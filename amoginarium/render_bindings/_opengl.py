@@ -76,8 +76,8 @@ class OpenGLRenderer(BaseRenderer):
         }
 
         # get screen size
-        screen_info = pg.display.Info()
-        window_size = (screen_info.current_w, screen_info.current_h)
+        # screen_info = pg.display.Info()
+        window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)
 
         # set global screen size and ppm
         global_vars.screen_size = Vec2.from_cartesian(*window_size)
