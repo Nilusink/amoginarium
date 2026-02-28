@@ -1,0 +1,17 @@
+changelog:
+  categories:
+    - title: Exciting New Features 🎉
+      labels:
+        - enhancement
+    - title: Changes 🛠
+      labels:
+        - change
+    - title: Bugs? No more! 🐞
+      labels:
+        - bug
+    - title: Inexplicable code? Should be better now 📝
+      labels:
+        - documentation
+    - title: Other Changes 🛠
+      labels:
+        - "*"
