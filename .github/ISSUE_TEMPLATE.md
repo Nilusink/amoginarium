@@ -2,7 +2,7 @@
 We recommend using a template --->
 
 ### Issue description
-<!-- Write down you suggestions and experience -->
+<!-- Write down your suggestions and experience -->
 
 
 ---
