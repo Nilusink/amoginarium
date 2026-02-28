@@ -16,7 +16,7 @@
 ---
 
 ### Others
-<!-- Write down you everything else (documentation, ...) [can be deleted if not used] -->
+<!-- Write down everything else (documentation, ...) [can be deleted if not used] -->
 
 
 ---
