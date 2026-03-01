@@ -47,7 +47,7 @@ class OpenGLRenderer(BaseRenderer):
         if size in self._fonts:
             for font in self._fonts[size]:  # TODO: fix
                 if all([
-                    # font. == family,
+                    font.name == family,
                     font.bold == bold,
                     font.italic == italic
                 ]):
@@ -85,7 +85,7 @@ class OpenGLRenderer(BaseRenderer):
         global_vars.pixel_per_meter = window_size[0] / 1920
 
         # set max fps to monitor refresh rate
-        global_vars.max_fps = 240  #  max(pg.display.get_desktop_refresh_rates())  # TODO: fix for modern pygame versions
+        global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
 
         pg.display.set_mode(
             global_vars.screen_size.xy,
