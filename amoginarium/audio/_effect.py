@@ -71,6 +71,10 @@ class SoundEffect:
 
         return self._playing.get_busy()
 
+    @property
+    def started(self) -> bool:
+        return self._sound is not ...
+
     def play(
             self,
             loops: int = 0,
@@ -176,7 +180,7 @@ class ThreeStageSoundEffect:
             )
             self._stage_two.volume = self.volume
 
-        if self._stage_three is not ...:
+        if self._stage_three_name is not ...:
             self._stage_three = SoundEffect(
                 self._stage_three_name,
                 self.stop
@@ -197,12 +201,17 @@ class ThreeStageSoundEffect:
         if self._stage_one is not ...:
             self._stage_one.play()
 
+        else:
+            self._play_2()
+
+    @run_with_debug()
     def _play_2(self) -> None:
         if self._playing:
-            self._stage_two.play()
+            if not self._stage_two.playing:
+                self._stage_two.play()
 
-    def _play_3(self) -> None:
-        if self._playing:
+    def _play_3(self, force_play: bool = False) -> None:
+        if self._playing or force_play:
             if self._stage_three is not ...:
                 self._stage_three.play()
 
@@ -229,31 +238,33 @@ class ContinuousSoundEffect(ThreeStageSoundEffect):
     def stage_one_done(self) -> bool:
         return self._one_done
 
+    @run_with_debug()
     def _play_2(self) -> None:
         self._one_done = True
 
-        if self._playing:
+        if self._playing and not self._stage_two.started:
+            ic(1)
             self._stage_two.play(-1)
 
+    def _play_3(self, force_play: bool = False) -> None:
+        pass
+
+    @run_with_debug()
     def done(self) -> None:
         """
         stop stage 2 playing
         """
         self._stage_two.stop()
 
-        if self.stage_one_done:
-            if self._playing:
-                self._play_3()
-
-        else:
-            self._playing = False
+        ic("playing 3")
+        if self.stage_one_done and self._playing:
+            super()._play_3(True)
+            self.stop()
 
     @run_with_debug()
     def stop(self) -> None:
         self._playing = False
         self._stage_two.stop()
-        ic(self._stage_two.playing)
-        self.done()
 
 
 class Minigun(ContinuousSoundEffect):
@@ -265,6 +276,4 @@ class Minigun(ContinuousSoundEffect):
 
 class AK47(ContinuousSoundEffect):
     _stage_two_name = ("ak47", "loop")
-    _stage_one_name = "spool_up"
-    _stage_three_name = "spool_down"
     volume: float = .1

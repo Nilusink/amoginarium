@@ -278,7 +278,7 @@ class BaseWeapon:
         self._bullet_explosion_damage = bullet_explosion_damage
         self._bullet_lifetime = bullet_lifetime
         self._sound_effect = sound_effect
-        self.__sound_effect: sound_effect = ...
+        self.__sound_effect: ContinuousSoundEffect = ...
         self._texture_id_r, _ = textures.get_texture(
             self._image_name,
             self._image_size,
@@ -381,7 +381,7 @@ class BaseWeapon:
 
         # audio
         if self._sound_effect is not ...:
-            self._current_sound_time = self._recoil_time * 3
+            self._current_sound_time = self._recoil_time
 
         if self._current_recoil_time > 0:
             return False

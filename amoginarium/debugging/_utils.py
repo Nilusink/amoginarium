@@ -13,14 +13,22 @@ import inspect
 from ._console_colors import get_fg_color, CC
 
 
-def get_caller_name() -> str:
+def get_caller_name(extended: bool = False) -> str | dict:
     """
     get the name of the function that called this context
     """
     curframe = inspect.currentframe()
     calframe = inspect.getouterframes(curframe, 2)
 
-    return calframe[1][3]
+    if not extended:
+        return calframe[2][3]
+
+    return {
+        "file": calframe[2][1],
+        "line": calframe[2][2],
+        "function": calframe[2][3],
+        "context": calframe[2][4],
+    }
 
 
 def print_ic_style(*values, sep=" ") -> None:
