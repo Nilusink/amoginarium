@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and support
+    url: https://github.com/<OWNER>/<REPO>/discussions
+    about: Please use the repository discussions for questions and general support.
+  - name: Report a security vulnerability
+    url: https://github.com/<OWNER>/<REPO>/security/advisories/new
+    about: Please report security vulnerabilities via this repository's "Report a vulnerability" flow.
