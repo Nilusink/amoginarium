@@ -92,8 +92,6 @@ class BaseGame:
         self._last_loaded = ...
         self._shifting = False
 
-        self.__ready_to_exit = False
-
         # configure icecream
         if not debug:
             ic.disable()
@@ -354,7 +352,7 @@ class BaseGame:
             match event.type:
                 case pg.QUIT:
                     ic("pygame end")
-                    self.end()
+                    self.__clean_end()
 
                 case pg.JOYDEVICEADDED:
                     joy = pg.joystick.Joystick(event.device_index)
@@ -375,6 +373,9 @@ class BaseGame:
                             out.append("c")
 
         return out
+
+    def __clean_end(self) -> None:
+        self.running = False
 
     def _run_pygame(self) -> None:
         """
@@ -423,11 +424,8 @@ class BaseGame:
             nonlocal in_settings
             in_settings = not in_settings
 
-        def do_none():
-            pass
-
         start_menu = StartMenu(
-            start_game, toggle_settings, self.end
+            start_game, toggle_settings, self.__clean_end
         )
 
         pause_menu = PauseMenu(
@@ -601,6 +599,7 @@ class BaseGame:
             clock.tick(global_vars.max_fps)
 
         ic("pygame end")
+        self.end()
 
     def _run_logic(self) -> None:
         """
@@ -685,7 +684,6 @@ class BaseGame:
         # self._pool.submit(self._run_logic)
         self._pool.submit(self._run_comms)
         self._run_pygame()
-        self.__ready_to_exit = True
 
     @run_with_debug()
     def end(self) -> None:
