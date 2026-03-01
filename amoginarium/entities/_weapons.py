@@ -16,7 +16,8 @@ from icecream import ic
 
 from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
-from ..audio import ContinuousSoundEffect, Minigun as MinigunSound
+from ..audio import ContinuousSoundEffect
+from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, Entity
 from ..render_bindings import renderer
@@ -558,7 +559,8 @@ class Ak47(BaseWeapon):
             bullet_damage=2.5,
             barrel_length=140,
             parent_position_offset=parent_position_offset,
-            drop_casings=drop_casings
+            drop_casings=drop_casings,
+            sound_effect=AK47Sound
         )
 
 

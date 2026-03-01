@@ -183,6 +183,7 @@ class BaseGame:
         """
         # load sounds
         sounds.load_sounds("assets/audio/background")
+        sounds.load_sounds("assets/audio/effects/ak47")
         sounds.load_sounds("assets/audio/effects/minigun")
         sounds.load_sounds("assets/audio/effects/explosions")
         sounds.load_sounds("assets/audio/effects/shots")
