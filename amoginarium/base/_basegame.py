@@ -13,7 +13,6 @@ from time import perf_counter, strftime
 from icecream import ic
 import typing as tp
 import pygame as pg
-import asyncio
 import json
 import os
 
@@ -21,13 +20,16 @@ from OpenGL.GL import glClearColor
 
 from ._groups import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players
 from ._groups import Updated, GravityAffected, Drawn, FrictionXAffected
+from ._pausemenu import PauseMenu
+from ._settings_menu import SettingsMenu
+from ._startmenu import StartMenu
 from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret
-from ..entities import Player, Island, Bullet, BaseTurret, FlakTurret
+from ..entities import Player, Island, BaseTurret, FlakTurret
 from ..entities import CRAMTurret, TextEntity
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC
 from ._scrolling_background import ParalaxBackground
-from ._linked import global_vars, Coalitions
+from ..shared import global_vars, Coalitions
 from ..logic import SimpleLock, Color, Vec2
 from ..audio import sounds, sound_effects
 from ..render_bindings import renderer
@@ -35,7 +37,7 @@ from ..audio import BackgroundPlayer
 from ..communications import TCPServer
 from ..animations import explosion
 from ._textures import textures
-from ..ui import Button
+from ..settings import Settings
 
 
 class BoundFunction(tp.TypedDict):
@@ -89,6 +91,8 @@ class BaseGame:
         self.time_multiplier = time_multiplier
         self._last_loaded = ...
         self._shifting = False
+
+        self.__ready_to_exit = False
 
         # configure icecream
         if not debug:
@@ -230,8 +234,8 @@ class BaseGame:
         Players.spawn_point = Vec2.from_cartesian(*data["spawn_pos"])
 
         # set background
-        if 0 <= data["background"]-1 <= len(self._backgrounds):
-            self._background = self._backgrounds[data["background"]-1]
+        if 0 <= data["background"] - 1 <= len(self._backgrounds):
+            self._background = self._backgrounds[data["background"] - 1]
 
         else:
             self._background = self._backgrounds[0]
@@ -382,13 +386,13 @@ class BaseGame:
 
         in_menu: bool = True
         has_started: bool = False
+        in_settings: bool = False
         self.load_map("assets/maps/tutorial.json")
+
         # self.load_map("assets/maps/test.json")
 
         def start_game():
             nonlocal in_menu, has_started
-            # self._background.reset_scroll()
-            widgets[0]._text = "Continue"
             in_menu = False
             has_started = True
 
@@ -409,43 +413,39 @@ class BaseGame:
 
             in_menu = False
 
-        widgets = [
-            Button(
-                (760, 390),
-                (400, 150),
-                "Start",
-                Color.from_255(100, 100, 100),
-                start_game,
-                20
-            ),
-            Button(
-                (760, 600),
-                (400, 150),
-                "Restart",
-                Color.from_255(100, 100, 100),
-                reset_game,
-                20
-            )
-        ]
+        def back_to_menu():
+            nonlocal in_menu, has_started
+            reset_game()
+            in_menu = True
+            has_started = False
+
+        def toggle_settings():
+            nonlocal in_settings
+            in_settings = not in_settings
+
+        def do_none():
+            pass
+
+        start_menu = StartMenu(
+            start_game, toggle_settings, self.end
+        )
+
+        pause_menu = PauseMenu(
+            start_game, reset_game, toggle_settings, back_to_menu
+        )
+
+        settings = SettingsMenu()
 
         # draw background once
         while self.running:
             # total delta since last call
             now = perf_counter()
-            delta = now-last
+            delta = now - last
 
             delta *= self.time_multiplier  # slow-motion
 
             if in_menu:
                 pressed = self.handle_events()
-
-                if "escape" in pressed or "c" in pressed:
-                    start_game()
-                    continue
-
-                elif "r" in pressed:
-                    reset_game()
-                    continue
 
                 # update background music
                 try:  # throws error on game end
@@ -461,13 +461,26 @@ class BaseGame:
                     Drawn.gl_draw()
                     HasBars.gl_draw()
 
-                    for widget in widgets:
-                        widget.gl_draw()
-
+                    if in_settings:
+                        if "escape" in pressed:
+                            toggle_settings()
+                            continue
+                        settings.gl_draw()
+                    else:
+                        if "escape" in pressed:
+                            start_game()
+                            continue
+                        pause_menu.gl_draw()
                 else:
-                    widgets[0].gl_draw()
-
+                    if in_settings:
+                        if "escape" in pressed:
+                            toggle_settings()
+                            continue
+                        settings.gl_draw()
+                    else:
+                        start_menu.gl_draw()
                 pg.display.flip()
+                # debugging kopieren - @
                 clock.tick(global_vars.max_fps)
 
                 self._game_start = perf_counter()
@@ -513,10 +526,10 @@ class BaseGame:
                     # V(x)=ℯ^( ( (1400-x) / 800 )^2 )
 
                     speed_coeff = (abs((
-                        self._background.position
-                        + global_vars.screen_size.x
-                        - 1400
-                    ) - max_player_pos.x) / 800) ** 2
+                                               self._background.position
+                                               + global_vars.screen_size.x
+                                               - 1400
+                                       ) - max_player_pos.x) / 800) ** 2
                     speed_coeff = math.exp(speed_coeff)
 
                     self._background.scroll(delta * 3 * speed_coeff)
@@ -672,12 +685,15 @@ class BaseGame:
         # self._pool.submit(self._run_logic)
         self._pool.submit(self._run_comms)
         self._run_pygame()
+        self.__ready_to_exit = True
 
     @run_with_debug()
     def end(self) -> None:
         """
         stop everything
         """
+        Settings.write()
+
         # check if end has already been called
         if not self.running:
             return
@@ -686,7 +702,7 @@ class BaseGame:
         self.running = False
 
         # tell server to shutdown
-        #with suppress(RuntimeError):
+        # with suppress(RuntimeError):
         # self._server.close()
 
         ic("stopping game...")

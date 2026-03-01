@@ -7,13 +7,12 @@ an island in the sky
 Author:
 Nilusink
 """
-from icecream import ic
 import pygame as pg
 import typing as tp
 import math as m
 import random
 
-from ..base._linked import global_vars
+from ..shared import global_vars
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..entities import VisibleEntity
@@ -195,15 +194,15 @@ class Island(VisibleEntity):
 
     @classmethod
     def random_between(
-        cls,
-        x_start: int,
-        x_end: int,
-        y_start: int,
-        y_end: int,
-        x_size_start: int,
-        x_size_end: int,
-        y_size_start: int,
-        y_size_end: int
+            cls,
+            x_start: int,
+            x_end: int,
+            y_start: int,
+            y_end: int,
+            x_size_start: int,
+            x_size_end: int,
+            y_size_start: int,
+            y_size_end: int
     ) -> tp.Self:
         x = random.randint(x_start, x_end)
         y = random.randint(y_start, y_end)
@@ -299,12 +298,12 @@ class Island(VisibleEntity):
         right_collides = (
             self.mask.overlap(right_collider[1], right_offset.xy)
         )
-        
+
         bottom_offset = bottom_collider[0] - self.position
         bottom_collides = (
             self.mask.overlap(bottom_collider[1], bottom_offset.xy)
         )
-        
+
         left_offset = left_collider[0] - self.position
         left_collides = (
             self.mask.overlap(left_collider[1], left_offset.xy)
@@ -351,28 +350,28 @@ class Island(VisibleEntity):
                 if self._form is not ...:
                     if row > 0:
                         try:
-                            block_top = self._form[row-1][column]
+                            block_top = self._form[row - 1][column]
 
                         except IndexError:
                             block_top = 0
 
                     if row < n_rows - 1:
                         try:
-                            block_bottom = self._form[row+1][column]
+                            block_bottom = self._form[row + 1][column]
 
                         except IndexError:
                             block_left = 0
 
                     if column > 0:
                         try:
-                            block_left = self._form[row][column-1]
+                            block_left = self._form[row][column - 1]
 
                         except IndexError:
                             block_left = 0
 
                     if column < n_columns - 1:
                         try:
-                            block_right = self._form[row][column+1]
+                            block_right = self._form[row][column + 1]
 
                         except IndexError:
                             block_right = 0

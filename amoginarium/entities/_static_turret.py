@@ -17,9 +17,8 @@ from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related
 from ._base_entity import VisibleEntity
 from ..render_bindings import renderer
-from ..base._linked import global_vars
+from ..shared import global_vars, Coalitions
 from ..base._textures import textures
-from ..base._linked import Coalitions
 
 
 class BaseTurret(VisibleEntity):
@@ -55,15 +54,15 @@ class BaseTurret(VisibleEntity):
             )
 
     def __init__(
-        self,
-        coalition: Coalitions,
-        size: Vec2,
-        position: Vec2,
-        weapon: BaseWeapon,
-        engagement_range: float,
-        airburst_munition: bool = False,
-        intercept_bullets: bool = False,
-        intercept_players: bool = True
+            self,
+            coalition: Coalitions,
+            size: Vec2,
+            position: Vec2,
+            weapon: BaseWeapon,
+            engagement_range: float,
+            airburst_munition: bool = False,
+            intercept_bullets: bool = False,
+            intercept_players: bool = True
     ) -> None:
         self.weapon = weapon
         self.engagement_range = engagement_range
@@ -107,7 +106,7 @@ class BaseTurret(VisibleEntity):
         # ic(self.available_targets
         targets = list(self.available_targets.keys())
         for target in sorted(
-            targets, key=lambda t: self.available_targets[t]["distance"]
+                targets, key=lambda t: self.available_targets[t]["distance"]
         ):
             t = self.available_targets[target]
             if t["shot_at"] < 0:
@@ -240,9 +239,9 @@ class BaseTurret(VisibleEntity):
         # only draw if on screen
         if not any([
             Updated.world_position.x < self.position.x - self.size.x / 2,
-            self.position.x + self.size.x / 2 < Updated.world_position.x+1920,
+            self.position.x + self.size.x / 2 < Updated.world_position.x + 1920,
             Updated.world_position.y < self.position.y - self.size.y / 2,
-            self.position.y + self.size.y / 2 < Updated.world_position.y+1080,
+            self.position.y + self.size.y / 2 < Updated.world_position.y + 1080,
         ]):
             return
 

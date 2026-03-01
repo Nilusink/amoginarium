@@ -7,30 +7,32 @@ a button, what did you expect?
 Author:
 Nilusink
 """
+
+from __future__ import annotations
+
 import typing as tp
 import pygame as pg
 
 from ..logic import coord_t, convert_coord, Color, Vec2
 from ..render_bindings import renderer, tColor
+from ..shared import global_vars
+
+from ._rectangle import Rectangle
 
 
-class Button:
+class Button(Rectangle):
     def __init__(
             self,
-            position: coord_t,
-            size: coord_t,
+            relative_position: coord_t,
+            relative_size: coord_t,
             text: str,
-            color: tColor | Color,
             command: tp.Callable[[], None] = ...,
             radius: float = ...,
+            anchor: tp.Literal["nw", "center"] = "center",
     ) -> None:
-        self._position = convert_coord(position, Vec2)
-        self._size = convert_coord(size, Vec2)
-        self._radius = radius
-        self._color = Color.from_255(70, 70, 70)
+        super().__init__(relative_position, relative_size, radius, anchor)
+
         self._hover_color = Color.from_255(90, 90, 90)
-        self._border_color = Color.from_255(40, 40, 40)
-        self._border_width = 5
         self._fg_color = Color.from_255(255, 255, 255)
         self._command = command
         self._text = text
@@ -38,50 +40,11 @@ class Button:
         self._last_mouse = False
 
     def gl_draw(self) -> None:
-        mouse_pos = pg.mouse.get_pos()
-        hover = all([
-            self._position.x <= mouse_pos[0] <= self._position.x + self._size.x,
-            self._position.y <= mouse_pos[1] <= self._position.y + self._size.y
-        ])
-
-        # base box
-        if self._radius is not ...:
-            if self._border_width > 0:
-                renderer.draw_rounded_rect(
-                    self._position,
-                    self._size,
-                    self._border_color,
-                    self._radius
-                )
-
-            renderer.draw_rounded_rect(
-                self._position + self._border_width,
-                self._size - 2 * self._border_width,
-                self._hover_color if hover else self._color,
-                self._radius
-            )
-
-        else:
-            if self._border_width > 0:
-                renderer.draw_rect(
-                    self._position,
-                    self._size,
-                    self._border_color,
-                )
-
-            renderer.draw_rect(
-                self._position + self._border_width,
-                self._size - 2 * self._border_width,
-                self._color,
-            )
+        super().gl_draw()
 
         # text
         renderer.draw_text(
-            self._position + self._size / 2,
-            # (
-            #     self._position.x + self._size.x / 2,
-            #     self._position.y + self._size.y * 1.5
-            # ),
+            self._top_left + self._abs_size / 2,
             self._text,
             self._fg_color,
             (0, 0, 0, 0),
@@ -91,8 +54,8 @@ class Button:
 
         # check if mouse down
         mouse_left, *_ = pg.mouse.get_pressed()
-        if hover and not self._last_mouse and mouse_left:
+        if self._hover and not self._last_mouse and mouse_left:
             self._command()
 
-        self._last_hover = hover
+        self._last_hover = self._hover
         self._last_mouse = mouse_left
