@@ -24,7 +24,8 @@ from ._island import Island
 from ..logic import Vec2
 
 
-PLAYER_RIGHT_64_PATH = "gunogus64right"
+PLAYER_LEFT_64_PATH = "amogus64left"
+PLAYER_RIGHT_64_PATH = "amogus64right"
 PLAYER_OOB_RIGHT_64_PATH = "amogusOOB64right"
 PLAYER_OOB_LEFT_64_PATH = "amogusOOB64left"
 
@@ -60,12 +61,11 @@ class Player(LRImageEntity):
     def load_textures(cls) -> None:
         cls._player_right_64_texture, _ = textures.get_texture(
             PLAYER_RIGHT_64_PATH,
-            (128, 64)
+            (64, 64)
         )
         cls._player_left_64_texture, _ = textures.get_texture(
-            PLAYER_RIGHT_64_PATH,
-            (128, 64),
-            mirror="x"
+            PLAYER_LEFT_64_PATH,
+            (64, 64),
         )
 
         cls._player_oob_right_1_texture, _ = textures.get_texture(
@@ -116,17 +116,17 @@ class Player(LRImageEntity):
         else:
             self._texture_right, _ = textures.get_texture(
                 PLAYER_RIGHT_64_PATH,
-                (size * 2, size)
+                (size, size)
             )
             self._texture_left, _ = textures.get_texture(
                 PLAYER_RIGHT_64_PATH,
-                (size * 2, size),
+                (size, size),
                 mirror="x"
             )
         self._image_size = size
 
         super().__init__(
-            size=Vec2.from_cartesian(size*2, size),
+            size=Vec2.from_cartesian(size, size),
             facing=facing,
             initial_position=initial_position,
             initial_velocity=initial_velocity,
@@ -145,8 +145,8 @@ class Player(LRImageEntity):
         self._last_wpn_change = 0
         self._current_weapon = 0
         self._weapons = [
-            Ak47(self, False),
-            Minigun(self, False),
+            Ak47(self, False, parent_position_offset=(0, 0)),
+            Minigun(self, False, parent_position_offset=(0, 10)),
             Sniper(self, False),
             Mortar(self, False),
             Flak(self, False),
@@ -188,6 +188,13 @@ class Player(LRImageEntity):
     @property
     def weapon(self) -> BaseWeapon:
         return self._weapons[self._current_weapon]
+
+    @property
+    def weapon_position(self) -> Vec2:
+        """
+        returns the location where the weapon is held at
+        """
+        return self.position + ...
 
     def next_weapon(self) -> None:
         """
@@ -341,10 +348,13 @@ class Player(LRImageEntity):
         # shoot
         if self._controller.shoot:
             # shoot a bit up
-            shot_direction = self.facing.copy()
-            shot_direction.y = -.4
+            mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
+            vector = mouse_pos - self.world_position
+
+            # shot_direction = self.facing.copy()
+            # shot_direction.y = -.4
             if self.weapon.shoot(
-                shot_direction
+                vector
             ):
                 self._controller.feedback_shoot()
 
@@ -355,7 +365,6 @@ class Player(LRImageEntity):
                 self._controller.feedback_heal_start()
             else:
                 self._controller.feedback_heal_stop()
-        
 
         # run update from parent classes
         super().update(delta)
@@ -408,8 +417,15 @@ class Player(LRImageEntity):
                 )
 
         else:
+            mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
+            vector = mouse_pos - self.world_position
+            angle = vector.angle * (180/3.14169265358979)
+
             super().gl_draw()
-            self.weapon.draw_at(self.position, -20)
+            self.weapon.draw_at(
+                self.position,
+                angle
+            )
 
     def kill(self, killed_by=...) -> None:
         """

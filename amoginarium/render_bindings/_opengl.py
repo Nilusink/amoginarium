@@ -17,6 +17,7 @@ from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
 from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
 from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
+from OpenGL.GL import glTranslated
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
@@ -190,16 +191,31 @@ class OpenGLRenderer(BaseRenderer):
 
         return texture_id, (width, height)
 
-    @staticmethod
+    # @staticmethod
     def draw_textured_quad(
+            self,
             texture_id: TextureID,
             pos,
             size,
             convert_global=True,
-            rotate_angle=0
+            rotate_angle=0,
+            rotate_anchor: Vec2 | tuple[float, float] = ...
     ):
+        """
+        :param texture_id: texture id
+        :param pos: position (top left)
+        :param size: size (width, height)
+        :param convert_global: whether to convert the texture to global coords
+        :param rotate_angle: angle to rotate the image at
+        :param rotate_anchor: at what pixel to rotate at
+        """
         pos = convert_coord(pos, Vec2)
         size = convert_coord(size, Vec2)
+        if rotate_anchor is ...:
+            rotate_anchor = size / 2
+
+        else:
+            rotate_anchor = convert_coord(rotate_anchor, Vec2)
 
         # convert to screen realtive coords and size
         if convert_global:
@@ -224,7 +240,10 @@ class OpenGLRenderer(BaseRenderer):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 
         # rotate
-        glRotated(rotate_angle, 0, 0, 1)
+        if rotate_angle != 0:
+            glTranslated(rotate_anchor.x, rotate_anchor.y, 0)
+            glRotated(rotate_angle, 0, 0, 1)  # rotate around Z
+            glTranslated(-rotate_anchor.x, -rotate_anchor.y, 0)
 
         glBegin(GL_QUADS)
 
@@ -241,6 +260,8 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
         glDisable(GL_TEXTURE_2D)
         glFlush()
+
+        # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
 
     def draw_circle(
             self,
