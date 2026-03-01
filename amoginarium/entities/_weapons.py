@@ -17,12 +17,12 @@ from icecream import ic
 from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect, Minigun as MinigunSound
+from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, Entity
 from ..render_bindings import renderer
 from ..base._linked import global_vars
 from ..base._textures import textures
 from ..animations import explosion
-from ..logic import Vec2, Color
 from ..base import WallCollider
 
 
@@ -224,8 +224,10 @@ class Bullet(ImageEntity):
 
 
 class BaseWeapon:
-    _image: str = ("bullet", (64, 64), "x")
+    _image_name: str = "bullet"
+    _image_size: tuple[int, int] = (64, 64)
     _image_offset: Vec2 = Vec2.from_cartesian(0, 15)
+    _image_rotate_anchor: Vec2 = ...
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
     _current_reload_time: float = 0
@@ -245,6 +247,8 @@ class BaseWeapon:
         mag_size: int,
         inaccuracy: float,
         bullet_speed: float,
+        barrel_length: float,  # where bullets spawn
+        parent_position_offset: Vec2 | tuple[float, float],
         bullet_size: int = 10,
         bullet_damage: float = 1,
         bullet_explosion_radius: float = -1,
@@ -265,13 +269,27 @@ class BaseWeapon:
         self._recoil_factor = recoil_factor
         self._bullet_damage = bullet_damage
         self._bullet_size = bullet_size
+        self._barrel_length = barrel_length
+        self._parent_position_offset = convert_coord(
+            parent_position_offset, Vec2
+        )
         self._bullet_explosion_radius = bullet_explosion_radius
         self._bullet_explosion_damage = bullet_explosion_damage
         self._bullet_lifetime = bullet_lifetime
         self._sound_effect = sound_effect
         self.__sound_effect: sound_effect = ...
-        self._texture_id, _ = textures.get_texture(*self._image)  # renderer.load_texture(*self._image)
-        self._size = Vec2.from_cartesian(*self._image[1])
+        self._texture_id_r, _ = textures.get_texture(
+            self._image_name,
+            self._image_size,
+            "x"
+        )
+        self._texture_id_l, _ = textures.get_texture(
+            self._image_name,
+            self._image_size
+        )
+        self._size = Vec2.from_cartesian(*self._image_size)
+        if self._image_rotate_anchor is ...:
+            self._image_rotate_anchor = self._size / 2
 
     @property
     def mag_size(self) -> int:
@@ -279,7 +297,7 @@ class BaseWeapon:
 
     @property
     def recoil_factor(self) -> float:
-        return self.recoil_factor
+        return self._recoil_factor
 
     @property
     def bullet_speed(self) -> float:
@@ -385,6 +403,7 @@ class BaseWeapon:
         offset = randint(-255, 255) / 255
         offset *= self._inaccuracy
         direction.angle += offset
+        direction.normalize()
 
         # recoil
         if hasattr(self.parent, "_movement_acceleration"):
@@ -406,8 +425,8 @@ class BaseWeapon:
         Bullet(
             self.parent,
             self._coalition,
-            self.parent.position + Vec2.from_cartesian(0, 7)
-            + direction.normalize() * self.parent.size.length * .45,
+            self.parent.position + self._parent_position_offset
+            + direction.normalize() * self._barrel_length * .45,
             direction.normalize() * self._bullet_speed + self.parent.velocity,
             base_damage=self._bullet_damage,
             size=self._bullet_size,
@@ -455,20 +474,50 @@ class BaseWeapon:
         """
         draw the weapon (centered) at a specified position
         """
-        position += self._image_offset
-        renderer.draw_textured_quad(
-            self._texture_id,
-            (position - Updated.world_position - (self._size / 2)).xy,
-            self._size.xy,
-            rotate_angle=angle
-        )
+        angle = angle % 360
+        # offset = self._image_offset + self._parent_position_offset
+        offset = self._parent_position_offset
+
+        if self.parent.facing.x < 0:
+            offset.x = -offset.x
+
+        position += offset
+
+        if 90 < angle < 270:
+            anchor = Vec2.from_cartesian(
+                self._size.x - self._image_rotate_anchor.x,
+                self._image_rotate_anchor.y
+            )
+            renderer.draw_textured_quad(
+                self._texture_id_l,
+                (position - Updated.world_position - anchor).xy,
+                self._size.xy,
+                rotate_angle=angle-180,
+                rotate_anchor=anchor
+            )
+
+        else:
+            renderer.draw_textured_quad(
+                self._texture_id_r,
+                (position - Updated.world_position - self._image_rotate_anchor).xy,
+                self._size.xy,
+                rotate_angle=angle,
+                rotate_anchor=self._image_rotate_anchor
+            )
 
 
 class Minigun(BaseWeapon):
-    _image: str = ("minigun", (128, 64), "x")
-    _image_offset: Vec2 = Vec2.from_cartesian(0, 30)
+    _image_name: str = "minigun"
+    _image_size: tuple[int, int] = (128, 64)
+    # _image_offset: Vec2 = Vec2.from_cartesian(25, 1)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(35, 30)
 
-    def __init__(self, parent, drop_casings: bool = False) -> None:
+    def __init__(
+            self,
+            parent,
+            drop_casings: bool = False,
+            parent_position_offset: coord_t = Vec2()
+    ) -> None:
         super().__init__(
             parent,
             reload_time=3,
@@ -478,16 +527,25 @@ class Minigun(BaseWeapon):
             inaccuracy=.01093606,
             bullet_speed=1600,
             bullet_damage=2,
+            barrel_length=210,
+            parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             sound_effect=MinigunSound
         )
 
 
 class Ak47(BaseWeapon):
-    _image: str = ("ak47", (80, 40), "x")
-    _image_offset: Vec2 = Vec2.from_cartesian(0, 20)
+    _image_name: str = "ak47"
+    _image_size: tuple[int, int] = (80, 40)
+    # _image_offset: Vec2 = Vec2.from_cartesian(15, -6)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(30, 20)
 
-    def __init__(self, parent, drop_casings: bool = False) -> None:
+    def __init__(
+            self,
+            parent,
+            drop_casings: bool = False,
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+    ) -> None:
         super().__init__(
             parent,
             reload_time=2.5,
@@ -498,15 +556,24 @@ class Ak47(BaseWeapon):
             bullet_size=11,
             bullet_speed=1200,
             bullet_damage=2.5,
+            barrel_length=140,
+            parent_position_offset=parent_position_offset,
             drop_casings=drop_casings
         )
 
 
 class Sniper(BaseWeapon):
-    _image: str = ("sniper", (120, 60), "x")
-    _image_offset: Vec2 = Vec2.from_cartesian(0, 25)
+    _image_name: str = "sniper"
+    _image_size: tuple[int, int] = (120, 60)
+    # _image_offset: Vec2 = Vec2.from_cartesian(0, 25)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(25, 33)
 
-    def __init__(self, parent, drop_casings: bool = False) -> None:
+    def __init__(
+            self,
+            parent,
+            drop_casings: bool = False,
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+    ) -> None:
         super().__init__(
             parent,
             reload_time=5,
@@ -517,6 +584,8 @@ class Sniper(BaseWeapon):
             bullet_size=15,
             bullet_speed=2500,
             bullet_damage=4,
+            barrel_length=230,
+            parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             sound_effect=Shotgun
         )
@@ -525,7 +594,12 @@ class Sniper(BaseWeapon):
 class Mortar(BaseWeapon):
     _bullet_image = BULLET_PATH
 
-    def __init__(self, parent, drop_casings: bool = False) -> None:
+    def __init__(
+            self,
+            parent,
+            drop_casings: bool = False,
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+    ) -> None:
         super().__init__(
             parent,
             reload_time=4,
@@ -536,6 +610,8 @@ class Mortar(BaseWeapon):
             bullet_size=22,
             bullet_speed=1400,
             bullet_damage=40,
+            barrel_length=5,
+            parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_radius=200,
             bullet_explosion_damage=50,
@@ -544,7 +620,12 @@ class Mortar(BaseWeapon):
 
 
 class Flak(BaseWeapon):
-    def __init__(self, parent, drop_casings: bool = False) -> None:
+    def __init__(
+            self,
+            parent,
+            drop_casings: bool = False,
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+    ) -> None:
         super().__init__(
             parent,
             reload_time=3,
@@ -556,6 +637,8 @@ class Flak(BaseWeapon):
             # bullet_speed=1400*2,  # can shoot down bullets, but is too op
             bullet_speed=1400,
             bullet_damage=30,
+            barrel_length=5,
+            parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
@@ -565,7 +648,12 @@ class Flak(BaseWeapon):
 
 
 class CRAM(BaseWeapon):
-    def __init__(self, parent, drop_casings: bool = False) -> None:
+    def __init__(
+            self,
+            parent,
+            drop_casings: bool = False,
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+    ) -> None:
         super().__init__(
             parent,
             reload_time=8,
@@ -575,6 +663,8 @@ class CRAM(BaseWeapon):
             inaccuracy=.001093606,
             bullet_speed=3000,
             bullet_damage=.1,
+            barrel_length=20,
+            parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_size=9,
             bullet_lifetime=1,

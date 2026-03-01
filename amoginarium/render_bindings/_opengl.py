@@ -8,15 +8,16 @@ Author:
 Nilusink
 """
 from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
+from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
 from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
 from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
-from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
-from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
 from OpenGL.GL import GL_UNSIGNED_BYTE, GL_MODELVIEW, GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
 from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
+from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
+from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
-from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND
+from OpenGL.GL import glTranslated
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
@@ -44,9 +45,9 @@ class OpenGLRenderer(BaseRenderer):
     ) -> pg.font.Font:
         # check if font exists
         if size in self._fonts:
-            for font in self._fonts[size]:
+            for font in self._fonts[size]:  # TODO: fix
                 if all([
-                    font.name == family,
+                    # font. == family,
                     font.bold == bold,
                     font.italic == italic
                 ]):
@@ -77,18 +78,18 @@ class OpenGLRenderer(BaseRenderer):
 
         # get screen size
         screen_info = pg.display.Info()
-        window_size = (screen_info.current_w, screen_info.current_h)
+        window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
 
         # set global screen size and ppm
         global_vars.screen_size = Vec2.from_cartesian(*window_size)
         global_vars.pixel_per_meter = window_size[0] / 1920
 
         # set max fps to monitor refresh rate
-        global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
+        global_vars.max_fps = 240  #  max(pg.display.get_desktop_refresh_rates())  # TODO: fix for modern pygame versions
 
         pg.display.set_mode(
             global_vars.screen_size.xy,
-            DOUBLEBUF | OPENGL | pg.FULLSCREEN
+            DOUBLEBUF | OPENGL #| pg.FULLSCREEN  # TODO: display flickering
         )
         # self.font = pg.font.SysFont(None, 24)
         pg.display.set_caption(title)
@@ -190,16 +191,31 @@ class OpenGLRenderer(BaseRenderer):
 
         return texture_id, (width, height)
 
-    @staticmethod
+    # @staticmethod
     def draw_textured_quad(
+            self,
             texture_id: TextureID,
             pos,
             size,
             convert_global=True,
-            rotate_angle=0
+            rotate_angle=0,
+            rotate_anchor: Vec2 | tuple[float, float] = ...
     ):
+        """
+        :param texture_id: texture id
+        :param pos: position (top left)
+        :param size: size (width, height)
+        :param convert_global: whether to convert the texture to global coords
+        :param rotate_angle: angle to rotate the image at
+        :param rotate_anchor: at what pixel to rotate at
+        """
         pos = convert_coord(pos, Vec2)
         size = convert_coord(size, Vec2)
+        if rotate_anchor is ...:
+            rotate_anchor = size / 2
+
+        else:
+            rotate_anchor = convert_coord(rotate_anchor, Vec2)
 
         # convert to screen realtive coords and size
         if convert_global:
@@ -220,8 +236,14 @@ class OpenGLRenderer(BaseRenderer):
         glEnable(GL_TEXTURE_2D)
         glBindTexture(GL_TEXTURE_2D, texture_id)
 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
         # rotate
-        glRotated(rotate_angle, 0, 0, 1)
+        if rotate_angle != 0:
+            glTranslated(rotate_anchor.x, rotate_anchor.y, 0)
+            glRotated(rotate_angle, 0, 0, 1)  # rotate around Z
+            glTranslated(-rotate_anchor.x, -rotate_anchor.y, 0)
 
         glBegin(GL_QUADS)
 
@@ -238,6 +260,8 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
         glDisable(GL_TEXTURE_2D)
         glFlush()
+
+        # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
 
     def draw_circle(
             self,
