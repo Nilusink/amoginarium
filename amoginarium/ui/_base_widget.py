@@ -10,11 +10,18 @@ Project: amoginarium
 
 from __future__ import annotations
 
-from typing import Tuple, Literal
+from typing import Any, Callable, Optional
+# noinspection PyPackageRequirements
+import pygame as pg
 
+from ._event_handler import EventHandler
+from ..audio import SoundEffect
 from ..logic import coord_t, convert_coord, Vec2
-from ._base_frame import BaseFrame
 from ..shared import global_vars
+from ._event import AmogusEvent, event_t
+
+from ._base_frame import BaseFrame
+from ._types import anchor_t
 
 
 ##################################################
@@ -22,55 +29,232 @@ from ..shared import global_vars
 ##################################################
 
 class BaseWidget(BaseFrame):
-    _abs_position: Vec2
-    _abs_size: Vec2
-    _rel_position: Vec2
-    _rel_size: Vec2
-    _anchor: Literal["nw", "center"]
+    __abs_position: Vec2  # Absolute position - anchor not factored in
+    __abs_size: Vec2  # Absolute size
+    __rel_position: Vec2  # Relative position - anchor not factored in
+    __rel_size: Vec2  # Relative size
+    __anchor: anchor_t  # Placement anchor
 
-    _width: float
-    _height: float
-    _top_left: Vec2
-    _top_right: Vec2
-    _bottom_left: Vec2
-    _bottom_right: Vec2
+    __absolute: bool
+    __scaling: bool
+
+    __width: float  # Absolute width
+    __height: float  # Absolute height
+    __top_left: Vec2  # Absolute top left
+    __top_right: Vec2  # Absolute top right
+    __bottom_left: Vec2  # Absolute bottom left
+    __bottom_right: Vec2  # Absolute bottom right
+
+    __hover: bool
+    __last_hover: bool
+
+    __events: list[AmogusEvent]
 
     def __init__(
             self,
-            relative_position: coord_t,
-            relative_size: coord_t,
-            anchor: Literal["nw", "center"] = "nw"
+            position: coord_t,
+            size: coord_t,
+            *_args: Any,
+            anchor: anchor_t = "center",
+            absolute: bool = False,
+            scaling: bool = True
     ) -> None:
-        self._rel_position = convert_coord(relative_position, Vec2)
-        self._rel_size = convert_coord(relative_size, Vec2)
-        self._anchor = anchor
+        super().__init__()
+        self.__absolute = absolute
+        self.__scaling = scaling
+        self.__anchor = anchor
+
+        self.__last_hover = False
+        self.__hover = False
+
+        if self.__absolute:
+            if self.__scaling:  # Absolute positioning with scaling
+                self.__rel_position, self.__abs_position = self.__absolute_to_relative(position, size)
+            else:  # Absolute positioning without scaling
+                self.__abs_position = convert_coord(position, Vec2)
+                self.__abs_size = convert_coord(size, Vec2)
+        else:
+            if self.__scaling:  # Relative positioning with scaling
+                self.__rel_position = convert_coord(position, Vec2)
+                self.__rel_size = convert_coord(size, Vec2)
+            else:  # Relative positioning without scaling
+                self.__abs_position, self.__abs_size = self.__relative_to_absolute(position, size)
+
+        self.__events = []
+        EventHandler.add_check_events_callback(self.__check_event)
+
+    @staticmethod
+    def __relative_to_absolute(
+            relative_position: coord_t,
+            relative_size: coord_t
+    ) -> tuple[Vec2, Vec2]:
+        return (
+            convert_coord(
+                (
+                    int(relative_position.x * global_vars.screen_size.x),
+                    int(relative_position.y * global_vars.screen_size.y)
+                ),
+                Vec2
+            ),
+            convert_coord(
+                (
+                    int(relative_size.x * global_vars.screen_size.x),
+                    int(relative_size.y * global_vars.screen_size.y)
+                ),
+                Vec2
+            )
+        )
+
+    @staticmethod
+    def __absolute_to_relative(
+            absolute_position: coord_t,
+            absolute_size: coord_t
+    ) -> tuple[Vec2, Vec2]:
+        return (
+            convert_coord(
+                (
+                    int(absolute_position.x / global_vars.screen_size.x),
+                    int(absolute_position.y / global_vars.screen_size.y)
+                ),
+                Vec2
+            ),
+            convert_coord(
+                (
+                    int(absolute_size.x / global_vars.screen_size.x),
+                    int(absolute_size.y / global_vars.screen_size.y)
+                ),
+            )
+        )
+
+    def __check_event(self, event: pg.Event | str) -> None:
+        if self.__hover and self._visible or event == "mouse-leave" and self._visible:
+            for ev in self.__events:
+                ev.check_event(event)
+
+    def add_event(
+            self,
+            event_type: event_t,
+            *_args: Any,
+            button: int | None = None,
+            key: int | None = None,
+            callback: Callable[[pg.Event], Any] | None = None,
+            sound: SoundEffect | None = None
+    ) -> None:
+        self.__events.append(AmogusEvent(event_type, *_args, button=button,
+                                         key=key, callback=callback, sound=sound))
 
     def gl_draw(self) -> None:
-        self._abs_position = convert_coord(
-            (
-                int(self._rel_position.x * global_vars.screen_size.x),
-                int(self._rel_position.y * global_vars.screen_size.y)
-            ),
-            Vec2
-        )
-        self._abs_size = convert_coord(
-            (
-                int(self._rel_size.x * global_vars.screen_size.x),
-                int(self._rel_size.y * global_vars.screen_size.y)
-            ),
-            Vec2
-        )
+        super().gl_draw()
+        if self.__scaling:
+            self.__abs_position, self.__abs_size = self.__relative_to_absolute(
+                self.__rel_position,
+                self.__rel_size
+            )
+        else:
+            self.__rel_position, self.__rel_size = (
+                self.__absolute_to_relative(self.__abs_position, self.__abs_size))
 
-        self._width = self._abs_size.x
-        self._height = self._abs_size.y
+        self.__width = self.__abs_size.x
+        self.__height = self.__abs_size.y
 
-        if self._anchor == "nw":
-            self._top_left = self._abs_position
-            self._top_right = self._abs_position + convert_coord((self._abs_size.x, 0), Vec2)
-            self._bottom_left = self._abs_position + convert_coord((0, self._abs_size.y), Vec2)
-            self._bottom_right = self._abs_position + self._abs_size.y
-        elif self._anchor == "center":
-            self._top_left = self._abs_position - self._abs_size / 2
-            self._top_right = self._abs_position + convert_coord((self._abs_size.x / 2, -self._abs_size.y / 2), Vec2)
-            self._bottom_left = self._abs_position + convert_coord((-self._abs_size.x / 2, self._abs_size.y / 2), Vec2)
-            self._bottom_right = self._abs_position + self._abs_size / 2
+        if self.__anchor == "nw":
+            self.__top_left = self.__abs_position
+            self.__top_right = self.__abs_position + convert_coord((self.__abs_size.x, 0), Vec2)
+            self.__bottom_left = self.__abs_position + convert_coord((0, self.__abs_size.y), Vec2)
+            self.__bottom_right = self.__abs_position + self.__abs_size.y
+        elif self.__anchor == "center":
+            self.__top_left = self.__abs_position - self.__abs_size / 2
+            self.__top_right = self.__abs_position + convert_coord((self.__abs_size.x / 2, -self.__abs_size.y / 2),
+                                                                   Vec2)
+            self.__bottom_left = self.__abs_position + convert_coord((-self.__abs_size.x / 2, self.__abs_size.y / 2),
+                                                                     Vec2)
+            self.__bottom_right = self.__abs_position + self.__abs_size / 2
+
+        mouse_pos = pg.mouse.get_pos()
+        self.__hover = all([
+            self._top_left.x <= mouse_pos[0] <= self._bottom_right.x,
+            self._top_left.y <= mouse_pos[1] <= self._bottom_right.y
+        ])
+
+        if not self.__last_hover and self.__hover:
+            self.__check_event("mouse-enter")
+        elif self.__last_hover and not self.__hover:
+            print("MOUSE LEAVE")
+            self.__check_event("mouse-leave")
+
+        self.__last_hover = self.__hover
+
+    @property
+    def _abs_position(self) -> Vec2:
+        """:return: Absolute position - anchor not factored in"""
+        return self.__abs_position
+
+    @property
+    def _abs_size(self) -> Vec2:
+        """:return: Absolute size"""
+        return self.__abs_size
+
+    @property
+    def _rel_position(self) -> Vec2:
+        """:return: Relative position - anchor not factored in"""
+        return self.__rel_position
+
+    @property
+    def _rel_size(self) -> Vec2:
+        """:return: Relative size"""
+        return self.__rel_size
+
+    @property
+    def _width(self) -> float:
+        """:return: Absolute width"""
+        return self.__width
+
+    @property
+    def _height(self) -> float:
+        """:return: Absolute height"""
+        return self.__width
+
+    @property
+    def _anchor(self) -> anchor_t:
+        """:return: Placement anchor"""
+        return self.__anchor
+
+    @property
+    def _top_left(self) -> Vec2:
+        """:return: Absolute top left"""
+        return self.__top_left
+
+    @property
+    def _top_right(self) -> Vec2:
+        """:return: Absolute top right"""
+        return self.__top_right
+
+    @property
+    def _bottom_left(self) -> Vec2:
+        """:return: Absolute bottom left"""
+        return self.__bottom_left
+
+    @property
+    def _bottom_right(self) -> Vec2:
+        """:return: Absolute bottom right"""
+        return self.__bottom_right
+
+    @property
+    def _hover(self) -> bool:
+        """:return: Is mouse hovering over this widget"""
+        return self.__hover
+
+    @property
+    def _last_hover(self) -> bool:
+        """:return: Was mouse hovering over this widget last frame"""
+        return self.__last_hover
+
+
+"""
+        # check if mouse down
+        mouse_left, *_ = pg.mouse.get_pressed()
+        if self._hover and not self.__last_mouse and mouse_left and self.__command is not None:
+            self.__command()
+
+        self.__last_mouse = mouse_left
+"""

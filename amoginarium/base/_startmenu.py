@@ -9,8 +9,6 @@ Project: amoginarium
 ##################################################
 
 from typing import Callable
-
-from ..logic import Color
 from ..ui import Button, BaseFrame
 
 
@@ -27,33 +25,34 @@ class StartMenu(BaseFrame):
             open_settings_callback: Callable[[], None],
             exit_callback: Callable[[], None],
     ) -> None:
+        super().__init__()
         self.__widgets = [
             Button(
                 (0.5, 0.35),
                 (0.2, 0.12),
                 "New game",
-                start_game_callback,
-                20,
-                "center"
+                command=start_game_callback
             ),
             Button(
                 (0.5, 0.5),
                 (0.2, 0.12),
                 "Settings",
-                open_settings_callback,
-                20,
-                "center"
+                command=open_settings_callback,
             ),
             Button(
                 (0.5, 0.65),
                 (0.2, 0.12),
                 "Exit",
-                exit_callback,
-                20,
-                "center"
+                command=exit_callback,
             )
         ]
 
+    def update(self) -> None:
+        super().update()
+        for widget in self.__widgets:
+            widget.update()
+
     def gl_draw(self) -> None:
+        super().gl_draw()
         for widget in self.__widgets:
             widget.gl_draw()

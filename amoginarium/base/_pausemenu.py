@@ -10,7 +10,6 @@ Project: amoginarium
 
 from typing import Callable
 
-from ..logic import Color
 from ..ui import Button, BaseFrame
 
 
@@ -28,6 +27,7 @@ class PauseMenu(BaseFrame):
             open_settings_callback: Callable[[], None],
             end_game_callback: Callable[[], None],
     ) -> None:
+        super().__init__()
         self.__widgets = [
             Button(
                 (0.5, 0.26),
@@ -63,6 +63,12 @@ class PauseMenu(BaseFrame):
             )
         ]
 
+    def update(self) -> None:
+        super().update()
+        for widget in self.__widgets:
+            widget.update()
+
     def gl_draw(self) -> None:
+        super().gl_draw()
         for widget in self.__widgets:
             widget.gl_draw()

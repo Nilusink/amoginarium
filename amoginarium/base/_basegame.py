@@ -17,6 +17,7 @@ import json
 import os
 
 from OpenGL.GL import glClearColor
+from typing_extensions import Any
 
 from ._groups import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players
 from ._groups import Updated, GravityAffected, Drawn, FrictionXAffected
@@ -38,6 +39,7 @@ from ..communications import TCPServer
 from ..animations import explosion
 from ._textures import textures
 from ..settings import Settings
+from ..ui._event_handler import EventHandler
 
 
 class BoundFunction(tp.TypedDict):
@@ -189,6 +191,7 @@ class BaseGame:
         sounds.load_sounds("assets/audio/effects/explosions")
         sounds.load_sounds("assets/audio/effects/shots")
         sounds.load_sounds("assets/audio/effects/reloads")
+        sounds.load_sounds("assets/audio/effects/ui")
         self._background_player.assign_scope("background")
 
         # load entity textures
@@ -343,11 +346,19 @@ class BaseGame:
         self._new_controllers.append(controller)
         self._new_controllers_lock.release()
 
+    def __add_joystick(self, event: pg.Event) -> None:
+        joy = pg.joystick.Joystick(event.device_index)
+        c = GameController.get(joy.get_guid(), joy)
+
+        # re-assign pygame joystick instance
+        c.set_joystick(joy)
+
     def handle_events(self) -> list[str]:
         """
         handles pygame events
         """
         out = []
+
         for event in pg.event.get():
             match event.type:
                 case pg.QUIT:
@@ -374,7 +385,8 @@ class BaseGame:
 
         return out
 
-    def __clean_end(self) -> None:
+    def __clean_end(self, *_args: Any, **_kwargs: Any) -> None:
+        ic("pygame end")
         self.running = False
 
     def _run_pygame(self) -> None:
@@ -389,6 +401,9 @@ class BaseGame:
         has_started: bool = False
         in_settings: bool = False
         self.load_map("assets/maps/tutorial.json")
+
+        EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
+        EventHandler.add_event(pg.JOYDEVICEADDED, callback=self.__add_joystick)
 
         # self.load_map("assets/maps/test.json")
 
@@ -423,6 +438,7 @@ class BaseGame:
         def toggle_settings():
             nonlocal in_settings
             in_settings = not in_settings
+            print("LEAVE SETTINGS")
 
         start_menu = StartMenu(
             start_game, toggle_settings, self.__clean_end
@@ -432,7 +448,9 @@ class BaseGame:
             start_game, reset_game, toggle_settings, back_to_menu
         )
 
-        settings = SettingsMenu()
+        settings = SettingsMenu(
+            toggle_settings
+        )
 
         # draw background once
         while self.running:
@@ -441,6 +459,12 @@ class BaseGame:
             delta = now - last
 
             delta *= self.time_multiplier  # slow-motion
+
+            EventHandler.check_events()
+
+            start_menu.update()
+            pause_menu.update()
+            settings.update()
 
             if in_menu:
                 pressed = self.handle_events()
@@ -690,11 +714,11 @@ class BaseGame:
         """
         stop everything
         """
-        Settings.write()
-
         # check if end has already been called
         if not self.running:
             return
+
+        Settings.write()
 
         # tell threads to exit
         self.running = False

@@ -1,5 +1,5 @@
 """
-amoginarium/global/__init__.py
+amoginarium/shared/__init__.py
 
 Project: amoginarium
 """
