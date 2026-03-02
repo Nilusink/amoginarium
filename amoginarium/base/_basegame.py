@@ -128,7 +128,7 @@ class BaseGame:
 
         # initialize pygame (logic) and renderer
         pg.init()
-        pg.mixer.init(channels=32, buffer=1024)
+        pg.mixer.init(channels=64, buffer=1024)
         renderer.init("amoginarium")
 
         # initialize background

@@ -255,7 +255,7 @@ class BaseWeapon:
         bullet_explosion_radius: float = -1,
         bullet_explosion_damage: float = 0,
         drop_casings: bool = False,
-        bullet_lifetime=2,
+        bullet_lifetime=4,
         sound_effect: type[ContinuousSoundEffect | PresetEffect] = ...
     ) -> None:
         self.parent = parent
@@ -277,8 +277,10 @@ class BaseWeapon:
         self._bullet_explosion_radius = bullet_explosion_radius
         self._bullet_explosion_damage = bullet_explosion_damage
         self._bullet_lifetime = bullet_lifetime
-        self._sound_effect = sound_effect
-        self.__sound_effect: ContinuousSoundEffect = ...
+        self._sound_effect: ContinuousSoundEffect | PresetEffect = ...
+        if sound_effect is not ...:
+            self._sound_effect = sound_effect()
+        # self.__sound_effect: ContinuousSoundEffect = ...
         self._texture_id_r, _ = textures.get_texture(
             self._image_name,
             self._image_size,
@@ -356,10 +358,9 @@ class BaseWeapon:
         if self._current_sound_time < 0:
             self._current_sound_time = 0
 
-            if self.__sound_effect is not ...:
-                if hasattr(self.__sound_effect, "done"):
-                    self.__sound_effect.done()
-                    self.__sound_effect = ...
+            if self._sound_effect is not ...:
+                if hasattr(self._sound_effect, "done"):
+                    self._sound_effect.done()
 
     def shoot(
         self,
@@ -381,24 +382,24 @@ class BaseWeapon:
 
         # audio
         if self._sound_effect is not ...:
-            self._current_sound_time = self._recoil_time
+            self._current_sound_time = self._recoil_time * 3
 
         if self._current_recoil_time > 0:
             return False
 
         if self._sound_effect is not ...:
-            if hasattr(self._sound_effect, "stage_one_done"):
-                if self.__sound_effect is ...:
-                    self.__sound_effect = self._sound_effect()
-                    return False
+            if not self._sound_effect.playing:
+                if hasattr(self._sound_effect, "stage_one_done"):
+                    ic("play")
+                    self._sound_effect.play()
 
-                if not self.__sound_effect.stage_one_done:
-                    return False
+                else:
+                    self._sound_effect.volume = .7
+                    self._sound_effect.play()
 
-            else:
-                exp = self._sound_effect()
-                exp.volume = .7
-                exp.play()
+            elif hasattr(self._sound_effect, "stage_one_done"):
+                if not self._sound_effect.stage_one_done:
+                    return False
 
         # inacuracy
         offset = randint(-255, 255) / 255
@@ -468,8 +469,8 @@ class BaseWeapon:
         """
         stop all running effects
         """
-        if self.__sound_effect is not ...:
-            self.__sound_effect.stop()
+        if self._sound_effect is not ...:
+            self._sound_effect.stop()
 
     def draw_at(self, position: Vec2, angle: float) -> None:
         """

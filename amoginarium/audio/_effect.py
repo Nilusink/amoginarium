@@ -60,20 +60,17 @@ class SoundEffect:
     ) -> None:
         self._sound_name = sound_name
         self._sound: pg.mixer.Sound = ...
-        self._playing: pg.mixer.Channel = ...
         self._on_finish = on_finish_playing
-        self._last_playing = False
+        self._has_played = False
+        self._channel = pg.mixer.find_channel(force=False)
 
     @property
     def playing(self) -> bool:
-        if self._playing is ...:
-            return False
+        return self._has_played
 
-        return self._playing.get_busy()
-
-    @property
-    def started(self) -> bool:
-        return self._sound is not ...
+    # @property
+    # def started(self) -> bool:
+    #     return self._sound is not ...
 
     def play(
             self,
@@ -84,46 +81,39 @@ class SoundEffect:
         """
         play the sound effect
         """
+        self._has_played = True
         if self._sound is ...:
             if isinstance(self._sound_name, tuple):
-                ic(f"loading {self._sound_name}")
                 self._sound = sounds.get_sound(*self._sound_name[::-1])
 
             else:
-                ic(f"loading {self._sound_name}")
                 self._sound = sounds.get_sound(self._sound_name)
 
             if self._sound is None:
                 raise RuntimeError(f"Sound {self._sound_name} not found!")
 
-        elif self.playing:
+        elif self._channel.get_busy():
             self.stop()
 
         self._sound.set_volume(self.volume)
-        tmp = self._sound.play(loops, maxtime, fade_ms)
-        if tmp is None:
-            return ...
-
-        self._playing = tmp
+        self._channel.play(self._sound, loops, maxtime, fade_ms)
 
     def stop(self) -> None:
         """
         stop the sound effect if it is currently playing
         """
-        if self.playing:
-            self._playing.stop()
-            self._playing = ...
+        if self._channel.get_busy():
+            self._channel.stop()
 
     def update(self) -> None:
         """
         updates called by the game loop
         """
-        now = self.playing
-
-        if self._last_playing and not now and self._on_finish is not ...:
+        done_playing = self._has_played and not self._channel.get_busy()
+        if done_playing and self._on_finish is not ...:
+            self._has_played = False
             self._on_finish()
-
-        self._last_playing = now
+            self.stop()
 
 
 class PresetEffect(SoundEffect):
@@ -187,17 +177,18 @@ class ThreeStageSoundEffect:
             )
             self._stage_three.volume = self.volume
 
-        self._playing = True
-        self.play()
+        self._playing = False
 
     @property
     def playing(self) -> bool:
         return self._playing
 
+    @run_with_debug()
     def play(self) -> None:
         """
         play the sound effect
         """
+        self._playing = True
         if self._stage_one is not ...:
             self._stage_one.play()
 
@@ -215,6 +206,7 @@ class ThreeStageSoundEffect:
             if self._stage_three is not ...:
                 self._stage_three.play()
 
+    @run_with_debug()
     def stop(self) -> None:
         """
         stop the sound effect from playing
@@ -239,10 +231,16 @@ class ContinuousSoundEffect(ThreeStageSoundEffect):
         return self._one_done
 
     @run_with_debug()
+    def play(self) -> None:
+        self._one_done = False
+        super().play()
+
+    @run_with_debug()
     def _play_2(self) -> None:
         self._one_done = True
 
-        if self._playing and not self._stage_two.started:
+        ic(0)
+        if self._playing and not self._stage_two.playing:
             ic(1)
             self._stage_two.play(-1)
 
@@ -256,7 +254,6 @@ class ContinuousSoundEffect(ThreeStageSoundEffect):
         """
         self._stage_two.stop()
 
-        ic("playing 3")
         if self.stage_one_done and self._playing:
             super()._play_3(True)
             self.stop()
