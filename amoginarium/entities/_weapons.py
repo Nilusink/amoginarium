@@ -11,11 +11,13 @@ from time import perf_counter
 from random import randint
 import typing as tp
 # from threading import Thread
+from icecream import ic
 # import time
 
 from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
-from ..audio import ContinuousSoundEffect, Minigun as MinigunSound
+from ..audio import ContinuousSoundEffect
+from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, Entity
 from ..render_bindings import renderer
@@ -23,6 +25,7 @@ from ..shared import global_vars
 from ..base._textures import textures
 from ..animations import explosion
 from ..base import WallCollider
+
 
 BULLET_PATH = "bullet"
 
@@ -95,7 +98,7 @@ class Bullet(ImageEntity):
         x = max(self._initial_velocity.length, 800)
 
         speed_mult = 1 + (
-                (self.velocity.length - 1300) / x
+            (self.velocity.length - 1300) / x
         ) * .5
         damage = self._base_damage * speed_mult
 
@@ -151,8 +154,8 @@ class Bullet(ImageEntity):
         # explode
         if self._explosion_radius > 0:
             for d, entity in CollisionDestroyed.get_entities_in_circle(
-                    self.position,
-                    self._explosion_radius
+                self.position,
+                self._explosion_radius
             ):
                 if all([
                     entity != self,
@@ -237,23 +240,23 @@ class BaseWeapon:
     _mag_size: int
 
     def __init__(
-            self,
-            parent,
-            reload_time: float,
-            recoil_time: float,
-            recoil_factor: float,
-            mag_size: int,
-            inaccuracy: float,
-            bullet_speed: float,
-            barrel_length: float,  # where bullets spawn
-            parent_position_offset: Vec2 | tuple[float, float],
-            bullet_size: int = 10,
-            bullet_damage: float = 1,
-            bullet_explosion_radius: float = -1,
-            bullet_explosion_damage: float = 0,
-            drop_casings: bool = False,
-            bullet_lifetime=2,
-            sound_effect: type[ContinuousSoundEffect | PresetEffect] = ...
+        self,
+        parent,
+        reload_time: float,
+        recoil_time: float,
+        recoil_factor: float,
+        mag_size: int,
+        inaccuracy: float,
+        bullet_speed: float,
+        barrel_length: float,  # where bullets spawn
+        parent_position_offset: Vec2 | tuple[float, float],
+        bullet_size: int = 10,
+        bullet_damage: float = 1,
+        bullet_explosion_radius: float = -1,
+        bullet_explosion_damage: float = 0,
+        drop_casings: bool = False,
+        bullet_lifetime=4,
+        sound_effect: ContinuousSoundEffect | PresetEffect = ...
     ) -> None:
         self.parent = parent
         self._coalition = parent.coalition
@@ -275,7 +278,7 @@ class BaseWeapon:
         self._bullet_explosion_damage = bullet_explosion_damage
         self._bullet_lifetime = bullet_lifetime
         self._sound_effect = sound_effect
-        self.__sound_effect: sound_effect = ...
+        # self.__sound_effect: ContinuousSoundEffect = ...
         self._texture_id_r, _ = textures.get_texture(
             self._image_name,
             self._image_size,
@@ -302,8 +305,8 @@ class BaseWeapon:
         return self._bullet_speed
 
     def get_mag_state(
-            self,
-            max_out: float
+        self,
+        max_out: float
     ) -> tuple[float, int] | tuple[float, float]:
         """
         returns the current mag size (rising when reloading)
@@ -312,14 +315,14 @@ class BaseWeapon:
         """
         if not self._current_reload_time:
             return self._mag_state * (
-                    max_out / self._mag_size
+                max_out / self._mag_size
             ), self._mag_state
 
         return (
             (
-                    (
-                            self._reload_time - self._current_reload_time
-                    ) / self._reload_time
+                (
+                    self._reload_time-self._current_reload_time
+                ) / self._reload_time
             ) * max_out,
             round(self._current_reload_time, 2)
         )
@@ -353,10 +356,8 @@ class BaseWeapon:
         if self._current_sound_time < 0:
             self._current_sound_time = 0
 
-            if self.__sound_effect is not ...:
-                if hasattr(self.__sound_effect, "done"):
-                    self.__sound_effect.done()
-                    self.__sound_effect = ...
+            if hasattr(self._sound_effect, "done"):
+                self._sound_effect.done()
 
     def shoot(
             self,
@@ -378,26 +379,20 @@ class BaseWeapon:
 
         # audio
         if self._sound_effect is not ...:
-            self._current_sound_time = self._recoil_time * 3
+            self._current_sound_time = self._recoil_time
 
         if self._current_recoil_time > 0:
             return False
 
         if self._sound_effect is not ...:
+            if not self._sound_effect.playing:
+                self._sound_effect.play()
+
             if hasattr(self._sound_effect, "stage_one_done"):
-                if self.__sound_effect is ...:
-                    self.__sound_effect = self._sound_effect()
+                if not self._sound_effect.stage_one_done:
                     return False
 
-                if not self.__sound_effect.stage_one_done:
-                    return False
-
-            else:
-                exp = self._sound_effect()
-                exp.volume = .7
-                exp.play()
-
-        # inacuracy
+        # inaccuracy
         offset = randint(-255, 255) / 255
         offset *= self._inaccuracy
         direction.angle += offset
@@ -465,8 +460,8 @@ class BaseWeapon:
         """
         stop all running effects
         """
-        if self.__sound_effect is not ...:
-            self.__sound_effect.stop()
+        if self._sound_effect is not ...:
+            self._sound_effect.stop()
 
     def draw_at(self, position: Vec2, angle: float) -> None:
         """
@@ -490,7 +485,7 @@ class BaseWeapon:
                 self._texture_id_l,
                 (position - Updated.world_position - anchor).xy,
                 self._size.xy,
-                rotate_angle=angle - 180,
+                rotate_angle=angle-180,
                 rotate_anchor=anchor
             )
 
@@ -528,7 +523,7 @@ class Minigun(BaseWeapon):
             barrel_length=210,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=MinigunSound
+            sound_effect=MinigunSound()
         )
 
 
@@ -556,7 +551,8 @@ class Ak47(BaseWeapon):
             bullet_damage=2.5,
             barrel_length=140,
             parent_position_offset=parent_position_offset,
-            drop_casings=drop_casings
+            drop_casings=drop_casings,
+            sound_effect=AK47Sound()
         )
 
 
@@ -572,6 +568,8 @@ class Sniper(BaseWeapon):
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2()
     ) -> None:
+        s = Shotgun()
+        s.volume = .7
         super().__init__(
             parent,
             reload_time=5,
@@ -585,7 +583,7 @@ class Sniper(BaseWeapon):
             barrel_length=230,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=Shotgun
+            sound_effect=s
         )
 
 

@@ -14,6 +14,9 @@ import zipfile
 import os
 
 
+type sound_name_t = str | tuple[str, str]
+
+
 class NamedSound(tp.TypedDict):
     sound: pg.mixer.Sound
     name: str
