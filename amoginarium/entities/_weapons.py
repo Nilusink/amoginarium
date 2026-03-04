@@ -15,8 +15,7 @@ import typing as tp
 
 from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
-from ..audio import ContinuousSoundEffect
-from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
+from ..audio import ContinuousSoundEffect, Minigun as MinigunSound
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, Entity
 from ..render_bindings import renderer
@@ -276,7 +275,7 @@ class BaseWeapon:
         self._bullet_explosion_damage = bullet_explosion_damage
         self._bullet_lifetime = bullet_lifetime
         self._sound_effect = sound_effect
-        # self.__sound_effect: ContinuousSoundEffect = ...
+        self.__sound_effect: sound_effect = ...
         self._texture_id_r, _ = textures.get_texture(
             self._image_name,
             self._image_size,
@@ -354,8 +353,10 @@ class BaseWeapon:
         if self._current_sound_time < 0:
             self._current_sound_time = 0
 
-            if hasattr(self._sound_effect, "done"):
-                self._sound_effect.done()
+            if self.__sound_effect is not ...:
+                if hasattr(self.__sound_effect, "done"):
+                    self.__sound_effect.done()
+                    self.__sound_effect = ...
 
     def shoot(
             self,
@@ -377,20 +378,26 @@ class BaseWeapon:
 
         # audio
         if self._sound_effect is not ...:
-            self._current_sound_time = self._recoil_time
+            self._current_sound_time = self._recoil_time * 3
 
         if self._current_recoil_time > 0:
             return False
 
         if self._sound_effect is not ...:
-            if not self._sound_effect.playing:
-                self._sound_effect.play()
-
             if hasattr(self._sound_effect, "stage_one_done"):
-                if not self._sound_effect.stage_one_done:
+                if self.__sound_effect is ...:
+                    self.__sound_effect = self._sound_effect()
                     return False
 
-        # inaccuracy
+                if not self.__sound_effect.stage_one_done:
+                    return False
+
+            else:
+                exp = self._sound_effect()
+                exp.volume = .7
+                exp.play()
+
+        # inacuracy
         offset = randint(-255, 255) / 255
         offset *= self._inaccuracy
         direction.angle += offset
@@ -458,8 +465,8 @@ class BaseWeapon:
         """
         stop all running effects
         """
-        if self._sound_effect is not ...:
-            self._sound_effect.stop()
+        if self.__sound_effect is not ...:
+            self.__sound_effect.stop()
 
     def draw_at(self, position: Vec2, angle: float) -> None:
         """
@@ -521,7 +528,7 @@ class Minigun(BaseWeapon):
             barrel_length=210,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=MinigunSound()
+            sound_effect=MinigunSound
         )
 
 
@@ -549,8 +556,7 @@ class Ak47(BaseWeapon):
             bullet_damage=2.5,
             barrel_length=140,
             parent_position_offset=parent_position_offset,
-            drop_casings=drop_casings,
-            sound_effect=AK47Sound()
+            drop_casings=drop_casings
         )
 
 
@@ -566,8 +572,6 @@ class Sniper(BaseWeapon):
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2()
     ) -> None:
-        s = Shotgun()
-        s.volume = .7
         super().__init__(
             parent,
             reload_time=5,
@@ -581,7 +585,7 @@ class Sniper(BaseWeapon):
             barrel_length=230,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=s
+            sound_effect=Shotgun
         )
 
 

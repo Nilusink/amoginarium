@@ -40,15 +40,12 @@ def run_with_debug(
             # )
 
             if ic.enabled and show_call:
-                context = get_caller_name(True)
                 print(
                     f"{get_fg_color(36)}{prefix_time}"
                     f"{get_fg_color(247)}{prefix_arrow}{CC.fg.GREEN}"
                     f"running {CC.fg.MAGENTA}{func_name}"
                     f"{get_fg_color(36)}, called by {CC.fg.MAGENTA}"
-                    f"{context["function"]}{get_fg_color(247)} in File \""
-                    f"{context["file"]}\", line {CC.fg.MAGENTA}{context["line"]}"
-                    f"{get_fg_color(36)}" +
+                    f"{get_caller_name()}{get_fg_color(36)}" +
                     (f" with {args, kwargs}" if show_args else "") +
                     f"{CC.ctrl.ENDC}"
                 )

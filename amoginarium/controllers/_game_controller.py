@@ -8,9 +8,8 @@ Author:
 Nilusink
 """
 from dataclasses import dataclass
-from contextlib  import suppress
-import pygame as pg
 # from icecream import ic
+import pygame as pg
 
 from ._base_controller import Controller
 
@@ -82,15 +81,10 @@ class GameController(Controller):
 
     def update(self, delta):
         # read controls
-        self._keys.shoot = self.btn(ControllerKeybmap.r2) or self.btn(ControllerKeybmap.r1)
-        with suppress(pg.error):
-            self._keys.shoot = self._keys.shoot or self._joystick.get_axis(
-                ControllerKeybmap.r2_axis
-            ) > 0
-
+        self._keys.shoot = self.btn(ControllerKeybmap.r2) or self.btn(ControllerKeybmap.r1) or self._joystick.get_axis(ControllerKeybmap.r2_axis) > 0
         self._keys.reload = self.btn(ControllerKeybmap.b)
         self._keys.jump = self.btn(ControllerKeybmap.a)
-        self._keys.wpn_f = self.btn(ControllerKeybmap.x)
+        self._keys.idk = self.btn(ControllerKeybmap.x)
 
         # set joystick position
         self._keys.joy_x = self.joy_curve(
