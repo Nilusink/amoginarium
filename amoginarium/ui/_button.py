@@ -49,6 +49,8 @@ class Button(Rectangle):
 
     __last_mouse: bool
 
+    __text_surface: pg.Surface
+
     def __init__(
             self,
             position: coord_t,
@@ -60,8 +62,8 @@ class Button(Rectangle):
             absolute: bool = False,
             scaling: bool = True,
 
-            fg_color: ui_color_t = (0, 0, 0),
-            hover_fg_color: ui_color_t = (0, 0, 0),
+            fg_color: ui_color_t = Color.c_255_to_1(0, 0, 0),
+            hover_fg_color: ui_color_t = Color.c_255_to_1(0, 0, 0),
 
             bg_color: ui_color_t = Color.c_255_to_1(56.0, 254.0, 255.0),
             hover_bg_color: ui_color_t = Color.c_255_to_1(140, 255, 255),
@@ -118,8 +120,14 @@ class Button(Rectangle):
         self.__text = text
         self.__last_mouse = False
 
-        self.__fg_color = fg_color
-        self.__hover_fg_color = hover_fg_color
+        self.__fg_color = Color.from_1(*fg_color)
+        self.__hover_fg_color = Color.from_1(*fg_color)
+
+        self.__text_font: pg.font.Font = renderer.get_font(64, "Arial", False, False)
+        self.__text_surface = self.__text_font.render(self.__text, True,
+                                                      self.__fg_color.rgb255)
+
+        self.bg_color = Color(0, 0, 0, 0)
 
         if self.__command is not None:
             self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())
@@ -127,11 +135,8 @@ class Button(Rectangle):
     def gl_draw(self) -> None:
         super().gl_draw()
         # text
-        renderer.draw_text(
+        renderer.draw_pg_surf(
             self._top_left + self._abs_size / 2,
-            self.__text,
-            self.__hover_fg_color if self._hover else self.__fg_color,
-            (0, 0, 0, 0),
-            # self._hover_color if hover else self._color,
+            self.__text_surface,
             centered=True
         )

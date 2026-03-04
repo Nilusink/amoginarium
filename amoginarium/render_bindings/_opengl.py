@@ -35,7 +35,7 @@ type TextureID = int
 
 
 class OpenGLRenderer(BaseRenderer):
-    def _get_font(
+    def get_font(
             self,
             size: int,
             family: str,
@@ -489,8 +489,10 @@ class OpenGLRenderer(BaseRenderer):
             bold=False,
             italic=False
     ):
-        bg_color = self.set_color(bg_color)
-        color = self.set_color(color)
+        if not isinstance(bg_color, Color):
+            bg_color = self.set_color(bg_color)
+        if not isinstance(color, Color):
+            color = self.set_color(color)
 
         # weird conversion because pygame is ass
         text_surface: pg.Surface = self.generate_pg_surf_text(
@@ -513,7 +515,7 @@ class OpenGLRenderer(BaseRenderer):
             bold=False,
             italic=False
     ):
-        return self._get_font(
+        return self.get_font(
             font_size,
             font_family,
             bold,
