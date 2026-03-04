@@ -88,18 +88,19 @@ class BaseWidget(UIElement):
             relative_position: coord_t,
             relative_size: coord_t
     ) -> tuple[Vec2, Vec2]:
+
         return (
             convert_coord(
                 (
-                    int(relative_position.x * global_vars.screen_size.x),
-                    int(relative_position.y * global_vars.screen_size.y)
+                    int(relative_position.x * 1920),
+                    int(relative_position.y * 1080)
                 ),
                 Vec2
             ),
             convert_coord(
                 (
-                    int(relative_size.x * global_vars.screen_size.x),
-                    int(relative_size.y * global_vars.screen_size.y)
+                    int(relative_size.x * 1920),
+                    int(relative_size.y * 1080)
                 ),
                 Vec2
             )
@@ -113,15 +114,15 @@ class BaseWidget(UIElement):
         return (
             convert_coord(
                 (
-                    int(absolute_position.x / global_vars.screen_size.x),
-                    int(absolute_position.y / global_vars.screen_size.y)
+                    int(absolute_position.x / 1920),
+                    int(absolute_position.y / 1080)
                 ),
                 Vec2
             ),
             convert_coord(
                 (
-                    int(absolute_size.x / global_vars.screen_size.x),
-                    int(absolute_size.y / global_vars.screen_size.y)
+                    int(absolute_size.x / 1920),
+                    int(absolute_size.y / 1080)
                 ),
                 Vec2
             )
@@ -175,6 +176,8 @@ class BaseWidget(UIElement):
             self.__bottom_right = self.__abs_position + self.__abs_size / 2
 
         mouse_pos = pg.mouse.get_pos()
+        mouse_pos = (mouse_pos[0] * 1920 / global_vars.screen_size_real.x,
+                     mouse_pos[1] * 1080 / global_vars.screen_size_real.y)
         self.__hover = all([
             self._top_left.x <= mouse_pos[0] <= self._bottom_right.x,
             self._top_left.y <= mouse_pos[1] <= self._bottom_right.y

@@ -33,6 +33,7 @@ class PyGameRenderer(BaseRenderer):
 
         # set global screen size and ppm
         global_vars.screen_size = Vec2.from_cartesian(*window_size)
+        global_vars.screen_size_real = Vec2.from_cartesian(*window_size)
         global_vars.pixel_per_meter = window_size[0] / 1920
         global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
 
