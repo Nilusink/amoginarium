@@ -28,7 +28,7 @@ def play_animation(
     """
     play an animation based on textures
     """
-
+    # TODO: convert to entity / gl_draw
     if position is ... and position_reference is ...:
         raise ValueError("position and position_reference weren't given")
 

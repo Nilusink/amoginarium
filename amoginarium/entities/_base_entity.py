@@ -7,7 +7,8 @@ defines the most basic form of an entity
 Author:
 Nilusink
 """
-from OpenGL.GL import glRotated
+from __future__ import annotations
+# from OpenGL.GL import glRotated
 # from icecream import ic
 import pygame as pg
 import typing as tp
@@ -22,7 +23,79 @@ from ..logic import Vec2
 _next_entity_id = 0
 
 
-class Entity(pg.sprite.Sprite):
+class BaseEntity(pg.sprite.Sprite):
+    _children: list[BaseEntity] = ...
+
+    def __init__(self, parent: BaseEntity = ...) -> None:
+        global _next_entity_id
+
+        # assign unique id
+        self.__id = _next_entity_id
+
+        _next_entity_id += 1
+        super().__init__()
+        self._parent = parent
+
+    @property
+    def id(self) -> int:
+        """
+        unique entity id (simplifies comparison)
+        """
+        return self.__id
+
+    @property
+    def parent(self) -> BaseEntity:
+        return self._parent
+
+    @property
+    def root(self):
+        """
+        get the root entity
+        """
+        return self._parent.root
+
+    @property
+    def children(self) -> list[BaseEntity]:
+        return self._children
+
+
+class PositionedEntity(BaseEntity):
+    position: Vec2
+    size: Vec2
+
+    def __init__(self, position: Vec2, size: Vec2) -> None:
+        super().__init__()
+
+        self._position = position
+        self._size = size
+
+    @property
+    def position(self) -> Vec2:
+        return self._position
+
+    @position.setter
+    def position(self, value: Vec2) -> None:
+        self._position = value
+
+    @property
+    def size(self) -> Vec2:
+        return self._size
+
+
+class UIEntity(PositionedEntity):
+    def __init__(self, position: Vec2, size: Vec2) -> None:
+        super().__init__(position, size)
+        self.add(Drawn)
+        self.add(Updated)
+
+    def update(self, delta: float) -> None:
+        pass
+
+    def gl_draw(self) -> None:
+        pass
+
+
+class GameEntity(PositionedEntity):
     facing: Vec2
     position: Vec2
     velocity: Vec2
@@ -36,32 +109,19 @@ class Entity(pg.sprite.Sprite):
         initial_velocity: Vec2 = ...,
         coalition: tp.Any = ...
     ) -> None:
-        global _next_entity_id
-
-        # assign unique id
-        self.__id = _next_entity_id
-        _next_entity_id += 1
-
         self._coalition = coalition
 
-        self.size = Vec2.from_cartesian(1, 1) if size is ... else size
+        size = Vec2.from_cartesian(1, 1) if size is ... else size
         self.facing = Vec2.from_cartesian(1, 0) if facing is ... else facing
-        self.position = Vec2() if initial_position is ... else initial_position
+        position = Vec2() if initial_position is ... else initial_position
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
 
-        super().__init__()
+        super().__init__(position, size)
 
         self.update_rect()
         self._generate_collision_mask()
         self.add(Updated)
-
-    @property
-    def id(self) -> int:
-        """
-        unique entity id (simplifies comparison)
-        """
-        return self.__id
 
     @property
     def position_center(self) -> Vec2:
@@ -80,13 +140,6 @@ class Entity(pg.sprite.Sprite):
     @property
     def is_bullet(self) -> bool:
         return False
-
-    @property
-    def root(self):
-        """
-        get the root entity
-        """
-        return self._parent.root
 
     @property
     def coalition(self) -> tp.Any:
@@ -123,7 +176,7 @@ class Entity(pg.sprite.Sprite):
         super().kill()
 
 
-class VisibleEntity(Entity):
+class VisibleGameEntity(GameEntity):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -143,7 +196,7 @@ class VisibleEntity(Entity):
         )
 
 
-class ImageEntity(VisibleEntity):
+class ImageEntity(VisibleGameEntity):
     _original_image: pg.surface.Surface
 
     def __init__(self, texture_id: int, *args, **kwargs) -> None:
@@ -169,22 +222,11 @@ class ImageEntity(VisibleEntity):
         )
 
 
-class LRImageEntity(VisibleEntity):
+class LRImageEntity(VisibleGameEntity):
     _texture_left: int
     _texture_right: int
 
-    def __init__(self, *args, **kwargs) -> None:
-        # self.image = self._image_right.copy()
-
-        super().__init__(*args, **kwargs)
-
     def update(self, delta: float) -> None:
-        # if self.facing.x > 0:
-        #     self.image = self._image_right.copy()
-
-        # elif self.facing.x < 0:
-        #     self.image = self._image_left.copy()
-
         super().update(delta)
 
     def gl_draw(self) -> None:

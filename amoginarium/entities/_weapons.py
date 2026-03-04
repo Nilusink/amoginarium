@@ -19,7 +19,7 @@ from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..logic import Vec2, Color, convert_coord, coord_t
-from ._base_entity import ImageEntity, Entity
+from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
 from ..shared import global_vars
 from ..base._textures import textures
@@ -40,7 +40,7 @@ class Bullet(ImageEntity):
 
     def __init__(
             self,
-            parent: Entity,
+            parent: GameEntity,
             coalition: tp.Any,
             initial_position: Vec2,
             initial_velocity: Vec2,
@@ -107,7 +107,7 @@ class Bullet(ImageEntity):
         return damage
 
     @property
-    def parent(self) -> Entity:
+    def parent(self) -> GameEntity:
         return self._parent
 
     @property

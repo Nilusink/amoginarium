@@ -15,13 +15,13 @@ from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets
 from ..base import GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related
-from ._base_entity import VisibleEntity
+from ._base_entity import VisibleGameEntity
 from ..render_bindings import renderer
 from ..shared import global_vars, Coalitions
 from ..base._textures import textures
 
 
-class BaseTurret(VisibleEntity):
+class BaseTurret(VisibleGameEntity):
     size: Vec2
     weapon: BaseWeapon
     _body_texture: int = ...
