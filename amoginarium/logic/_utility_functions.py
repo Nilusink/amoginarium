@@ -7,6 +7,8 @@ a few useful functions
 Author:
 Nilusink
 """
+from icecream import ic
+
 from ._vectors import Vec2
 
 
@@ -61,7 +63,11 @@ def is_related(a: object, b: object, depth: int = 2) -> bool:
         return is_same or is_parented
 
     try:
-        is_sibling = a.parent == b.parent
+        if a.parent is not ... and b.parent is not ...:
+            is_sibling = a.parent == b.parent
+
+        else:
+            is_sibling = False
 
     except AttributeError:
         is_sibling = False

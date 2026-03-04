@@ -18,6 +18,7 @@ from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
+from ..debugging import run_with_debug
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
@@ -54,7 +55,6 @@ class Bullet(ImageEntity):
     ) -> None:
         size = Vec2.from_cartesian(size, size)
         self._casing = casing
-        self._parent = parent
         self._base_damage = base_damage
         self._ttl = time_to_life
         self._initial_velocity = initial_velocity
@@ -74,7 +74,8 @@ class Bullet(ImageEntity):
             size=size,
             initial_position=initial_position.copy(),
             initial_velocity=initial_velocity.copy(),
-            coalition=coalition
+            coalition=coalition,
+            parent=parent
         )
 
         self.add(GravityAffected)
@@ -102,13 +103,7 @@ class Bullet(ImageEntity):
         ) * .5
         damage = self._base_damage * speed_mult
 
-        # ic(damage)
-
         return damage
-
-    @property
-    def parent(self) -> GameEntity:
-        return self._parent
 
     @property
     def is_bullet(self) -> bool:
@@ -192,6 +187,19 @@ class Bullet(ImageEntity):
 
     def gl_draw(self) -> None:
         if not self._casing:
+            if global_vars.show_targets and self._target_pos is not ...:
+                renderer.draw_line(
+                    self.world_position,
+                    self._target_pos - Updated.world_position,
+                    Color.from_255(255, 100, 0, 220)
+                )
+                renderer.draw_circle(
+                    self._target_pos - Updated.world_position,
+                    self.size.x * .5,
+                    32,
+                    Color.from_255(255, 100, 0, 220)
+                )
+
             if self._bullet_texture is ...:
                 renderer.draw_circle(
                     self.world_position,
@@ -199,20 +207,6 @@ class Bullet(ImageEntity):
                     8,
                     Color.from_255(255, 255, 60)
                 )
-
-                if global_vars.show_targets and self._target_pos is not ...:
-                    renderer.draw_line(
-                        self.world_position,
-                        self._target_pos - Updated.world_position,
-                        Color.from_255(255, 100, 0, 220)
-                    )
-                    renderer.draw_circle(
-                        self._target_pos - Updated.world_position,
-                        self.size.x * .5,
-                        32,
-                        Color.from_255(255, 100, 0, 220)
-                    )
-
                 return
 
             # draw image if given
@@ -225,8 +219,8 @@ class Bullet(ImageEntity):
 
 
 class BaseWeapon:
-    _image_name: str = "bullet"
-    _image_size: tuple[int, int] = (64, 64)
+    _image_name: str = "amogus64right"
+    _image_size: tuple[int, int] = (16, 16)
     _image_offset: Vec2 = Vec2.from_cartesian(0, 15)
     _image_rotate_anchor: Vec2 = ...
     _current_recoil_time: float = 0
@@ -639,7 +633,7 @@ class Flak(BaseWeapon):
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
             bullet_lifetime=5,
-            sound_effect=Shotgun
+            sound_effect=Shotgun()
         )
 
 

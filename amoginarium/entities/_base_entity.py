@@ -63,8 +63,13 @@ class PositionedEntity(BaseEntity):
     position: Vec2
     size: Vec2
 
-    def __init__(self, position: Vec2, size: Vec2) -> None:
-        super().__init__()
+    def __init__(
+            self,
+            position: Vec2,
+            size: Vec2,
+            parent: BaseEntity = ...
+    ) -> None:
+        super().__init__(parent)
 
         self._position = position
         self._size = size
@@ -83,8 +88,13 @@ class PositionedEntity(BaseEntity):
 
 
 class UIEntity(PositionedEntity):
-    def __init__(self, position: Vec2, size: Vec2) -> None:
-        super().__init__(position, size)
+    def __init__(
+            self,
+            position: Vec2,
+            size: Vec2,
+            parent: BaseEntity = ...
+    ) -> None:
+        super().__init__(position, size, parent)
         self.add(Drawn)
         self.add(Updated)
 
@@ -107,7 +117,8 @@ class GameEntity(PositionedEntity):
         facing: Vec2 = ...,
         initial_position: Vec2 = ...,
         initial_velocity: Vec2 = ...,
-        coalition: tp.Any = ...
+        coalition: tp.Any = ...,
+        parent: BaseEntity = ...
     ) -> None:
         self._coalition = coalition
 
@@ -117,7 +128,7 @@ class GameEntity(PositionedEntity):
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
 
-        super().__init__(position, size)
+        super().__init__(position, size, parent)
 
         self.update_rect()
         self._generate_collision_mask()
