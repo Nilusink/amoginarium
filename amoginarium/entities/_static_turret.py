@@ -11,17 +11,19 @@ from contextlib import suppress
 # from icecream import ic
 import typing as tp
 
+from icecream import ic
+
 from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets
 from ..base import GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related
-from ._base_entity import VisibleEntity
+from ._base_entity import VisibleGameEntity
 from ..render_bindings import renderer
 from ..shared import global_vars, Coalitions
 from ..base._textures import textures
 
 
-class BaseTurret(VisibleEntity):
+class BaseTurret(VisibleGameEntity):
     size: Vec2
     weapon: BaseWeapon
     _body_texture: int = ...
@@ -103,7 +105,6 @@ class BaseTurret(VisibleEntity):
         """
         returns the next best target to shoot at
         """
-        # ic(self.available_targets
         targets = list(self.available_targets.keys())
         for target in sorted(
                 targets, key=lambda t: self.available_targets[t]["distance"]
@@ -162,7 +163,6 @@ class BaseTurret(VisibleEntity):
                 self.available_targets[target]["shot_at"] -= delta
 
         new_target = self.get_next_target()
-        # ic(new_target)
         if new_target is not None:
             player_velocity = new_target.velocity.copy()
             player_acceleration = new_target.acceleration.copy()
@@ -214,8 +214,9 @@ class BaseTurret(VisibleEntity):
                 # idk why, but if engaging bullets, the tof is wrong and
                 # x1.1 corrects it soemehow
                 tof = min(
-                    tof * self._high_tof_multiplier if magic else
-                    tof * self._low_tof_multiplier,
+                    tof,
+                    # tof * self._high_tof_multiplier if magic else
+                    # tof * self._low_tof_multiplier,
                     self.engagement_range / self.weapon.bullet_speed
                 )
 

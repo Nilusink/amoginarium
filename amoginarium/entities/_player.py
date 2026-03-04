@@ -20,6 +20,7 @@ from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..controllers import Controller
+from ..shared import Coalitions
 from ._island import Island
 from ..logic import Vec2
 
@@ -41,7 +42,7 @@ class Player(LRImageEntity):
     _player_oob_right_2_texture: int = ...
     _player_oob_left_1_texture: int = ...
     _player_oob_left_2_texture: int = ...
-    _movement_acceleration: float = 700
+    _movement_acceleration: float = 700  # TODO: delta
     _heal_per_second: float = 2
     _time_to_heal: float = 5
     _max_speed: float = 1000
@@ -90,13 +91,12 @@ class Player(LRImageEntity):
 
     def __init__(
         self,
-        coalition,
+        coalition: Coalitions,
         controller: Controller,
         facing: Vec2 = ...,
         initial_position: Vec2 = ...,
         initial_velocity: Vec2 = ...,
         size: int = 64
-
     ) -> None:
         self._hp = self._max_hp
 
@@ -156,8 +156,6 @@ class Player(LRImageEntity):
         for i in range(len(self._weapons)):
             self._weapons[i].reload(True)
 
-        self._n_hits = 0
-
         self._last_hit = perf_counter()
 
     @property
@@ -176,10 +174,6 @@ class Player(LRImageEntity):
         return self._on_ground
 
     @property
-    def parent(self) -> tp.Self:
-        return self
-
-    @property
     def alive(self) -> bool:
         """
         checks if the player is alive
@@ -189,13 +183,6 @@ class Player(LRImageEntity):
     @property
     def weapon(self) -> BaseWeapon:
         return self._weapons[self._current_weapon]
-
-    @property
-    def weapon_position(self) -> Vec2:
-        """
-        returns the location where the weapon is held at
-        """
-        return self.position + ...
 
     def next_weapon(self) -> None:
         """
@@ -317,14 +304,14 @@ class Player(LRImageEntity):
         # accelerate right
         if self._controller.joy_x > 0:
             if self.velocity.x < self._max_speed:
-                self.acceleration.x += self._movement_acceleration
+                self.acceleration.x += self._movement_acceleration # * delta
 
             # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
-                self.acceleration.x -= self._movement_acceleration
+                self.acceleration.x -= self._movement_acceleration #* delta
 
             # self.facing.x = -1
 
@@ -389,7 +376,6 @@ class Player(LRImageEntity):
         angle = vector.angle * (180 / 3.14169265358979)
 
         if self.world_position.x < 0:
-
             # facing
             if self.facing.x > 0:
                 renderer.draw_textured_quad(
