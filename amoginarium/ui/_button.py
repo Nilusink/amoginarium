@@ -20,13 +20,18 @@ from ._rectangle import Rectangle
 
 
 class _OnHoverButtonSound(PresetEffect):
-    volume = .1
+    volume = .5
     _sound_name = "button_hover"
 
 
 class _ButtonClickSound(PresetEffect):
     volume = 1
     _sound_name = "button_click"
+
+
+class _OnButtonLeaveSound(PresetEffect):
+    volume = .5
+    _sound_name = "button_leave"
 
 
 TEST_DURATION = .15
@@ -58,18 +63,18 @@ class Button(Rectangle):
             fg_color: ui_color_t = (0, 0, 0),
             hover_fg_color: ui_color_t = (0, 0, 0),
 
-            bg_color: ui_color_t = (56.0, 254.0, 255.0),
-            hover_bg_color: ui_color_t = (140, 255, 255),
+            bg_color: ui_color_t = Color.c_255_to_1(56.0, 254.0, 255.0),
+            hover_bg_color: ui_color_t = Color.c_255_to_1(140, 255, 255),
             hover_bg_color_duration: float = TEST_DURATION,
             hover_bg_color_reverse_duration: float = TEST_DURATION,
 
-            border_color: ui_color_t = (33, 133, 163),
-            hover_border_color: ui_color_t = (255, 255, 255),
+            border_color: ui_color_t = Color.c_255_to_1(33, 133, 163),
+            hover_border_color: ui_color_t = Color.c_255_to_1(255, 255, 255),
             hover_border_color_duration: float = TEST_DURATION,
             hover_border_color_reverse_duration: float = TEST_DURATION,
 
             border_width: int = 5,
-            hover_border_width: int = 15,
+            hover_border_width: int = 10,
             hover_border_width_duration: float = TEST_DURATION,
             hover_border_width_reverse_duration: float = TEST_DURATION,
 
@@ -83,7 +88,7 @@ class Button(Rectangle):
             hover_collapse_duration: coord_t | float | int = TEST_DURATION,
 
             on_hover_sound: SoundEffect | None = _OnHoverButtonSound(),
-            on_leave_sound: SoundEffect | None = None,
+            on_leave_sound: SoundEffect | None = _OnButtonLeaveSound(),
             on_click_sound: SoundEffect | None = _ButtonClickSound(),
     ) -> None:
         super().__init__(position, size, anchor=anchor, absolute=absolute, scaling=scaling,

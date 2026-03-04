@@ -8,4 +8,4 @@ from typing import Literal, Union
 
 anchor_t = Literal["nw", "center"]
 
-ui_color_t = Union[tuple[int, int, int], tuple[int, int, int, int]]
+ui_color_t = Union[tuple[int, int, int], tuple[int, int, int, int]]  # Temporary solution

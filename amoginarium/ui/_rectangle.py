@@ -48,16 +48,16 @@ class Rectangle(BaseWidget):
             absolute: bool = False,
             scaling: bool = True,
 
-            bg_color: ui_color_t = (70, 70, 70),
-            border_color: ui_color_t = (70, 70, 70),
+            bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
+            border_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
             border_width: int = 5,
-            radius: float | None = 20,
+            radius: float = 20,
 
-            hover_bg_color: ui_color_t = (70, 70, 70),
+            hover_bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
             hover_bg_color_duration: float = 0,
             hover_bg_color_reverse_duration: float = 0,
 
-            hover_border_color: ui_color_t = (70, 70, 70),
+            hover_border_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
             hover_border_color_duration: float = 0,
             hover_border_color_reverse_duration: float = 0,
 
@@ -65,7 +65,7 @@ class Rectangle(BaseWidget):
             hover_border_width_duration: float = 0,
             hover_border_width_reverse_duration: float = 0,
 
-            hover_radius: float = 0,
+            hover_radius: float = 20,
             hover_radius_duration: float = 0,
             hover_radius_reverse_duration: float = 0,
 
@@ -87,10 +87,10 @@ class Rectangle(BaseWidget):
         self.__on_leave_sound = on_leave_sound
         self.__on_click_sound = on_click_sound
 
-        self.__hover_bg_color_animation = MultiAnimation(start=bg_color, end=hover_bg_color,
+        self.__hover_bg_color_animation = MultiAnimation(start=bg_color, end=hover_bg_color, count=3,
                                                          extend_duration=hover_bg_color_duration,
                                                          reduce_duration=hover_bg_color_reverse_duration)
-        self.__hover_border_color_animation = MultiAnimation(start=border_color, end=hover_border_color,
+        self.__hover_border_color_animation = MultiAnimation(start=border_color, end=hover_border_color, count=3,
                                                              extend_duration=hover_border_color_duration,
                                                              reduce_duration=hover_border_color_reverse_duration)
         self.__hover_border_width_animation = Animation(start=border_width, end=hover_border_width,
@@ -99,7 +99,7 @@ class Rectangle(BaseWidget):
         self.__hover_radius_animation = Animation(start=radius, end=hover_radius,
                                                   extend_duration=hover_radius_duration,
                                                   reduce_duration=hover_radius_reverse_duration)
-        self.__hover_extend_animation = MultiAnimation(start=0, end=hover_extend,
+        self.__hover_extend_animation = MultiAnimation(start=0, end=hover_extend, count=2,
                                                        extend_duration=hover_extend_duration,
                                                        reduce_duration=hover_collapse_duration)
 
@@ -132,9 +132,6 @@ class Rectangle(BaseWidget):
 
         extend_vec = convert_coord(extend, Vec2)
         double_extend_vec = convert_coord((extend[0] * 2, extend[1] * 2), Vec2)
-
-        bg_color = Color.from_255(*bg_color)
-        border_color = Color.from_255(*border_color)
 
         if radius > 0:
             if border_width > 0:
