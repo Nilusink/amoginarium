@@ -18,6 +18,7 @@ class BetterDict:
     """
     each element is also accessible with instance.element
     """
+
     def __init__(self, **initial) -> None:
         for key, value in initial.items():
             setattr(self, key, value)
@@ -37,8 +38,8 @@ class SimpleLock:
         self.__locked_by: str = ...
 
     def aquire(
-        self,
-        timeout: float = 0
+            self,
+            timeout: float = 0
     ) -> bool:
         """
         :param timeout: timeout in seconds
@@ -265,10 +266,10 @@ class Color:
 
     @staticmethod
     def to_255(
-        r: float,
-        g: float,
-        b: float,
-        a: float = None
+            r: float,
+            g: float,
+            b: float,
+            a: float = None
     ) -> tuple[int, int, int] | tuple[int, int, int, int]:
         # return rgb if alpha is not given
         if a is None:
@@ -288,10 +289,10 @@ class Color:
 
     @staticmethod
     def to_1(
-        r: int,
-        g: int,
-        b: int,
-        a: int = None
+            r: int,
+            g: int,
+            b: int,
+            a: int = None
     ) -> tuple[float, float, float] | tuple[float, float, float, float]:
         if a is None:
             return (
@@ -319,3 +320,8 @@ class Color:
             int(a.b + (b.b - a.b) * t),
             int(a.a + (b.a - a.a) * t) if None not in (a.a, b.a) else None,
         )
+
+    # TEMPORARY
+    @staticmethod
+    def c_255_to_1(r: float, g: float, b: float) -> tuple[float, float, float]:
+        return r / 255.0, g / 255.0, b / 255.0

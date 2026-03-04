@@ -28,8 +28,7 @@ import math as m
 
 from ..logic import Vec2, Color, convert_coord
 from ._base_renderer import BaseRenderer, tColor
-from ..base._linked import global_vars
-
+from ..shared import global_vars
 
 # define types
 type TextureID = int
@@ -290,8 +289,8 @@ class OpenGLRenderer(BaseRenderer):
         glBegin(GL_POLYGON)
 
         for i in range(num_segments):
-            cosine = radius * np.cos(i*2*np.pi / num_segments)
-            sine = radius * np.sin(i*2*np.pi / num_segments)
+            cosine = radius * np.cos(i * 2 * np.pi / num_segments)
+            sine = radius * np.sin(i * 2 * np.pi / num_segments)
             glVertex2f(cosine, sine)
 
         glEnd()
@@ -354,11 +353,11 @@ class OpenGLRenderer(BaseRenderer):
             i1 = i * 2
             i2 = i1 + 1
 
-            cosine1 = np.cos(i1*2*np.pi / num_segments)
-            sine1 = np.sin(i1*2*np.pi / num_segments)
+            cosine1 = np.cos(i1 * 2 * np.pi / num_segments)
+            sine1 = np.sin(i1 * 2 * np.pi / num_segments)
 
-            cosine2 = np.cos(i2*2*np.pi / num_segments)
-            sine2 = np.sin(i2*2*np.pi / num_segments)
+            cosine2 = np.cos(i2 * 2 * np.pi / num_segments)
+            sine2 = np.sin(i2 * 2 * np.pi / num_segments)
 
             glBegin(GL_POLYGON)
             glVertex2f(cosine1 * radius, sine1 * radius)

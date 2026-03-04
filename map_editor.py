@@ -21,7 +21,6 @@ import pygame as pg
 import pydantic
 import os
 
-
 from amoginarium.logic import Vec2
 from amoginarium.base import BaseGame  # needed to import Entities
 from amoginarium.entities import Island
@@ -36,9 +35,9 @@ class PlatformDict(pydantic.BaseModel):
 class MapDict(pydantic.BaseModel):
     name: str
     background: (
-        str
-        | tuple[float, float, float]
-        | tuple[float, float, float, float]
+            str
+            | tuple[float, float, float]
+            | tuple[float, float, float, float]
     )
     spawn_pos: tuple[float, float]
     platforms: tp.Optional[list[PlatformDict]] = []
@@ -274,7 +273,7 @@ def main() -> None:
     # update map name on entry change
     world_name_var.trace_add(
         StringVar.TraceModes.write,
-        lambda s, *_: map.change_name(s.get())
+        lambda s, *_: map.change_name(s.update())
     )
 
     # ################## top menu ##################
