@@ -256,7 +256,7 @@ class BaseWeapon:
         bullet_explosion_damage: float = 0,
         drop_casings: bool = False,
         bullet_lifetime=4,
-        sound_effect: type[ContinuousSoundEffect | PresetEffect] = ...
+        sound_effect: ContinuousSoundEffect | PresetEffect = ...
     ) -> None:
         self.parent = parent
         self._coalition = parent.coalition
@@ -277,9 +277,7 @@ class BaseWeapon:
         self._bullet_explosion_radius = bullet_explosion_radius
         self._bullet_explosion_damage = bullet_explosion_damage
         self._bullet_lifetime = bullet_lifetime
-        self._sound_effect: ContinuousSoundEffect | PresetEffect = ...
-        if sound_effect is not ...:
-            self._sound_effect = sound_effect()
+        self._sound_effect = sound_effect
         # self.__sound_effect: ContinuousSoundEffect = ...
         self._texture_id_r, _ = textures.get_texture(
             self._image_name,
@@ -389,19 +387,13 @@ class BaseWeapon:
 
         if self._sound_effect is not ...:
             if not self._sound_effect.playing:
-                if hasattr(self._sound_effect, "stage_one_done"):
-                    ic("play")
-                    self._sound_effect.play()
+                self._sound_effect.play()
 
-                else:
-                    self._sound_effect.volume = .7
-                    self._sound_effect.play()
-
-            elif hasattr(self._sound_effect, "stage_one_done"):
+            if hasattr(self._sound_effect, "stage_one_done"):
                 if not self._sound_effect.stage_one_done:
                     return False
 
-        # inacuracy
+        # inaccuracy
         offset = randint(-255, 255) / 255
         offset *= self._inaccuracy
         direction.angle += offset
@@ -532,7 +524,7 @@ class Minigun(BaseWeapon):
             barrel_length=210,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=MinigunSound
+            sound_effect=MinigunSound()
         )
 
 
@@ -561,7 +553,7 @@ class Ak47(BaseWeapon):
             barrel_length=140,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=AK47Sound
+            sound_effect=AK47Sound()
         )
 
 
@@ -577,6 +569,8 @@ class Sniper(BaseWeapon):
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2()
     ) -> None:
+        s = Shotgun()
+        s.volume = .7
         super().__init__(
             parent,
             reload_time=5,
@@ -590,7 +584,7 @@ class Sniper(BaseWeapon):
             barrel_length=230,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=Shotgun
+            sound_effect=s
         )
 
 
