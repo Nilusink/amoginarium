@@ -8,8 +8,8 @@ Author:
 Nilusink
 """
 import math
+from time import perf_counter, strftime, time, perf_counter_ns
 from concurrent.futures import ThreadPoolExecutor
-from time import perf_counter, strftime, time
 from icecream import ic
 import typing as tp
 import pygame as pg
@@ -186,6 +186,7 @@ class BaseGame:
         """
         load all textures n stuff
         """
+        start = perf_counter_ns()
         # load sounds
         sounds.load_sounds("assets/audio/background")
         sounds.load_sounds("assets/audio/effects/ak47")
@@ -209,6 +210,9 @@ class BaseGame:
         Player.load_textures()
         BaseTurret.load_textures()
         explosion.load_textures(size=(512, 512))
+        end = perf_counter_ns()
+        load_time = (end-start)/1e6
+        ic(load_time)
 
     @property
     def id(self) -> int:
@@ -369,7 +373,7 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        self.load_map("assets/maps/tutorial.json")
+        self.load_map("assets/maps/test.json")
 
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
         EventHandler.add_event(pg.JOYDEVICEADDED, callback=self.__add_joystick)
@@ -379,8 +383,6 @@ class BaseGame:
         def start_game():
             nonlocal active_scene
             active_scene = "Game"
-
-            print("START GAME")
 
             start_menu.hide()
             settings.hide()

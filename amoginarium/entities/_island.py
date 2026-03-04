@@ -15,7 +15,7 @@ import random
 from ..shared import global_vars
 from ..render_bindings import renderer
 from ..base._textures import textures
-from ..entities import VisibleEntity
+from ..entities import VisibleGameEntity
 from ..base import Walls
 from ..logic import Vec2
 
@@ -34,7 +34,7 @@ class _PolyMatcher:
         return self.__str__()
 
 
-class Island(VisibleEntity):
+class Island(VisibleGameEntity):
     _island_single_texture: int = ...
 
     _island_single_right_texture: int = ...
@@ -186,7 +186,8 @@ class Island(VisibleEntity):
 
         super().__init__(
             size=self._size,
-            initial_position=start
+            initial_position=start,
+            # initial_velocity=Vec2.from_cartesian(4, 0)
         )
 
         self.add(Walls)

@@ -12,6 +12,7 @@ from contextlib import suppress
 import pygame as pg
 import typing as tp
 import numpy as np
+from icecream import ic
 
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord
 from ..render_bindings import renderer
