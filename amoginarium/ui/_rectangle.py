@@ -142,11 +142,12 @@ class Rectangle(BaseWidget):
                     radius
                 )
 
+            inner_radius = radius - border_width
             renderer.draw_rounded_rect(
                 self._top_left + border_width - extend_vec,
                 self._abs_size - 2 * border_width + double_extend_vec,
                 bg_color,
-                radius - border_width
+                inner_radius if inner_radius > 0 else 0
             )
 
         else:

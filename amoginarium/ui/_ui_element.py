@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base_frame.py
+amoginarium/ui/_ui_element.py
 
 Project: amoginarium
 """

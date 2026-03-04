@@ -121,7 +121,8 @@ class Button(Rectangle):
         self.__fg_color = fg_color
         self.__hover_fg_color = hover_fg_color
 
-        self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())
+        if self.__command is not None:
+            self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())
 
     def gl_draw(self) -> None:
         super().gl_draw()

@@ -107,8 +107,8 @@ class BaseWidget(UIElement):
 
     @staticmethod
     def __absolute_to_relative(
-            absolute_position: coord_t,
-            absolute_size: coord_t
+            absolute_position: Vec2,
+            absolute_size: Vec2
     ) -> tuple[Vec2, Vec2]:
         return (
             convert_coord(
@@ -123,6 +123,7 @@ class BaseWidget(UIElement):
                     int(absolute_size.x / global_vars.screen_size.x),
                     int(absolute_size.y / global_vars.screen_size.y)
                 ),
+                Vec2
             )
         )
 

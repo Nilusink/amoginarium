@@ -196,7 +196,3 @@ class MultiAnimation:
             return (val,) * self.__count
 
         return tuple(anim.get_value() for anim in self.__anims)
-
-    def debug(self) -> None:
-        for anim in self.__anims:
-            anim.debug()
