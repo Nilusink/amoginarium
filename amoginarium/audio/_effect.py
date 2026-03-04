@@ -7,10 +7,12 @@ a basic sound effect
 Author:
 Nilusink
 """
-# from icecream import ic
-from ._sounds import sounds
+from icecream import ic
+from ._sounds import sounds, sound_name_t
 import typing as tp
 import pygame as pg
+
+from ..debugging import run_with_debug
 
 
 class _SoundEffects:
@@ -54,21 +56,27 @@ class SoundEffect:
 
     def __init__(
             self,
-            sound_name: str,
+            sound_name: sound_name_t,
             on_finish_playing: tp.Callable[[], None] = ...
     ) -> None:
         self._sound_name = sound_name
-        self._sound: pg.mixer.Sound = ...
-        self._playing: pg.mixer.Channel = ...
         self._on_finish = on_finish_playing
-        self._last_playing = False
+        self._channel = ...
+        self._has_played = False
+        self._loop = False
+
+        if isinstance(self._sound_name, tuple):
+            self._sound = sounds.get_sound(*self._sound_name[::-1])
+
+        else:
+            self._sound = sounds.get_sound(self._sound_name)
+
+        if self._sound is None:
+            raise RuntimeError(f"Sound {self._sound_name} not found!")
 
     @property
     def playing(self) -> bool:
-        if self._playing is ...:
-            return False
-
-        return self._playing.get_busy()
+        return self._has_played or self._loop
 
     def play(
             self,
@@ -79,40 +87,45 @@ class SoundEffect:
         """
         play the sound effect
         """
-        if self._sound is ...:
-            self._sound = sounds.get_sound(self._sound_name)
-
-            if self._sound is None:
-                raise RuntimeError(f"Sound {self._sound_name} not found!")
-
-        elif self.playing:
-            self.stop()
+        if loops < 0:
+            self._loop = True
 
         self._sound.set_volume(self.volume)
-        tmp = self._sound.play(loops, maxtime, fade_ms)
-        if tmp is None:
-            return ...
+        self._channel = pg.mixer.find_channel(force=False)
+        self._channel.play(self._sound, loops, maxtime, fade_ms)
+        self._has_played = True
 
-        self._playing = tmp
-
+    # @run_with_debug()
     def stop(self) -> None:
         """
         stop the sound effect if it is currently playing
         """
-        if self.playing:
-            self._playing.stop()
-            self._playing = ...
+        if self._channel is not ...:
+            if self._channel.get_busy():
+                self._channel.stop()
+
+        self._has_played = False
+        self._loop = False
+        self._channel = ...
 
     def update(self) -> None:
         """
         updates called by the game loop
         """
-        now = self.playing
+        if self._channel is ...:
+            return
 
-        if self._last_playing and not now and self._on_finish is not ...:
-            self._on_finish()
+        done_playing = all([
+            self._has_played,
+            not self._loop,
+            not self._channel.get_busy(),
+        ])
+        if done_playing:
+            self._channel = ...
+            if self._on_finish is not ...:
+                self._on_finish()
 
-        self._last_playing = now
+            self.stop()
 
 
 class PresetEffect(SoundEffect):
@@ -144,95 +157,120 @@ def sound_effect_wrapper(sound_name: str, volume: float = 1) -> SoundEffect:
     return effect
 
 
-class ThreeStageSoundEffect:
-    _stage_one_name: str
-    _stage_two_name: str
-    _stage_three_name: str
-    volume: float = 1
+class ContinuousSoundEffect:
+    _stage_one_name: str = ...
+    _stage_two_name: str = ...
+    _stage_three_name: str = ...
 
-    def __init__(self) -> None:
-        self._stage_three = SoundEffect(
-            self._stage_three_name,
-            self.stop
-        )
-        self._stage_three.volume = self.volume
-        self._stage_two = SoundEffect(
-            self._stage_two_name,
-            self._play_3
-        )
-        self._stage_two.volume = self.volume
-        self._stage_one = SoundEffect(
-            self._stage_one_name,
-            self._play_2
-        )
-        self._stage_one.volume = self.volume
-        self._playing = True
-        self.play()
+    def __init__(self, volume: float = 1) -> None:
+        self._stage_one = ...
+        self._stage_two = ...
+        self._stage_three = ...
+
+        if self._stage_one_name is not ...:
+            self._stage_one = SoundEffect(
+                self._stage_one_name,
+                self._play_2
+            )
+
+        if self._stage_two_name is not ...:
+            self._stage_two = SoundEffect(
+                self._stage_two_name,
+                self._play_3
+            )
+
+        if self._stage_three_name is not ...:
+            self._stage_three = SoundEffect(
+                self._stage_three_name,
+                self._stop
+            )
+
+        self.volume = volume
+        self._playing = 0
 
     @property
-    def playing(self) -> bool:
+    def volume(self) -> float:
+        return self._volume
+
+    @volume.setter
+    def volume(self, volume: float) -> None:
+        self._volume = volume
+        if self._stage_one is not ...:
+            self._stage_one.volume = self._volume
+
+        if self._stage_two is not ...:
+            self._stage_two.volume = self._volume
+
+        if self._stage_three is not ...:
+            self._stage_three.volume = self._volume
+
+    @property
+    def playing(self) -> int:
         return self._playing
-
-    def play(self) -> None:
-        """
-        play the sound effect
-        """
-        self._stage_one.play()
-
-    def _play_2(self) -> None:
-        if self._playing:
-            self._stage_two.play()
-
-    def _play_3(self) -> None:
-        if self._playing:
-            self._stage_three.play()
-
-    def stop(self) -> None:
-        """
-        stop the sound effect from playing
-        """
-        self._playing = False
-
-
-class ContinuousSoundEffect(ThreeStageSoundEffect):
-    def __init__(self) -> None:
-        super().__init__()
-        self._stage_two = SoundEffect(
-            self._stage_two_name,
-        )
-        self._stage_two.volume = self.volume
-        self._one_done = False
 
     @property
     def stage_one_done(self) -> bool:
-        return self._one_done
+        return self.playing > 1
+
+    def play(self) -> None:
+        if self._stage_one is ...:
+            return self._play_2()
+
+        self._playing = 1
+        self._stage_one.play()
 
     def _play_2(self) -> None:
-        self._one_done = True
+        if self._stage_two is ...:
+            return self._play_3()
 
-        if self._playing:
-            self._stage_two.play(-1)
+        self._playing = 2
+        self._stage_two.play(loops=-1)
+
+    def _play_3(self) -> None:
+        if self._stage_three is ...:
+            return self._stop()
+
+        self._playing = 3
+        self._stage_three.play()
+
+    def stop(self) -> None:
+        match self.playing:
+            case 1:
+                self._stage_one.stop()
+            case 2:
+                self._stage_two.stop()
+            case 3:
+                self._stage_three.stop()
+
+        return self._stop()
+
+    def _stop(self) -> None:
+        self._playing = 0
 
     def done(self) -> None:
         """
-        stop stage 2 playing
+        stop loop and play shutdown
         """
-        self._stage_two.stop()
+        match self.playing:
+            case 1:
+                self._stage_one.stop()
+                self._stage_two.stop()
+            case 2:
+                self._stage_two.stop()
+            case 3:
+                return
 
-        if self.stage_one_done:
-            if self._playing:
-                self._play_3()
-
-        else:
-            self._playing = False
-
-    def stop(self) -> None:
-        self._playing = False
-        self.done()
+        self._play_3()
 
 
 class Minigun(ContinuousSoundEffect):
-    _stage_one_name = "spool_up"
-    _stage_two_name = "burst"
-    _stage_three_name = "spool_down"
+    _stage_one_name = ("minigun", "spool_up")
+    _stage_two_name = ("minigun", "burst")
+    _stage_three_name = ("minigun", "spool_down")
+    volume: float = .1
+
+
+class AK47(ContinuousSoundEffect):
+    _stage_two_name = ("ak47", "loop")
+    _stage_three_name = ("ak47", "echo")
     volume: float = .1

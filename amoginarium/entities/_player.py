@@ -8,7 +8,7 @@ Author:
 Nilusink
 """
 from time import perf_counter
-# from icecream import ic
+from icecream import ic
 import pygame as pg
 import typing as tp
 
@@ -46,6 +46,7 @@ class Player(LRImageEntity):
     _time_to_heal: float = 5
     _max_speed: float = 1000
     _max_hp: int = 80
+    __heading = 1
     _hp: int = 0
 
     on_wall: bool = False
@@ -318,14 +319,14 @@ class Player(LRImageEntity):
             if self.velocity.x < self._max_speed:
                 self.acceleration.x += self._movement_acceleration
 
-            self.facing.x = 1
+            # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
                 self.acceleration.x -= self._movement_acceleration
 
-            self.facing.x = -1
+            # self.facing.x = -1
 
         # jump
         if self._controller.jump and self.on_ground:
@@ -347,7 +348,6 @@ class Player(LRImageEntity):
         # directional stuff
         # shoot
         if self._controller.shoot:
-            # shoot a bit up
             mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
             vector = mouse_pos - self.world_position
 
@@ -383,6 +383,11 @@ class Player(LRImageEntity):
     def gl_draw(self) -> None:
         # check if out of bounds
         # left of screen
+        mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
+        vector = mouse_pos - self.world_position
+        self.facing.x = vector.x // abs(vector.x)
+        angle = vector.angle * (180 / 3.14169265358979)
+
         if self.world_position.x < 0:
 
             # facing
@@ -417,10 +422,6 @@ class Player(LRImageEntity):
                 )
 
         else:
-            mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
-            vector = mouse_pos - self.world_position
-            angle = vector.angle * (180/3.14169265358979)
-
             super().gl_draw()
             self.weapon.draw_at(
                 self.position,
