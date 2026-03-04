@@ -87,11 +87,11 @@ def calculate_launch_angle(
         v_x = launch_speed * m.cos(angle)
 
         # prev_time = a_time
-        a_time = abs(x / v_x)
+        a_time = abs(x / v_x) * 1.1
 
         a_pos = position_delta + target_velocity * a_time
         a_pos += target_acceleration * a_time**2 * 1/2
         # print_ic_style(a_pos.xy, a_time, position_delta.xy, target_velocity.xy, launch_speed)
 
     sol = Vec2.from_polar(aim_type(solutions), 1)
-    return sol, a_time, a_pos
+    return sol, a_time / 1.0, a_pos

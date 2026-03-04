@@ -214,8 +214,9 @@ class BaseTurret(VisibleGameEntity):
                 # idk why, but if engaging bullets, the tof is wrong and
                 # x1.1 corrects it soemehow
                 tof = min(
-                    tof * self._high_tof_multiplier if magic else
-                    tof * self._low_tof_multiplier,
+                    tof,
+                    # tof * self._high_tof_multiplier if magic else
+                    # tof * self._low_tof_multiplier,
                     self.engagement_range / self.weapon.bullet_speed
                 )
 
