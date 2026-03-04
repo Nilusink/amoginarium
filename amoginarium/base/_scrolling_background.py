@@ -12,18 +12,18 @@ from icecream import ic
 
 import pygame as pg
 
-from ..base._linked import global_vars
+from ..shared import global_vars
 from ..render_bindings import renderer
 from ..base._textures import textures
 
 
 class ScrollingBackground:
     def __init__(
-        self,
-        background_file: str,
-        scrolling_part_file: str,
-        screen_width: int,
-        screen_height: int,
+            self,
+            background_file: str,
+            scrolling_part_file: str,
+            screen_width: int,
+            screen_height: int,
     ) -> None:
         self._texture_id, self._texture_size = textures.get_texture(
             background_file
@@ -55,13 +55,13 @@ class ParalaxBackground:
     _animation_counter: float
 
     def __init__(
-        self,
-        background_scope: str,
-        screen_width: int,
-        screen_height: int,
-        parallax_multiplier: float = 1.2,
-        animated_layers: list[int] = ...,
-        load: bool = False
+            self,
+            background_scope: str,
+            screen_width: int,
+            screen_height: int,
+            parallax_multiplier: float = 1.2,
+            animated_layers: list[int] = ...,
+            load: bool = False
     ) -> None:
         self._scope = background_scope
         self._multiplier = parallax_multiplier
@@ -100,13 +100,13 @@ class ParalaxBackground:
         """
         get the position of the top layer
         """
-        return -self._position * self._multiplier**len(self._textures)
+        return -self._position * self._multiplier ** len(self._textures)
 
     def scroll(self, value: float) -> None:
         """
         scroll by `value` pixels (first layer)
         """
-        if self._position-value <= 0:
+        if self._position - value <= 0:
             self._position -= value
 
         # tmp = global_vars.world_position
@@ -129,14 +129,14 @@ class ParalaxBackground:
         """
         self._animation_counter += delta
 
-        n_layers = len(self._textures)-1
+        n_layers = len(self._textures) - 1
         if n_layers == -1:
             self.load_textures()
             return self.draw(delta)
 
         for layer in range(n_layers, -1, -1):
             image_pos = self._position + 10 % self._screen_width
-            image_pos *= self._multiplier**(n_layers-layer)
+            image_pos *= self._multiplier ** (n_layers - layer)
 
             # if layer in self._animated_layers:
             #     image_pos *= self._animation_counter * .1
