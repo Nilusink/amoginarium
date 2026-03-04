@@ -65,15 +65,6 @@ class SoundEffect:
         self._has_played = False
         self._loop = False
 
-        if isinstance(self._sound_name, tuple):
-            self._sound = sounds.get_sound(*self._sound_name[::-1])
-
-        else:
-            self._sound = sounds.get_sound(self._sound_name)
-
-        if self._sound is None:
-            raise RuntimeError(f"Sound {self._sound_name} not found!")
-
     @property
     def playing(self) -> bool:
         return self._has_played or self._loop
@@ -89,6 +80,15 @@ class SoundEffect:
         """
         if loops < 0:
             self._loop = True
+
+        if isinstance(self._sound_name, tuple):
+            self._sound = sounds.get_sound(*self._sound_name[::-1])
+
+        else:
+            self._sound = sounds.get_sound(self._sound_name)
+
+        if self._sound is None:
+            raise RuntimeError(f"Sound {self._sound_name} not found!")
 
         self._sound.set_volume(self.volume)
         self._channel = pg.mixer.find_channel(force=False)
