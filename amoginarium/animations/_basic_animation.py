@@ -11,19 +11,19 @@ from threading import Thread
 import typing as tp
 import time
 
-from ..audio import LargeExplosion, PresetEffect
+from ..audio import PresetEffect
 from ..render_bindings import renderer
-from ..base._linked import global_vars
+from ..shared import global_vars
 from ..base._textures import textures
 from ..logic import Vec2
 
 
 def play_animation(
-    sizes: tp.Iterable[Vec2],
-    textures: tp.Iterable[int],
-    position: Vec2 = ...,
-    position_reference: object = ...,
-    delay=.2
+        sizes: tp.Iterable[Vec2],
+        textures: tp.Iterable[int],
+        position: Vec2 = ...,
+        position_reference: object = ...,
+        delay=.2
 ) -> None:
     """
     play an animation based on textures
@@ -78,11 +78,11 @@ class ImageAnimation:
             self._sizes.append(Vec2.from_cartesian(*size))
 
     def draw(
-        self,
-        delay=.2,
-        size: Vec2 = ...,
-        position: Vec2 = ...,
-        position_reference: object = ...
+            self,
+            delay=.2,
+            size: Vec2 = ...,
+            position: Vec2 = ...,
+            position_reference: object = ...
     ) -> None:
         """
         play the recently loaded animation

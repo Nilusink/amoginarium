@@ -21,7 +21,7 @@ from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, Entity
 from ..render_bindings import renderer
-from ..base._linked import global_vars
+from ..shared import global_vars
 from ..base._textures import textures
 from ..animations import explosion
 from ..base import WallCollider
@@ -39,18 +39,18 @@ class Bullet(ImageEntity):
         return super(Bullet, cls).__new__(cls)
 
     def __init__(
-        self,
-        parent: Entity,
-        coalition: tp.Any,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        base_damage: float = 1,
-        casing: bool = False,
-        time_to_life: float = 2,
-        explosion_radius: float = -1,
-        explosion_damage: float = 0,
-        target_pos: Vec2 = ...,
-        size: int = 10
+            self,
+            parent: Entity,
+            coalition: tp.Any,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            base_damage: float = 1,
+            casing: bool = False,
+            time_to_life: float = 2,
+            explosion_radius: float = -1,
+            explosion_damage: float = 0,
+            target_pos: Vec2 = ...,
+            size: int = 10
     ) -> None:
         size = Vec2.from_cartesian(size, size)
         self._casing = casing
@@ -360,10 +360,10 @@ class BaseWeapon:
                 self._sound_effect.done()
 
     def shoot(
-        self,
-        direction: Vec2,
-        bullet_tof: float = ...,
-        target_pos: Vec2 = ...
+            self,
+            direction: Vec2,
+            bullet_tof: float = ...,
+            target_pos: Vec2 = ...
     ) -> bool:
         """
         shoot a bullet and check for recoil and reload

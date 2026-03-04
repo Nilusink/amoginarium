@@ -19,6 +19,7 @@ class _SoundEffects:
     """
     a collection of all sound effects
     """
+
     def __init__(self) -> None:
         self._effects = []
 
