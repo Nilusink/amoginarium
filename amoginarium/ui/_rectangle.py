@@ -131,7 +131,7 @@ class Rectangle(BaseWidget):
         extend: Tuple[float, float] = self.__hover_extend_animation.update()
 
         extend_vec = convert_coord(extend, Vec2)
-        double_extend_vec = convert_coord((extend[0] * 2, extend[1] * 2), Vec2)
+        double_extend_vec = extend_vec * 2
 
         if radius > 0:
             if border_width > 0:
