@@ -117,12 +117,13 @@ class SoundEffect:
         done_playing = all([
             self._has_played,
             not self._loop,
-            self._on_finish is not ...,
             not self._channel.get_busy(),
         ])
         if done_playing:
             self._channel = ...
-            self._on_finish()
+            if self._on_finish is not ...:
+                self._on_finish()
+
             self.stop()
 
 
@@ -153,128 +154,6 @@ def sound_effect_wrapper(sound_name: str, volume: float = 1) -> SoundEffect:
     effect = SoundEffect(sound_name)
     effect.volume = volume
     return effect
-
-
-# class ThreeStageSoundEffect:
-#     _stage_one_name: sound_name_t
-#     _stage_two_name: sound_name_t
-#     _stage_three_name: sound_name_t
-#     volume: float = 1
-#
-#     def __init__(self) -> None:
-#         self._stage_one = ...
-#         self._stage_two = ...
-#         self._stage_three = ...
-#
-#         if self._stage_one_name is not ...:
-#             self._stage_one = SoundEffect(
-#                 self._stage_one_name,
-#                 self._play_2
-#             )
-#             self._stage_one.volume = self.volume
-#
-#         if self._stage_two_name is not ...:
-#             self._stage_two = SoundEffect(
-#                 self._stage_two_name,
-#                 self._play_3,
-#                 True
-#             )
-#             self._stage_two.volume = self.volume
-#
-#         if self._stage_three_name is not ...:
-#             self._stage_three = SoundEffect(
-#                 self._stage_three_name,
-#                 self.stop
-#             )
-#             self._stage_three.volume = self.volume
-#
-#         self._playing = False
-#
-#     @property
-#     def playing(self) -> bool:
-#         return self._playing
-#
-#     @run_with_debug()
-#     def play(self) -> None:
-#         """
-#         play the sound effect
-#         """
-#         self._playing = True
-#         if self._stage_one is not ...:
-#             self._stage_one.play()
-#
-#         else:
-#             self._play_2()
-#
-#     @run_with_debug()
-#     def _play_2(self) -> None:
-#         if self._playing:
-#             if not self._stage_two.playing:
-#                 self._stage_two.play()
-#
-#     def _play_3(self, force_play: bool = False) -> None:
-#         if self._playing or force_play:
-#             if self._stage_three is not ...:
-#                 self._stage_three.play()
-#
-#     @run_with_debug()
-#     def stop(self) -> None:
-#         """
-#         stop the sound effect from playing
-#         """
-#         self._playing = False
-#
-#
-# class ContinuousSoundEffect(ThreeStageSoundEffect):
-#     _stage_one_name = ...
-#     _stage_three_name = ...
-#
-#     def __init__(self) -> None:
-#         super().__init__()
-#         # self._stage_two = SoundEffect(
-#         #     self._stage_two_name,
-#         # )
-#         # self._stage_two.volume = self.volume
-#         self._one_done = self._stage_one_name is ...
-#
-#     @property
-#     def stage_one_done(self) -> bool:
-#         return self._one_done
-#
-#     @run_with_debug()
-#     def play(self) -> None:
-#         self._one_done = False
-#         super().play()
-#
-#     @run_with_debug()
-#     def _play_2(self) -> None:
-#         self._one_done = True
-#
-#         ic(0)
-#         ic(self._playing, self._stage_two.playing)
-#         if self._playing and not self._stage_two.playing:
-#             ic(1)
-#             self._stage_two.play(-1)
-#             ic(2)
-#
-#     def _play_3(self, force_play: bool = False) -> None:
-#         pass
-#
-#     @run_with_debug()
-#     def done(self) -> None:
-#         """
-#         stop stage 2 playing
-#         """
-#         self._stage_two.stop()
-#
-#         if self.stage_one_done and self._playing:
-#             super()._play_3(True)
-#             self.stop()
-#
-#     @run_with_debug()
-#     def stop(self) -> None:
-#         self._playing = False
-#         self._stage_two.stop()
 
 
 class ContinuousSoundEffect:
@@ -334,7 +213,6 @@ class ContinuousSoundEffect:
     def stage_one_done(self) -> bool:
         return self.playing > 1
 
-    @run_with_debug()
     def play(self) -> None:
         if self._stage_one is ...:
             return self._play_2()
@@ -350,7 +228,6 @@ class ContinuousSoundEffect:
         self._playing = 2
         self._stage_two.play(loops=-1)
 
-    @run_with_debug()
     def _play_3(self) -> None:
         if self._stage_three is ...:
             return self._stop()
@@ -358,7 +235,6 @@ class ContinuousSoundEffect:
         self._playing = 3
         self._stage_three.play()
 
-    @run_with_debug()
     def stop(self) -> None:
         match self.playing:
             case 1:
@@ -370,7 +246,6 @@ class ContinuousSoundEffect:
 
         return self._stop()
 
-    @run_with_debug()
     def _stop(self) -> None:
         self._playing = 0
 

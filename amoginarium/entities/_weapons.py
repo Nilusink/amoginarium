@@ -356,9 +356,8 @@ class BaseWeapon:
         if self._current_sound_time < 0:
             self._current_sound_time = 0
 
-            if self._sound_effect is not ...:
-                if hasattr(self._sound_effect, "done"):
-                    self._sound_effect.done()
+            if hasattr(self._sound_effect, "done"):
+                self._sound_effect.done()
 
     def shoot(
         self,
@@ -380,7 +379,7 @@ class BaseWeapon:
 
         # audio
         if self._sound_effect is not ...:
-            self._current_sound_time = self._recoil_time * 3
+            self._current_sound_time = self._recoil_time
 
         if self._current_recoil_time > 0:
             return False
