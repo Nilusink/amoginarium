@@ -9,16 +9,14 @@ Project: amoginarium
 ##################################################
 
 from typing import Callable
-from ..ui import Button, BaseFrame
+from ..ui import Button, UIElement
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class StartMenu(BaseFrame):
-    __widgets: list[Button]
-
+class StartMenu(UIElement):
     def __init__(
             self,
             start_game_callback: Callable[[], None],
@@ -26,33 +24,32 @@ class StartMenu(BaseFrame):
             exit_callback: Callable[[], None],
     ) -> None:
         super().__init__()
-        self.__widgets = [
+        self._children.append(
             Button(
                 (0.5, 0.35),
                 (0.2, 0.12),
                 "New game",
                 command=start_game_callback
-            ),
+            ))
+        self._children.append(
             Button(
                 (0.5, 0.5),
                 (0.2, 0.12),
                 "Settings",
                 command=open_settings_callback,
-            ),
+            ))
+        self._children.append(
             Button(
                 (0.5, 0.65),
                 (0.2, 0.12),
                 "Exit",
                 command=exit_callback,
-            )
-        ]
-
-    def update(self) -> None:
-        super().update()
-        for widget in self.__widgets:
-            widget.update()
+            ))
 
     def gl_draw(self) -> None:
-        super().gl_draw()
-        for widget in self.__widgets:
+        """
+        Draw function
+        """
+
+        for widget in self._children:
             widget.gl_draw()

@@ -14,24 +14,22 @@ import pygame as pg
 from ..audio import PresetEffect, SoundEffect
 from ..render_bindings import renderer
 from ..logic import coord_t, Color
-from ._types import anchor_t
+from ._types import anchor_t, ui_color_t
 
 from ._rectangle import Rectangle
 
 
 class _OnHoverButtonSound(PresetEffect):
-    volume = 1
+    volume = .1
     _sound_name = "button_hover"
-
-
-class _OnLeaveButtonSound(PresetEffect):
-    volume = 1
-    _sound_name = "button_leave"
 
 
 class _ButtonClickSound(PresetEffect):
     volume = 1
     _sound_name = "button_click"
+
+
+TEST_DURATION = .15
 
 
 class Button(Rectangle):
@@ -57,29 +55,60 @@ class Button(Rectangle):
             absolute: bool = False,
             scaling: bool = True,
 
-            fg_color: Color = Color.from_255(0, 0, 0),
-            hover_fg_color: Color = Color.from_255(0, 0, 0),
+            fg_color: ui_color_t = (0, 0, 0),
+            hover_fg_color: ui_color_t = (0, 0, 0),
 
-            bg_color: Color = Color.from_255(56, 254, 255),
-            border_color: Color = Color.from_255(33, 133, 163),
+            bg_color: ui_color_t = (56.0, 254.0, 255.0),
+            hover_bg_color: ui_color_t = (140, 255, 255),
+            hover_bg_color_duration: float = TEST_DURATION,
+            hover_bg_color_reverse_duration: float = TEST_DURATION,
+
+            border_color: ui_color_t = (33, 133, 163),
+            hover_border_color: ui_color_t = (255, 255, 255),
+            hover_border_color_duration: float = TEST_DURATION,
+            hover_border_color_reverse_duration: float = TEST_DURATION,
+
             border_width: int = 5,
-            radius: float | None = 20,
+            hover_border_width: int = 15,
+            hover_border_width_duration: float = TEST_DURATION,
+            hover_border_width_reverse_duration: float = TEST_DURATION,
 
-            hover_bg_color: Color = Color.from_255(140, 255, 255),
-            hover_border_color: Color = Color.from_255(255, 255, 255),
-            hover_border_width: int = 10,
-            hover_radius: float | None = None,
-            hover_extend: coord_t | int = 5,
+            radius: float = 20,
+            hover_radius: float = 40,
+            hover_radius_duration: float = TEST_DURATION,
+            hover_radius_reverse_duration: float = TEST_DURATION,
+
+            hover_extend: coord_t | float | int = (10, 5),
+            hover_extend_duration: coord_t | float | int = TEST_DURATION,
+            hover_collapse_duration: coord_t | float | int = TEST_DURATION,
 
             on_hover_sound: SoundEffect | None = _OnHoverButtonSound(),
-            on_leave_sound: SoundEffect | None = _OnLeaveButtonSound(),
+            on_leave_sound: SoundEffect | None = None,
             on_click_sound: SoundEffect | None = _ButtonClickSound(),
     ) -> None:
-        super().__init__(position, size, anchor=anchor, absolute=absolute, scaling=scaling, bg_color=bg_color,
-                         border_color=border_color, border_width=border_width, radius=radius,
-                         hover_bg_color=hover_bg_color, hover_border_color=hover_border_color,
-                         hover_border_width=hover_border_width, hover_radius=hover_radius, hover_extend=hover_extend,
-                         on_hover_sound=on_hover_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound)
+        super().__init__(position, size, anchor=anchor, absolute=absolute, scaling=scaling,
+                         on_hover_sound=on_hover_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
+
+                         bg_color=bg_color, hover_bg_color=hover_bg_color,
+                         hover_bg_color_duration=hover_bg_color_duration,
+                         hover_bg_color_reverse_duration=hover_bg_color_reverse_duration,
+
+                         border_color=border_color, hover_border_color=hover_border_color,
+                         hover_border_color_duration=hover_border_color_duration,
+                         hover_border_color_reverse_duration=hover_border_color_reverse_duration,
+
+                         border_width=border_width, hover_border_width=hover_border_width,
+                         hover_border_width_duration=hover_border_width_duration,
+                         hover_border_width_reverse_duration=hover_border_width_reverse_duration,
+
+                         radius=radius, hover_radius=hover_radius,
+                         hover_radius_duration=hover_radius_duration,
+                         hover_radius_reverse_duration=hover_radius_reverse_duration,
+
+                         hover_extend=hover_extend,
+                         hover_extend_duration=hover_extend_duration,
+                         hover_collapse_duration=hover_collapse_duration
+                         )
         self.__command = command
         self.__text = text
         self.__last_mouse = False
@@ -91,7 +120,6 @@ class Button(Rectangle):
 
     def gl_draw(self) -> None:
         super().gl_draw()
-
         # text
         renderer.draw_text(
             self._top_left + self._abs_size / 2,

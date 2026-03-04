@@ -87,7 +87,7 @@ class OpenGLRenderer(BaseRenderer):
         global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
 
         pg.display.set_mode(
-            global_vars.screen_size.xy,
+            (0, 0),
             DOUBLEBUF | OPENGL
         )
         # self.font = pg.font.SysFont(None, 24)

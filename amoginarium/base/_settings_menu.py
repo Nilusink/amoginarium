@@ -27,9 +27,3 @@ class SettingsMenu(Rectangle):
 
         self.__close_settings_callback = close_settings_callback
         self.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: self.__close_settings_callback())
-
-    def update(self) -> None:
-        super().update()
-
-    def gl_draw(self) -> None:
-        super().gl_draw()

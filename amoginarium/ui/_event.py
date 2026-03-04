@@ -25,7 +25,7 @@ class AmogusEvent:
     __button: int
     __key: int
 
-    __callback: Callable[[pg.Event], None] | None
+    __callback: Callable[[pg.Event | str], None] | None
     __sound: SoundEffect | None
 
     def __init__(
@@ -34,7 +34,7 @@ class AmogusEvent:
             *_args: Any,
             button: int | None = None,
             key: int | None = None,
-            callback: Callable[[pg.Event], Any] | None = None,
+            callback: Callable[[pg.Event | str], Any] | None = None,
             sound: SoundEffect | None = None
     ) -> None:
         self.__event_type = event_type
@@ -46,27 +46,20 @@ class AmogusEvent:
     def check_event(
             self,
             event: pg.Event | str
-    ) -> None:
-
-        if self.__key == pg.K_ESCAPE:
-            print(event)
-            print("WOULD CALL", self.__callback)
-
+    ) -> bool:
         if isinstance(event, str):
             if event != self.__event_type:
-                return
+                return False
         else:
             if self.__event_type != event.type:
-                return
+                return False
             if self.__button is not None and self.__button != event.button:
-                return
+                return False
             if self.__key is not None and self.__key != event.key:
-                return
+                return False
+        return True
 
-        print("DID MAKE IT")
-        self.raise_event(event)
-
-    def raise_event(self, event: pg.Event) -> None:
+    def raise_event(self, event: pg.Event | str) -> None:
         if self.__sound is not None:
             self.__sound.play()
 

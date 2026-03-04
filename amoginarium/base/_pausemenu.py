@@ -9,17 +9,16 @@ Project: amoginarium
 ##################################################
 
 from typing import Callable
+import pygame as pg
 
-from ..ui import Button, BaseFrame
+from ..ui import Button, UIElement
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class PauseMenu(BaseFrame):
-    __widgets: list[Button]
-
+class PauseMenu(UIElement):
     def __init__(
             self,
             continue_callback: Callable[[], None],
@@ -28,47 +27,29 @@ class PauseMenu(BaseFrame):
             end_game_callback: Callable[[], None],
     ) -> None:
         super().__init__()
-        self.__widgets = [
+        self._children = [
             Button(
                 (0.5, 0.26),
                 (0.2, 0.12),
                 "Continue",
-                continue_callback,
-                20,
-                "center"
+                command=continue_callback,
             ),
             Button(
                 (0.5, 0.42),
                 (0.2, 0.12),
                 "Restart",
-                restart_callback,
-                20,
-                "center"
+                command=restart_callback,
             ),
             Button(
                 (0.5, 0.58),
                 (0.2, 0.12),
                 "Settings",
-                open_settings_callback,
-                20,
-                "center"
+                command=open_settings_callback,
             ),
             Button(
                 (0.5, 0.74),
                 (0.2, 0.12),
                 "End game",
-                end_game_callback,
-                20,
-                "center"
+                command=end_game_callback,
             )
         ]
-
-    def update(self) -> None:
-        super().update()
-        for widget in self.__widgets:
-            widget.update()
-
-    def gl_draw(self) -> None:
-        super().gl_draw()
-        for widget in self.__widgets:
-            widget.gl_draw()

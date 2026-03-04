@@ -9,7 +9,7 @@ Nilusink
 """
 import math
 from concurrent.futures import ThreadPoolExecutor
-from time import perf_counter, strftime
+from time import perf_counter, strftime, time
 from icecream import ic
 import typing as tp
 import pygame as pg
@@ -39,6 +39,7 @@ from ..communications import TCPServer
 from ..animations import explosion
 from ._textures import textures
 from ..settings import Settings
+from ..ui import UIElement
 from ..ui._event_handler import EventHandler
 
 
@@ -353,38 +354,6 @@ class BaseGame:
         # re-assign pygame joystick instance
         c.set_joystick(joy)
 
-    def handle_events(self) -> list[str]:
-        """
-        handles pygame events
-        """
-        out = []
-
-        for event in pg.event.get():
-            match event.type:
-                case pg.QUIT:
-                    ic("pygame end")
-                    self.__clean_end()
-
-                case pg.JOYDEVICEADDED:
-                    joy = pg.joystick.Joystick(event.device_index)
-                    c = GameController.get(joy.get_guid(), joy)
-
-                    # re-assign pygame joystick instance
-                    c.set_joystick(joy)
-
-                case pg.KEYDOWN:
-                    match event.key:
-                        case pg.K_ESCAPE:
-                            out.append("escape")
-
-                        case pg.K_r:
-                            out.append("r")
-
-                        case pg.K_c:
-                            out.append("c")
-
-        return out
-
     def __clean_end(self, *_args: Any, **_kwargs: Any) -> None:
         ic("pygame end")
         self.running = False
@@ -397,9 +366,8 @@ class BaseGame:
         last_fps_print = 0
         clock = pg.time.Clock()
 
-        in_menu: bool = True
-        has_started: bool = False
-        in_settings: bool = False
+        active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
+
         self.load_map("assets/maps/tutorial.json")
 
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
@@ -408,12 +376,21 @@ class BaseGame:
         # self.load_map("assets/maps/test.json")
 
         def start_game():
-            nonlocal in_menu, has_started
-            in_menu = False
-            has_started = True
+            nonlocal active_scene
+            active_scene = "Game"
+
+            print("START GAME")
+
+            start_menu.hide()
+            settings.hide()
+            pause_menu.hide()
+
+            game_ui_dummy.show()
 
         def reset_game():
-            nonlocal in_menu
+            nonlocal active_scene
+            active_scene = "Game"
+
             for entity in Updated.sprites():
                 entity.kill()
 
@@ -427,48 +404,104 @@ class BaseGame:
             for player in Players.sprites():
                 player.respawn()
 
-            in_menu = False
+            # UI
+            start_menu.hide()
+            settings.hide()
+            pause_menu.hide()
+
+            game_ui_dummy.show()
 
         def back_to_menu():
-            nonlocal in_menu, has_started
+            nonlocal active_scene
             reset_game()
-            in_menu = True
-            has_started = False
+            active_scene = "StartMenu"
 
-        def toggle_settings():
-            nonlocal in_settings
-            in_settings = not in_settings
-            print("LEAVE SETTINGS")
+            game_ui_dummy.hide()
+            settings.hide()
+            pause_menu.hide()
+
+            start_menu.show()
+
+        def pause_game():
+            nonlocal active_scene
+            active_scene = "PauseMenu"
+
+            start_menu.hide()
+            settings.hide()
+            game_ui_dummy.hide()
+
+            pause_menu.show()
+
+        def open_settings():
+            nonlocal active_scene
+            if active_scene == "PauseMenu":
+                active_scene = "PauseSettings"
+
+                pause_menu.hide()
+                start_menu.hide()
+                game_ui_dummy.hide()
+
+                settings.show()
+            else:
+                active_scene = "StartSettings"
+
+                game_ui_dummy.hide()
+                pause_menu.hide()
+                start_menu.hide()
+
+                settings.show()
+
+        def close_settings():
+            nonlocal active_scene
+            if active_scene == "PauseSettings":
+                active_scene = "PauseMenu"
+
+                start_menu.hide()
+                settings.hide()
+                game_ui_dummy.hide()
+
+                pause_menu.show()
+            else:
+                active_scene = "StartMenu"
+
+                game_ui_dummy.hide()
+                pause_menu.hide()
+                settings.hide()
+
+                start_menu.show()
 
         start_menu = StartMenu(
-            start_game, toggle_settings, self.__clean_end
+            start_game, open_settings, self.__clean_end
         )
 
         pause_menu = PauseMenu(
-            start_game, reset_game, toggle_settings, back_to_menu
+            start_game, reset_game, open_settings, back_to_menu
         )
+        pause_menu.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: start_game())
 
         settings = SettingsMenu(
-            toggle_settings
+            close_settings
         )
+
+        # Temporary solution
+        game_ui_dummy: UIElement = UIElement()
+        game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
+
+        start_menu.show()
 
         # draw background once
         while self.running:
             # total delta since last call
             now = perf_counter()
+            global_vars.time = time()
+
             delta = now - last
 
             delta *= self.time_multiplier  # slow-motion
 
             EventHandler.check_events()
 
-            start_menu.update()
-            pause_menu.update()
-            settings.update()
-
-            if in_menu:
-                pressed = self.handle_events()
-
+            if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
                 # update background music
                 try:  # throws error on game end
                     self._background_player.update()
@@ -479,148 +512,128 @@ class BaseGame:
                 self._background.scroll(delta / 200)
                 self._background.draw(delta)
 
-                if has_started:
+                if active_scene in ["PauseMenu", "PauseSettings"]:
                     Drawn.gl_draw()
                     HasBars.gl_draw()
 
-                    if in_settings:
-                        if "escape" in pressed:
-                            toggle_settings()
-                            continue
-                        settings.gl_draw()
-                    else:
-                        if "escape" in pressed:
-                            start_game()
-                            continue
-                        pause_menu.gl_draw()
-                else:
-                    if in_settings:
-                        if "escape" in pressed:
-                            toggle_settings()
-                            continue
-                        settings.gl_draw()
-                    else:
-                        start_menu.gl_draw()
+                start_menu.draw_if_visible()
+                pause_menu.draw_if_visible()
+                settings.draw_if_visible()
+
                 pg.display.flip()
                 # debugging kopieren - @
                 clock.tick(global_vars.max_fps)
 
                 self._game_start = perf_counter()
                 last = now
-                continue
 
-            # update logic
-            self._update_logic(delta, now)
+            elif active_scene == "Game":
+                self._update_logic(delta, now)
 
-            # pygame loop time
-            start = perf_counter()
+                # pygame loop time
+                start = perf_counter()
 
-            # only update fps every 200ms (for readability)
-            if now - last_fps_print > .2:
-                self._pygame_fps = int(1 / delta)
-                last_fps_print = now
+                # only update fps every 200ms (for readability)
+                if now - last_fps_print > .2:
+                    self._pygame_fps = int(1 / delta)
+                    last_fps_print = now
 
-            # handle events
-            pressed = self.handle_events()
-            if "escape" in pressed:
-                in_menu = True
+                # update background music
+                try:  # throws error on game end
+                    self._background_player.update()
 
-            # update background music
-            try:  # throws error on game end
-                self._background_player.update()
+                except pg.error:
+                    break
 
-            except pg.error:
-                break
+                # clear screen
+                glClearColor(0, 0, 0, 1)
 
-            # clear screen
-            glClearColor(0, 0, 0, 1)
+                _, max_player_pos = Players.get_position_extremes()
 
-            _, max_player_pos = Players.get_position_extremes()
+                # background_pos_left = self._background.position + 60
 
-            # background_pos_left = self._background.position + 60
+                if self._shifting:
+                    background_pos_right = self._background.position \
+                                           + global_vars.screen_size.x - 1400
 
-            if self._shifting:
-                background_pos_right = self._background.position \
-                                       + global_vars.screen_size.x - 1400
+                    if max_player_pos.x > background_pos_right:
+                        # world speed coefficient:
+                        # V(x)=ℯ^( ( (1400-x) / 800 )^2 )
 
-                if max_player_pos.x > background_pos_right:
-                    # world speed coefficient:
-                    # V(x)=ℯ^( ( (1400-x) / 800 )^2 )
+                        speed_coeff = (abs((
+                                                   self._background.position
+                                                   + global_vars.screen_size.x
+                                                   - 1400
+                                           ) - max_player_pos.x) / 800) ** 2
+                        speed_coeff = math.exp(speed_coeff)
 
-                    speed_coeff = (abs((
-                                               self._background.position
-                                               + global_vars.screen_size.x
-                                               - 1400
-                                       ) - max_player_pos.x) / 800) ** 2
-                    speed_coeff = math.exp(speed_coeff)
+                        self._background.scroll(delta * 3 * speed_coeff)
+                        Updated.world_position.x = self._background.position
 
-                    self._background.scroll(delta * 3 * speed_coeff)
-                    Updated.world_position.x = self._background.position
+                    else:
+                        self._shifting = False
 
                 else:
-                    self._shifting = False
+                    background_pos_right = self._background.position \
+                                           + global_vars.screen_size.x - 900
 
-            else:
-                background_pos_right = self._background.position \
-                                       + global_vars.screen_size.x - 900
+                    if max_player_pos.x > background_pos_right:
+                        self._background.scroll(delta * 3)
+                        Updated.world_position.x = self._background.position
+                        self._shifting = True
 
-                if max_player_pos.x > background_pos_right:
-                    self._background.scroll(delta * 3)
-                    Updated.world_position.x = self._background.position
-                    self._shifting = True
+                # elif min_player_pos.x < background_pos_left:
+                #     self._background.scroll(-delta * 15)
+                #     Updated.world_position.x = self._background.position
 
-            # elif min_player_pos.x < background_pos_left:
-            #     self._background.scroll(-delta * 15)
-            #     Updated.world_position.x = self._background.position
+                # draw background
+                self._background.draw(delta)
 
-            # draw background
-            self._background.draw(delta)
+                # global_vars.pixel_per_meter *= .999
 
-            # global_vars.pixel_per_meter *= .999
+                # handle groups
+                Drawn.gl_draw()
+                HasBars.gl_draw()
 
-            # handle groups
-            Drawn.gl_draw()
-            HasBars.gl_draw()
+                # draw in_loop
+                for f in [*global_vars.in_next_loop, *global_vars.get_in_loop()]:
+                    f["func"](*f["args"], **f["kwargs"])
 
-            # draw in_loop
-            for f in [*global_vars.in_next_loop, *global_vars.get_in_loop()]:
-                f["func"](*f["args"], **f["kwargs"])
+                global_vars.in_next_loop.clear()
 
-            global_vars.in_next_loop.clear()
+                # # show fps
+                # fps_surf = self.font.render(
+                #     f"{self._pygame_fps} FPS (render)", False, (255, 255, 255,
+                # 255)
+                # )
 
-            # # show fps
-            # fps_surf = self.font.render(
-            #     f"{self._pygame_fps} FPS (render)", False, (255, 255, 255,
-            # 255)
-            # )
+                # self.top_layer.blit(fps_surf, (0, 0))
+                # fps_surf = self.font.render(
+                #     f"{self._logic_fps} FPS (logic)", False, (255, 255, 255, 255)
+                # )
+                # self.top_layer.blit(fps_surf, (0, 15))
+                # ping_surf = self.font.render(
+                #     f"{self._comms_ping} ms ping", False, (255, 255, 255, 255)
+                # )
+                # self.top_layer.blit(ping_surf, (0, 30))
 
-            # self.top_layer.blit(fps_surf, (0, 0))
-            # fps_surf = self.font.render(
-            #     f"{self._logic_fps} FPS (logic)", False, (255, 255, 255, 255)
-            # )
-            # self.top_layer.blit(fps_surf, (0, 15))
-            # ping_surf = self.font.render(
-            #     f"{self._comms_ping} ms ping", False, (255, 255, 255, 255)
-            # )
-            # self.top_layer.blit(ping_surf, (0, 30))
+                # render_text(
+                #     f"{self._pygame_fps} FPS (render)",
+                #     0, 0,
+                #     self.font
+                # )
 
-            # render_text(
-            #     f"{self._pygame_fps} FPS (render)",
-            #     0, 0,
-            #     self.font
-            # )
+                pg.display.flip()
 
-            pg.display.flip()
+                self._pygame_loop_times.append(
+                    (now - self._game_start, perf_counter() - start)
+                )
+                self._total_loop_times.append(
+                    (now - self._game_start, delta)
+                )
+                last = now
 
-            self._pygame_loop_times.append(
-                (now - self._game_start, perf_counter() - start)
-            )
-            self._total_loop_times.append(
-                (now - self._game_start, delta)
-            )
-            last = now
-
-            clock.tick(global_vars.max_fps)
+                clock.tick(global_vars.max_fps)
 
         ic("pygame end")
         self.end()

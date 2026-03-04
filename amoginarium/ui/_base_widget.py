@@ -20,7 +20,7 @@ from ..logic import coord_t, convert_coord, Vec2
 from ..shared import global_vars
 from ._event import AmogusEvent, event_t
 
-from ._base_frame import BaseFrame
+from ._ui_element import UIElement
 from ._types import anchor_t
 
 
@@ -28,7 +28,7 @@ from ._types import anchor_t
 #                     Code                       #
 ##################################################
 
-class BaseWidget(BaseFrame):
+class BaseWidget(UIElement):
     __abs_position: Vec2  # Absolute position - anchor not factored in
     __abs_size: Vec2  # Absolute size
     __rel_position: Vec2  # Relative position - anchor not factored in
@@ -126,10 +126,13 @@ class BaseWidget(BaseFrame):
             )
         )
 
-    def __check_event(self, event: pg.Event | str) -> None:
+    def __check_event(self, event: pg.Event | str) -> list[Callable[[], None]]:
+        callbacks: list[Callable[[], None]] = []
         if self.__hover and self._visible or event == "mouse-leave" and self._visible:
             for ev in self.__events:
-                ev.check_event(event)
+                if ev.check_event(event):
+                    callbacks.append(lambda arg_ev=event, amogus_event=ev: amogus_event.raise_event(arg_ev))
+        return callbacks
 
     def add_event(
             self,
@@ -176,11 +179,13 @@ class BaseWidget(BaseFrame):
             self._top_left.y <= mouse_pos[1] <= self._bottom_right.y
         ])
 
+        callbacks = []
         if not self.__last_hover and self.__hover:
-            self.__check_event("mouse-enter")
+            callbacks = self.__check_event("mouse-enter")
         elif self.__last_hover and not self.__hover:
-            print("MOUSE LEAVE")
-            self.__check_event("mouse-leave")
+            callbacks = self.__check_event("mouse-leave")
+        for cb in callbacks:
+            cb()
 
         self.__last_hover = self.__hover
 

@@ -18,7 +18,7 @@ from amoginarium.ui._event import AmogusEvent, event_t
 ##################################################
 
 class _EventHandler:
-    __check_events_callbacks: list[Callable[[pg.Event], None]]
+    __check_events_callbacks: list[Callable[[pg.Event], list[Callable[[], None]]]]
 
     __events: list[AmogusEvent]
 
@@ -39,15 +39,21 @@ class _EventHandler:
         self.__events.append(AmogusEvent(event_type, *_args, button=button,
                                          key=key, callback=callback, sound=sound))
 
-    def add_check_events_callback(self, callback: Callable[[pg.Event], None]) -> None:
+    def add_check_events_callback(self, callback: Callable[[pg.Event], list[Callable[[], None]]]) -> None:
         self.__check_events_callbacks.append(callback)
 
     def check_events(self) -> None:
+        callbacks: list[Callable[[], None]] = []
+
         for event in pg.event.get():
             for ev in self.__events:
-                ev.check_event(event)
+                if ev.check_event(event):
+                    callbacks.append(lambda arg_ev=event, amogus_event=ev: amogus_event.raise_event(arg_ev))
             for callback in self.__check_events_callbacks:
-                callback(event)
+                callbacks += callback(event)
+
+        for cb in callbacks:
+            cb()
 
 
 EventHandler = _EventHandler()

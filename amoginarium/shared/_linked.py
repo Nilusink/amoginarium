@@ -38,6 +38,8 @@ class _GlobalVars:
     in_next_loop: list[BoundFunction] = []
     _in_loop: dict[int, BoundFunction] = {}
 
+    time: float = 0
+
     max_fps: int = 60
     show_targets: bool = True
     background_position = 0
