@@ -187,8 +187,6 @@ class ContinuousSoundEffect:
         self.volume = volume
         self._playing = 0
 
-        ic(self._stage_one, self._stage_two, self._stage_three)
-
     @property
     def volume(self) -> float:
         return self._volume
@@ -220,7 +218,6 @@ class ContinuousSoundEffect:
         self._playing = 1
         self._stage_one.play()
 
-    @run_with_debug()
     def _play_2(self) -> None:
         if self._stage_two is ...:
             return self._play_3()
@@ -249,7 +246,6 @@ class ContinuousSoundEffect:
     def _stop(self) -> None:
         self._playing = 0
 
-    @run_with_debug()
     def done(self) -> None:
         """
         stop loop and play shutdown
@@ -267,12 +263,13 @@ class ContinuousSoundEffect:
 
 
 class Minigun(ContinuousSoundEffect):
-    _stage_one_name = "spool_up"
-    _stage_two_name = "burst"
-    _stage_three_name = "spool_down"
+    _stage_one_name = ("minigun", "spool_up")
+    _stage_two_name = ("minigun", "burst")
+    _stage_three_name = ("minigun", "spool_down")
     volume: float = .1
 
 
 class AK47(ContinuousSoundEffect):
     _stage_two_name = ("ak47", "loop")
+    _stage_three_name = ("ak47", "echo")
     volume: float = .1
