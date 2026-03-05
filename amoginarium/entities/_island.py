@@ -7,23 +7,22 @@ an island in the sky
 Author:
 Nilusink
 """
-import time
-
+from __future__ import annotations
 from OpenGL.GL import glBindTexture, glGetTexImage, GL_TEXTURE_2D, GL_RGBA
 from OpenGL.GL import GL_UNSIGNED_BYTE
+from icecream import ic
 import pygame as pg
 import typing as tp
 import math as m
 import random
-
-from icecream import ic
+import time
 
 from ..shared import global_vars
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..entities import VisibleGameEntity
+from ..logic import Vec2, coord_t, convert_coord
 from ..base import Walls
-from ..logic import Vec2
 
 
 class _PolyMatcher:
@@ -82,15 +81,20 @@ class Island(VisibleGameEntity):
 
     def __init__(
             self,
-            start: Vec2,
-            size: Vec2 = ...,
+            pos: coord_t,
+            size: coord_t = ...,
             form: list[list[int]] = ...,
+            damage: float = ...,
+            bounce: float = ...
     ) -> None:
         if size is ... and form is ...:
             raise ValueError("either size or form have to be given!")
 
-        self._size = size
+        start = convert_coord(pos, Vec2)
+        self._size = ... if size is ... else convert_coord(size, Vec2)
         self._form = form
+        self._damage = damage
+        self._bounce = bounce
         self.mask: pg.Mask = ...
 
         if form is not ...:
@@ -193,10 +197,20 @@ class Island(VisibleGameEntity):
         """
         more precise collision for islands
         """
-        # if self._form is ...:
-        #     return pg.sprite.collide_mask(self, other)
-
         return pg.sprite.collide_mask(self, other)
+
+    def player_contact(self, player, delta: float) -> None:
+        if self._damage is not ...:
+            player.hit(self._damage)
+            player.velocity.y -= min(
+                self._damage * delta * player._movement_acceleration / 35,
+                800
+            )
+
+        if self._bounce is not ...:
+            player.velocity.y -= (
+                    self._bounce * delta * player._movement_acceleration / 35
+            )
 
     def get_collided_sides(
             self,

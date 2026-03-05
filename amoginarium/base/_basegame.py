@@ -293,7 +293,10 @@ class BaseGame:
                 if island["type"] in ISLANDS:
                     island_type = ISLANDS[island["type"]]
 
-            if "size" in island:
+            if "args" in island:
+                i = island_type(**island["args"])
+
+            elif "size" in island:
                 i = island_type(
                     Vec2.from_cartesian(*island["pos"]),
                     size=Vec2.from_cartesian(*island["size"]),

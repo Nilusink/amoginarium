@@ -1,5 +1,5 @@
 """
-_moving_island.py
+_island_perks.py
 05. March 2026
 
 an Island that can Move
@@ -15,7 +15,7 @@ def create_moving_island(
         island: Island,
         offset: coord_t,
         time: float
-) -> None:
+) -> Island:
     """
     Takes any island and makes it move
     """
@@ -47,3 +47,4 @@ def create_moving_island(
         return original_update(delta)
 
     island.update = move_island
+    return island

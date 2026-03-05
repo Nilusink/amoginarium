@@ -359,6 +359,7 @@ class Player(LRImageEntity):
 
         # run update from parent classes
         if wall_rider is not ...:
+            wall_rider.player_contact(self, delta)
             self.velocity += wall_rider.velocity
 
         super().update(delta)

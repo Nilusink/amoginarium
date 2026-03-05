@@ -4,6 +4,6 @@ from ._base_entity import GameEntity, VisibleGameEntity, ImageEntity, LRImageEnt
 from ._text_entity import TextEntity
 from ._island import GreenBrickIsland, GrayBrickIsland, GrassIsland, Island
 from ._island import PillarIsland, PlatformIsland1, PlatformIsland2
-from ._moving_island import create_moving_island
+from ._island_perks import create_moving_island
 from ._weapons import Bullet
 from ._player import Player
