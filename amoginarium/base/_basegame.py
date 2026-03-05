@@ -415,6 +415,8 @@ class BaseGame:
         res_x, res_y = global_vars.resolution.xy
         res_ratio = res_x / res_y
 
+        pos = pg.display.get_window_position()
+
         vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(width, height, res_ratio)
 
         if global_vars.scaling == "bars":
@@ -456,6 +458,8 @@ class BaseGame:
             global_vars.screen_size_fac_y = global_vars.resolution.y / global_vars.screen_size_real.y
             global_vars.screen_size_offset_x = 0
             global_vars.screen_size_offset_y = 0
+
+        pg.display.set_window_position(pos)
 
         # 4. FIXED COORDINATE SPACE
         glMatrixMode(GL_PROJECTION)
