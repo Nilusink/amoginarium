@@ -144,6 +144,8 @@ class BaseGame:
         self._background_player.volume = .6
         self._ended = False
 
+        self.__windowed_fullscreen()
+
         # add decorator with callback to self.end
         for func in ("_run_pygame", "_run_logic", "_run_comms"):
             setattr(

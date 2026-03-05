@@ -94,7 +94,7 @@ class OpenGLRenderer(BaseRenderer):
 
         pg.display.set_mode(
             global_vars.screen_size.xy,
-            DOUBLEBUF | OPENGL | pg.RESIZABLE
+            DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
         )
         # self.font = pg.font.SysFont(None, 24)
         pg.display.set_caption(title)
