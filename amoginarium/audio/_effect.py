@@ -103,7 +103,7 @@ class SoundEffect:
         """
         stop the sound effect if it is currently playing
         """
-        if self._channel is not ...:
+        if self._channel is not ... and self._channel is not None:
             if self._channel.get_busy():
                 self._channel.stop()
 

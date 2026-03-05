@@ -25,8 +25,9 @@ from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
 from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret
-from ..entities import Player, GrassIsland, GrayBrickIsland, BaseTurret, FlakTurret, Island
-from ..entities import CRAMTurret, TextEntity
+from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
+from ..entities import Player, GrassIsland, GrayBrickIsland, Island
+from ..entities import GreenBrickIsland, PillarIsland
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC
 from ._scrolling_background import ParalaxBackground
@@ -69,6 +70,8 @@ SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
 ISLANDS: dict[str, tp.Type[Island]] = {
     "island.grass": GrassIsland,
     "island.brick.gray": GrayBrickIsland,
+    "island.brick.green": GreenBrickIsland,
+    "island.pillar": PillarIsland,
 }
 
 
@@ -204,7 +207,9 @@ class BaseGame:
         # load entity textures
         textures.load_images("assets/images/textures.zip")
         textures.load_images("assets/images/dirt_islands.zip")
-        textures.load_images("assets/images/gray_bricks")
+        textures.load_images("assets/images/bricks_gray")
+        textures.load_images("assets/images/bricks_green")
+        textures.load_images("assets/images/column")
         textures.load_images("assets/images/bg1.zip")
         textures.load_images("assets/images/bg2.zip")
         textures.load_images("assets/images/bg3.zip")
