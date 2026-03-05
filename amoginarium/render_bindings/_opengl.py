@@ -81,14 +81,20 @@ class OpenGLRenderer(BaseRenderer):
 
         # set global screen size and ppm
         global_vars.screen_size = Vec2.from_cartesian(*window_size)
-        global_vars.pixel_per_meter = window_size[0] / 1920
+        global_vars.screen_size_real = Vec2.from_cartesian(*window_size)
+        global_vars.resolution = Vec2.from_cartesian(*window_size)
+        global_vars.screen_size_fac_x = 1
+        global_vars.screen_size_offset_x = 0
+        global_vars.screen_size_fac_y = 1
+        global_vars.screen_size_offset_y = 0
+        global_vars.pixel_per_meter = 1
 
         # set max fps to monitor refresh rate
         global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
 
         pg.display.set_mode(
             global_vars.screen_size.xy,
-            DOUBLEBUF | OPENGL
+            DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
         )
         # self.font = pg.font.SysFont(None, 24)
         pg.display.set_caption(title)
@@ -304,10 +310,6 @@ class OpenGLRenderer(BaseRenderer):
     ):
         start = convert_coord(start, Vec2)
         size = convert_coord(size, Vec2)
-
-        if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            size = global_vars.translate_scale(size)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, size):
@@ -534,6 +536,9 @@ class OpenGLRenderer(BaseRenderer):
         text_size: tuple[int, int] = surface.get_size()
 
         pos.y = global_vars.screen_size.y - pos.y
+
+        pos.x = (pos.x / global_vars.screen_size_fac_x) + global_vars.screen_size_offset_x
+        pos.y = (pos.y / global_vars.screen_size_fac_y) + global_vars.screen_size_offset_y
 
         if centered:
             pos.x -= text_size[0] / 2
