@@ -92,6 +92,9 @@ class SoundEffect:
 
         self._sound.set_volume(self.volume)
         self._channel = pg.mixer.find_channel(force=False)
+        if self._channel is None:
+            return
+
         self._channel.play(self._sound, loops, maxtime, fade_ms)
         self._has_played = True
 
@@ -112,7 +115,7 @@ class SoundEffect:
         """
         updates called by the game loop
         """
-        if self._channel is ...:
+        if self._channel is ... or self._channel is None:
             return
 
         done_playing = all([

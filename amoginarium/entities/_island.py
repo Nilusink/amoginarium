@@ -49,7 +49,7 @@ class Island(VisibleGameEntity):
     _island_middle_inv_texture: int = ...
 
     _island_top_bottom_texture: int = ...
-    _island_left_right_rexture: int = ...
+    _island_left_right_texture: int = ...
 
     _island_right_texture: int = ...
     _island_right_inv_texture: int = ...
@@ -71,103 +71,13 @@ class Island(VisibleGameEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        if cls._island_single_texture is not ...:
-            return
-
-        cls._island_single_texture, _ = textures.get_texture(
-            "grass_single",
-            cls._image_size
-        )
-
-        cls._island_single_right_texture, _ = textures.get_texture(
-            "grass_single_right",
-            cls._image_size
-        )
-        cls._island_single_left_texture, _ = textures.get_texture(
-            "grass_single_left",
-            cls._image_size
-        )
-        cls._island_single_top_texture, _ = textures.get_texture(
-            "grass_single_top",
-            cls._image_size
-        )
-        cls._island_single_bottom_texture, _ = textures.get_texture(
-            "grass_single_bottom",
-            cls._image_size
-        )
-
-        cls._island_left_texture, _ = textures.get_texture(
-            "grass_left",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_left_inv_texture, _ = textures.get_texture(
-            "grass_left_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_middle_texture, _ = textures.get_texture(
-            "grass_middle",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_middle_inv_texture, _ = textures.get_texture(
-            "grass_middle_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_top_bottom_texture, _ = textures.get_texture(
-            "grass_top_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_left_right_rexture, _ = textures.get_texture(
-            "grass_left_right",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_right_texture, _ = textures.get_texture(
-            "grass_right",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_right_inv_texture, _ = textures.get_texture(
-            "grass_right_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_wall_right_texture, _ = textures.get_texture(
-            "grass_wall_right",
-            cls._image_size,
-            mirror=""
-        )
-        cls._island_wall_left_texture, _ = textures.get_texture(
-            "grass_wall_right",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._dirt_texture, _ = textures.get_texture(
-            "dirt",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._dirt_hole_texture, _ = textures.get_texture(
-            "dirt_hole",
-            cls._image_size,
-            mirror="x"
-        )
+        raise NotImplementedError
 
     def __init__(
             self,
             start: Vec2,
             size: Vec2 = ...,
             form: list[list[int]] = ...,
-            texture: str = ...
     ) -> None:
         if size is ... and form is ...:
             raise ValueError("either size or form have to be given!")
@@ -178,11 +88,9 @@ class Island(VisibleGameEntity):
 
         if form is not ...:
             self._size = Vec2.from_cartesian(
-                64 * max(len(row) for row in self._form),
-                64 * len(self._form)
+                self._image_size[0] * max(len(r) for r in form),
+                self._image_size[1] * len(form)
             )
-
-        self._texture = texture
 
         super().__init__(
             size=self._size,
@@ -479,7 +387,7 @@ class Island(VisibleGameEntity):
                             left=True,
                             right=True
                         ):
-                            texture = self._island_left_right_rexture
+                            texture = self._island_left_right_texture
 
                         # bottom empty
                         case _PolyMatcher(
@@ -606,3 +514,188 @@ class Island(VisibleGameEntity):
                     pos,
                     size
                 )
+
+
+class GrassIsland(Island):
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._island_single_texture is not ...:
+            return
+
+        cls._island_single_texture, _ = textures.get_texture(
+            "grass_single",
+            cls._image_size
+        )
+
+        cls._island_single_right_texture, _ = textures.get_texture(
+            "grass_single_right",
+            cls._image_size
+        )
+        cls._island_single_left_texture, _ = textures.get_texture(
+            "grass_single_left",
+            cls._image_size
+        )
+        cls._island_single_top_texture, _ = textures.get_texture(
+            "grass_single_top",
+            cls._image_size
+        )
+        cls._island_single_bottom_texture, _ = textures.get_texture(
+            "grass_single_bottom",
+            cls._image_size
+        )
+
+        cls._island_left_texture, _ = textures.get_texture(
+            "grass_left",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_left_inv_texture, _ = textures.get_texture(
+            "grass_left_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_middle_texture, _ = textures.get_texture(
+            "grass_middle",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_middle_inv_texture, _ = textures.get_texture(
+            "grass_middle_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_top_bottom_texture, _ = textures.get_texture(
+            "grass_top_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_left_right_texture, _ = textures.get_texture(
+            "grass_left_right",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_right_texture, _ = textures.get_texture(
+            "grass_right",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_right_inv_texture, _ = textures.get_texture(
+            "grass_right_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_wall_right_texture, _ = textures.get_texture(
+            "grass_wall_right",
+            cls._image_size,
+            mirror=""
+        )
+        cls._island_wall_left_texture, _ = textures.get_texture(
+            "grass_wall_right",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._dirt_texture, _ = textures.get_texture(
+            "dirt",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._dirt_hole_texture, _ = textures.get_texture(
+            "dirt_hole",
+            cls._image_size,
+            mirror="x"
+        )
+
+
+class BasicScopedIsland(Island):
+    _scope: str
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._island_single_texture is not ...:
+            return
+
+        cls._island_single_texture, _ = textures.get_texture(
+            "single",
+            cls._image_size,
+            scope=cls._scope
+        )
+
+        cls._island_middle_texture, _ = textures.get_texture(
+            "top",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_left_texture, _ = textures.get_texture(
+            "top_left",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_wall_left_texture, _ = textures.get_texture(
+            "left",
+            cls._image_size,
+            mirror="",
+            scope=cls._scope
+        )
+        cls._island_left_inv_texture, _ = textures.get_texture(
+            "bottom_left",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_middle_inv_texture, _ = textures.get_texture(
+            "bottom",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_right_inv_texture, _ = textures.get_texture(
+            "bottom_right",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_wall_right_texture, _ = textures.get_texture(
+            "right",
+            cls._image_size,
+            mirror="",
+            scope=cls._scope
+        )
+        cls._island_right_texture, _ = textures.get_texture(
+            "top_right",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._dirt_texture, _ = textures.get_texture(
+            "center",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+
+        cls._dirt_hole_texture = cls._dirt_texture
+
+        cls._island_top_bottom_texture = cls._island_single_texture
+        cls._island_left_right_texture, _ = textures.get_texture(
+            "left_right",
+            cls._image_size,
+            mirror="",
+            scope=cls._scope
+        )
+
+        cls._island_single_right_texture = cls._island_single_texture
+        cls._island_single_left_texture = cls._island_single_texture
+        cls._island_single_top_texture = cls._island_single_texture
+        cls._island_single_bottom_texture = cls._island_single_texture
+
+
+class GrayBrickIsland(BasicScopedIsland):
+    _scope = "gray_bricks"
+    _image_size = (24*3, 24*3)

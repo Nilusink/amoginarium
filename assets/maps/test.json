@@ -4,6 +4,7 @@
     "spawn_pos": [100, 100],
     "platforms": [
         {
+            "type": "island.brick.gray",
             "pos": [0, 300],
             "form": [
                 [0, 0, 0, 0, 0, 0, 0, 0, 1, 1],

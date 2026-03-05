@@ -157,7 +157,10 @@ class OpenGLRenderer(BaseRenderer):
     ) -> tuple[TextureID, tuple[int, int]]:
         # for debugging
         if size is not None:
-            image = image.resize(convert_coord(size))
+            image = image.resize(
+                convert_coord(size),
+                resample=Image.NEAREST
+            )
 
         if "x" in mirror:
             image = image.transpose(Image.FLIP_LEFT_RIGHT)

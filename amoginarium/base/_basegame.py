@@ -25,7 +25,7 @@ from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
 from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret
-from ..entities import Player, Island, BaseTurret, FlakTurret
+from ..entities import Player, GrassIsland, GrayBrickIsland, BaseTurret, FlakTurret, Island
 from ..entities import CRAMTurret, TextEntity
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC
@@ -64,7 +64,11 @@ SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
     "turret.static.mortar": MortarTurret,
     "turret.static.flak": FlakTurret,
     "turret.static.cram": CRAMTurret,
-    "instructions.text": TextEntity
+    "instructions.text": TextEntity,
+}
+ISLANDS: dict[str, tp.Type[Island]] = {
+    "island.grass": GrassIsland,
+    "island.brick.gray": GrayBrickIsland,
 }
 
 
@@ -200,13 +204,16 @@ class BaseGame:
         # load entity textures
         textures.load_images("assets/images/textures.zip")
         textures.load_images("assets/images/dirt_islands.zip")
+        textures.load_images("assets/images/gray_bricks")
         textures.load_images("assets/images/bg1.zip")
         textures.load_images("assets/images/bg2.zip")
         textures.load_images("assets/images/bg3.zip")
         textures.load_images("assets/images/bg4.zip")
         textures.load_images("assets/images/animations/explosion.zip")
 
-        Island.load_textures()
+        for island in ISLANDS.values():
+            island.load_textures()
+
         Player.load_textures()
         BaseTurret.load_textures()
         explosion.load_textures(size=(512, 512))
@@ -271,14 +278,19 @@ class BaseGame:
 
         # load islands
         for island in data["platforms"]:
+            island_type = GrassIsland
+            if "type" in island:
+                if island["type"] in ISLANDS:
+                    island_type = ISLANDS[island["type"]]
+
             if "size" in island:
-                Island(
+                island_type(
                     Vec2.from_cartesian(*island["pos"]),
                     size=Vec2.from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
-                Island(
+                island_type(
                     Vec2.from_cartesian(*island["pos"]),
                     form=island["form"],
                 )
