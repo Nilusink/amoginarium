@@ -24,10 +24,12 @@ from ._groups import Updated, GravityAffected, Drawn, FrictionXAffected
 from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
-from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret
+from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
+    create_moving_island
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
 from ..entities import Player, GrassIsland, GrayBrickIsland, Island
-from ..entities import GreenBrickIsland, PillarIsland
+from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
+from ..entities import PlatformIsland2
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC
 from ._scrolling_background import ParalaxBackground
@@ -71,7 +73,9 @@ ISLANDS: dict[str, tp.Type[Island]] = {
     "island.grass": GrassIsland,
     "island.brick.gray": GrayBrickIsland,
     "island.brick.green": GreenBrickIsland,
-    "island.pillar": PillarIsland,
+    "island.pillar.1": PillarIsland,
+    "island.platform.1": PlatformIsland1,
+    "island.platform.2": PlatformIsland2,
 }
 
 
@@ -209,7 +213,8 @@ class BaseGame:
         textures.load_images("assets/images/dirt_islands.zip")
         textures.load_images("assets/images/bricks_gray")
         textures.load_images("assets/images/bricks_green")
-        textures.load_images("assets/images/column")
+        textures.load_images("assets/images/columns")
+        textures.load_images("assets/images/platforms")
         textures.load_images("assets/images/bg1.zip")
         textures.load_images("assets/images/bg2.zip")
         textures.load_images("assets/images/bg3.zip")
@@ -289,13 +294,13 @@ class BaseGame:
                     island_type = ISLANDS[island["type"]]
 
             if "size" in island:
-                island_type(
+                i = island_type(
                     Vec2.from_cartesian(*island["pos"]),
                     size=Vec2.from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
-                island_type(
+                i = island_type(
                     Vec2.from_cartesian(*island["pos"]),
                     form=island["form"],
                 )
@@ -304,6 +309,13 @@ class BaseGame:
                 print_ic_style(
                     f"{CC.fg.RED}invalid island: "
                     f"{CC.fg.YELLOW}{island}"
+                )
+                continue
+
+            if "move" in island:
+                create_moving_island(
+                    i,
+                    **island["move"]
                 )
 
         # load entities

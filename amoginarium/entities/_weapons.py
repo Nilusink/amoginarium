@@ -394,7 +394,7 @@ class BaseWeapon:
 
         # recoil
         if hasattr(self.parent, "_movement_acceleration"):
-            recoil = direction * self.parent._movement_acceleration
+            recoil = direction * self.parent._movement_acceleration / 100
             recoil *= self._recoil_factor
             self.parent.acceleration -= recoil
 

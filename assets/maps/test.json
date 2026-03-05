@@ -16,11 +16,20 @@
             ]
         },
         {
-            "type": "island.pillar",
+            "type": "island.pillar.1",
             "pos": [150, 880],
             "form": [
-                [1, 1, 0, 1]
+                [1, 1, 2, 1]
             ]
+        },
+        {
+            "type": "island.platform.2",
+            "pos": [850, 180],
+            "form": [[1]],
+            "move": {
+                "offset": [200, 100],
+                "time": 3
+            }
         },
         {
             "pos": [1000, 736],

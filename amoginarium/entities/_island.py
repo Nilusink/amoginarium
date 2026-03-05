@@ -140,7 +140,7 @@ class Island(VisibleGameEntity):
         )
 
     @classmethod
-    def _get_block_mask(cls) -> pg.Mask:
+    def _get_block_mask(cls) -> pg.Mask | tuple[pg.Mask, pg.Mask]:
         return pg.Mask(cls._image_size, fill=True)
 
     def _generate_collision_mask(self) -> None:
@@ -154,6 +154,10 @@ class Island(VisibleGameEntity):
         # collide sprite and rect
         entity_mask = pg.Mask(self.size.xy)
         block_mask = self._get_block_mask()
+        special_mask = None
+
+        if isinstance(block_mask, tuple):
+            block_mask, special_mask = block_mask
 
         n_rows = len(self._form)
         n_columns = max(len(row) for row in self._form)
@@ -170,8 +174,12 @@ class Island(VisibleGameEntity):
                     island_type = -1
 
                 if island_type > 0:
+                    mask = block_mask
+                    if special_mask is not None and island_type == 2:
+                        mask = special_mask
+
                     entity_mask.draw(
-                        block_mask,
+                        mask,
                         (column_offset, row_offset)
                     )
 
@@ -776,6 +784,7 @@ class GreenBrickIsland(BasicScopedIsland):
 
 class SingleBlockIsland(Island):
     _texture: tuple[str, str]
+    _special_texture: [str, str] = None  # optional
 
     @classmethod
     def load_textures(cls) -> None:
@@ -809,17 +818,50 @@ class SingleBlockIsland(Island):
         cls._island_wall_left_texture = cls._island_single_texture
 
         cls._dirt_texture = cls._island_single_texture
-        cls._dirt_hole_texture = cls._island_single_texture
+
+        if cls._special_texture is not None:
+            cls._dirt_hole_texture, _ = textures.get_texture(
+                cls._special_texture[1],
+                cls._image_size,
+                scope=cls._special_texture[0]
+            )
+
+        else:
+            cls._dirt_hole_texture = cls._island_single_texture
 
     @classmethod
-    def _get_block_mask(cls) -> pg.Mask:
+    def _get_block_mask(cls) -> pg.Mask | tuple[pg.Mask, pg.Mask]:
+        # get default mask
         glBindTexture(GL_TEXTURE_2D, cls._island_single_texture)
         data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
         surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
         surface = pg.transform.flip(surface, False, False)
-        return pg.mask.from_surface(surface)
+        normal_mask = pg.mask.from_surface(surface)
+
+        if cls._special_texture is None:
+            return normal_mask
+
+        # get special texture
+        glBindTexture(GL_TEXTURE_2D, cls._dirt_hole_texture)
+        data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
+        surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
+        surface = pg.transform.flip(surface, False, False)
+        special_mask = pg.mask.from_surface(surface)
+
+        return normal_mask, special_mask
 
 
 class PillarIsland(SingleBlockIsland):
-    _texture = ("column", "column")
+    _texture = ("columns", "1")
+    _special_texture = ("columns", "1_1")
     _image_size = (64*3, 112*3)
+
+
+class PlatformIsland1(SingleBlockIsland):
+    _texture = ("platforms", "1")
+    _image_size = (46*3, 13*3)
+
+
+class PlatformIsland2(SingleBlockIsland):
+    _texture = ("platforms", "2")
+    _image_size = (44*3, 11*3)
