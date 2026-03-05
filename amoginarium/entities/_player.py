@@ -303,14 +303,14 @@ class Player(LRImageEntity):
         # accelerate right
         if self._controller.joy_x > 0:
             if self.velocity.x < self._max_speed:
-                self.acceleration.x += self._movement_acceleration # * delta
+                self.acceleration.x += self._movement_acceleration  # * delta
 
             # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
-                self.acceleration.x -= self._movement_acceleration #* delta
+                self.acceleration.x -= self._movement_acceleration  # * delta
 
             # self.facing.x = -1
 
@@ -335,8 +335,8 @@ class Player(LRImageEntity):
         # shoot
         if self._controller.shoot:
             mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
-            mouse_pos = (mouse_pos.x * 1920 / global_vars.screen_size_real.x,
-                         mouse_pos.y * 1080 / global_vars.screen_size_real.y)
+            mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
+                         (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
 
             vector = convert_coord(mouse_pos, Vec2) - self.world_position
 
@@ -373,8 +373,8 @@ class Player(LRImageEntity):
         # check if out of bounds
         # left of screen
         mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
-        mouse_pos = (mouse_pos.x * 1920 / global_vars.screen_size_real.x,
-                     mouse_pos.y * 1080 / global_vars.screen_size_real.y)
+        mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
+                     (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
 
         vector = convert_coord(mouse_pos, Vec2) - self.world_position
         self.facing.x = vector.x // abs(vector.x)

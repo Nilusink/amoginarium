@@ -82,6 +82,11 @@ class OpenGLRenderer(BaseRenderer):
         # set global screen size and ppm
         global_vars.screen_size = Vec2.from_cartesian(*window_size)
         global_vars.screen_size_real = Vec2.from_cartesian(*window_size)
+        global_vars.resolution = Vec2.from_cartesian(*window_size)
+        global_vars.screen_size_fac_x = 1
+        global_vars.screen_size_offset_x = 0
+        global_vars.screen_size_fac_y = 1
+        global_vars.screen_size_offset_y = 0
         global_vars.pixel_per_meter = 1
 
         # set max fps to monitor refresh rate
@@ -532,8 +537,8 @@ class OpenGLRenderer(BaseRenderer):
 
         pos.y = global_vars.screen_size.y - pos.y
 
-        pos.x *= global_vars.screen_size_real.x / 1920
-        pos.y *= global_vars.screen_size_real.y / 1080
+        pos.x = (pos.x / global_vars.screen_size_fac_x) + global_vars.screen_size_offset_x
+        pos.y = (pos.y / global_vars.screen_size_fac_y) + global_vars.screen_size_offset_y
 
         if centered:
             pos.x -= text_size[0] / 2

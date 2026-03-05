@@ -176,8 +176,8 @@ class BaseWidget(UIElement):
             self.__bottom_right = self.__abs_position + self.__abs_size / 2
 
         mouse_pos = pg.mouse.get_pos()
-        mouse_pos = (mouse_pos[0] * 1920 / global_vars.screen_size_real.x,
-                     mouse_pos[1] * 1080 / global_vars.screen_size_real.y)
+        mouse_pos = ((mouse_pos[0] - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
+                     (mouse_pos[1] - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
         self.__hover = all([
             self._top_left.x <= mouse_pos[0] <= self._bottom_right.x,
             self._top_left.y <= mouse_pos[1] <= self._bottom_right.y
