@@ -135,6 +135,7 @@ class Button(Rectangle):
     def gl_draw(self) -> None:
         super().gl_draw()
         # text
+
         renderer.draw_pg_surf(
             self._top_left + self._abs_size / 2,
             self.__text_surface,

@@ -7,6 +7,7 @@ Project: amoginarium
 from __future__ import annotations
 
 from json import load, dump
+import typing as tp
 
 
 ##################################################
@@ -24,6 +25,7 @@ class _Settings:
     master_volume: float
     gun_volume: float
     music_volume: float
+    scaling: tp.Literal["bars", "fixed_aspect_ratio", "stretching"]
 
     def __init__(self, file: str = "settings.json") -> None:
         self.__file = file
@@ -40,6 +42,7 @@ class _Settings:
                 "master_volume": 1.0,
                 "gun_volume": 1.0,
                 "music_volume": 1.0,
+                "scaling": "bars"
             }
             for key, value in self.__data.items():
                 self.__setattr__(key, value)

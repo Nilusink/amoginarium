@@ -22,8 +22,8 @@ from ..base._textures import textures
 from ..controllers import Controller
 from ..shared import Coalitions
 from ._island import Island
-from ..logic import Vec2
-
+from ..logic import Vec2, convert_coord
+from ..shared import global_vars
 
 PLAYER_LEFT_64_PATH = "amogus64left"
 PLAYER_RIGHT_64_PATH = "amogus64right"
@@ -90,13 +90,13 @@ class Player(LRImageEntity):
         )
 
     def __init__(
-        self,
-        coalition: Coalitions,
-        controller: Controller,
-        facing: Vec2 = ...,
-        initial_position: Vec2 = ...,
-        initial_velocity: Vec2 = ...,
-        size: int = 64
+            self,
+            coalition: Coalitions,
+            controller: Controller,
+            facing: Vec2 = ...,
+            initial_position: Vec2 = ...,
+            initial_velocity: Vec2 = ...,
+            size: int = 64
     ) -> None:
         self._hp = self._max_hp
 
@@ -198,7 +198,7 @@ class Player(LRImageEntity):
         """
         self._current_weapon -= 1
         if self._current_weapon < 0:
-            self._current_weapon = len(self._weapons)-1
+            self._current_weapon = len(self._weapons) - 1
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
@@ -340,7 +340,10 @@ class Player(LRImageEntity):
         # shoot
         if self._controller.shoot:
             mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
-            vector = mouse_pos - self.world_position
+            mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
+                         (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
+
+            vector = convert_coord(mouse_pos, Vec2) - self.world_position
 
             # shot_direction = self.facing.copy()
             # shot_direction.y = -.4
@@ -382,7 +385,10 @@ class Player(LRImageEntity):
         # check if out of bounds
         # left of screen
         mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
-        vector = mouse_pos - self.world_position
+        mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
+                     (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
+
+        vector = convert_coord(mouse_pos, Vec2) - self.world_position
         self.facing.x = vector.x // abs(vector.x)
         angle = vector.angle * (180 / 3.14169265358979)
 

@@ -7,17 +7,17 @@ Defines the core game
 Author:
 Nilusink
 """
-import math
-from time import perf_counter, strftime, time, perf_counter_ns
+import numpy
+from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glLoadIdentity, glOrtho, GL_MODELVIEW, \
+    glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
 from concurrent.futures import ThreadPoolExecutor
+from time import perf_counter, strftime, time, perf_counter_ns
 from icecream import ic
 import typing as tp
 import pygame as pg
 import json
+import math
 import os
-
-from OpenGL.GL import glClearColor
-from typing_extensions import Any
 
 from ._groups import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players
 from ._groups import Updated, GravityAffected, Drawn, FrictionXAffected
@@ -34,7 +34,7 @@ from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC
 from ._scrolling_background import ParalaxBackground
 from ..shared import global_vars, Coalitions
-from ..logic import SimpleLock, Color, Vec2
+from ..logic import SimpleLock, Vec2, convert_coord
 from ..audio import sounds, sound_effects
 from ..render_bindings import renderer
 from ..audio import BackgroundPlayer
@@ -42,8 +42,7 @@ from ..communications import TCPServer
 from ..animations import explosion
 from ._textures import textures
 from ..settings import Settings
-from ..ui import UIElement
-from ..ui._event_handler import EventHandler
+from ..ui import UIElement, EventHandler
 
 
 class BoundFunction(tp.TypedDict):
@@ -103,8 +102,10 @@ class BaseGame:
     ) -> None:
         global_vars.show_targets = show_targets
         self.time_multiplier = time_multiplier
-        self._last_loaded = ...
+        self._last_loaded: tp.LiteralString = ...
         self._shifting = False
+
+        global_vars.scaling = Settings.scaling
 
         # configure icecream
         if not debug:
@@ -152,6 +153,9 @@ class BaseGame:
         self._bg_color = (0, 0, 0)
         self._background_player = BackgroundPlayer()
         self._background_player.volume = .6
+        self._ended = False
+
+        self.__windowed_fullscreen()
 
         # add decorator with callback to self.end
         for func in ("_run_pygame", "_run_logic", "_run_comms"):
@@ -228,7 +232,7 @@ class BaseGame:
         BaseTurret.load_textures()
         explosion.load_textures(size=(512, 512))
         end = perf_counter_ns()
-        load_time = (end-start)/1e6
+        load_time = (end - start) / 1e6
         ic(load_time)
 
     @property
@@ -391,9 +395,109 @@ class BaseGame:
         # re-assign pygame joystick instance
         c.set_joystick(joy)
 
-    def __clean_end(self, *_args: Any, **_kwargs: Any) -> None:
+    def __clean_end(self, *_args: tp.Any, **_kwargs: tp.Any) -> None:
         ic("pygame end")
         self.running = False
+
+    def __scaling_restricted_ratio(self, width: float, height: float, ratio: float):
+        # Calculate the aspect ratio of the current window
+        window_ratio = width / height
+
+        if window_ratio > ratio:
+            # Window is too wide: height is the constraint
+            view_h = height
+            view_w = int(height * ratio)
+            offset_x = (width - view_w) // 2
+            offset_y = 0
+        else:
+            # Window is too tall: width is the constraint
+            view_w = width
+            view_h = int(width / ratio)
+            offset_x = 0
+            offset_y = (height - view_h) // 2
+
+        return offset_x, offset_y, view_w, view_h
+
+    def __windowed_fullscreen(self) -> None:
+        pg.display.set_mode(
+            (0, 0),
+            pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE | pg.FULLSCREEN
+        )
+
+        size = numpy.ndarray.tolist(glGetIntegerv(GL_VIEWPORT))
+        size = size[2], size[3]
+
+        pos = pg.display.get_window_position()
+
+        pg.display.set_mode(
+            (0, 0),
+            pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
+        )
+
+        self.__window_update(*size)
+
+        pg.display.set_window_position(pos)
+
+    def __window_update(self, width: float = ..., height: float = ...) -> None:
+        if width is ...:
+            width = pg.display.get_window_size()[0]
+        if height is ...:
+            height = pg.display.get_window_size()[1]
+
+        res_x, res_y = global_vars.resolution.xy
+        res_ratio = res_x / res_y
+
+        vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(width, height, res_ratio)
+
+        if global_vars.scaling == "bars":
+            # Tell OpenGL to only draw inside the calculated aspect-correct rectangle
+            glViewport(vp_x, vp_y, vp_w, vp_h)
+            pg.display.set_mode(
+                (width, height),
+                pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
+            )
+            global_vars.screen_size_real = convert_coord((width, height), Vec2)
+
+            global_vars.screen_size_fac_x = global_vars.resolution.x / vp_w
+            global_vars.screen_size_fac_y = global_vars.resolution.y / vp_h
+            global_vars.screen_size_offset_x = vp_x
+            global_vars.screen_size_offset_y = vp_y
+
+        elif global_vars.scaling == "fixed_aspect_ratio":
+            pg.display.set_mode(
+                (vp_w, vp_h),
+                pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
+            )
+            global_vars.screen_size_real = convert_coord((vp_w, vp_h), Vec2)
+
+            global_vars.screen_size_fac_x = global_vars.resolution.x / global_vars.screen_size_real.x
+            global_vars.screen_size_fac_y = global_vars.resolution.y / global_vars.screen_size_real.y
+            global_vars.screen_size_offset_x = 0
+            global_vars.screen_size_offset_y = 0
+
+        else:
+            pg.display.set_mode(
+                (width, height),
+                pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
+            )
+            glViewport(0, 0, width, height)
+
+            global_vars.screen_size_real = convert_coord((width, height), Vec2)
+
+            global_vars.screen_size_fac_x = global_vars.resolution.x / global_vars.screen_size_real.x
+            global_vars.screen_size_fac_y = global_vars.resolution.y / global_vars.screen_size_real.y
+            global_vars.screen_size_offset_x = 0
+            global_vars.screen_size_offset_y = 0
+
+        # 4. FIXED COORDINATE SPACE
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+
+        glOrtho(0, res_x, res_y, 0, -1, 1)
+
+        # Switch back to Modelview for drawing
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
 
     def _run_pygame(self) -> None:
         """
@@ -408,7 +512,9 @@ class BaseGame:
         self.load_map("assets/maps/test.json")
 
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
+        EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
         EventHandler.add_event(pg.JOYDEVICEADDED, callback=self.__add_joystick)
+        EventHandler.add_event(pg.VIDEORESIZE, callback=lambda ev: self.__window_update(*ev.size))
 
         # self.load_map("assets/maps/test.json")
 
@@ -515,7 +621,8 @@ class BaseGame:
         pause_menu.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: start_game())
 
         settings = SettingsMenu(
-            close_settings
+            close_settings,
+            self.__window_update
         )
 
         # Temporary solution
@@ -526,6 +633,12 @@ class BaseGame:
 
         # draw background once
         while self.running:
+            glClearColor(0.0, 0.0, 0.1, 1)
+
+            # 2. Clear the entire window buffer with that black color
+            # (Note: glClear ignores glViewport, so it will clean the whole window)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
             # total delta since last call
             now = perf_counter()
             global_vars.time = time()
@@ -763,9 +876,11 @@ class BaseGame:
         stop everything
         """
         # check if end has already been called
-        if not self.running:
+        if self._ended:
             return
+        self._ended = True
 
+        Settings.scaling = global_vars.scaling
         Settings.write()
 
         # tell threads to exit
