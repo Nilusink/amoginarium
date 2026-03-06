@@ -7,17 +7,22 @@ an island in the sky
 Author:
 Nilusink
 """
+from __future__ import annotations
+from OpenGL.GL import glBindTexture, glGetTexImage, GL_TEXTURE_2D, GL_RGBA
+from OpenGL.GL import GL_UNSIGNED_BYTE
+from icecream import ic
 import pygame as pg
 import typing as tp
 import math as m
 import random
+import time
 
 from ..shared import global_vars
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..entities import VisibleGameEntity
+from ..logic import Vec2, coord_t, convert_coord
 from ..base import Walls
-from ..logic import Vec2
 
 
 class _PolyMatcher:
@@ -49,7 +54,7 @@ class Island(VisibleGameEntity):
     _island_middle_inv_texture: int = ...
 
     _island_top_bottom_texture: int = ...
-    _island_left_right_rexture: int = ...
+    _island_left_right_texture: int = ...
 
     _island_right_texture: int = ...
     _island_right_inv_texture: int = ...
@@ -61,6 +66,7 @@ class Island(VisibleGameEntity):
     _dirt_texture: int = ...
 
     _image_size: tuple[int, int] = (64, 64)
+    debug = False
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
@@ -71,118 +77,31 @@ class Island(VisibleGameEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        if cls._island_single_texture is not ...:
-            return
-
-        cls._island_single_texture, _ = textures.get_texture(
-            "grass_single",
-            cls._image_size
-        )
-
-        cls._island_single_right_texture, _ = textures.get_texture(
-            "grass_single_right",
-            cls._image_size
-        )
-        cls._island_single_left_texture, _ = textures.get_texture(
-            "grass_single_left",
-            cls._image_size
-        )
-        cls._island_single_top_texture, _ = textures.get_texture(
-            "grass_single_top",
-            cls._image_size
-        )
-        cls._island_single_bottom_texture, _ = textures.get_texture(
-            "grass_single_bottom",
-            cls._image_size
-        )
-
-        cls._island_left_texture, _ = textures.get_texture(
-            "grass_left",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_left_inv_texture, _ = textures.get_texture(
-            "grass_left_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_middle_texture, _ = textures.get_texture(
-            "grass_middle",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_middle_inv_texture, _ = textures.get_texture(
-            "grass_middle_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_top_bottom_texture, _ = textures.get_texture(
-            "grass_top_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_left_right_rexture, _ = textures.get_texture(
-            "grass_left_right",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_right_texture, _ = textures.get_texture(
-            "grass_right",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._island_right_inv_texture, _ = textures.get_texture(
-            "grass_right_bottom",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._island_wall_right_texture, _ = textures.get_texture(
-            "grass_wall_right",
-            cls._image_size,
-            mirror=""
-        )
-        cls._island_wall_left_texture, _ = textures.get_texture(
-            "grass_wall_right",
-            cls._image_size,
-            mirror="x"
-        )
-
-        cls._dirt_texture, _ = textures.get_texture(
-            "dirt",
-            cls._image_size,
-            mirror="x"
-        )
-        cls._dirt_hole_texture, _ = textures.get_texture(
-            "dirt_hole",
-            cls._image_size,
-            mirror="x"
-        )
+        raise NotImplementedError
 
     def __init__(
             self,
-            start: Vec2,
-            size: Vec2 = ...,
+            pos: coord_t,
+            size: coord_t = ...,
             form: list[list[int]] = ...,
-            texture: str = ...
+            damage: float = ...,
+            bounce: float = ...
     ) -> None:
         if size is ... and form is ...:
             raise ValueError("either size or form have to be given!")
 
-        self._size = size
+        start = convert_coord(pos, Vec2)
+        self._size = ... if size is ... else convert_coord(size, Vec2)
         self._form = form
+        self._damage = damage
+        self._bounce = bounce
         self.mask: pg.Mask = ...
 
         if form is not ...:
             self._size = Vec2.from_cartesian(
-                64 * max(len(row) for row in self._form),
-                64 * len(self._form)
+                self._image_size[0] * max(len(r) for r in form),
+                self._image_size[1] * len(form)
             )
-
-        self._texture = texture
 
         super().__init__(
             size=self._size,
@@ -224,15 +143,25 @@ class Island(VisibleGameEntity):
             self.size.y
         )
 
+    @classmethod
+    def _get_block_mask(cls) -> pg.Mask | tuple[pg.Mask, pg.Mask]:
+        return pg.Mask(cls._image_size, fill=True)
+
     def _generate_collision_mask(self) -> None:
         """
         generate the mask used for collision
         """
+        start = time.perf_counter_ns()
         if self._form is ...:
             return super()._generate_collision_mask()
 
         # collide sprite and rect
-        mask_surf = pg.Surface(self.size.xy, pg.SRCALPHA, 32)
+        entity_mask = pg.Mask(self.size.xy)
+        block_mask = self._get_block_mask()
+        special_mask = None
+
+        if isinstance(block_mask, tuple):
+            block_mask, special_mask = block_mask
 
         n_rows = len(self._form)
         n_columns = max(len(row) for row in self._form)
@@ -249,34 +178,39 @@ class Island(VisibleGameEntity):
                     island_type = -1
 
                 if island_type > 0:
-                    pg.draw.rect(
-                        mask_surf,
-                        (255, 255, 255, 255),
-                        (
-                            (column_offset, row_offset),
-                            self._image_size
-                        )
-                    )
-                else:
-                    pg.draw.rect(
-                        mask_surf,
-                        (0, 0, 0, 0),
-                        (
-                            (column_offset, row_offset),
-                            self._image_size
-                        )
+                    mask = block_mask
+                    if special_mask is not None and island_type == 2:
+                        mask = special_mask
+
+                    entity_mask.draw(
+                        mask,
+                        (column_offset, row_offset)
                     )
 
-        self.mask = pg.mask.from_surface(mask_surf)
+        self.mask = entity_mask
+        end = time.perf_counter_ns()
+        calc_time = (end - start) / 1000
+        classname = self.__class__.__name__
+        ic(classname, calc_time, "µs")
 
     def collide(self, other) -> tuple[int, int] | None:
         """
         more precise collision for islands
         """
-        # if self._form is ...:
-        #     return pg.sprite.collide_mask(self, other)
-
         return pg.sprite.collide_mask(self, other)
+
+    def player_contact(self, player, delta: float) -> None:
+        if self._damage is not ...:
+            player.hit(self._damage)
+            player.velocity.y -= min(
+                self._damage * delta * player._movement_acceleration / 35,
+                800
+            )
+
+        if self._bounce is not ...:
+            player.velocity.y -= (
+                    self._bounce * delta * player._movement_acceleration / 35
+            )
 
     def get_collided_sides(
             self,
@@ -479,7 +413,7 @@ class Island(VisibleGameEntity):
                             left=True,
                             right=True
                         ):
-                            texture = self._island_left_right_rexture
+                            texture = self._island_left_right_texture
 
                         # bottom empty
                         case _PolyMatcher(
@@ -606,3 +540,342 @@ class Island(VisibleGameEntity):
                     pos,
                     size
                 )
+
+        if self.debug:
+            debug_surface = self.mask.to_surface()
+            renderer.draw_pg_surf((
+                self.world_position.x,
+                self.world_position.y + self.size.y
+            ),
+                debug_surface
+            )
+
+
+class GrassIsland(Island):
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._island_single_texture is not ...:
+            return
+
+        cls._island_single_texture, _ = textures.get_texture(
+            "grass_single",
+            cls._image_size
+        )
+
+        cls._island_single_right_texture, _ = textures.get_texture(
+            "grass_single_right",
+            cls._image_size
+        )
+        cls._island_single_left_texture, _ = textures.get_texture(
+            "grass_single_left",
+            cls._image_size
+        )
+        cls._island_single_top_texture, _ = textures.get_texture(
+            "grass_single_top",
+            cls._image_size
+        )
+        cls._island_single_bottom_texture, _ = textures.get_texture(
+            "grass_single_bottom",
+            cls._image_size
+        )
+
+        cls._island_left_texture, _ = textures.get_texture(
+            "grass_left",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_left_inv_texture, _ = textures.get_texture(
+            "grass_left_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_middle_texture, _ = textures.get_texture(
+            "grass_middle",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_middle_inv_texture, _ = textures.get_texture(
+            "grass_middle_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_top_bottom_texture, _ = textures.get_texture(
+            "grass_top_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_left_right_texture, _ = textures.get_texture(
+            "grass_left_right",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_right_texture, _ = textures.get_texture(
+            "grass_right",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._island_right_inv_texture, _ = textures.get_texture(
+            "grass_right_bottom",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._island_wall_right_texture, _ = textures.get_texture(
+            "grass_wall_right",
+            cls._image_size,
+            mirror=""
+        )
+        cls._island_wall_left_texture, _ = textures.get_texture(
+            "grass_wall_right",
+            cls._image_size,
+            mirror="x"
+        )
+
+        cls._dirt_texture, _ = textures.get_texture(
+            "dirt",
+            cls._image_size,
+            mirror="x"
+        )
+        cls._dirt_hole_texture, _ = textures.get_texture(
+            "dirt_hole",
+            cls._image_size,
+            mirror="x"
+        )
+
+
+class BasicScopedIsland(Island):
+    _scope: str
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._island_single_texture is not ...:
+            return
+
+        available = textures.get_raw_from_scope(cls._scope)
+
+        cls._island_single_texture, _ = textures.get_texture(
+            "single",
+            cls._image_size,
+            scope=cls._scope
+        )
+
+        cls._island_middle_texture, _ = textures.get_texture(
+            "top",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_left_texture, _ = textures.get_texture(
+            "top_left",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_wall_left_texture, _ = textures.get_texture(
+            "left",
+            cls._image_size,
+            mirror="",
+            scope=cls._scope
+        )
+        cls._island_left_inv_texture, _ = textures.get_texture(
+            "bottom_left",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_middle_inv_texture, _ = textures.get_texture(
+            "bottom",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_right_inv_texture, _ = textures.get_texture(
+            "bottom_right",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._island_wall_right_texture, _ = textures.get_texture(
+            "right",
+            cls._image_size,
+            mirror="",
+            scope=cls._scope
+        )
+        cls._island_right_texture, _ = textures.get_texture(
+            "top_right",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+        cls._dirt_texture, _ = textures.get_texture(
+            "center",
+            cls._image_size,
+            mirror="x",
+            scope=cls._scope
+        )
+
+        if "special" in available:
+            cls._dirt_hole_texture, _ = textures.get_texture(
+                "special",
+                cls._image_size,
+                mirror="",
+                scope=cls._scope
+            )
+
+        else:
+            cls._dirt_hole_texture = cls._dirt_texture
+
+        cls._island_top_bottom_texture, _ = textures.get_texture(
+            "top_bottom",
+            cls._image_size,
+            mirror="",
+            scope=cls._scope
+        )
+        cls._island_left_right_texture, _ = textures.get_texture(
+            "left_right",
+            cls._image_size,
+            mirror="",
+            scope=cls._scope
+        )
+
+        if "single_right" in available:
+            cls._island_single_right_texture, _ = textures.get_texture(
+                "single_right",
+                cls._image_size,
+                mirror="",
+                scope=cls._scope
+            )
+
+        else:
+            cls._island_single_right_texture = cls._island_single_texture
+
+        if "single_left" in available:
+            cls._island_single_left_texture, _ = textures.get_texture(
+                "single_left",
+                cls._image_size,
+                mirror="",
+                scope=cls._scope
+            )
+
+        else:
+            cls._island_single_left_texture = cls._island_single_texture
+
+        if "single_top" in available:
+            cls._island_single_top_texture, _ = textures.get_texture(
+                "single_top",
+                cls._image_size,
+                mirror="",
+                scope=cls._scope
+            )
+
+        else:
+            cls._island_single_top_texture = cls._island_single_texture
+
+        if "single_bottom" in available:
+            cls._island_single_bottom_texture, _ = textures.get_texture(
+                "single_bottom",
+                cls._image_size,
+                mirror="",
+                scope=cls._scope
+            )
+
+        else:
+            cls._island_single_bottom_texture = cls._island_single_texture
+
+
+class GrayBrickIsland(BasicScopedIsland):
+    _scope = "bricks_gray"
+    _image_size = (24*3, 24*3)
+
+
+class GreenBrickIsland(BasicScopedIsland):
+    _scope = "bricks_green"
+    _image_size = (24*3, 24*3)
+
+
+class SingleBlockIsland(Island):
+    _texture: tuple[str, str]
+    _special_texture: [str, str] = None  # optional
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._island_single_texture is not ...:
+            return
+
+        cls._island_single_texture, _ = textures.get_texture(
+            cls._texture[1],
+            cls._image_size,
+            scope=cls._texture[0]
+        )
+
+        cls._island_single_right_texture = cls._island_single_texture
+        cls._island_single_left_texture = cls._island_single_texture
+        cls._island_single_top_texture = cls._island_single_texture
+        cls._island_single_bottom_texture = cls._island_single_texture
+
+        cls._island_left_texture = cls._island_single_texture
+        cls._island_left_inv_texture = cls._island_single_texture
+
+        cls._island_middle_texture = cls._island_single_texture
+        cls._island_middle_inv_texture = cls._island_single_texture
+
+        cls._island_top_bottom_texture = cls._island_single_texture
+        cls._island_left_right_texture = cls._island_single_texture
+
+        cls._island_right_texture = cls._island_single_texture
+        cls._island_right_inv_texture = cls._island_single_texture
+
+        cls._island_wall_right_texture = cls._island_single_texture
+        cls._island_wall_left_texture = cls._island_single_texture
+
+        cls._dirt_texture = cls._island_single_texture
+
+        if cls._special_texture is not None:
+            cls._dirt_hole_texture, _ = textures.get_texture(
+                cls._special_texture[1],
+                cls._image_size,
+                scope=cls._special_texture[0]
+            )
+
+        else:
+            cls._dirt_hole_texture = cls._island_single_texture
+
+    @classmethod
+    def _get_block_mask(cls) -> pg.Mask | tuple[pg.Mask, pg.Mask]:
+        # get default mask
+        glBindTexture(GL_TEXTURE_2D, cls._island_single_texture)
+        data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
+        surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
+        surface = pg.transform.flip(surface, False, False)
+        normal_mask = pg.mask.from_surface(surface)
+
+        if cls._special_texture is None:
+            return normal_mask
+
+        # get special texture
+        glBindTexture(GL_TEXTURE_2D, cls._dirt_hole_texture)
+        data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
+        surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
+        surface = pg.transform.flip(surface, False, False)
+        special_mask = pg.mask.from_surface(surface)
+
+        return normal_mask, special_mask
+
+
+class PillarIsland(SingleBlockIsland):
+    _texture = ("columns", "1")
+    _special_texture = ("columns", "1_1")
+    _image_size = (64*3, 112*3)
+
+
+class PlatformIsland1(SingleBlockIsland):
+    _texture = ("platforms", "1")
+    _image_size = (46*3, 13*3)
+
+
+class PlatformIsland2(SingleBlockIsland):
+    _texture = ("platforms", "2")
+    _image_size = (44*3, 11*3)

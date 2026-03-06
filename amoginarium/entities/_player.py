@@ -30,6 +30,7 @@ PLAYER_RIGHT_64_PATH = "amogus64right"
 PLAYER_OOB_RIGHT_64_PATH = "amogusOOB64right"
 PLAYER_OOB_LEFT_64_PATH = "amogusOOB64left"
 
+
 PIXEL_MASK = pg.mask.Mask((1, 1), True)
 PIXEL_LINE_VERTICAL = pg.mask.Mask((1, 32), True)
 
@@ -41,7 +42,7 @@ class Player(LRImageEntity):
     _player_oob_right_2_texture: int = ...
     _player_oob_left_1_texture: int = ...
     _player_oob_left_2_texture: int = ...
-    _movement_acceleration: float = 700  # TODO: delta
+    _movement_acceleration: float = 100000
     _heal_per_second: float = 2
     _time_to_heal: float = 5
     _max_speed: float = 1000
@@ -250,6 +251,7 @@ class Player(LRImageEntity):
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
         self._on_ground = False
+        wall_rider: Island = ...
         if in_wall:
             wall, _ = in_wall
             wall: Island
@@ -297,20 +299,23 @@ class Player(LRImageEntity):
                 self.velocity.x = 0
                 self.position.x += 1
 
+            if self._on_ground:
+                wall_rider = wall
+
         # update controls
         self._controller.update(delta)
 
         # accelerate right
         if self._controller.joy_x > 0:
             if self.velocity.x < self._max_speed:
-                self.acceleration.x += self._movement_acceleration  # * delta
+                self.acceleration.x += self._movement_acceleration * delta
 
             # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
-                self.acceleration.x -= self._movement_acceleration  # * delta
+                self.acceleration.x -= self._movement_acceleration * delta
 
             # self.facing.x = -1
 
@@ -343,7 +348,7 @@ class Player(LRImageEntity):
             # shot_direction = self.facing.copy()
             # shot_direction.y = -.4
             if self.weapon.shoot(
-                    vector
+                vector
             ):
                 self._controller.feedback_shoot()
 
@@ -356,7 +361,14 @@ class Player(LRImageEntity):
                 self._controller.feedback_heal_stop()
 
         # run update from parent classes
+        if wall_rider is not ...:
+            wall_rider.player_contact(self, delta)
+            self.velocity += wall_rider.velocity
+
         super().update(delta)
+
+        if wall_rider is not ...:
+            self.velocity -= wall_rider.velocity
 
         if self.position.y > 2000:
             self.kill()

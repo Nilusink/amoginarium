@@ -24,9 +24,12 @@ from ._groups import Updated, GravityAffected, Drawn, FrictionXAffected
 from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
-from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret
-from ..entities import Player, Island, BaseTurret, FlakTurret
-from ..entities import CRAMTurret, TextEntity
+from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
+    create_moving_island
+from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
+from ..entities import Player, GrassIsland, GrayBrickIsland, Island
+from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
+from ..entities import PlatformIsland2
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC
 from ._scrolling_background import ParalaxBackground
@@ -63,7 +66,15 @@ SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
     "turret.static.mortar": MortarTurret,
     "turret.static.flak": FlakTurret,
     "turret.static.cram": CRAMTurret,
-    "instructions.text": TextEntity
+    "instructions.text": TextEntity,
+}
+ISLANDS: dict[str, tp.Type[Island]] = {
+    "island.grass": GrassIsland,
+    "island.brick.gray": GrayBrickIsland,
+    "island.brick.green": GreenBrickIsland,
+    "island.pillar.1": PillarIsland,
+    "island.platform.1": PlatformIsland1,
+    "island.platform.2": PlatformIsland2,
 }
 
 
@@ -204,13 +215,19 @@ class BaseGame:
         # load entity textures
         textures.load_images("assets/images/textures.zip")
         textures.load_images("assets/images/dirt_islands.zip")
+        textures.load_images("assets/images/bricks_gray")
+        textures.load_images("assets/images/bricks_green")
+        textures.load_images("assets/images/columns")
+        textures.load_images("assets/images/platforms")
         textures.load_images("assets/images/bg1.zip")
         textures.load_images("assets/images/bg2.zip")
         textures.load_images("assets/images/bg3.zip")
         textures.load_images("assets/images/bg4.zip")
         textures.load_images("assets/images/animations/explosion.zip")
 
-        Island.load_textures()
+        for island in ISLANDS.values():
+            island.load_textures()
+
         Player.load_textures()
         BaseTurret.load_textures()
         explosion.load_textures(size=(512, 512))
@@ -275,14 +292,22 @@ class BaseGame:
 
         # load islands
         for island in data["platforms"]:
-            if "size" in island:
-                Island(
+            island_type = GrassIsland
+            if "type" in island:
+                if island["type"] in ISLANDS:
+                    island_type = ISLANDS[island["type"]]
+
+            if "args" in island:
+                i = island_type(**island["args"])
+
+            elif "size" in island:
+                i = island_type(
                     Vec2.from_cartesian(*island["pos"]),
                     size=Vec2.from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
-                Island(
+                i = island_type(
                     Vec2.from_cartesian(*island["pos"]),
                     form=island["form"],
                 )
@@ -291,6 +316,13 @@ class BaseGame:
                 print_ic_style(
                     f"{CC.fg.RED}invalid island: "
                     f"{CC.fg.YELLOW}{island}"
+                )
+                continue
+
+            if "move" in island:
+                create_moving_island(
+                    i,
+                    **island["move"]
                 )
 
         # load entities
