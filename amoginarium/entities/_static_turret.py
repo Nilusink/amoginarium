@@ -27,8 +27,8 @@ class BaseTurret(VisibleGameEntity):
     size: Vec2
     weapon: BaseWeapon
     _body_texture: int = ...
-    _body_texture_path: str
     _body_texture_path: str = "static_turret_base"
+    _body_texture_size: tuple[int, int] = (64, 64)
     _weapon_texture: int | None = ...
     _weapon_texture_path: str | None
     _max_hp: int = 80
@@ -53,7 +53,7 @@ class BaseTurret(VisibleGameEntity):
         if cls._body_texture is ...:
             cls._body_texture, _ = textures.get_texture(
                 cls._body_texture_path,
-                (64, 64)
+                cls._body_texture_size
             )
 
     def __init__(
@@ -75,6 +75,7 @@ class BaseTurret(VisibleGameEntity):
         self.intercept_players = intercept_players
         self.available_targets = {}
         self._last_shot = perf_counter()
+        self._aiming_at = Vec2.from_cartesian(0, -1)
 
         if target_taps > 0:
             self._target_tapping = True
@@ -111,6 +112,10 @@ class BaseTurret(VisibleGameEntity):
         # check for turret death
         if self._hp <= 0:
             self.kill(hit_by)
+
+    def kill(self, killed_by=...):
+        self.weapon.stop()
+        super().kill(killed_by)
 
     def get_next_target(self) -> tp.Any:
         """
@@ -251,6 +256,8 @@ class BaseTurret(VisibleGameEntity):
                 self.engagement_range / self.weapon.bullet_speed
             )
 
+            self._aiming_at = aiming_angle.copy()
+            self._aiming_at.normalize()
             shot = self.weapon.shoot(
                 aiming_angle,
                 tof if self.airburst_munition else ...,
@@ -258,13 +265,11 @@ class BaseTurret(VisibleGameEntity):
             )
 
             if shot:
-                ic(tof, self.available_targets[target]["shot_at"])
                 if self.available_targets[target]["shot_at"] < -1:
                     self.available_targets[target]["shot_at"] += 1
 
                 else:
                     self.available_targets[target]["shot_at"] = tof
-                ic(1, self.available_targets[target]["shot_at"])
 
             return target_predict
 
@@ -279,6 +284,12 @@ class BaseTurret(VisibleGameEntity):
             self.position.y + self.size.y / 2 < Updated.world_position.y + 1080,
         ]):
             return
+
+        # weapon
+        self.weapon.draw_at(
+            self.position,
+            self._aiming_at.angle * (180/3.14159265)
+        )
 
         renderer.draw_textured_quad(
             self._body_texture,
@@ -382,15 +393,26 @@ class MinigunTurret(BaseTurret):
 class MortarTurret(BaseTurret):
     _max_hp: int = 90
     _aim_type = "high"
+    _body_texture_path = "mortar_turret_base"
+    _body_texture_size = (23, 24)
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._body_texture is ...:
+            ic(cls._body_texture_path)
+            cls._body_texture, _ = textures.get_texture(
+                cls._body_texture_path,
+                cls._body_texture_size
+            )
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
         self._coalition = coalition  # needed becauuse the weapon wants it
-        weapon = Mortar(self, False)
+        weapon = Mortar(self, False, parent_position_offset=(0, -13))
         weapon.reload(True)
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 64),
+            Vec2.from_cartesian(46, 48),
             position,
             weapon,
             1800,

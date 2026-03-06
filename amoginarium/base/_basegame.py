@@ -213,7 +213,7 @@ class BaseGame:
         self._background_player.assign_scope("background")
 
         # load entity textures
-        textures.load_images("assets/images/textures.zip")
+        textures.load_images("assets/images/textures")
         textures.load_images("assets/images/dirt_islands.zip")
         textures.load_images("assets/images/bricks_gray")
         textures.load_images("assets/images/bricks_green")
@@ -228,8 +228,11 @@ class BaseGame:
         for island in ISLANDS.values():
             island.load_textures()
 
+        for spwanable in SPAWNABLES.values():
+            if hasattr(spwanable, "load_textures"):
+                spwanable.load_textures()
+
         Player.load_textures()
-        BaseTurret.load_textures()
         explosion.load_textures(size=(512, 512))
         end = perf_counter_ns()
         load_time = (end - start) / 1e6
