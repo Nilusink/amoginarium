@@ -16,7 +16,7 @@ from ..base import GravityAffected, FrictionXAffected, HasBars
 from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
 from ._base_entity import LRImageEntity
-from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon
+from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..controllers import Controller
@@ -151,6 +151,7 @@ class Player(LRImageEntity):
             Sniper(self, False),
             Mortar(self, False),
             Flak(self, False),
+            CRAM(self, False)
         ]
 
         for i in range(len(self._weapons)):
@@ -351,6 +352,9 @@ class Player(LRImageEntity):
                 vector
             ):
                 self._controller.feedback_shoot()
+
+        else:
+            self.weapon.stop_shooting()
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:

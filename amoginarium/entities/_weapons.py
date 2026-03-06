@@ -16,9 +16,9 @@ from icecream import ic
 
 from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
-from ..audio import ContinuousSoundEffect
+from ..audio import ContinuousSoundEffect, Mortar as MortarSound
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
-from ..debugging import run_with_debug
+from ..audio import CRAM as CRAMSound
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
@@ -51,7 +51,8 @@ class Bullet(ImageEntity):
             explosion_radius: float = -1,
             explosion_damage: float = 0,
             target_pos: Vec2 = ...,
-            size: int = 10
+            size: int = 10,
+            no_gravity = False
     ) -> None:
         size = Vec2.from_cartesian(size, size)
         self._casing = casing
@@ -78,7 +79,9 @@ class Bullet(ImageEntity):
             parent=parent
         )
 
-        self.add(GravityAffected)
+        self.remove(Updated)
+        if not no_gravity:
+            self.add(GravityAffected)
 
         if not casing:
             self.add(Bullets, CollisionDestroyed)
@@ -222,6 +225,7 @@ class BaseWeapon:
     _image_name: str = "amogus64right"
     _image_size: tuple[int, int] = (16, 16)
     _image_offset: Vec2 = Vec2.from_cartesian(0, 15)
+    _no_bullet_gravity: bool = False
     _image_rotate_anchor: Vec2 = ...
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
@@ -347,10 +351,12 @@ class BaseWeapon:
         if self._current_sound_time > 0:
             self._current_sound_time -= delta
 
-        if self._current_sound_time < 0:
-            self._current_sound_time = 0
+        # if self._current_sound_time < 0:
+        #     self._current_sound_time = 0
 
-            if hasattr(self._sound_effect, "done"):
+    def stop_shooting(self):
+        if hasattr(self._sound_effect, "done"):
+            if self._sound_effect.playing:
                 self._sound_effect.done()
 
     def shoot(
@@ -368,6 +374,7 @@ class BaseWeapon:
         if self._mag_state <= 0:
             if self._current_reload_time == 0:
                 self._current_reload_time = self._reload_time
+                self.stop_shooting()
 
             return False
 
@@ -380,6 +387,9 @@ class BaseWeapon:
 
         if self._sound_effect is not ...:
             if not self._sound_effect.playing:
+                self._sound_effect.play()
+
+            elif not hasattr(self._sound_effect, "stage_one_done"):
                 self._sound_effect.play()
 
             if hasattr(self._sound_effect, "stage_one_done"):
@@ -420,7 +430,8 @@ class BaseWeapon:
             explosion_radius=self._bullet_explosion_radius,
             explosion_damage=self._bullet_explosion_damage,
             time_to_life=bullet_lifetime,
-            target_pos=target_pos
+            target_pos=target_pos,
+            no_gravity=self._no_bullet_gravity
         )
 
         if self._drop_casings:
@@ -496,7 +507,6 @@ class BaseWeapon:
 class Minigun(BaseWeapon):
     _image_name: str = "minigun"
     _image_size: tuple[int, int] = (128, 64)
-    # _image_offset: Vec2 = Vec2.from_cartesian(25, 1)
     _image_rotate_anchor: Vec2 = Vec2.from_cartesian(35, 30)
 
     def __init__(
@@ -524,7 +534,6 @@ class Minigun(BaseWeapon):
 class Ak47(BaseWeapon):
     _image_name: str = "ak47"
     _image_size: tuple[int, int] = (80, 40)
-    # _image_offset: Vec2 = Vec2.from_cartesian(15, -6)
     _image_rotate_anchor: Vec2 = Vec2.from_cartesian(30, 20)
 
     def __init__(
@@ -553,7 +562,6 @@ class Ak47(BaseWeapon):
 class Sniper(BaseWeapon):
     _image_name: str = "sniper"
     _image_size: tuple[int, int] = (120, 60)
-    # _image_offset: Vec2 = Vec2.from_cartesian(0, 25)
     _image_rotate_anchor: Vec2 = Vec2.from_cartesian(25, 33)
 
     def __init__(
@@ -606,6 +614,7 @@ class Mortar(BaseWeapon):
             bullet_explosion_radius=200,
             bullet_explosion_damage=50,
             bullet_lifetime=7,
+            sound_effect=MortarSound()
         )
 
 
@@ -633,7 +642,7 @@ class Flak(BaseWeapon):
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
             bullet_lifetime=5,
-            sound_effect=Shotgun()
+            sound_effect=Shotgun().set_volume(.8)
         )
 
 
@@ -660,5 +669,5 @@ class CRAM(BaseWeapon):
             bullet_lifetime=1,
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
-            # sound_effect=MinigunSound
+            sound_effect=CRAMSound()
         )

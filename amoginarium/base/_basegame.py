@@ -509,7 +509,7 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        self.load_map("assets/maps/test.json")
+        self.load_map("assets/maps/tutorial.json")
 
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
         EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
@@ -835,6 +835,7 @@ class BaseGame:
         FrictionXAffected.calculate_friction(delta)
         WallBouncer.update()
 
+        Bullets.update(delta)
         Updated.update(delta)
 
         CollisionDestroyed.update()
