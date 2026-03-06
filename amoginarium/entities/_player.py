@@ -16,7 +16,7 @@ from ..base import GravityAffected, FrictionXAffected, HasBars
 from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
 from ._base_entity import LRImageEntity
-from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon
+from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..controllers import Controller
@@ -42,7 +42,7 @@ class Player(LRImageEntity):
     _player_oob_right_2_texture: int = ...
     _player_oob_left_1_texture: int = ...
     _player_oob_left_2_texture: int = ...
-    _movement_acceleration: float = 100000
+    _movement_acceleration: float = 700
     _heal_per_second: float = 2
     _time_to_heal: float = 5
     _max_speed: float = 1000
@@ -151,6 +151,7 @@ class Player(LRImageEntity):
             Sniper(self, False),
             Mortar(self, False),
             Flak(self, False),
+            CRAM(self, False)
         ]
 
         for i in range(len(self._weapons)):
@@ -308,14 +309,14 @@ class Player(LRImageEntity):
         # accelerate right
         if self._controller.joy_x > 0:
             if self.velocity.x < self._max_speed:
-                self.acceleration.x += self._movement_acceleration * delta
+                self.acceleration.x += self._movement_acceleration
 
             # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
-                self.acceleration.x -= self._movement_acceleration * delta
+                self.acceleration.x -= self._movement_acceleration
 
             # self.facing.x = -1
 
@@ -351,6 +352,9 @@ class Player(LRImageEntity):
                 vector
             ):
                 self._controller.feedback_shoot()
+
+        else:
+            self.weapon.stop_shooting()
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:

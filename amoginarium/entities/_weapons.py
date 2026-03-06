@@ -16,9 +16,9 @@ from icecream import ic
 
 from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
-from ..audio import ContinuousSoundEffect
+from ..audio import ContinuousSoundEffect, Mortar as MortarSound
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
-from ..debugging import run_with_debug
+from ..audio import CRAM as CRAMSound
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
@@ -33,7 +33,8 @@ BULLET_PATH = "bullet"
 
 class Bullet(ImageEntity):
     _bullet_image: str = (BULLET_PATH, "x")
-    _casing_image: str = (BULLET_PATH, "")
+    _casing_image: str = (BULLET_PATH, "x")
+    _image_size: tuple[int, int] = ...
     _base_damage: float = 1
 
     def __new__(cls, *args, **kwargs) -> "Bullet":
@@ -51,9 +52,12 @@ class Bullet(ImageEntity):
             explosion_radius: float = -1,
             explosion_damage: float = 0,
             target_pos: Vec2 = ...,
-            size: int = 10
+            size: Vec2 | int = 10,
+            no_gravity=False
     ) -> None:
-        size = Vec2.from_cartesian(size, size)
+        if not isinstance(size, Vec2):
+            size = Vec2.from_cartesian(size, size)
+
         self._casing = casing
         self._base_damage = base_damage
         self._ttl = time_to_life
@@ -65,8 +69,18 @@ class Bullet(ImageEntity):
         self._start_time = perf_counter()
 
         # load textures
-        self._bullet_texture, _ = textures.get_texture(BULLET_PATH, size.xy, "x")
-        self._casing_texture, _ = textures.get_texture(BULLET_PATH, size.xy, "x")
+        # isize = size.xy if self._image_size is ... else self._image_size
+        isize = size.xy
+        self._bullet_texture, _ = textures.get_texture(
+            self._bullet_image[0],
+            isize,
+            self._bullet_image[1]
+        )
+        self._casing_texture, _ = textures.get_texture(
+            self._casing_image[0],
+            isize,
+            self._casing_image[1]
+        )
         texture_id = self._bullet_texture
 
         super().__init__(
@@ -78,7 +92,9 @@ class Bullet(ImageEntity):
             parent=parent
         )
 
-        self.add(GravityAffected)
+        self.remove(Updated)
+        if not no_gravity:
+            self.add(GravityAffected)
 
         if not casing:
             self.add(Bullets, CollisionDestroyed)
@@ -218,10 +234,47 @@ class Bullet(ImageEntity):
         return super().gl_draw()
 
 
+class MortarShell(Bullet):
+    _bullet_image: str = ("mortar_shell", "")
+    # _image_size = (80, 40)
+
+    def __init__(
+        self,
+        parent: GameEntity,
+        coalition: tp.Any,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        base_damage: float = 40,
+        casing: bool = False,
+        time_to_life: float = 10,
+        explosion_radius: float = 200,
+        explosion_damage: float = 50,
+        target_pos: Vec2 = ...,
+        size=Vec2.from_cartesian(800, 400),
+        no_gravity=False
+    ) -> None:
+        ic(1)
+        super().__init__(
+            parent,
+            coalition,
+            initial_position,
+            initial_velocity,
+            base_damage,
+            casing,
+            time_to_life,
+            explosion_radius,
+            explosion_damage,
+            target_pos,
+            size,
+            no_gravity
+        )
+
+
 class BaseWeapon:
     _image_name: str = "amogus64right"
     _image_size: tuple[int, int] = (16, 16)
     _image_offset: Vec2 = Vec2.from_cartesian(0, 15)
+    _no_bullet_gravity: bool = False
     _image_rotate_anchor: Vec2 = ...
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
@@ -244,13 +297,14 @@ class BaseWeapon:
         bullet_speed: float,
         barrel_length: float,  # where bullets spawn
         parent_position_offset: Vec2 | tuple[float, float],
-        bullet_size: int = 10,
+        bullet_size: Vec2 | int = 10,
         bullet_damage: float = 1,
         bullet_explosion_radius: float = -1,
         bullet_explosion_damage: float = 0,
         drop_casings: bool = False,
         bullet_lifetime=4,
-        sound_effect: ContinuousSoundEffect | PresetEffect = ...
+        sound_effect: ContinuousSoundEffect | PresetEffect = ...,
+        bullet_type: tp.Type[Bullet] = Bullet
     ) -> None:
         self.parent = parent
         self._coalition = parent.coalition
@@ -272,6 +326,7 @@ class BaseWeapon:
         self._bullet_explosion_damage = bullet_explosion_damage
         self._bullet_lifetime = bullet_lifetime
         self._sound_effect = sound_effect
+        self._bullet_type = bullet_type
         # self.__sound_effect: ContinuousSoundEffect = ...
         self._texture_id_r, _ = textures.get_texture(
             self._image_name,
@@ -347,10 +402,12 @@ class BaseWeapon:
         if self._current_sound_time > 0:
             self._current_sound_time -= delta
 
-        if self._current_sound_time < 0:
-            self._current_sound_time = 0
+        # if self._current_sound_time < 0:
+        #     self._current_sound_time = 0
 
-            if hasattr(self._sound_effect, "done"):
+    def stop_shooting(self):
+        if hasattr(self._sound_effect, "done"):
+            if self._sound_effect.playing:
                 self._sound_effect.done()
 
     def shoot(
@@ -368,6 +425,7 @@ class BaseWeapon:
         if self._mag_state <= 0:
             if self._current_reload_time == 0:
                 self._current_reload_time = self._reload_time
+                self.stop_shooting()
 
             return False
 
@@ -382,6 +440,9 @@ class BaseWeapon:
             if not self._sound_effect.playing:
                 self._sound_effect.play()
 
+            elif not hasattr(self._sound_effect, "stage_one_done"):
+                self._sound_effect.play()
+
             if hasattr(self._sound_effect, "stage_one_done"):
                 if not self._sound_effect.stage_one_done:
                     return False
@@ -394,7 +455,7 @@ class BaseWeapon:
 
         # recoil
         if hasattr(self.parent, "_movement_acceleration"):
-            recoil = direction * self.parent._movement_acceleration / 100
+            recoil = direction * self.parent._movement_acceleration
             recoil *= self._recoil_factor
             self.parent.acceleration -= recoil
 
@@ -409,7 +470,7 @@ class BaseWeapon:
         else:
             bullet_lifetime = bullet_tof
 
-        Bullet(
+        self._bullet_type(
             self.parent,
             self._coalition,
             self.parent.position + self._parent_position_offset
@@ -420,14 +481,15 @@ class BaseWeapon:
             explosion_radius=self._bullet_explosion_radius,
             explosion_damage=self._bullet_explosion_damage,
             time_to_life=bullet_lifetime,
-            target_pos=target_pos
+            target_pos=target_pos,
+            no_gravity=self._no_bullet_gravity
         )
 
         if self._drop_casings:
             # casing
             casing_direction = direction.normalize()
             casing_direction.x *= -.3
-            Bullet(
+            self._bullet_type(
                 self.parent,
                 self._coalition,
                 self.parent.position + Vec2.from_cartesian(0, 7)
@@ -496,7 +558,6 @@ class BaseWeapon:
 class Minigun(BaseWeapon):
     _image_name: str = "minigun"
     _image_size: tuple[int, int] = (128, 64)
-    # _image_offset: Vec2 = Vec2.from_cartesian(25, 1)
     _image_rotate_anchor: Vec2 = Vec2.from_cartesian(35, 30)
 
     def __init__(
@@ -524,7 +585,6 @@ class Minigun(BaseWeapon):
 class Ak47(BaseWeapon):
     _image_name: str = "ak47"
     _image_size: tuple[int, int] = (80, 40)
-    # _image_offset: Vec2 = Vec2.from_cartesian(15, -6)
     _image_rotate_anchor: Vec2 = Vec2.from_cartesian(30, 20)
 
     def __init__(
@@ -553,7 +613,6 @@ class Ak47(BaseWeapon):
 class Sniper(BaseWeapon):
     _image_name: str = "sniper"
     _image_size: tuple[int, int] = (120, 60)
-    # _image_offset: Vec2 = Vec2.from_cartesian(0, 25)
     _image_rotate_anchor: Vec2 = Vec2.from_cartesian(25, 33)
 
     def __init__(
@@ -583,6 +642,9 @@ class Sniper(BaseWeapon):
 
 class Mortar(BaseWeapon):
     _bullet_image = BULLET_PATH
+    _image_name: str = "mortar"
+    _image_size: tuple[int, int] = (25*2, 17*2)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(15, 8*2)
 
     def __init__(
             self,
@@ -597,7 +659,7 @@ class Mortar(BaseWeapon):
             recoil_factor=100,
             mag_size=1,
             inaccuracy=.00100002,
-            bullet_size=22,
+            bullet_size=Vec2.from_cartesian(40, 20),
             bullet_speed=1400,
             bullet_damage=40,
             barrel_length=5,
@@ -606,6 +668,8 @@ class Mortar(BaseWeapon):
             bullet_explosion_radius=200,
             bullet_explosion_damage=50,
             bullet_lifetime=7,
+            sound_effect=MortarSound(),
+            bullet_type=MortarShell
         )
 
 
@@ -633,7 +697,7 @@ class Flak(BaseWeapon):
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
             bullet_lifetime=5,
-            sound_effect=Shotgun()
+            sound_effect=Shotgun().set_volume(.8)
         )
 
 
@@ -660,5 +724,5 @@ class CRAM(BaseWeapon):
             bullet_lifetime=1,
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
-            # sound_effect=MinigunSound
+            sound_effect=CRAMSound()
         )

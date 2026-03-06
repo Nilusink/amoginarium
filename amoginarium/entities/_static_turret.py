@@ -8,7 +8,7 @@ Author:
 Nilusink
 """
 from contextlib import suppress
-# from icecream import ic
+from time import perf_counter
 import typing as tp
 
 from icecream import ic
@@ -27,18 +27,19 @@ class BaseTurret(VisibleGameEntity):
     size: Vec2
     weapon: BaseWeapon
     _body_texture: int = ...
-    _body_texture_path: str
     _body_texture_path: str = "static_turret_base"
+    _body_texture_size: tuple[int, int] = (64, 64)
     _weapon_texture: int | None = ...
     _weapon_texture_path: str | None
     _max_hp: int = 80
     _hp: int = 0
     _aim_type: tp.Literal["low", "high"] = "low"
     _target: tp.Any = ...
-    _target_predict: Vec2 = ...
+    _target_predict: list[Vec2] = ...
     available_targets: dict = ...
     _high_tof_multiplier: float = 1.1
     _low_tof_multiplier: float = 1
+    _number_target_taps: int
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
@@ -52,7 +53,7 @@ class BaseTurret(VisibleGameEntity):
         if cls._body_texture is ...:
             cls._body_texture, _ = textures.get_texture(
                 cls._body_texture_path,
-                (64, 64)
+                cls._body_texture_size
             )
 
     def __init__(
@@ -64,7 +65,8 @@ class BaseTurret(VisibleGameEntity):
             engagement_range: float,
             airburst_munition: bool = False,
             intercept_bullets: bool = False,
-            intercept_players: bool = True
+            intercept_players: bool = True,
+            target_taps: int = -1
     ) -> None:
         self.weapon = weapon
         self.engagement_range = engagement_range
@@ -72,6 +74,16 @@ class BaseTurret(VisibleGameEntity):
         self.intercept_bullets = intercept_bullets
         self.intercept_players = intercept_players
         self.available_targets = {}
+        self._last_shot = perf_counter()
+        self._aiming_at = Vec2.from_cartesian(0, -1)
+
+        if target_taps > 0:
+            self._target_tapping = True
+            self._number_target_taps = target_taps
+
+        else:
+            self._target_tapping = False
+            self._number_target_taps = 1
 
         self._hp = self._max_hp
 
@@ -101,6 +113,10 @@ class BaseTurret(VisibleGameEntity):
         if self._hp <= 0:
             self.kill(hit_by)
 
+    def kill(self, killed_by=...):
+        self.weapon.stop()
+        super().kill(killed_by)
+
     def get_next_target(self) -> tp.Any:
         """
         returns the next best target to shoot at
@@ -110,13 +126,16 @@ class BaseTurret(VisibleGameEntity):
                 targets, key=lambda t: self.available_targets[t]["distance"]
         ):
             t = self.available_targets[target]
-            if t["shot_at"] < 0:
+            if t["shot_at"] < -.5:
                 return target
 
         # all targets have been shot at, so shoot at nothing
         # and reset shot_ats
-        for target in self.available_targets:
-            self.available_targets[target]["shot_at"] = -1
+        if not self._target_tapping:
+            for target in self.available_targets:
+                self.available_targets[target]["shot_at"] = -1
+
+        # deleted because targets will now be shot at if last shot missed
 
         return None
 
@@ -148,7 +167,7 @@ class BaseTurret(VisibleGameEntity):
         for target in targets:
             if target[1] not in self.available_targets:
                 self.available_targets[target[1]] = {
-                    "shot_at": -1,
+                    "shot_at": -self._number_target_taps,
                     "distance": target[0]
                 }
 
@@ -159,82 +178,102 @@ class BaseTurret(VisibleGameEntity):
                 self.available_targets.pop(target)
                 continue
 
-            if self.available_targets[target]["shot_at"] >= -1:
+            if self.available_targets[target]["shot_at"] >= 0:
                 self.available_targets[target]["shot_at"] -= delta
+
+            elif self.available_targets[target]["shot_at"] > -1:
+                self.available_targets[target]["shot_at"] = -self._number_target_taps
 
         new_target = self.get_next_target()
         if new_target is not None:
-            player_velocity = new_target.velocity.copy()
-            player_acceleration = new_target.acceleration.copy()
-
-            self._target = new_target
-
-            # if target is on ground, subtrac gravitaional acceleration
-            if hasattr(new_target, "on_ground"):
-                if new_target.on_ground:
-                    player_acceleration.y -= GravityAffected.gravity
-
-            position_delta = new_target.position - self.position
-            position_delta.y *= -1
-            player_velocity.y *= -1
-            player_acceleration.y *= -1
-
-            mirror = False
-            if position_delta.x < 0:
-                position_delta.x *= -1
-                player_velocity.x *= -1
-                player_acceleration.x *= -1
-                mirror = True
-
-            # try to predict where the player is going to be
-            self._target_predict = ...
-            with suppress(ValueError):
-                magic = player_velocity.length > self.weapon._bullet_speed
-
-                aiming_angle, tof, predict = calculate_launch_angle(
-                    position_delta,
-                    player_velocity * .9 if magic else player_velocity,
-                    player_acceleration,
-                    self.weapon.bullet_speed,
-                    10,
-                    self._aim_type,
-                    # *2 because for some reaseon I gave bullets 2x gravity
-                    g=GravityAffected.gravity * 2
-                )
-
-                aiming_angle.y *= -1
-                predict.y *= -1
-
-                if mirror:
-                    aiming_angle.x *= -1
-                    predict.x *= -1
-
-                self._target_predict = self.position + predict
-                # if airburst, explode at max engagement range
-                # idk why, but if engaging bullets, the tof is wrong and
-                # x1.1 corrects it soemehow
-                tof = min(
-                    tof,
-                    # tof * self._high_tof_multiplier if magic else
-                    # tof * self._low_tof_multiplier,
-                    self.engagement_range / self.weapon.bullet_speed
-                )
-
-                shot = self.weapon.shoot(
-                    aiming_angle,
-                    tof if self.airburst_munition else ...,
-                    target_pos=self._target_predict
-                )
-
-                if shot:
-                    self.available_targets[new_target]["shot_at"] = \
-                        self.weapon._reload_time - .01
+            self._last_shot = perf_counter()
+            self._target_predict = [
+                self.__shoot_at(new_target),
+            ]
 
         else:
             self._target = ...
-            self._target_predict = ...
+            self._target_predict = []
+
+        if perf_counter() - self._last_shot >= .1:
+            self.weapon.stop_shooting()
 
         super().update(delta)
+
+    def __shoot_at(self, target) -> Vec2 | None:
+        player_velocity = target.velocity.copy()
+        player_acceleration = target.acceleration.copy()
+
+        self._target = target
+
+        # if target is on ground, subtrac gravitaional acceleration
+        if hasattr(target, "on_ground"):
+            if target.on_ground:
+                player_acceleration.y -= GravityAffected.gravity
+
+        position_delta = target.position - self.position
+        position_delta.y *= -1
+        player_velocity.y *= -1
+        player_acceleration.y *= -1
+
+        mirror = False
+        if position_delta.x < 0:
+            position_delta.x *= -1
+            player_velocity.x *= -1
+            player_acceleration.x *= -1
+            mirror = True
+
+        # try to predict where the player is going to be
+        with suppress(ValueError):
+            magic = player_velocity.length > self.weapon._bullet_speed
+
+            aiming_angle, tof, predict = calculate_launch_angle(
+                position_delta,
+                player_velocity * .9 if magic else player_velocity,
+                player_acceleration,
+                self.weapon.bullet_speed,
+                10,
+                self._aim_type,
+                # *2 because for some reason I gave bullets 2x gravity
+                g=GravityAffected.gravity * 2
+            )
+
+            aiming_angle.y *= -1
+            predict.y *= -1
+
+            if mirror:
+                aiming_angle.x *= -1
+                predict.x *= -1
+
+            target_predict = self.position + predict
+            # if airburst, explode at max engagement range
+            # idk why, but if engaging bullets, the tof is wrong and
+            # x1.1 corrects it soemehow
+            tof = min(
+                tof,
+                # tof * self._high_tof_multiplier if magic else
+                # tof * self._low_tof_multiplier,
+                self.engagement_range / self.weapon.bullet_speed
+            )
+
+            self._aiming_at = aiming_angle.copy()
+            self._aiming_at.normalize()
+            shot = self.weapon.shoot(
+                aiming_angle,
+                tof if self.airburst_munition else ...,
+                target_pos=target_predict
+            )
+
+            if shot:
+                if self.available_targets[target]["shot_at"] < -1:
+                    self.available_targets[target]["shot_at"] += 1
+
+                else:
+                    self.available_targets[target]["shot_at"] = tof
+
+            return target_predict
+
+        return None
 
     def gl_draw(self) -> None:
         # only draw if on screen
@@ -245,6 +284,12 @@ class BaseTurret(VisibleGameEntity):
             self.position.y + self.size.y / 2 < Updated.world_position.y + 1080,
         ]):
             return
+
+        # weapon
+        self.weapon.draw_at(
+            self.position,
+            self._aiming_at.angle * (180/3.14159265)
+        )
 
         renderer.draw_textured_quad(
             self._body_texture,
@@ -277,17 +322,21 @@ class BaseTurret(VisibleGameEntity):
                 )
 
             if self._target_predict is not ...:
-                renderer.draw_line(
-                    self.world_position,
-                    self._target_predict - Updated.world_position,
-                    Color.from_255(50, 200, 0, 100)
-                )
-                renderer.draw_circle(
-                    self._target_predict - Updated.world_position,
-                    global_vars.translate_scale(32),
-                    32,
-                    Color.from_255(50, 200, 0, 100)
-                )
+                for target in self._target_predict:
+                    if target is None:
+                        continue
+
+                    renderer.draw_line(
+                        self.world_position,
+                        target - Updated.world_position,
+                        Color.from_255(50, 200, 0, 100)
+                    )
+                    renderer.draw_circle(
+                        target - Updated.world_position,
+                        global_vars.translate_scale(32),
+                        32,
+                        Color.from_255(50, 200, 0, 100)
+                    )
 
 
 class SniperTurret(BaseTurret):
@@ -344,15 +393,26 @@ class MinigunTurret(BaseTurret):
 class MortarTurret(BaseTurret):
     _max_hp: int = 90
     _aim_type = "high"
+    _body_texture_path = "mortar_turret_base"
+    _body_texture_size = (23, 24)
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._body_texture is ...:
+            ic(cls._body_texture_path)
+            cls._body_texture, _ = textures.get_texture(
+                cls._body_texture_path,
+                cls._body_texture_size
+            )
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
         self._coalition = coalition  # needed becauuse the weapon wants it
-        weapon = Mortar(self, False)
+        weapon = Mortar(self, False, parent_position_offset=(0, -13))
         weapon.reload(True)
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 64),
+            Vec2.from_cartesian(46, 48),
             position,
             weapon,
             1800,
@@ -375,7 +435,8 @@ class FlakTurret(BaseTurret):
             weapon,
             1550,
             airburst_munition=True,
-            intercept_bullets=False
+            intercept_bullets=False,
+            target_taps=2
         )
 
 
@@ -394,10 +455,11 @@ class CRAMTurret(BaseTurret):
             Vec2.from_cartesian(64, 64),
             position,
             weapon,
-            1200,
+            1300,
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
+            target_taps=4
         )
 
         self._tof_multilier = .2
