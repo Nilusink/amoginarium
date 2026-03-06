@@ -1,0 +1,11 @@
+name: Blank issue
+description: Create a new issue from scratch
+projects: [ "Nilusink/3" ]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Add a description
+      placeholder: Type your description here
+    validations:
+      required: true

@@ -1,7 +1,8 @@
 name: Bug Report
 description: Report a bug
+projects: [ "Nilusink/3" ]
 title: "[Bug]: <title>"
-labels: ["bug"]
+labels: [ "bug" ]
 assignees:
   - LukasKrah
 body:
