@@ -4,6 +4,11 @@
     "spawn_pos": [100, 600],
     "platforms": [
         {
+            "pos": [10, 740],
+            "size": [64, 64]
+        },
+
+        {
             "pos": [0, 800],
             "size": [2048, 64]
         },
@@ -90,6 +95,10 @@
         }
     ],
     "entities": [
+        {
+            "type": "turret.static.cram",
+            "pos": [1200, 870]
+        },
         {
             "type": "instructions.text",
             "pos": [200, 200],

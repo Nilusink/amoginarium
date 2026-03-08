@@ -27,8 +27,10 @@ class BaseTurret(VisibleGameEntity):
     size: Vec2
     weapon: BaseWeapon
     _body_texture: int = ...
-    _body_texture_path: str = "static_turret_base"
-    _body_texture_size: tuple[int, int] = (64, 64)
+    # _body_texture_path: str = "static_turret_base"
+    # _body_texture_size: tuple[int, int] = (64, 64)
+    _body_texture_path = "mortar_turret_base"
+    _body_texture_size = (23, 24)
     _weapon_texture: int | None = ...
     _weapon_texture_path: str | None
     _max_hp: int = 80
@@ -38,7 +40,6 @@ class BaseTurret(VisibleGameEntity):
     _target_predict: list[Vec2] = ...
     available_targets: dict = ...
     _high_tof_multiplier: float = 1.1
-    _low_tof_multiplier: float = 1
     _number_target_taps: int
 
     def __new__(cls, *args, **kwargs):
@@ -68,6 +69,8 @@ class BaseTurret(VisibleGameEntity):
             intercept_players: bool = True,
             target_taps: int = -1
     ) -> None:
+        position.y -= size.y
+
         self.weapon = weapon
         self.engagement_range = engagement_range
         self.airburst_munition = airburst_munition
@@ -75,7 +78,7 @@ class BaseTurret(VisibleGameEntity):
         self.intercept_players = intercept_players
         self.available_targets = {}
         self._last_shot = perf_counter()
-        self._aiming_at = Vec2.from_cartesian(0, -1)
+        self._aiming_at = Vec2.from_cartesian(-1, 0)
 
         if target_taps > 0:
             self._target_tapping = True
@@ -200,7 +203,7 @@ class BaseTurret(VisibleGameEntity):
 
         super().update(delta)
 
-    def __shoot_at(self, target) -> Vec2 | None:
+    def __shoot_at(self, target: VisibleGameEntity) -> Vec2 | None:
         player_velocity = target.velocity.copy()
         player_acceleration = target.acceleration.copy()
 
@@ -211,7 +214,16 @@ class BaseTurret(VisibleGameEntity):
             if target.on_ground:
                 player_acceleration.y -= GravityAffected.gravity
 
-        position_delta = target.position - self.position
+        # if issubclass(Bullet, target.__class__)
+        if target in Bullets.sprites():
+            target_position = target.position
+
+        else:
+            target_position = target.position_center
+
+        position_delta = target_position - (
+            self.position + self.weapon.parent_position_offset
+        )
         position_delta.y *= -1
         player_velocity.y *= -1
         player_acceleration.y *= -1
@@ -245,7 +257,7 @@ class BaseTurret(VisibleGameEntity):
                 aiming_angle.x *= -1
                 predict.x *= -1
 
-            target_predict = self.position + predict
+            target_predict = self.position + self.weapon.parent_position_offset + predict
             # if airburst, explode at max engagement range
             # idk why, but if engaging bullets, the tof is wrong and
             # x1.1 corrects it soemehow
@@ -310,7 +322,7 @@ class BaseTurret(VisibleGameEntity):
         if global_vars.show_targets:
             if self._target is not ...:
                 renderer.draw_line(
-                    self.world_position,
+                    self.world_position + self.weapon.parent_position_offset,
                     self._target.world_position,
                     Color.from_255(255, 0, 0, 100)
                 )
@@ -327,7 +339,7 @@ class BaseTurret(VisibleGameEntity):
                         continue
 
                     renderer.draw_line(
-                        self.world_position,
+                        self.world_position + self.weapon.parent_position_offset,
                         target - Updated.world_position,
                         Color.from_255(50, 200, 0, 100)
                     )
@@ -344,7 +356,7 @@ class SniperTurret(BaseTurret):
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
         self._coalition = coalition  # needed becauuse the weapon wants it
-        weapon = Sniper(self, True)
+        weapon = Sniper(self, True, parent_position_offset=(0, -13))
         weapon.reload(True)
 
         super().__init__(
@@ -360,8 +372,8 @@ class AkTurret(BaseTurret):
     _max_hp: int = 60
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
-        self._coalition = coalition  # needed becauuse the weapon wants it
-        weapon = Ak47(self, False)
+        self._coalition = coalition  # needed because the weapon wants it
+        weapon = Ak47(self, False, parent_position_offset=(0, -13))
         weapon.reload(True)
 
         super().__init__(
@@ -377,8 +389,8 @@ class MinigunTurret(BaseTurret):
     _max_hp: int = 60
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
-        self._coalition = coalition  # needed becauuse the weapon wants it
-        weapon = Minigun(self, False)
+        self._coalition = coalition  # needed because the weapon wants it
+        weapon = Minigun(self, False, parent_position_offset=(0, -13))
         weapon.reload(True)
 
         super().__init__(
@@ -386,7 +398,7 @@ class MinigunTurret(BaseTurret):
             Vec2.from_cartesian(64, 64),
             position,
             weapon,
-            1200
+            1200,
         )
 
 
@@ -442,17 +454,22 @@ class FlakTurret(BaseTurret):
 
 class CRAMTurret(BaseTurret):
     _max_hp: int = 60
-    _low_tof_multiplier = .93
+    _body_texture_path = "CRAM_base"
+    _body_texture_size = (64, 128)
     _aim_type = "low"
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
         self._coalition = coalition  # needed becauuse the weapon wants it
-        weapon = CRAM(self, False)  # don't eject casings, because i like my pc
+        weapon = CRAM(
+            self,
+            False,
+            parent_position_offset=(0, 15)
+        )  # don't eject casings because I like my pc
         weapon.reload(True)
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 64),
+            Vec2.from_cartesian(64, 128),
             position,
             weapon,
             1300,
@@ -461,5 +478,3 @@ class CRAMTurret(BaseTurret):
             airburst_munition=True,
             target_taps=4
         )
-
-        self._tof_multilier = .2

@@ -53,7 +53,8 @@ class Bullet(ImageEntity):
             explosion_damage: float = 0,
             target_pos: Vec2 = ...,
             size: Vec2 | int = 10,
-            no_gravity=False
+            no_gravity=False,
+            visibility_offset: float = 0
     ) -> None:
         if not isinstance(size, Vec2):
             size = Vec2.from_cartesian(size, size)
@@ -65,6 +66,7 @@ class Bullet(ImageEntity):
         self._explosion_radius = explosion_radius
         self._explosion_damage = explosion_damage
         self._target_pos = target_pos
+        self._visibility_offset = visibility_offset
 
         self._start_time = perf_counter()
 
@@ -133,6 +135,7 @@ class Bullet(ImageEntity):
 
     def update(self, delta):
         self._ttl -= delta
+        self._visibility_offset -= delta
 
         if any([
             self.position.y > 2000,
@@ -202,6 +205,9 @@ class Bullet(ImageEntity):
         super().kill()
 
     def gl_draw(self) -> None:
+        if self._visibility_offset > 0:
+            return
+
         if not self._casing:
             if global_vars.show_targets and self._target_pos is not ...:
                 renderer.draw_line(
@@ -251,7 +257,8 @@ class MortarShell(Bullet):
         explosion_damage: float = 50,
         target_pos: Vec2 = ...,
         size=Vec2.from_cartesian(800, 400),
-        no_gravity=False
+        no_gravity=False,
+        **kwargs
     ) -> None:
         ic(1)
         super().__init__(
@@ -266,13 +273,15 @@ class MortarShell(Bullet):
             explosion_damage,
             target_pos,
             size,
-            no_gravity
+            no_gravity,
+            **kwargs
         )
 
 
 class BaseWeapon:
     _image_name: str = "amogus64right"
     _image_size: tuple[int, int] = (16, 16)
+    _image_mirror: bool = False
     _image_offset: Vec2 = Vec2.from_cartesian(0, 15)
     _no_bullet_gravity: bool = False
     _image_rotate_anchor: Vec2 = ...
@@ -304,7 +313,8 @@ class BaseWeapon:
         drop_casings: bool = False,
         bullet_lifetime=4,
         sound_effect: ContinuousSoundEffect | PresetEffect = ...,
-        bullet_type: tp.Type[Bullet] = Bullet
+        bullet_type: tp.Type[Bullet] = Bullet,
+        bullet_visibility_offset: float = 0  # time offset
     ) -> None:
         self.parent = parent
         self._coalition = parent.coalition
@@ -327,15 +337,17 @@ class BaseWeapon:
         self._bullet_lifetime = bullet_lifetime
         self._sound_effect = sound_effect
         self._bullet_type = bullet_type
+        self._bullet_visibility_offset = bullet_visibility_offset
         # self.__sound_effect: ContinuousSoundEffect = ...
         self._texture_id_r, _ = textures.get_texture(
             self._image_name,
             self._image_size,
-            "x"
+            "" if self._image_mirror else "x"
         )
         self._texture_id_l, _ = textures.get_texture(
             self._image_name,
-            self._image_size
+            self._image_size,
+            "x" if self._image_mirror else ""
         )
         self._size = Vec2.from_cartesian(*self._image_size)
         if self._image_rotate_anchor is ...:
@@ -352,6 +364,10 @@ class BaseWeapon:
     @property
     def bullet_speed(self) -> float:
         return self._bullet_speed
+
+    @property
+    def parent_position_offset(self) -> Vec2:
+        return self._parent_position_offset.copy()
 
     def get_mag_state(
         self,
@@ -482,7 +498,8 @@ class BaseWeapon:
             explosion_damage=self._bullet_explosion_damage,
             time_to_life=bullet_lifetime,
             target_pos=target_pos,
-            no_gravity=self._no_bullet_gravity
+            no_gravity=self._no_bullet_gravity,
+            visibility_offset=self._bullet_visibility_offset
         )
 
         if self._drop_casings:
@@ -662,7 +679,7 @@ class Mortar(BaseWeapon):
             bullet_size=Vec2.from_cartesian(40, 20),
             bullet_speed=1400,
             bullet_damage=40,
-            barrel_length=5,
+            barrel_length=50,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_radius=200,
@@ -702,6 +719,11 @@ class Flak(BaseWeapon):
 
 
 class CRAM(BaseWeapon):
+    _image_name: str = "CRAM_canon"
+    _image_mirror = True
+    _image_size: tuple[int, int] = (128, 128)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(32, 79)
+
     def __init__(
             self,
             parent,
@@ -724,5 +746,6 @@ class CRAM(BaseWeapon):
             bullet_lifetime=1,
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
-            sound_effect=CRAMSound()
+            sound_effect=CRAMSound(),
+            bullet_visibility_offset=.024
         )

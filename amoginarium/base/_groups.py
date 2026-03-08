@@ -257,7 +257,7 @@ class _HasBars(_BaseGroup):
         for sprite in self.sprites():
             with suppress(KeyError):
                 sprite: tp.Any
-                bar_height = sprite.size.y / 10
+                bar_height = 7
 
                 # draw health bar
                 max_len = sprite.size.x
