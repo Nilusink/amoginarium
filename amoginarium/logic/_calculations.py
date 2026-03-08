@@ -15,13 +15,6 @@ from icecream import ic
 import math as m
 
 
-# def correction_func(x) -> float:
-    # if x < 1800:
-    #     return max(0.4, 0.36 * (400/x)**0.72)
-    #
-    # return 0.1 * (2000/x)**4
-
-
 # @timeit(10)
 # @timeit(2)
 def calculate_launch_angle(
@@ -48,14 +41,12 @@ def calculate_launch_angle(
 
     # approximate where the target will be (this is not an exact method!!!)
     a_time = abs(position_delta.length / launch_speed)
-    # prev_time = a_time
-    # a_pos = position_delta + target_velocity * a_time
     a_pos = position_delta + target_velocity * a_time
     a_pos += target_acceleration * a_time**2 * 1/2
 
     # mirror = False
     solutions: list[float] = []
-    # print_ic_style(a_pos.xy, a_time, position_delta.xy, target_velocity.xy, launch_speed)
+
     for _ in range(recalculate + 1):
         solutions.clear()
 
@@ -97,15 +88,14 @@ def calculate_launch_angle(
         angle = aim_type(solutions)
         v_x = launch_speed * m.cos(angle)
 
-        # prev_time = a_time
-        xabv = 1 #+ correction_func(target_velocity.length)
-        a_time = abs(x / v_x) * xabv
+        a_time = abs(x / v_x)
 
         a_pos = position_delta + target_velocity * a_time
         a_pos += target_acceleration * a_time**2 * 1/2
 
     sol = Vec2.from_polar(aim_type(solutions), 1)
     return sol, a_time, a_pos
+
 
 # @timeit(2)
 def calculate_launch_angle_iterative(

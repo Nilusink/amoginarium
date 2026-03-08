@@ -16,7 +16,8 @@ from icecream import ic
 from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets
 from ..base import GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
-from ..logic import Vec2, calculate_launch_angle, Color, is_related
+from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
+    calculate_launch_angle_iterative
 from ._base_entity import VisibleGameEntity
 from ..render_bindings import renderer
 from ..shared import global_vars, Coalitions
@@ -241,10 +242,11 @@ class BaseTurret(VisibleGameEntity):
 
             aiming_angle, tof, predict = calculate_launch_angle(
                 position_delta,
-                player_velocity * .9 if magic else player_velocity,
+                player_velocity * .9 if 0 else player_velocity,
                 player_acceleration,
                 self.weapon.bullet_speed,
-                10,
+                16,
+                # 2 * position_delta.length / self.weapon.bullet_speed,
                 self._aim_type,
                 # *2 because for some reason I gave bullets 2x gravity
                 g=GravityAffected.gravity * 2
@@ -258,13 +260,9 @@ class BaseTurret(VisibleGameEntity):
                 predict.x *= -1
 
             target_predict = self.position + self.weapon.parent_position_offset + predict
-            # if airburst, explode at max engagement range
-            # idk why, but if engaging bullets, the tof is wrong and
-            # x1.1 corrects it soemehow
+
             tof = min(
                 tof,
-                # tof * self._high_tof_multiplier if magic else
-                # tof * self._low_tof_multiplier,
                 self.engagement_range / self.weapon.bullet_speed
             )
 
@@ -459,7 +457,7 @@ class CRAMTurret(BaseTurret):
     _aim_type = "low"
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
-        self._coalition = coalition  # needed becauuse the weapon wants it
+        self._coalition = coalition  # needed because the weapon wants it
         weapon = CRAM(
             self,
             False,

@@ -97,7 +97,7 @@
     "entities": [
         {
             "type": "turret.static.cram",
-            "pos": [1200, 870]
+            "pos": [1700, 870]
         },
         {
             "type": "instructions.text",

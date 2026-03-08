@@ -16,6 +16,7 @@ from icecream import ic
 
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord
 from ..render_bindings import renderer
+from ..debugging import timeit
 # from ..debugging import run_with_debug
 
 
@@ -356,22 +357,18 @@ class _CollisionDestroyed(_BaseGroup):
         return pg.sprite.collide_rect(a, b)
 
     # @profile
+    @timeit(10)
     def update(self) -> None:
-        # calculated: list[set] = []
         for sprite in CollisionDestroyed.sprites():
-            # calculated.append({sprite, sprite})
-            # ic(sprite.__class__.__name__, sprite.rect)
 
             with suppress(AttributeError):
                 for other in self.sprites():
                     sprite: tp.Any
                     other: tp.Any
 
-                    # if {sprite, other} not in calculated:
                     if 1:
                         if all([
                             pg.sprite.collide_rect(sprite, other),
-                            # self.dynamic_collide(sprite, other),
                             not is_related(sprite, other, 2)
                         ]):
                             try:
@@ -400,8 +397,6 @@ class _CollisionDestroyed(_BaseGroup):
                                 hp = sprite.hp
                                 if dmg != 0:
                                     other.hit_someone(target_hp=hp)
-
-                    # calculated.append({sprite, other})
 
     @staticmethod
     def size_collide(sprite1, sprite2) -> bool:

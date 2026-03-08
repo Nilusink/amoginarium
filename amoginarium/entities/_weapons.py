@@ -19,6 +19,7 @@ from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect, Mortar as MortarSound
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..audio import CRAM as CRAMSound
+from ..debugging import run_with_debug
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
@@ -36,6 +37,7 @@ class Bullet(ImageEntity):
     _casing_image: str = (BULLET_PATH, "x")
     _image_size: tuple[int, int] = ...
     _base_damage: float = 1
+    _hp: int = -1
 
     def __new__(cls, *args, **kwargs) -> "Bullet":
         return super(Bullet, cls).__new__(cls)
@@ -128,7 +130,14 @@ class Bullet(ImageEntity):
         return True
 
     def hit(self, _damage: float, hit_by: tp.Self = ...) -> None:
-        self.kill(killed_by=hit_by)
+        if self._hp <= 0:
+            self.kill(killed_by=hit_by)
+
+        else:
+            self._hp -= _damage
+            ic(self._hp, _damage, hit_by.id)
+            if self._hp <= 0:
+                self.kill(killed_by=hit_by)
 
     def hit_someone(self, target_hp: float) -> None:
         self.kill()
@@ -242,7 +251,7 @@ class Bullet(ImageEntity):
 
 class MortarShell(Bullet):
     _bullet_image: str = ("mortar_shell", "")
-    # _image_size = (80, 40)
+    _hp = .6
 
     def __init__(
         self,
@@ -260,7 +269,6 @@ class MortarShell(Bullet):
         no_gravity=False,
         **kwargs
     ) -> None:
-        ic(1)
         super().__init__(
             parent,
             coalition,
@@ -592,10 +600,11 @@ class Minigun(BaseWeapon):
             inaccuracy=.01093606,
             bullet_speed=1600,
             bullet_damage=2,
-            barrel_length=210,
+            barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=MinigunSound()
+            sound_effect=MinigunSound(),
+            bullet_visibility_offset=.058
         )
 
 
@@ -620,10 +629,11 @@ class Ak47(BaseWeapon):
             bullet_size=11,
             bullet_speed=1200,
             bullet_damage=2.5,
-            barrel_length=140,
+            barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=AK47Sound()
+            sound_effect=AK47Sound(),
+            bullet_visibility_offset=.043
         )
 
 
@@ -650,10 +660,11 @@ class Sniper(BaseWeapon):
             bullet_size=15,
             bullet_speed=2500,
             bullet_damage=4,
-            barrel_length=230,
+            barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=s
+            sound_effect=s,
+            bullet_visibility_offset=.04
         )
 
 
