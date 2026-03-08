@@ -32,7 +32,8 @@ class _BaseGroup(pg.sprite.Group):
     def entities_in_circle(
         entities: list[pg.sprite.Sprite],
         center: Vec2,
-        radius: float
+        radius: float,
+        min_radius: float = 0
     ) -> list[tuple[float, tp.Any]]:
         """
         check which of the given entities are in the circle
@@ -42,8 +43,38 @@ class _BaseGroup(pg.sprite.Group):
         for sprite in entities:
             delta = sprite.position - center
 
-            if delta.length <= radius:
+            if min_radius <= delta.length <= radius:
                 out.append((delta.length, sprite))
+
+        return sorted(out, key=lambda r: r[0])
+
+    @staticmethod
+    def entities_in_partial_circle(
+            entities: list[pg.sprite.Sprite],
+            center: Vec2,
+            radius: float,
+            angle_start: Vec2,
+            angle_end: Vec2,
+            min_radius: float = 0
+    ):
+        out = []
+        angle_delta = Vec2.normalize_angle(
+            angle_end.angle
+            - angle_start.angle
+        )
+        start2 = angle_start.angle + angle_delta
+        end2 = angle_end.angle - angle_delta
+
+        for sprite in entities:
+            delta = sprite.position - center
+
+            if min_radius <= delta.length <= radius:
+                delta.angle = Vec2.normalize_angle(delta.angle)
+                if any([
+                    angle_start.angle < delta.angle < start2,
+                    angle_end.angle > delta.angle > end2,
+                ]):
+                    out.append((delta.length, sprite))
 
         return sorted(out, key=lambda r: r[0])
 
@@ -357,7 +388,7 @@ class _CollisionDestroyed(_BaseGroup):
         return pg.sprite.collide_rect(a, b)
 
     # @profile
-    @timeit(10)
+    # @timeit(10)
     def update(self) -> None:
         for sprite in CollisionDestroyed.sprites():
 

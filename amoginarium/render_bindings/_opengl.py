@@ -304,6 +304,52 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnd()
 
+    def draw_partial_circle(
+            self,
+            center,
+            radius,
+            angle_start,
+            angle_end,
+            num_segments,
+            color,
+            convert_global=True
+    ):
+        center = convert_coord(center, Vec2)
+        angle_start = convert_coord(angle_start, Vec2)
+        angle_end = convert_coord(angle_end, Vec2)
+
+        # convert to screen relative coords and size
+        if convert_global:
+            center = global_vars.translate_screen_coord(center)
+            radius = global_vars.translate_scale(radius)
+
+        # only draw if on screen
+        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
+            return
+
+        angle_delta = (
+                Vec2.normalize_angle(angle_end.angle)
+                - Vec2.normalize_angle(angle_start.angle)
+        )
+
+        glLoadIdentity()  # reset previous glTranslate statements
+        glTranslate(center.x, center.y, 0)
+
+        self.set_color(color)
+
+        glBegin(GL_POLYGON)
+        glVertex2f(0, 0)
+
+        for i in range(num_segments + 1):
+            angle = angle_start.angle + (i / num_segments) * angle_delta
+            pos = Vec2.from_polar(
+                angle,
+                radius
+            )
+            glVertex2f(*pos.xy)
+
+        glEnd()
+
     def draw_rect(
             self,
             start,
@@ -375,6 +421,60 @@ class OpenGLRenderer(BaseRenderer):
                 sine2 * (radius + thickness)
             )
             glVertex2f(cosine2 * radius, sine2 * radius)
+            glEnd()
+
+    def draw_partial_dashed_circle(
+            self,
+            center,
+            radius,
+            angle_start,
+            angle_end,
+            num_segments,
+            color,
+            thickness=1,
+            convert_global=True
+    ):
+        center = convert_coord(center, Vec2)
+        angle_start = convert_coord(angle_start, Vec2)
+        angle_end = convert_coord(angle_end, Vec2)
+        if convert_global:
+            center = global_vars.translate_screen_coord(center)
+            radius = global_vars.translate_scale(radius)
+
+        # only draw if on screen
+        if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
+            return
+
+        angle_delta = Vec2.normalize_angle(
+                angle_end.angle - angle_start.angle
+        ) / 2
+
+        glLoadIdentity()
+        glTranslate(center.x, center.y, 0)
+
+        self.set_color(color)
+
+        for i in range(num_segments):
+            i1 = i * 2
+            i2 = i1 + 1
+
+            angle1 = angle_start.angle + (i1 / num_segments) * angle_delta
+            angle2 = angle_start.angle + (i2 / num_segments) * angle_delta
+
+            pos1 = Vec2.from_polar(
+                angle1,
+                1
+            )
+            pos2 = Vec2.from_polar(
+                angle2,
+                1
+            )
+
+            glBegin(GL_POLYGON)
+            glVertex2f(*(pos1 * radius).xy)
+            glVertex2f(*(pos1 * (radius + thickness)).xy)
+            glVertex2f(*(pos2 * (radius + thickness)).xy)
+            glVertex2f(*(pos2 * radius).xy)
             glEnd()
 
     def draw_line(

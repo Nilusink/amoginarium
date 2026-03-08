@@ -97,7 +97,7 @@
     "entities": [
         {
             "type": "turret.static.cram",
-            "pos": [1700, 870]
+            "pos": [1700, 805]
         },
         {
             "type": "instructions.text",
@@ -178,7 +178,7 @@
         },
         {
             "type": "turret.static.ak47",
-            "pos": [10500, 700]
+            "pos": [10500, 820]
         },
         {
             "type": "instructions.text",

@@ -65,21 +65,29 @@ class BaseTurret(VisibleGameEntity):
             position: Vec2,
             weapon: BaseWeapon,
             engagement_range: float,
+            min_range: float = 0,
             airburst_munition: bool = False,
             intercept_bullets: bool = False,
             intercept_players: bool = True,
-            target_taps: int = -1
+            target_taps: int = -1,
+            valid_angles: tuple[Vec2, Vec2] = ...
     ) -> None:
-        position.y -= size.y
+        self._set_pos = position.copy()
+        position.y -= size.y / 2
 
         self.weapon = weapon
         self.engagement_range = engagement_range
+        self.min_range = min_range
         self.airburst_munition = airburst_munition
         self.intercept_bullets = intercept_bullets
         self.intercept_players = intercept_players
         self.available_targets = {}
         self._last_shot = perf_counter()
         self._aiming_at = Vec2.from_cartesian(-1, 0)
+        self._valid_angles = valid_angles
+        if self._valid_angles is not ...:
+            self._valid_angles[0].length = self.engagement_range
+            self._valid_angles[1].length = self.engagement_range
 
         if target_taps > 0:
             self._target_tapping = True
@@ -121,7 +129,7 @@ class BaseTurret(VisibleGameEntity):
         self.weapon.stop()
         super().kill(killed_by)
 
-    def get_next_target(self) -> tp.Any:
+    def get_next_target(self, include_all: bool = False) -> tp.Any:
         """
         returns the next best target to shoot at
         """
@@ -130,6 +138,9 @@ class BaseTurret(VisibleGameEntity):
                 targets, key=lambda t: self.available_targets[t]["distance"]
         ):
             t = self.available_targets[target]
+            if include_all:
+                return target
+
             if t["shot_at"] < -.5:
                 return target
 
@@ -150,7 +161,7 @@ class BaseTurret(VisibleGameEntity):
         # scan for targets and engage the closest one
         targets = []
         if self.intercept_players:
-            # only add living playerse
+            # only add living players
             targets.extend(
                 [p for p in Players.sprites() if p.alive]
             )
@@ -158,11 +169,22 @@ class BaseTurret(VisibleGameEntity):
         if self.intercept_bullets:
             targets.extend(Bullets.sprites())
 
-        targets = Players.entities_in_circle(
-            targets,
-            self.position,
-            self.engagement_range
-        )
+        if self._valid_angles is not ...:
+            targets = Players.entities_in_partial_circle(
+                targets,
+                self.position,
+                self.engagement_range,
+                *self._valid_angles,
+                min_radius=self.min_range
+            )
+
+        else:
+            targets = Players.entities_in_circle(
+                targets,
+                self.position,
+                self.engagement_range,
+                min_radius=self.min_range
+            )
 
         # filter stuff shot by myself
         targets = [e for e in targets if not is_related(self, e[1], depth=4)]
@@ -189,10 +211,17 @@ class BaseTurret(VisibleGameEntity):
                 self.available_targets[target]["shot_at"] = -self._number_target_taps
 
         new_target = self.get_next_target()
+        simulate_target = self.get_next_target(True)
         if new_target is not None:
             self._last_shot = perf_counter()
             self._target_predict = [
                 self.__shoot_at(new_target),
+            ]
+
+        # aim but don't shoot
+        elif simulate_target is not None:
+            self._target_predict = [
+                self.__shoot_at(simulate_target, True),
             ]
 
         else:
@@ -202,25 +231,38 @@ class BaseTurret(VisibleGameEntity):
         if perf_counter() - self._last_shot >= .1:
             self.weapon.stop_shooting()
 
+        # check if reload
+        if self.weapon.get_mag_state(1)[0] == 0:
+            self.weapon.reload()
+
         super().update(delta)
 
-    def __shoot_at(self, target: VisibleGameEntity) -> Vec2 | None:
+    def __shoot_at(
+            self,
+            target: VisibleGameEntity,
+            simulate: bool = False
+    ) -> Vec2 | None:
+        """
+        shoot at specified target
+        :param target:
+        :param simulate: calculate & aim but don't shoot
+        """
         player_velocity = target.velocity.copy()
         player_acceleration = target.acceleration.copy()
 
         self._target = target
 
-        # if target is on ground, subtrac gravitaional acceleration
+        # if target is on ground, subtract gravitational acceleration
         if hasattr(target, "on_ground"):
             if target.on_ground:
                 player_acceleration.y -= GravityAffected.gravity
 
         # if issubclass(Bullet, target.__class__)
-        if target in Bullets.sprites():
-            target_position = target.position
+        # if 1:  # target in Bullets.sprites():
+        target_position = target.position
 
-        else:
-            target_position = target.position_center
+        # else:
+        #     target_position = target.position_center
 
         position_delta = target_position - (
             self.position + self.weapon.parent_position_offset
@@ -263,11 +305,15 @@ class BaseTurret(VisibleGameEntity):
 
             tof = min(
                 tof,
-                self.engagement_range / self.weapon.bullet_speed
+                1.3 * self.engagement_range / self.weapon.bullet_speed
             )
 
             self._aiming_at = aiming_angle.copy()
             self._aiming_at.normalize()
+
+            if simulate:
+                return target_predict
+
             shot = self.weapon.shoot(
                 aiming_angle,
                 tof if self.airburst_munition else ...,
@@ -295,6 +341,8 @@ class BaseTurret(VisibleGameEntity):
         ]):
             return
 
+        engage_center = self.world_position + self.weapon.parent_position_offset
+
         # weapon
         self.weapon.draw_at(
             self.position,
@@ -307,14 +355,68 @@ class BaseTurret(VisibleGameEntity):
             self.size.xy
         )
 
-        # draw engagement ragne
-        renderer.draw_dashed_circle(
-            self.world_position,
-            self.engagement_range,
-            64,
-            Color.white(),
-            3
-        )
+        # draw engagement range
+        if self._valid_angles is not ...:
+            min_1 = self._valid_angles[0].copy()
+            min_2 = self._valid_angles[1].copy()
+
+            min_1.length = self.min_range
+            min_2.length = self.min_range
+
+            renderer.draw_line(
+                engage_center + min_1,
+                engage_center + self._valid_angles[0],
+                Color.white()
+            )
+
+            renderer.draw_line(
+                engage_center + min_2,
+                engage_center + self._valid_angles[1],
+                Color.white()
+            )
+
+            angle_delta = abs(Vec2.normalize_angle(
+                self._valid_angles[1].angle
+                - self._valid_angles[0].angle
+            ))
+            segments = int(64 * (angle_delta / (2*3.1415926)))
+
+            renderer.draw_partial_dashed_circle(
+                engage_center,
+                self.engagement_range,
+                *self._valid_angles,
+                num_segments=segments,
+                color=Color.white(),
+                thickness=3
+            )
+
+            if self.min_range > 0:
+                renderer.draw_partial_dashed_circle(
+                    engage_center,
+                    self.min_range,
+                    *self._valid_angles,
+                    num_segments=segments // 2,
+                    color=(1, .5, 0),
+                    thickness=2
+                )
+
+        else:
+            renderer.draw_dashed_circle(
+                engage_center,
+                self.engagement_range,
+                64,
+                Color.white(),
+                3
+            )
+
+            if self.min_range > 0:
+                renderer.draw_dashed_circle(
+                    engage_center,
+                    self.min_range,
+                    64,
+                    (1, .5, 0),
+                    3
+                )
 
         # targets
         if global_vars.show_targets:
@@ -337,7 +439,7 @@ class BaseTurret(VisibleGameEntity):
                         continue
 
                     renderer.draw_line(
-                        self.world_position + self.weapon.parent_position_offset,
+                        engage_center,
                         target - Updated.world_position,
                         Color.from_255(50, 200, 0, 100)
                     )
@@ -359,7 +461,7 @@ class SniperTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 64),
+            Vec2.from_cartesian(31, 32),
             position,
             weapon,
             2400
@@ -376,7 +478,7 @@ class AkTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 64),
+            Vec2.from_cartesian(31, 32),
             position,
             weapon,
             1500
@@ -393,7 +495,7 @@ class MinigunTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 64),
+            Vec2.from_cartesian(48, 48),
             position,
             weapon,
             1200,
@@ -430,23 +532,30 @@ class MortarTurret(BaseTurret):
 
 
 class FlakTurret(BaseTurret):
-    _max_hp: int = 70
+    _max_hp: int = 170
+    _body_texture_path = "FLAK_base"
+    _body_texture_size = (98, 44)
     _aim_type = "low"
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
-        self._coalition = coalition  # needed becauuse the weapon wants it
-        weapon = Flak(self, True)
+        self._coalition = coalition  # needed because the weapon wants it
+        weapon = Flak(self, True, parent_position_offset=(16, -26))
         weapon.reload(True)
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 64),
+            Vec2.from_cartesian(*self._body_texture_size)*2,
             position,
             weapon,
             1550,
+            300,
             airburst_munition=True,
             intercept_bullets=False,
-            target_taps=2
+            target_taps=2,
+            valid_angles=(
+                Vec2.from_cartesian(-1, .3),
+                Vec2.from_cartesian(-.1, -1)
+            )
         )
 
 
@@ -470,9 +579,14 @@ class CRAMTurret(BaseTurret):
             Vec2.from_cartesian(64, 128),
             position,
             weapon,
-            1300,
+            1400,
+            150,
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
-            target_taps=4
+            target_taps=4,
+            valid_angles=(
+                Vec2.from_cartesian(-.5, 1),
+                Vec2.from_cartesian(.5, 1)
+            )
         )

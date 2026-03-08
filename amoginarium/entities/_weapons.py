@@ -130,7 +130,7 @@ class Bullet(ImageEntity):
         return True
 
     def hit(self, _damage: float, hit_by: tp.Self = ...) -> None:
-        if self._hp <= 0:
+        if self._hp <= 0 or not issubclass(hit_by.__class__, Bullet):
             self.kill(killed_by=hit_by)
 
         else:
@@ -251,7 +251,7 @@ class Bullet(ImageEntity):
 
 class MortarShell(Bullet):
     _bullet_image: str = ("mortar_shell", "")
-    _hp = .6
+    _hp = .5
 
     def __init__(
         self,
@@ -702,6 +702,10 @@ class Mortar(BaseWeapon):
 
 
 class Flak(BaseWeapon):
+    _image_name: str = "FLAK_canon"
+    _image_size: tuple[int, int] = (256, 128)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(83, 59)
+
     def __init__(
             self,
             parent,
@@ -719,13 +723,14 @@ class Flak(BaseWeapon):
             # bullet_speed=1400*2,  # can shoot down bullets, but is too op
             bullet_speed=1400,
             bullet_damage=30,
-            barrel_length=5,
+            barrel_length=100,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
             bullet_lifetime=5,
-            sound_effect=Shotgun().set_volume(.8)
+            sound_effect=Shotgun().set_volume(.8),
+            bullet_visibility_offset=.1
         )
 
 
