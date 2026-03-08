@@ -169,6 +169,7 @@ class BaseTurret(VisibleGameEntity):
         if self.intercept_bullets:
             targets.extend(Bullets.sprites())
 
+        # only check targets inside engagement envelope
         if self._valid_angles is not ...:
             targets = Players.entities_in_partial_circle(
                 targets,
@@ -302,6 +303,24 @@ class BaseTurret(VisibleGameEntity):
                 predict.x *= -1
 
             target_predict = self.position + self.weapon.parent_position_offset + predict
+
+            if predict.length < self.min_range:
+                return
+
+            if self._valid_angles is not ...:
+                angle_delta = Vec2.normalize_angle(
+                    self._valid_angles[1].angle
+                    - self._valid_angles[0].angle
+                )
+                start2 = self._valid_angles[0].angle + angle_delta
+                end2 = self._valid_angles[1].angle - angle_delta
+
+                # check if firing-solution is inside engagement envelope
+                if not any([
+                    self._valid_angles[0].angle < aiming_angle.angle < start2,
+                    self._valid_angles[1].angle > aiming_angle.angle > end2,
+                ]):
+                    return
 
             tof = min(
                 tof,

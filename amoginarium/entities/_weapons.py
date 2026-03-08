@@ -529,6 +529,10 @@ class BaseWeapon:
         """
         reload the weapon
         """
+        if hasattr(self._sound_effect, "done"):
+            if 0 < self._sound_effect.playing < 3:
+                self._sound_effect.done()
+
         self._current_reload_time = 0 if instant else self._reload_time
 
         if instant:
@@ -627,7 +631,7 @@ class Ak47(BaseWeapon):
             mag_size=30,
             inaccuracy=0.03,
             bullet_size=11,
-            bullet_speed=1200,
+            bullet_speed=1250,
             bullet_damage=2.5,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
