@@ -279,6 +279,9 @@ class BaseTurret(VisibleGameEntity):
             player_acceleration.x *= -1
             mirror = True
 
+        # try to negate effects of bullet spawning off-center
+        # position_delta.length -= self.weapon.barrel_length / 2
+
         # try to predict where the player is going to be
         with suppress(ValueError):
             magic = player_velocity.length > self.weapon._bullet_speed
@@ -543,7 +546,7 @@ class MortarTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(46, 48),
+            Vec2.from_cartesian(23*1.5, 24*1.5),
             position,
             weapon,
             1800,
@@ -566,7 +569,7 @@ class FlakTurret(BaseTurret):
             Vec2.from_cartesian(*self._body_texture_size)*2,
             position,
             weapon,
-            1550,
+            1750,
             300,
             airburst_munition=True,
             intercept_bullets=False,
@@ -605,7 +608,8 @@ class CRAMTurret(BaseTurret):
             airburst_munition=True,
             target_taps=4,
             valid_angles=(
-                Vec2.from_cartesian(-.5, 1),
+                # Vec2.from_cartesian(-.5, 1),
+                Vec2.from_polar(4.699, 1),
                 Vec2.from_cartesian(.5, 1)
             )
         )

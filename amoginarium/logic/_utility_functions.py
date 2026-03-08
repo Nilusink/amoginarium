@@ -90,7 +90,7 @@ def is_related(a: object, b: object, depth: int = 2) -> bool:
 def convert_coord[A](
         coord: coord_t,
         convert_to: type[A] = tuple
-) -> A:
+) -> A | tuple[A, A]:
     """
     accepts both tuple and Vec2
     """
@@ -105,3 +105,11 @@ def convert_coord[A](
             return coord
 
         return coord.xy
+
+    if convert_to is int:
+        if isinstance(coord, Vec2):
+            coord = coord.xy
+
+        return int(coord[0]), int(coord[1])
+
+    raise ValueError("Unsupported conversion: ", convert_to)

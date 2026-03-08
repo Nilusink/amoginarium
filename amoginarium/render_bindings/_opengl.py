@@ -150,21 +150,21 @@ class OpenGLRenderer(BaseRenderer):
         return False
 
         # 200 for buffering
-        return any([
-            pos.x > global_vars.screen_size.x + 200,
-            pos.x + size.x < -200
-        ])
+        # return any([
+        #     pos.x > global_vars.screen_size.x + 200,
+        #     pos.x + size.x < -200
+        # ])
 
     @staticmethod
     def load_texture(
             image,
-            size,
+            size=None,
             mirror=""
     ) -> tuple[TextureID, tuple[int, int]]:
         # for debugging
         if size is not None:
             image = image.resize(
-                convert_coord(size),
+                convert_coord(size, int),
                 resample=Image.NEAREST
             )
 

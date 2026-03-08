@@ -254,7 +254,7 @@ class _GravityAffected(_BaseGroup):
         for sprite in self.sprites():
             sprite: tp.Any
 
-            sprite.acceleration.y = self.gravity
+            sprite.acceleration.y += self.gravity
 
             # with suppress(AttributeError):
             #     if sprite.on_ground and sprite.velocity.y > 0:
@@ -273,7 +273,7 @@ class _FrictionXAffected(_BaseGroup):
     def calculate_friction(self, delta: float) -> None:
         for sprite in self.sprites():
             with suppress(AttributeError):
-                sprite.acceleration.x = -sprite.velocity.x / 100
+                sprite.acceleration.x -= sprite.velocity.x / 100
                 sprite.acceleration.x *= self.friction
 
 
@@ -347,17 +347,31 @@ class _WallBouncer(_BaseGroup):
         for sprite in self.sprites():
             with suppress(AttributeError):
                 sprite: tp.Any
-                if 10 > sprite.position.x:
+                in_wall = WallCollider.collides_with(sprite)
+
+                if not in_wall:
+                    continue
+
+                wall, pos = in_wall
+                delta = Vec2.from_cartesian(*pos)
+                delta.angle = Vec2.normalize_angle(delta.angle)
+
+                if hasattr(sprite, "_bounce_friction"):
+                    sprite.velocity *= sprite._bounce_friction
+
+                pi4 = np.pi / 4
+                # ic(pi4, delta.xy, delta.angle, pos, sprite.position.xy)
+                if pi4 <= delta.angle < 3*pi4:
                     sprite.velocity.x = abs(sprite.velocity.x)
 
-                elif sprite.position.x > 1920:
+                elif 3*pi4 <= delta.angle < 5*pi4:
                     print(sprite.position)
                     sprite.velocity.x = -abs(sprite.velocity.x)
 
-                if 10 > sprite.position.y:
+                elif 5*pi4 <= delta.angle < 7*pi4:
                     sprite.velocity.y = abs(sprite.velocity.y)
 
-                elif sprite.position.y > 900:
+                else:
                     sprite.velocity.y = -abs(sprite.velocity.y)
 
 

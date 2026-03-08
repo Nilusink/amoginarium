@@ -187,6 +187,7 @@ class GameEntity(PositionedEntity):
         # update velocity and position
         self.velocity += self.acceleration * delta
         self.position += self.velocity * delta
+        self.acceleration *= 0
 
         # re-calculate pygame stuff
         self.last_angle = self.velocity.angle

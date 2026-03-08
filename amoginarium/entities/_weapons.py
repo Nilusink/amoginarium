@@ -14,12 +14,13 @@ import typing as tp
 from icecream import ic
 # import time
 
-from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn
+from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn, \
+    WallBouncer
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect, Mortar as MortarSound
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..audio import CRAM as CRAMSound
-from ..debugging import run_with_debug
+from ..debugging import run_with_debug, timeit
 from ..logic import Vec2, Color, convert_coord, coord_t
 from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
@@ -153,15 +154,16 @@ class Bullet(ImageEntity):
             self._ttl <= 0,
             self.on_ground
         ]):
-            self.kill()
-            return
+            if self.kill():
+                return
 
         # double gravity (because why not)
         self.acceleration.y *= 2
 
         super().update(delta)
 
-    def kill(self, killed_by: tp.Self = ...) -> None:
+    # @timeit(10)
+    def kill(self, killed_by: tp.Self = ...) -> bool:
         if all([
             self._casing,
             not Updated.out_of_bounds_x(self)
@@ -178,17 +180,26 @@ class Bullet(ImageEntity):
         if self._explosion_radius > 0:
             for d, entity in CollisionDestroyed.get_entities_in_circle(
                 self.position,
-                self._explosion_radius
+                self._explosion_radius * 2
             ):
                 if all([
                     entity != self,
-                    entity.__class__ is not killed_by.__class__
+                    not issubclass(killed_by.__class__, Bullet)
                 ]):
                     entity.hit(
                         (1 - .8 * d / self._explosion_radius)
                         * self._explosion_damage,
                         hit_by=self
                     )
+                    if hasattr(entity, "_movement_acceleration"):
+                        delta = entity.position - self.position
+                        delta = delta.normalize() \
+                            * entity._movement_acceleration \
+                            * (
+                                    1 - max(d, 40)
+                                    / (self._explosion_radius * 4)
+                            ) * (self._explosion_damage / 100)
+                        entity.acceleration += delta
 
             explosion.draw(
                 delay=.05,
@@ -212,6 +223,7 @@ class Bullet(ImageEntity):
 
         self.remove(Drawn)
         super().kill()
+        return True
 
     def gl_draw(self) -> None:
         if self._visibility_offset > 0:
@@ -284,6 +296,56 @@ class MortarShell(Bullet):
             no_gravity,
             **kwargs
         )
+
+
+class Grenade(Bullet):
+    _hp = .2
+    _bounce_friction = .7
+
+    def __init__(
+        self,
+        parent: GameEntity,
+        coalition: tp.Any,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        base_damage: float = 0,
+        casing: bool = False,
+        time_to_life: float = 5,
+        explosion_radius: float = 150,
+        explosion_damage: float = 50,
+        target_pos: Vec2 = ...,
+        size=20,
+        no_gravity=False,
+        **kwargs
+    ) -> None:
+        super().__init__(
+            parent,
+            coalition,
+            initial_position,
+            initial_velocity,
+            base_damage,
+            casing,
+            time_to_life,
+            explosion_radius,
+            explosion_damage,
+            target_pos,
+            size,
+            no_gravity,
+            **kwargs
+        )
+
+        self.add(WallBouncer)
+
+    def kill(self, killed_by=...):
+        # can only be killed by bullets and ttl
+        if killed_by is not ...:
+            if issubclass(killed_by.__class__, Bullet):
+                self._ttl = 0
+
+        if self._ttl > 0:
+            return False
+
+        return super().kill(killed_by)
 
 
 class BaseWeapon:
@@ -376,6 +438,10 @@ class BaseWeapon:
     @property
     def parent_position_offset(self) -> Vec2:
         return self._parent_position_offset.copy()
+
+    @property
+    def barrel_length(self) -> float:
+        return self._barrel_length
 
     def get_mag_state(
         self,
@@ -675,8 +741,8 @@ class Sniper(BaseWeapon):
 class Mortar(BaseWeapon):
     _bullet_image = BULLET_PATH
     _image_name: str = "mortar"
-    _image_size: tuple[int, int] = (25*2, 17*2)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(15, 8*2)
+    _image_size: tuple[int, int] = (25*1.5, 17*1.5)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(7.5*1.5, 8*1.5)
 
     def __init__(
             self,
@@ -694,14 +760,15 @@ class Mortar(BaseWeapon):
             bullet_size=Vec2.from_cartesian(40, 20),
             bullet_speed=1400,
             bullet_damage=40,
-            barrel_length=50,
+            barrel_length=10,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_radius=200,
             bullet_explosion_damage=50,
             bullet_lifetime=7,
             sound_effect=MortarSound(),
-            bullet_type=MortarShell
+            bullet_type=MortarShell,
+            bullet_visibility_offset=.025
         )
 
 
@@ -727,14 +794,14 @@ class Flak(BaseWeapon):
             # bullet_speed=1400*2,  # can shoot down bullets, but is too op
             bullet_speed=1400,
             bullet_damage=30,
-            barrel_length=100,
+            barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
             bullet_lifetime=5,
             sound_effect=Shotgun().set_volume(.8),
-            bullet_visibility_offset=.1
+            bullet_visibility_offset=.13
         )
 
 
@@ -768,4 +835,38 @@ class CRAM(BaseWeapon):
             bullet_explosion_radius=15,
             sound_effect=CRAMSound(),
             bullet_visibility_offset=.024
+        )
+
+
+class HandThrownGrenade(BaseWeapon):
+    _image_name: str = "bullet"
+    _image_mirror = True
+    _image_size: tuple[int, int] = (32, 32)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(16, 16)
+
+    def __init__(
+            self,
+            parent,
+            drop_casings: bool = False,
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+    ) -> None:
+        super().__init__(
+            parent,
+            reload_time=8,
+            recoil_time=2,
+            recoil_factor=2,
+            mag_size=1,
+            inaccuracy=.01,
+            bullet_speed=800,
+            bullet_damage=0,
+            barrel_length=0,
+            parent_position_offset=parent_position_offset,
+            drop_casings=drop_casings,
+            bullet_size=20,
+            bullet_lifetime=5,
+            bullet_explosion_damage=50,
+            bullet_explosion_radius=150,
+            # sound_effect=CRAMSound(),
+            bullet_visibility_offset=.0,
+            bullet_type=Grenade
         )

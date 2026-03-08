@@ -96,7 +96,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.cram",
+            "type": "turret.static.flak",
             "pos": [1700, 805]
         },
         {

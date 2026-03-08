@@ -17,6 +17,7 @@ from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
+from ._weapons import HandThrownGrenade
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..controllers import Controller
@@ -151,7 +152,8 @@ class Player(LRImageEntity):
             Sniper(self, False),
             Mortar(self, False),
             Flak(self, False),
-            CRAM(self, False)
+            CRAM(self, False),
+            HandThrownGrenade(self, False)
         ]
 
         for i in range(len(self._weapons)):
