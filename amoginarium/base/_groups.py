@@ -254,7 +254,7 @@ class _GravityAffected(_BaseGroup):
         for sprite in self.sprites():
             sprite: tp.Any
 
-            sprite.acceleration.y += self.gravity
+            sprite.acceleration.y = self.gravity
 
             # with suppress(AttributeError):
             #     if sprite.on_ground and sprite.velocity.y > 0:

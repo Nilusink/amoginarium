@@ -173,7 +173,7 @@ class Bullet(ImageEntity):
                 CollisionDestroyed,
                 GravityAffected
             )
-            return
+            return True
 
         # explode
         if self._explosion_radius > 0:
@@ -843,7 +843,7 @@ class CRAM(BaseWeapon):
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
             sound_effect=CRAMSound(),
-            bullet_visibility_offset=.00024
+            bullet_visibility_offset=.027
         )
 
 
