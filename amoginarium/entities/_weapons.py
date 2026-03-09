@@ -135,7 +135,6 @@ class Bullet(ImageEntity):
 
         else:
             self._hp -= _damage
-            ic(self._hp, _damage, hit_by.id)
             if self._hp <= 0:
                 self.kill(killed_by=hit_by)
 
@@ -179,7 +178,7 @@ class Bullet(ImageEntity):
         if self._explosion_radius > 0:
             for d, entity in CollisionDestroyed.get_entities_in_circle(
                 self.position,
-                self._explosion_radius * 2
+                self._explosion_radius
             ):
                 if all([
                     entity != self,
@@ -299,7 +298,7 @@ class MortarShell(Bullet):
 
 class Grenade(Bullet):
     _bullet_image: str = ("grenade", "")
-    _hp = .2
+    _hp = .05
     _bounce_friction = .7
 
     def __init__(

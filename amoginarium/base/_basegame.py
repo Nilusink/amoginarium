@@ -213,7 +213,7 @@ class BaseGame:
         self._background_player.assign_scope("background")
 
         # load entity textures
-        textures.load_images("assets/images/textures")
+        textures.load_images("assets/images/textures.zip")
         textures.load_images("assets/images/dirt_islands.zip")
         textures.load_images("assets/images/bricks_gray")
         textures.load_images("assets/images/bricks_green")
