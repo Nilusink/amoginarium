@@ -1,7 +1,8 @@
 name: Feature request
 description: Suggest an idea for this project
+projects: [ "Nilusink/3" ]
 title: "[Feature Request / Suggestion]: <title>"
-labels: ["enhancement"]
+labels: [ "enhancement" ]
 assignees:
   - LukasKrah
 body:
