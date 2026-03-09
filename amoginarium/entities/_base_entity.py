@@ -16,8 +16,8 @@ import math as m
 
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
+from ..logic import Vec2, rk4_update
 from ..base import Updated, Drawn
-from ..logic import Vec2
 
 
 _next_entity_id = 0
@@ -174,9 +174,20 @@ class GameEntity(PositionedEntity):
         )
 
     def update(self, delta: float) -> None:
+        # acceleration_func just returns self.acceleration (constant) or compute dynamically
+        # def acc_func(pos, vel):
+        #     return self.acceleration  # or compute based on pos/vel if needed
+        #
+        # self.position, self.velocity = rk4_update(
+        #     self.position,
+        #     self.velocity,
+        #     acc_func,
+        #     delta
+        # )
         # update velocity and position
         self.velocity += self.acceleration * delta
         self.position += self.velocity * delta
+        self.acceleration.x *= 0
 
         # re-calculate pygame stuff
         self.last_angle = self.velocity.angle

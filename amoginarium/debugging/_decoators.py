@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 from traceback import format_exc
+from time import perf_counter_ns
 from icecream import ic
 import typing as tp
 import inspect
@@ -84,5 +85,35 @@ def run_with_debug(
                 if reraise_errors:
                     raise e
 
+        return wrapper
+    return decorator
+
+
+def timeit(
+        times_run: int
+):
+    def decorator[**A, R](func: tp.Callable[A, R]):
+        def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
+            start = perf_counter_ns()
+            for _ in range(times_run-1):
+                func(*args, **kwargs)
+
+            result = func(*args, **kwargs)
+            end = perf_counter_ns()
+            time_taken = (end - start) / (times_run * 1000)
+
+            prefix = ic.prefix()
+            prefix_time = prefix[:-3]
+            prefix_arrow = prefix[-3:]
+            print(
+                f"{get_fg_color(36)}{prefix_time}"
+                f"{get_fg_color(247)}{prefix_arrow}{CC.fg.GREEN}"
+                f"timing {CC.fg.MAGENTA}{func.__name__}"
+                f"{get_fg_color(36)} for {get_fg_color(247)}{times_run}"
+                f"{get_fg_color(36)} iterations. result: {CC.fg.MAGENTA}"
+                f"{time_taken}µs{CC.ctrl.ENDC}"
+            )
+
+            return result
         return wrapper
     return decorator

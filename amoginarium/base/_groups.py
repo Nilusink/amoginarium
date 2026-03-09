@@ -16,6 +16,7 @@ from icecream import ic
 
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord
 from ..render_bindings import renderer
+from ..debugging import timeit
 # from ..debugging import run_with_debug
 
 
@@ -31,7 +32,8 @@ class _BaseGroup(pg.sprite.Group):
     def entities_in_circle(
         entities: list[pg.sprite.Sprite],
         center: Vec2,
-        radius: float
+        radius: float,
+        min_radius: float = 0
     ) -> list[tuple[float, tp.Any]]:
         """
         check which of the given entities are in the circle
@@ -41,8 +43,38 @@ class _BaseGroup(pg.sprite.Group):
         for sprite in entities:
             delta = sprite.position - center
 
-            if delta.length <= radius:
+            if min_radius <= delta.length <= radius:
                 out.append((delta.length, sprite))
+
+        return sorted(out, key=lambda r: r[0])
+
+    @staticmethod
+    def entities_in_partial_circle(
+            entities: list[pg.sprite.Sprite],
+            center: Vec2,
+            radius: float,
+            angle_start: Vec2,
+            angle_end: Vec2,
+            min_radius: float = 0
+    ):
+        out = []
+        angle_delta = Vec2.normalize_angle(
+            angle_end.angle
+            - angle_start.angle
+        )
+        start2 = angle_start.angle + angle_delta
+        end2 = angle_end.angle - angle_delta
+
+        for sprite in entities:
+            delta = sprite.position - center
+
+            if min_radius <= delta.length <= radius:
+                delta.angle = Vec2.normalize_angle(delta.angle)
+                if any([
+                    angle_start.angle < delta.angle < start2,
+                    angle_end.angle > delta.angle > end2,
+                ]):
+                    out.append((delta.length, sprite))
 
         return sorted(out, key=lambda r: r[0])
 
@@ -241,7 +273,7 @@ class _FrictionXAffected(_BaseGroup):
     def calculate_friction(self, delta: float) -> None:
         for sprite in self.sprites():
             with suppress(AttributeError):
-                sprite.acceleration.x = -sprite.velocity.x / 100
+                sprite.acceleration.x -= sprite.velocity.x / 100
                 sprite.acceleration.x *= self.friction
 
 
@@ -257,7 +289,7 @@ class _HasBars(_BaseGroup):
         for sprite in self.sprites():
             with suppress(KeyError):
                 sprite: tp.Any
-                bar_height = sprite.size.y / 10
+                bar_height = 7
 
                 # draw health bar
                 max_len = sprite.size.x
@@ -310,22 +342,39 @@ class _WallBouncer(_BaseGroup):
 
         velocity: Vec2
         position: Vec2
+        in_wall: Vec2 | None (optional, set by update)
     """
     def update(self) -> None:
         for sprite in self.sprites():
             with suppress(AttributeError):
                 sprite: tp.Any
-                if 10 > sprite.position.x:
+                in_wall = WallCollider.collides_with(sprite)
+
+                if not in_wall:
+                    sprite.in_wall = None
+                    continue
+
+                wall, pos = in_wall
+                delta = Vec2.from_cartesian(*pos)
+                delta.angle = Vec2.normalize_angle(delta.angle)
+                sprite.in_wall = delta
+
+                if hasattr(sprite, "_bounce_friction"):
+                    sprite.velocity *= sprite._bounce_friction
+
+                pi4 = np.pi / 4
+                # ic(pi4, delta.xy, delta.angle, pos, sprite.position.xy)
+                if pi4 <= delta.angle < 3*pi4:
                     sprite.velocity.x = abs(sprite.velocity.x)
 
-                elif sprite.position.x > 1920:
+                elif 3*pi4 <= delta.angle < 5*pi4:
                     print(sprite.position)
                     sprite.velocity.x = -abs(sprite.velocity.x)
 
-                if 10 > sprite.position.y:
+                elif 5*pi4 <= delta.angle < 7*pi4:
                     sprite.velocity.y = abs(sprite.velocity.y)
 
-                elif sprite.position.y > 900:
+                else:
                     sprite.velocity.y = -abs(sprite.velocity.y)
 
 
@@ -356,22 +405,18 @@ class _CollisionDestroyed(_BaseGroup):
         return pg.sprite.collide_rect(a, b)
 
     # @profile
+    # @timeit(10)
     def update(self) -> None:
-        # calculated: list[set] = []
         for sprite in CollisionDestroyed.sprites():
-            # calculated.append({sprite, sprite})
-            # ic(sprite.__class__.__name__, sprite.rect)
 
             with suppress(AttributeError):
                 for other in self.sprites():
                     sprite: tp.Any
                     other: tp.Any
 
-                    # if {sprite, other} not in calculated:
                     if 1:
                         if all([
                             pg.sprite.collide_rect(sprite, other),
-                            # self.dynamic_collide(sprite, other),
                             not is_related(sprite, other, 2)
                         ]):
                             try:
@@ -400,8 +445,6 @@ class _CollisionDestroyed(_BaseGroup):
                                 hp = sprite.hp
                                 if dmg != 0:
                                     other.hit_someone(target_hp=hp)
-
-                    # calculated.append({sprite, other})
 
     @staticmethod
     def size_collide(sprite1, sprite2) -> bool:

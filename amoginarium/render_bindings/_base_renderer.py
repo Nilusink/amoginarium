@@ -80,6 +80,18 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    def draw_partial_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            angle_start: coord_t,
+            angle_end: coord_t,
+            num_segments: int,
+            color: Color | tColor,
+            convert_global=True
+    ):
+        raise NotImplementedError
+
     def draw_rect(
             self,
             start: coord_t,
@@ -104,6 +116,19 @@ class BaseRenderer:
         """
         draw a dashed circle with num_segments segments
         """
+        raise NotImplementedError
+
+    def draw_partial_dashed_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            angle_start: coord_t,
+            angle_end: coord_t,
+            num_segments: int,
+            color: Color | tColor,
+            thickness=1,
+            convert_global=True
+    ):
         raise NotImplementedError
 
     def draw_line(
