@@ -9,10 +9,9 @@ Nilusink
 """
 from time import perf_counter
 from random import randint
-import typing as tp
-# from threading import Thread
 from icecream import ic
-# import time
+import typing as tp
+import numpy as np
 
 from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn, \
     WallBouncer
@@ -277,7 +276,7 @@ class MortarShell(Bullet):
         explosion_radius: float = 200,
         explosion_damage: float = 50,
         target_pos: Vec2 = ...,
-        size=Vec2.from_cartesian(800, 400),
+        size=Vec2.from_cartesian(40, 20),
         no_gravity=False,
         **kwargs
     ) -> None:
@@ -299,6 +298,7 @@ class MortarShell(Bullet):
 
 
 class Grenade(Bullet):
+    _bullet_image: str = ("grenade", "")
     _hp = .2
     _bounce_friction = .7
 
@@ -334,7 +334,16 @@ class Grenade(Bullet):
             **kwargs
         )
 
+        self.in_wall = None
         self.add(WallBouncer)
+
+    def update(self, delta):
+        if self.in_wall is not None:
+            pi4 = np.pi / 4
+            if 7*pi4 <= self.in_wall.angle or self.in_wall.angle < pi4:
+                self.acceleration.y = 0
+
+        super().update(delta)
 
     def kill(self, killed_by=...):
         # can only be killed by bullets and ttl
@@ -826,7 +835,7 @@ class CRAM(BaseWeapon):
             inaccuracy=.001093606,
             bullet_speed=3000,
             bullet_damage=.1,
-            barrel_length=20,
+            barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_size=9,
@@ -834,12 +843,12 @@ class CRAM(BaseWeapon):
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
             sound_effect=CRAMSound(),
-            bullet_visibility_offset=.024
+            bullet_visibility_offset=.00024
         )
 
 
 class HandThrownGrenade(BaseWeapon):
-    _image_name: str = "bullet"
+    _image_name: str = "grenade"
     _image_mirror = True
     _image_size: tuple[int, int] = (32, 32)
     _image_rotate_anchor: Vec2 = Vec2.from_cartesian(16, 16)
@@ -852,7 +861,7 @@ class HandThrownGrenade(BaseWeapon):
     ) -> None:
         super().__init__(
             parent,
-            reload_time=8,
+            reload_time=5,
             recoil_time=2,
             recoil_factor=2,
             mag_size=1,
@@ -862,7 +871,7 @@ class HandThrownGrenade(BaseWeapon):
             barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            bullet_size=20,
+            bullet_size=32,
             bullet_lifetime=5,
             bullet_explosion_damage=50,
             bullet_explosion_radius=150,

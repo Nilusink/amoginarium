@@ -608,8 +608,7 @@ class CRAMTurret(BaseTurret):
             airburst_munition=True,
             target_taps=4,
             valid_angles=(
-                # Vec2.from_cartesian(-.5, 1),
-                Vec2.from_polar(4.699, 1),
+                Vec2.from_cartesian(-.5, 1),
                 Vec2.from_cartesian(.5, 1)
             )
         )

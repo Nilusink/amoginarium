@@ -342,6 +342,7 @@ class _WallBouncer(_BaseGroup):
 
         velocity: Vec2
         position: Vec2
+        in_wall: Vec2 | None (optional, set by update)
     """
     def update(self) -> None:
         for sprite in self.sprites():
@@ -350,11 +351,13 @@ class _WallBouncer(_BaseGroup):
                 in_wall = WallCollider.collides_with(sprite)
 
                 if not in_wall:
+                    sprite.in_wall = None
                     continue
 
                 wall, pos = in_wall
                 delta = Vec2.from_cartesian(*pos)
                 delta.angle = Vec2.normalize_angle(delta.angle)
+                sprite.in_wall = delta
 
                 if hasattr(sprite, "_bounce_friction"):
                     sprite.velocity *= sprite._bounce_friction
