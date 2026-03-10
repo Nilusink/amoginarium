@@ -13,8 +13,8 @@ import typing as tp
 
 from icecream import ic
 
-from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets
-from ..base import GravityAffected
+from ._groups import HasBars, CollisionDestroyed, Players, Updated, Bullets
+from ._groups import GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
     calculate_launch_angle_iterative
@@ -266,7 +266,7 @@ class BaseTurret(VisibleGameEntity):
         #     target_position = target.position_center
 
         position_delta = target_position - (
-            self.position + self.weapon.parent_position_offset
+                self.position + self.weapon.parent_position_offset
         )
         position_delta.y *= -1
         player_velocity.y *= -1
@@ -368,7 +368,7 @@ class BaseTurret(VisibleGameEntity):
         # weapon
         self.weapon.draw_at(
             self.position,
-            self._aiming_at.angle * (180/3.14159265)
+            self._aiming_at.angle * (180 / 3.14159265)
         )
 
         renderer.draw_textured_quad(
@@ -401,7 +401,7 @@ class BaseTurret(VisibleGameEntity):
                 self._valid_angles[1].angle
                 - self._valid_angles[0].angle
             ))
-            segments = int(64 * (angle_delta / (2*3.1415926)))
+            segments = int(64 * (angle_delta / (2 * 3.1415926)))
 
             renderer.draw_partial_dashed_circle(
                 engage_center,
@@ -546,7 +546,7 @@ class MortarTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(23*1.5, 24*1.5),
+            Vec2.from_cartesian(23 * 1.5, 24 * 1.5),
             position,
             weapon,
             1800,
@@ -566,7 +566,7 @@ class FlakTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(*self._body_texture_size)*2,
+            Vec2.from_cartesian(*self._body_texture_size) * 2,
             position,
             weapon,
             1750,

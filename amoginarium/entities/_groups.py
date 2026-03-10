@@ -20,6 +20,8 @@ from icecream import ic
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord
 from ..render_bindings import renderer
 from ..debugging import timeit
+
+
 # from ..debugging import run_with_debug
 
 
@@ -36,7 +38,7 @@ class _BaseGroup(pg.sprite.Group):
             entities: list[pg.sprite.Sprite],
             center: Vec2,
             radius: float,
-        min_radius: float = 0
+            min_radius: float = 0
     ) -> list[tuple[float, tp.Any]]:
         """
         check which of the given entities are in the circle
@@ -369,14 +371,14 @@ class _WallBouncer(_BaseGroup):
 
                 pi4 = np.pi / 4
                 # ic(pi4, delta.xy, delta.angle, pos, sprite.position.xy)
-                if pi4 <= delta.angle < 3*pi4:
+                if pi4 <= delta.angle < 3 * pi4:
                     sprite.velocity.x = abs(sprite.velocity.x)
 
-                elif 3*pi4 <= delta.angle < 5*pi4:
+                elif 3 * pi4 <= delta.angle < 5 * pi4:
                     print(sprite.position)
                     sprite.velocity.x = -abs(sprite.velocity.x)
 
-                elif 5*pi4 <= delta.angle < 7*pi4:
+                elif 5 * pi4 <= delta.angle < 7 * pi4:
                     sprite.velocity.y = abs(sprite.velocity.y)
 
                 else:

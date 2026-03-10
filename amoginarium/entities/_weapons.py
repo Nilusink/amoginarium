@@ -13,7 +13,7 @@ from icecream import ic
 import typing as tp
 import numpy as np
 
-from ..base import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn, \
+from ._groups import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn, \
     WallBouncer
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect, Mortar as MortarSound
@@ -26,8 +26,7 @@ from ..render_bindings import renderer
 from ..shared import global_vars
 from ..base._textures import textures
 from ..animations import explosion
-from ..base import WallCollider
-
+from ._groups import WallCollider
 
 BULLET_PATH = "bullet"
 
@@ -119,7 +118,7 @@ class Bullet(ImageEntity):
         x = max(self._initial_velocity.length, 800)
 
         speed_mult = 1 + (
-            (self.velocity.length - 1300) / x
+                (self.velocity.length - 1300) / x
         ) * .5
         damage = self._base_damage * speed_mult
 
@@ -177,8 +176,8 @@ class Bullet(ImageEntity):
         # explode
         if self._explosion_radius > 0:
             for d, entity in CollisionDestroyed.get_entities_in_circle(
-                self.position,
-                self._explosion_radius
+                    self.position,
+                    self._explosion_radius
             ):
                 if all([
                     entity != self,
@@ -192,11 +191,11 @@ class Bullet(ImageEntity):
                     if hasattr(entity, "_movement_acceleration"):
                         delta = entity.position - self.position
                         delta = delta.normalize() \
-                            * entity._movement_acceleration \
-                            * (
-                                    1 - max(d, 40)
-                                    / (self._explosion_radius * 4)
-                            ) * (self._explosion_damage / 100)
+                                * entity._movement_acceleration \
+                                * (
+                                        1 - max(d, 40)
+                                        / (self._explosion_radius * 4)
+                                ) * (self._explosion_damage / 100)
                         entity.acceleration += delta
 
             explosion.draw(
@@ -264,20 +263,20 @@ class MortarShell(Bullet):
     _hp = .5
 
     def __init__(
-        self,
-        parent: GameEntity,
-        coalition: tp.Any,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        base_damage: float = 40,
-        casing: bool = False,
-        time_to_life: float = 10,
-        explosion_radius: float = 200,
-        explosion_damage: float = 50,
-        target_pos: Vec2 = ...,
-        size=Vec2.from_cartesian(40, 20),
-        no_gravity=False,
-        **kwargs
+            self,
+            parent: GameEntity,
+            coalition: tp.Any,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            base_damage: float = 40,
+            casing: bool = False,
+            time_to_life: float = 10,
+            explosion_radius: float = 200,
+            explosion_damage: float = 50,
+            target_pos: Vec2 = ...,
+            size=Vec2.from_cartesian(40, 20),
+            no_gravity=False,
+            **kwargs
     ) -> None:
         super().__init__(
             parent,
@@ -302,20 +301,20 @@ class Grenade(Bullet):
     _bounce_friction = .7
 
     def __init__(
-        self,
-        parent: GameEntity,
-        coalition: tp.Any,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        base_damage: float = 0,
-        casing: bool = False,
-        time_to_life: float = 5,
-        explosion_radius: float = 150,
-        explosion_damage: float = 50,
-        target_pos: Vec2 = ...,
-        size=20,
-        no_gravity=False,
-        **kwargs
+            self,
+            parent: GameEntity,
+            coalition: tp.Any,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            base_damage: float = 0,
+            casing: bool = False,
+            time_to_life: float = 5,
+            explosion_radius: float = 150,
+            explosion_damage: float = 50,
+            target_pos: Vec2 = ...,
+            size=20,
+            no_gravity=False,
+            **kwargs
     ) -> None:
         super().__init__(
             parent,
@@ -339,7 +338,7 @@ class Grenade(Bullet):
     def update(self, delta):
         if self.in_wall is not None:
             pi4 = np.pi / 4
-            if 7*pi4 <= self.in_wall.angle or self.in_wall.angle < pi4:
+            if 7 * pi4 <= self.in_wall.angle or self.in_wall.angle < pi4:
                 self.acceleration.y = 0
 
         super().update(delta)
@@ -374,25 +373,25 @@ class BaseWeapon:
     _mag_size: int
 
     def __init__(
-        self,
-        parent,
-        reload_time: float,
-        recoil_time: float,
-        recoil_factor: float,
-        mag_size: int,
-        inaccuracy: float,
-        bullet_speed: float,
-        barrel_length: float,  # where bullets spawn
-        parent_position_offset: Vec2 | tuple[float, float],
-        bullet_size: Vec2 | int = 10,
-        bullet_damage: float = 1,
-        bullet_explosion_radius: float = -1,
-        bullet_explosion_damage: float = 0,
-        drop_casings: bool = False,
-        bullet_lifetime=4,
-        sound_effect: ContinuousSoundEffect | PresetEffect = ...,
-        bullet_type: tp.Type[Bullet] = Bullet,
-        bullet_visibility_offset: float = 0  # time offset
+            self,
+            parent,
+            reload_time: float,
+            recoil_time: float,
+            recoil_factor: float,
+            mag_size: int,
+            inaccuracy: float,
+            bullet_speed: float,
+            barrel_length: float,  # where bullets spawn
+            parent_position_offset: Vec2 | tuple[float, float],
+            bullet_size: Vec2 | int = 10,
+            bullet_damage: float = 1,
+            bullet_explosion_radius: float = -1,
+            bullet_explosion_damage: float = 0,
+            drop_casings: bool = False,
+            bullet_lifetime=4,
+            sound_effect: ContinuousSoundEffect | PresetEffect = ...,
+            bullet_type: tp.Type[Bullet] = Bullet,
+            bullet_visibility_offset: float = 0  # time offset
     ) -> None:
         self.parent = parent
         self._coalition = parent.coalition
@@ -452,8 +451,8 @@ class BaseWeapon:
         return self._barrel_length
 
     def get_mag_state(
-        self,
-        max_out: float
+            self,
+            max_out: float
     ) -> tuple[float, int] | tuple[float, float]:
         """
         returns the current mag size (rising when reloading)
@@ -462,14 +461,14 @@ class BaseWeapon:
         """
         if not self._current_reload_time:
             return self._mag_state * (
-                max_out / self._mag_size
+                    max_out / self._mag_size
             ), self._mag_state
 
         return (
             (
-                (
-                    self._reload_time-self._current_reload_time
-                ) / self._reload_time
+                    (
+                            self._reload_time - self._current_reload_time
+                    ) / self._reload_time
             ) * max_out,
             round(self._current_reload_time, 2)
         )
@@ -644,7 +643,7 @@ class BaseWeapon:
                 self._texture_id_l,
                 (position - Updated.world_position - anchor).xy,
                 self._size.xy,
-                rotate_angle=angle-180,
+                rotate_angle=angle - 180,
                 rotate_anchor=anchor
             )
 
@@ -749,8 +748,8 @@ class Sniper(BaseWeapon):
 class Mortar(BaseWeapon):
     _bullet_image = BULLET_PATH
     _image_name: str = "mortar"
-    _image_size: tuple[int, int] = (25*1.5, 17*1.5)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(7.5*1.5, 8*1.5)
+    _image_size: tuple[int, int] = (25 * 1.5, 17 * 1.5)
+    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(7.5 * 1.5, 8 * 1.5)
 
     def __init__(
             self,

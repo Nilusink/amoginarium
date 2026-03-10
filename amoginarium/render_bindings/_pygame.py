@@ -12,6 +12,7 @@ from icecream import ic
 from PIL import Image
 import pygame as pg
 import numpy as np
+from typing_extensions import deprecated
 
 from ..logic import Vec2, Color, convert_coord
 from ._base_renderer import BaseRenderer
@@ -21,6 +22,7 @@ from ..shared import global_vars
 type TextureID = pg.Surface
 
 
+@deprecated("Use OpenGLRenderer instead")
 class PyGameRenderer(BaseRenderer):
     def init(self, title):
         ic("using pygame backend")

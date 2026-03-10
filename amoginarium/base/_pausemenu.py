@@ -11,14 +11,14 @@ Project: amoginarium
 from typing import Callable
 import pygame as pg
 
-from ..ui import Button, UIElement
+from ..ui import Button, UIEntity
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class PauseMenu(UIElement):
+class PauseMenu(UIEntity):
     def __init__(
             self,
             continue_callback: Callable[[], None],
@@ -27,29 +27,31 @@ class PauseMenu(UIElement):
             end_game_callback: Callable[[], None],
     ) -> None:
         super().__init__()
-        self._children = [
-            Button(
-                (0.5, 0.26),
-                (0.2, 0.12),
-                "Continue",
-                command=continue_callback,
-            ),
-            Button(
-                (0.5, 0.42),
-                (0.2, 0.12),
-                "Restart",
-                command=restart_callback,
-            ),
-            Button(
-                (0.5, 0.58),
-                (0.2, 0.12),
-                "Settings",
-                command=open_settings_callback,
-            ),
-            Button(
-                (0.5, 0.74),
-                (0.2, 0.12),
-                "End game",
-                command=end_game_callback,
-            )
-        ]
+        Button(
+            (0.5, 0.26),
+            (0.2, 0.12),
+            "Continue",
+            parent=self,
+            command=continue_callback,
+        )
+        Button(
+            (0.5, 0.42),
+            (0.2, 0.12),
+            "Restart",
+            parent=self,
+            command=restart_callback,
+        )
+        Button(
+            (0.5, 0.58),
+            (0.2, 0.12),
+            "Settings",
+            parent=self,
+            command=open_settings_callback,
+        )
+        Button(
+            (0.5, 0.74),
+            (0.2, 0.12),
+            "End game",
+            parent=self,
+            command=end_game_callback,
+        )

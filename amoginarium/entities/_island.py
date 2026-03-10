@@ -22,7 +22,7 @@ from ..render_bindings import renderer
 from ..base._textures import textures
 from ..entities import VisibleGameEntity
 from ..logic import Vec2, coord_t, convert_coord
-from ..base import Walls
+from ._groups import Walls
 
 
 class _PolyMatcher:
@@ -788,12 +788,12 @@ class BasicScopedIsland(Island):
 
 class GrayBrickIsland(BasicScopedIsland):
     _scope = "bricks_gray"
-    _image_size = (24*3, 24*3)
+    _image_size = (24 * 3, 24 * 3)
 
 
 class GreenBrickIsland(BasicScopedIsland):
     _scope = "bricks_green"
-    _image_size = (24*3, 24*3)
+    _image_size = (24 * 3, 24 * 3)
 
 
 class SingleBlockIsland(Island):
@@ -868,14 +868,14 @@ class SingleBlockIsland(Island):
 class PillarIsland(SingleBlockIsland):
     _texture = ("columns", "1")
     _special_texture = ("columns", "1_1")
-    _image_size = (64*3, 112*3)
+    _image_size = (64 * 3, 112 * 3)
 
 
 class PlatformIsland1(SingleBlockIsland):
     _texture = ("platforms", "1")
-    _image_size = (46*3, 13*3)
+    _image_size = (46 * 3, 13 * 3)
 
 
 class PlatformIsland2(SingleBlockIsland):
     _texture = ("platforms", "2")
-    _image_size = (44*3, 11*3)
+    _image_size = (44 * 3, 11 * 3)

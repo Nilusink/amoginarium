@@ -11,6 +11,7 @@ from typing import Any, Callable
 # noinspection PyPackageRequirements
 import pygame as pg
 
+from ._entity import UIEntity
 from ..audio import PresetEffect, SoundEffect
 from ..render_bindings import renderer
 from ..logic import coord_t, Color
@@ -92,6 +93,8 @@ class Button(Rectangle):
             on_hover_sound: SoundEffect | None = _OnHoverButtonSound(),
             on_leave_sound: SoundEffect | None = _OnButtonLeaveSound(),
             on_click_sound: SoundEffect | None = _ButtonClickSound(),
+
+            parent: UIEntity | None = None
     ) -> None:
         super().__init__(position, size, anchor=anchor, absolute=absolute, scaling=scaling,
                          on_hover_sound=on_hover_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
@@ -114,7 +117,9 @@ class Button(Rectangle):
 
                          hover_extend=hover_extend,
                          hover_extend_duration=hover_extend_duration,
-                         hover_collapse_duration=hover_collapse_duration
+                         hover_collapse_duration=hover_collapse_duration,
+
+                         parent=parent
                          )
         self.__command = command
         self.__text = text
@@ -129,8 +134,8 @@ class Button(Rectangle):
 
         self.bg_color = Color(0, 0, 0, 0)
 
-        if self.__command is not None:
-            self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())
+        # if self.__command is not None:
+        #     self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())
 
     def gl_draw(self) -> None:
         super().gl_draw()

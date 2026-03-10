@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_types.py
+amoginarium/entities/_ui/_ui_types.py
 
 Project: amoginarium
 """

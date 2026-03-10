@@ -14,21 +14,21 @@ from typing import Any, Callable, Tuple
 # noinspection PyPackageRequirements
 import pygame as pg
 
+from ._entity import UIEntity
 from ._animation import Animation, MultiAnimation
 from ..audio import SoundEffect
 from ..logic import coord_t, Color, convert_coord, Vec2
 from ..render_bindings import renderer
 
-from ._base_widget import BaseWidget
+from ._component import UIComponent
 from ._types import anchor_t, ui_color_t
-from ..shared import global_vars
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class Rectangle(BaseWidget):
+class Rectangle(UIComponent):
     __hover_bg_color_animation: MultiAnimation
     __hover_border_color_animation: MultiAnimation
     __hover_border_width_animation: Animation
@@ -80,8 +80,10 @@ class Rectangle(BaseWidget):
             on_hover_sound: SoundEffect | None = None,
             on_leave_sound: SoundEffect | None = None,
             on_click_sound: SoundEffect | None = None,
+
+            parent: UIEntity | None = None
     ) -> None:
-        super().__init__(position, size, anchor=anchor, absolute=absolute, scaling=scaling)
+        super().__init__(position, size, placement_anchor=anchor, parent=parent)
 
         self.__on_hover_sound = on_hover_sound
         self.__on_leave_sound = on_leave_sound
@@ -103,9 +105,9 @@ class Rectangle(BaseWidget):
                                                        extend_duration=hover_extend_duration,
                                                        reduce_duration=hover_collapse_duration)
 
-        self.add_event("mouse-enter", callback=lambda *_: self.__on_enter(), sound=self.__on_hover_sound)
-        self.add_event("mouse-leave", callback=lambda *_: self.__on_leave(), sound=self.__on_leave_sound)
-        self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, sound=self.__on_click_sound)
+        # self.add_event("mouse-enter", callback=lambda *_: self.__on_enter(), sound=self.__on_hover_sound)
+        # self.add_event("mouse-leave", callback=lambda *_: self.__on_leave(), sound=self.__on_leave_sound)
+        # self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, sound=self.__on_click_sound)
 
     def __on_enter(self) -> None:
         self.__hover_extend_animation.start_extend()

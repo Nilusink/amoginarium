@@ -7,8 +7,8 @@ globals
 Author:
 Nilusink
 """
-from amoginarium.debugging import get_caller_name, print_ic_style, CC
-from amoginarium.logic import Vec2
+from ..debugging import get_caller_name, print_ic_style, CC
+from ..logic import Vec2
 from enum import Enum
 import typing as tp
 

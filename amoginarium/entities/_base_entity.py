@@ -18,7 +18,7 @@ import math as m
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
 from ..logic import Vec2, rk4_update
-from ..base import Updated, Drawn
+from ._groups import Updated, Drawn
 
 
 class BaseEntity(pg.sprite.Sprite):

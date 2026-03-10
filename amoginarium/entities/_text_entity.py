@@ -13,7 +13,7 @@ import pygame as pg
 
 from ..logic import coord_t, Color, Vec2, convert_coord
 from ..render_bindings import renderer, tColor
-from ..base import Drawn, Updated
+from ._groups import Drawn, Updated
 
 
 class TextEntity(pg.sprite.Sprite):

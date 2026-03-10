@@ -9,14 +9,14 @@ Project: amoginarium
 ##################################################
 
 from typing import Callable
-from ..ui import Button, UIElement
+from ..ui import Button, UIEntity
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class StartMenu(UIElement):
+class StartMenu(UIEntity):
     def __init__(
             self,
             start_game_callback: Callable[[], None],
@@ -24,32 +24,27 @@ class StartMenu(UIElement):
             exit_callback: Callable[[], None],
     ) -> None:
         super().__init__()
-        self._children.append(
-            Button(
-                (0.5, 0.35),
-                (0.2, 0.12),
-                "New game",
-                command=start_game_callback
-            ))
-        self._children.append(
-            Button(
-                (0.5, 0.5),
-                (0.2, 0.12),
-                "Settings",
-                command=open_settings_callback,
-            ))
-        self._children.append(
-            Button(
-                (0.5, 0.65),
-                (0.2, 0.12),
-                "Exit",
-                command=exit_callback,
-            ))
 
-    def gl_draw(self) -> None:
-        """
-        Draw function
-        """
+        Button(
+            (0.5, 0.35),
+            (0.2, 0.12),
+            "New game",
+            parent=self,
+            command=start_game_callback
+        )
 
-        for widget in self._children:
-            widget.gl_draw()
+        Button(
+            (0.5, 0.5),
+            (0.2, 0.12),
+            "Settings",
+            parent=self,
+            command=open_settings_callback,
+        )
+
+        Button(
+            (0.5, 0.65),
+            (0.2, 0.12),
+            "Exit",
+            parent=self,
+            command=exit_callback,
+        )
