@@ -6,6 +6,9 @@ Defines sprite groups
 
 Author:
 Nilusink
+
+
+# todo move to entities
 """
 from contextlib import suppress
 # from icecream import ic
@@ -16,6 +19,8 @@ from icecream import ic
 
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord
 from ..render_bindings import renderer
+
+
 # from ..debugging import run_with_debug
 
 
@@ -29,9 +34,9 @@ class _BaseGroup(pg.sprite.Group):
 
     @staticmethod
     def entities_in_circle(
-        entities: list[pg.sprite.Sprite],
-        center: Vec2,
-        radius: float
+            entities: list[pg.sprite.Sprite],
+            center: Vec2,
+            radius: float
     ) -> list[tuple[float, tp.Any]]:
         """
         check which of the given entities are in the circle
@@ -47,9 +52,9 @@ class _BaseGroup(pg.sprite.Group):
         return sorted(out, key=lambda r: r[0])
 
     def get_entities_in_circle(
-        self,
-        center: Vec2,
-        radius: float
+            self,
+            center: Vec2,
+            radius: float
     ) -> list[tuple[float, tp.Any]]:
         """
         get all entities inside a circle, sorted by distance (closest first)
@@ -155,6 +160,7 @@ class _WallCollider(_BaseGroup):
 
         on_wall: bool
     """
+
     @staticmethod
     def collides_with(
             sprite
@@ -311,6 +317,7 @@ class _WallBouncer(_BaseGroup):
         velocity: Vec2
         position: Vec2
     """
+
     def update(self) -> None:
         for sprite in self.sprites():
             with suppress(AttributeError):
@@ -339,6 +346,7 @@ class _CollisionDestroyed(_BaseGroup):
         hit(damage: float) -> None
         kill() -> None
     """
+
     @staticmethod
     def dynamic_collide(a: pg.sprite.Sprite, b: pg.sprite.Sprite) -> bool:
         """
@@ -408,7 +416,7 @@ class _CollisionDestroyed(_BaseGroup):
         # check for the first sprite to be in the second
         collision_distance = sprite1.size.length + sprite2.size.length
         return (
-            sprite1.position_center - sprite2.position_center
+                sprite1.position_center - sprite2.position_center
         ).length <= collision_distance
 
     @staticmethod

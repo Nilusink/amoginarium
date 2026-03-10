@@ -5,3 +5,4 @@ from ._text_entity import TextEntity
 from ._weapons import Bullet
 from ._player import Player
 from ._island import Island
+from ._ui import UIEntity
