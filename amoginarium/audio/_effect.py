@@ -12,7 +12,7 @@ from ._sounds import sounds, sound_name_t
 import typing as tp
 import pygame as pg
 
-from ..debugging import run_with_debug
+from ..debugging import CC
 
 
 class _SoundEffects:
@@ -69,6 +69,10 @@ class SoundEffect:
     def playing(self) -> bool:
         return self._has_played or self._loop
 
+    def set_volume(self, volume: float) -> tp.Self:
+        self.volume = volume
+        return self
+
     def play(
             self,
             loops: int = 0,
@@ -81,6 +85,19 @@ class SoundEffect:
         if loops < 0:
             self._loop = True
 
+        if self._has_played and not self._loop:
+            SoundEffect(
+                self._sound_name,
+                self._on_finish
+            ).set_volume(
+                self.volume
+            ).play(
+                loops,
+                maxtime,
+                fade_ms
+            )
+            return
+
         if isinstance(self._sound_name, tuple):
             self._sound = sounds.get_sound(*self._sound_name[::-1])
 
@@ -92,15 +109,17 @@ class SoundEffect:
 
         self._sound.set_volume(self.volume)
         self._channel = pg.mixer.find_channel(force=False)
+        if self._channel is None:
+            return
+
         self._channel.play(self._sound, loops, maxtime, fade_ms)
         self._has_played = True
 
-    # @run_with_debug()
     def stop(self) -> None:
         """
         stop the sound effect if it is currently playing
         """
-        if self._channel is not ...:
+        if self._channel is not ... and self._channel is not None:
             if self._channel.get_busy():
                 self._channel.stop()
 
@@ -112,7 +131,7 @@ class SoundEffect:
         """
         updates called by the game loop
         """
-        if self._channel is ...:
+        if self._channel is ... or self._channel is None:
             return
 
         done_playing = all([
@@ -144,8 +163,13 @@ class SmallExplosion(PresetEffect):
 
 
 class Shotgun(PresetEffect):
-    volume = .5
+    volume = 1
     _sound_name = "shotgun"
+
+
+class Mortar(PresetEffect):
+    volume = 1
+    _sound_name = "mortar"
 
 
 def sound_effect_wrapper(sound_name: str, volume: float = 1) -> SoundEffect:
@@ -213,6 +237,11 @@ class ContinuousSoundEffect:
         return self.playing > 1
 
     def play(self) -> None:
+        if self._playing:
+            info = CC.fg.RED+"tried to double-play CSE"+CC.ctrl.ENDC
+            ic(info)
+            return
+
         if self._stage_one is ...:
             return self._play_2()
 
@@ -265,6 +294,13 @@ class ContinuousSoundEffect:
 
 class Minigun(ContinuousSoundEffect):
     _stage_one_name = ("minigun", "spool_up")
+    _stage_two_name = ("minigun", "burst")
+    _stage_three_name = ("minigun", "spool_down")
+    volume: float = .1
+
+
+class CRAM(ContinuousSoundEffect):
+    _stage_one_name = ("minigun", "spool_up_short")
     _stage_two_name = ("minigun", "burst")
     _stage_three_name = ("minigun", "spool_down")
     volume: float = .1

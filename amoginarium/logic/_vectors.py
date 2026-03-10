@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 import math as m
+from ..debugging import timeit
 
 
 class Vec2:
@@ -105,8 +106,9 @@ class Vec2:
 
         return facing, other
 
+    # @timeit(10)
     def copy(self):
-        return Vec2().from_cartesian(x=self.x, y=self.y)
+        return Vec2.from_cartesian(x=self.x, y=self.y)
 
     def to_dict(self) -> dict:
         return {

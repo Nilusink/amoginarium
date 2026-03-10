@@ -60,6 +60,9 @@ class _Textures:
             files = sorted(os.listdir(path))
             scope = path.split("/")[-1]
 
+            # filter out folders
+            files = [f for f in files if os.path.isfile(os.path.join(path, f))]
+
         if self.debug >= 2:
             print_ic_style(f"loading texture scope "
                            f"{get_fg_color(36)}\"{scope}\"")
@@ -224,6 +227,15 @@ class _Textures:
             ))
 
         return out
+
+    def get_raw_from_scope(self, scope: str) -> list[str]:
+        """
+        return all texture names from a scope
+        """
+        if scope not in self._raw_images:
+            raise ValueError(f"scope \"{scope}\" not found")
+
+        return list(self._raw_images[scope].keys())
 
 
 textures = _Textures()

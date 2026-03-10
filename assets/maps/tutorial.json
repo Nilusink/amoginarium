@@ -4,6 +4,11 @@
     "spawn_pos": [100, 600],
     "platforms": [
         {
+            "pos": [10, 740],
+            "size": [64, 64]
+        },
+
+        {
             "pos": [0, 800],
             "size": [2048, 64]
         },
@@ -30,8 +35,8 @@
                 [0, 0, 1, 0],
                 [0, 0, 1, 1],
                 [0, 1, 1, 1, 1],
-                [0, 1, 1, 2, 1],
-                [1, 1, 1, 1, 1]
+                [0, 1, 1, 2, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1]
             ]
         },
         {
@@ -91,6 +96,10 @@
     ],
     "entities": [
         {
+            "type": "turret.static.cram",
+            "pos": [1700, 805]
+        },
+        {
             "type": "instructions.text",
             "pos": [200, 200],
             "args": {
@@ -137,7 +146,7 @@
         },
         {
             "type": "turret.static.mortar",
-            "pos": [6000, 700]
+            "pos": [6000, 740]
         },
         {
             "type": "instructions.text",
@@ -169,7 +178,7 @@
         },
         {
             "type": "turret.static.ak47",
-            "pos": [10500, 700]
+            "pos": [10500, 820]
         },
         {
             "type": "instructions.text",
