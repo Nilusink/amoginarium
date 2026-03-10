@@ -26,6 +26,7 @@ from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
 from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
     create_moving_island
+from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
 from ..entities import Player, GrassIsland, GrayBrickIsland, Island
 from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
@@ -832,6 +833,10 @@ class BaseGame:
 
         # update sounds
         sound_effects.update()
+
+        # reset and update detection Groups
+        DETECTION_GROUP_MANAGER.reset()
+        DETECTION_GROUP_MANAGER.update_detection()
 
         # update entities
         GravityAffected.calculate_gravity(delta)

@@ -19,6 +19,7 @@ from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
     calculate_launch_angle_iterative
 from ._base_entity import VisibleGameEntity
+from ..radar import MagicSensor, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DetectionGroup
 from ..render_bindings import renderer
 from ..shared import global_vars, Coalitions
 from ..base._textures import textures
@@ -107,6 +108,13 @@ class BaseTurret(VisibleGameEntity):
 
         self.add(CollisionDestroyed, HasBars)
 
+        # create detection sensor
+        self._sensor = MagicSensor(
+            self,
+            self.engagement_range,
+        )
+        self.detection_group.add_sensor(self._sensor)
+
     @property
     def max_hp(self) -> int:
         return self._max_hp
@@ -114,6 +122,16 @@ class BaseTurret(VisibleGameEntity):
     @property
     def hp(self) -> int:
         return self._hp
+
+    @property
+    def detection_group(self) -> DetectionGroup:
+        if self.coalition == Coalitions.red:
+            return DETECTION_GLOBAL_RED
+
+        elif self.coalition == Coalitions.blue:
+            return DETECTION_GLOBAL_BLUE
+
+        return DETECTION_GLOBAL_NEUTRAL
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
@@ -159,15 +177,15 @@ class BaseTurret(VisibleGameEntity):
         self.weapon.update(delta)
 
         # scan for targets and engage the closest one
-        targets = []
-        if self.intercept_players:
-            # only add living players
-            targets.extend(
-                [p for p in Players.sprites() if p.alive]
-            )
+        targets = self.detection_group.targets
 
-        if self.intercept_bullets:
-            targets.extend(Bullets.sprites())
+        # only check targets that are supposed to be engaged
+        targets = [
+            t for t in targets if any([
+                t in Players.sprites() if self.intercept_players else False,
+                t in Bullets.sprites() if self.intercept_bullets else False
+            ])
+        ]
 
         # only check targets inside engagement envelope
         if self._valid_angles is not ...:

@@ -31,8 +31,8 @@ class BaseEntity(pg.sprite.Sprite):
 
         # assign unique id
         self.__id = _next_entity_id
-
         _next_entity_id += 1
+
         super().__init__()
         self._parent = parent
 

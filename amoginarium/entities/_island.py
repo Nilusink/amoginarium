@@ -151,7 +151,7 @@ class Island(VisibleGameEntity):
         """
         generate the mask used for collision
         """
-        start = time.perf_counter_ns()
+        # start = time.perf_counter_ns()
         if self._form is ...:
             return super()._generate_collision_mask()
 
@@ -188,10 +188,10 @@ class Island(VisibleGameEntity):
                     )
 
         self.mask = entity_mask
-        end = time.perf_counter_ns()
-        calc_time = (end - start) / 1000
-        classname = self.__class__.__name__
-        ic(classname, calc_time, "µs")
+        # end = time.perf_counter_ns()
+        # calc_time = (end - start) / 1000
+        # classname = self.__class__.__name__
+        # ic(classname, calc_time, "µs")
 
     def collide(self, other) -> tuple[int, int] | None:
         """
