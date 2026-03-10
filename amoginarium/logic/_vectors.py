@@ -7,6 +7,7 @@ defines game Vectors
 Author:
 Nilusink
 """
+from __future__ import annotations
 import math as m
 from ..debugging import timeit
 
@@ -105,6 +106,9 @@ class Vec2:
         )
 
         return facing, other
+
+    def dot(self, other: Vec2) -> float:
+        return self.x * other.x + self.y * other.y
 
     # @timeit(10)
     def copy(self):

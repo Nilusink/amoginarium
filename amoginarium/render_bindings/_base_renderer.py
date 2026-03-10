@@ -57,6 +57,15 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    def draw_polygon(
+            self,
+            vertices: tp.Iterable[coord_t],
+            color: Color | tColor,
+            center: coord_t = None,
+            convert_global: bool = True
+    ) -> None:
+        raise NotImplementedError
+
     @staticmethod
     def check_out_of_screen(
             pos,

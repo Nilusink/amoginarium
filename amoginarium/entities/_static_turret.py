@@ -14,10 +14,10 @@ import typing as tp
 from icecream import ic
 
 from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
-    GravityAffected
+    GravityAffected, Walls
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
-    calculate_launch_angle_iterative
+    lidar_sphere
 from ._base_entity import VisibleGameEntity
 from ..radar import MagicSensor, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED, \
     DETECTION_GLOBAL_BLUE, DetectionGroup, BaseSensor, VisualSensor
@@ -111,6 +111,7 @@ class BaseTurret(VisibleGameEntity):
         self.add(CollisionDestroyed, HasBars)
 
         # create detection sensor
+        self._sphere = []
         if sensors is not None:
             for sensor in sensors:
                 self._children.append(sensor)
@@ -509,7 +510,7 @@ class SniperTurret(BaseTurret):
             weapon,
             2400,
             sensors=[
-                MagicSensor(self, 1500)
+                VisualSensor(self, 2500, sphere_accuracy=256)
             ]
         )
 
@@ -547,7 +548,10 @@ class MinigunTurret(BaseTurret):
             Vec2.from_cartesian(48, 48),
             position,
             weapon,
-            1200,
+            2000,
+            sensors=[
+                VisualSensor(self, 1500)
+            ]
         )
 
 
@@ -577,6 +581,9 @@ class MortarTurret(BaseTurret):
             position,
             weapon,
             1800,
+            sensors=[
+                VisualSensor(self, 1500)
+            ]
         )
 
 
@@ -596,7 +603,7 @@ class FlakTurret(BaseTurret):
             Vec2.from_cartesian(*self._body_texture_size)*2,
             position,
             weapon,
-            1750,
+            1850,
             300,
             airburst_munition=True,
             intercept_bullets=False,
@@ -604,7 +611,10 @@ class FlakTurret(BaseTurret):
             valid_angles=(
                 Vec2.from_cartesian(-1, .3),
                 Vec2.from_cartesian(-.1, -1)
-            )
+            ),
+            sensors=[
+                VisualSensor(self, 1700)
+            ]
         )
 
 
@@ -628,7 +638,7 @@ class CRAMTurret(BaseTurret):
             Vec2.from_cartesian(64, 128),
             position,
             weapon,
-            1400,
+            1900,
             150,
             intercept_bullets=True,
             intercept_players=False,
@@ -637,5 +647,13 @@ class CRAMTurret(BaseTurret):
             valid_angles=(
                 Vec2.from_cartesian(-.5, 1),
                 Vec2.from_cartesian(.5, 1)
-            )
+            ),
+            sensors=[
+                VisualSensor(
+                    self,
+                    1500,
+                    sphere_accuracy=256,
+                    min_rcs=.04
+                )
+            ]
         )

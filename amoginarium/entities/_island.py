@@ -849,7 +849,7 @@ class SingleBlockIsland(Island):
         glBindTexture(GL_TEXTURE_2D, cls._island_single_texture)
         data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
         surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
-        surface = pg.transform.flip(surface, False, False)
+        # surface = pg.transform.flip(surface, False, False)
         normal_mask = pg.mask.from_surface(surface)
 
         if cls._special_texture is None:
@@ -859,7 +859,7 @@ class SingleBlockIsland(Island):
         glBindTexture(GL_TEXTURE_2D, cls._dirt_hole_texture)
         data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
         surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
-        surface = pg.transform.flip(surface, False, False)
+        # surface = pg.transform.flip(surface, False, False)
         special_mask = pg.mask.from_surface(surface)
 
         return normal_mask, special_mask

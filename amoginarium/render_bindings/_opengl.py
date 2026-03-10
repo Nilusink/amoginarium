@@ -271,6 +271,34 @@ class OpenGLRenderer(BaseRenderer):
 
         # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
 
+    def draw_polygon(
+            self,
+            vertices,
+            color,
+            center=None,
+            convert_global=True
+    ):
+        vertices = [convert_coord(v, Vec2) for v in vertices]
+
+        if convert_global:
+            vertices = [
+                global_vars.translate_screen_coord(v) for v in vertices
+            ]
+
+        glLoadIdentity()  # reset previous glTranslate statements
+        if center is not None:
+            center = convert_coord(center, tuple)
+            glTranslate(center[0], center[1], 0)
+
+        self.set_color(color)
+
+        glBegin(GL_POLYGON)
+
+        for vertice in vertices:
+            glVertex2f(*vertice.xy)
+
+        glEnd()
+
     def draw_circle(
             self,
             center,

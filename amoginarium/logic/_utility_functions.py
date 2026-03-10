@@ -10,10 +10,10 @@ Nilusink
 from icecream import ic
 import typing as tp
 import pygame as pg
+import numpy as np
 
 from ._vectors import Vec2
 from ..debugging import timeit
-
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
 
@@ -130,8 +130,8 @@ def raycast_mask(
         sprite: EntityLike,
         start: coord_t,
         end: coord_t,
-        sample_rate
-    ) -> Vec2 | None:
+        sample_rate: float = 10
+) -> Vec2 | None:
     start = convert_coord(start, Vec2)
     end = convert_coord(end, Vec2)
 
@@ -156,7 +156,7 @@ def raycast_mask(
 
         # trace line through entity
         for i in range(sample_rate):
-            current = start + delta * i/sample_rate
+            current = start + delta * i / sample_rate
 
             try:
                 if sprite.mask.get_at(current.xy):
@@ -166,3 +166,79 @@ def raycast_mask(
                 continue
 
     return None
+
+
+@timeit(1)
+def lidar_sphere(
+        position: Vec2,
+        radius: float,
+        segments: int,
+        entity_sample: tp.Iterable[EntityLike],
+        sample_rate: float = 1,
+) -> list[Vec2]:
+    """
+    cast an array of spheres around a certain point
+    and check if it hits any entity
+
+    :returns: list of vectors to hit
+    """
+    angle_step = (np.pi * 2) / segments
+
+    out = []
+    for i in range(segments):
+        curr_angle = i * angle_step
+        delta = Vec2.from_polar(curr_angle, radius)
+
+        hits = []
+        for entity in entity_sample:
+            res = raycast_mask(
+                entity,
+                position,
+                position + delta,
+                sample_rate
+            )
+
+            if res is not None:
+                hits.append(res)
+
+        if hits:
+            hits = sorted(hits, key=lambda x: x.length)
+
+            out.append(hits[0] - position)
+            continue
+
+        out.append(delta)
+
+    return out
+
+
+def point_in_triangle(
+        p: Vec2,
+        a: Vec2,
+        b: Vec2,
+        c: Vec2
+) -> bool:
+    """
+    p: point to test
+    a,b,c: triangle vertices
+    """
+
+    v0 = c - a
+    v1 = b - a
+    v2 = p - a
+
+    dot00 = v0.dot(v0)
+    dot01 = v0.dot(v1)
+    dot02 = v0.dot(v2)
+    dot11 = v1.dot(v1)
+    dot12 = v1.dot(v2)
+
+    denom = dot00 * dot11 - dot01 * dot01
+    if denom == 0:
+        return False
+
+    inv = 1 / denom
+    u = (dot11 * dot02 - dot01 * dot12) * inv
+    v = (dot00 * dot12 - dot01 * dot02) * inv
+
+    return (u >= 0) and (v >= 0) and (u + v <= 1)

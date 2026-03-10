@@ -52,8 +52,8 @@ class BaseSensor(VisibleBaseEntity):
     # def update(self, delta: float) -> None:
     #     pass
 
-    def gl_draw(self) -> None:
-        if self._visible:
+    def gl_draw(self, draw: bool = True) -> None:
+        if self._visible and draw:
             renderer.draw_line_circle(
                 self.parent.world_position + self._position_offset,
                 self.detection_range,  # * ((self._current_t % a_time) / a_time)**2,
