@@ -7,7 +7,10 @@
             "pos": [10, 740],
             "size": [64, 64]
         },
-
+        {
+            "pos": [1000, 697],
+            "size": [128, 128]
+        },
         {
             "pos": [0, 800],
             "size": [2048, 64]
@@ -96,7 +99,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.cram",
+            "type": "turret.static.ak47",
             "pos": [1700, 805]
         },
         {

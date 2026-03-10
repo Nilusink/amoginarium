@@ -836,7 +836,6 @@ class BaseGame:
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()
-        DETECTION_GROUP_MANAGER.update_detection()
 
         # update entities
         GravityAffected.calculate_gravity(delta)
@@ -844,6 +843,7 @@ class BaseGame:
         WallBouncer.update()
 
         Bullets.update(delta)
+        DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
         CollisionDestroyed.update()

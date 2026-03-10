@@ -80,6 +80,17 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    def draw_line_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            num_segments: int,
+            color: Color | tColor,
+            thickness: float = 1,
+            convert_global: bool = True
+    ):
+        raise NotImplementedError
+
     def draw_partial_circle(
             self,
             center: coord_t,

@@ -17,7 +17,7 @@ from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
 from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
 from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
-from OpenGL.GL import glTranslated
+from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
@@ -277,7 +277,7 @@ class OpenGLRenderer(BaseRenderer):
             radius,
             num_segments,
             color,
-            convert_global=True
+            convert_global=True,
     ):
         center = convert_coord(center, Vec2)
 
@@ -301,6 +301,47 @@ class OpenGLRenderer(BaseRenderer):
             cosine = radius * np.cos(i * 2 * np.pi / num_segments)
             sine = radius * np.sin(i * 2 * np.pi / num_segments)
             glVertex2f(cosine, sine)
+
+        glEnd()
+
+    def draw_line_circle(
+            self,
+            center,
+            radius,
+            num_segments,
+            color,
+            thickness=1,
+            convert_global=True,
+    ):
+        center = convert_coord(center, Vec2)
+
+        # convert to screen realtive coords and size
+        if convert_global:
+            center = global_vars.translate_screen_coord(center)
+            radius = global_vars.translate_scale(radius)
+
+        # only draw if on screen
+        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
+            return
+
+        glLoadIdentity()  # reset previous glTranslate statements
+        glTranslate(center.x, center.y, 0)
+
+        self.set_color(color)
+
+        glBegin(GL_TRIANGLE_STRIP)
+
+        inner = radius
+        outer = radius + thickness
+
+        angle_step = 2 * np.pi / num_segments
+        for i in range(num_segments + 1):
+            angle = i * angle_step
+            c = np.cos(angle)
+            s = np.sin(angle)
+
+            glVertex2f(outer * c, outer * s)
+            glVertex2f(inner * c, inner * s)
 
         glEnd()
 

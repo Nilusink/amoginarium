@@ -13,13 +13,14 @@ import typing as tp
 
 from icecream import ic
 
-from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets
-from ..base import GravityAffected
+from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
+    GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
     calculate_launch_angle_iterative
 from ._base_entity import VisibleGameEntity
-from ..radar import MagicSensor, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DetectionGroup
+from ..radar import MagicSensor, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED, \
+    DETECTION_GLOBAL_BLUE, DetectionGroup, BaseSensor, VisualSensor
 from ..render_bindings import renderer
 from ..shared import global_vars, Coalitions
 from ..base._textures import textures
@@ -71,7 +72,8 @@ class BaseTurret(VisibleGameEntity):
             intercept_bullets: bool = False,
             intercept_players: bool = True,
             target_taps: int = -1,
-            valid_angles: tuple[Vec2, Vec2] = ...
+            valid_angles: tuple[Vec2, Vec2] = ...,
+            sensors: tp.Iterable[BaseSensor] = None
     ) -> None:
         self._set_pos = position.copy()
         position.y -= size.y / 2
@@ -109,11 +111,10 @@ class BaseTurret(VisibleGameEntity):
         self.add(CollisionDestroyed, HasBars)
 
         # create detection sensor
-        self._sensor = MagicSensor(
-            self,
-            self.engagement_range,
-        )
-        self.detection_group.add_sensor(self._sensor)
+        if sensors is not None:
+            for sensor in sensors:
+                self._children.append(sensor)
+                self.detection_group.add_sensor(sensor)
 
     @property
     def max_hp(self) -> int:
@@ -490,12 +491,14 @@ class BaseTurret(VisibleGameEntity):
                         Color.from_255(50, 200, 0, 100)
                     )
 
+        super().gl_draw()
+
 
 class SniperTurret(BaseTurret):
     _max_hp: int = 40
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
-        self._coalition = coalition  # needed becauuse the weapon wants it
+        self._coalition = coalition  # needed because the weapon wants it
         weapon = Sniper(self, True, parent_position_offset=(0, -13))
         weapon.reload(True)
 
@@ -504,7 +507,10 @@ class SniperTurret(BaseTurret):
             Vec2.from_cartesian(31, 32),
             position,
             weapon,
-            2400
+            2400,
+            sensors=[
+                MagicSensor(self, 1500)
+            ]
         )
 
 
@@ -521,7 +527,10 @@ class AkTurret(BaseTurret):
             Vec2.from_cartesian(31, 32),
             position,
             weapon,
-            1500
+            1500,
+            sensors=[
+                VisualSensor(self, 1500)
+            ]
         )
 
 

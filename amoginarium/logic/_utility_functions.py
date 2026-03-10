@@ -8,11 +8,21 @@ Author:
 Nilusink
 """
 from icecream import ic
+import typing as tp
+import pygame as pg
 
 from ._vectors import Vec2
+from ..debugging import timeit
 
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
+
+
+class EntityLike(tp.Protocol):
+    position: Vec2
+    size: Vec2
+    mask: pg.Mask
+    rect: pg.Rect
 
 
 def classname(c: object) -> str:
@@ -90,7 +100,7 @@ def is_related(a: object, b: object, depth: int = 2) -> bool:
 def convert_coord[A](
         coord: coord_t,
         convert_to: type[A] = tuple
-) -> A | tuple[A, A]:
+) -> A | tuple[float, float] | tuple[A, A]:
     """
     accepts both tuple and Vec2
     """
@@ -113,3 +123,46 @@ def convert_coord[A](
         return int(coord[0]), int(coord[1])
 
     raise ValueError("Unsupported conversion: ", convert_to)
+
+
+# @timeit(1)
+def raycast_mask(
+        sprite: EntityLike,
+        start: coord_t,
+        end: coord_t,
+        sample_rate
+    ) -> Vec2 | None:
+    start = convert_coord(start, Vec2)
+    end = convert_coord(end, Vec2)
+
+    # subtract sprites position (masks don't have positions)
+    sprite_start = sprite.position
+
+    # check if in collision box first to save time
+    clipped = sprite.rect.clipline(start.xy, end.xy)
+    if clipped:
+        # only calculate points actually in sprite
+        start, end = clipped
+
+        # position offsets
+        start = Vec2.from_cartesian(*start) - sprite_start
+        end = Vec2.from_cartesian(*end) - sprite_start
+
+        # calculate line
+        delta = end - start
+        sample_rate = int(
+            max(abs(delta.x), abs(delta.y)) / sample_rate
+        )
+
+        # trace line through entity
+        for i in range(sample_rate):
+            current = start + delta * i/sample_rate
+
+            try:
+                if sprite.mask.get_at(current.xy):
+                    return sprite_start + current
+
+            except IndexError:
+                continue
+
+    return None

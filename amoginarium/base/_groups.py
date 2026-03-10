@@ -14,7 +14,8 @@ import typing as tp
 import numpy as np
 from icecream import ic
 
-from ..logic import Vec2, is_related, Color, coord_t, convert_coord
+from ..logic import Vec2, is_related, Color, coord_t, convert_coord, \
+    raycast_mask
 from ..render_bindings import renderer
 from ..debugging import timeit
 # from ..debugging import run_with_debug
@@ -129,7 +130,20 @@ class _Drawn(_BaseGroup):
 
 
 class _Walls(_BaseGroup):
-    ...
+    # @timeit(10)
+    def walls_in_line(
+            self,
+            start: coord_t,
+            end: coord_t
+    ) -> list:
+        start = convert_coord(start, tuple)
+        end = convert_coord(end, tuple)
+        walls_hit = []
+        for wall in self.sprites():
+            if raycast_mask(wall, start, end, 2):
+                walls_hit.append(wall)
+
+        return walls_hit
 
 
 class _Players(_BaseGroup):
@@ -236,6 +250,8 @@ class _WallCollider(_BaseGroup):
                 return wall
 
         return False
+
+
 
 
 class _GravityAffected(_BaseGroup):
