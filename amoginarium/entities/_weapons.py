@@ -59,7 +59,7 @@ class Bullet(ImageEntity):
             visibility_offset: float = 0
     ) -> None:
         if not isinstance(size, Vec2):
-            size = Vec2.from_cartesian(size, size)
+            size = Vec2().from_cartesian(size, size)
 
         self._casing = casing
         self._base_damage = base_damage
@@ -201,7 +201,7 @@ class Bullet(ImageEntity):
 
             explosion.draw(
                 delay=.05,
-                size=Vec2.from_cartesian(
+                size=Vec2().from_cartesian(
                     self._explosion_radius * 2,
                     self._explosion_radius * 2
                 ),
@@ -275,7 +275,7 @@ class MortarShell(Bullet):
         explosion_radius: float = 200,
         explosion_damage: float = 50,
         target_pos: Vec2 = ...,
-        size=Vec2.from_cartesian(40, 20),
+        size=Vec2().from_cartesian(40, 20),
         no_gravity=False,
         **kwargs
     ) -> None:
@@ -360,7 +360,7 @@ class BaseWeapon:
     _image_name: str = "amogus64right"
     _image_size: tuple[int, int] = (16, 16)
     _image_mirror: bool = False
-    _image_offset: Vec2 = Vec2.from_cartesian(0, 15)
+    _image_offset: Vec2 = Vec2().from_cartesian(0, 15)
     _no_bullet_gravity: bool = False
     _image_rotate_anchor: Vec2 = ...
     _current_recoil_time: float = 0
@@ -427,7 +427,7 @@ class BaseWeapon:
             self._image_size,
             "x" if self._image_mirror else ""
         )
-        self._size = Vec2.from_cartesian(*self._image_size)
+        self._size = Vec2().from_cartesian(*self._image_size)
         if self._image_rotate_anchor is ...:
             self._image_rotate_anchor = self._size / 2
 
@@ -591,7 +591,7 @@ class BaseWeapon:
             self._bullet_type(
                 self.parent,
                 self._coalition,
-                self.parent.position + Vec2.from_cartesian(0, 7)
+                self.parent.position + Vec2().from_cartesian(0, 7)
                 + casing_direction * self.parent.size.length * .4,
                 casing_direction * 500 + self.parent.velocity,
                 casing=True
@@ -636,7 +636,7 @@ class BaseWeapon:
         position += offset
 
         if 90 < angle < 270:
-            anchor = Vec2.from_cartesian(
+            anchor = Vec2().from_cartesian(
                 self._size.x - self._image_rotate_anchor.x,
                 self._image_rotate_anchor.y
             )
@@ -661,7 +661,7 @@ class BaseWeapon:
 class Minigun(BaseWeapon):
     _image_name: str = "minigun"
     _image_size: tuple[int, int] = (128, 64)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(35, 30)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(35, 30)
 
     def __init__(
             self,
@@ -689,7 +689,7 @@ class Minigun(BaseWeapon):
 class Ak47(BaseWeapon):
     _image_name: str = "ak47"
     _image_size: tuple[int, int] = (80, 40)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(30, 20)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(30, 20)
 
     def __init__(
             self,
@@ -718,7 +718,7 @@ class Ak47(BaseWeapon):
 class Sniper(BaseWeapon):
     _image_name: str = "sniper"
     _image_size: tuple[int, int] = (120, 60)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(25, 33)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
 
     def __init__(
             self,
@@ -750,7 +750,7 @@ class Mortar(BaseWeapon):
     _bullet_image = BULLET_PATH
     _image_name: str = "mortar"
     _image_size: tuple[int, int] = (25*1.5, 17*1.5)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(7.5*1.5, 8*1.5)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(7.5*1.5, 8*1.5)
 
     def __init__(
             self,
@@ -765,7 +765,7 @@ class Mortar(BaseWeapon):
             recoil_factor=100,
             mag_size=1,
             inaccuracy=.00100002,
-            bullet_size=Vec2.from_cartesian(40, 20),
+            bullet_size=Vec2().from_cartesian(40, 20),
             bullet_speed=1400,
             bullet_damage=40,
             barrel_length=10,
@@ -783,7 +783,7 @@ class Mortar(BaseWeapon):
 class Flak(BaseWeapon):
     _image_name: str = "FLAK_canon"
     _image_size: tuple[int, int] = (256, 128)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(83, 59)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(83, 59)
 
     def __init__(
             self,
@@ -817,7 +817,7 @@ class CRAM(BaseWeapon):
     _image_name: str = "CRAM_canon"
     _image_mirror = True
     _image_size: tuple[int, int] = (128, 128)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(32, 79)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(32, 79)
 
     def __init__(
             self,
@@ -850,7 +850,7 @@ class HandThrownGrenade(BaseWeapon):
     _image_name: str = "grenade"
     _image_mirror = True
     _image_size: tuple[int, int] = (32, 32)
-    _image_rotate_anchor: Vec2 = Vec2.from_cartesian(16, 16)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(16, 16)
 
     def __init__(
             self,

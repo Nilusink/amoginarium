@@ -26,7 +26,7 @@ import pygame as pg
 import numpy as np
 import math as m
 
-from ..logic import Vec2, Color, convert_coord
+from ..logic import Vec2, Color, convert_coord, normalize_angle
 from ._base_renderer import BaseRenderer, tColor
 from ..shared import global_vars
 
@@ -80,9 +80,9 @@ class OpenGLRenderer(BaseRenderer):
         window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
 
         # set global screen size and ppm
-        global_vars.screen_size = Vec2.from_cartesian(*window_size)
-        global_vars.screen_size_real = Vec2.from_cartesian(*window_size)
-        global_vars.resolution = Vec2.from_cartesian(*window_size)
+        global_vars.screen_size = Vec2().from_cartesian(*window_size)
+        global_vars.screen_size_real = Vec2().from_cartesian(*window_size)
+        global_vars.resolution = Vec2().from_cartesian(*window_size)
         global_vars.screen_size_fac_x = 1
         global_vars.screen_size_offset_x = 0
         global_vars.screen_size_fac_y = 1
@@ -144,8 +144,8 @@ class OpenGLRenderer(BaseRenderer):
         """
         check if a rect is on the screen
         """
-        pos = convert_coord(pos, Vec2)
-        size = convert_coord(size, Vec2)
+        # pos = convert_coord(pos, Vec2)
+        # size = convert_coord(size, Vec2)
 
         return False
 
@@ -397,8 +397,8 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         angle_delta = (
-                Vec2.normalize_angle(angle_end.angle)
-                - Vec2.normalize_angle(angle_start.angle)
+                normalize_angle(angle_end.angle)
+                - normalize_angle(angle_start.angle)
         )
 
         glLoadIdentity()  # reset previous glTranslate statements
@@ -411,7 +411,7 @@ class OpenGLRenderer(BaseRenderer):
 
         for i in range(num_segments + 1):
             angle = angle_start.angle + (i / num_segments) * angle_delta
-            pos = Vec2.from_polar(
+            pos = Vec2().from_polar(
                 angle,
                 radius
             )
@@ -514,7 +514,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
             return
 
-        angle_delta = Vec2.normalize_angle(
+        angle_delta = normalize_angle(
                 angle_end.angle - angle_start.angle
         ) / 2
 
@@ -530,11 +530,11 @@ class OpenGLRenderer(BaseRenderer):
             angle1 = angle_start.angle + (i1 / num_segments) * angle_delta
             angle2 = angle_start.angle + (i2 / num_segments) * angle_delta
 
-            pos1 = Vec2.from_polar(
+            pos1 = Vec2().from_polar(
                 angle1,
                 1
             )
-            pos2 = Vec2.from_polar(
+            pos2 = Vec2().from_polar(
                 angle2,
                 1
             )

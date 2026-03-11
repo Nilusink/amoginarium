@@ -12,7 +12,8 @@ import typing as tp
 import numpy as np
 
 from ..debugging import timeit
-from ..logic import coord_t, Vec2, FastVec2, point_in_triangle, is_related
+from ..logic import coord_t, Vec2, point_in_triangle, is_related, \
+    normalize_angle
 from ..base._groups import Players, Bullets, Walls
 from ..entities._base_entity import GameEntity
 from ..render_bindings import renderer
@@ -46,11 +47,10 @@ class RadarSensor(BaseSensor):
         out = []
         for i in range(self._sphere_accuracy):
             curr_angle = i * angle_step
-            out.append(Vec2.from_polar(curr_angle, self.detection_range))
+            out.append(Vec2().from_polar(curr_angle, self.detection_range))
 
         return out
 
-    # @timeit(1)
     def _check_in_sphere(
             self,
             targets: tp.Iterable[GameEntity]
@@ -59,7 +59,7 @@ class RadarSensor(BaseSensor):
         check if a target is inside the calculated sphere
         """
         out = []
-        center = self.parent.position + self._position_offset
+        center: Vec2 = self.parent.position + self._position_offset
         angle_step = (np.pi * 2) / self._sphere_accuracy
         position_offset = self.parent.world_position + self._position_offset
         for target in targets:
@@ -69,13 +69,8 @@ class RadarSensor(BaseSensor):
             if delta.length <= self.detection_range:
 
                 if self._sphere:
-                    delta = FastVec2.from_polar(
-                        Vec2.normalize_angle(delta.angle),
-                        delta.length
-                    )
-
                     # filter by in sphere
-                    angle_index = delta.angle() / angle_step
+                    angle_index = normalize_angle(delta.angle) / angle_step
                     angle_index = int(angle_index)
 
                     # get sector
@@ -84,21 +79,21 @@ class RadarSensor(BaseSensor):
 
                     if point_in_triangle(
                             delta,
-                            FastVec2(*t1.xy),
-                            FastVec2(*t2.xy),
-                            FastVec2(0, 0)
+                            t1,
+                            t2,
+                            Vec2()
                     ):
                         # check RCS
                         # check left and right side of target
-                        size_factor = Vec2.from_polar(
-                            delta.angle() + np.pi/2,
+                        size_factor = Vec2().from_polar(
+                            normalize_angle(delta.angle) + np.pi/2,
                             target.size.length / 2
                         )
 
                         a1 = (target.position + size_factor) - center
                         a2 = (target.position - size_factor) - center
 
-                        da = Vec2.normalize_angle(a1.angle - a2.angle)
+                        da = normalize_angle(a1.angle - a2.angle)
                         if da >= self._min_rcs:
                             out.append(target)
 

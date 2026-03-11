@@ -12,10 +12,13 @@ from time import perf_counter
 from icecream import ic
 import typing as tp
 
+from unicodedata import normalize
+
 from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
     GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
-from ..logic import Vec2, calculate_launch_angle, Color, is_related
+from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
+    normalize_angle
 from ._base_entity import VisibleGameEntity
 from ..radar import RadarSensor, BaseSensor, VisualSensor, DetectionGroup, \
     DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
@@ -84,7 +87,7 @@ class BaseTurret(VisibleGameEntity):
         self.intercept_players = intercept_players
         self.available_targets = {}
         self._last_shot = perf_counter()
-        self._aiming_at = Vec2.from_cartesian(-1, 0)
+        self._aiming_at = Vec2().from_cartesian(-1, 0)
         self._valid_angles = valid_angles
         if self._valid_angles is not ...:
             self._valid_angles[0].length = self.engagement_range
@@ -302,11 +305,9 @@ class BaseTurret(VisibleGameEntity):
 
         # try to predict where the player is going to be
         with suppress(ValueError):
-            magic = player_velocity.length > self.weapon._bullet_speed
-
             aiming_angle, tof, predict = calculate_launch_angle(
                 position_delta,
-                player_velocity * .9 if 0 else player_velocity,
+                player_velocity,
                 player_acceleration,
                 self.weapon.bullet_speed,
                 16,
@@ -329,7 +330,7 @@ class BaseTurret(VisibleGameEntity):
                 return
 
             if self._valid_angles is not ...:
-                angle_delta = Vec2.normalize_angle(
+                angle_delta = normalize_angle(
                     self._valid_angles[1].angle
                     - self._valid_angles[0].angle
                 )
@@ -415,7 +416,7 @@ class BaseTurret(VisibleGameEntity):
                 Color.white()
             )
 
-            angle_delta = abs(Vec2.normalize_angle(
+            angle_delta = abs(normalize_angle(
                 self._valid_angles[1].angle
                 - self._valid_angles[0].angle
             ))
@@ -503,7 +504,7 @@ class SniperTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(31, 32),
+            Vec2().from_cartesian(31, 32),
             position,
             weapon,
             2400,
@@ -523,7 +524,7 @@ class AkTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(31, 32),
+            Vec2().from_cartesian(31, 32),
             position,
             weapon,
             1500,
@@ -543,7 +544,7 @@ class MinigunTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(48, 48),
+            Vec2().from_cartesian(48, 48),
             position,
             weapon,
             2000,
@@ -575,7 +576,7 @@ class MortarTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(23*1.5, 24*1.5),
+            Vec2().from_cartesian(23*1.5, 24*1.5),
             position,
             weapon,
             1800,
@@ -598,7 +599,7 @@ class FlakTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(*self._body_texture_size)*2,
+            Vec2().from_cartesian(*self._body_texture_size)*2,
             position,
             weapon,
             1850,
@@ -607,8 +608,8 @@ class FlakTurret(BaseTurret):
             intercept_bullets=False,
             target_taps=2,
             valid_angles=(
-                Vec2.from_cartesian(-1, .3),
-                Vec2.from_cartesian(-.1, -1)
+                Vec2().from_cartesian(-1, .3),
+                Vec2().from_cartesian(-.1, -1)
             ),
             sensors=[
                 VisualSensor(self, 1700)
@@ -633,7 +634,7 @@ class CRAMTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 128),
+            Vec2().from_cartesian(64, 128),
             position,
             weapon,
             1900,
@@ -643,8 +644,8 @@ class CRAMTurret(BaseTurret):
             airburst_munition=True,
             target_taps=4,
             valid_angles=(
-                Vec2.from_cartesian(-.5, 1),
-                Vec2.from_cartesian(.5, 1)
+                Vec2().from_cartesian(-.5, 1),
+                Vec2().from_cartesian(.5, 1)
             ),
             sensors=[
                 RadarSensor(

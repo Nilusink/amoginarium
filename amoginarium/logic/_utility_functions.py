@@ -13,7 +13,7 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
-from ._vectors import Vec2, FastVec2
+from ._cvectors import Vec2
 from ..debugging import timeit
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
@@ -98,7 +98,7 @@ def is_related(a: object, b: object, depth: int = 2) -> bool:
     return False
 
 
-def convert_coord[A: Vec2 | FastVec2 | tuple | float](
+def convert_coord[A: Vec2 | tuple | float](
         coord: coord_t,
         convert_to: type[A] = tuple
 ) -> A | tuple[float, float] | tuple[A, A]:
@@ -109,7 +109,7 @@ def convert_coord[A: Vec2 | FastVec2 | tuple | float](
         if isinstance(coord, Vec2):
             return coord.copy()
 
-        return Vec2.from_cartesian(*coord)
+        return Vec2().from_cartesian(*coord)
 
     if convert_to is tuple:
         if isinstance(coord, tuple):
@@ -146,8 +146,8 @@ def raycast_mask(
         start, end = clipped
 
         # position offsets
-        start = Vec2.from_cartesian(*start) - sprite_start
-        end = Vec2.from_cartesian(*end) - sprite_start
+        start = Vec2().from_cartesian(*start) - sprite_start
+        end = Vec2().from_cartesian(*end) - sprite_start
 
         # calculate line
         delta = end - start
@@ -188,7 +188,7 @@ def lidar_sphere(
     out = []
     for i in range(segments):
         curr_angle = i * angle_step
-        delta = Vec2.from_polar(curr_angle, radius)
+        delta = Vec2().from_polar(curr_angle, radius)
 
         hits = []
         for entity in entity_sample:
@@ -213,12 +213,11 @@ def lidar_sphere(
     return out
 
 
-@njit()
 def point_in_triangle(
-        p: FastVec2,
-        a: FastVec2,
-        b: FastVec2,
-        c: FastVec2
+        p: Vec2,
+        a: Vec2,
+        b: Vec2,
+        c: Vec2
 ) -> bool:
     """
     p: point to test

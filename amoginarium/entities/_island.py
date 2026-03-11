@@ -98,7 +98,7 @@ class Island(VisibleGameEntity):
         self.mask: pg.Mask = ...
 
         if form is not ...:
-            self._size = Vec2.from_cartesian(
+            self._size = Vec2().from_cartesian(
                 self._image_size[0] * max(len(r) for r in form),
                 self._image_size[1] * len(form)
             )
@@ -106,7 +106,7 @@ class Island(VisibleGameEntity):
         super().__init__(
             size=self._size,
             initial_position=start,
-            # initial_velocity=Vec2.from_cartesian(4, 0)
+            # initial_velocity=Vec2().from_cartesian(4, 0)
         )
 
         self.add(Walls)
@@ -130,8 +130,8 @@ class Island(VisibleGameEntity):
         x_size = random.randint(x_size_start, x_size_end)
         y_size = random.randint(y_size_start, y_size_end)
 
-        start = Vec2.from_cartesian(x, y)
-        size = Vec2.from_cartesian(x_size, y_size)
+        start = Vec2().from_cartesian(x, y)
+        size = Vec2().from_cartesian(x_size, y_size)
 
         return cls(start, size)
 
@@ -530,7 +530,7 @@ class Island(VisibleGameEntity):
                             )
 
                 column_offset = self._image_size[0] * column
-                pos = start_pos + Vec2.from_cartesian(
+                pos = start_pos + Vec2().from_cartesian(
                     column_offset,
                     row_offset
                 )

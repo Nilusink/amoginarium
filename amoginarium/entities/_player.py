@@ -128,7 +128,7 @@ class Player(LRImageEntity):
         self._image_size = size
 
         super().__init__(
-            size=Vec2.from_cartesian(size, size),
+            size=Vec2().from_cartesian(size, size),
             facing=facing,
             initial_position=initial_position,
             initial_velocity=initial_velocity,
@@ -225,21 +225,21 @@ class Player(LRImageEntity):
     def collide_wall(self, wall: Island):
         return wall.get_collided_sides(
             (
-                self.position + Vec2.from_cartesian(0, self.size.y / 2),
+                self.position + Vec2().from_cartesian(0, self.size.y / 2),
                 PIXEL_MASK
             ),
             (
-                self.position + Vec2.from_cartesian(
+                self.position + Vec2().from_cartesian(
                     self.size.y / 2, -PIXEL_LINE_VERTICAL.get_size()[1] / 2
                 ),
                 PIXEL_LINE_VERTICAL
             ),
             (
-                self.position - Vec2.from_cartesian(0, self.size.y / 2),
+                self.position - Vec2().from_cartesian(0, self.size.y / 2),
                 PIXEL_MASK
             ),
             (
-                self.position - Vec2.from_cartesian(
+                self.position - Vec2().from_cartesian(
                     self.size.y / 2, PIXEL_LINE_VERTICAL.get_size()[1] / 2
                 ),
                 PIXEL_LINE_VERTICAL
@@ -343,7 +343,7 @@ class Player(LRImageEntity):
         # directional stuff
         # shoot
         if self._controller.shoot:
-            mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
+            mouse_pos = Vec2().from_cartesian(*pg.mouse.get_pos())
             mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
                          (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
 
@@ -391,7 +391,7 @@ class Player(LRImageEntity):
     def gl_draw(self) -> None:
         # check if out of bounds
         # left of screen
-        mouse_pos = Vec2.from_cartesian(*pg.mouse.get_pos())
+        mouse_pos = Vec2().from_cartesian(*pg.mouse.get_pos())
         mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
                      (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
 

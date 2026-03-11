@@ -9,7 +9,7 @@ Nilusink
 """
 from __future__ import annotations
 # from OpenGL.GL import glRotated
-# from icecream import ic
+from icecream import ic
 import pygame as pg
 import typing as tp
 import math as m
@@ -134,8 +134,8 @@ class GameEntity(PositionedEntity):
     ) -> None:
         self._coalition = coalition
 
-        size = Vec2.from_cartesian(1, 1) if size is ... else size
-        self.facing = Vec2.from_cartesian(1, 0) if facing is ... else facing
+        size = Vec2().from_cartesian(1, 1) if size is ... else size
+        self.facing = Vec2().from_cartesian(1, 0) if facing is ... else facing
         position = Vec2() if initial_position is ... else initial_position
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
