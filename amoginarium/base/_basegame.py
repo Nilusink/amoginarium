@@ -32,7 +32,7 @@ from ..entities import Player, GrassIsland, GrayBrickIsland, Island
 from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
 from ..entities import PlatformIsland2
 from ..controllers import Controllers, Controller, GameController
-from ..debugging import run_with_debug, print_ic_style, CC
+from ..debugging import run_with_debug, print_ic_style, CC, timeit
 from ._scrolling_background import ParalaxBackground
 from ..shared import global_vars, Coalitions
 from ..logic import SimpleLock, Vec2, convert_coord
@@ -843,7 +843,7 @@ class BaseGame:
         FrictionXAffected.calculate_friction(delta)
         WallBouncer.update()
 
-        Bullets.update(delta)
+        timeit(1)(Bullets.update)(delta)
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 

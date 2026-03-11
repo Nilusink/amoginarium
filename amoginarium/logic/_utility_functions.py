@@ -8,7 +8,6 @@ Author:
 Nilusink
 """
 from icecream import ic
-from numba import njit
 import typing as tp
 import pygame as pg
 import numpy as np

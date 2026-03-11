@@ -10,7 +10,6 @@ Nilusink
 from ..debugging import timeit
 from contextlib import suppress
 from ._cvectors import Vec2
-from numba import njit
 import typing as tp
 from icecream import ic
 import math as m
