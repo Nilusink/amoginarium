@@ -100,6 +100,9 @@ class Animation:
     def get_value(self) -> float:
         return self.__current_value
 
+    def is_changing(self) -> bool:
+        return self.__phase != "at_start" and self.__phase != "at_end"
+
 
 # Helper type for the inputs: accepts a single number or a sequence of numbers
 AnimInput = Union[float, int, Sequence[Union[float, int]]]
@@ -196,3 +199,6 @@ class MultiAnimation:
             return (val,) * self.__count
 
         return tuple(anim.get_value() for anim in self.__anims)
+
+    def is_changing(self) -> bool:
+        return any([anim.is_changing() for anim in self.__anims])

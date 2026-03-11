@@ -82,7 +82,7 @@ class Button(Rectangle):
             hover_border_width_reverse_duration: float = TEST_DURATION,
 
             radius: float = 20,
-            hover_radius: float = 40,
+            hover_radius: float = 70,
             hover_radius_duration: float = TEST_DURATION,
             hover_radius_reverse_duration: float = TEST_DURATION,
 
@@ -137,8 +137,8 @@ class Button(Rectangle):
         # if self.__command is not None:
         #     self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())
 
-    def gl_draw(self) -> None:
-        super().gl_draw()
+    def _gl_draw(self) -> None:
+        super()._gl_draw()
         # text
 
         renderer.draw_pg_surf(

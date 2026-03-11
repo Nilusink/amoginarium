@@ -491,6 +491,10 @@ class _CollisionDestroyed(_BaseGroup):
         ])
 
 
+class _Cursor(_BaseGroup):
+    ...
+
+
 # initialize groups
 Drawn = _Drawn()
 Walls = _Walls()
@@ -503,3 +507,4 @@ WallCollider = _WallCollider()
 GravityAffected = _GravityAffected()
 FrictionXAffected = _FrictionXAffected()
 CollisionDestroyed = _CollisionDestroyed()
+Cursor = _Cursor()

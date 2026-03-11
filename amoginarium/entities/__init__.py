@@ -1,5 +1,5 @@
 from ._groups import Drawn, Walls, Players, Bullets, HasBars, Updated, WallBouncer, WallCollider, GravityAffected, \
-    FrictionXAffected, CollisionDestroyed
+    FrictionXAffected, CollisionDestroyed, Cursor
 from ._static_turret import SniperTurret, AkTurret, MinigunTurret, MortarTurret
 from ._static_turret import FlakTurret, BaseTurret, CRAMTurret
 from ._base_entity import GameEntity, VisibleGameEntity, ImageEntity, LRImageEntity

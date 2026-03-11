@@ -22,7 +22,6 @@ from ..shared import global_vars
 type TextureID = pg.Surface
 
 
-@deprecated("Use OpenGLRenderer instead")
 class PyGameRenderer(BaseRenderer):
     def init(self, title):
         ic("using pygame backend")

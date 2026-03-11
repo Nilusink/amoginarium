@@ -9,6 +9,7 @@ from __future__ import annotations
 from ._group import UIGroup
 from ..entities import BaseEntity
 
+import pygame as pg
 import typing as tp
 
 

@@ -42,6 +42,7 @@ from ..communications import TCPServer
 from ..animations import explosion
 from ._textures import textures
 from ..settings import Settings
+from ..ui import UICursor
 
 
 class BoundFunction(tp.TypedDict):
@@ -582,6 +583,8 @@ class BaseGame:
 
         # Temporary solution
         # todo: reimplement
+        mouse_cursor = UICursor()
+
         # game_ui_dummy: UIElement = UIElement()
         # game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
 
@@ -603,6 +606,11 @@ class BaseGame:
 
             # todo: reimplement
             # EventHandler.check_events()
+
+            mouse_cursor.gl_draw()
+
+            for event in pg.event.get():
+                ...
 
             if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
                 # update background music

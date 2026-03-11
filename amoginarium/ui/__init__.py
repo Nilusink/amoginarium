@@ -8,3 +8,4 @@ from ._component import UIComponent
 from ._rectangle import Rectangle
 from ._entity import UIEntity
 from ._button import Button
+from ._cursor import UICursor

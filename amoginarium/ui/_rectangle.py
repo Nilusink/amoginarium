@@ -23,6 +23,8 @@ from ..render_bindings import renderer
 from ._component import UIComponent
 from ._types import anchor_t, ui_color_t
 
+from .temp_pygame_rendering import draw_rounded_rect
+
 
 ##################################################
 #                     Code                       #
@@ -105,8 +107,9 @@ class Rectangle(UIComponent):
                                                        extend_duration=hover_extend_duration,
                                                        reduce_duration=hover_collapse_duration)
 
-        # self.add_event("mouse-enter", callback=lambda *_: self.__on_enter(), sound=self.__on_hover_sound)
-        # self.add_event("mouse-leave", callback=lambda *_: self.__on_leave(), sound=self.__on_leave_sound)
+        self.add_enter_callback(self.__on_enter)
+        self.add_leave_callback(self.__on_leave)
+
         # self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, sound=self.__on_click_sound)
 
     def __on_enter(self) -> None:
@@ -123,8 +126,17 @@ class Rectangle(UIComponent):
         self.__hover_border_width_animation.start_reduce()
         self.__hover_radius_animation.start_reduce()
 
-    def gl_draw(self) -> None:
-        super().gl_draw()
+    def _gl_draw(self) -> None:
+        if self._work_with_collision_mask and not self._ui_changed:
+            self._ui_changed = any([
+                self.__hover_border_width_animation.is_changing(),
+                self.__hover_border_color_animation.is_changing(),
+                self.__hover_bg_color_animation.is_changing(),
+                self.__hover_radius_animation.is_changing(),
+                self.__hover_extend_animation.is_changing(),
+            ])
+
+        super()._gl_draw()
 
         border_width: float = self.__hover_border_width_animation.update()
         border_color: ui_color_t = self.__hover_border_color_animation.update()
@@ -151,6 +163,16 @@ class Rectangle(UIComponent):
                 bg_color,
                 inner_radius if inner_radius > 0 else 0
             )
+
+            if self._ui_changed:
+                print("REDRAW mask")
+                draw_rounded_rect(
+                    self._collision_surface,
+                    (0, 0),
+                    self._abs_size + double_extend_vec,
+                    border_color,
+                    radius
+                )
 
         else:
             if border_width > 0:
