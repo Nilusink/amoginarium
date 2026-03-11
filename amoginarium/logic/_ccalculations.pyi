@@ -1,14 +1,15 @@
-from ._cvectors import Vec2
+class Vec2:
+    ...
 
 
 def calculate_launch_angle(
-        position_delta: Vec2,
-        target_velocity: Vec2,
-        target_acceleration: Vec2,
-        launch_speed: float,
-        recalculate: int = 10,
-        aim_type: str = "low",
-        g: float = 9.81
+    position_delta: Vec2,
+    target_velocity: Vec2,
+    target_acceleration: Vec2,
+    launch_speed: float,
+    recalculate: int = 10,
+    aim_type: str = "low",
+    g: float = 9.81
 ) -> tuple[Vec2, float, Vec2]:
     """
     :param position_delta: the position delta between cannon and target

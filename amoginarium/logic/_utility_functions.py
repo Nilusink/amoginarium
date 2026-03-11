@@ -13,8 +13,9 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
-from ._cvectors import Vec2
+from ._cutility_functions import raycast_mask
 from ..debugging import timeit
+from ._cvectors import Vec2
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
 
@@ -126,56 +127,13 @@ def convert_coord[A: Vec2 | tuple | float](
     raise ValueError("Unsupported conversion: ", convert_to)
 
 
-# @timeit(1)
-def raycast_mask(
-        sprite: EntityLike,
-        start: coord_t,
-        end: coord_t,
-        sample_rate: float = 10
-) -> Vec2 | None:
-    start = convert_coord(start, Vec2)
-    end = convert_coord(end, Vec2)
-
-    # subtract sprites position (masks don't have positions)
-    sprite_start = sprite.position
-
-    # check if in collision box first to save time
-    clipped = sprite.rect.clipline(start.xy, end.xy)
-    if clipped:
-        # only calculate points actually in sprite
-        start, end = clipped
-
-        # position offsets
-        start = Vec2().from_cartesian(*start) - sprite_start
-        end = Vec2().from_cartesian(*end) - sprite_start
-
-        # calculate line
-        delta = end - start
-        sample_rate = int(
-            max(abs(delta.x), abs(delta.y)) / sample_rate
-        )
-
-        # trace line through entity
-        for i in range(sample_rate):
-            current = start + delta * i / sample_rate
-
-            try:
-                if sprite.mask.get_at(current.xy):
-                    return sprite_start + current
-
-            except IndexError:
-                continue
-
-    return None
-
-
 @timeit(1)
 def lidar_sphere(
         position: Vec2,
         radius: float,
         segments: int,
         entity_sample: tp.Iterable[EntityLike],
-        sample_rate: float = 1,
+        sample_rate: int = 1,
 ) -> list[Vec2]:
     """
     cast an array of spheres around a certain point
@@ -200,7 +158,8 @@ def lidar_sphere(
             )
 
             if res is not None:
-                hits.append(res)
+                if res.length > 0:
+                    hits.append(res)
 
         if hits:
             hits = sorted(hits, key=lambda x: x.length)
@@ -211,35 +170,3 @@ def lidar_sphere(
         out.append(delta)
 
     return out
-
-
-def point_in_triangle(
-        p: Vec2,
-        a: Vec2,
-        b: Vec2,
-        c: Vec2
-) -> bool:
-    """
-    p: point to test
-    a,b,c: triangle vertices
-    """
-
-    v0 = c - a
-    v1 = b - a
-    v2 = p - a
-
-    dot00 = v0.dot(v0)
-    dot01 = v0.dot(v1)
-    dot02 = v0.dot(v2)
-    dot11 = v1.dot(v1)
-    dot12 = v1.dot(v2)
-
-    denom = dot00 * dot11 - dot01 * dot01
-    if denom == 0:
-        return False
-
-    inv = 1 / denom
-    u = (dot11 * dot02 - dot01 * dot12) * inv
-    v = (dot00 * dot12 - dot01 * dot02) * inv
-
-    return (u >= 0) and (v >= 0) and (u + v <= 1)

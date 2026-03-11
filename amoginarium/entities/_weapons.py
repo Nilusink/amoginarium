@@ -261,7 +261,7 @@ class Bullet(ImageEntity):
 
 class MortarShell(Bullet):
     _bullet_image: str = ("mortar_shell", "")
-    _hp = .5
+    _hp = 2
 
     def __init__(
         self,
@@ -842,7 +842,7 @@ class CRAM(BaseWeapon):
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
             sound_effect=CRAMSound(),
-            bullet_visibility_offset=.027
+            bullet_visibility_offset=.027  # TODO: smart target tap (max)
         )
 
 
