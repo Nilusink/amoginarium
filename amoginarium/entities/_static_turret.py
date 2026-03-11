@@ -9,20 +9,18 @@ Nilusink
 """
 from contextlib import suppress
 from time import perf_counter
+from icecream import ic
 import typing as tp
 
-from icecream import ic
-
 from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
-    GravityAffected, Walls
+    GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
-from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
-    lidar_sphere
+from ..logic import Vec2, calculate_launch_angle, Color, is_related
 from ._base_entity import VisibleGameEntity
-from ..radar import MagicSensor, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED, \
-    DETECTION_GLOBAL_BLUE, DetectionGroup, BaseSensor, VisualSensor
-from ..render_bindings import renderer
+from ..radar import RadarSensor, BaseSensor, VisualSensor, DetectionGroup, \
+    DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
 from ..shared import global_vars, Coalitions
+from ..render_bindings import renderer
 from ..base._textures import textures
 
 
@@ -582,7 +580,7 @@ class MortarTurret(BaseTurret):
             weapon,
             1800,
             sensors=[
-                VisualSensor(self, 1500)
+                RadarSensor(self, 1500)
             ]
         )
 
@@ -649,7 +647,7 @@ class CRAMTurret(BaseTurret):
                 Vec2.from_cartesian(.5, 1)
             ),
             sensors=[
-                VisualSensor(
+                RadarSensor(
                     self,
                     1500,
                     sphere_accuracy=256,

@@ -181,7 +181,7 @@
         },
         {
             "type": "turret.static.ak47",
-            "pos": [10500, 820]
+            "pos": [10500, 690]
         },
         {
             "type": "instructions.text",
