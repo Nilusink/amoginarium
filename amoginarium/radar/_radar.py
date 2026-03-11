@@ -7,11 +7,12 @@ _radar.py
 Author:
 Nilusink
 """
+from icecream import ic
 import typing as tp
 import numpy as np
 
 from ..debugging import timeit
-from ..logic import coord_t, Vec2, lidar_sphere, point_in_triangle, is_related
+from ..logic import coord_t, Vec2, FastVec2, point_in_triangle, is_related
 from ..base._groups import Players, Bullets, Walls
 from ..entities._base_entity import GameEntity
 from ..render_bindings import renderer
@@ -49,7 +50,7 @@ class RadarSensor(BaseSensor):
 
         return out
 
-    @timeit(1)
+    # @timeit(1)
     def _check_in_sphere(
             self,
             targets: tp.Iterable[GameEntity]
@@ -59,6 +60,8 @@ class RadarSensor(BaseSensor):
         """
         out = []
         center = self.parent.position + self._position_offset
+        angle_step = (np.pi * 2) / self._sphere_accuracy
+        position_offset = self.parent.world_position + self._position_offset
         for target in targets:
             delta = target.position - center
 
@@ -66,26 +69,29 @@ class RadarSensor(BaseSensor):
             if delta.length <= self.detection_range:
 
                 if self._sphere:
-                    delta.angle = Vec2.normalize_angle(delta.angle)
+                    delta = FastVec2.from_polar(
+                        Vec2.normalize_angle(delta.angle),
+                        delta.length
+                    )
 
                     # filter by in sphere
-                    angle_index = (delta.angle / (np.pi * 2)) * len(self._sphere)
+                    angle_index = delta.angle() / angle_step
                     angle_index = int(angle_index)
 
                     # get sector
                     t1 = self._sphere[angle_index]
-                    t2 = self._sphere[(angle_index + 1) % len(self._sphere)]
+                    t2 = self._sphere[(angle_index + 1) % self._sphere_accuracy]
 
                     if point_in_triangle(
                             delta,
-                            t1,
-                            t2,
-                            Vec2()
+                            FastVec2(*t1.xy),
+                            FastVec2(*t2.xy),
+                            FastVec2(0, 0)
                     ):
                         # check RCS
                         # check left and right side of target
                         size_factor = Vec2.from_polar(
-                            delta.angle + np.pi/2,
+                            delta.angle() + np.pi/2,
                             target.size.length / 2
                         )
 
@@ -97,8 +103,8 @@ class RadarSensor(BaseSensor):
                             out.append(target)
 
                             if not is_related(self.parent, target, 4):
-                                t1 += self.parent.world_position + self._position_offset
-                                t2 += self.parent.world_position + self._position_offset
+                                t1 += position_offset
+                                t2 += position_offset
 
                                 self._highlighted_sectors.append((t1, t2))
 

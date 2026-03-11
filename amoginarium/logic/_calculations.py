@@ -9,23 +9,24 @@ Nilusink
 """
 from ..debugging import timeit
 from contextlib import suppress
-from ._vectors import Vec2
+from ._vectors import Vec2, FastVec2
+from numba import njit
 import typing as tp
 from icecream import ic
 import math as m
 
 
-# @timeit(10)
-# @timeit(2)
+@timeit(10)
+@njit
 def calculate_launch_angle(
-    position_delta: Vec2,
-    target_velocity: Vec2,
-    target_acceleration: Vec2,
+    position_delta: FastVec2,
+    target_velocity: FastVec2,
+    target_acceleration: FastVec2,
     launch_speed: float,
     recalculate: int = 10,
     aim_type: str = "low",
     g: float = 9.81
-) -> tuple[Vec2, float, Vec2]:
+) -> tuple[FastVec2, float, FastVec2]:
     """
     :param position_delta: the position delta between cannon and target
     :param target_velocity: the current velocity of the target, pass empty Vec3 if no velocity is known
@@ -40,7 +41,7 @@ def calculate_launch_angle(
     aim_type = max if aim_type.lower() in ("high", "h") else min
 
     # approximate where the target will be (this is not an exact method!!!)
-    a_time = abs(position_delta.length / launch_speed)
+    a_time = abs(position_delta.length() / launch_speed)
     a_pos = position_delta + target_velocity * a_time
     a_pos += target_acceleration * a_time**2 * 1/2
 

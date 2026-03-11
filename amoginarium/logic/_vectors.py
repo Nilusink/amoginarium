@@ -8,8 +8,11 @@ Author:
 Nilusink
 """
 from __future__ import annotations
-import math as m
+from numba.experimental import jitclass
+from numba import njit, float64
 from icecream import ic
+import math as m
+import math
 
 from ..debugging import timeit
 
@@ -282,3 +285,67 @@ class Vec2:
     @staticmethod
     def normalize_angle(value: float) -> float:
         return value % (2 * m.pi)
+
+
+spec = [
+    ('x', float64),
+    ('y', float64),
+]
+
+
+@jitclass(spec)
+class FastVec2:
+    def __init__(self, x: float = 0.0, y: float = 0.0):
+        self.x = x
+        self.y = y
+
+    # Properties
+    def length(self):
+        return math.sqrt(self.x * self.x + self.y * self.y)
+
+    def angle(self):
+        return math.atan2(self.y, self.x) % (m.pi*2)
+
+    def set_length(self, length: float):
+        ang = self.angle()
+        self.x = math.cos(ang) * length
+        self.y = math.sin(ang) * length
+
+    def set_angle(self, angle: float):
+        l = self.length()
+        self.x = math.cos(angle) * l
+        self.y = math.sin(angle) * l
+
+    # Basic operations
+    def copy(self):
+        return FastVec2(self.x, self.y)
+
+    def __add__(self, other: FastVec2):
+        return FastVec2(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other: FastVec2):
+        return FastVec2(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, scalar):
+        return FastVec2(self.x * scalar, self.y * scalar)
+
+    def __truediv__(self, scalar):
+        return FastVec2(self.x / scalar, self.y / scalar)
+
+    def dot(self, other: FastVec2):
+        return self.x * other.x + self.y * other.y
+
+    def normalize(self):
+        l = self.length()
+        if l > 0:
+            return FastVec2(self.x / l, self.y / l)
+        return FastVec2(0.0, 0.0)
+
+    # Polar coordinates helper
+    @staticmethod
+    def from_polar(angle: float, length: float):
+        return FastVec2(
+            math.cos(angle) * length,
+            math.sin(angle) * length
+        )
+

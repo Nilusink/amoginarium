@@ -8,11 +8,12 @@ Author:
 Nilusink
 """
 from icecream import ic
+from numba import njit
 import typing as tp
 import pygame as pg
 import numpy as np
 
-from ._vectors import Vec2
+from ._vectors import Vec2, FastVec2
 from ..debugging import timeit
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
@@ -97,7 +98,7 @@ def is_related(a: object, b: object, depth: int = 2) -> bool:
     return False
 
 
-def convert_coord[A](
+def convert_coord[A: Vec2 | FastVec2 | tuple | float](
         coord: coord_t,
         convert_to: type[A] = tuple
 ) -> A | tuple[float, float] | tuple[A, A]:
@@ -212,11 +213,12 @@ def lidar_sphere(
     return out
 
 
+@njit()
 def point_in_triangle(
-        p: Vec2,
-        a: Vec2,
-        b: Vec2,
-        c: Vec2
+        p: FastVec2,
+        a: FastVec2,
+        b: FastVec2,
+        c: FastVec2
 ) -> bool:
     """
     p: point to test

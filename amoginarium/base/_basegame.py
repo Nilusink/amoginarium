@@ -19,6 +19,7 @@ import json
 import math
 import os
 
+from .._numba_precompile import pre_compile
 from ._groups import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players
 from ._groups import Updated, GravityAffected, Drawn, FrictionXAffected
 from ._pausemenu import PauseMenu
@@ -235,6 +236,10 @@ class BaseGame:
 
         Player.load_textures()
         explosion.load_textures(size=(512, 512))
+
+        # pre-compile numba functions
+        pre_compile()
+
         end = perf_counter_ns()
         load_time = (end - start) / 1e6
         ic(load_time)
