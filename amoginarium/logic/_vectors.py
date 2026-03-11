@@ -9,6 +9,8 @@ Nilusink
 """
 from __future__ import annotations
 import math as m
+from icecream import ic
+
 from ..debugging import timeit
 
 
@@ -17,47 +19,71 @@ class Vec2:
     y: float
     angle: float
     length: float
+    __slots__ = ("__x", "__y", "__angle", "__length", "_p", "_c")
 
     def __init__(self) -> None:
         self.__x: float = 0
         self.__y: float = 0
         self.__angle: float = 0
         self.__length: float = 0
+        self._p = False
+        self._c = False
 
     # variable getters / setters
     @property
     def x(self):
+        if self._p:
+            self.__update()
+
         return self.__x
 
     @x.setter
     def x(self, value):
+        if self._p:
+            self.__update()
+
         self.__x = value
-        self.__update("c")
+        self._c = True
 
     @property
     def y(self):
+        if self._p:
+            self.__update()
+
         return self.__y
 
     @y.setter
     def y(self, value):
+        if self._p:
+            self.__update()
+
         self.__y = value
-        self.__update("c")
+        self._c = True
 
     @property
     def xy(self):
+        if self._p:
+            self.__update()
+
         return self.__x, self.__y
 
     @xy.setter
     def xy(self, xy):
+        if self._p:
+            self.__update()
+
         self.__x = xy[0]
         self.__y = xy[1]
-        self.__update("c")
+        self._c = True
 
     @property
     def angle(self):
         """
         value in radian
         """
+        if self._c:
+            self.__update()
+
         return self.__angle
 
     @angle.setter
@@ -65,29 +91,42 @@ class Vec2:
         """
         value in radian
         """
-        value = self.normalize_angle(value)
+        if self._c:
+            self.__update()
 
-        self.__angle = value
-        self.__update("p")
+        self.__angle = self.normalize_angle(value)
+        self._p = True
 
     @property
     def length(self):
+        if self._c:
+            self.__update()
+
         return self.__length
 
     @length.setter
     def length(self, value):
+        if self._c:
+            self.__update()
+
         self.__length = value
-        self.__update("p")
+        self._p = True
 
     @property
     def polar(self):
+        if self._c:
+            self.__update()
+
         return self.__angle, self.__length
 
     @polar.setter
     def polar(self, polar):
+        if self._c:
+            self.__update()
+
         self.__angle = polar[0]
         self.__length = polar[1]
-        self.__update("p")
+        self._p = True
 
     # interaction
     def split_vector(self, direction):
@@ -112,7 +151,14 @@ class Vec2:
 
     # @timeit(10)
     def copy(self):
-        return Vec2.from_cartesian(x=self.x, y=self.y)
+        v = Vec2()
+        v.__x = self.__x
+        v.__y = self.__y
+        v.__angle = self.__angle
+        v.__length = self.__length
+        v._c = self._c
+        v._p = self._p
+        return v
 
     def to_dict(self) -> dict:
         return {
@@ -123,7 +169,11 @@ class Vec2:
         }
 
     def normalize(self) -> "Vec2":
-        self.length = 1
+        if self._c:
+            self.__update()
+
+        self.__length = 1
+        self._p = True
         return self
 
     def mirror(self, mirror_by: "Vec2") -> "Vec2":
@@ -134,19 +184,19 @@ class Vec2:
 
     # maths
     def __add__(self, other):
-        if issubclass(type(other), Vec2):
+        if isinstance(other, Vec2):
             return Vec2.from_cartesian(x=self.x + other.x, y=self.y + other.y)
 
         return Vec2.from_cartesian(x=self.x + other, y=self.y + other)
 
     def __sub__(self, other):
-        if issubclass(type(other), Vec2):
+        if isinstance(other, Vec2):
             return Vec2.from_cartesian(x=self.x - other.x, y=self.y - other.y)
 
         return Vec2.from_cartesian(x=self.x - other, y=self.y - other)
 
     def __mul__(self, other):
-        if issubclass(type(other), Vec2):
+        if isinstance(other, Vec2):
             return Vec2.from_polar(
                 angle=self.angle + other.angle,
                 length=self.length * other.length
@@ -158,17 +208,25 @@ class Vec2:
         return Vec2.from_cartesian(x=self.x / other, y=self.y / other)
 
     # internal functions
-    def __update(self, calc_from):
+    def __update(self):
         """
         :param calc_from: polar (p) | cartesian (c)
         """
-        if calc_from in ("p", "polar"):
-            self.__x = m.cos(self.angle) * self.length
-            self.__y = m.sin(self.angle) * self.length
+        if self._p and self._c:
+            raise RuntimeError("polar and cartesian have both been set without recalc")
 
-        elif calc_from in ("c", "cartesian"):
-            self.__length = m.sqrt(self.x**2 + self.y**2)
-            self.__angle = m.atan2(self.y, self.x)
+        if not any([self._p, self._c]):
+            ic(self._p, self._c)
+
+        if self._p:
+            self.__x = m.cos(self.__angle) * self.__length
+            self.__y = m.sin(self.__angle) * self.__length
+            self._p = False
+
+        elif self._c:
+            self.__length = m.sqrt(self.__x*self.__x + self.__y*self.__y)
+            self.__angle = m.atan2(self.__y, self.__x)
+            self._c = False
 
         else:
             raise ValueError("Invalid value for \"calc_from\"")
@@ -188,14 +246,20 @@ class Vec2:
     @staticmethod
     def from_cartesian(x, y) -> "Vec2":
         p = Vec2()
-        p.xy = x, y
+        p.__x = x
+        p.__y = y
+        p._c = True
+        p.__update()
 
         return p
 
     @staticmethod
     def from_polar(angle, length) -> "Vec2":
         p = Vec2()
-        p.polar = angle, length
+        p.__angle = angle
+        p.__length = length
+        p._p = True
+        p.__update()
 
         return p
 
@@ -217,10 +281,4 @@ class Vec2:
 
     @staticmethod
     def normalize_angle(value: float) -> float:
-        while value > 2 * m.pi:
-            value -= 2 * m.pi
-
-        while value < 0:
-            value += 2 * m.pi
-
-        return value
+        return value % (2 * m.pi)
