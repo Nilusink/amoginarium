@@ -17,7 +17,7 @@ from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
 from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
 from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
-from OpenGL.GL import glTranslated
+from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
@@ -26,7 +26,7 @@ import pygame as pg
 import numpy as np
 import math as m
 
-from ..logic import Vec2, Color, convert_coord
+from ..logic import Vec2, Color, convert_coord, normalize_angle
 from ._base_renderer import BaseRenderer, tColor
 from ..shared import global_vars
 
@@ -80,9 +80,9 @@ class OpenGLRenderer(BaseRenderer):
         window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
 
         # set global screen size and ppm
-        global_vars.screen_size = Vec2.from_cartesian(*window_size)
-        global_vars.screen_size_real = Vec2.from_cartesian(*window_size)
-        global_vars.resolution = Vec2.from_cartesian(*window_size)
+        global_vars.screen_size = Vec2().from_cartesian(*window_size)
+        global_vars.screen_size_real = Vec2().from_cartesian(*window_size)
+        global_vars.resolution = Vec2().from_cartesian(*window_size)
         global_vars.screen_size_fac_x = 1
         global_vars.screen_size_offset_x = 0
         global_vars.screen_size_fac_y = 1
@@ -144,8 +144,8 @@ class OpenGLRenderer(BaseRenderer):
         """
         check if a rect is on the screen
         """
-        pos = convert_coord(pos, Vec2)
-        size = convert_coord(size, Vec2)
+        # pos = convert_coord(pos, Vec2)
+        # size = convert_coord(size, Vec2)
 
         return False
 
@@ -271,13 +271,41 @@ class OpenGLRenderer(BaseRenderer):
 
         # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
 
+    def draw_polygon(
+            self,
+            vertices,
+            color,
+            center=None,
+            convert_global=True
+    ):
+        vertices = [convert_coord(v, Vec2) for v in vertices]
+
+        if convert_global:
+            vertices = [
+                global_vars.translate_screen_coord(v) for v in vertices
+            ]
+
+        glLoadIdentity()  # reset previous glTranslate statements
+        if center is not None:
+            center = convert_coord(center, tuple)
+            glTranslate(center[0], center[1], 0)
+
+        self.set_color(color)
+
+        glBegin(GL_POLYGON)
+
+        for vertice in vertices:
+            glVertex2f(*vertice.xy)
+
+        glEnd()
+
     def draw_circle(
             self,
             center,
             radius,
             num_segments,
             color,
-            convert_global=True
+            convert_global=True,
     ):
         center = convert_coord(center, Vec2)
 
@@ -301,6 +329,47 @@ class OpenGLRenderer(BaseRenderer):
             cosine = radius * np.cos(i * 2 * np.pi / num_segments)
             sine = radius * np.sin(i * 2 * np.pi / num_segments)
             glVertex2f(cosine, sine)
+
+        glEnd()
+
+    def draw_line_circle(
+            self,
+            center,
+            radius,
+            num_segments,
+            color,
+            thickness=1,
+            convert_global=True,
+    ):
+        center = convert_coord(center, Vec2)
+
+        # convert to screen realtive coords and size
+        if convert_global:
+            center = global_vars.translate_screen_coord(center)
+            radius = global_vars.translate_scale(radius)
+
+        # only draw if on screen
+        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
+            return
+
+        glLoadIdentity()  # reset previous glTranslate statements
+        glTranslate(center.x, center.y, 0)
+
+        self.set_color(color)
+
+        glBegin(GL_TRIANGLE_STRIP)
+
+        inner = radius
+        outer = radius + thickness
+
+        angle_step = 2 * np.pi / num_segments
+        for i in range(num_segments + 1):
+            angle = i * angle_step
+            c = np.cos(angle)
+            s = np.sin(angle)
+
+            glVertex2f(outer * c, outer * s)
+            glVertex2f(inner * c, inner * s)
 
         glEnd()
 
@@ -328,8 +397,8 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         angle_delta = (
-                Vec2.normalize_angle(angle_end.angle)
-                - Vec2.normalize_angle(angle_start.angle)
+                normalize_angle(angle_end.angle)
+                - normalize_angle(angle_start.angle)
         )
 
         glLoadIdentity()  # reset previous glTranslate statements
@@ -342,7 +411,7 @@ class OpenGLRenderer(BaseRenderer):
 
         for i in range(num_segments + 1):
             angle = angle_start.angle + (i / num_segments) * angle_delta
-            pos = Vec2.from_polar(
+            pos = Vec2().from_polar(
                 angle,
                 radius
             )
@@ -445,7 +514,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
             return
 
-        angle_delta = Vec2.normalize_angle(
+        angle_delta = normalize_angle(
                 angle_end.angle - angle_start.angle
         ) / 2
 
@@ -461,11 +530,11 @@ class OpenGLRenderer(BaseRenderer):
             angle1 = angle_start.angle + (i1 / num_segments) * angle_delta
             angle2 = angle_start.angle + (i2 / num_segments) * angle_delta
 
-            pos1 = Vec2.from_polar(
+            pos1 = Vec2().from_polar(
                 angle1,
                 1
             )
-            pos2 = Vec2.from_polar(
+            pos2 = Vec2().from_polar(
                 angle2,
                 1
             )

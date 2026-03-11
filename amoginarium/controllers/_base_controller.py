@@ -177,7 +177,7 @@ class Controller:
 
     @property
     def joy_polar(self) -> Vec2:
-        return Vec2.from_cartesian(self.joy_x, self.joy_y)
+        return Vec2().from_cartesian(self.joy_x, self.joy_y)
 
     @property
     def controls(self) -> controls:

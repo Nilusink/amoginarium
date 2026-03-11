@@ -9,7 +9,7 @@ Nilusink
 """
 from __future__ import annotations
 # from OpenGL.GL import glRotated
-# from icecream import ic
+from icecream import ic
 import pygame as pg
 import typing as tp
 import math as m
@@ -25,15 +25,17 @@ _next_entity_id = 0
 
 class BaseEntity(pg.sprite.Sprite):
     _children: list[BaseEntity] = ...
+    _current_t: float = 0
 
     def __init__(self, parent: BaseEntity = ...) -> None:
         global _next_entity_id
 
         # assign unique id
         self.__id = _next_entity_id
-
         _next_entity_id += 1
+
         super().__init__()
+        self._children: list[BaseEntity] = []
         self._parent = parent
 
     @property
@@ -57,6 +59,16 @@ class BaseEntity(pg.sprite.Sprite):
     @property
     def children(self) -> list[BaseEntity]:
         return self._children
+
+    def update(self, delta: float) -> None:
+        self._current_t += delta
+
+
+class VisibleBaseEntity(BaseEntity):
+    def gl_draw(self) -> None:
+        for child in self._children:
+            if hasattr(child, "gl_draw"):
+                child.gl_draw()
 
 
 class PositionedEntity(BaseEntity):
@@ -122,8 +134,8 @@ class GameEntity(PositionedEntity):
     ) -> None:
         self._coalition = coalition
 
-        size = Vec2.from_cartesian(1, 1) if size is ... else size
-        self.facing = Vec2.from_cartesian(1, 0) if facing is ... else facing
+        size = Vec2().from_cartesian(1, 1) if size is ... else size
+        self.facing = Vec2().from_cartesian(1, 0) if facing is ... else facing
         position = Vec2() if initial_position is ... else initial_position
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
@@ -194,6 +206,12 @@ class GameEntity(PositionedEntity):
 
         self.update_rect()
 
+        super().update(delta)
+
+        # update children
+        for child in self._children:
+            child.update(delta)
+
     def kill(self, killed_by: tp.Self = ...) -> None:
         super().kill()
 
@@ -213,9 +231,9 @@ class VisibleGameEntity(GameEntity):
         )
 
     def gl_draw(self) -> None:
-        raise NotImplementedError(
-            f"gl_draw wasn't implemented for \"{self.__class__.__name__}\""
-        )
+        for child in self._children:
+            if hasattr(child, "gl_draw"):
+                child.gl_draw()
 
 
 class ImageEntity(VisibleGameEntity):
@@ -242,6 +260,7 @@ class ImageEntity(VisibleGameEntity):
             ),
             rotate_angle=self.velocity.angle * (180 / m.pi)
         )
+        super().gl_draw()
 
 
 class LRImageEntity(VisibleGameEntity):
@@ -257,3 +276,4 @@ class LRImageEntity(VisibleGameEntity):
             self.world_position - self.size / 2,
             self.size
         )
+        super().gl_draw()

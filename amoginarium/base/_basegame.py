@@ -26,12 +26,13 @@ from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
 from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
     create_moving_island
+from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
 from ..entities import Player, GrassIsland, GrayBrickIsland, Island
 from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
 from ..entities import PlatformIsland2
 from ..controllers import Controllers, Controller, GameController
-from ..debugging import run_with_debug, print_ic_style, CC
+from ..debugging import run_with_debug, print_ic_style, CC, timeit
 from ._scrolling_background import ParalaxBackground
 from ..shared import global_vars, Coalitions
 from ..logic import SimpleLock, Vec2, convert_coord
@@ -234,6 +235,7 @@ class BaseGame:
 
         Player.load_textures()
         explosion.load_textures(size=(512, 512))
+
         end = perf_counter_ns()
         load_time = (end - start) / 1e6
         ic(load_time)
@@ -262,7 +264,7 @@ class BaseGame:
         self._last_loaded = map_path
 
         pg.display.set_caption(f"amoginarium - {data["name"]}")
-        Players.spawn_point = Vec2.from_cartesian(*data["spawn_pos"])
+        Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
 
         # set background
         if 0 <= data["background"] - 1 <= len(self._backgrounds):
@@ -276,20 +278,20 @@ class BaseGame:
             self._background.load_textures()
 
         # # spwan a lot of bulllets
-        # Players.spawn_point = Vec2.from_cartesian(950, -100)
+        # Players.spawn_point = Vec2().from_cartesian(950, -100)
         # n_bullets = 150
         # x_spacing = global_vars.screen_size.x / n_bullets
 
         # for i in range(n_bullets):
         #     Bullet(
         #          self,
-        #          Vec2.from_cartesian(0 + x_spacing*i, 0),
-        #          Vec2.from_cartesian(0, 100), time_to_life=5
+        #          Vec2().from_cartesian(0 + x_spacing*i, 0),
+        #          Vec2().from_cartesian(0, 100), time_to_life=5
         #     )
         #     Bullet(
         #          self,
-        #          Vec2.from_cartesian(0 + x_spacing*i, 100),
-        #          Vec2.from_cartesian(0, 100), time_to_life=5
+        #          Vec2().from_cartesian(0 + x_spacing*i, 100),
+        #          Vec2().from_cartesian(0, 100), time_to_life=5
         #     )
         # return
 
@@ -305,13 +307,13 @@ class BaseGame:
 
             elif "size" in island:
                 i = island_type(
-                    Vec2.from_cartesian(*island["pos"]),
-                    size=Vec2.from_cartesian(*island["size"]),
+                    Vec2().from_cartesian(*island["pos"]),
+                    size=Vec2().from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
                 i = island_type(
-                    Vec2.from_cartesian(*island["pos"]),
+                    Vec2().from_cartesian(*island["pos"]),
                     form=island["form"],
                 )
 
@@ -345,7 +347,7 @@ class BaseGame:
             try:
                 SPAWNABLES[entity["type"]](
                     Coalitions.red,
-                    Vec2.from_cartesian(*entity["pos"]),
+                    Vec2().from_cartesian(*entity["pos"]),
                     **args
                 )
 
@@ -833,12 +835,16 @@ class BaseGame:
         # update sounds
         sound_effects.update()
 
+        # reset and update detection Groups
+        DETECTION_GROUP_MANAGER.reset()
+
         # update entities
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
         WallBouncer.update()
 
-        Bullets.update(delta)
+        timeit(1)(Bullets.update)(delta)
+        DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
         CollisionDestroyed.update()

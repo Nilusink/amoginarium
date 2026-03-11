@@ -98,7 +98,7 @@ class Island(VisibleGameEntity):
         self.mask: pg.Mask = ...
 
         if form is not ...:
-            self._size = Vec2.from_cartesian(
+            self._size = Vec2().from_cartesian(
                 self._image_size[0] * max(len(r) for r in form),
                 self._image_size[1] * len(form)
             )
@@ -106,7 +106,7 @@ class Island(VisibleGameEntity):
         super().__init__(
             size=self._size,
             initial_position=start,
-            # initial_velocity=Vec2.from_cartesian(4, 0)
+            # initial_velocity=Vec2().from_cartesian(4, 0)
         )
 
         self.add(Walls)
@@ -130,8 +130,8 @@ class Island(VisibleGameEntity):
         x_size = random.randint(x_size_start, x_size_end)
         y_size = random.randint(y_size_start, y_size_end)
 
-        start = Vec2.from_cartesian(x, y)
-        size = Vec2.from_cartesian(x_size, y_size)
+        start = Vec2().from_cartesian(x, y)
+        size = Vec2().from_cartesian(x_size, y_size)
 
         return cls(start, size)
 
@@ -151,7 +151,7 @@ class Island(VisibleGameEntity):
         """
         generate the mask used for collision
         """
-        start = time.perf_counter_ns()
+        # start = time.perf_counter_ns()
         if self._form is ...:
             return super()._generate_collision_mask()
 
@@ -188,10 +188,10 @@ class Island(VisibleGameEntity):
                     )
 
         self.mask = entity_mask
-        end = time.perf_counter_ns()
-        calc_time = (end - start) / 1000
-        classname = self.__class__.__name__
-        ic(classname, calc_time, "µs")
+        # end = time.perf_counter_ns()
+        # calc_time = (end - start) / 1000
+        # classname = self.__class__.__name__
+        # ic(classname, calc_time, "µs")
 
     def collide(self, other) -> tuple[int, int] | None:
         """
@@ -530,7 +530,7 @@ class Island(VisibleGameEntity):
                             )
 
                 column_offset = self._image_size[0] * column
-                pos = start_pos + Vec2.from_cartesian(
+                pos = start_pos + Vec2().from_cartesian(
                     column_offset,
                     row_offset
                 )
@@ -849,7 +849,7 @@ class SingleBlockIsland(Island):
         glBindTexture(GL_TEXTURE_2D, cls._island_single_texture)
         data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
         surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
-        surface = pg.transform.flip(surface, False, False)
+        # surface = pg.transform.flip(surface, False, False)
         normal_mask = pg.mask.from_surface(surface)
 
         if cls._special_texture is None:
@@ -859,7 +859,7 @@ class SingleBlockIsland(Island):
         glBindTexture(GL_TEXTURE_2D, cls._dirt_hole_texture)
         data = glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE)
         surface = pg.image.frombuffer(data, cls._image_size, "RGBA")
-        surface = pg.transform.flip(surface, False, False)
+        # surface = pg.transform.flip(surface, False, False)
         special_mask = pg.mask.from_surface(surface)
 
         return normal_mask, special_mask

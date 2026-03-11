@@ -143,3 +143,4 @@ settings.json
 test2.py
 assets/images/tiles/
 ideas.md
+*.c

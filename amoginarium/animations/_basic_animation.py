@@ -75,7 +75,7 @@ class ImageAnimation:
         self._sizes = []
         for texture, size in textures.get_all_from_scope(self._scope):
             self._textures.append(texture)
-            self._sizes.append(Vec2.from_cartesian(*size))
+            self._sizes.append(Vec2().from_cartesian(*size))
 
     def draw(
             self,

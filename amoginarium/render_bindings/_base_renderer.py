@@ -57,6 +57,15 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    def draw_polygon(
+            self,
+            vertices: tp.Iterable[coord_t],
+            color: Color | tColor,
+            center: coord_t = None,
+            convert_global: bool = True
+    ) -> None:
+        raise NotImplementedError
+
     @staticmethod
     def check_out_of_screen(
             pos,
@@ -78,6 +87,17 @@ class BaseRenderer:
         """
         draw a circle
         """
+        raise NotImplementedError
+
+    def draw_line_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            num_segments: int,
+            color: Color | tColor,
+            thickness: float = 1,
+            convert_global: bool = True
+    ):
         raise NotImplementedError
 
     def draw_partial_circle(

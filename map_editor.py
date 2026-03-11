@@ -121,7 +121,7 @@ class MapRenderer:
         x *= 1 / self.scale
         y *= 1 / self.scale
 
-        self._map_pos += Vec2.from_cartesian(x, y)
+        self._map_pos += Vec2().from_cartesian(x, y)
 
     def scale_by(self, value: float) -> None:
         """
@@ -221,7 +221,7 @@ class MapRenderer:
             )
 
         # draw span point
-        spawn_position = Vec2.from_cartesian(*self._map_params.spawn_pos)
+        spawn_position = Vec2().from_cartesian(*self._map_params.spawn_pos)
         spawn_position -= self._map_pos
         spawn_position *= self.scale
         spawn_size = 20 * self.scale
@@ -235,11 +235,11 @@ class MapRenderer:
 
         # draw platforms
         for platform in self._map_params.platforms:
-            platform_position = Vec2.from_cartesian(*platform.pos)
+            platform_position = Vec2().from_cartesian(*platform.pos)
             platform_position -= self._map_pos
             platform_position *= self.scale
 
-            platform_size = Vec2.from_cartesian(*platform.size)
+            platform_size = Vec2().from_cartesian(*platform.size)
             platform_size *= self.scale
 
             pg.draw.rect(
@@ -417,7 +417,7 @@ def main() -> None:
         last_moving = map.mouse_moving
         map.mouse_moving = render_frame.is_active
 
-        now_pos = Vec2.from_cartesian(*root.mouse_pos)
+        now_pos = Vec2().from_cartesian(*root.mouse_pos)
         if last_moving:
             # calculate mouse position delta
             delta = now_pos - map.last_mouse_pos
@@ -430,7 +430,7 @@ def main() -> None:
         map.last_mouse_pos = now_pos
 
         # zoom
-        now_scroll = Vec2.from_cartesian(*root.mouse_scroll)
+        now_scroll = Vec2().from_cartesian(*root.mouse_scroll)
         if render_frame.is_hover:
             delta = now_scroll - map.last_mouse_scroll
 

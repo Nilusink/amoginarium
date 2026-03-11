@@ -8,11 +8,22 @@ Author:
 Nilusink
 """
 from icecream import ic
+import typing as tp
+import pygame as pg
+import numpy as np
 
-from ._vectors import Vec2
-
+from ._cutility_functions import raycast_mask
+from ..debugging import timeit
+from ._cvectors import Vec2
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
+
+
+class EntityLike(tp.Protocol):
+    position: Vec2
+    size: Vec2
+    mask: pg.Mask
+    rect: pg.Rect
 
 
 def classname(c: object) -> str:
@@ -87,10 +98,10 @@ def is_related(a: object, b: object, depth: int = 2) -> bool:
     return False
 
 
-def convert_coord[A](
+def convert_coord[A: Vec2 | tuple | float](
         coord: coord_t,
         convert_to: type[A] = tuple
-) -> A | tuple[A, A]:
+) -> A | tuple[float, float] | tuple[A, A]:
     """
     accepts both tuple and Vec2
     """
@@ -98,7 +109,7 @@ def convert_coord[A](
         if isinstance(coord, Vec2):
             return coord.copy()
 
-        return Vec2.from_cartesian(*coord)
+        return Vec2().from_cartesian(*coord)
 
     if convert_to is tuple:
         if isinstance(coord, tuple):
@@ -113,3 +124,48 @@ def convert_coord[A](
         return int(coord[0]), int(coord[1])
 
     raise ValueError("Unsupported conversion: ", convert_to)
+
+
+@timeit(1)
+def lidar_sphere(
+        position: Vec2,
+        radius: float,
+        segments: int,
+        entity_sample: tp.Iterable[EntityLike],
+        sample_rate: int = 1,
+) -> list[Vec2]:
+    """
+    cast an array of spheres around a certain point
+    and check if it hits any entity
+
+    :returns: list of vectors to hit
+    """
+    angle_step = (np.pi * 2) / segments
+
+    out = []
+    for i in range(segments):
+        curr_angle = i * angle_step
+        delta = Vec2().from_polar(curr_angle, radius)
+
+        hits = []
+        for entity in entity_sample:
+            res = raycast_mask(
+                entity,
+                position,
+                position + delta,
+                sample_rate
+            )
+
+            if res is not None:
+                if res.length > 0:
+                    hits.append(res)
+
+        if hits:
+            hits = sorted(hits, key=lambda x: x.length)
+
+            out.append(hits[0] - position)
+            continue
+
+        out.append(delta)
+
+    return out

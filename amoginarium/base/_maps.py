@@ -38,7 +38,7 @@ class Maps:
         self._last_loaded = map_path
 
         pg.display.set_caption(f"amoginarium - {data["name"]}")
-        Players.spawn_point = Vec2.from_cartesian(*data["spawn_pos"])
+        Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
 
         # set background
         if 0 <= data["background"] - 1 <= len(self._backgrounds):
@@ -52,20 +52,20 @@ class Maps:
             self._background.load_textures()
 
         # # spwan a lot of bulllets
-        # Players.spawn_point = Vec2.from_cartesian(950, -100)
+        # Players.spawn_point = Vec2().from_cartesian(950, -100)
         # n_bullets = 150
         # x_spacing = global_vars.screen_size.x / n_bullets
 
         # for i in range(n_bullets):
         #     Bullet(
         #          self,
-        #          Vec2.from_cartesian(0 + x_spacing*i, 0),
-        #          Vec2.from_cartesian(0, 100), time_to_life=5
+        #          Vec2().from_cartesian(0 + x_spacing*i, 0),
+        #          Vec2().from_cartesian(0, 100), time_to_life=5
         #     )
         #     Bullet(
         #          self,
-        #          Vec2.from_cartesian(0 + x_spacing*i, 100),
-        #          Vec2.from_cartesian(0, 100), time_to_life=5
+        #          Vec2().from_cartesian(0 + x_spacing*i, 100),
+        #          Vec2().from_cartesian(0, 100), time_to_life=5
         #     )
         # return
 
@@ -73,13 +73,13 @@ class Maps:
         for island in data["platforms"]:
             if "size" in island:
                 Island(
-                    Vec2.from_cartesian(*island["pos"]),
-                    size=Vec2.from_cartesian(*island["size"]),
+                    Vec2().from_cartesian(*island["pos"]),
+                    size=Vec2().from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
                 Island(
-                    Vec2.from_cartesian(*island["pos"]),
+                    Vec2().from_cartesian(*island["pos"]),
                     form=island["form"],
                 )
 
@@ -106,7 +106,7 @@ class Maps:
             try:
                 SPAWNABLES[entity["type"]](
                     Coalitions.red,
-                    Vec2.from_cartesian(*entity["pos"]),
+                    Vec2().from_cartesian(*entity["pos"]),
                     **args
                 )
 
