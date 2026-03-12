@@ -1,6 +1,7 @@
 class Vec2:
     x: float
     y: float
+    xy: tuple[float, float]
     angle: float
     length: float
     polar: tuple[float, float]

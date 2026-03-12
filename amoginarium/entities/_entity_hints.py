@@ -9,10 +9,10 @@ Nilusink
 """
 from __future__ import annotations
 from typing import Protocol
+import pygame as pg
 
 from ..logic import Vec2
 from ..shared import Coalitions
-from ._island import Island
 
 
 class BaseEntityLike(Protocol):
@@ -44,7 +44,7 @@ class GameEntityLike(BaseEntityLike, Protocol):
     def world_position(self) -> Vec2: ...
 
     @property
-    def is_bullet(self) -> Vec2: ...
+    def is_bullet(self) -> bool: ...
 
     @property
     def coalition(self) -> Coalitions: ...
@@ -52,6 +52,43 @@ class GameEntityLike(BaseEntityLike, Protocol):
     def on_ground(self) -> bool: ...
 
     def kill(self, killed_by: GameEntityLike) -> None: ...
+
+
+class IslandLike(GameEntityLike, Protocol):
+    @classmethod
+    def load_textures(cls) -> None: ...
+
+    @classmethod
+    def random_between(
+            cls,
+            x_start: int,
+            x_end: int,
+            y_start: int,
+            y_end: int,
+            x_size_start: int,
+            x_size_end: int,
+            y_size_start: int,
+            y_size_end: int
+    ) -> IslandLike: ...
+
+    @classmethod
+    def _get_block_mask(cls) -> pg.Mask | tuple[pg.Mask, pg.Mask]: ...
+
+    def _generate_collision_mask(self) -> None: ...
+
+    def collide(self, other) -> tuple[int, int] | None: ...
+
+    def player_contact(self, player, delta: float) -> None: ...
+
+    def get_collided_sides(
+            self,
+            top_collider: tuple[Vec2, pg.Mask],
+            right_collider: tuple[Vec2, pg.Mask],
+            bottom_collider: tuple[Vec2, pg.Mask],
+            left_collider: tuple[Vec2, pg.Mask],
+    ) -> tuple[
+        tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]
+    ]: ...
 
 
 class PlayerLike(GameEntityLike, Protocol):
@@ -73,7 +110,9 @@ class PlayerLike(GameEntityLike, Protocol):
 
     def hit(self, damage: float, hit_by: GameEntityLike) -> None: ...
 
-    def collide_wall(self, wall: Island) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]: ...
+    def heal(self, heal: float) -> bool: ...
+
+    # def collide_wall(self, wall: IslandLike) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]: ...
 
     def respawn(self, pos: Vec2 = ...) -> None: ...
 

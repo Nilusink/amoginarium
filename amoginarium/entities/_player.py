@@ -7,6 +7,7 @@ defines a player
 Author:
 Nilusink
 """
+from contextlib import suppress
 from time import perf_counter
 from icecream import ic
 import pygame as pg
@@ -17,8 +18,8 @@ from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
+from ._items import BaseItem, Shield, HealingPotion
 from ._weapons import HandThrownGrenade
-from ._items import BaseItem
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..controllers import Controller
@@ -50,7 +51,7 @@ class Player(LRImageEntity):
     _max_speed: float = 1000
     _max_hp: int = 80
     __heading = 1
-    _hp: int = 0
+    _hp: float = 0
 
     on_wall: bool = False
 
@@ -147,16 +148,44 @@ class Player(LRImageEntity):
 
         self._last_wpn_change = 0
         self._current_weapon = 0
-        self._weapons: list[tuple[BaseWeapon | BaseItem, int]] = [
-            (Ak47(self, False, parent_position_offset=(0, 0)), 1),
-            (Minigun(self, False, parent_position_offset=(0, 10)), 1),
-            (Sniper(self, False), 1),
-            (HandThrownGrenade(self, False), 1),
+        self._weapons: list[dict[str, BaseWeapon | BaseItem | int]] = [
+            {
+                "item": Ak47(self, False, parent_position_offset=(0, 0)),
+                "uses": 1
+            },
+            {
+                "item": Minigun(self, False, parent_position_offset=(0, 10)),
+                "uses": 1
+            },
+            {
+                "item": Sniper(self, False),
+                "uses": 1
+            },
+            {
+                "item": HandThrownGrenade(self, False),
+                "uses": 1
+            },
+            {
+                "item": Shield(
+                    self,
+                    lambda x: self._item_used(4, x),
+                    Vec2().from_cartesian(50, 0),
+                ),
+                "uses": 1
+            },
+            {
+                "item": HealingPotion(
+                    self,
+                    lambda x: self._item_used(5, x),
+                    Vec2().from_cartesian(10, 3),
+                ),
+                "uses": 1
+            }
         ]
 
         for i in range(len(self._weapons)):
-            if isinstance(self._weapons[i][0], BaseWeapon):
-                self._weapons[i][0].reload(True)
+            if isinstance(self._weapons[i]["item"], BaseWeapon):
+                self._weapons[i]["item"].reload(True)
 
         self._last_hit = perf_counter()
 
@@ -184,8 +213,8 @@ class Player(LRImageEntity):
 
     @property
     def item(self) -> BaseWeapon | BaseItem | None:
-        if self._weapons[self._current_weapon][1]:
-            return self._weapons[self._current_weapon][0]
+        if self._weapons[self._current_weapon]["uses"] > 0:
+            return self._weapons[self._current_weapon]["item"]
 
         else:
             return None
@@ -212,11 +241,23 @@ class Player(LRImageEntity):
         if self._current_weapon < 0:
             self._current_weapon = len(self._weapons) - 1
 
+    def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
+        """
+        remove used_amount from set item
+        """
+        ic(item_id, used_amount)
+        with suppress(KeyError, IndexError):
+            self._weapons[item_id]["uses"] -= used_amount
+            ic(self._weapons[item_id]["uses"])
+            return self._weapons[item_id]["uses"] > 0
+
+        return False
+
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
         deal damage to the player
         """
-        damage = 0
+        # damage = 0
         self._hp -= damage
 
         if damage != 0:
@@ -232,6 +273,15 @@ class Player(LRImageEntity):
         # update last hit
         self._last_hit = perf_counter()
         self._controller.feedback_heal_stop()
+
+    def heal(self, heal: float) -> bool:
+        new = self._hp + heal
+        if new > self._max_hp:
+            return False
+
+        else:
+            self._hp = new
+            return True
 
     def collide_wall(self, wall: Island):
         return wall.get_collided_sides(
@@ -261,7 +311,8 @@ class Player(LRImageEntity):
         # update reloads
         # self.weapon.update(delta)
         for i in range(len(self._weapons)):
-            self._weapons[i][0].update(delta)
+            if self._weapons[i]["uses"] > 0:
+                self._weapons[i]["item"].update(delta)
 
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
@@ -416,7 +467,12 @@ class Player(LRImageEntity):
                      (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
 
         vector = convert_coord(mouse_pos, Vec2) - self.world_position
-        self.facing.x = vector.x // abs(vector.x)
+        if vector.x == 0:
+            self.facing.x = 1
+
+        else:
+            self.facing.x = vector.x // abs(vector.x)
+
         angle = vector.angle * (180 / 3.14169265358979)
 
         if self.world_position.x < 0:
@@ -493,6 +549,9 @@ class Player(LRImageEntity):
         self._hp = self._max_hp
         if isinstance(self.item, BaseWeapon):
             self.item.reload(True)
+
+        elif self.item:
+            self.item.reset()
 
         # reset position / velocity
         self.position = self._initial_position.copy()

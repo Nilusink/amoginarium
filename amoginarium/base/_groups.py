@@ -252,8 +252,6 @@ class _WallCollider(_BaseGroup):
         return False
 
 
-
-
 class _GravityAffected(_BaseGroup):
     """
     required methods / variables:
@@ -338,7 +336,16 @@ class _HasBars(_BaseGroup):
                 )
 
                 # draw mag / reload bar
-                mag_n, mag_v = sprite.weapon.get_mag_state(1000)
+                if sprite in Players.sprites():
+                    weapon = sprite.item
+
+                else:
+                    weapon = sprite.weapon
+
+                if not weapon:
+                    continue
+
+                mag_n, mag_v = weapon.get_mag_state(1000)
                 now_len = (mag_n / 1000) * max_len
                 renderer.draw_rect(
                     bar_start + Vec2().from_cartesian(0, 1.5 * bar_height),
@@ -430,9 +437,11 @@ class _CollisionDestroyed(_BaseGroup):
                     sprite: tp.Any
                     other: tp.Any
 
+                    # pg.sprite.collide_mask()
+
                     if 1:
                         if all([
-                            pg.sprite.collide_rect(sprite, other),
+                            pg.sprite.collide_mask(sprite, other),
                             not is_related(sprite, other, 2)
                         ]):
                             try:

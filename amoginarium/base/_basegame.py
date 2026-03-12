@@ -220,6 +220,8 @@ class BaseGame:
         textures.load_images("assets/images/bricks_green")
         textures.load_images("assets/images/columns")
         textures.load_images("assets/images/platforms")
+        textures.load_images("assets/images/Shield_6")
+        textures.load_images("assets/images/potions")
         textures.load_images("assets/images/bg1.zip")
         textures.load_images("assets/images/bg2.zip")
         textures.load_images("assets/images/bg3.zip")
@@ -843,7 +845,8 @@ class BaseGame:
         FrictionXAffected.calculate_friction(delta)
         WallBouncer.update()
 
-        timeit(1)(Bullets.update)(delta)
+        # timeit(1)(Bullets.update)(delta)
+        Bullets.update(delta)
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
