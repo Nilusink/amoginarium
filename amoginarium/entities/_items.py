@@ -292,6 +292,10 @@ class HealingPotion(BaseItem):
         super().__init__(parent, used_callback, parent_position_offset)
         self._drinking = False
 
+        self._target_rotation = 0
+        self._f_velocity = 0
+        self._f_tilt = 0
+
     def use(self) -> None:
         self._drinking = True
 
@@ -310,24 +314,65 @@ class HealingPotion(BaseItem):
             if self._uses_left <= 0:
                 self.kill()
 
+        stiffness = .2
+        damping = .9
+
+        target = -self._target_rotation
+        acceleration = (target - self._f_tilt) * stiffness
+        self._f_velocity += acceleration
+        self._f_velocity *= damping
+        self._f_tilt += self._f_velocity
+
         super().update(delta)
 
     def draw_at(self, position: Vec2, angle: float) -> None:
+        self._target_rotation = angle
         angle = angle % 360
         self.position = position - self.size / 2
 
-        if 90 < angle < 270:
-            renderer.draw_textured_quad(
-                self._image_texture_l,
-                self.world_position + self._internal_offset - self._position_offset,
-                self._image_size,
-                # rotate_angle=angle - 180
-            )
+        pos = self.world_position + self._internal_offset
+        pos += self._position_offset
 
-        else:
-            renderer.draw_textured_quad(
-                self._image_texture_r,
-                self.world_position + self._internal_offset + self._position_offset,
-                self._image_size,
-                # rotate_angle=angle
-            )
+        renderer.apply_stencil(
+            renderer.draw_textured_quad,
+            self._image_texture_l,
+            self.world_position + self._internal_offset, # - self._position_offset,
+            self._image_size,
+            rotate_angle=angle
+        )
+
+        renderer.draw_polygon(
+            [
+                self.world_position + Vec2().from_cartesian(0, self.size.y),
+                self.world_position + self.size,
+                self.world_position + self.size / 2 + Vec2().from_polar(
+                    (self._target_rotation + self._f_tilt) * m.pi / 180,
+                    self.size.x / 2) + Vec2().from_cartesian(
+                    0, 5
+                ),
+                self.world_position + self.size / 2 - Vec2().from_polar(
+                    (self._target_rotation + self._f_tilt) * m.pi / 180,
+                    self.size.x / 2) + Vec2().from_cartesian(
+                    0, 5
+                ),
+            ],
+            (0, 1, 0)
+        )
+
+        renderer.disable_stencil()
+
+        # if 90 < angle < 270:
+        #     renderer.draw_textured_quad(
+        #         self._image_texture_l,
+        #         self.world_position + self._internal_offset - self._position_offset,
+        #         self._image_size,
+        #         # rotate_angle=angle - 180
+        #     )
+        #
+        # else:
+        #     renderer.draw_textured_quad(
+        #         self._image_texture_r,
+        #         self.world_position + self._internal_offset + self._position_offset,
+        #         self._image_size,
+        #         # rotate_angle=angle
+        #     )

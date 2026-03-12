@@ -57,6 +57,15 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    def apply_stencil[**A](
+            self,
+            stencil_func: tp.Callable[[A], tp.Any],
+            *args: A.args,
+            **kwargs: A.kwargs
+    ) -> None: ...
+
+    def disable_stencil(self) -> None: ...
+
     def draw_polygon(
             self,
             vertices: tp.Iterable[coord_t],
