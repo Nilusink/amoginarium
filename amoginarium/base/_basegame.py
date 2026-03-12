@@ -604,6 +604,8 @@ class BaseGame:
 
             delta *= self.time_multiplier  # slow-motion
 
+            global_vars.delta = delta
+
             # todo: reimplement
             # EventHandler.check_events()
 

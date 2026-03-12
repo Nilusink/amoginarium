@@ -24,6 +24,7 @@ from ._component import UIComponent
 from ._types import anchor_t, ui_color_t
 
 from .temp_pygame_rendering import draw_rounded_rect
+from ..shared import global_vars
 
 
 ##################################################
@@ -97,34 +98,42 @@ class Rectangle(UIComponent):
         self.__hover_border_color_animation = MultiAnimation(start=border_color, end=hover_border_color, count=3,
                                                              extend_duration=hover_border_color_duration,
                                                              reduce_duration=hover_border_color_reverse_duration)
-        self.__hover_border_width_animation = Animation(start=border_width, end=hover_border_width,
-                                                        extend_duration=hover_border_width_duration,
-                                                        reduce_duration=hover_border_width_reverse_duration)
-        self.__hover_radius_animation = Animation(start=radius, end=hover_radius,
-                                                  extend_duration=hover_radius_duration,
-                                                  reduce_duration=hover_radius_reverse_duration)
+        self.__hover_border_width_animation = Animation(start_value=border_width, end_value=hover_border_width,
+                                                        extend_duration_seconds=hover_border_width_duration,
+                                                        reduce_duration_seconds=hover_border_width_reverse_duration)
+        self.__hover_radius_animation = Animation(start_value=radius, end_value=hover_radius,
+                                                  extend_duration_seconds=hover_radius_duration,
+                                                  reduce_duration_seconds=hover_radius_reverse_duration)
         self.__hover_extend_animation = MultiAnimation(start=0, end=hover_extend, count=2,
                                                        extend_duration=hover_extend_duration,
                                                        reduce_duration=hover_collapse_duration)
 
         self.add_enter_callback(self.__on_enter)
+        self.add_buffer_callback(self.__on_buffer_zone)
         self.add_leave_callback(self.__on_leave)
 
         # self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, sound=self.__on_click_sound)
 
     def __on_enter(self) -> None:
-        self.__hover_extend_animation.start_extend()
-        self.__hover_bg_color_animation.start_extend()
-        self.__hover_border_color_animation.start_extend()
-        self.__hover_border_width_animation.start_extend()
-        self.__hover_radius_animation.start_extend()
+        self.__hover_extend_animation.extend()
+        self.__hover_bg_color_animation.extend()
+        self.__hover_border_color_animation.extend()
+        self.__hover_border_width_animation.extend()
+        self.__hover_radius_animation.extend()
 
     def __on_leave(self) -> None:
-        self.__hover_extend_animation.start_reduce()
-        self.__hover_bg_color_animation.start_reduce()
-        self.__hover_border_color_animation.start_reduce()
-        self.__hover_border_width_animation.start_reduce()
-        self.__hover_radius_animation.start_reduce()
+        self.__hover_extend_animation.contract()
+        self.__hover_bg_color_animation.contract()
+        self.__hover_border_color_animation.contract()
+        self.__hover_border_width_animation.contract()
+        self.__hover_radius_animation.contract()
+
+    def __on_buffer_zone(self) -> None:
+        self.__hover_extend_animation.stop()
+        self.__hover_bg_color_animation.stop()
+        self.__hover_border_color_animation.stop()
+        self.__hover_border_width_animation.stop()
+        self.__hover_radius_animation.stop()
 
     def _gl_draw(self) -> None:
         if self._work_with_collision_mask and not self._ui_changed:
@@ -138,19 +147,23 @@ class Rectangle(UIComponent):
 
         super()._gl_draw()
 
-        border_width: float = self.__hover_border_width_animation.update()
-        border_color: ui_color_t = self.__hover_border_color_animation.update()
-        bg_color: ui_color_t = self.__hover_bg_color_animation.update()
-        radius: float = self.__hover_radius_animation.update()
-        extend: Tuple[float, float] = self.__hover_extend_animation.update()
+        border_width: float = self.__hover_border_width_animation.update(global_vars.delta)
+        border_color: ui_color_t = self.__hover_border_color_animation.update(global_vars.delta)
+        bg_color: ui_color_t = self.__hover_bg_color_animation.update(global_vars.delta)
+        radius: float = self.__hover_radius_animation.update(global_vars.delta)
+        extend: Tuple[float, float] = self.__hover_extend_animation.update(global_vars.delta)
 
         extend_vec = convert_coord(extend, Vec2)
         double_extend_vec = extend_vec * 2
 
+        self._top_left -= extend_vec
+        self._bottom_right += double_extend_vec
+        self._abs_size += double_extend_vec
+
         if radius > 0:
             if border_width > 0:
                 renderer.draw_rounded_rect(
-                    self._top_left - extend_vec,
+                    self._top_left,
                     self._abs_size + double_extend_vec,
                     border_color,
                     radius
@@ -158,14 +171,13 @@ class Rectangle(UIComponent):
 
             inner_radius = radius - border_width
             renderer.draw_rounded_rect(
-                self._top_left + border_width - extend_vec,
+                self._top_left + border_width,
                 self._abs_size - 2 * border_width + double_extend_vec,
                 bg_color,
                 inner_radius if inner_radius > 0 else 0
             )
 
             if self._ui_changed:
-                print("REDRAW mask")
                 draw_rounded_rect(
                     self._collision_surface,
                     (0, 0),
@@ -177,13 +189,13 @@ class Rectangle(UIComponent):
         else:
             if border_width > 0:
                 renderer.draw_rect(
-                    self._top_left - extend_vec,
+                    self._top_left,
                     self._abs_size + double_extend_vec,
                     border_color,
                 )
 
             renderer.draw_rect(
-                self._top_left + border_width - extend_vec,
+                self._top_left + border_width,
                 self._abs_size - 2 * border_width - double_extend_vec,
                 bg_color,
             )

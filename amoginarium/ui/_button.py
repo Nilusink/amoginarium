@@ -35,7 +35,7 @@ class _OnButtonLeaveSound(PresetEffect):
     _sound_name = "button_leave"
 
 
-TEST_DURATION = .15
+TEST_DURATION = 3
 
 
 class Button(Rectangle):
@@ -81,12 +81,12 @@ class Button(Rectangle):
             hover_border_width_duration: float = TEST_DURATION,
             hover_border_width_reverse_duration: float = TEST_DURATION,
 
-            radius: float = 20,
-            hover_radius: float = 70,
+            radius: float = 60,
+            hover_radius: float = 5,
             hover_radius_duration: float = TEST_DURATION,
             hover_radius_reverse_duration: float = TEST_DURATION,
 
-            hover_extend: coord_t | float | int = (10, 5),
+            hover_extend: coord_t | float | int = (50, 50),
             hover_extend_duration: coord_t | float | int = TEST_DURATION,
             hover_collapse_duration: coord_t | float | int = TEST_DURATION,
 

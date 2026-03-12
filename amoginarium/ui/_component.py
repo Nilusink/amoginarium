@@ -49,6 +49,7 @@ class UIComponent(UIEntity):
 
     __collision_surface: pg.Surface | None = None
     __collision_mask: pg.Mask | None
+    __collision_buffer: int
     __work_with_collision_mask: bool
 
     __collision_recreation: bool
@@ -57,10 +58,14 @@ class UIComponent(UIEntity):
     __last_absolute_position: Vec2 | None
     __last_absolute_size: Vec2 | None
 
-    __last_hover: bool | None
     __is_hovered: bool | None
+    __is_hovered_last: bool | None
+
+    __is_hovered_buffer: bool | None
+    __is_hovered_buffer_last: bool | None
 
     __on_enter_callbacks: list[tp.Callable[[], None]] | None
+    __on_buffer_callback: list[tp.Callable[[], None]] | None
     __on_leave_callbacks: list[tp.Callable[[], None]] | None
 
     def __init__(
@@ -70,6 +75,7 @@ class UIComponent(UIEntity):
             *_args: tp.Any,
             parent: UIEntity | None = None,
             placement_anchor: anchor_t = "center",
+            collision_buffer: int = 20,
             _work_with_collision_mask: bool = True
     ) -> None:
         super().__init__(parent=parent)
@@ -77,18 +83,21 @@ class UIComponent(UIEntity):
         self.__relative_position = convert_coord(relative_position, Vec2)
         self.__relative_size = convert_coord(relative_size, Vec2)
         self.__placement_anchor = placement_anchor
+        self.__collision_buffer = collision_buffer
         self.__work_with_collision_mask = _work_with_collision_mask
 
         self.__absolute_size_updated = False
         self.__absolute_position_updated = False
 
         self.__on_enter_callbacks = None
+        self.__on_buffer_callback = None
         self.__on_leave_callbacks = None
 
         self.__absolute_position = Vec2()
         self.__absolute_size = Vec2()
 
         self.__is_hovered = None
+        self.__is_hovered_buffer = None
         self.__ui_changed = True
         self.__collision_recreation = True
         self.__last_absolute_size = None
@@ -146,6 +155,11 @@ class UIComponent(UIEntity):
             self.__on_enter_callbacks = []
         self.__on_enter_callbacks.append(callback)
 
+    def add_buffer_callback(self, callback: tp.Callable[[], None]) -> None:
+        if self.__on_buffer_callback is None:
+            self.__on_buffer_callback = []
+        self.__on_buffer_callback.append(callback)
+
     def add_leave_callback(self, callback: tp.Callable[[], None]) -> None:
         if self.__on_leave_callbacks is None:
             self.__on_leave_callbacks = []
@@ -163,38 +177,80 @@ class UIComponent(UIEntity):
 
         return self.__is_hovered
 
-    def __is_hovered_by(self, coords: Vec2) -> bool:
+    @property
+    def is_hovered_in_buffer(self) -> bool:
+        if self.__is_hovered_buffer is None:
+            self.__is_hovered_buffer = False
+            cursor: UIComponent
+            for cursor in Cursor.sprites():
+                if self.__is_hovered_by(cursor._abs_position, buffer=self.__collision_buffer):
+                    self.__is_hovered_buffer = True
+                    break
+
+        return self.__is_hovered_buffer
+
+    def __is_hovered_by(self, coords: Vec2, buffer: int = 0) -> bool:
         if all([
-            self.__top_left.x <= coords.x <= self.__bottom_right.x,
-            self.__top_left.y <= coords.y <= self.__bottom_right.y
+            (self.__top_left.x + buffer) <= coords.x <= (self.__bottom_right.x - buffer),
+            (self.__top_left.y + buffer) <= coords.y <= (self.__bottom_right.y - buffer)
         ]):
             if not self.__work_with_collision_mask:
                 return True
+
+            coords = (coords - self.__top_left)
+
+            # todo: cleanup after fix
+            mod_x = -buffer
+            mod_y = -buffer
+            if coords.x < self.center.x:
+                mod_x = buffer
+            if coords.y < self.center.y:
+                mod_y = buffer
+
+            cx = coords.x
+            cy = coords.y
+
+            coords_new = convert_coord((cx + mod_x, cy), Vec2)
+
             try:
-                if self._collision_mask.get_at((coords - self.__top_left).xy):
+                if self._collision_mask.get_at(coords_new.xy):
                     return True
             except IndexError:
                 ...
-            print("IN BOUNDS, BUT NOT IN MASK GRRRRRR")
 
         return False
 
     def _after_draw_update(self) -> None:
-        if self.__on_enter_callbacks or self.__on_leave_callbacks:
+        if self.__on_enter_callbacks or self.__on_leave_callbacks or self.__on_buffer_callback:
             # print(self.is_hovered, self.__last_hover)
+            a = self.is_hovered
+            b = self.is_hovered_in_buffer
+
             if self.is_hovered is None:  # DO NOT CHANGE - this triggers an update
+                if self.is_hovered_in_buffer is None:
+                    return
                 return
 
-            if self.__last_hover is None:
+            if self.__is_hovered_last is None:
                 return
 
-            if self.__last_hover != self.is_hovered:
-                if self.is_hovered:
-                    for callback in self.__on_enter_callbacks:
-                        callback()
-                else:
-                    for callback in self.__on_leave_callbacks:
-                        callback()
+            if self.__is_hovered_buffer_last is None:
+                return
+
+            if (not self.__is_hovered_last and self.is_hovered) or (
+                    self.is_hovered and self.__is_hovered_last and
+                    self.is_hovered_in_buffer and not self.__is_hovered_buffer_last):
+                for callback in self.__on_enter_callbacks:
+                    callback()
+            elif self.__is_hovered_last and not self.is_hovered:
+                for callback in self.__on_leave_callbacks:
+                    callback()
+
+            # print(self.__is_hovered_buffer_last, self.is_hovered_in_buffer)
+            elif (self.__is_hovered_buffer_last and not self.is_hovered_in_buffer
+                  and self.is_hovered and self.__is_hovered_last):
+                for callback in self.__on_buffer_callback:
+                    callback()
 
     def _gl_draw(self) -> None:
         """
@@ -205,8 +261,10 @@ class UIComponent(UIEntity):
         - Call super()._gl_draw()
         - Draw the UI and collision surface
         """
-        self.__last_hover = self.__is_hovered
+        self.__is_hovered_last = self.__is_hovered
+        self.__is_hovered_buffer_last = self.__is_hovered_buffer
         self.__is_hovered = None
+        self.__is_hovered_buffer = None
 
         # Save old values
         if self.__work_with_collision_mask:
@@ -266,7 +324,7 @@ class UIComponent(UIEntity):
     @_abs_position.setter
     def _abs_position(self, value: Vec2) -> None:
         """:return: Absolute position - anchor not factored in"""
-        self.__absolute_position = value
+        self.__absolute_position = convert_coord(value, Vec2)
         self.__absolute_position_updated = True
 
     @property
@@ -309,6 +367,10 @@ class UIComponent(UIEntity):
         """:return: Absolute top left"""
         return self.__top_left
 
+    @_top_left.setter
+    def _top_left(self, value: Vec2) -> None:
+        self.__top_left = value
+
     @property
     def _top_right(self) -> Vec2:
         """:return: Absolute top right"""
@@ -323,6 +385,10 @@ class UIComponent(UIEntity):
     def _bottom_right(self) -> Vec2:
         """:return: Absolute bottom right"""
         return self.__bottom_right
+
+    @_bottom_right.setter
+    def _bottom_right(self, value: Vec2) -> None:
+        self.__bottom_right = value
 
     @property
     def center(self) -> Vec2:
