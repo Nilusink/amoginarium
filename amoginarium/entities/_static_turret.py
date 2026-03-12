@@ -12,8 +12,6 @@ from time import perf_counter
 from icecream import ic
 import typing as tp
 
-from unicodedata import normalize
-
 from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
     GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM

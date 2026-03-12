@@ -261,7 +261,7 @@ class Bullet(ImageEntity):
 
 class MortarShell(Bullet):
     _bullet_image: str = ("mortar_shell", "")
-    _hp = 2
+    _hp = .5
 
     def __init__(
         self,

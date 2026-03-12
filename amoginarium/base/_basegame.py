@@ -229,9 +229,9 @@ class BaseGame:
         for island in ISLANDS.values():
             island.load_textures()
 
-        for spwanable in SPAWNABLES.values():
-            if hasattr(spwanable, "load_textures"):
-                spwanable.load_textures()
+        for entity in Updated.sprites():
+            if hasattr(entity, "load_textures"):
+                entity.load_textures()
 
         Player.load_textures()
         explosion.load_textures(size=(512, 512))

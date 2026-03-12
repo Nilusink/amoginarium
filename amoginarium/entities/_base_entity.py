@@ -18,16 +18,17 @@ import math as m
 from ..render_bindings import renderer
 from ..logic import Vec2, rk4_update
 from ..base import Updated, Drawn
+from ._entity_hints import BaseEntityLike
 
 
 _next_entity_id = 0
 
 
 class BaseEntity(pg.sprite.Sprite):
-    _children: list[BaseEntity] = ...
+    _children: list[BaseEntityLike] = ...
     _current_t: float = 0
 
-    def __init__(self, parent: BaseEntity = ...) -> None:
+    def __init__(self, parent: BaseEntityLike = ...) -> None:
         global _next_entity_id
 
         # assign unique id
@@ -46,7 +47,7 @@ class BaseEntity(pg.sprite.Sprite):
         return self.__id
 
     @property
-    def parent(self) -> BaseEntity:
+    def parent(self) -> BaseEntityLike:
         return self._parent
 
     @property
@@ -57,7 +58,7 @@ class BaseEntity(pg.sprite.Sprite):
         return self._parent.root
 
     @property
-    def children(self) -> list[BaseEntity]:
+    def children(self) -> list[BaseEntityLike]:
         return self._children
 
     def update(self, delta: float) -> None:
@@ -79,7 +80,7 @@ class PositionedEntity(BaseEntity):
             self,
             position: Vec2,
             size: Vec2,
-            parent: BaseEntity = ...
+            parent: BaseEntityLike = ...
     ) -> None:
         super().__init__(parent)
 
