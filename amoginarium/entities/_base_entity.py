@@ -9,16 +9,15 @@ Nilusink
 """
 from __future__ import annotations
 # from OpenGL.GL import glRotated
-from icecream import ic
 import pygame as pg
 import typing as tp
 import math as m
 
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
-from ..logic import Vec2, rk4_update
+from ..logic import Vec2
 from ..base import Updated, Drawn
-from ._entity_hints import BaseEntityLike
+from amoginarium.shared._entity_hints import BaseEntityLike
 
 
 _next_entity_id = 0

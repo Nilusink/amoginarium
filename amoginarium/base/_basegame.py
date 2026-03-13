@@ -40,7 +40,7 @@ from ..audio import sounds, sound_effects
 from ..render_bindings import renderer
 from ..audio import BackgroundPlayer
 from ..communications import TCPServer
-from ..animations import explosion
+from ..entities import explosion
 from ._textures import textures
 from ..settings import Settings
 from ..ui import UIElement, EventHandler
@@ -220,7 +220,7 @@ class BaseGame:
         textures.load_images("assets/images/bricks_green")
         textures.load_images("assets/images/columns")
         textures.load_images("assets/images/platforms")
-        # textures.load_images("assets/images/Shield_6")
+        textures.load_images("assets/images/missiles")
         textures.load_images("assets/images/potions")
         textures.load_images("assets/images/bg1.zip")
         textures.load_images("assets/images/bg2.zip")

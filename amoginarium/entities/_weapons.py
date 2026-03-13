@@ -25,7 +25,7 @@ from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
 from ..shared import global_vars
 from ..base._textures import textures
-from ..animations import explosion
+from ._animation import explosion
 from ..base import WallCollider
 
 

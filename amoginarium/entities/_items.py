@@ -14,13 +14,13 @@ import typing as tp
 import pygame as pg
 import math as m
 
-from ..debugging import run_with_debug
 from ..render_bindings import renderer
 from ..logic import coord_t, convert_coord, Vec2
 from ..base._textures import textures
 from ..base import CollisionDestroyed, Updated
 from ._base_entity import PositionedEntity
-from ._entity_hints import PlayerLike, BaseEntityLike
+from ..shared._entity_hints import PlayerLike, BaseEntityLike
+from ._animation import Animation
 
 
 class BaseItem(PositionedEntity):
@@ -74,7 +74,6 @@ class BaseItem(PositionedEntity):
             (square_size - self._image_size[0]) / 2,
             (square_size - self._image_size[1]) / 2
         )
-        ic(self._image_size, self._internal_offset.xy)
 
         super().__init__(
             parent.position + self._position_offset,
@@ -297,7 +296,6 @@ class HealingPotion(BaseItem):
 
         super().load_textures()
 
-
     def __init__(
             self,
             parent: PlayerLike,
@@ -413,3 +411,91 @@ class HealingPotion(BaseItem):
                 self._image_size,
                 rotate_angle=angle
             )
+
+
+class JetBag(BaseItem):
+    _image_name: tuple[str, str] | str = ("missiles", "Missile02F")
+    _image_size: tuple[int, int] = (32, 64)
+    _animation_scope: str = "explosion"
+    _animation_size: tuple[int, int] = (32, 32)
+    _animation_textures: list[int] = ...
+    _max_uses: int = 200
+    _recoil_factor = 2
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._animation_textures is not ...:
+            return
+
+        cls._animation_textures = [
+            t[0] for t in \
+            textures.get_all_from_scope(
+                cls._animation_scope,
+                cls._animation_size
+            )
+        ]
+
+        super().load_textures()
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self._in_use = False
+        self._facing = True
+
+        self._animation = Animation(
+            self._animation_textures,
+            self._animation_size,
+            .02,
+            position_reference=self._flame_position,
+        )
+
+    def _flame_position(self) -> Vec2:
+        return self.position + Vec2().from_cartesian(
+            self.size.x / 2 + self._position_offset.x * (1 if self._facing else -1),
+            self.size.y + self._position_offset.y - 10
+        )
+
+    def use(self) -> None:
+        self._in_use = True
+
+    def stop_use(self) -> None:
+        self._in_use = False
+
+    def update(self, delta: float) -> None:
+        if self._in_use:
+            if hasattr(self.parent, "_movement_acceleration"):
+                recoil = Vec2().from_cartesian(
+                    0,
+                    self.parent._movement_acceleration
+                )
+                recoil *= self._recoil_factor
+                self.parent.acceleration -= recoil
+                ic(1)
+
+    def draw_at(self, position: Vec2, angle: float) -> None:
+        angle = angle % 360
+        self.position = position - self.size / 2
+
+        if 90 < angle < 270:
+            pos = self.world_position + self._internal_offset
+            pos -= self._position_offset
+            renderer.draw_textured_quad(
+                self._image_texture_l,
+                pos,
+                self._image_size,
+            )
+            self._facing = False
+
+        else:
+            pos = self.world_position + self._internal_offset
+            pos += self._position_offset
+            renderer.draw_textured_quad(
+                self._image_texture_r,
+                pos,
+                self._image_size,
+            )
+            self._facing = True
+
+        if self._in_use:
+            self._animation.play()

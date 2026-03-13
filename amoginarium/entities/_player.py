@@ -18,7 +18,7 @@ from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
-from ._items import BaseItem, Shield, HealingPotion
+from ._items import BaseItem, Shield, HealingPotion, JetBag
 from ._weapons import HandThrownGrenade
 from ..render_bindings import renderer
 from ..base._textures import textures
@@ -178,6 +178,14 @@ class Player(LRImageEntity):
                     self,
                     lambda x: self._item_used(5, x),
                     Vec2().from_cartesian(0, 5),
+                ),
+                "uses": 1
+            },
+            {
+                "item": JetBag(
+                    self,
+                    lambda x: self._item_used(6, x),
+                    Vec2().from_cartesian(-24, 0),
                 ),
                 "uses": 1
             }

@@ -11,8 +11,12 @@ from __future__ import annotations
 from typing import Protocol
 import pygame as pg
 
-from ..logic import Vec2
-from ..shared import Coalitions
+from amoginarium.logic import Vec2
+from amoginarium.shared import Coalitions
+
+
+class HasPosition(Protocol):
+    position: Vec2
 
 
 class BaseEntityLike(Protocol):
