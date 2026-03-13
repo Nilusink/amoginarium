@@ -96,7 +96,7 @@
     "entities": [
         {
             "type": "turret.static.ak47",
-            "pos": [1700, 805]
+            "pos": [2700, 805]
         },
         {
             "type": "instructions.text",

@@ -20,8 +20,8 @@ from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
 from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import glGetIntegerv, GL_STENCIL_BITS, GL_ALPHA_TEST
-from OpenGL.GL import glAlphaFunc, GL_GREATER
+from OpenGL.GL import glGetIntegerv, GL_STENCIL_BITS, GL_ALPHA_TEST, GL_FALSE
+from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
@@ -281,6 +281,7 @@ class OpenGLRenderer(BaseRenderer):
     def apply_stencil[**A](
             self,
             stencil_func: tp.Callable[[A], tp.Any],
+            show_stencil=False,
             *args: A.args,
             **kwargs: A.kwargs
     ) -> None:
@@ -297,10 +298,13 @@ class OpenGLRenderer(BaseRenderer):
         glEnable(GL_ALPHA_TEST)
         glAlphaFunc(GL_GREATER, 0.01)
 
-        # glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)  # if mask invis
+        if not show_stencil:
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)  # if mask invis
+
         stencil_func(*args, **kwargs)
 
-        # glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
+        if not show_stencil:
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
 
         glStencilMask(0x00)
         glStencilFunc(GL_EQUAL, 1, 0xFF)

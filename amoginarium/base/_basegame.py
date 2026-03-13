@@ -220,7 +220,7 @@ class BaseGame:
         textures.load_images("assets/images/bricks_green")
         textures.load_images("assets/images/columns")
         textures.load_images("assets/images/platforms")
-        textures.load_images("assets/images/Shield_6")
+        # textures.load_images("assets/images/Shield_6")
         textures.load_images("assets/images/potions")
         textures.load_images("assets/images/bg1.zip")
         textures.load_images("assets/images/bg2.zip")

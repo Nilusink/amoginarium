@@ -177,7 +177,7 @@ class Player(LRImageEntity):
                 "item": HealingPotion(
                     self,
                     lambda x: self._item_used(5, x),
-                    Vec2().from_cartesian(10, 3),
+                    Vec2().from_cartesian(0, 5),
                 ),
                 "uses": 1
             }
