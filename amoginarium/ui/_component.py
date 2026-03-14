@@ -27,8 +27,10 @@ class UIComponent(UIEntity):
     __relative_size: Vec2
     __placement_anchor: anchor_t
 
+    __absolute_position_original: Vec2
     __absolute_position: Vec2
     __absolute_position_updated: bool
+    __absolute_size_original: Vec2
     __absolute_size: Vec2
     __absolute_size_updated: bool
     __width: float
@@ -75,7 +77,7 @@ class UIComponent(UIEntity):
             *_args: tp.Any,
             parent: UIEntity | None = None,
             placement_anchor: anchor_t = "center",
-            collision_buffer: int = 20,
+            collision_buffer: int = 1,
             _work_with_collision_mask: bool = True
     ) -> None:
         super().__init__(parent=parent)
@@ -169,9 +171,10 @@ class UIComponent(UIEntity):
     def is_hovered(self) -> bool:
         if self.__is_hovered is None:
             self.__is_hovered = False
+            col_buf = -self.__collision_buffer if self.__is_hovered_last else 0
             cursor: UIComponent
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._abs_position):
+                if self.__is_hovered_by(cursor._abs_position_original, buffer=col_buf):
                     self.__is_hovered = True
                     break
 
@@ -183,7 +186,7 @@ class UIComponent(UIEntity):
             self.__is_hovered_buffer = False
             cursor: UIComponent
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._abs_position, buffer=self.__collision_buffer):
+                if self.__is_hovered_by(cursor._abs_position_original, buffer=self.__collision_buffer):
                     self.__is_hovered_buffer = True
                     break
 
@@ -197,20 +200,12 @@ class UIComponent(UIEntity):
             if not self.__work_with_collision_mask:
                 return True
 
-            coords = (coords - self.__top_left)
+            rel_coords = (coords - self.__top_left)
 
-            # todo: cleanup after fix
-            mod_x = -buffer
-            mod_y = -buffer
-            if coords.x < self.center.x:
-                mod_x = buffer
-            if coords.y < self.center.y:
-                mod_y = buffer
+            rel_coords.x += -buffer if coords.x < self.center.x else buffer
+            rel_coords.y += -buffer if coords.y < self.center.y else buffer
 
-            cx = coords.x
-            cy = coords.y
-
-            coords_new = convert_coord((cx + mod_x, cy), Vec2)
+            coords_new = convert_coord(rel_coords.xy, Vec2)
 
             try:
                 if self._collision_mask.get_at(coords_new.xy):
@@ -237,9 +232,7 @@ class UIComponent(UIEntity):
             if self.__is_hovered_buffer_last is None:
                 return
 
-            if (not self.__is_hovered_last and self.is_hovered) or (
-                    self.is_hovered and self.__is_hovered_last and
-                    self.is_hovered_in_buffer and not self.__is_hovered_buffer_last):
+            if self.is_hovered_in_buffer and not self.__is_hovered_buffer_last:
                 for callback in self.__on_enter_callbacks:
                     callback()
             elif self.__is_hovered_last and not self.is_hovered:
@@ -252,7 +245,7 @@ class UIComponent(UIEntity):
                 for callback in self.__on_buffer_callback:
                     callback()
 
-    def _gl_draw(self) -> None:
+    def _gl_draw(self, mod_pos: Vec2 | None = None, mod_size: Vec2 | None = None) -> None:
         """
         Draw function called in loop
 
@@ -275,12 +268,16 @@ class UIComponent(UIEntity):
         if self.__absolute_position_updated:
             self.__absolute_position_updated = False
         else:
-            self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
+            self.__absolute_position_original = self.__relative_to_absolute(self.__relative_position)
 
         if self.__absolute_size_updated:
             self.__absolute_size_updated = False
         else:
-            self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
+            self.__absolute_size_original = self.__relative_to_absolute(self.__relative_size)
+
+        self.__absolute_size = (self.__absolute_size_original + mod_size) if mod_size else self.__absolute_size_original
+        self.__absolute_position = (
+                self.__absolute_position_original + mod_pos) if mod_pos else self.__absolute_position_original
 
         # Check if values changed
         if self.__work_with_collision_mask and not self._ui_changed:
@@ -321,10 +318,15 @@ class UIComponent(UIEntity):
         """:return: Absolute position - anchor not factored in"""
         return self.__absolute_position
 
-    @_abs_position.setter
-    def _abs_position(self, value: Vec2) -> None:
+    @property
+    def _abs_position_original(self) -> Vec2:
         """:return: Absolute position - anchor not factored in"""
-        self.__absolute_position = convert_coord(value, Vec2)
+        return self.__absolute_position_original
+
+    @_abs_position_original.setter
+    def _abs_position_original(self, value: Vec2) -> None:
+        """:return: Absolute position - anchor not factored in"""
+        self.__absolute_position_original = convert_coord(value, Vec2)
         self.__absolute_position_updated = True
 
     @property
@@ -332,9 +334,14 @@ class UIComponent(UIEntity):
         """:return: Absolute size"""
         return self.__absolute_size
 
-    @_abs_size.setter
-    def _abs_size(self, value: Vec2) -> None:
-        self.__absolute_size = value
+    @property
+    def _abs_size_original(self) -> Vec2:
+        """:return: Absolute size"""
+        return self.__absolute_size_original
+
+    @_abs_size_original.setter
+    def _abs_size_original(self, value: Vec2) -> None:
+        self.__absolute_size_original = value
         self.__absolute_size_updated = True
 
     @property

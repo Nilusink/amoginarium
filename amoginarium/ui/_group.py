@@ -17,4 +17,3 @@ class UIGroup(_BaseGroup):
     @run_with_debug()
     def __init__(self) -> None:
         super().__init__()
-        print("NEW GROUP")

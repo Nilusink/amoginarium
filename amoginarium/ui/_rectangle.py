@@ -92,21 +92,23 @@ class Rectangle(UIComponent):
         self.__on_leave_sound = on_leave_sound
         self.__on_click_sound = on_click_sound
 
-        self.__hover_bg_color_animation = MultiAnimation(start=bg_color, end=hover_bg_color, count=3,
-                                                         extend_duration=hover_bg_color_duration,
-                                                         reduce_duration=hover_bg_color_reverse_duration)
-        self.__hover_border_color_animation = MultiAnimation(start=border_color, end=hover_border_color, count=3,
-                                                             extend_duration=hover_border_color_duration,
-                                                             reduce_duration=hover_border_color_reverse_duration)
+        self.__hover_bg_color_animation: MultiAnimation[tuple[int, int, int]] = (
+            MultiAnimation(start_values=bg_color, end_values=hover_bg_color, count=3,
+                           extend_durations_in_seconds=hover_bg_color_duration,
+                           collapse_duration_in_seconds=hover_bg_color_reverse_duration))
+        self.__hover_border_color_animation = MultiAnimation(start_values=border_color, end_values=hover_border_color,
+                                                             count=3,
+                                                             extend_durations_in_seconds=hover_border_color_duration,
+                                                             collapse_duration_in_seconds=hover_border_color_reverse_duration)
         self.__hover_border_width_animation = Animation(start_value=border_width, end_value=hover_border_width,
                                                         extend_duration_seconds=hover_border_width_duration,
-                                                        reduce_duration_seconds=hover_border_width_reverse_duration)
+                                                        collapse_duration_seconds=hover_border_width_reverse_duration)
         self.__hover_radius_animation = Animation(start_value=radius, end_value=hover_radius,
                                                   extend_duration_seconds=hover_radius_duration,
-                                                  reduce_duration_seconds=hover_radius_reverse_duration)
-        self.__hover_extend_animation = MultiAnimation(start=0, end=hover_extend, count=2,
-                                                       extend_duration=hover_extend_duration,
-                                                       reduce_duration=hover_collapse_duration)
+                                                  collapse_duration_seconds=hover_radius_reverse_duration)
+        self.__hover_extend_animation = MultiAnimation(start_values=0, end_values=hover_extend, count=2,
+                                                       extend_durations_in_seconds=hover_extend_duration,
+                                                       collapse_duration_in_seconds=hover_collapse_duration)
 
         self.add_enter_callback(self.__on_enter)
         self.add_buffer_callback(self.__on_buffer_zone)
@@ -125,8 +127,8 @@ class Rectangle(UIComponent):
         self.__hover_extend_animation.contract()
         self.__hover_bg_color_animation.contract()
         self.__hover_border_color_animation.contract()
-        self.__hover_border_width_animation.contract()
-        self.__hover_radius_animation.contract()
+        self.__hover_border_width_animation.collapse()
+        self.__hover_radius_animation.collapse()
 
     def __on_buffer_zone(self) -> None:
         self.__hover_extend_animation.stop()
@@ -145,8 +147,6 @@ class Rectangle(UIComponent):
                 self.__hover_extend_animation.is_changing(),
             ])
 
-        super()._gl_draw()
-
         border_width: float = self.__hover_border_width_animation.update(global_vars.delta)
         border_color: ui_color_t = self.__hover_border_color_animation.update(global_vars.delta)
         bg_color: ui_color_t = self.__hover_bg_color_animation.update(global_vars.delta)
@@ -156,15 +156,13 @@ class Rectangle(UIComponent):
         extend_vec = convert_coord(extend, Vec2)
         double_extend_vec = extend_vec * 2
 
-        self._top_left -= extend_vec
-        self._bottom_right += double_extend_vec
-        self._abs_size += double_extend_vec
+        super()._gl_draw(mod_size=double_extend_vec)
 
         if radius > 0:
             if border_width > 0:
                 renderer.draw_rounded_rect(
                     self._top_left,
-                    self._abs_size + double_extend_vec,
+                    self._abs_size_original + double_extend_vec,
                     border_color,
                     radius
                 )
@@ -172,7 +170,7 @@ class Rectangle(UIComponent):
             inner_radius = radius - border_width
             renderer.draw_rounded_rect(
                 self._top_left + border_width,
-                self._abs_size - 2 * border_width + double_extend_vec,
+                self._abs_size_original - 2 * border_width + double_extend_vec,
                 bg_color,
                 inner_radius if inner_radius > 0 else 0
             )
@@ -181,7 +179,7 @@ class Rectangle(UIComponent):
                 draw_rounded_rect(
                     self._collision_surface,
                     (0, 0),
-                    self._abs_size + double_extend_vec,
+                    self._abs_size_original + double_extend_vec,
                     border_color,
                     radius
                 )
@@ -190,12 +188,12 @@ class Rectangle(UIComponent):
             if border_width > 0:
                 renderer.draw_rect(
                     self._top_left,
-                    self._abs_size + double_extend_vec,
+                    self._abs_size_original + double_extend_vec,
                     border_color,
                 )
 
             renderer.draw_rect(
                 self._top_left + border_width,
-                self._abs_size - 2 * border_width - double_extend_vec,
+                self._abs_size_original - 2 * border_width - double_extend_vec,
                 bg_color,
             )
