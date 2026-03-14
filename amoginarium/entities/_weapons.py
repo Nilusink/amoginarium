@@ -470,16 +470,18 @@ class BaseWeapon:
         self._bullet_type = bullet_type
         self._bullet_visibility_offset = bullet_visibility_offset
         # self.__sound_effect: ContinuousSoundEffect = ...
-        self._texture_id_r, _ = textures.get_texture(
-            self._image_name,
-            self._image_size,
-            "" if self._image_mirror else "x"
-        )
-        self._texture_id_l, _ = textures.get_texture(
-            self._image_name,
-            self._image_size,
-            "x" if self._image_mirror else ""
-        )
+        if self._image_name is not ...:
+            self._texture_id_r, _ = textures.get_texture(
+                self._image_name,
+                self._image_size,
+                "" if self._image_mirror else "x"
+            )
+            self._texture_id_l, _ = textures.get_texture(
+                self._image_name,
+                self._image_size,
+                "x" if self._image_mirror else ""
+            )
+
         self._size = Vec2().from_cartesian(*self._image_size)
         if self._image_rotate_anchor is ...:
             self._image_rotate_anchor = self._size / 2
@@ -511,6 +513,14 @@ class BaseWeapon:
     @property
     def barrel_length(self) -> float:
         return self._barrel_length
+
+    @property
+    def texture_id_l(self) -> int:
+        return self._texture_id_l
+
+    @property
+    def texture_id_r(self) -> int:
+        return self._texture_id_r
 
     def get_mag_state(
         self,
@@ -702,7 +712,7 @@ class BaseWeapon:
                 self._image_rotate_anchor.y
             )
             renderer.draw_textured_quad(
-                self._texture_id_l,
+                self.texture_id_l,
                 (position - Updated.world_position - anchor).xy,
                 self._size.xy,
                 rotate_angle=angle-180 + self._image_rotation_offset,
@@ -711,7 +721,7 @@ class BaseWeapon:
 
         else:
             renderer.draw_textured_quad(
-                self._texture_id_r,
+                self.texture_id_r,
                 (position - Updated.world_position - self._image_rotate_anchor).xy,
                 self._size.xy,
                 rotate_angle=angle + self._image_rotation_offset,

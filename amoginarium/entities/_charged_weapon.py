@@ -10,6 +10,7 @@ Nilusink
 from icecream import ic
 import typing as tp
 
+from ..base._textures import textures
 from ..audio import ContinuousSoundEffect, PresetEffect
 from ._weapons import BaseWeapon, Bullet
 from ..logic import Vec2, coord_t
@@ -191,11 +192,12 @@ class Bow(ChargedWeapon):
             bullet_visibility_offset=.058,
         )
 
+
 class RailGun(ChargedWeapon):
-    _image_name = "Missile02B"
-    _image_size = (64, 128)
-    _image_rotate_anchor = Vec2().from_cartesian(32, 64)
-    _image_rotation_offset = 90
+    _image_name = ...
+    _image_scope = "railgun"
+    _image_size = (128, 64)
+    _image_rotate_anchor = Vec2().from_cartesian(24, 32)
 
     def __init__(
             self,
@@ -221,6 +223,24 @@ class RailGun(ChargedWeapon):
             bullet_explosion_radius=(5, 512)
         )
 
+        self._images = [t[0] for t in textures.get_all_from_scope(
+            self._image_scope,
+            self._image_size,
+            mirror="x"
+        )]
+        self._images_m = [t[0] for t in textures.get_all_from_scope(
+            self._image_scope,
+            self._image_size,
+        )]
+
     @staticmethod
     def _recoil_curve(value: float) -> float:
         return value**2
+
+    @property
+    def texture_id_r(self) -> int:
+        return self._images[round(self.charged * (len(self._images)-1))]
+
+    @property
+    def texture_id_l(self) -> int:
+        return self._images_m[round(self.charged * (len(self._images)-1))]

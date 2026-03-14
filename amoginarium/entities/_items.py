@@ -217,7 +217,7 @@ class BaseItem(PositionedEntity):
 
 
 class Shield(BaseItem):
-    _image_name: tuple[str, str] | str = ("textures", "amogus64right")
+    _image_name: tuple[str, str] | str = ("Shield_6", "4")
     _image_size: tuple[int, int] = (45, 80)
     _max_uses: int = 200  # acts as HP for shield
 
@@ -301,6 +301,7 @@ class Shield(BaseItem):
                     size / 2,
                     rotate_angle=angle
                 )
+
 
 class HealingPotion(BaseItem):
     _image_name = ("potions", "empty")
