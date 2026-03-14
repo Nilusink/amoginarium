@@ -16,6 +16,7 @@ import typing as tp
 from ..base import GravityAffected, FrictionXAffected, HasBars
 from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
+from ..audio import DeathSound
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
 from ._items import BaseItem, Shield, HealingPotion, JetBag
@@ -128,6 +129,8 @@ class Player(LRImageEntity):
                 mirror="x"
             )
         self._image_size = size
+
+        self._death_sound = DeathSound()
 
         super().__init__(
             size=Vec2().from_cartesian(size, size),
@@ -529,6 +532,8 @@ class Player(LRImageEntity):
         """
         # set state to dead
         self._alive = False
+
+        self._death_sound.play()
 
         # remove from every group except players
         super().kill(killed_by)

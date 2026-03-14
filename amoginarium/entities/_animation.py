@@ -29,6 +29,7 @@ class Animation(VisibleBaseEntity):
             position: coord_t = ...,
             position_reference: HasPosition | tp.Callable[[], Vec2] = ...,
             position_offset: coord_t = ...,
+            loop: bool = False
     ) -> None:
         super().__init__()
 
@@ -37,6 +38,7 @@ class Animation(VisibleBaseEntity):
         self._textures = textures
         self._size = convert_coord(size, Vec2)
         self._delay = delay
+        self._loop = loop
         self._position = convert_coord(position, Vec2) if position is not ... \
             else ...
         self._position_reference = position_reference
@@ -62,6 +64,10 @@ class Animation(VisibleBaseEntity):
 
         return pos + self._position_offset
 
+    @property
+    def playing(self) -> bool:
+        return self._playing
+
     def play(self) -> None:
         if self._playing:
             return
@@ -80,9 +86,15 @@ class Animation(VisibleBaseEntity):
         self._current_t -= delta
         if self._current_t <= 0:
             if (self._current_image + 1) >= len(self._textures):
-                self.stop()
+                if self._loop:
+                    self._current_image = 0
 
-            self._current_image += 1
+                else:
+                    self.stop()
+
+            else:
+                self._current_image += 1
+
             self._current_t = self._delay
 
     def gl_draw(self) -> None:

@@ -211,6 +211,7 @@ class BaseGame:
         sounds.load_sounds("assets/audio/effects/shots")
         sounds.load_sounds("assets/audio/effects/reloads")
         sounds.load_sounds("assets/audio/effects/ui")
+        sounds.load_sounds("assets/audio/effects/death")
         self._background_player.assign_scope("background")
 
         # load entity textures
@@ -227,6 +228,7 @@ class BaseGame:
         textures.load_images("assets/images/bg3.zip")
         textures.load_images("assets/images/bg4.zip")
         textures.load_images("assets/images/animations/explosion.zip")
+        textures.load_images("assets/images/animations/flame")
 
         for island in ISLANDS.values():
             island.load_textures()

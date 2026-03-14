@@ -416,11 +416,12 @@ class HealingPotion(BaseItem):
 class JetBag(BaseItem):
     _image_name: tuple[str, str] | str = ("missiles", "Missile02F")
     _image_size: tuple[int, int] = (32, 64)
-    _animation_scope: str = "explosion"
+    _animation_scope: str = "flame"
     _animation_size: tuple[int, int] = (32, 32)
     _animation_textures: list[int] = ...
-    _max_uses: int = 200
-    _recoil_factor = 2
+    _max_uses: int = 5
+    _reload_per_second: float = .1
+    _recoil_factor = 1
 
     @classmethod
     def load_textures(cls) -> None:
@@ -446,32 +447,53 @@ class JetBag(BaseItem):
         self._animation = Animation(
             self._animation_textures,
             self._animation_size,
-            .02,
+            .05,
             position_reference=self._flame_position,
+            loop=True
         )
 
     def _flame_position(self) -> Vec2:
         return self.position + Vec2().from_cartesian(
             self.size.x / 2 + self._position_offset.x * (1 if self._facing else -1),
-            self.size.y + self._position_offset.y - 10
+            self.size.y / 2 + self._position_offset.y + 36
         )
 
     def use(self) -> None:
         self._in_use = True
+        if self._uses_left > 0:
+            self._animation.play()
 
     def stop_use(self) -> None:
         self._in_use = False
+        self._animation.stop()
+
+    def kill(self, killed_by=...) -> None:
+        self._animation.stop()
+        super().kill(killed_by)
 
     def update(self, delta: float) -> None:
         if self._in_use:
-            if hasattr(self.parent, "_movement_acceleration"):
-                recoil = Vec2().from_cartesian(
-                    0,
-                    self.parent._movement_acceleration
+            if self._uses_left > 0:
+                self._uses_left -= delta
+
+                if hasattr(self.parent, "_movement_acceleration"):
+                    recoil = Vec2().from_cartesian(
+                        0,
+                        self.parent._movement_acceleration
+                    )
+                    recoil *= self._recoil_factor
+                    self.parent.acceleration -= recoil
+
+            else:
+                if self._animation.playing:
+                    self._animation.stop()
+
+        elif self.parent.on_ground:
+            if self._uses_left < self._max_uses:
+                self._uses_left = min(
+                    self._uses_left + self._reload_per_second * delta,
+                    self._max_uses
                 )
-                recoil *= self._recoil_factor
-                self.parent.acceleration -= recoil
-                ic(1)
 
     def draw_at(self, position: Vec2, angle: float) -> None:
         angle = angle % 360
@@ -496,6 +518,3 @@ class JetBag(BaseItem):
                 self._image_size,
             )
             self._facing = True
-
-        if self._in_use:
-            self._animation.play()
