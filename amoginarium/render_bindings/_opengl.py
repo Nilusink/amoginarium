@@ -86,7 +86,11 @@ class OpenGLRenderer(BaseRenderer):
 
         # set global screen size and ppm
         global_vars.screen_size = Vec2().from_cartesian(*window_size)
-        global_vars.screen_size_real = Vec2().from_cartesian(*window_size)
+        global_vars.screen_size_real = Vec2().from_cartesian(
+            screen_info.current_w,
+            screen_info.current_h
+        )
+        ic(global_vars.screen_size_real.xy)
         global_vars.resolution = Vec2().from_cartesian(*window_size)
         global_vars.screen_size_fac_x = 1
         global_vars.screen_size_offset_x = 0
@@ -232,10 +236,11 @@ class OpenGLRenderer(BaseRenderer):
         else:
             rotate_anchor = convert_coord(rotate_anchor, Vec2)
 
-        # convert to screen realtive coords and size
+        # convert to screen relative coords and size
         if convert_global:
             pos = global_vars.translate_screen_coord(pos)
             size = global_vars.translate_scale(size)
+            rotate_anchor = global_vars.translate_scale(rotate_anchor)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(pos, size):
@@ -475,6 +480,10 @@ class OpenGLRenderer(BaseRenderer):
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, size):
             return
+
+        if convert_global:
+            start = global_vars.translate_screen_coord(start)
+            size = global_vars.translate_scale(size)
 
         glLoadIdentity()  # reset previous glTranslate statements
         glTranslate(start.x, start.y, 0)

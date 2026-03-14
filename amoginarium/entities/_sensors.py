@@ -14,7 +14,7 @@ from ..base._groups import CollisionDestroyed, HasBars, Updated
 from ._base_entity import VisibleGameEntity
 from ..radar import RadarSensor, BaseSensor, VisualSensor, DetectionGroup, \
     DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
-from ..shared import BaseEntityLike, Coalitions
+from ..shared import BaseEntityLike, Coalitions, global_vars
 from ..render_bindings import renderer
 from ..logic import Vec2
 
@@ -102,9 +102,11 @@ class BaseDetector(VisibleGameEntity):
         # only draw if on screen
         if not any([
             Updated.world_position.x < self.position.x - self.size.x / 2,
-            self.position.x + self.size.x / 2 < Updated.world_position.x + 1920,
+            self.position.x + self.size.x / 2 < Updated.world_position.x +
+            global_vars.screen_pixels.x,
             Updated.world_position.y < self.position.y - self.size.y / 2,
-            self.position.y + self.size.y / 2 < Updated.world_position.y + 1080,
+            self.position.y + self.size.y / 2 < Updated.world_position.y +
+            global_vars.screen_pixels.y,
         ]):
             return
 

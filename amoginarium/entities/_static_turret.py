@@ -374,9 +374,11 @@ class BaseTurret(VisibleGameEntity):
         # only draw if on screen
         if not any([
             Updated.world_position.x < self.position.x - self.size.x / 2,
-            self.position.x + self.size.x / 2 < Updated.world_position.x + 1920,
+            self.position.x + self.size.x / 2 < Updated.world_position.x +
+            global_vars.screen_pixels.x,
             Updated.world_position.y < self.position.y - self.size.y / 2,
-            self.position.y + self.size.y / 2 < Updated.world_position.y + 1080,
+            self.position.y + self.size.y / 2 < Updated.world_position.y +
+            global_vars.screen_pixels.y,
         ]):
             return
 
