@@ -126,6 +126,37 @@ def convert_coord[A: Vec2 | tuple | float](
     raise ValueError("Unsupported conversion: ", convert_to)
 
 
+# @timeit(1)
+def multi_raycast_mask(
+    parent: EntityLike,
+    sprites: tp.Collection[EntityLike],
+    start: Vec2,
+    end: Vec2,
+    sample_rate: int = 10
+) -> list[tuple[EntityLike, Vec2]]:
+    out = []
+
+    for sprite in sprites:
+        if not all([
+            sprite,
+            hasattr(sprite, "rect"),
+            hasattr(sprite, "mask"),
+            not is_related(sprite, parent, depth=2)
+        ]):
+            continue
+
+        res = raycast_mask(
+            sprite,
+            start,
+            end,
+            sample_rate
+        )
+        if res.length > 0:
+            out.append((sprite, res))
+
+    return out
+
+
 @timeit(1)
 def lidar_sphere(
         position: Vec2,

@@ -491,6 +491,15 @@ class BaseTurret(VisibleGameEntity):
 
         super().gl_draw()
 
+        debug_surface = self.mask.to_surface()
+        renderer.draw_pg_surf(
+            (
+                self.rect.x - Updated.world_position.x,
+                self.rect.y - Updated.world_position.y + self.size.y
+            ),
+            debug_surface
+        )
+
 
 class SniperTurret(BaseTurret):
     _max_hp: int = 40

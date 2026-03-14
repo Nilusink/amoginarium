@@ -17,6 +17,7 @@ from icecream import ic
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord, \
     raycast_mask, normalize_angle
 from ..render_bindings import renderer
+from ..shared import GameEntityLike
 from ..debugging import timeit
 # from ..debugging import run_with_debug
 
@@ -358,6 +359,22 @@ class _HasBars(_BaseGroup):
                     (.55, .55, 1, 1)
                 )
 
+                # draw charge bar
+                if not hasattr(weapon, "charged"):
+                    continue
+
+                now_len = weapon.charged * max_len
+                renderer.draw_rect(
+                    bar_start + Vec2().from_cartesian(0, 3 * bar_height),
+                    Vec2().from_cartesian(max_len if now_len else 0, bar_height),
+                    (0, 0, 0, .5)
+                )
+                renderer.draw_rect(
+                    bar_start + Vec2().from_cartesian(0, 3 * bar_height),
+                    Vec2().from_cartesian(now_len, bar_height),
+                    (143, 0, 124, 1)
+                )
+
 
 class _WallBouncer(_BaseGroup):
     """
@@ -434,8 +451,8 @@ class _CollisionDestroyed(_BaseGroup):
 
             with suppress(AttributeError):
                 for other in self.sprites():
-                    sprite: tp.Any
-                    other: tp.Any
+                    sprite: pg.sprite.Sprite
+                    other: pg.sprite.Sprite
 
                     # pg.sprite.collide_mask()
 

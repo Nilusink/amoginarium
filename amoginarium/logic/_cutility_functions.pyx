@@ -31,7 +31,7 @@ cpdef Vec2 raycast_mask(
 
         # trace line through entity
         for i in range(sample_rate):
-            delta = delta.mul_double(i).div(sample_rate).add_vec2(start)
+            delta = delta.mul_double(i).div(sample_rate).add_vec2(start) # TODO: rethink logic
 
             try:
                 if sprite.mask.get_at((delta.x, delta.y)):

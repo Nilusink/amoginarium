@@ -20,6 +20,7 @@ from ..audio import DeathSound
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
 from ._items import BaseItem, Shield, HealingPotion, JetBag
+from ._charged_weapon import Bow, ChargedWeapon, RailGun
 from ._weapons import HandThrownGrenade
 from ..render_bindings import renderer
 from ..base._textures import textures
@@ -190,7 +191,15 @@ class Player(LRImageEntity):
                     Vec2().from_cartesian(-24, 0),
                 ),
                 "uses": 1
-            }
+            },
+            {
+                "item": Bow(self, False, parent_position_offset=(0, 0)),
+                "uses": 1
+            },
+            {
+                "item": RailGun(self, False, parent_position_offset=(0, 0)),
+                "uses": 1
+            },
         ]
 
         for i in range(len(self._weapons)):
@@ -425,7 +434,10 @@ class Player(LRImageEntity):
             # shot_direction = self.facing.copy()
             # shot_direction.y = -.4
             if isinstance(self.item, BaseWeapon):
-                if self.item.shoot(
+                if hasattr(self.item, "charge"):
+                    self.item.charge()
+
+                elif self.item.shoot(
                     vector
                 ):
                     self._controller.feedback_shoot()
@@ -435,7 +447,31 @@ class Player(LRImageEntity):
 
         else:
             if isinstance(self.item, BaseWeapon):
-                self.item.stop_shooting()
+                if hasattr(self.item, "charge"):
+                    item: ChargedWeapon = self.item
+
+                    if item.charged > 0:
+                        mouse_pos = Vec2().from_cartesian(*pg.mouse.get_pos())
+                        mouse_pos = (
+                            (mouse_pos.x - global_vars.screen_size_offset_x) \
+                            * global_vars.screen_size_fac_x,
+                            (mouse_pos.y - global_vars.screen_size_offset_y) \
+                            * global_vars.screen_size_fac_y
+                        )
+
+                        vector = convert_coord(
+                            mouse_pos,
+                            Vec2
+                        ) - self.world_position
+
+                        if self.item.shoot(vector):
+                            self._controller.feedback_shoot()
+
+                    else:
+                        self.item.stop_shooting()
+
+                else:
+                    self.item.stop_shooting()
 
             elif self.item:
                 self.item.stop_use()

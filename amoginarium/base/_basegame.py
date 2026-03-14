@@ -920,11 +920,13 @@ class BaseGame:
         FrictionXAffected.calculate_friction(delta)
         WallBouncer.update()
 
-        timeit(1)(Bullets.update)(delta)
+        Bullets.update(delta)
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
         CollisionDestroyed.update()
+
+        # sleep(.3)
 
         logic_time = perf_counter() - start
         self._logic_loop_times.append(
