@@ -19,7 +19,7 @@ from ..base import Drawn, Updated
 class TextEntity(pg.sprite.Sprite):
     def __init__(
             self,
-            _coalition,
+            coalition,
             position: coord_t,
             text: str,
             size: int = 64,

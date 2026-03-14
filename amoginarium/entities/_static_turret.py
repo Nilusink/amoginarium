@@ -12,8 +12,6 @@ from time import perf_counter
 from icecream import ic
 import typing as tp
 
-from unicodedata import normalize
-
 from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
     GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
@@ -492,6 +490,15 @@ class BaseTurret(VisibleGameEntity):
                     )
 
         super().gl_draw()
+
+        # debug_surface = self.mask.to_surface()
+        # renderer.draw_pg_surf(
+        #     (
+        #         self.rect.x - Updated.world_position.x,
+        #         self.rect.y - Updated.world_position.y + self.size.y
+        #     ),
+        #     debug_surface
+        # )
 
 
 class SniperTurret(BaseTurret):

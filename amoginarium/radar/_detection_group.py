@@ -15,7 +15,7 @@ import typing as tp
 
 from ..base._groups import Bullets, Players
 from ._sensors import BaseSensor
-from ..debugging import run_with_debug
+from ..debugging import run_with_debug, CC
 
 if tp.TYPE_CHECKING:
     from ..entities._base_entity import GameEntity
@@ -144,6 +144,17 @@ class DetectionGroup:
         adds a sensor to detection scope
         """
         self._sensors.append(sensor)
+        sensor.group_add(self)
+
+    def remove_sensor(self, sensor: BaseSensor) -> None:
+        """
+        remove a sensor
+        """
+        if sensor in self._sensors:
+            self._sensors.remove(sensor)
+        #
+        # else:
+        #     ic(CC.fg.RED + "sensor not in list!")
 
     def update_detection(
             self,

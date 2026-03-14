@@ -11,6 +11,7 @@ from icecream import ic
 from ._sounds import sounds, sound_name_t
 import typing as tp
 import pygame as pg
+from random import choice
 
 from ..debugging import CC
 
@@ -56,10 +57,10 @@ class SoundEffect:
 
     def __init__(
             self,
-            sound_name: sound_name_t,
-            on_finish_playing: tp.Callable[[], None] = ...
+            sound: sound_name_t | pg.mixer.Sound,
+            on_finish_playing: tp.Callable[[], tp.Any] = ...
     ) -> None:
-        self._sound_name = sound_name
+        self._sound_name = sound
         self._on_finish = on_finish_playing
         self._channel = ...
         self._has_played = False
@@ -98,7 +99,10 @@ class SoundEffect:
             )
             return
 
-        if isinstance(self._sound_name, tuple):
+        if isinstance(self._sound_name, pg.mixer.Sound):
+            self._sound = self._sound_name
+
+        elif isinstance(self._sound_name, tuple):
             self._sound = sounds.get_sound(*self._sound_name[::-1])
 
         else:
@@ -310,3 +314,77 @@ class AK47(ContinuousSoundEffect):
     _stage_two_name = ("ak47", "loop")
     _stage_three_name = ("ak47", "echo")
     volume: float = .1
+
+
+class RandomizedEffect:
+    def __init__(
+            self,
+            effects: tp.Sequence[SoundEffect],
+    ) -> None:
+        self._effects = effects
+        self._playing = None
+
+    @property
+    def playing(self) -> bool:
+        return not not self._playing
+
+    def set_volume(self, volume: float) -> tp.Self:
+        for effect in self._effects:
+            effect.volume = volume
+
+        return self
+
+    def play(
+            self,
+            loops: int = 0,
+            maxtime: int = 0,
+            fade_ms: int = 0,
+    ) -> None:
+        """
+        play the sound effect
+        """
+        if self._playing:
+            self.stop()
+
+        self._playing = choice(self._effects)
+        self._playing.play(
+            loops,
+            maxtime,
+            fade_ms
+        )
+
+    def stop(self) -> None:
+        """
+        stop the sound effect if it is currently playing
+        """
+        if self._playing:
+            self._playing.stop()
+            self._playing = None
+
+
+    def update(self) -> None:
+        """
+        updates called by the game loop
+        """
+        if self._playing:
+            self._playing.update()
+
+
+class ScopedRandomizedEffect(RandomizedEffect):
+    def __init__(
+            self,
+            sound_scope: str,
+            callback: tp.Callable[[], tp.Any]
+    ) -> None:
+        s = sounds.get_all_from_scope(sound_scope)
+        super().__init__([
+            SoundEffect(
+                sound,
+                callback
+            ) for sound in s
+        ])
+
+
+class DeathSound(ScopedRandomizedEffect):
+    def __init__(self, callback: tp.Callable[[], tp.Any] = ...) -> None:
+        super().__init__("death", callback)

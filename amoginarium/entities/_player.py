@@ -7,6 +7,7 @@ defines a player
 Author:
 Nilusink
 """
+from contextlib import suppress
 from time import perf_counter
 from icecream import ic
 import pygame as pg
@@ -15,8 +16,11 @@ import typing as tp
 from ..base import GravityAffected, FrictionXAffected, HasBars
 from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
+from ..audio import DeathSound, SoundEffect
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
+from ._items import BaseItem, Shield, HealingPotion, JetBag
+from ._charged_weapon import Bow, ChargedWeapon, RailGun
 from ._weapons import HandThrownGrenade
 from ..render_bindings import renderer
 from ..base._textures import textures
@@ -49,7 +53,7 @@ class Player(LRImageEntity):
     _max_speed: float = 1000
     _max_hp: int = 80
     __heading = 1
-    _hp: int = 0
+    _hp: float = 0
 
     on_wall: bool = False
 
@@ -100,7 +104,6 @@ class Player(LRImageEntity):
             size: int = 64
     ) -> None:
         self._hp = self._max_hp
-
         self._controller = controller
         self._on_ground = False
         self._alive = True
@@ -127,6 +130,8 @@ class Player(LRImageEntity):
             )
         self._image_size = size
 
+        self._death_sound = DeathSound()
+
         super().__init__(
             size=Vec2().from_cartesian(size, size),
             facing=facing,
@@ -144,20 +149,64 @@ class Player(LRImageEntity):
             HasBars
         )
 
+        self._groaning = SoundEffect(("groaning", "hugh_1"))
+
         self._last_wpn_change = 0
         self._current_weapon = 0
-        self._weapons = [
-            Ak47(self, False, parent_position_offset=(0, 0)),
-            Minigun(self, False, parent_position_offset=(0, 10)),
-            Sniper(self, False),
-            Mortar(self, False),
-            Flak(self, False),
-            CRAM(self, False),
-            HandThrownGrenade(self, False)
+        self._weapons: list[dict[str, BaseWeapon | BaseItem | int]] = [
+            {
+                "item": Ak47(self, False, parent_position_offset=(0, 0)),
+                "uses": 1
+            },
+            {
+                "item": Minigun(self, False, parent_position_offset=(0, 10)),
+                "uses": 1
+            },
+            {
+                "item": Sniper(self, False),
+                "uses": 1
+            },
+            {
+                "item": HandThrownGrenade(self, False),
+                "uses": 1
+            },
+            {
+                "item": Shield(
+                    self,
+                    lambda x: self._item_used(4, x),
+                    Vec2().from_cartesian(50, 0),
+                ),
+                "uses": 1
+            },
+            {
+                "item": HealingPotion(
+                    self,
+                    lambda x: self._item_used(5, x),
+                    Vec2().from_cartesian(0, 5),
+                ),
+                "uses": 1
+            },
+            {
+                "item": JetBag(
+                    self,
+                    lambda x: self._item_used(6, x),
+                    Vec2().from_cartesian(-24, 0),
+                ),
+                "uses": 1
+            },
+            {
+                "item": Bow(self, False, parent_position_offset=(0, 0)),
+                "uses": 1
+            },
+            {
+                "item": RailGun(self, False, parent_position_offset=(0, 0)),
+                "uses": 1
+            },
         ]
 
         for i in range(len(self._weapons)):
-            self._weapons[i].reload(True)
+            if isinstance(self._weapons[i]["item"], BaseWeapon):
+                self._weapons[i]["item"].reload(True)
 
         self._last_hit = perf_counter()
 
@@ -166,7 +215,7 @@ class Player(LRImageEntity):
         return self._max_hp
 
     @property
-    def hp(self) -> int:
+    def hp(self) -> float:
         return self._hp
 
     @property
@@ -184,13 +233,20 @@ class Player(LRImageEntity):
         return self._alive
 
     @property
-    def weapon(self) -> BaseWeapon:
-        return self._weapons[self._current_weapon]
+    def item(self) -> BaseWeapon | BaseItem | None:
+        if self._weapons[self._current_weapon]["uses"] > 0:
+            return self._weapons[self._current_weapon]["item"]
+
+        else:
+            return None
 
     def next_weapon(self) -> None:
         """
         switches to the next weapon
         """
+        if self.item:
+            self.item.stop()
+
         self._current_weapon += 1
         if self._current_weapon >= len(self._weapons):
             self._current_weapon = 0
@@ -199,15 +255,30 @@ class Player(LRImageEntity):
         """
         switches to the previous weapon
         """
+        if self.item:
+            self.item.stop()
+
         self._current_weapon -= 1
         if self._current_weapon < 0:
             self._current_weapon = len(self._weapons) - 1
+
+    def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
+        """
+        remove used_amount from set item
+        """
+        ic(item_id, used_amount)
+        with suppress(KeyError, IndexError):
+            self._weapons[item_id]["uses"] -= used_amount
+            ic(self._weapons[item_id]["uses"])
+            return self._weapons[item_id]["uses"] > 0
+
+        return False
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
         deal damage to the player
         """
-        damage = 0
+        # damage = 0
         self._hp -= damage
 
         if damage != 0:
@@ -215,12 +286,23 @@ class Player(LRImageEntity):
 
         # check for player death
         if self._hp <= 0:
-            self.weapon.stop()
+            if self.item:
+                self.item.stop()
+
             self.kill(hit_by)
 
         # update last hit
         self._last_hit = perf_counter()
         self._controller.feedback_heal_stop()
+
+    def heal(self, heal: float) -> bool:
+        new = self._hp + heal
+        if new > self._max_hp:
+            return False
+
+        else:
+            self._hp = new
+            return True
 
     def collide_wall(self, wall: Island):
         return wall.get_collided_sides(
@@ -250,7 +332,8 @@ class Player(LRImageEntity):
         # update reloads
         # self.weapon.update(delta)
         for i in range(len(self._weapons)):
-            self._weapons[i].update(delta)
+            if self._weapons[i]["uses"] > 0:
+                self._weapons[i]["item"].update(delta)
 
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
@@ -268,6 +351,9 @@ class Player(LRImageEntity):
             if on_top and self.velocity.y >= 0:
                 if self.velocity.y > 3:
                     self._controller.feedback_collide()
+
+                if self.velocity.y > 450:
+                    self._groaning.play()
 
                 self.acceleration.y = 0
                 self.velocity.y = 0
@@ -329,7 +415,8 @@ class Player(LRImageEntity):
 
         # reload
         if self._controller.reload:
-            self.weapon.reload()
+            if isinstance(self.item, BaseWeapon):
+                self.item.reload()
 
         # switch weapon
         if self._controller.wpn_f and perf_counter() - self._last_wpn_change > .1:
@@ -351,13 +438,48 @@ class Player(LRImageEntity):
 
             # shot_direction = self.facing.copy()
             # shot_direction.y = -.4
-            if self.weapon.shoot(
-                vector
-            ):
-                self._controller.feedback_shoot()
+            if isinstance(self.item, BaseWeapon):
+                if hasattr(self.item, "charge"):
+                    self.item.charge()
+
+                elif self.item.shoot(
+                    vector
+                ):
+                    self._controller.feedback_shoot()
+
+            elif self.item:
+                self.item.use()
 
         else:
-            self.weapon.stop_shooting()
+            if isinstance(self.item, BaseWeapon):
+                if hasattr(self.item, "charge"):
+                    item: ChargedWeapon = self.item
+
+                    if item.charged > 0:
+                        mouse_pos = Vec2().from_cartesian(*pg.mouse.get_pos())
+                        mouse_pos = (
+                            (mouse_pos.x - global_vars.screen_size_offset_x) \
+                            * global_vars.screen_size_fac_x,
+                            (mouse_pos.y - global_vars.screen_size_offset_y) \
+                            * global_vars.screen_size_fac_y
+                        )
+
+                        vector = convert_coord(
+                            mouse_pos,
+                            Vec2
+                        ) - self.world_position
+
+                        if self.item.shoot(vector):
+                            self._controller.feedback_shoot()
+
+                    else:
+                        self.item.stop_shooting()
+
+                else:
+                    self.item.stop_shooting()
+
+            elif self.item:
+                self.item.stop_use()
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:
@@ -396,7 +518,12 @@ class Player(LRImageEntity):
                      (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
 
         vector = convert_coord(mouse_pos, Vec2) - self.world_position
-        self.facing.x = vector.x // abs(vector.x)
+        if vector.x == 0:
+            self.facing.x = 1
+
+        else:
+            self.facing.x = vector.x // abs(vector.x)
+
         angle = vector.angle * (180 / 3.14169265358979)
 
         if self.world_position.x < 0:
@@ -433,10 +560,11 @@ class Player(LRImageEntity):
 
         else:
             super().gl_draw()
-            self.weapon.draw_at(
-                self.position,
-                angle
-            )
+            if self.item:
+                self.item.draw_at(
+                    self.position,
+                    angle
+                )
 
     def kill(self, killed_by=...) -> None:
         """
@@ -444,6 +572,13 @@ class Player(LRImageEntity):
         """
         # set state to dead
         self._alive = False
+
+        self._death_sound.play()
+        if hasattr(self.item, "kill"):
+            self.item.stop_use()
+
+        else:
+            self.item.stop_shooting()
 
         # remove from every group except players
         super().kill(killed_by)
@@ -470,10 +605,16 @@ class Player(LRImageEntity):
 
         # reset health
         self._hp = self._max_hp
-        self.weapon.reload(True)
+        if isinstance(self.item, BaseWeapon):
+            self.item.reload(True)
+
+        elif self.item:
+            self.item.reset()
 
         # reset position / velocity
         self.position = self._initial_position.copy()
+        self._acceleration_to_add *= 0
+        self.acceleration *= 0
         self.velocity *= 0
 
         if pos is not ...:

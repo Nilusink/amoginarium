@@ -30,7 +30,7 @@ from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
 from ..entities import Player, GrassIsland, GrayBrickIsland, Island
 from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
-from ..entities import PlatformIsland2
+from ..entities import PlatformIsland2, Radar
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC, timeit
 from ._scrolling_background import ParalaxBackground
@@ -40,7 +40,7 @@ from ..audio import sounds, sound_effects
 from ..render_bindings import renderer
 from ..audio import BackgroundPlayer
 from ..communications import TCPServer
-from ..animations import explosion
+from ..entities import explosion
 from ._textures import textures
 from ..settings import Settings
 from ..ui import UIElement, EventHandler
@@ -67,6 +67,7 @@ SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
     "turret.static.mortar": MortarTurret,
     "turret.static.flak": FlakTurret,
     "turret.static.cram": CRAMTurret,
+    "sensor.static.radar": Radar,
     "instructions.text": TextEntity,
 }
 ISLANDS: dict[str, tp.Type[Island]] = {
@@ -264,7 +265,10 @@ class BaseGame:
         sounds.load_sounds("assets/audio/effects/reloads")
         self._update_loading_screen(8)
         sounds.load_sounds("assets/audio/effects/ui")
+        self._update_loading_screen(8)
+        sounds.load_sounds("assets/audio/effects/groaning")
         self._update_loading_screen(9)
+        sounds.load_sounds("assets/audio/effects/death")
         self._background_player.assign_scope("background")
         self._update_loading_screen(10, "loading textures")
 
@@ -280,6 +284,14 @@ class BaseGame:
         textures.load_images("assets/images/columns")
         self._update_loading_screen(15)
         textures.load_images("assets/images/platforms")
+        self._update_loading_screen(15)
+        textures.load_images("assets/images/missiles")
+        self._update_loading_screen(15)
+        textures.load_images("assets/images/weapons/railgun.zip")
+        self._update_loading_screen(15)
+        textures.load_images("assets/images/potions")
+        self._update_loading_screen(16)
+        textures.load_images("assets/images/Shield_6")
         self._update_loading_screen(16)
         textures.load_images("assets/images/bg1.zip")
         self._update_loading_screen(17)
@@ -291,10 +303,14 @@ class BaseGame:
         self._update_loading_screen(20)
         textures.load_images("assets/images/animations/explosion.zip")
         self._update_loading_screen(21)
+        textures.load_images("assets/images/animations/flame")
 
         for island in ISLANDS.values():
             island.load_textures()
 
+        for entity in Updated.sprites():
+            if hasattr(entity, "load_textures"):
+                entity.load_textures()
         self._update_loading_screen(22)
 
         for spwanable in SPAWNABLES.values():
@@ -414,12 +430,12 @@ class BaseGame:
 
             try:
                 SPAWNABLES[entity["type"]](
-                    Coalitions.red,
-                    Vec2().from_cartesian(*entity["pos"]),
+                    coalition=Coalitions.red,
+                    position=Vec2().from_cartesian(*entity["pos"]),
                     **args
                 )
 
-            except TypeError:
+            except TypeError as e:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
@@ -913,11 +929,13 @@ class BaseGame:
         FrictionXAffected.calculate_friction(delta)
         WallBouncer.update()
 
-        timeit(1)(Bullets.update)(delta)
+        Bullets.update(delta)
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
         CollisionDestroyed.update()
+
+        # sleep(.3)
 
         logic_time = perf_counter() - start
         self._logic_loop_times.append(

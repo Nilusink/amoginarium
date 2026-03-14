@@ -20,7 +20,7 @@ import time
 from ..shared import global_vars
 from ..render_bindings import renderer
 from ..base._textures import textures
-from ..entities import VisibleGameEntity
+from ._base_entity import VisibleGameEntity
 from ..logic import Vec2, coord_t, convert_coord
 from ..base import Walls
 

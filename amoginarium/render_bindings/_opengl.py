@@ -17,12 +17,17 @@ from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
 from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
 from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
-from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP
+from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
+from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
+from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
+from OpenGL.GL import glGetIntegerv, GL_STENCIL_BITS, GL_ALPHA_TEST, GL_FALSE
+from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
 from PIL import Image
 import pygame as pg
+import typing as tp
 import numpy as np
 import math as m
 
@@ -92,11 +97,13 @@ class OpenGLRenderer(BaseRenderer):
         # set max fps to monitor refresh rate
         global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
 
+        pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode(
             global_vars.screen_size.xy,
             DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
         )
         # self.font = pg.font.SysFont(None, 24)
+        # request stencil buffer
         pg.display.set_caption(title)
 
         # initialize OpenGL stuff
@@ -270,6 +277,42 @@ class OpenGLRenderer(BaseRenderer):
         glFlush()
 
         # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
+
+    def apply_stencil[**A](
+            self,
+            stencil_func: tp.Callable[[A], tp.Any],
+            show_stencil=False,
+            *args: A.args,
+            **kwargs: A.kwargs
+    ) -> None:
+        # stencil_bits = glGetIntegerv(GL_STENCIL_BITS)
+        # print("Stencil bits:", stencil_bits)
+
+        glEnable(GL_STENCIL_TEST)
+        glClear(GL_STENCIL_BUFFER_BIT)
+
+        glStencilFunc(GL_ALWAYS, 1, 0xFF)
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
+        glStencilMask(0xFF)
+
+        glEnable(GL_ALPHA_TEST)
+        glAlphaFunc(GL_GREATER, 0.01)
+
+        if not show_stencil:
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)  # if mask invis
+
+        stencil_func(*args, **kwargs)
+
+        if not show_stencil:
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
+
+        glStencilMask(0x00)
+        glStencilFunc(GL_EQUAL, 1, 0xFF)
+
+    def disable_stencil(self) -> None:
+        glDisable(GL_STENCIL_TEST)
+        glStencilMask(0xFF)
+        glStencilFunc(GL_ALWAYS, 0, 0xFF)
 
     def draw_polygon(
             self,

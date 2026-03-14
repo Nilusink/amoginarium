@@ -17,6 +17,7 @@ from icecream import ic
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord, \
     raycast_mask, normalize_angle
 from ..render_bindings import renderer
+from ..shared import GameEntityLike
 from ..debugging import timeit
 # from ..debugging import run_with_debug
 
@@ -252,8 +253,6 @@ class _WallCollider(_BaseGroup):
         return False
 
 
-
-
 class _GravityAffected(_BaseGroup):
     """
     required methods / variables:
@@ -338,7 +337,20 @@ class _HasBars(_BaseGroup):
                 )
 
                 # draw mag / reload bar
-                mag_n, mag_v = sprite.weapon.get_mag_state(1000)
+                if sprite in Players.sprites():
+                    weapon = sprite.item
+
+                else:
+                    if hasattr(sprite, "weapon"):
+                        weapon = sprite.weapon
+
+                    else:
+                        continue
+
+                if not weapon:
+                    continue
+
+                mag_n, mag_v = weapon.get_mag_state(1000)
                 now_len = (mag_n / 1000) * max_len
                 renderer.draw_rect(
                     bar_start + Vec2().from_cartesian(0, 1.5 * bar_height),
@@ -349,6 +361,22 @@ class _HasBars(_BaseGroup):
                     bar_start + Vec2().from_cartesian(0, 1.5 * bar_height),
                     Vec2().from_cartesian(now_len, bar_height),
                     (.55, .55, 1, 1)
+                )
+
+                # draw charge bar
+                if not hasattr(weapon, "charged"):
+                    continue
+
+                now_len = weapon.charged * max_len
+                renderer.draw_rect(
+                    bar_start + Vec2().from_cartesian(0, 3 * bar_height),
+                    Vec2().from_cartesian(max_len if now_len else 0, bar_height),
+                    (0, 0, 0, .5)
+                )
+                renderer.draw_rect(
+                    bar_start + Vec2().from_cartesian(0, 3 * bar_height),
+                    Vec2().from_cartesian(now_len, bar_height),
+                    (143, 0, 124, 1)
                 )
 
 
@@ -427,12 +455,14 @@ class _CollisionDestroyed(_BaseGroup):
 
             with suppress(AttributeError):
                 for other in self.sprites():
-                    sprite: tp.Any
-                    other: tp.Any
+                    sprite: pg.sprite.Sprite
+                    other: pg.sprite.Sprite
+
+                    # pg.sprite.collide_mask()
 
                     if 1:
                         if all([
-                            pg.sprite.collide_rect(sprite, other),
+                            pg.sprite.collide_mask(sprite, other),
                             not is_related(sprite, other, 2)
                         ]):
                             try:

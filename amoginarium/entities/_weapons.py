@@ -7,6 +7,7 @@ minigun go brrrrrt
 Author:
 Nilusink
 """
+from contextlib import suppress
 from time import perf_counter
 from random import randint
 from icecream import ic
@@ -20,12 +21,13 @@ from ..audio import ContinuousSoundEffect, Mortar as MortarSound
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..audio import CRAM as CRAMSound
 from ..debugging import run_with_debug, timeit
-from ..logic import Vec2, Color, convert_coord, coord_t
+from ..logic import Vec2, Color, convert_coord, coord_t, multi_raycast_mask, \
+    is_related
 from ._base_entity import ImageEntity, GameEntity
 from ..render_bindings import renderer
 from ..shared import global_vars
 from ..base._textures import textures
-from ..animations import explosion
+from ._animation import explosion
 from ..base import WallCollider
 
 
@@ -95,6 +97,7 @@ class Bullet(ImageEntity):
             coalition=coalition,
             parent=parent
         )
+        self._last_pos = self.position.copy()
 
         self.remove(Updated)
         if not no_gravity:
@@ -158,7 +161,45 @@ class Bullet(ImageEntity):
         # double gravity (because why not)
         self.acceleration.y *= 2
 
+        self._last_pos = self.position.copy()
         super().update(delta)
+
+        # check if bullet has hit someone
+        if self.velocity.length > 2000:
+            entities_hit = multi_raycast_mask(
+                self,
+                Updated.sprites(),
+                self._last_pos,
+                self.position,
+                1
+            )
+
+            for other, pos in entities_hit:
+                if not is_related(self, other):
+                    self.position = pos
+
+                    try:
+                        dmg = other.damage
+
+                    except AttributeError:
+                        dmg = 0
+
+                    self.hit(dmg, other)
+
+                    with suppress(AttributeError):
+                        hp = other.hp
+                        if dmg != 0:
+                            self.hit_someone(target_hp=hp)
+
+                    # bullet is sprite
+                    try:
+                        dmg = self.damage
+
+                    except AttributeError:
+                        dmg = 0
+
+                    with suppress(AttributeError):
+                        other.hit(dmg, self)
 
     # @timeit(10)
     def kill(self, killed_by: tp.Self = ...) -> bool:
@@ -205,7 +246,7 @@ class Bullet(ImageEntity):
                     self._explosion_radius * 2,
                     self._explosion_radius * 2
                 ),
-                position_reference=self
+                position=self.position.copy()
             )
 
             if self._explosion_radius > 64:
@@ -256,12 +297,18 @@ class Bullet(ImageEntity):
         else:
             self._texture_id = self._casing_texture
 
-        return super().gl_draw()
+        super().gl_draw()
+
+        # renderer.draw_line(
+        #     self.position - Updated.world_position,
+        #     self._last_pos - Updated.world_position,
+        #     (1, 1, 0, 1)
+        # )
 
 
 class MortarShell(Bullet):
     _bullet_image: str = ("mortar_shell", "")
-    _hp = 2
+    _hp = .5
 
     def __init__(
         self,
@@ -363,6 +410,7 @@ class BaseWeapon:
     _image_offset: Vec2 = Vec2().from_cartesian(0, 15)
     _no_bullet_gravity: bool = False
     _image_rotate_anchor: Vec2 = ...
+    _image_rotation_offset: float = 0
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
     _current_reload_time: float = 0
@@ -417,16 +465,18 @@ class BaseWeapon:
         self._bullet_type = bullet_type
         self._bullet_visibility_offset = bullet_visibility_offset
         # self.__sound_effect: ContinuousSoundEffect = ...
-        self._texture_id_r, _ = textures.get_texture(
-            self._image_name,
-            self._image_size,
-            "" if self._image_mirror else "x"
-        )
-        self._texture_id_l, _ = textures.get_texture(
-            self._image_name,
-            self._image_size,
-            "x" if self._image_mirror else ""
-        )
+        if self._image_name is not ...:
+            self._texture_id_r, _ = textures.get_texture(
+                self._image_name,
+                self._image_size,
+                "" if self._image_mirror else "x"
+            )
+            self._texture_id_l, _ = textures.get_texture(
+                self._image_name,
+                self._image_size,
+                "x" if self._image_mirror else ""
+            )
+
         self._size = Vec2().from_cartesian(*self._image_size)
         if self._image_rotate_anchor is ...:
             self._image_rotate_anchor = self._size / 2
@@ -444,12 +494,28 @@ class BaseWeapon:
         return self._bullet_speed
 
     @property
+    def bullet_explosion_radius(self) -> float:
+        return self._bullet_explosion_radius
+
+    @property
+    def bullet_explosion_damage(self) -> float:
+        return self._bullet_explosion_damage
+
+    @property
     def parent_position_offset(self) -> Vec2:
         return self._parent_position_offset.copy()
 
     @property
     def barrel_length(self) -> float:
         return self._barrel_length
+
+    @property
+    def texture_id_l(self) -> int:
+        return self._texture_id_l
+
+    @property
+    def texture_id_r(self) -> int:
+        return self._texture_id_r
 
     def get_mag_state(
         self,
@@ -554,7 +620,7 @@ class BaseWeapon:
         # recoil
         if hasattr(self.parent, "_movement_acceleration"):
             recoil = direction * self.parent._movement_acceleration
-            recoil *= self._recoil_factor
+            recoil *= self.recoil_factor
             self.parent.acceleration -= recoil
 
         self._current_recoil_time = self._recoil_time
@@ -573,11 +639,11 @@ class BaseWeapon:
             self._coalition,
             self.parent.position + self._parent_position_offset
             + direction.normalize() * self._barrel_length * .45,
-            direction.normalize() * self._bullet_speed + self.parent.velocity,
+            direction.normalize() * self.bullet_speed + self.parent.velocity,
             base_damage=self._bullet_damage,
             size=self._bullet_size,
-            explosion_radius=self._bullet_explosion_radius,
-            explosion_damage=self._bullet_explosion_damage,
+            explosion_radius=self.bullet_explosion_radius,
+            explosion_damage=self.bullet_explosion_damage,
             time_to_life=bullet_lifetime,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,
@@ -641,19 +707,19 @@ class BaseWeapon:
                 self._image_rotate_anchor.y
             )
             renderer.draw_textured_quad(
-                self._texture_id_l,
+                self.texture_id_l,
                 (position - Updated.world_position - anchor).xy,
                 self._size.xy,
-                rotate_angle=angle-180,
+                rotate_angle=angle-180 + self._image_rotation_offset,
                 rotate_anchor=anchor
             )
 
         else:
             renderer.draw_textured_quad(
-                self._texture_id_r,
+                self.texture_id_r,
                 (position - Updated.world_position - self._image_rotate_anchor).xy,
                 self._size.xy,
-                rotate_angle=angle,
+                rotate_angle=angle + self._image_rotation_offset,
                 rotate_anchor=self._image_rotate_anchor
             )
 
@@ -737,7 +803,7 @@ class Sniper(BaseWeapon):
             inaccuracy=.00500002,
             bullet_size=15,
             bullet_speed=2500,
-            bullet_damage=4,
+            bullet_damage=15,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,

@@ -9,25 +9,25 @@ Nilusink
 """
 from __future__ import annotations
 # from OpenGL.GL import glRotated
-from icecream import ic
 import pygame as pg
 import typing as tp
 import math as m
 
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
-from ..logic import Vec2, rk4_update
+from ..logic import Vec2
 from ..base import Updated, Drawn
+from amoginarium.shared._entity_hints import BaseEntityLike
 
 
 _next_entity_id = 0
 
 
 class BaseEntity(pg.sprite.Sprite):
-    _children: list[BaseEntity] = ...
+    _children: list[BaseEntityLike] = ...
     _current_t: float = 0
 
-    def __init__(self, parent: BaseEntity = ...) -> None:
+    def __init__(self, parent: BaseEntityLike = ...) -> None:
         global _next_entity_id
 
         # assign unique id
@@ -46,7 +46,7 @@ class BaseEntity(pg.sprite.Sprite):
         return self.__id
 
     @property
-    def parent(self) -> BaseEntity:
+    def parent(self) -> BaseEntityLike:
         return self._parent
 
     @property
@@ -57,7 +57,7 @@ class BaseEntity(pg.sprite.Sprite):
         return self._parent.root
 
     @property
-    def children(self) -> list[BaseEntity]:
+    def children(self) -> list[BaseEntityLike]:
         return self._children
 
     def update(self, delta: float) -> None:
@@ -79,7 +79,7 @@ class PositionedEntity(BaseEntity):
             self,
             position: Vec2,
             size: Vec2,
-            parent: BaseEntity = ...
+            parent: BaseEntityLike = ...
     ) -> None:
         super().__init__(parent)
 
@@ -139,6 +139,7 @@ class GameEntity(PositionedEntity):
         position = Vec2() if initial_position is ... else initial_position
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
+        self._acceleration_to_add = Vec2()
 
         super().__init__(position, size, parent)
 
@@ -168,6 +169,12 @@ class GameEntity(PositionedEntity):
     def coalition(self) -> tp.Any:
         return self._coalition
 
+    def add_acceleration(self, value: Vec2) -> None:
+        """
+        add acceleration to the entity and guarantee that it will be valid
+        """
+        self._acceleration_to_add += value
+
     def _generate_collision_mask(self) -> None:
         """
         generate the mask used for precise collision
@@ -196,6 +203,9 @@ class GameEntity(PositionedEntity):
         #     acc_func,
         #     delta
         # )
+        self.acceleration += self._acceleration_to_add
+        self._acceleration_to_add *= 0
+
         # update velocity and position
         self.velocity += self.acceleration * delta
         self.position += self.velocity * delta
@@ -213,6 +223,10 @@ class GameEntity(PositionedEntity):
             child.update(delta)
 
     def kill(self, killed_by: tp.Self = ...) -> None:
+        for child in self._children:
+            if hasattr(child, "kill"):
+                child.kill()
+
         super().kill()
 
 
