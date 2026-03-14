@@ -713,12 +713,19 @@ class OpenGLRenderer(BaseRenderer):
             font_size=64,
             font_family="arial",
             bold=False,
-            italic=False
+            italic=False,
+            convert_global=True
     ):
         if not isinstance(bg_color, Color):
             bg_color = self.set_color(bg_color)
         if not isinstance(color, Color):
             color = self.set_color(color)
+
+        pos = convert_coord(pos, Vec2)
+
+        if convert_global:
+            pos = global_vars.translate_screen_coord(pos)
+            font_size = global_vars.translate_scale(font_size)
 
         # weird conversion because pygame is ass
         text_surface: pg.Surface = self.generate_pg_surf_text(
@@ -753,8 +760,14 @@ class OpenGLRenderer(BaseRenderer):
             bg_color.rgb255 if bg_color.a > 125 else None
         )
 
-    def draw_pg_surf(self, pos, surface, centered=False):
+    def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):
         pos = convert_coord(pos, Vec2)
+
+        pos = convert_coord(pos, Vec2)
+
+        if convert_global:
+            pos = global_vars.translate_screen_coord(pos)
+            # font_size = global_vars.translate_scale(font_size)
 
         text_data = pg.image.tostring(surface, "RGBA", True)
         text_size: tuple[int, int] = surface.get_size()

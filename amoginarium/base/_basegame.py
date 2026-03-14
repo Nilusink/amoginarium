@@ -730,7 +730,7 @@ class BaseGame:
 
         # draw background once
         while self.running:
-            glClearColor(0.0, 0.0, 0.0, 1)
+            glClearColor(0.0, 0.0, 0.1, 1)
 
             # 2. Clear the entire window buffer with that black color
             # (Note: glClear ignores glViewport, so it will clean the whole window)
@@ -789,9 +789,6 @@ class BaseGame:
 
                 except pg.error:
                     break
-
-                # clear screen
-                glClearColor(0, 0, 0, 1)
 
                 _, max_player_pos = Players.get_position_extremes()
 
