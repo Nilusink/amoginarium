@@ -223,7 +223,7 @@ class BaseGame:
             (1, 1, 1),
             (0, 0, 0, 0),
             font_size=32,
-            centered = True,
+            centered=True,
         )
 
         # draw loading bar
@@ -232,7 +232,8 @@ class BaseGame:
         renderer.draw_rect(
             bar_start,
             bar_size,
-            (.3, .3, .3)
+            (.3, .3, .3),
+            convert_global=False
         )
         renderer.draw_rect(
             bar_start,
@@ -240,7 +241,8 @@ class BaseGame:
                 bar_size[0] * (step / self._loading_screen_steps),
                 bar_size[1]
             ),
-            (1, 1, 1)
+            (1, 1, 1),
+            convert_global=False
         )
 
         pg.display.flip()
@@ -702,6 +704,9 @@ class BaseGame:
 
                 start_menu.show()
 
+        def handle_zoom(event):
+            global_vars.pixel_per_meter *= 1 + event.y / 30
+
         start_menu = StartMenu(
             start_game, open_settings, self.__clean_end
         )
@@ -719,6 +724,7 @@ class BaseGame:
         # Temporary solution
         game_ui_dummy: UIElement = UIElement()
         game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
+        game_ui_dummy.add_fullscreen_event(pg.MOUSEWHEEL, callback=handle_zoom)
 
         start_menu.show()
 
@@ -784,12 +790,11 @@ class BaseGame:
                 except pg.error:
                     break
 
-                # clear screen
-                glClearColor(0, 0, 0, 1)
-
                 _, max_player_pos = Players.get_position_extremes()
 
                 # background_pos_left = self._background.position + 60
+                Updated.world_position.y = -((global_vars.screen_size.y / global_vars.pixel_per_meter) - global_vars.screen_size.y)
+                global_vars.world_position.y = Updated.world_position.y
 
                 if self._shifting:
                     background_pos_right = self._background.position \

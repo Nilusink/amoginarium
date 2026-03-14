@@ -692,6 +692,7 @@ class BaseWeapon:
         """
         draw the weapon (centered) at a specified position
         """
+
         angle = angle % 360
         # offset = self._image_offset + self._parent_position_offset
         offset = self._parent_position_offset
@@ -722,6 +723,8 @@ class BaseWeapon:
                 rotate_angle=angle + self._image_rotation_offset,
                 rotate_anchor=self._image_rotate_anchor
             )
+
+        renderer.draw_circle(position - offset, 4, 4, (1, 1, 0))
 
 
 class Minigun(BaseWeapon):
@@ -805,6 +808,7 @@ class Sniper(BaseWeapon):
             bullet_speed=2500,
             bullet_damage=15,
             barrel_length=0,
+            bullet_lifetime=10,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             sound_effect=s,

@@ -67,9 +67,9 @@ class ParalaxBackground:
         self._multiplier = parallax_multiplier
         self._animation_counter = 0
         self._position = 0
-
-        self._screen_width = screen_width
-        self._screen_height = screen_height
+        #
+        # self._screen_width = screen_width
+        # self._screen_height = screen_height
         self._animated_layers = animated_layers
 
         self._textures = []
@@ -83,10 +83,10 @@ class ParalaxBackground:
         load all textures
         """
         for texture, _ in textures.get_all_from_scope(
-                self._scope, size=(self._screen_width, self._screen_height)
+                self._scope, size=global_vars.screen_size
         ):
             self._textures.append(texture)
-            self._sizes.append((self._screen_width, self._screen_height))
+            self._sizes.append(global_vars.screen_size.xy)
 
     @property
     def loaded(self) -> bool:
@@ -135,23 +135,25 @@ class ParalaxBackground:
             return self.draw(delta)
 
         for layer in range(n_layers, -1, -1):
-            image_pos = self._position + 10 % self._screen_width
+            image_pos = self._position + 10 % global_vars.screen_size.x
             image_pos *= self._multiplier ** (n_layers - layer)
 
             # if layer in self._animated_layers:
             #     image_pos *= self._animation_counter * .1
             #     image_pos *= self._multiplier**(n_layers-layer)
 
-            image_pos = int(image_pos % self._screen_width)
-            image_pos -= self._screen_width
+            image_pos = int(image_pos % global_vars.screen_size.x)
+            image_pos -= global_vars.screen_size.x
 
             renderer.draw_textured_quad(
                 self._textures[layer],
                 (image_pos, 0),
-                self._sizes[layer]
+                self._sizes[layer],
+                False
             )
             renderer.draw_textured_quad(
                 self._textures[layer],
-                (image_pos + self._screen_width, 0),
-                self._sizes[layer]
+                (image_pos + global_vars.screen_size.x, 0),
+                self._sizes[layer],
+                False
             )

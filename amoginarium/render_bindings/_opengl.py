@@ -86,7 +86,11 @@ class OpenGLRenderer(BaseRenderer):
 
         # set global screen size and ppm
         global_vars.screen_size = Vec2().from_cartesian(*window_size)
-        global_vars.screen_size_real = Vec2().from_cartesian(*window_size)
+        global_vars.screen_size_real = Vec2().from_cartesian(
+            screen_info.current_w,
+            screen_info.current_h
+        )
+        ic(global_vars.screen_size_real.xy)
         global_vars.resolution = Vec2().from_cartesian(*window_size)
         global_vars.screen_size_fac_x = 1
         global_vars.screen_size_offset_x = 0
@@ -232,10 +236,11 @@ class OpenGLRenderer(BaseRenderer):
         else:
             rotate_anchor = convert_coord(rotate_anchor, Vec2)
 
-        # convert to screen realtive coords and size
+        # convert to screen relative coords and size
         if convert_global:
             pos = global_vars.translate_screen_coord(pos)
             size = global_vars.translate_scale(size)
+            rotate_anchor = global_vars.translate_scale(rotate_anchor)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(pos, size):
@@ -476,6 +481,10 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(start, size):
             return
 
+        if convert_global:
+            start = global_vars.translate_screen_coord(start)
+            size = global_vars.translate_scale(size)
+
         glLoadIdentity()  # reset previous glTranslate statements
         glTranslate(start.x, start.y, 0)
 
@@ -704,12 +713,19 @@ class OpenGLRenderer(BaseRenderer):
             font_size=64,
             font_family="arial",
             bold=False,
-            italic=False
+            italic=False,
+            convert_global=True
     ):
         if not isinstance(bg_color, Color):
             bg_color = self.set_color(bg_color)
         if not isinstance(color, Color):
             color = self.set_color(color)
+
+        pos = convert_coord(pos, Vec2)
+
+        if convert_global:
+            pos = global_vars.translate_screen_coord(pos)
+            font_size = global_vars.translate_scale(font_size)
 
         # weird conversion because pygame is ass
         text_surface: pg.Surface = self.generate_pg_surf_text(
@@ -744,8 +760,14 @@ class OpenGLRenderer(BaseRenderer):
             bg_color.rgb255 if bg_color.a > 125 else None
         )
 
-    def draw_pg_surf(self, pos, surface, centered=False):
+    def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):
         pos = convert_coord(pos, Vec2)
+
+        pos = convert_coord(pos, Vec2)
+
+        if convert_global:
+            pos = global_vars.translate_screen_coord(pos)
+            # font_size = global_vars.translate_scale(font_size)
 
         text_data = pg.image.tostring(surface, "RGBA", True)
         text_size: tuple[int, int] = surface.get_size()

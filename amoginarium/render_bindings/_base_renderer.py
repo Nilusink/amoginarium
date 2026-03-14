@@ -200,7 +200,8 @@ class BaseRenderer:
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
-            italic: bool = False
+            italic: bool = False,
+            convert_global: bool = True
     ) -> tuple[int, int]:
         """
         draw a text to the given position
@@ -228,7 +229,8 @@ class BaseRenderer:
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
-            italic: bool = False
+            italic: bool = False,
+            convert_global: bool = True
     ) -> pg.Surface:
         """
         generates a pygame surface from a text

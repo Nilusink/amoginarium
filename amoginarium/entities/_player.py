@@ -430,11 +430,12 @@ class Player(LRImageEntity):
         # directional stuff
         # shoot
         if self._controller.shoot:
-            mouse_pos = Vec2().from_cartesian(*pg.mouse.get_pos())
-            mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
-                         (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
-
-            vector = convert_coord(mouse_pos, Vec2) - self.world_position
+            mouse_pos = pg.mouse.get_pos()
+            vector = convert_coord((
+                (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
+                (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+            ), Vec2)
+            vector -= self.world_position
 
             # shot_direction = self.facing.copy()
             # shot_direction.y = -.4
@@ -456,18 +457,12 @@ class Player(LRImageEntity):
                     item: ChargedWeapon = self.item
 
                     if item.charged > 0:
-                        mouse_pos = Vec2().from_cartesian(*pg.mouse.get_pos())
-                        mouse_pos = (
-                            (mouse_pos.x - global_vars.screen_size_offset_x) \
-                            * global_vars.screen_size_fac_x,
-                            (mouse_pos.y - global_vars.screen_size_offset_y) \
-                            * global_vars.screen_size_fac_y
-                        )
-
-                        vector = convert_coord(
-                            mouse_pos,
-                            Vec2
-                        ) - self.world_position
+                        mouse_pos = pg.mouse.get_pos()
+                        vector = convert_coord((
+                            (mouse_pos[ 0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
+                            (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+                        ), Vec2)
+                        vector -= self.world_position
 
                         if self.item.shoot(vector):
                             self._controller.feedback_shoot()
@@ -513,11 +508,12 @@ class Player(LRImageEntity):
     def gl_draw(self) -> None:
         # check if out of bounds
         # left of screen
-        mouse_pos = Vec2().from_cartesian(*pg.mouse.get_pos())
-        mouse_pos = ((mouse_pos.x - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
-                     (mouse_pos.y - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
-
-        vector = convert_coord(mouse_pos, Vec2) - self.world_position
+        mouse_pos = pg.mouse.get_pos()
+        vector = convert_coord((
+            (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
+            (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+        ), Vec2)
+        vector -= self.world_position
         if vector.x == 0:
             self.facing.x = 1
 

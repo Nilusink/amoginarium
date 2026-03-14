@@ -79,6 +79,10 @@ class _GlobalVars:
     def world_position(self, value: Vec2) -> None:
         self._world_position = value
 
+    @property
+    def screen_pixels(self) -> Vec2:
+        return self.screen_size_real / self.pixel_per_meter
+
     def set_in_loop[**A, R](
             self,
             func: tp.Callable[A, R],
