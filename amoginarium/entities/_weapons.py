@@ -166,12 +166,12 @@ class Bullet(ImageEntity):
 
         # check if bullet has hit someone
         if self.velocity.length > 2000:
-            global_vars.set_in_loop(
-                renderer.draw_line,
-                self._last_pos - Updated.world_position,
-                self.position - Updated.world_position,
-                (1, 1, 0)
-            )
+            # global_vars.set_in_loop(
+            #     renderer.draw_line,
+            #     self._last_pos - Updated.world_position,
+            #     self.position - Updated.world_position,
+            #     (1, 1, 0)
+            # )
             entities_hit = multi_raycast_mask(
                 self,
                 Updated.sprites(),
@@ -182,13 +182,13 @@ class Bullet(ImageEntity):
 
             for other, pos in entities_hit:
                 if not is_related(self, other):
-                    global_vars.set_in_loop(
-                        renderer.draw_circle,
-                        pos,
-                        4, 4,
-                        (1, 1, 0)
-                    )
-                    ic(other, pos)
+                    # global_vars.set_in_loop(
+                    #     renderer.draw_circle,
+                    #     pos,
+                    #     4, 4,
+                    #     (1, 1, 0)
+                    # )
+                    # ic(other, pos)
 
                     try:
                         dmg = other.damage
