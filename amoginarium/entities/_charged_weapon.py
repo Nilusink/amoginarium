@@ -7,7 +7,6 @@ weapons that need to charge before firing (bow)
 Author:
 Nilusink
 """
-from icecream import ic
 import typing as tp
 
 from ..base._textures import textures

@@ -435,7 +435,7 @@ class BaseGame:
                     **args
                 )
 
-            except TypeError:
+            except TypeError as e:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
@@ -600,7 +600,7 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        self.load_map("assets/maps/test.json")
+        self.load_map("assets/maps/tutorial.json")
 
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
         EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
