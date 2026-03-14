@@ -808,6 +808,7 @@ class Sniper(BaseWeapon):
             bullet_speed=2500,
             bullet_damage=15,
             barrel_length=0,
+            bullet_lifetime=10,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             sound_effect=s,

@@ -278,7 +278,7 @@ class Player(LRImageEntity):
         """
         deal damage to the player
         """
-        damage = 0
+        # damage = 0
         self._hp -= damage
 
         if damage != 0:

@@ -704,6 +704,9 @@ class BaseGame:
 
                 start_menu.show()
 
+        def handle_zoom(event):
+            global_vars.pixel_per_meter *= 1 + event.y / 30
+
         start_menu = StartMenu(
             start_game, open_settings, self.__clean_end
         )
@@ -721,6 +724,7 @@ class BaseGame:
         # Temporary solution
         game_ui_dummy: UIElement = UIElement()
         game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
+        game_ui_dummy.add_fullscreen_event(pg.MOUSEWHEEL, callback=handle_zoom)
 
         start_menu.show()
 
