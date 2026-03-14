@@ -139,6 +139,7 @@ class GameEntity(PositionedEntity):
         position = Vec2() if initial_position is ... else initial_position
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
+        self._acceleration_to_add = Vec2()
 
         super().__init__(position, size, parent)
 
@@ -168,6 +169,12 @@ class GameEntity(PositionedEntity):
     def coalition(self) -> tp.Any:
         return self._coalition
 
+    def add_acceleration(self, value: Vec2) -> None:
+        """
+        add acceleration to the entity and guarantee that it will be valid
+        """
+        self._acceleration_to_add += value
+
     def _generate_collision_mask(self) -> None:
         """
         generate the mask used for precise collision
@@ -196,6 +203,9 @@ class GameEntity(PositionedEntity):
         #     acc_func,
         #     delta
         # )
+        self.acceleration += self._acceleration_to_add
+        self._acceleration_to_add *= 0
+
         # update velocity and position
         self.velocity += self.acceleration * delta
         self.position += self.velocity * delta

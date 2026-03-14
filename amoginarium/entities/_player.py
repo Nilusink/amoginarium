@@ -103,7 +103,6 @@ class Player(LRImageEntity):
             size: int = 64
     ) -> None:
         self._hp = self._max_hp
-
         self._controller = controller
         self._on_ground = False
         self._alive = True
@@ -534,6 +533,11 @@ class Player(LRImageEntity):
         self._alive = False
 
         self._death_sound.play()
+        if hasattr(self.item, "kill"):
+            self.item.stop_use()
+
+        else:
+            self.item.stop_shooting()
 
         # remove from every group except players
         super().kill(killed_by)

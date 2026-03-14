@@ -53,6 +53,11 @@ class GameEntityLike(BaseEntityLike, Protocol):
     @property
     def coalition(self) -> Coalitions: ...
 
+    def add_acceleration(self, value: Vec2) -> None:
+        """
+        add acceleration to the entity and guarantee that it will be valid
+        """
+
     def on_ground(self) -> bool: ...
 
     def kill(self, killed_by: GameEntityLike) -> None: ...

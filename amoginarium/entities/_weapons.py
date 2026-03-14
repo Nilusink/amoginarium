@@ -737,7 +737,7 @@ class Sniper(BaseWeapon):
             inaccuracy=.00500002,
             bullet_size=15,
             bullet_speed=2500,
-            bullet_damage=4,
+            bullet_damage=10,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,

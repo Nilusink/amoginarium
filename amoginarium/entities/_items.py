@@ -229,7 +229,8 @@ class Shield(BaseItem):
     ) -> None:
         super().__init__(parent, used_callback, parent_position_offset)
 
-        self.add(CollisionDestroyed)
+        self._in_use = False
+        # self.add(CollisionDestroyed)
 
     @property
     def hp(self) -> float:
@@ -239,11 +240,17 @@ class Shield(BaseItem):
         """
         start using the item
         """
+        if not self._in_use:
+            self._in_use = True
+            self.add(CollisionDestroyed)
 
     def stop_use(self) -> None:
         """
         stop using the item
         """
+        if self._in_use:
+            self._in_use = False
+            self.remove(CollisionDestroyed)
 
     def hit(self, damage: float, hit_by: BaseEntityLike = ...) -> None:
         self._uses_left -= damage
@@ -257,24 +264,43 @@ class Shield(BaseItem):
         delta.angle += angle * (m.pi / 180)
 
         self._current_angle = delta
-        self.position = position + delta - self.size / 2
 
-        if 90 < angle < 270:
-            renderer.draw_textured_quad(
-                self._image_texture_l,
-                self.world_position + self._internal_offset,
-                self._image_size,
-                rotate_angle=angle - 180
-            )
+        if self._in_use:
+            self.position = position + delta - self.size / 2
+            if 90 < angle < 270:
+                renderer.draw_textured_quad(
+                    self._image_texture_l,
+                    self.world_position + self._internal_offset,
+                    self._image_size,
+                    rotate_angle=angle - 180
+                )
+
+            else:
+                renderer.draw_textured_quad(
+                    self._image_texture_r,
+                    self.world_position + self._internal_offset,
+                    self._image_size,
+                    rotate_angle=angle
+                )
 
         else:
-            renderer.draw_textured_quad(
-                self._image_texture_r,
-                self.world_position + self._internal_offset,
-                self._image_size,
-                rotate_angle=angle
-            )
+            size = Vec2().from_cartesian(*self._image_size)
+            self.position = position - size / 4
+            if 90 < angle < 270:
+                renderer.draw_textured_quad(
+                    self._image_texture_l,
+                    self.world_position, # + self._internal_offset,
+                    size / 2,
+                    rotate_angle=angle - 180
+                )
 
+            else:
+                renderer.draw_textured_quad(
+                    self._image_texture_r,
+                    self.world_position, # + self._internal_offset,
+                    size / 2,
+                    rotate_angle=angle
+                )
 
 class HealingPotion(BaseItem):
     _image_name = ("potions", "empty")
@@ -420,7 +446,7 @@ class JetBag(BaseItem):
     _animation_size: tuple[int, int] = (32, 32)
     _animation_textures: list[int] = ...
     _max_uses: int = 5
-    _reload_per_second: float = .1
+    _reload_per_second: float = .2
     _recoil_factor = 1
 
     @classmethod
@@ -479,10 +505,10 @@ class JetBag(BaseItem):
                 if hasattr(self.parent, "_movement_acceleration"):
                     recoil = Vec2().from_cartesian(
                         0,
-                        self.parent._movement_acceleration
+                        -self.parent._movement_acceleration
                     )
                     recoil *= self._recoil_factor
-                    self.parent.acceleration -= recoil
+                    self.parent.add_acceleration(recoil)
 
             else:
                 if self._animation.playing:
