@@ -152,9 +152,9 @@ class DetectionGroup:
         """
         if sensor in self._sensors:
             self._sensors.remove(sensor)
-
-        else:
-            ic(CC.fg.RED + "sensor not in list!")
+        #
+        # else:
+        #     ic(CC.fg.RED + "sensor not in list!")
 
     def update_detection(
             self,

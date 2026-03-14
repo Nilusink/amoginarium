@@ -265,6 +265,8 @@ class BaseGame:
         sounds.load_sounds("assets/audio/effects/reloads")
         self._update_loading_screen(8)
         sounds.load_sounds("assets/audio/effects/ui")
+        self._update_loading_screen(8)
+        sounds.load_sounds("assets/audio/effects/groaning")
         self._update_loading_screen(9)
         sounds.load_sounds("assets/audio/effects/death")
         self._background_player.assign_scope("background")

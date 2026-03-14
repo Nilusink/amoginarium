@@ -16,7 +16,7 @@ import typing as tp
 from ..base import GravityAffected, FrictionXAffected, HasBars
 from ..base import CollisionDestroyed, WallCollider, Players
 from ..base import Updated, Drawn
-from ..audio import DeathSound
+from ..audio import DeathSound, SoundEffect
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
 from ._items import BaseItem, Shield, HealingPotion, JetBag
@@ -148,6 +148,8 @@ class Player(LRImageEntity):
             Players,
             HasBars
         )
+
+        self._groaning = SoundEffect(("groaning", "hugh_1"))
 
         self._last_wpn_change = 0
         self._current_weapon = 0
@@ -349,6 +351,9 @@ class Player(LRImageEntity):
             if on_top and self.velocity.y >= 0:
                 if self.velocity.y > 3:
                     self._controller.feedback_collide()
+
+                if self.velocity.y > 450:
+                    self._groaning.play()
 
                 self.acceleration.y = 0
                 self.velocity.y = 0
