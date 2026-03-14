@@ -166,12 +166,6 @@ class Bullet(ImageEntity):
 
         # check if bullet has hit someone
         if self.velocity.length > 2000:
-            # global_vars.set_in_loop(
-            #     renderer.draw_line,
-            #     self._last_pos - Updated.world_position,
-            #     self.position - Updated.world_position,
-            #     (1, 1, 0)
-            # )
             entities_hit = multi_raycast_mask(
                 self,
                 Updated.sprites(),
@@ -182,13 +176,7 @@ class Bullet(ImageEntity):
 
             for other, pos in entities_hit:
                 if not is_related(self, other):
-                    # global_vars.set_in_loop(
-                    #     renderer.draw_circle,
-                    #     pos,
-                    #     4, 4,
-                    #     (1, 1, 0)
-                    # )
-                    # ic(other, pos)
+                    self.position = pos
 
                     try:
                         dmg = other.damage
@@ -258,7 +246,7 @@ class Bullet(ImageEntity):
                     self._explosion_radius * 2,
                     self._explosion_radius * 2
                 ),
-                position_reference=self
+                position=self.position.copy()
             )
 
             if self._explosion_radius > 64:
@@ -815,7 +803,7 @@ class Sniper(BaseWeapon):
             inaccuracy=.00500002,
             bullet_size=15,
             bullet_speed=2500,
-            bullet_damage=10,
+            bullet_damage=15,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,

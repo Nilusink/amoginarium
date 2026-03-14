@@ -36,7 +36,7 @@ class Animation(VisibleBaseEntity):
         self._current_image = 0
         self._current_t = delay
         self._textures = textures
-        self._size = convert_coord(size, Vec2)
+        self._size: Vec2 = convert_coord(size, Vec2)
         self._delay = delay
         self._loop = loop
         self._position = convert_coord(position, Vec2) if position is not ... \
@@ -106,7 +106,7 @@ class Animation(VisibleBaseEntity):
 
         renderer.draw_textured_quad(
             texture,
-            self.position - Updated.world_position - self._size / 2,
+            self.position - (self._size / 2) - Updated.world_position,
             self._size
         )
 
@@ -175,7 +175,7 @@ class ImageAnimation:
         """
         self._textures = []
         self._sizes = []
-        for texture, size in textures.get_all_from_scope(self._scope):
+        for texture, size in textures.get_all_from_scope(self._scope, size):
             self._textures.append(texture)
             self._sizes.append(Vec2().from_cartesian(*size))
 
