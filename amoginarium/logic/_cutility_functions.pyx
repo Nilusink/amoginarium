@@ -31,11 +31,11 @@ cpdef Vec2 raycast_mask(
 
         # trace line through entity
         for i in range(sample_rate):
-            delta = delta.mul_double(i).div(sample_rate).add_vec2(start) # TODO: rethink logic
+            d = delta.mul_double(i).div(sample_rate).add_vec2(start).sub_vec2(sprite_start)
 
             try:
-                if sprite.mask.get_at((delta.x, delta.y)):
-                    return sprite_start.add_vec2(delta)
+                if sprite.mask.get_at((d.x, d.y)):
+                    return sprite_start.add_vec2(d)
 
             except IndexError:
                 continue

@@ -30,7 +30,7 @@ from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
 from ..entities import Player, GrassIsland, GrayBrickIsland, Island
 from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
-from ..entities import PlatformIsland2
+from ..entities import PlatformIsland2, Radar
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC, timeit
 from ._scrolling_background import ParalaxBackground
@@ -67,6 +67,7 @@ SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
     "turret.static.mortar": MortarTurret,
     "turret.static.flak": FlakTurret,
     "turret.static.cram": CRAMTurret,
+    "sensor.static.radar": Radar,
     "instructions.text": TextEntity,
 }
 ISLANDS: dict[str, tp.Type[Island]] = {
@@ -427,8 +428,8 @@ class BaseGame:
 
             try:
                 SPAWNABLES[entity["type"]](
-                    Coalitions.red,
-                    Vec2().from_cartesian(*entity["pos"]),
+                    coalition=Coalitions.red,
+                    position=Vec2().from_cartesian(*entity["pos"]),
                     **args
                 )
 
@@ -597,7 +598,7 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        self.load_map("assets/maps/tutorial.json")
+        self.load_map("assets/maps/test.json")
 
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
         EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())

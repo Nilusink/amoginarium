@@ -8,3 +8,5 @@ from ._island_perks import create_moving_island
 from ._weapons import Bullet
 from ._player import Player
 from ._animation import Animation, ImageAnimation, explosion
+from ._sensors import BaseSensor, Radar
+

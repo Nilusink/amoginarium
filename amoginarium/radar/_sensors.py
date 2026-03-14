@@ -7,8 +7,10 @@ basic sensor prototypes
 Author:
 Nilusink
 """
+from icecream import ic
 import typing as tp
 
+from ..debugging import run_with_debug
 from ..logic import coord_t, convert_coord, Vec2
 from ..base._groups import Players, Bullets
 from ..render_bindings import renderer
@@ -36,6 +38,8 @@ class BaseSensor(VisibleBaseEntity):
         else:
             self._position_offset = convert_coord(position_offset, Vec2)
 
+        self._detection_group = None
+
         super().__init__(parent)
 
     @property
@@ -46,11 +50,20 @@ class BaseSensor(VisibleBaseEntity):
     def parent(self) -> GameEntity:
         return self._parent
 
-    def get_targets(self, from_entities: tp.Iterable[GameEntity] = None) -> list[GameEntity]:
+    def group_add(self, group) -> None:
+        self._detection_group = group
+
+    def get_targets(
+            self,
+            from_entities: tp.Iterable[GameEntity] = None
+    ) -> list[GameEntity]:
         raise NotImplementedError
 
-    # def update(self, delta: float) -> None:
-    #     pass
+    def kill(self, *_args, **_kwargs) -> None:
+        if self._detection_group:
+            self._detection_group.remove_sensor(self)
+
+        super().kill()
 
     def gl_draw(self, draw: bool = True) -> None:
         if self._visible and draw:

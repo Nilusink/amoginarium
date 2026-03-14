@@ -14,12 +14,12 @@ import typing as tp
 import pygame as pg
 import math as m
 
-from ..render_bindings import renderer
+from ..shared._entity_hints import PlayerLike, BaseEntityLike
 from ..logic import coord_t, convert_coord, Vec2
-from ..base._textures import textures
 from ..base import CollisionDestroyed, Updated
 from ._base_entity import PositionedEntity
-from ..shared._entity_hints import PlayerLike, BaseEntityLike
+from ..base._textures import textures
+from ..render_bindings import renderer
 from ._animation import Animation
 
 
@@ -87,6 +87,7 @@ class BaseItem(PositionedEntity):
         self._generate_collision_mask()
         self.update_rect()
 
+    # noinspection PyTypeChecker
     @property
     def parent(self) -> PlayerLike:
         return self._parent
@@ -124,7 +125,11 @@ class BaseItem(PositionedEntity):
         )
         self._mask_left_surf = surf
 
-        self._mask_right_surf = pg.transform.flip(self._mask_left_surf, True, False)
+        self._mask_right_surf = pg.transform.flip(
+            self._mask_left_surf,
+            True,
+            False
+        )
         self._update_mask()
 
     def _update_mask(self) -> None:
@@ -289,7 +294,7 @@ class Shield(BaseItem):
             if 90 < angle < 270:
                 renderer.draw_textured_quad(
                     self._image_texture_l,
-                    self.world_position, # + self._internal_offset,
+                    self.world_position,
                     size / 2,
                     rotate_angle=angle - 180
                 )
@@ -297,7 +302,7 @@ class Shield(BaseItem):
             else:
                 renderer.draw_textured_quad(
                     self._image_texture_r,
-                    self.world_position, # + self._internal_offset,
+                    self.world_position,
                     size / 2,
                     rotate_angle=angle
                 )
@@ -344,6 +349,7 @@ class HealingPotion(BaseItem):
 
     def update(self, delta: float) -> None:
         if self._drinking:
+            # noinspection PyTypeChecker
             heal = min(
                 self._uses_left,
                 self._heal_per_sec * delta
@@ -370,7 +376,8 @@ class HealingPotion(BaseItem):
         acc_mag, acc_angle = self.parent.acceleration.polar
         acc_angle *= 180/m.pi
 
-        acceleration += m.sin(m.radians(acc_angle)) * acc_mag * self.parent.acceleration.length / 500
+        acceleration += m.sin(m.radians(acc_angle)) * acc_mag \
+            * self.parent.acceleration.length / 500
 
         self._f_velocity += acceleration
         self._f_velocity *= damping
@@ -387,8 +394,8 @@ class HealingPotion(BaseItem):
         pos += self._position_offset
 
         offset = self._position_offset
-        # (self._position_offset * -1)) if 90 < angle < 270 else self._position_offset
 
+        # noinspection PyTypeChecker
         renderer.apply_stencil(
             renderer.draw_textured_quad,
             False,
@@ -398,11 +405,18 @@ class HealingPotion(BaseItem):
             rotate_angle=angle - (180 if 90 < angle < 270 else 0),
         )
 
-        fill_line = 5 + (self.size.y - 10) * (1 - self._uses_left / self._max_uses)
+        fill_line = 5 + (self.size.y - 10) \
+            * (1 - self._uses_left / self._max_uses)
         renderer.draw_polygon(
             [
-                self.world_position + offset + Vec2().from_cartesian(-self.size.x, self.size.y),
-                self.world_position + offset + Vec2().from_cartesian(2 * self.size.x, self.size.y),
+                self.world_position + offset + Vec2().from_cartesian(
+                    -self.size.x,
+                    self.size.y
+                ),
+                self.world_position + offset + Vec2().from_cartesian(
+                    2 * self.size.x,
+                    self.size.y
+                ),
                 self.world_position + offset + Vec2().from_cartesian(
                     self.size.x / 2, fill_line
                 ) + Vec2().from_polar(
@@ -426,7 +440,7 @@ class HealingPotion(BaseItem):
         if 90 < angle < 270:
             renderer.draw_textured_quad(
                 self._image_texture_l,
-                self.world_position + self._internal_offset + self._position_offset,
+                self.world_position+self._internal_offset+self._position_offset,
                 self._image_size,
                 rotate_angle=angle - 180
             )
@@ -434,7 +448,7 @@ class HealingPotion(BaseItem):
         else:
             renderer.draw_textured_quad(
                 self._image_texture_r,
-                self.world_position + self._internal_offset + self._position_offset,
+                self.world_position+self._internal_offset+self._position_offset,
                 self._image_size,
                 rotate_angle=angle
             )
@@ -456,7 +470,7 @@ class JetBag(BaseItem):
             return
 
         cls._animation_textures = [
-            t[0] for t in \
+            t[0] for t in
             textures.get_all_from_scope(
                 cls._animation_scope,
                 cls._animation_size
@@ -481,7 +495,8 @@ class JetBag(BaseItem):
 
     def _flame_position(self) -> Vec2:
         return self.position + Vec2().from_cartesian(
-            self.size.x / 2 + self._position_offset.x * (1 if self._facing else -1),
+            self.size.x / 2 + self._position_offset.x
+            * (1 if self._facing else -1),
             self.size.y / 2 + self._position_offset.y + 36
         )
 
@@ -504,6 +519,7 @@ class JetBag(BaseItem):
                 self._uses_left -= delta
 
                 if hasattr(self.parent, "_movement_acceleration"):
+                    # noinspection PyProtectedMember
                     recoil = Vec2().from_cartesian(
                         0,
                         -self.parent._movement_acceleration

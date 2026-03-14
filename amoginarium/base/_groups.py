@@ -341,7 +341,11 @@ class _HasBars(_BaseGroup):
                     weapon = sprite.item
 
                 else:
-                    weapon = sprite.weapon
+                    if hasattr(sprite, "weapon"):
+                        weapon = sprite.weapon
+
+                    else:
+                        continue
 
                 if not weapon:
                     continue

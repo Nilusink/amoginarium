@@ -276,7 +276,7 @@ class Player(LRImageEntity):
         """
         deal damage to the player
         """
-        # damage = 0
+        damage = 0
         self._hp -= damage
 
         if damage != 0:
@@ -608,6 +608,8 @@ class Player(LRImageEntity):
 
         # reset position / velocity
         self.position = self._initial_position.copy()
+        self._acceleration_to_add *= 0
+        self.acceleration *= 0
         self.velocity *= 0
 
         if pos is not ...:

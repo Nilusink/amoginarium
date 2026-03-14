@@ -223,6 +223,10 @@ class GameEntity(PositionedEntity):
             child.update(delta)
 
     def kill(self, killed_by: tp.Self = ...) -> None:
+        for child in self._children:
+            if hasattr(child, "kill"):
+                child.kill()
+
         super().kill()
 
 
