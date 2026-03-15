@@ -28,9 +28,7 @@ from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
     create_moving_island
 from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
-from ..entities import Player, GrassIsland, GrayBrickIsland, Island
-from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
-from ..entities import PlatformIsland2, Radar
+from ..entities import Player, GrassIsland, ISLANDS, Radar, SPAWNABLES
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC, timeit
 from ._scrolling_background import ParalaxBackground
@@ -58,26 +56,6 @@ def current_time() -> str:
     """
     ms = str(round(perf_counter(), 4)).split(".")[1]
     return f"{strftime('%H:%M:%S')}.{ms: <4} |> "
-
-
-SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
-    "turret.static.sniper": SniperTurret,
-    "turret.static.ak47": AkTurret,
-    "turret.static.minigun": MinigunTurret,
-    "turret.static.mortar": MortarTurret,
-    "turret.static.flak": FlakTurret,
-    "turret.static.cram": CRAMTurret,
-    "sensor.static.radar": Radar,
-    "instructions.text": TextEntity,
-}
-ISLANDS: dict[str, tp.Type[Island]] = {
-    "island.grass": GrassIsland,
-    "island.brick.gray": GrayBrickIsland,
-    "island.brick.green": GreenBrickIsland,
-    "island.pillar.1": PillarIsland,
-    "island.platform.1": PlatformIsland1,
-    "island.platform.2": PlatformIsland2,
-}
 
 
 class BaseGame:
@@ -340,6 +318,7 @@ class BaseGame:
     def root(self) -> tp.Self:
         return self
 
+    @run_with_debug()
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
         load a map from a json file

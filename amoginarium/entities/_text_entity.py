@@ -17,6 +17,8 @@ from ..base import Drawn, Updated
 
 
 class TextEntity(pg.sprite.Sprite):
+    __cid = "instructions.text"
+
     def __init__(
             self,
             coalition,
@@ -56,6 +58,10 @@ class TextEntity(pg.sprite.Sprite):
 
         # generate text surface once
         self._regenerate_surface()
+
+    @classmethod
+    def cid(cls) -> str:
+        return cls.__cid
 
     def _regenerate_surface(self) -> None:
         """

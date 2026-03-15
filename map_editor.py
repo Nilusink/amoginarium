@@ -16,14 +16,15 @@ from amoginarium.controllers import KeyboardController
 from amoginarium.base import BaseGame, Updated, CollisionDestroyed
 from amoginarium.ui import EventHandler, UIElement
 from amoginarium.shared import global_vars, VisibleGameEntityLike, Coalitions, \
-    GameEntityLike
+    GameEntityLike, IslandLike
 from amoginarium.logic import convert_coord, Vec2
-from amoginarium.entities import Player
+from amoginarium.map import save_map
 
 
 def main() -> None:
     base = BaseGame(debug=True)
-    base.load_map("assets/maps/tutorial.json")
+    base.load_map("test_map.json")
+    # base.load_map("test_map.json")
     base.running = False
 
     # k = KeyboardController.get()
@@ -33,6 +34,10 @@ def main() -> None:
     last_mouse_pos = None
     selected: GameEntityLike | None = None
     selected_offset: Vec2 | None = None
+
+    def handle_quit(_event):
+        save_map("test_map.json")
+        base.end()
 
     def handle_zoom(event):
         global_vars.pixel_per_meter *= 1 + event.y / 30
@@ -66,7 +71,6 @@ def main() -> None:
 
                 # move sprite
                 if selected:
-                    ic(selected_offset)
                     selected.position = x + Updated.world_position - selected_offset
                     selected.update_rect()
 
@@ -111,7 +115,7 @@ def main() -> None:
             else:
                 selected = None
 
-    EventHandler.add_event(pg.QUIT, callback=lambda e: base.end())
+    EventHandler.add_event(pg.QUIT, callback=handle_quit)
     EventHandler.add_event(pg.MOUSEWHEEL, callback=handle_zoom)
     EventHandler.add_event(pg.MOUSEBUTTONDOWN, callback=handle_mouse_down)
     EventHandler.add_event(pg.MOUSEBUTTONUP, callback=handle_mouse_up)

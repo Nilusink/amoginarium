@@ -120,6 +120,7 @@ class BaseDetector(VisibleGameEntity):
 
 
 class Radar(BaseDetector):
+    _cid = "sensor.static.radar"
     _body_texture_path: str | tuple[str, str] = "amogus64right"
     _body_texture_size: tuple[int, int] = (64, 64)
 
