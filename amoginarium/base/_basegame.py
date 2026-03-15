@@ -81,7 +81,7 @@ ISLANDS: dict[str, tp.Type[Island]] = {
 
 
 class BaseGame:
-    running: bool = True
+    running: bool = False
     _last_logic: float
     _bg_color: tuple[float, float, float]
     _instance: tp.Self = ...
@@ -154,7 +154,7 @@ class BaseGame:
         self._loading_screen_info = "Window init"
 
         # initialize background
-        self._background = ...
+        self._background: ParalaxBackground = ...
         self._bg_color = (0, 0, 0)
         self._background_player = BackgroundPlayer()
         self._background_player.volume = .6
@@ -602,8 +602,6 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        self.load_map("assets/maps/tutorial.json")
-
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
         EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
         EventHandler.add_event(pg.JOYDEVICEADDED, callback=self.__add_joystick)
@@ -882,18 +880,34 @@ class BaseGame:
         ic("pygame end")
         self.end()
 
+    def draw_entities_only(self) -> None:
+        """
+        only draw entities, no game updates or menus
+        """
+        glClearColor(0.0, 0.0, 0.1, 1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        self._background.draw(0)
+        Drawn.gl_draw()
+        HasBars.gl_draw()
+
+        pg.display.flip()
+        # clock.tick(global_vars.max_fps)
+
+    @run_with_debug()
     def _run_logic(self) -> None:
         """
         start game logic
         """
         last = perf_counter()
         last_fps_print = 0
+        sleep(3)
         while self.running:
             now = perf_counter()
 
             # minimum loop time of .5 ms (so the CPU isn't stressed too much)
-            while now - last < .0005:
-                now = perf_counter()
+            # while now - last < .00005:
+            #     now = perf_counter()
 
             delta = now - last
 
@@ -967,10 +981,11 @@ class BaseGame:
         """
         run the game
         """
+        self.running = True
         self._game_start = perf_counter()
 
         # self._pool.submit(self._run_logic)
-        self._pool.submit(self._run_comms)
+        # self._pool.submit(self._run_comms)
         self._run_pygame()
 
     @run_with_debug()

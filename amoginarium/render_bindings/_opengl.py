@@ -285,7 +285,7 @@ class OpenGLRenderer(BaseRenderer):
 
     def apply_stencil[**A](
             self,
-            stencil_func: tp.Callable[[A], tp.Any],
+            stencil_func: tp.Callable[A, tp.Any],
             show_stencil=False,
             *args: A.args,
             **kwargs: A.kwargs

@@ -102,6 +102,13 @@ class ParalaxBackground:
         """
         return -self._position * self._multiplier ** len(self._textures)
 
+    def set_position(self, position: float) -> None:
+        """
+        set the position of the top layer
+        """
+        self._position = -position / (self._multiplier ** len(self._textures))
+        # global_vars.background_position = self.position
+
     def scroll(self, value: float) -> None:
         """
         scroll by `value` pixels (first layer)
