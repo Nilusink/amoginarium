@@ -22,7 +22,7 @@ from ..render_bindings import renderer
 from ..base._textures import textures
 from ._base_entity import VisibleGameEntity
 from ..logic import Vec2, coord_t, convert_coord
-from ..base import Walls
+from ..base import Walls, Updated
 
 
 class _PolyMatcher:
@@ -255,11 +255,18 @@ class Island(VisibleGameEntity):
         start_pos = self.world_position
 
         # check if island is on screen
-        if any([
-            self.position.x > global_vars.screen_pixels.x + global_vars.world_position.x,
-            self.position.x + self.size.x < global_vars.world_position.x
+        if not any([
+            Updated.world_position.x < self.position.x,
+            self.position.x + self.size.x < Updated.world_position.x +
+            global_vars.screen_pixels.x,
+            Updated.world_position.y < self.position.y,
+            self.position.y + self.size.y < Updated.world_position.y +
+            global_vars.screen_pixels.y,
         ]):
             return
+
+        if self._highlight:
+            renderer.start_stencil(True)
 
         # fill island with dirt
         if self._form is ...:
@@ -549,6 +556,17 @@ class Island(VisibleGameEntity):
             ),
                 debug_surface
             )
+
+        if self._highlight:
+            renderer.enable_stencil(True)
+
+            renderer.draw_rect(
+                self.world_position - self.size / 2,
+                self.size * 2,
+                (1, 1, 1, .5)
+            )
+
+            renderer.disable_stencil()
 
 
 class GrassIsland(Island):

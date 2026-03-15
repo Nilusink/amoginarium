@@ -232,9 +232,16 @@ class GameEntity(PositionedEntity):
 
 class VisibleGameEntity(GameEntity):
     def __init__(self, *args, **kwargs) -> None:
+        self._highlight = False
         super().__init__(*args, **kwargs)
 
         self.add(Drawn)
+
+    def highlight(self) -> None:
+        self._highlight = True
+
+    def stop_highlight(self) -> None:
+        self._highlight = False
 
     def update_rect(self) -> None:
         self.rect = pg.Rect(

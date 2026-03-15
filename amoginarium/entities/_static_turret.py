@@ -384,6 +384,9 @@ class BaseTurret(VisibleGameEntity):
 
         engage_center = self.world_position + self.weapon.parent_position_offset
 
+        if self._highlight:
+            renderer.start_stencil(True)
+
         # weapon
         self.weapon.draw_at(
             self.position,
@@ -393,8 +396,19 @@ class BaseTurret(VisibleGameEntity):
         renderer.draw_textured_quad(
             self._body_texture,
             self.world_position - self.size / 2,
-            self.size.xy
+            self.size
         )
+
+        if self._highlight:
+            renderer.enable_stencil(True)
+
+            renderer.draw_rect(
+                self.world_position - self.size,
+                self.size * 2,
+                (1, 1, 1, .5)
+            )
+
+            renderer.disable_stencil()
 
         # draw engagement range
         if self._valid_angles is not ...:

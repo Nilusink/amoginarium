@@ -724,7 +724,7 @@ class BaseWeapon:
                 rotate_anchor=self._image_rotate_anchor
             )
 
-        renderer.draw_circle(position - offset, 4, 4, (1, 1, 0))
+        renderer.draw_circle(position - offset - Updated.world_position, 4, 4, (1, 1, 0))
 
 
 class Minigun(BaseWeapon):
