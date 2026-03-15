@@ -2,6 +2,8 @@
 amoginarium/entities/_ui/_ui_group.py
 
 Project: amoginarium
+Created: 10.03.2026
+Authors: LukasKrah
 """
 
 from ..entities import _BaseGroup

@@ -2,6 +2,8 @@
 amoginarium/ui/_rectangle.py
 
 Project: amoginarium
+Created: 01.03.2026
+Authors: LukasKrah
 """
 
 ##################################################

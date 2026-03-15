@@ -2,6 +2,8 @@
 amoginarium/ui/_pointer.py
 
 Project: amoginarium
+Created: 11.03.2026
+Authors: LukasKrah
 """
 
 from ._component import UIComponent

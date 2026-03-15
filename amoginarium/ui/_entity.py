@@ -2,15 +2,16 @@
 amoginarium/entities/_ui/_ui_entity.py
 
 Project: amoginarium
+Created: 10.03.2026
+Authors: LukasKrah
 """
 
 from __future__ import annotations
 
-from ._group import UIGroup
-from ..entities import BaseEntity
-
-import pygame as pg
 import typing as tp
+
+from ..entities import BaseEntity
+from ._group import UIGroup
 
 
 ##################################################
@@ -19,7 +20,7 @@ import typing as tp
 
 class UIEntity(BaseEntity):
     """
-    Basically UI-Element, no UI, just basic logic
+    Base UI-Entity, no UI, just default entity relation / method stuff
     """
 
     __group: UIGroup | None

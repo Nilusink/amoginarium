@@ -2,6 +2,8 @@
 amoginarium/ui/__init__.py
 
 Project: amoginarium
+Created: 26.03.2024
+Authors: Nilusink, LukasKrah
 """
 
 from ._animation import Animation, MultiAnimation, AnimationPhase

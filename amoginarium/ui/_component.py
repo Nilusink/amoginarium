@@ -2,6 +2,8 @@
 amoginarium/entities/_ui/_ui_component.py
 
 Project: amoginarium
+Created: 10.03.2026
+Authors: LukasKrah
 """
 
 from __future__ import annotations
@@ -224,12 +226,6 @@ class UIComponent(UIEntity):
             if self.is_hovered is None:  # DO NOT CHANGE - this triggers an update
                 if self.is_hovered_in_buffer is None:
                     return
-                return
-
-            if self.__is_hovered_last is None:
-                return
-
-            if self.__is_hovered_buffer_last is None:
                 return
 
             if self.is_hovered_in_buffer and not self.__is_hovered_buffer_last:
