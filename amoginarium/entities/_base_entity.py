@@ -15,8 +15,15 @@ import pygame as pg
 import typing as tp
 import math as m
 
+from ..debugging import print_ic_style, CC
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
+from ..logic import Vec2
+from ..base import Updated, Drawn
+from amoginarium.shared._entity_hints import BaseEntityLike
+
+
+_next_entity_id = 0
 from ..logic import Vec2, rk4_update
 from ._groups import Updated, Drawn
 
@@ -29,16 +36,18 @@ class BaseEntity(pg.sprite.Sprite):
     """
     __next_entity_id: int = 0  # class var
 
-    _parent: BaseEntity | None = None  # instance var
-    _children: list[BaseEntity] | None = None  # instance var
-    _root: BaseEntity | None = None  # instance var
+    _children: list[BaseEntityLike] = ...
+    _current_t: float = 0
+    _parent: BaseEntityLike | None = None
+    _root: BaseEntityLike | None = None
 
-    def __init__(self, parent: BaseEntity | None = None) -> None:
+    def __init__(self, parent: BaseEntityLike | None = None) -> None:
         """
         Init BaseEntity
         :param parent: parent entity (optional)
         """
         super().__init__()
+        self._children: list[BaseEntity] = []
 
         self.__id = BaseEntity.__next_entity_id
         BaseEntity.__next_entity_id += 1
@@ -51,7 +60,7 @@ class BaseEntity(pg.sprite.Sprite):
         return self.__id
 
     @property
-    def parent(self) -> BaseEntity | None:
+    def parent(self) -> BaseEntityLike:
         """:return: Parent entity or None"""
         return self._parent
 
@@ -61,9 +70,19 @@ class BaseEntity(pg.sprite.Sprite):
         return self._parent.root if self._parent else self
 
     @property
-    def children(self) -> list[BaseEntity] | None:
+    def children(self) -> list[BaseEntityLike] | None:
         """return: List of children or None"""
         return self._children
+
+    def update(self, delta: float) -> None:
+        self._current_t += delta
+
+
+class VisibleBaseEntity(BaseEntity):
+    def gl_draw(self) -> None:
+        for child in self._children:
+            if hasattr(child, "gl_draw"):
+                child.gl_draw()
 
 
 class PositionedEntity(BaseEntity):
@@ -77,7 +96,7 @@ class PositionedEntity(BaseEntity):
             self,
             position: Vec2,
             size: Vec2,
-            parent: BaseEntity | None = None
+            parent: BaseEntityLike = ...
     ) -> None:
         super().__init__(parent=parent)
 
@@ -112,6 +131,7 @@ class PositionedEntity(BaseEntity):
 
 
 class GameEntity(PositionedEntity):
+    _cid: str = ...
     facing: Vec2
     position: Vec2
     velocity: Vec2
@@ -124,15 +144,16 @@ class GameEntity(PositionedEntity):
             initial_position: Vec2 = ...,
             initial_velocity: Vec2 = ...,
             coalition: tp.Any = ...,
-            parent: BaseEntity = ...
+            parent: BaseEntityLike = ...
     ) -> None:
         self._coalition = coalition
 
-        size = Vec2.from_cartesian(1, 1) if size is ... else size
-        self.facing = Vec2.from_cartesian(1, 0) if facing is ... else facing
+        size = Vec2().from_cartesian(1, 1) if size is ... else size
+        self.facing = Vec2().from_cartesian(1, 0) if facing is ... else facing
         position = Vec2() if initial_position is ... else initial_position
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
+        self._acceleration_to_add = Vec2()
 
         super().__init__(position, size, parent)
 
@@ -162,6 +183,35 @@ class GameEntity(PositionedEntity):
     def coalition(self) -> tp.Any:
         return self._coalition
 
+    @classmethod
+    def cid(cls) -> str:
+        if cls._cid is ...:
+            raise ValueError("__cid is not defined for " + cls.__name__)
+
+        return cls._cid
+
+    @property
+    def serializable(self) -> bool:
+        return hasattr(self, "_cid")
+
+    def to_dict(self) -> dict:
+        if not hasattr(self, "_cid"):
+            print_ic_style(
+                f"{CC.fg.RED}Entity of type {self.__class__.__name__} is not"
+                f"serializable{CC.ctrl.ENDL}",
+            )
+
+        return {
+            "type": self.cid(),
+            "pos": self.position
+        }
+
+    def add_acceleration(self, value: Vec2) -> None:
+        """
+        add acceleration to the entity and guarantee that it will be valid
+        """
+        self._acceleration_to_add += value
+
     def _generate_collision_mask(self) -> None:
         """
         generate the mask used for precise collision
@@ -190,6 +240,9 @@ class GameEntity(PositionedEntity):
         #     acc_func,
         #     delta
         # )
+        self.acceleration += self._acceleration_to_add
+        self._acceleration_to_add *= 0
+
         # update velocity and position
         self.velocity += self.acceleration * delta
         self.position += self.velocity * delta
@@ -200,15 +253,32 @@ class GameEntity(PositionedEntity):
 
         self.update_rect()
 
+        super().update(delta)
+
+        # update children
+        for child in self._children:
+            child.update(delta)
+
     def kill(self, killed_by: tp.Self = ...) -> None:
+        for child in self._children:
+            if hasattr(child, "kill"):
+                child.kill()
+
         super().kill()
 
 
 class VisibleGameEntity(GameEntity):
     def __init__(self, *args, **kwargs) -> None:
+        self._highlight = False
         super().__init__(*args, **kwargs)
 
         self.add(Drawn)
+
+    def highlight(self) -> None:
+        self._highlight = True
+
+    def stop_highlight(self) -> None:
+        self._highlight = False
 
     def update_rect(self) -> None:
         self.rect = pg.Rect(
@@ -219,9 +289,9 @@ class VisibleGameEntity(GameEntity):
         )
 
     def gl_draw(self) -> None:
-        raise NotImplementedError(
-            f"gl_draw wasn't implemented for \"{self.__class__.__name__}\""
-        )
+        for child in self._children:
+            if hasattr(child, "gl_draw"):
+                child.gl_draw()
 
 
 class ImageEntity(VisibleGameEntity):
@@ -248,6 +318,7 @@ class ImageEntity(VisibleGameEntity):
             ),
             rotate_angle=self.velocity.angle * (180 / m.pi)
         )
+        super().gl_draw()
 
 
 class LRImageEntity(VisibleGameEntity):
@@ -263,3 +334,4 @@ class LRImageEntity(VisibleGameEntity):
             self.world_position - self.size / 2,
             self.size
         )
+        super().gl_draw()

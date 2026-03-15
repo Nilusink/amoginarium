@@ -7,7 +7,6 @@
             "pos": [10, 740],
             "size": [64, 64]
         },
-
         {
             "pos": [0, 800],
             "size": [2048, 64]
@@ -96,7 +95,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.cram",
+            "type": "turret.static.ak47",
             "pos": [1700, 805]
         },
         {
@@ -178,7 +177,7 @@
         },
         {
             "type": "turret.static.ak47",
-            "pos": [10500, 820]
+            "pos": [10500, 805]
         },
         {
             "type": "instructions.text",

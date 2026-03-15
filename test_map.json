@@ -1,0 +1,178 @@
+{
+    "name": "test",
+    "background": 2,
+    "spawn_pos": [100, 600],
+    "platforms": [
+        {
+            "args": {
+                "pos": [10, 740],
+                "size": [64, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [0, 800],
+                "size": [2048, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [2300, 700],
+                "size": [600, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [3000, 800],
+                "size": [200, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [3400, 760],
+                "size": [300, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [4096, 800],
+                "size": [1024, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [5600, 500],
+                "form": [
+                    [0, 0, 0, 1],
+                    [0, 0, 1, 0],
+                    [0, 0, 1, 1],
+                    [0, 1, 1, 1, 1],
+                    [0, 1, 1, 2, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1]
+                ]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [6144, 800],
+                "size": [2048, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [8192, 800],
+                "size": [2048, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [9300, 544],
+                "form": [
+                    [0, 1],
+                    [0, 1],
+                    [1, 1]
+                ]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [10240, 800],
+                "size": [2048, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [12288, 750],
+                "size": [2048, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [14336, 800],
+                "size": [1024, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [16384, 800],
+                "size": [2048, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [18432, 800],
+                "size": [1300, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [20100, 700],
+                "size": [256, 64]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [20500, 800],
+                "form": [
+                    [1, 0, 0, 0, 1, 1],
+                    [1, 1, 1, 1, 1, 0],
+                    [0, 0, 1, 1, 0, 0]
+                ]
+            },
+            "type": "island.grass"
+        },
+        {
+            "args": {
+                "pos": [21500, 600],
+                "form": [
+                    [0, 1, 1, 0, 0, 1],
+                    [0, 0, 0, 0, 1, 1],
+                    [1, 1, 1, 1, 1, 0]
+                ]
+            },
+            "type": "island.grass"
+        }
+    ],
+    "entities": [
+        {
+            "type": "turret.static.ak47",
+            "pos": [1458.7637362637352, 517.6208791208794]
+        },
+        {
+            "type": "turret.static.mortar",
+            "pos": [6000, 686]
+        },
+        {
+            "type": "turret.static.ak47",
+            "pos": [10500, 757]
+        },
+        {
+            "type": "turret.static.cram",
+            "pos": [16200, 558]
+        },
+        {
+            "type": "turret.static.mortar",
+            "pos": [16300, 596]
+        },
+        {
+            "type": "turret.static.flak",
+            "pos": [21500, 268]
+        }
+    ]
+}

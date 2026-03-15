@@ -17,16 +17,21 @@ from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
 from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
 from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
-from OpenGL.GL import glTranslated
+from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
+from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
+from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
+from OpenGL.GL import glGetIntegerv, GL_STENCIL_BITS, GL_ALPHA_TEST, GL_FALSE
+from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
 from PIL import Image
 import pygame as pg
+import typing as tp
 import numpy as np
 import math as m
 
-from ..logic import Vec2, Color, convert_coord
+from ..logic import Vec2, Color, convert_coord, normalize_angle
 from ._base_renderer import BaseRenderer, tColor
 from ..shared import global_vars
 
@@ -56,7 +61,7 @@ class OpenGLRenderer(BaseRenderer):
             self._fonts[size] = []
 
         # no font found, create new
-        new_font = pg.font.SysFont(family, size, bold, italic)
+        new_font = pg.font.SysFont(family, int(size), bold, italic)
         self._fonts[size].append(new_font)
 
         return new_font
@@ -80,9 +85,13 @@ class OpenGLRenderer(BaseRenderer):
         window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
 
         # set global screen size and ppm
-        global_vars.screen_size = Vec2.from_cartesian(*window_size)
-        global_vars.screen_size_real = Vec2.from_cartesian(*window_size)
-        global_vars.resolution = Vec2.from_cartesian(*window_size)
+        global_vars.screen_size = Vec2().from_cartesian(*window_size)
+        global_vars.screen_size_real = Vec2().from_cartesian(
+            screen_info.current_w,
+            screen_info.current_h
+        )
+        ic(global_vars.screen_size_real.xy)
+        global_vars.resolution = Vec2().from_cartesian(*window_size)
         global_vars.screen_size_fac_x = 1
         global_vars.screen_size_offset_x = 0
         global_vars.screen_size_fac_y = 1
@@ -92,11 +101,13 @@ class OpenGLRenderer(BaseRenderer):
         # set max fps to monitor refresh rate
         global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
 
+        pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode(
             global_vars.screen_size.xy,
             DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
         )
         # self.font = pg.font.SysFont(None, 24)
+        # request stencil buffer
         pg.display.set_caption(title)
 
         # initialize OpenGL stuff
@@ -144,8 +155,8 @@ class OpenGLRenderer(BaseRenderer):
         """
         check if a rect is on the screen
         """
-        pos = convert_coord(pos, Vec2)
-        size = convert_coord(size, Vec2)
+        # pos = convert_coord(pos, Vec2)
+        # size = convert_coord(size, Vec2)
 
         return False
 
@@ -225,10 +236,11 @@ class OpenGLRenderer(BaseRenderer):
         else:
             rotate_anchor = convert_coord(rotate_anchor, Vec2)
 
-        # convert to screen realtive coords and size
+        # convert to screen relative coords and size
         if convert_global:
             pos = global_vars.translate_screen_coord(pos)
             size = global_vars.translate_scale(size)
+            rotate_anchor = global_vars.translate_scale(rotate_anchor)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(pos, size):
@@ -271,13 +283,88 @@ class OpenGLRenderer(BaseRenderer):
 
         # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
 
+    def apply_stencil[**A](
+            self,
+            stencil_func: tp.Callable[A, tp.Any],
+            show_stencil=False,
+            *args: A.args,
+            **kwargs: A.kwargs
+    ) -> None:
+        self.start_stencil(show_stencil)
+
+        stencil_func(*args, **kwargs)
+
+        self.enable_stencil(show_stencil)
+
+    @staticmethod
+    def start_stencil(show_stencil=False):
+        """
+        call this, then draw stencil, then draw enable_stencil
+        """
+        glEnable(GL_STENCIL_TEST)
+        glClear(GL_STENCIL_BUFFER_BIT)
+
+        glStencilFunc(GL_ALWAYS, 1, 0xFF)
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE)
+        glStencilMask(0xFF)
+
+        glEnable(GL_ALPHA_TEST)
+        glAlphaFunc(GL_GREATER, 0.01)
+
+        if not show_stencil:
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)  # if mask invis
+
+    @staticmethod
+    def enable_stencil(show_stencil=False):
+        """
+        start_stencil must be called first
+        """
+        if not show_stencil:
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
+
+        glStencilMask(0x00)
+        glStencilFunc(GL_EQUAL, 1, 0xFF)
+
+    def disable_stencil(self) -> None:
+        glDisable(GL_STENCIL_TEST)
+        glStencilMask(0xFF)
+        glStencilFunc(GL_ALWAYS, 0, 0xFF)
+
+    def draw_polygon(
+            self,
+            vertices,
+            color,
+            center=None,
+            convert_global=True
+    ):
+        vertices = [convert_coord(v, Vec2) for v in vertices]
+
+        if convert_global:
+            vertices = [
+                global_vars.translate_screen_coord(v) for v in vertices
+            ]
+
+        glLoadIdentity()  # reset previous glTranslate statements
+        if center is not None:
+            center = convert_coord(center, tuple)
+            glTranslate(center[0], center[1], 0)
+
+        self.set_color(color)
+
+        glBegin(GL_POLYGON)
+
+        for vertice in vertices:
+            glVertex2f(*vertice.xy)
+
+        glEnd()
+
     def draw_circle(
             self,
             center,
             radius,
             num_segments,
             color,
-            convert_global=True
+            convert_global=True,
     ):
         center = convert_coord(center, Vec2)
 
@@ -301,6 +388,47 @@ class OpenGLRenderer(BaseRenderer):
             cosine = radius * np.cos(i * 2 * np.pi / num_segments)
             sine = radius * np.sin(i * 2 * np.pi / num_segments)
             glVertex2f(cosine, sine)
+
+        glEnd()
+
+    def draw_line_circle(
+            self,
+            center,
+            radius,
+            num_segments,
+            color,
+            thickness=1,
+            convert_global=True,
+    ):
+        center = convert_coord(center, Vec2)
+
+        # convert to screen realtive coords and size
+        if convert_global:
+            center = global_vars.translate_screen_coord(center)
+            radius = global_vars.translate_scale(radius)
+
+        # only draw if on screen
+        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
+            return
+
+        glLoadIdentity()  # reset previous glTranslate statements
+        glTranslate(center.x, center.y, 0)
+
+        self.set_color(color)
+
+        glBegin(GL_TRIANGLE_STRIP)
+
+        inner = radius
+        outer = radius + thickness
+
+        angle_step = 2 * np.pi / num_segments
+        for i in range(num_segments + 1):
+            angle = i * angle_step
+            c = np.cos(angle)
+            s = np.sin(angle)
+
+            glVertex2f(outer * c, outer * s)
+            glVertex2f(inner * c, inner * s)
 
         glEnd()
 
@@ -328,8 +456,8 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         angle_delta = (
-                Vec2.normalize_angle(angle_end.angle)
-                - Vec2.normalize_angle(angle_start.angle)
+                normalize_angle(angle_end.angle)
+                - normalize_angle(angle_start.angle)
         )
 
         glLoadIdentity()  # reset previous glTranslate statements
@@ -342,7 +470,7 @@ class OpenGLRenderer(BaseRenderer):
 
         for i in range(num_segments + 1):
             angle = angle_start.angle + (i / num_segments) * angle_delta
-            pos = Vec2.from_polar(
+            pos = Vec2().from_polar(
                 angle,
                 radius
             )
@@ -363,6 +491,10 @@ class OpenGLRenderer(BaseRenderer):
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, size):
             return
+
+        if convert_global:
+            start = global_vars.translate_screen_coord(start)
+            size = global_vars.translate_scale(size)
 
         glLoadIdentity()  # reset previous glTranslate statements
         glTranslate(start.x, start.y, 0)
@@ -445,7 +577,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
             return
 
-        angle_delta = Vec2.normalize_angle(
+        angle_delta = normalize_angle(
                 angle_end.angle - angle_start.angle
         ) / 2
 
@@ -461,11 +593,11 @@ class OpenGLRenderer(BaseRenderer):
             angle1 = angle_start.angle + (i1 / num_segments) * angle_delta
             angle2 = angle_start.angle + (i2 / num_segments) * angle_delta
 
-            pos1 = Vec2.from_polar(
+            pos1 = Vec2().from_polar(
                 angle1,
                 1
             )
-            pos2 = Vec2.from_polar(
+            pos2 = Vec2().from_polar(
                 angle2,
                 1
             )
@@ -493,7 +625,7 @@ class OpenGLRenderer(BaseRenderer):
 
         if convert_global:
             start = global_vars.translate_screen_coord(start)
-            end = global_vars.translate_scale(end)
+            end = global_vars.translate_screen_coord(end)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, end - start):
@@ -592,12 +724,19 @@ class OpenGLRenderer(BaseRenderer):
             font_size=64,
             font_family="arial",
             bold=False,
-            italic=False
+            italic=False,
+            convert_global=True
     ):
         if not isinstance(bg_color, Color):
             bg_color = self.set_color(bg_color)
         if not isinstance(color, Color):
             color = self.set_color(color)
+
+        pos = convert_coord(pos, Vec2)
+
+        if convert_global:
+            pos = global_vars.translate_screen_coord(pos)
+            font_size = global_vars.translate_scale(font_size)
 
         # weird conversion because pygame is ass
         text_surface: pg.Surface = self.generate_pg_surf_text(
@@ -632,8 +771,14 @@ class OpenGLRenderer(BaseRenderer):
             bg_color.rgb255 if bg_color.a > 125 else None
         )
 
-    def draw_pg_surf(self, pos, surface, centered=False):
+    def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):
         pos = convert_coord(pos, Vec2)
+
+        pos = convert_coord(pos, Vec2)
+
+        if convert_global:
+            pos = global_vars.translate_screen_coord(pos)
+            # font_size = global_vars.translate_scale(font_size)
 
         text_data = pg.image.tostring(surface, "RGBA", True)
         text_size: tuple[int, int] = surface.get_size()

@@ -9,18 +9,21 @@ Nilusink
 """
 from contextlib import suppress
 from time import perf_counter
-import typing as tp
-
 from icecream import ic
+import typing as tp
 
 from ._groups import HasBars, CollisionDestroyed, Players, Updated, Bullets
 from ._groups import GravityAffected
+from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
+    GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
-    calculate_launch_angle_iterative
+    normalize_angle
 from ._base_entity import VisibleGameEntity
-from ..render_bindings import renderer
+from ..radar import RadarSensor, BaseSensor, VisualSensor, DetectionGroup, \
+    DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
 from ..shared import global_vars, Coalitions
+from ..render_bindings import renderer
 from ..base._textures import textures
 
 
@@ -28,8 +31,6 @@ class BaseTurret(VisibleGameEntity):
     size: Vec2
     weapon: BaseWeapon
     _body_texture: int = ...
-    # _body_texture_path: str = "static_turret_base"
-    # _body_texture_size: tuple[int, int] = (64, 64)
     _body_texture_path = "mortar_turret_base"
     _body_texture_size = (23, 24)
     _weapon_texture: int | None = ...
@@ -70,7 +71,8 @@ class BaseTurret(VisibleGameEntity):
             intercept_bullets: bool = False,
             intercept_players: bool = True,
             target_taps: int = -1,
-            valid_angles: tuple[Vec2, Vec2] = ...
+            valid_angles: tuple[Vec2, Vec2] = ...,
+            sensors: tp.Iterable[BaseSensor] = None
     ) -> None:
         self._set_pos = position.copy()
         position.y -= size.y / 2
@@ -83,7 +85,7 @@ class BaseTurret(VisibleGameEntity):
         self.intercept_players = intercept_players
         self.available_targets = {}
         self._last_shot = perf_counter()
-        self._aiming_at = Vec2.from_cartesian(-1, 0)
+        self._aiming_at = Vec2().from_cartesian(-1, 0)
         self._valid_angles = valid_angles
         if self._valid_angles is not ...:
             self._valid_angles[0].length = self.engagement_range
@@ -107,6 +109,13 @@ class BaseTurret(VisibleGameEntity):
 
         self.add(CollisionDestroyed, HasBars)
 
+        # create detection sensor
+        self._sphere = []
+        if sensors is not None:
+            for sensor in sensors:
+                self._children.append(sensor)
+                self.detection_group.add_sensor(sensor)
+
     @property
     def max_hp(self) -> int:
         return self._max_hp
@@ -114,6 +123,16 @@ class BaseTurret(VisibleGameEntity):
     @property
     def hp(self) -> int:
         return self._hp
+
+    @property
+    def detection_group(self) -> DetectionGroup:
+        if self.coalition == Coalitions.red:
+            return DETECTION_GLOBAL_RED
+
+        elif self.coalition == Coalitions.blue:
+            return DETECTION_GLOBAL_BLUE
+
+        return DETECTION_GLOBAL_NEUTRAL
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
@@ -159,15 +178,15 @@ class BaseTurret(VisibleGameEntity):
         self.weapon.update(delta)
 
         # scan for targets and engage the closest one
-        targets = []
-        if self.intercept_players:
-            # only add living players
-            targets.extend(
-                [p for p in Players.sprites() if p.alive]
-            )
+        targets = self.detection_group.targets
 
-        if self.intercept_bullets:
-            targets.extend(Bullets.sprites())
+        # only check targets that are supposed to be engaged
+        targets = [
+            t for t in targets if any([
+                t in Players.sprites() if self.intercept_players else False,
+                t in Bullets.sprites() if self.intercept_bullets else False
+            ])
+        ]
 
         # only check targets inside engagement envelope
         if self._valid_angles is not ...:
@@ -284,11 +303,9 @@ class BaseTurret(VisibleGameEntity):
 
         # try to predict where the player is going to be
         with suppress(ValueError):
-            magic = player_velocity.length > self.weapon._bullet_speed
-
             aiming_angle, tof, predict = calculate_launch_angle(
                 position_delta,
-                player_velocity * .9 if 0 else player_velocity,
+                player_velocity,
                 player_acceleration,
                 self.weapon.bullet_speed,
                 16,
@@ -311,7 +328,7 @@ class BaseTurret(VisibleGameEntity):
                 return
 
             if self._valid_angles is not ...:
-                angle_delta = Vec2.normalize_angle(
+                angle_delta = normalize_angle(
                     self._valid_angles[1].angle
                     - self._valid_angles[0].angle
                 )
@@ -357,13 +374,18 @@ class BaseTurret(VisibleGameEntity):
         # only draw if on screen
         if not any([
             Updated.world_position.x < self.position.x - self.size.x / 2,
-            self.position.x + self.size.x / 2 < Updated.world_position.x + 1920,
+            self.position.x + self.size.x / 2 < Updated.world_position.x +
+            global_vars.screen_pixels.x,
             Updated.world_position.y < self.position.y - self.size.y / 2,
-            self.position.y + self.size.y / 2 < Updated.world_position.y + 1080,
+            self.position.y + self.size.y / 2 < Updated.world_position.y +
+            global_vars.screen_pixels.y,
         ]):
             return
 
         engage_center = self.world_position + self.weapon.parent_position_offset
+
+        if self._highlight:
+            renderer.start_stencil(True)
 
         # weapon
         self.weapon.draw_at(
@@ -374,8 +396,19 @@ class BaseTurret(VisibleGameEntity):
         renderer.draw_textured_quad(
             self._body_texture,
             self.world_position - self.size / 2,
-            self.size.xy
+            self.size
         )
+
+        if self._highlight:
+            renderer.enable_stencil(True)
+
+            renderer.draw_rect(
+                self.world_position - self.size,
+                self.size * 2,
+                (1, 1, 1, .5)
+            )
+
+            renderer.disable_stencil()
 
         # draw engagement range
         if self._valid_angles is not ...:
@@ -397,7 +430,7 @@ class BaseTurret(VisibleGameEntity):
                 Color.white()
             )
 
-            angle_delta = abs(Vec2.normalize_angle(
+            angle_delta = abs(normalize_angle(
                 self._valid_angles[1].angle
                 - self._valid_angles[0].angle
             ))
@@ -472,25 +505,41 @@ class BaseTurret(VisibleGameEntity):
                         Color.from_255(50, 200, 0, 100)
                     )
 
+        super().gl_draw()
+
+        # debug_surface = self.mask.to_surface()
+        # renderer.draw_pg_surf(
+        #     (
+        #         self.rect.x - Updated.world_position.x,
+        #         self.rect.y - Updated.world_position.y + self.size.y
+        #     ),
+        #     debug_surface
+        # )
+
 
 class SniperTurret(BaseTurret):
+    _cid = "turret.static.sniper"
     _max_hp: int = 40
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
-        self._coalition = coalition  # needed becauuse the weapon wants it
+        self._coalition = coalition  # needed because the weapon wants it
         weapon = Sniper(self, True, parent_position_offset=(0, -13))
         weapon.reload(True)
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(31, 32),
+            Vec2().from_cartesian(31, 32),
             position,
             weapon,
-            2400
+            2400,
+            sensors=[
+                VisualSensor(self, 2500, sphere_accuracy=256)
+            ]
         )
 
 
 class AkTurret(BaseTurret):
+    _cid = "turret.static.ak47"
     _max_hp: int = 60
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
@@ -500,14 +549,18 @@ class AkTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(31, 32),
+            Vec2().from_cartesian(31, 32),
             position,
             weapon,
-            1500
+            1500,
+            sensors=[
+                VisualSensor(self, 1500)
+            ]
         )
 
 
 class MinigunTurret(BaseTurret):
+    _cid = "turret.static.minigun"
     _max_hp: int = 60
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
@@ -517,14 +570,18 @@ class MinigunTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(48, 48),
+            Vec2().from_cartesian(48, 48),
             position,
             weapon,
-            1200,
+            2000,
+            sensors=[
+                VisualSensor(self, 1500)
+            ]
         )
 
 
 class MortarTurret(BaseTurret):
+    _cid = "turret.static.mortar"
     _max_hp: int = 90
     _aim_type = "high"
     _body_texture_path = "mortar_turret_base"
@@ -546,14 +603,18 @@ class MortarTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(23 * 1.5, 24 * 1.5),
+            Vec2().from_cartesian(23 * 1.5, 24 * 1.5),
             position,
             weapon,
             1800,
+            sensors=[
+                RadarSensor(self, 1500)
+            ]
         )
 
 
 class FlakTurret(BaseTurret):
+    _cid = "turret.static.flak"
     _max_hp: int = 170
     _body_texture_path = "FLAK_base"
     _body_texture_size = (98, 44)
@@ -566,22 +627,26 @@ class FlakTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(*self._body_texture_size) * 2,
+            Vec2().from_cartesian(*self._body_texture_size) * 2,
             position,
             weapon,
-            1750,
+            1850,
             300,
             airburst_munition=True,
             intercept_bullets=False,
             target_taps=2,
             valid_angles=(
-                Vec2.from_cartesian(-1, .3),
-                Vec2.from_cartesian(-.1, -1)
-            )
+                Vec2().from_cartesian(-1, .3),
+                Vec2().from_cartesian(-.1, -1)
+            ),
+            sensors=[
+                VisualSensor(self, 1700)
+            ]
         )
 
 
 class CRAMTurret(BaseTurret):
+    _cid = "turret.static.cram"
     _max_hp: int = 60
     _body_texture_path = "CRAM_base"
     _body_texture_size = (64, 128)
@@ -598,17 +663,25 @@ class CRAMTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2.from_cartesian(64, 128),
+            Vec2().from_cartesian(64, 128),
             position,
             weapon,
-            1400,
+            1900,
             150,
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
             target_taps=4,
             valid_angles=(
-                Vec2.from_cartesian(-.5, 1),
-                Vec2.from_cartesian(.5, 1)
-            )
+                Vec2().from_cartesian(-.5, 1),
+                Vec2().from_cartesian(.5, 1)
+            ),
+            sensors=[
+                RadarSensor(
+                    self,
+                    1500,
+                    sphere_accuracy=256,
+                    min_rcs=.04
+                )
+            ]
         )

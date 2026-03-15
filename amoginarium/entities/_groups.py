@@ -17,8 +17,10 @@ import typing as tp
 import numpy as np
 from icecream import ic
 
-from ..logic import Vec2, is_related, Color, coord_t, convert_coord
+from ..logic import Vec2, is_related, Color, coord_t, convert_coord, \
+    raycast_mask, normalize_angle
 from ..render_bindings import renderer
+from ..shared import GameEntityLike
 from ..debugging import timeit
 
 
@@ -63,7 +65,7 @@ class _BaseGroup(pg.sprite.Group):
             min_radius: float = 0
     ):
         out = []
-        angle_delta = Vec2.normalize_angle(
+        angle_delta = normalize_angle(
             angle_end.angle
             - angle_start.angle
         )
@@ -74,7 +76,7 @@ class _BaseGroup(pg.sprite.Group):
             delta = sprite.position - center
 
             if min_radius <= delta.length <= radius:
-                delta.angle = Vec2.normalize_angle(delta.angle)
+                delta.angle = normalize_angle(delta.angle)
                 if any([
                     angle_start.angle < delta.angle < start2,
                     angle_end.angle > delta.angle > end2,
@@ -134,7 +136,20 @@ class _Drawn(_BaseGroup):
 
 
 class _Walls(_BaseGroup):
-    ...
+    # @timeit(10)
+    def walls_in_line(
+            self,
+            start: coord_t,
+            end: coord_t
+    ) -> list:
+        start = convert_coord(start, tuple)
+        end = convert_coord(end, tuple)
+        walls_hit = []
+        for wall in self.sprites():
+            if raycast_mask(wall, start, end, 2):
+                walls_hit.append(wall)
+
+        return walls_hit
 
 
 class _Players(_BaseGroup):
@@ -174,7 +189,7 @@ class _Players(_BaseGroup):
         :returns: min, max
         """
         max_pos = Vec2()
-        min_pos = Vec2.from_cartesian(np.inf, 0)
+        min_pos = Vec2().from_cartesian(np.inf, 0)
 
         for sprite in self.sprites():
             if sprite.position.x > max_pos.x:
@@ -318,27 +333,56 @@ class _HasBars(_BaseGroup):
 
                 renderer.draw_rect(
                     bar_start,
-                    Vec2.from_cartesian(max_len, bar_height),
+                    Vec2().from_cartesian(max_len, bar_height),
                     (0, 0, 0, .5)
                 )
                 renderer.draw_rect(
                     bar_start,
-                    Vec2.from_cartesian(now_len, bar_height),
+                    Vec2().from_cartesian(now_len, bar_height),
                     color
                 )
 
                 # draw mag / reload bar
-                mag_n, mag_v = sprite.weapon.get_mag_state(1000)
+                if sprite in Players.sprites():
+                    weapon = sprite.item
+
+                else:
+                    if hasattr(sprite, "weapon"):
+                        weapon = sprite.weapon
+
+                    else:
+                        continue
+
+                if not weapon:
+                    continue
+
+                mag_n, mag_v = weapon.get_mag_state(1000)
                 now_len = (mag_n / 1000) * max_len
                 renderer.draw_rect(
-                    bar_start + Vec2.from_cartesian(0, 1.5 * bar_height),
-                    Vec2.from_cartesian(max_len if now_len else 0, bar_height),
+                    bar_start + Vec2().from_cartesian(0, 1.5 * bar_height),
+                    Vec2().from_cartesian(max_len if now_len else 0, bar_height),
                     (0, 0, 0, .5)
                 )
                 renderer.draw_rect(
-                    bar_start + Vec2.from_cartesian(0, 1.5 * bar_height),
-                    Vec2.from_cartesian(now_len, bar_height),
+                    bar_start + Vec2().from_cartesian(0, 1.5 * bar_height),
+                    Vec2().from_cartesian(now_len, bar_height),
                     (.55, .55, 1, 1)
+                )
+
+                # draw charge bar
+                if not hasattr(weapon, "charged"):
+                    continue
+
+                now_len = weapon.charged * max_len
+                renderer.draw_rect(
+                    bar_start + Vec2().from_cartesian(0, 3 * bar_height),
+                    Vec2().from_cartesian(max_len if now_len else 0, bar_height),
+                    (0, 0, 0, .5)
+                )
+                renderer.draw_rect(
+                    bar_start + Vec2().from_cartesian(0, 3 * bar_height),
+                    Vec2().from_cartesian(now_len, bar_height),
+                    (143, 0, 124, 1)
                 )
 
 
@@ -362,8 +406,8 @@ class _WallBouncer(_BaseGroup):
                     continue
 
                 wall, pos = in_wall
-                delta = Vec2.from_cartesian(*pos)
-                delta.angle = Vec2.normalize_angle(delta.angle)
+                delta = Vec2().from_cartesian(*pos)
+                delta.angle = normalize_angle(delta.angle)
                 sprite.in_wall = delta
 
                 if hasattr(sprite, "_bounce_friction"):
@@ -419,12 +463,14 @@ class _CollisionDestroyed(_BaseGroup):
 
             with suppress(AttributeError):
                 for other in self.sprites():
-                    sprite: tp.Any
-                    other: tp.Any
+                    sprite: pg.sprite.Sprite
+                    other: pg.sprite.Sprite
+
+                    # pg.sprite.collide_mask()
 
                     if 1:
                         if all([
-                            pg.sprite.collide_rect(sprite, other),
+                            pg.sprite.collide_mask(sprite, other),
                             not is_related(sprite, other, 2)
                         ]):
                             try:
@@ -464,8 +510,10 @@ class _CollisionDestroyed(_BaseGroup):
 
     @staticmethod
     def point_in_sprite(sprite, point: tuple) -> bool:
-        start = sprite.position - sprite.size / 2
-        end = sprite.position + sprite.size / 2
+        # start = sprite.position - sprite.size / 2
+        # end = sprite.position + sprite.size / 2
+        start = convert_coord(sprite.rect.topleft, Vec2)
+        end = convert_coord(sprite.rect.bottomright, Vec2)
 
         return all([
             start.x <= point[0] <= end.x,

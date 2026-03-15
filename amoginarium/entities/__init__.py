@@ -5,10 +5,14 @@ from ._static_turret import FlakTurret, BaseTurret, CRAMTurret
 from ._base_entity import GameEntity, VisibleGameEntity, ImageEntity, LRImageEntity
 from ._text_entity import TextEntity
 from ._island import GreenBrickIsland, GrayBrickIsland, GrassIsland, Island
-from ._island import PillarIsland, PlatformIsland1, PlatformIsland2
+from ._island import PillarIsland, PlatformIsland1, PlatformIsland2, ISLANDS
 from ._island_perks import create_moving_island
 from ._base_entity import BaseEntity
 from ._weapons import Bullet
 from ._player import Player
+from ._animation import Animation, ImageAnimation, explosion
+from ._sensors import BaseSensor, Radar
+from ._spawnables import SPAWNABLES
+
 from ._island import Island
 from ._groups import _BaseGroup

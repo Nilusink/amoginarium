@@ -11,7 +11,7 @@ import numpy
 from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glLoadIdentity, glOrtho, GL_MODELVIEW, \
     glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
 from concurrent.futures import ThreadPoolExecutor
-from time import perf_counter, strftime, time, perf_counter_ns
+from time import perf_counter, strftime, time, perf_counter_ns, sleep
 from icecream import ic
 import typing as tp
 import pygame as pg
@@ -26,12 +26,11 @@ from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
 from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
     create_moving_island
+from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
-from ..entities import Player, GrassIsland, GrayBrickIsland, Island
-from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
-from ..entities import PlatformIsland2
+from ..entities import Player, GrassIsland, ISLANDS, Radar, SPAWNABLES
 from ..controllers import Controllers, Controller, GameController
-from ..debugging import run_with_debug, print_ic_style, CC
+from ..debugging import run_with_debug, print_ic_style, CC, timeit
 from ._scrolling_background import ParalaxBackground
 from ..shared import global_vars, Coalitions
 from ..logic import SimpleLock, Vec2, convert_coord
@@ -39,7 +38,7 @@ from ..audio import sounds, sound_effects
 from ..render_bindings import renderer
 from ..audio import BackgroundPlayer
 from ..communications import TCPServer
-from ..animations import explosion
+from ..entities import explosion
 from ._textures import textures
 from ..settings import Settings
 from ..ui import UICursor
@@ -59,27 +58,8 @@ def current_time() -> str:
     return f"{strftime('%H:%M:%S')}.{ms: <4} |> "
 
 
-SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
-    "turret.static.sniper": SniperTurret,
-    "turret.static.ak47": AkTurret,
-    "turret.static.minigun": MinigunTurret,
-    "turret.static.mortar": MortarTurret,
-    "turret.static.flak": FlakTurret,
-    "turret.static.cram": CRAMTurret,
-    "instructions.text": TextEntity,
-}
-ISLANDS: dict[str, tp.Type[Island]] = {
-    "island.grass": GrassIsland,
-    "island.brick.gray": GrayBrickIsland,
-    "island.brick.green": GreenBrickIsland,
-    "island.pillar.1": PillarIsland,
-    "island.platform.1": PlatformIsland1,
-    "island.platform.2": PlatformIsland2,
-}
-
-
 class BaseGame:
-    running: bool = True
+    running: bool = False
     _last_logic: float
     _bg_color: tuple[float, float, float]
     _instance: tp.Self = ...
@@ -148,12 +128,17 @@ class BaseGame:
         pg.mixer.init(channels=64, buffer=1024)
         renderer.init("amoginarium")
 
+        self._loading_screen_steps = 28
+        self._loading_screen_info = "Window init"
+
         # initialize background
-        self._background = ...
+        self._background: ParalaxBackground = ...
         self._bg_color = (0, 0, 0)
         self._background_player = BackgroundPlayer()
         self._background_player.volume = .6
         self._ended = False
+
+        self._update_loading_screen(1)
 
         self.__windowed_fullscreen()
 
@@ -191,10 +176,54 @@ class BaseGame:
             )
         ]
 
-        # load map
-        self.preload()
+        self._update_loading_screen(2, "loading sounds")
 
+        # load textures and sounds
+        self.preload()
         self._game_start = 0
+
+    def _update_loading_screen(self, step: int, info: str = ...) -> None:
+        if info is not ...:
+            self._loading_screen_info = info
+
+        # 2. Clear the entire window buffer with that black color
+        # (Note: glClear ignores glViewport, so it will clean the whole window)
+
+        # EventHandler.check_events()
+
+        glClearColor(0.0, 0.0, 0.0, 1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        # draw info text
+        renderer.draw_text(
+            (960, 850),
+            self._loading_screen_info,
+            (1, 1, 1),
+            (0, 0, 0, 0),
+            font_size=32,
+            centered=True,
+        )
+
+        # draw loading bar
+        bar_start = (100, 900)
+        bar_size = (1720, 30)
+        renderer.draw_rect(
+            bar_start,
+            bar_size,
+            (.3, .3, .3),
+            convert_global=False
+        )
+        renderer.draw_rect(
+            bar_start,
+            (
+                bar_size[0] * (step / self._loading_screen_steps),
+                bar_size[1]
+            ),
+            (1, 1, 1),
+            convert_global=False
+        )
+
+        pg.display.flip()
 
     @run_with_debug(reraise_errors=True, show_finish=True)
     def preload(self) -> None:
@@ -204,39 +233,82 @@ class BaseGame:
         start = perf_counter_ns()
         # load sounds
         sounds.load_sounds("assets/audio/background")
+        self._update_loading_screen(3)
         sounds.load_sounds("assets/audio/effects/ak47")
+        self._update_loading_screen(4)
         sounds.load_sounds("assets/audio/effects/minigun")
+        self._update_loading_screen(5)
         sounds.load_sounds("assets/audio/effects/explosions")
+        self._update_loading_screen(6)
         sounds.load_sounds("assets/audio/effects/shots")
+        self._update_loading_screen(7)
         sounds.load_sounds("assets/audio/effects/reloads")
+        self._update_loading_screen(8)
         sounds.load_sounds("assets/audio/effects/ui")
+        self._update_loading_screen(8)
+        sounds.load_sounds("assets/audio/effects/groaning")
+        self._update_loading_screen(9)
+        sounds.load_sounds("assets/audio/effects/death")
         self._background_player.assign_scope("background")
+        self._update_loading_screen(10, "loading textures")
 
         # load entity textures
         textures.load_images("assets/images/textures.zip")
+        self._update_loading_screen(11)
         textures.load_images("assets/images/dirt_islands.zip")
+        self._update_loading_screen(12)
         textures.load_images("assets/images/bricks_gray")
+        self._update_loading_screen(13)
         textures.load_images("assets/images/bricks_green")
+        self._update_loading_screen(14)
         textures.load_images("assets/images/columns")
+        self._update_loading_screen(15)
         textures.load_images("assets/images/platforms")
+        self._update_loading_screen(15)
+        textures.load_images("assets/images/missiles")
+        self._update_loading_screen(15)
+        textures.load_images("assets/images/weapons/railgun.zip")
+        self._update_loading_screen(15)
+        textures.load_images("assets/images/potions")
+        self._update_loading_screen(16)
+        textures.load_images("assets/images/Shield_6")
+        self._update_loading_screen(16)
         textures.load_images("assets/images/bg1.zip")
+        self._update_loading_screen(17)
         textures.load_images("assets/images/bg2.zip")
+        self._update_loading_screen(18)
         textures.load_images("assets/images/bg3.zip")
+        self._update_loading_screen(19)
         textures.load_images("assets/images/bg4.zip")
+        self._update_loading_screen(20)
         textures.load_images("assets/images/animations/explosion.zip")
+        self._update_loading_screen(21)
+        textures.load_images("assets/images/animations/flame")
 
         for island in ISLANDS.values():
             island.load_textures()
+
+        for entity in Updated.sprites():
+            if hasattr(entity, "load_textures"):
+                entity.load_textures()
+        self._update_loading_screen(22)
 
         for spwanable in SPAWNABLES.values():
             if hasattr(spwanable, "load_textures"):
                 spwanable.load_textures()
 
+        self._update_loading_screen(23)
+
         Player.load_textures()
         explosion.load_textures(size=(512, 512))
+
+        self._update_loading_screen(24, "loading map")
+
         end = perf_counter_ns()
         load_time = (end - start) / 1e6
         ic(load_time)
+
+        self._update_loading_screen(24, "loading map")
 
     @property
     def id(self) -> int:
@@ -246,10 +318,13 @@ class BaseGame:
     def root(self) -> tp.Self:
         return self
 
+    @run_with_debug()
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
         load a map from a json file
         """
+        self._update_loading_screen(24)
+
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
@@ -257,12 +332,18 @@ class BaseGame:
             if not os.path.isfile(map_path):
                 raise FileNotFoundError(f"Couldn't find map \"{map_path}\"")
 
+        self._update_loading_screen(24)
+
         # load map data
         data = json.load(open(map_path, "r"))
         self._last_loaded = map_path
 
+        self._update_loading_screen(25)
+
         pg.display.set_caption(f"amoginarium - {data["name"]}")
-        Players.spawn_point = Vec2.from_cartesian(*data["spawn_pos"])
+        self._update_loading_screen(25)
+        Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
+        self._update_loading_screen(25)
 
         # set background
         if 0 <= data["background"] - 1 <= len(self._backgrounds):
@@ -271,30 +352,15 @@ class BaseGame:
         else:
             self._background = self._backgrounds[0]
 
+        self._update_loading_screen(25)
+
         # check if background has been assigned
         if not self._background.loaded:
             self._background.load_textures()
 
-        # # spwan a lot of bulllets
-        # Players.spawn_point = Vec2.from_cartesian(950, -100)
-        # n_bullets = 150
-        # x_spacing = global_vars.screen_size.x / n_bullets
-
-        # for i in range(n_bullets):
-        #     Bullet(
-        #          self,
-        #          Vec2.from_cartesian(0 + x_spacing*i, 0),
-        #          Vec2.from_cartesian(0, 100), time_to_life=5
-        #     )
-        #     Bullet(
-        #          self,
-        #          Vec2.from_cartesian(0 + x_spacing*i, 100),
-        #          Vec2.from_cartesian(0, 100), time_to_life=5
-        #     )
-        # return
-
         # load islands
         for island in data["platforms"]:
+            self._update_loading_screen(26, "spawning islands")
             island_type = GrassIsland
             if "type" in island:
                 if island["type"] in ISLANDS:
@@ -305,13 +371,13 @@ class BaseGame:
 
             elif "size" in island:
                 i = island_type(
-                    Vec2.from_cartesian(*island["pos"]),
-                    size=Vec2.from_cartesian(*island["size"]),
+                    Vec2().from_cartesian(*island["pos"]),
+                    size=Vec2().from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
                 i = island_type(
-                    Vec2.from_cartesian(*island["pos"]),
+                    Vec2().from_cartesian(*island["pos"]),
                     form=island["form"],
                 )
 
@@ -330,6 +396,7 @@ class BaseGame:
 
         # load entities
         for entity in data["entities"]:
+            self._update_loading_screen(27, "spawning entities")
             if entity["type"] not in SPAWNABLES:
                 print_ic_style(
                     f"{CC.fg.RED}unknown entity: "
@@ -344,17 +411,19 @@ class BaseGame:
 
             try:
                 SPAWNABLES[entity["type"]](
-                    Coalitions.red,
-                    Vec2.from_cartesian(*entity["pos"]),
+                    coalition=Coalitions.red,
+                    position=Vec2().from_cartesian(*entity["pos"]),
                     **args
                 )
 
-            except TypeError:
+            except TypeError as e:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
                     f"\"{CC.fg.YELLOW}{args}{CC.fg.RED}\""
                 )
+
+        self._update_loading_screen(28, "done")
 
     def time_since_start(self) -> str:
         """
@@ -512,8 +581,6 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        self.load_map("assets/maps/tutorial.json")
-
         # todo: reimplement
         # EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
         # EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
@@ -566,6 +633,9 @@ class BaseGame:
             else:
                 active_scene = "StartMenu"
 
+        def handle_zoom(event):
+            global_vars.pixel_per_meter *= 1 + event.y / 30
+
         start_menu = StartMenu(
             start_game, open_settings, self.__clean_end
         )
@@ -582,6 +652,9 @@ class BaseGame:
         )
 
         # Temporary solution
+        # game_ui_dummy: UIElement = UIElement()
+        # game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
+        # game_ui_dummy.add_fullscreen_event(pg.MOUSEWHEEL, callback=handle_zoom)
         # todo: reimplement
         mouse_cursor = UICursor()
 
@@ -663,12 +736,11 @@ class BaseGame:
                 except pg.error:
                     break
 
-                # clear screen
-                glClearColor(0, 0, 0, 1)
-
                 _, max_player_pos = Players.get_position_extremes()
 
                 # background_pos_left = self._background.position + 60
+                Updated.world_position.y = -((global_vars.screen_size.y / global_vars.pixel_per_meter) - global_vars.screen_size.y)
+                global_vars.world_position.y = Updated.world_position.y
 
                 if self._shifting:
                     background_pos_right = self._background.position \
@@ -756,18 +828,34 @@ class BaseGame:
         ic("pygame end")
         self.end()
 
+    def draw_entities_only(self) -> None:
+        """
+        only draw entities, no game updates or menus
+        """
+        glClearColor(0.0, 0.0, 0.1, 1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        self._background.draw(0)
+        Drawn.gl_draw()
+        HasBars.gl_draw()
+
+        pg.display.flip()
+        # clock.tick(global_vars.max_fps)
+
+    @run_with_debug()
     def _run_logic(self) -> None:
         """
         start game logic
         """
         last = perf_counter()
         last_fps_print = 0
+        sleep(3)
         while self.running:
             now = perf_counter()
 
             # minimum loop time of .5 ms (so the CPU isn't stressed too much)
-            while now - last < .0005:
-                now = perf_counter()
+            # while now - last < .00005:
+            #     now = perf_counter()
 
             delta = now - last
 
@@ -800,15 +888,21 @@ class BaseGame:
         # update sounds
         sound_effects.update()
 
+        # reset and update detection Groups
+        DETECTION_GROUP_MANAGER.reset()
+
         # update entities
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
         WallBouncer.update()
 
         Bullets.update(delta)
+        DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
         CollisionDestroyed.update()
+
+        # sleep(.3)
 
         logic_time = perf_counter() - start
         self._logic_loop_times.append(
@@ -835,10 +929,11 @@ class BaseGame:
         """
         run the game
         """
+        self.running = True
         self._game_start = perf_counter()
 
         # self._pool.submit(self._run_logic)
-        self._pool.submit(self._run_comms)
+        # self._pool.submit(self._run_comms)
         self._run_pygame()
 
     @run_with_debug()

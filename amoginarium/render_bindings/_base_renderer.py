@@ -57,6 +57,31 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    def apply_stencil[**A](
+            self,
+            stencil_func: tp.Callable[A, tp.Any],
+            show_stencil: bool = False,
+            *args: A.args,
+            **kwargs: A.kwargs
+    ) -> None: ...
+
+    @staticmethod
+    def start_stencil(show_stencil: bool = False) -> None: ...
+
+    @staticmethod
+    def enable_stencil(show_stencil: bool = False) -> None: ...
+
+    def disable_stencil(self) -> None: ...
+
+    def draw_polygon(
+            self,
+            vertices: tp.Iterable[coord_t],
+            color: Color | tColor,
+            center: coord_t = None,
+            convert_global: bool = True
+    ) -> None:
+        raise NotImplementedError
+
     @staticmethod
     def check_out_of_screen(
             pos,
@@ -78,6 +103,17 @@ class BaseRenderer:
         """
         draw a circle
         """
+        raise NotImplementedError
+
+    def draw_line_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            num_segments: int,
+            color: Color | tColor,
+            thickness: float = 1,
+            convert_global: bool = True
+    ):
         raise NotImplementedError
 
     def draw_partial_circle(
@@ -170,7 +206,8 @@ class BaseRenderer:
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
-            italic: bool = False
+            italic: bool = False,
+            convert_global: bool = True
     ) -> tuple[int, int]:
         """
         draw a text to the given position
@@ -198,7 +235,8 @@ class BaseRenderer:
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
-            italic: bool = False
+            italic: bool = False,
+            convert_global: bool = True
     ) -> pg.Surface:
         """
         generates a pygame surface from a text
