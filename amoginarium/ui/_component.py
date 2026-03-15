@@ -8,33 +8,32 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
+# noinspection PyPackageRequirements
+import pygame as pg
 import typing as tp
-
-from ._entity import UIEntity
-from ._types import anchor_t
-from ..entities import Cursor
 
 from ..logic import Vec2, coord_t, convert_coord
 from ..shared import global_vars
+from ..entities import Cursor
 
-import pygame as pg
+from ._entity import UIEntity
+from ._types import Anchor
 
-
-##################################################
-#                     Code                       #
-##################################################
 
 class UIComponent(UIEntity):
-    __relative_position: Vec2
-    __relative_size: Vec2
-    __placement_anchor: anchor_t
+    """Basic UI component with position, size, and hovering"""
 
-    __absolute_position_original: Vec2
+    # region Attributes: position and size
+    __placement_anchor: Anchor
+
+    __relative_position: Vec2
     __absolute_position: Vec2
-    __absolute_position_updated: bool
-    __absolute_size_original: Vec2
+    __last_absolute_position: Vec2 | None
+
+    __relative_size: Vec2
     __absolute_size: Vec2
-    __absolute_size_updated: bool
+    __last_absolute_size: Vec2 | None
+
     __width: float
     __height: float
     __center: Vec2
@@ -42,35 +41,28 @@ class UIComponent(UIEntity):
     __top_right: Vec2
     __bottom_left: Vec2
     __bottom_right: Vec2
-    # masks - zwei farben
+    # endregion
 
-    # mask get at local
-
-    # hover grob?
-    # mask check
-
-    # wenn nix anders - gleiche maske - size/position animations gleich wie davor keine ausrechnen
-
+    # region Attributes: hovering
     __collision_surface: pg.Surface | None = None
     __collision_mask: pg.Mask | None
     __collision_buffer: int
-    __work_with_collision_mask: bool
+    __use_collision_mask: bool
 
-    __collision_recreation: bool
-    __ui_changed: bool
+    __collision_recreation: bool  # Internal variable indicating the collision surface/mask needs to be recreated
+    __ui_changed: bool  # Variable indicating if the UI has changed since the last draw. Can be set by outer layers
 
-    __last_absolute_position: Vec2 | None
-    __last_absolute_size: Vec2 | None
+    __is_hovered: bool
+    __is_hovered_inner: bool | None
+    __is_hovered_inner_last: bool | None
+    __is_hovered_outer: bool | None
+    __is_hovered_outer_last: bool | None
 
-    __is_hovered: bool | None
-    __is_hovered_last: bool | None
+    __on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None
+    __on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None
+    __on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None
 
-    __is_hovered_buffer: bool | None
-    __is_hovered_buffer_last: bool | None
-
-    __on_enter_callbacks: list[tp.Callable[[], None]] | None
-    __on_buffer_callback: list[tp.Callable[[], None]] | None
-    __on_leave_callbacks: list[tp.Callable[[], None]] | None
+    # endregion
 
     def __init__(
             self,
@@ -78,128 +70,172 @@ class UIComponent(UIEntity):
             relative_size: coord_t,
             *_args: tp.Any,
             parent: UIEntity | None = None,
-            placement_anchor: anchor_t = "center",
+            placement_anchor: Anchor = Anchor.CENTER,
             collision_buffer: int = 1,
-            _work_with_collision_mask: bool = True
+            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            _use_collision_mask: bool = True,
     ) -> None:
+        """
+        Create a new UI component
+        :param relative_position: Relative position of the component
+        :param relative_size: Relative size of the component
+        :param _args: Not used
+        :param parent: Optional parent UI-Entity
+        :param placement_anchor: Placement anchor of the component
+        :param collision_buffer: Mouse hovering buffer for edge cases
+        :param on_enter_callbacks: Callbacks to be called when a cursor enters the component
+        :param on_leave_callbacks: Callbacks to be called when a cursor leaves the component
+        :param on_buffer_callbacks: Callbacks to be called when a cursor is right on the edge of the component
+        :param _use_collision_mask: Whether a collision mask should be used or just a collision box
+        """
         super().__init__(parent=parent)
 
         self.__relative_position = convert_coord(relative_position, Vec2)
         self.__relative_size = convert_coord(relative_size, Vec2)
         self.__placement_anchor = placement_anchor
         self.__collision_buffer = collision_buffer
-        self.__work_with_collision_mask = _work_with_collision_mask
+        self.__use_collision_mask = _use_collision_mask
+        self.__on_enter_callbacks = on_enter_callbacks
+        self.__on_leave_callbacks = on_leave_callbacks
+        self.__on_buffer_callbacks = on_buffer_callbacks
 
-        self.__absolute_size_updated = False
-        self.__absolute_position_updated = False
+        self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
+        self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
 
-        self.__on_enter_callbacks = None
-        self.__on_buffer_callback = None
-        self.__on_leave_callbacks = None
-
-        self.__absolute_position = Vec2()
-        self.__absolute_size = Vec2()
-
-        self.__is_hovered = None
-        self.__is_hovered_buffer = None
+        self.__is_hovered = False
+        self.__is_hovered_inner = None
+        self.__is_hovered_inner_last = None
+        self.__is_hovered_outer = None
+        self.__is_hovered_outer_last = None
         self.__ui_changed = True
         self.__collision_recreation = True
         self.__last_absolute_size = None
         self.__last_absolute_position = None
         self.__collision_mask = None
 
-    @property
-    def _ui_changed(self) -> bool:
-        return self.__ui_changed
-
-    @_ui_changed.setter
-    def _ui_changed(self, value: bool) -> None:
-        self.__ui_changed = value
-        self.__collision_recreation = value
+    # region Methods: static absolute/relative convert
+    @staticmethod
+    def __relative_to_absolute(relative_value: coord_t) -> Vec2:
+        """
+        Converts relative coords to absolute coords according to the current resolution
+        :param relative_value: Relative value to convert
+        :return: Absolute value
+        """
+        absolute_value = convert_coord(relative_value, Vec2)
+        absolute_value.x *= global_vars.resolution.x
+        absolute_value.y *= global_vars.resolution.y
+        return absolute_value
 
     @staticmethod
-    def __relative_to_absolute(
-            absolute_value: coord_t
-    ) -> Vec2:
-        return convert_coord(
-            (
-                int(absolute_value.x * global_vars.resolution.x),
-                int(absolute_value.y * global_vars.resolution.y)
-            ),
-            Vec2
-        )
+    def __absolute_to_relative(absolute_value: coord_t) -> Vec2:
+        """
+        Converts relative coords to absolute coords according to the current resolution
+        :param absolute_value: Absolute value to convert
+        :return: Relative value
+        """
+        relative_value = convert_coord(absolute_value, Vec2)
+        relative_value.x /= global_vars.resolution.x
+        relative_value.y /= global_vars.resolution.y
+        return relative_value
 
-    @property
-    def _work_with_collision_mask(self) -> bool:
-        return self.__work_with_collision_mask
+    # endregion
 
-    @property
-    def _collision_surface(self) -> pg.Surface:
-        if not self.__work_with_collision_mask:
-            raise NotImplementedError("Collision surface isn't supported")
-
-        # whenever something changed compared to last time - how do i know?
-        if self.__collision_recreation:
-            self.__collision_recreation = False  #
-            self.__collision_mask = None
-            self.__collision_surface = pg.Surface(self.__absolute_size.xy, pg.SRCALPHA, 32)
-        return self.__collision_surface
-
-    @property
-    def _collision_mask(self) -> pg.Mask:
-        if not self.__work_with_collision_mask:
-            raise NotImplementedError("Collision mask isn't supported")
-
-        if self.__collision_mask is None:
-            self.__collision_mask = pg.mask.from_surface(self._collision_surface)
-        return self.__collision_mask
-
+    # region Methods: hovering
     def add_enter_callback(self, callback: tp.Callable[[], None]) -> None:
+        """:param callback: Callback to be called when a cursor enters the component"""
         if self.__on_enter_callbacks is None:
             self.__on_enter_callbacks = []
         self.__on_enter_callbacks.append(callback)
 
     def add_buffer_callback(self, callback: tp.Callable[[], None]) -> None:
-        if self.__on_buffer_callback is None:
-            self.__on_buffer_callback = []
-        self.__on_buffer_callback.append(callback)
+        """:param callback: Callback to be called when a cursor is right on the edge of the component"""
+        if self.__on_buffer_callbacks is None:
+            self.__on_buffer_callbacks = []
+        self.__on_buffer_callbacks.append(callback)
 
     def add_leave_callback(self, callback: tp.Callable[[], None]) -> None:
+        """:param callback: Callback to be called when a cursor leaves the component"""
         if self.__on_leave_callbacks is None:
             self.__on_leave_callbacks = []
         self.__on_leave_callbacks.append(callback)
 
     @property
-    def is_hovered(self) -> bool:
-        if self.__is_hovered is None:
-            self.__is_hovered = False
-            col_buf = -self.__collision_buffer if self.__is_hovered_last else 0
-            cursor: UIComponent
-            for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._abs_position_original, buffer=col_buf):
-                    self.__is_hovered = True
-                    break
-
-        return self.__is_hovered
+    def _use_collision_mask(self) -> bool:
+        """:return: Whether a collision mask is used or just a collision box"""
+        return self.__use_collision_mask
 
     @property
-    def is_hovered_in_buffer(self) -> bool:
-        if self.__is_hovered_buffer is None:
-            self.__is_hovered_buffer = False
+    def _collision_surface(self) -> pg.Surface:
+        """
+        :return: Collision surface
+        :raises ValueError: If use_collision_mask is set to false
+        """
+        if not self.__use_collision_mask:
+            raise ValueError("use_collision_mask is set to false")
+
+        if self.__collision_recreation:
+            self.__collision_recreation = False  #
+            self.__collision_mask = None
+            self.__collision_surface = pg.Surface(self._absolute_size.xy, pg.SRCALPHA, 32)
+        return self.__collision_surface
+
+    @property
+    def _collision_mask(self) -> pg.Mask:
+        """
+        :return: Collision mask
+        :raises ValueError: If use_collision_mask is set to false
+        """
+        if not self.__use_collision_mask:
+            raise ValueError("use_collision_mask is set to false")
+
+        if self.__collision_mask is None:
+            self.__collision_mask = pg.mask.from_surface(self._collision_surface)
+        return self.__collision_mask
+
+    @property
+    def is_hovered(self) -> bool:
+        """:return: Whether a cursor is hovering over the component"""
+        return self.__is_hovered
+
+    def __hovered_inner(self) -> bool:
+        """:return: Whether a cursor is hovering over the component"""
+        if self.__is_hovered_inner is None:
+            self.__is_hovered_inner = False
+            col_buf = -self.__collision_buffer if self.__is_hovered_inner_last else 0
             cursor: UIComponent
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._abs_position_original, buffer=self.__collision_buffer):
-                    self.__is_hovered_buffer = True
+                if self.__is_hovered_by(cursor._absolute_position, buffer=col_buf):
+                    self.__is_hovered_inner = True
                     break
 
-        return self.__is_hovered_buffer
+        return self.__is_hovered_inner
+
+    def __hovered_outer(self) -> bool:
+        """:return: Whether a cursor is hovering over the outer buffer of the component"""
+        if self.__is_hovered_outer is None:
+            self.__is_hovered_outer = False
+            cursor: UIComponent
+            for cursor in Cursor.sprites():
+                if self.__is_hovered_by(cursor._absolute_position, buffer=self.__collision_buffer):
+                    self.__is_hovered_outer = True
+                    break
+
+        return self.__is_hovered_outer
 
     def __is_hovered_by(self, coords: Vec2, buffer: int = 0) -> bool:
+        """
+        Check if coords are over the component with a buffer
+        :param coords: Coordinates to check
+        :param buffer: Buffer around the coordinates
+        :return: Whether coords are over the component
+        """
         if all([
             (self.__top_left.x + buffer) <= coords.x <= (self.__bottom_right.x - buffer),
             (self.__top_left.y + buffer) <= coords.y <= (self.__bottom_right.y - buffer)
         ]):
-            if not self.__work_with_collision_mask:
+            if not self.__use_collision_mask:
                 return True
 
             rel_coords = (coords - self.__top_left)
@@ -213,187 +249,186 @@ class UIComponent(UIEntity):
                 if self._collision_mask.get_at(coords_new.xy):
                     return True
             except IndexError:
-                ...
+                pass
 
         return False
 
-    def _after_draw_update(self) -> None:
-        if self.__on_enter_callbacks or self.__on_leave_callbacks or self.__on_buffer_callback:
-            # print(self.is_hovered, self.__last_hover)
-            a = self.is_hovered
-            b = self.is_hovered_in_buffer
+    # endregion
 
-            if self.is_hovered is None:  # DO NOT CHANGE - this triggers an update
-                if self.is_hovered_in_buffer is None:
-                    return
+    # region Methods: drawing
+    def _after_draw_update(self) -> None:
+        if self.__on_enter_callbacks or self.__on_leave_callbacks or self.__on_buffer_callbacks:
+            # Don't change directly into an if. This way the hovered_inner/outer variables are always both updated
+            hovered_inner = self.__hovered_inner()
+            hovered_outer = self.__hovered_outer()
+
+            if hovered_inner is None or hovered_outer is None:
                 return
 
-            if self.is_hovered_in_buffer and not self.__is_hovered_buffer_last:
+            if hovered_outer and not self.__is_hovered_outer_last:
+                self.__is_hovered = True
                 for callback in self.__on_enter_callbacks:
                     callback()
-            elif self.__is_hovered_last and not self.is_hovered:
+            elif self.__is_hovered_inner_last and not hovered_inner:
+                self.__is_hovered = False
                 for callback in self.__on_leave_callbacks:
                     callback()
 
-            # print(self.__is_hovered_buffer_last, self.is_hovered_in_buffer)
-            elif (self.__is_hovered_buffer_last and not self.is_hovered_in_buffer
-                  and self.is_hovered and self.__is_hovered_last):
-                for callback in self.__on_buffer_callback:
+            elif (self.__is_hovered_outer_last and not hovered_outer
+                  and hovered_inner and self.__is_hovered_inner_last):
+                for callback in self.__on_buffer_callbacks:
                     callback()
 
-    def _gl_draw(self, mod_pos: Vec2 | None = None, mod_size: Vec2 | None = None) -> None:
+    def _gl_draw(self) -> None:
         """
-        Draw function called in loop
+        The draw function called in loop
 
         It should always follow this structure in UI:
         - Compare if anything changed, requiring redrawing of the collision surface/mask
         - Call super()._gl_draw()
         - Draw the UI and collision surface
         """
-        self.__is_hovered_last = self.__is_hovered
-        self.__is_hovered_buffer_last = self.__is_hovered_buffer
-        self.__is_hovered = None
-        self.__is_hovered_buffer = None
+        self.__is_hovered_inner_last = self.__is_hovered_inner
+        self.__is_hovered_outer_last = self.__is_hovered_inner
+        self.__is_hovered_inner = None
+        self.__is_hovered_outer = None
 
-        # Save old values
-        if self.__work_with_collision_mask:
-            self.__last_absolute_position = self.__absolute_position
-            self.__last_absolute_size = self.__absolute_size
-
-        # Calculate new values
-        if self.__absolute_position_updated:
-            self.__absolute_position_updated = False
-        else:
-            self.__absolute_position_original = self.__relative_to_absolute(self.__relative_position)
-
-        if self.__absolute_size_updated:
-            self.__absolute_size_updated = False
-        else:
-            self.__absolute_size_original = self.__relative_to_absolute(self.__relative_size)
-
-        self.__absolute_size = (self.__absolute_size_original + mod_size) if mod_size else self.__absolute_size_original
-        self.__absolute_position = (
-                self.__absolute_position_original + mod_pos) if mod_pos else self.__absolute_position_original
+        # Scaling
+        self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
+        self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
 
         # Check if values changed
-        if self.__work_with_collision_mask and not self._ui_changed:
-            if (self.__absolute_position.xy != self.__last_absolute_position.xy
-                    or self.__absolute_size.xy != self.__last_absolute_size.xy):
-                self._ui_changed = True
+        if self.__use_collision_mask:
+            self.__last_absolute_position = self._absolute_position
+            self.__last_absolute_size = self._absolute_size
 
-        self.__width = self.__absolute_size.x
-        self.__height = self.__absolute_size.y
+            if not self._ui_changed:
+                if (self._absolute_position.xy != self.__last_absolute_position.xy
+                        or self._absolute_size.xy != self.__last_absolute_size.xy):
+                    self._ui_changed = True
+
+        self.__width = self._absolute_size.x
+        self.__height = self._absolute_size.y
 
         if self.__placement_anchor == "nw":
-            self.__top_left = self.__absolute_position
-            self.__top_right = self.__absolute_position + convert_coord((self.__absolute_size.x, 0), Vec2)
-            self.__bottom_left = self.__absolute_position + convert_coord((0, self.__absolute_size.y), Vec2)
-            self.__bottom_right = self.__absolute_position + self.__absolute_size.y
+            self.__top_left = self._absolute_position
+            self.__top_right = self._absolute_position + convert_coord((self._absolute_size.x, 0), Vec2)
+            self.__bottom_left = self._absolute_position + convert_coord((0, self._absolute_size.y), Vec2)
+            self.__bottom_right = self._absolute_position + self._absolute_size.y
 
-            self.__center = self.__absolute_position + self.__absolute_size / 2
+            self.__center = self._absolute_position + self._absolute_size / 2
 
         elif self.__placement_anchor == "center":
-            self.__top_left = self.__absolute_position - self.__absolute_size / 2
-            self.__top_right = self.__absolute_position + convert_coord(
-                (self.__absolute_size.x / 2, -self.__absolute_size.y / 2),
+            self.__top_left = self._absolute_position - self._absolute_size / 2
+            self.__top_right = self._absolute_position + convert_coord(
+                (self._absolute_size.x / 2, -self._absolute_size.y / 2),
                 Vec2)
-            self.__bottom_left = self.__absolute_position + convert_coord(
-                (-self.__absolute_size.x / 2, self.__absolute_size.y / 2),
+            self.__bottom_left = self._absolute_position + convert_coord(
+                (-self._absolute_size.x / 2, self._absolute_size.y / 2),
                 Vec2)
-            self.__bottom_right = self.__absolute_position + self.__absolute_size / 2
+            self.__bottom_right = self._absolute_position + self._absolute_size / 2
 
-            self.__center = self.__absolute_position
+            self.__center = self._absolute_position
 
     def gl_draw(self) -> None:
-        self._ui_changed = False
         self._gl_draw()
         self._after_draw_update()
+        self._ui_changed = False
+
+    # endregion
+
+    # region Methods: properties
+    @property
+    def _ui_changed(self) -> bool:
+        """:return: Whether the UI has changed since the last draw"""
+        return self.__ui_changed
+
+    @_ui_changed.setter
+    def _ui_changed(self, value: bool) -> None:
+        """:param value: Set whether the UI has changed since the last draw"""
+        self.__ui_changed = value
+        self.__collision_recreation = value
 
     @property
-    def _abs_position(self) -> Vec2:
+    def absolute_position(self) -> Vec2:
+        """:return: Absolute position - anchor not factored in"""
+        return self._absolute_position
+
+    @property
+    def _absolute_position(self) -> Vec2:
         """:return: Absolute position - anchor not factored in"""
         return self.__absolute_position
 
-    @property
-    def _abs_position_original(self) -> Vec2:
-        """:return: Absolute position - anchor not factored in"""
-        return self.__absolute_position_original
-
-    @_abs_position_original.setter
-    def _abs_position_original(self, value: Vec2) -> None:
-        """:return: Absolute position - anchor not factored in"""
-        self.__absolute_position_original = convert_coord(value, Vec2)
-        self.__absolute_position_updated = True
+    @_absolute_position.setter
+    def _absolute_position(self, value: coord_t) -> None:
+        """:param value: Absolute position"""
+        self.__relative_position = self.__absolute_to_relative(value)
+        self.__absolute_position = convert_coord(value, Vec2)
 
     @property
-    def _abs_size(self) -> Vec2:
+    def absolute_size(self) -> Vec2:
+        """:return: Absolute size"""
+        return self._absolute_size
+
+    @property
+    def _absolute_size(self) -> Vec2:
         """:return: Absolute size"""
         return self.__absolute_size
 
-    @property
-    def _abs_size_original(self) -> Vec2:
-        """:return: Absolute size"""
-        return self.__absolute_size_original
-
-    @_abs_size_original.setter
-    def _abs_size_original(self, value: Vec2) -> None:
-        self.__absolute_size_original = value
-        self.__absolute_size_updated = True
+    @_absolute_size.setter
+    def _absolute_size(self, value: coord_t) -> None:
+        """:param value: Absolute size"""
+        self.__relative_size = self.__absolute_to_relative(value)
+        self.__absolute_size = convert_coord(value, Vec2)
 
     @property
-    def _rel_position(self) -> Vec2:
+    def relative_position(self) -> Vec2:
         """:return: Relative position - anchor not factored in"""
         return self.__relative_position
 
     @property
-    def _rel_size(self) -> Vec2:
+    def relative_size(self) -> Vec2:
         """:return: Relative size"""
         return self.__relative_size
 
     @property
-    def _width(self) -> float:
+    def width(self) -> float:
         """:return: Absolute width"""
         return self.__width
 
     @property
-    def _height(self) -> float:
+    def height(self) -> float:
         """:return: Absolute height"""
         return self.__width
 
     @property
-    def _placement_anchor(self) -> anchor_t:
+    def placement_anchor(self) -> Anchor:
         """:return: Placement anchor"""
         return self.__placement_anchor
 
     @property
-    def _top_left(self) -> Vec2:
+    def top_left(self) -> Vec2:
         """:return: Absolute top left"""
         return self.__top_left
 
-    @_top_left.setter
-    def _top_left(self, value: Vec2) -> None:
-        self.__top_left = value
-
     @property
-    def _top_right(self) -> Vec2:
+    def top_right(self) -> Vec2:
         """:return: Absolute top right"""
         return self.__top_right
 
     @property
-    def _bottom_left(self) -> Vec2:
+    def bottom_left(self) -> Vec2:
         """:return: Absolute bottom left"""
         return self.__bottom_left
 
     @property
-    def _bottom_right(self) -> Vec2:
+    def bottom_right(self) -> Vec2:
         """:return: Absolute bottom right"""
         return self.__bottom_right
-
-    @_bottom_right.setter
-    def _bottom_right(self, value: Vec2) -> None:
-        self.__bottom_right = value
 
     @property
     def center(self) -> Vec2:
         """:return: Absolute center"""
         return self.__center
+
+    # endregion

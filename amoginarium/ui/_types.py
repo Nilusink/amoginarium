@@ -6,9 +6,14 @@ Created: 02.03.2026
 Authors: LukasKrah
 """
 
-import pygame as pg
+from enum import StrEnum
 import typing as tp
 
-anchor_t = tp.Literal["nw", "center"]
+
+class Anchor(StrEnum):
+    """UI Placement anchor types"""
+    NW = "nw"
+    CENTER = "center"
+
 
 ui_color_t = tp.Union[tuple[int, int, int], tuple[int, int, int, int]]  # Temporary solution

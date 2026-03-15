@@ -21,7 +21,7 @@ from ..shared import global_vars
 
 class UICursor(UIComponent):
     def __init__(self) -> None:
-        super().__init__((0, 0), (0, 0), _work_with_collision_mask=False)
+        super().__init__((0, 0), (0, 0), _use_collision_mask=False)
 
         self.add(Cursor)
 
@@ -29,6 +29,6 @@ class UICursor(UIComponent):
         mouse_pos = pg.mouse.get_pos()
         mouse_pos = ((mouse_pos[0] - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
                      (mouse_pos[1] - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
-        self._abs_position_original = convert_coord(mouse_pos, Vec2)
+        self._absolute_position = convert_coord(mouse_pos, Vec2)
 
         super()._gl_draw()

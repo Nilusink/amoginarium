@@ -16,7 +16,7 @@ from ._entity import UIEntity
 from ..audio import PresetEffect, SoundEffect
 from ..render_bindings import renderer
 from ..logic import coord_t, Color
-from ._types import anchor_t, ui_color_t
+from ._types import Anchor, ui_color_t
 
 from ._rectangle import Rectangle
 
@@ -35,6 +35,10 @@ class _OnButtonLeaveSound(PresetEffect):
     volume = .5
     _sound_name = "button_leave"
 
+
+OnHoverButtonSound = _OnHoverButtonSound()
+OnButtonLeaveSound = _OnButtonLeaveSound()
+ButtonClickSound = _ButtonClickSound()
 
 TEST_DURATION = 0.2
 
@@ -55,14 +59,12 @@ class Button(Rectangle):
 
     def __init__(
             self,
-            position: coord_t,
-            size: coord_t,
+            relative_position: coord_t,
+            relative_size: coord_t,
             text: str,
             *_args: Any,
             command: Callable[[], None] | None = None,
-            anchor: anchor_t = "center",
-            absolute: bool = False,
-            scaling: bool = True,
+            placement_anchor: Anchor = Anchor.CENTER,
 
             fg_color: ui_color_t = Color.c_255_to_1(0, 0, 0),
             hover_fg_color: ui_color_t = Color.c_255_to_1(0, 0, 0),
@@ -91,13 +93,13 @@ class Button(Rectangle):
             hover_extend_duration: coord_t | float | int = TEST_DURATION,
             hover_collapse_duration: coord_t | float | int = TEST_DURATION,
 
-            on_hover_sound: SoundEffect | None = _OnHoverButtonSound(),
-            on_leave_sound: SoundEffect | None = _OnButtonLeaveSound(),
-            on_click_sound: SoundEffect | None = _ButtonClickSound(),
+            on_hover_sound: SoundEffect | None = OnHoverButtonSound,
+            on_leave_sound: SoundEffect | None = OnButtonLeaveSound,
+            on_click_sound: SoundEffect | None = ButtonClickSound,
 
             parent: UIEntity | None = None
     ) -> None:
-        super().__init__(position, size, anchor=anchor, absolute=absolute, scaling=scaling,
+        super().__init__(relative_position, relative_size, placement_anchor=placement_anchor,
                          on_hover_sound=on_hover_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
 
                          bg_color=bg_color, hover_bg_color=hover_bg_color,
@@ -143,7 +145,7 @@ class Button(Rectangle):
         # text
 
         renderer.draw_pg_surf(
-            self._top_left + self._abs_size / 2,
+            self.top_left + self._absolute_size / 2,
             self.__text_surface,
             centered=True
         )

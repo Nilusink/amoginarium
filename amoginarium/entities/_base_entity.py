@@ -58,7 +58,7 @@ class BaseEntity(pg.sprite.Sprite):
     @property
     def root(self) -> BaseEntity | None:
         """return: Root entity or None"""
-        return self._parent.root
+        return self._parent.root if self._parent else self
 
     @property
     def children(self) -> list[BaseEntity] | None:
