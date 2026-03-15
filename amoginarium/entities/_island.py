@@ -256,8 +256,8 @@ class Island(VisibleGameEntity):
 
         # check if island is on screen
         if any([
-            self.position.x > global_vars.screen_pixels.x + global_vars.background_position,
-            self.position.x + self.size.x < global_vars.background_position
+            self.position.x > global_vars.screen_pixels.x + global_vars.world_position.x,
+            self.position.x + self.size.x < global_vars.world_position.x
         ]):
             return
 

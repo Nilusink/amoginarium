@@ -8,7 +8,7 @@ def main():
 
     # create initial controller
     KeyboardController.get()
-
+    game.load_map("assets/maps/tutorial.json")
     game.mainloop()
 
 
