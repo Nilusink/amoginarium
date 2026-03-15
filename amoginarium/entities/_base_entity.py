@@ -13,6 +13,7 @@ import pygame as pg
 import typing as tp
 import math as m
 
+from ..debugging import print_ic_style, CC
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
 from ..logic import Vec2
@@ -104,7 +105,7 @@ class UIEntity(PositionedEntity):
             self,
             position: Vec2,
             size: Vec2,
-            parent: BaseEntity = ...
+            parent: BaseEntityLike = ...
     ) -> None:
         super().__init__(position, size, parent)
         self.add(Drawn)
@@ -118,6 +119,7 @@ class UIEntity(PositionedEntity):
 
 
 class GameEntity(PositionedEntity):
+    _cid: str = ...
     facing: Vec2
     position: Vec2
     velocity: Vec2
@@ -130,7 +132,7 @@ class GameEntity(PositionedEntity):
         initial_position: Vec2 = ...,
         initial_velocity: Vec2 = ...,
         coalition: tp.Any = ...,
-        parent: BaseEntity = ...
+        parent: BaseEntityLike = ...
     ) -> None:
         self._coalition = coalition
 
@@ -168,6 +170,29 @@ class GameEntity(PositionedEntity):
     @property
     def coalition(self) -> tp.Any:
         return self._coalition
+
+    @classmethod
+    def cid(cls) -> str:
+        if cls._cid is ...:
+            raise ValueError("__cid is not defined for " + cls.__name__)
+
+        return cls._cid
+
+    @property
+    def serializable(self) -> bool:
+        return hasattr(self, "_cid")
+
+    def to_dict(self) -> dict:
+        if not hasattr(self, "_cid"):
+            print_ic_style(
+                f"{CC.fg.RED}Entity of type {self.__class__.__name__} is not"
+                f"serializable{CC.ctrl.ENDL}",
+            )
+
+        return {
+            "type": self.cid(),
+            "pos": self.position
+        }
 
     def add_acceleration(self, value: Vec2) -> None:
         """
@@ -232,9 +257,16 @@ class GameEntity(PositionedEntity):
 
 class VisibleGameEntity(GameEntity):
     def __init__(self, *args, **kwargs) -> None:
+        self._highlight = False
         super().__init__(*args, **kwargs)
 
         self.add(Drawn)
+
+    def highlight(self) -> None:
+        self._highlight = True
+
+    def stop_highlight(self) -> None:
+        self._highlight = False
 
     def update_rect(self) -> None:
         self.rect = pg.Rect(

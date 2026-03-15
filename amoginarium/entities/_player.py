@@ -140,15 +140,6 @@ class Player(LRImageEntity):
             coalition=coalition
         )
 
-        self.add(
-            CollisionDestroyed,
-            FrictionXAffected,
-            GravityAffected,
-            WallCollider,
-            Players,
-            HasBars
-        )
-
         self._groaning = SoundEffect(("groaning", "hugh_1"))
 
         self._last_wpn_change = 0
@@ -210,6 +201,15 @@ class Player(LRImageEntity):
 
         self._last_hit = perf_counter()
 
+        self.add(
+            CollisionDestroyed,
+            FrictionXAffected,
+            GravityAffected,
+            WallCollider,
+            Players,
+            HasBars
+        )
+
     @property
     def max_hp(self) -> int:
         return self._max_hp
@@ -234,6 +234,9 @@ class Player(LRImageEntity):
 
     @property
     def item(self) -> BaseWeapon | BaseItem | None:
+        if not hasattr(self, "_weapons"):
+            return None
+
         if self._weapons[self._current_weapon]["uses"] > 0:
             return self._weapons[self._current_weapon]["item"]
 

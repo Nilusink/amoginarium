@@ -502,8 +502,10 @@ class _CollisionDestroyed(_BaseGroup):
 
     @staticmethod
     def point_in_sprite(sprite, point: tuple) -> bool:
-        start = sprite.position - sprite.size / 2
-        end = sprite.position + sprite.size / 2
+        # start = sprite.position - sprite.size / 2
+        # end = sprite.position + sprite.size / 2
+        start = convert_coord(sprite.rect.topleft, Vec2)
+        end = convert_coord(sprite.rect.bottomright, Vec2)
 
         return all([
             start.x <= point[0] <= end.x,

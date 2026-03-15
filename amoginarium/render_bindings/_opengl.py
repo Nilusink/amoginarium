@@ -61,7 +61,7 @@ class OpenGLRenderer(BaseRenderer):
             self._fonts[size] = []
 
         # no font found, create new
-        new_font = pg.font.SysFont(family, size, bold, italic)
+        new_font = pg.font.SysFont(family, int(size), bold, italic)
         self._fonts[size].append(new_font)
 
         return new_font
@@ -285,14 +285,22 @@ class OpenGLRenderer(BaseRenderer):
 
     def apply_stencil[**A](
             self,
-            stencil_func: tp.Callable[[A], tp.Any],
+            stencil_func: tp.Callable[A, tp.Any],
             show_stencil=False,
             *args: A.args,
             **kwargs: A.kwargs
     ) -> None:
-        # stencil_bits = glGetIntegerv(GL_STENCIL_BITS)
-        # print("Stencil bits:", stencil_bits)
+        self.start_stencil(show_stencil)
 
+        stencil_func(*args, **kwargs)
+
+        self.enable_stencil(show_stencil)
+
+    @staticmethod
+    def start_stencil(show_stencil=False):
+        """
+        call this, then draw stencil, then draw enable_stencil
+        """
         glEnable(GL_STENCIL_TEST)
         glClear(GL_STENCIL_BUFFER_BIT)
 
@@ -306,8 +314,11 @@ class OpenGLRenderer(BaseRenderer):
         if not show_stencil:
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)  # if mask invis
 
-        stencil_func(*args, **kwargs)
-
+    @staticmethod
+    def enable_stencil(show_stencil=False):
+        """
+        start_stencil must be called first
+        """
         if not show_stencil:
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
 
@@ -614,7 +625,7 @@ class OpenGLRenderer(BaseRenderer):
 
         if convert_global:
             start = global_vars.translate_screen_coord(start)
-            end = global_vars.translate_scale(end)
+            end = global_vars.translate_screen_coord(end)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, end - start):

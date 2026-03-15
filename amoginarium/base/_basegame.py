@@ -28,9 +28,7 @@ from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
     create_moving_island
 from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
-from ..entities import Player, GrassIsland, GrayBrickIsland, Island
-from ..entities import GreenBrickIsland, PillarIsland, PlatformIsland1
-from ..entities import PlatformIsland2, Radar
+from ..entities import Player, GrassIsland, ISLANDS, Radar, SPAWNABLES
 from ..controllers import Controllers, Controller, GameController
 from ..debugging import run_with_debug, print_ic_style, CC, timeit
 from ._scrolling_background import ParalaxBackground
@@ -60,28 +58,8 @@ def current_time() -> str:
     return f"{strftime('%H:%M:%S')}.{ms: <4} |> "
 
 
-SPAWNABLES: dict[str, tp.Type[BaseTurret]] = {
-    "turret.static.sniper": SniperTurret,
-    "turret.static.ak47": AkTurret,
-    "turret.static.minigun": MinigunTurret,
-    "turret.static.mortar": MortarTurret,
-    "turret.static.flak": FlakTurret,
-    "turret.static.cram": CRAMTurret,
-    "sensor.static.radar": Radar,
-    "instructions.text": TextEntity,
-}
-ISLANDS: dict[str, tp.Type[Island]] = {
-    "island.grass": GrassIsland,
-    "island.brick.gray": GrayBrickIsland,
-    "island.brick.green": GreenBrickIsland,
-    "island.pillar.1": PillarIsland,
-    "island.platform.1": PlatformIsland1,
-    "island.platform.2": PlatformIsland2,
-}
-
-
 class BaseGame:
-    running: bool = True
+    running: bool = False
     _last_logic: float
     _bg_color: tuple[float, float, float]
     _instance: tp.Self = ...
@@ -154,7 +132,7 @@ class BaseGame:
         self._loading_screen_info = "Window init"
 
         # initialize background
-        self._background = ...
+        self._background: ParalaxBackground = ...
         self._bg_color = (0, 0, 0)
         self._background_player = BackgroundPlayer()
         self._background_player.volume = .6
@@ -340,6 +318,7 @@ class BaseGame:
     def root(self) -> tp.Self:
         return self
 
+    @run_with_debug()
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
         load a map from a json file
@@ -601,8 +580,6 @@ class BaseGame:
         clock = pg.time.Clock()
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
-
-        self.load_map("assets/maps/tutorial.json")
 
         EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
         EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
@@ -882,18 +859,34 @@ class BaseGame:
         ic("pygame end")
         self.end()
 
+    def draw_entities_only(self) -> None:
+        """
+        only draw entities, no game updates or menus
+        """
+        glClearColor(0.0, 0.0, 0.1, 1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        self._background.draw(0)
+        Drawn.gl_draw()
+        HasBars.gl_draw()
+
+        pg.display.flip()
+        # clock.tick(global_vars.max_fps)
+
+    @run_with_debug()
     def _run_logic(self) -> None:
         """
         start game logic
         """
         last = perf_counter()
         last_fps_print = 0
+        sleep(3)
         while self.running:
             now = perf_counter()
 
             # minimum loop time of .5 ms (so the CPU isn't stressed too much)
-            while now - last < .0005:
-                now = perf_counter()
+            # while now - last < .00005:
+            #     now = perf_counter()
 
             delta = now - last
 
@@ -967,10 +960,11 @@ class BaseGame:
         """
         run the game
         """
+        self.running = True
         self._game_start = perf_counter()
 
         # self._pool.submit(self._run_logic)
-        self._pool.submit(self._run_comms)
+        # self._pool.submit(self._run_comms)
         self._run_pygame()
 
     @run_with_debug()

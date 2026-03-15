@@ -29,8 +29,6 @@ class BaseTurret(VisibleGameEntity):
     size: Vec2
     weapon: BaseWeapon
     _body_texture: int = ...
-    # _body_texture_path: str = "static_turret_base"
-    # _body_texture_size: tuple[int, int] = (64, 64)
     _body_texture_path = "mortar_turret_base"
     _body_texture_size = (23, 24)
     _weapon_texture: int | None = ...
@@ -384,6 +382,9 @@ class BaseTurret(VisibleGameEntity):
 
         engage_center = self.world_position + self.weapon.parent_position_offset
 
+        if self._highlight:
+            renderer.start_stencil(True)
+
         # weapon
         self.weapon.draw_at(
             self.position,
@@ -393,8 +394,19 @@ class BaseTurret(VisibleGameEntity):
         renderer.draw_textured_quad(
             self._body_texture,
             self.world_position - self.size / 2,
-            self.size.xy
+            self.size
         )
+
+        if self._highlight:
+            renderer.enable_stencil(True)
+
+            renderer.draw_rect(
+                self.world_position - self.size,
+                self.size * 2,
+                (1, 1, 1, .5)
+            )
+
+            renderer.disable_stencil()
 
         # draw engagement range
         if self._valid_angles is not ...:
@@ -504,6 +516,7 @@ class BaseTurret(VisibleGameEntity):
 
 
 class SniperTurret(BaseTurret):
+    _cid = "turret.static.sniper"
     _max_hp: int = 40
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
@@ -524,6 +537,7 @@ class SniperTurret(BaseTurret):
 
 
 class AkTurret(BaseTurret):
+    _cid = "turret.static.ak47"
     _max_hp: int = 60
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
@@ -544,6 +558,7 @@ class AkTurret(BaseTurret):
 
 
 class MinigunTurret(BaseTurret):
+    _cid = "turret.static.minigun"
     _max_hp: int = 60
 
     def __init__(self, coalition: Coalitions, position: Vec2) -> None:
@@ -564,6 +579,7 @@ class MinigunTurret(BaseTurret):
 
 
 class MortarTurret(BaseTurret):
+    _cid = "turret.static.mortar"
     _max_hp: int = 90
     _aim_type = "high"
     _body_texture_path = "mortar_turret_base"
@@ -596,6 +612,7 @@ class MortarTurret(BaseTurret):
 
 
 class FlakTurret(BaseTurret):
+    _cid = "turret.static.flak"
     _max_hp: int = 170
     _body_texture_path = "FLAK_base"
     _body_texture_size = (98, 44)
@@ -627,6 +644,7 @@ class FlakTurret(BaseTurret):
 
 
 class CRAMTurret(BaseTurret):
+    _cid = "turret.static.cram"
     _max_hp: int = 60
     _body_texture_path = "CRAM_base"
     _body_texture_size = (64, 128)

@@ -59,11 +59,17 @@ class BaseRenderer:
 
     def apply_stencil[**A](
             self,
-            stencil_func: tp.Callable[[A], tp.Any],
+            stencil_func: tp.Callable[A, tp.Any],
             show_stencil: bool = False,
             *args: A.args,
             **kwargs: A.kwargs
     ) -> None: ...
+
+    @staticmethod
+    def start_stencil(show_stencil: bool = False) -> None: ...
+
+    @staticmethod
+    def enable_stencil(show_stencil: bool = False) -> None: ...
 
     def disable_stencil(self) -> None: ...
 

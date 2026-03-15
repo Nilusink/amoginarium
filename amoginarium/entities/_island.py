@@ -17,12 +17,13 @@ import math as m
 import random
 import time
 
+from ..debugging import print_ic_style, CC
 from ..shared import global_vars
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ._base_entity import VisibleGameEntity
 from ..logic import Vec2, coord_t, convert_coord
-from ..base import Walls
+from ..base import Walls, Updated
 
 
 class _PolyMatcher:
@@ -147,6 +148,13 @@ class Island(VisibleGameEntity):
     def _get_block_mask(cls) -> pg.Mask | tuple[pg.Mask, pg.Mask]:
         return pg.Mask(cls._image_size, fill=True)
 
+    @property
+    def form(self) -> list[list[int]] | None:
+        if self._form is ...:
+            return None
+
+        return self._form.copy()
+
     def _generate_collision_mask(self) -> None:
         """
         generate the mask used for collision
@@ -212,6 +220,32 @@ class Island(VisibleGameEntity):
                     self._bounce * delta * player._movement_acceleration / 35
             )
 
+    def to_dict(self) -> dict:
+        """
+        convert island to dict for saving
+        """
+        out = {
+            "args": {
+                "pos": self.position
+            }
+        }
+        if self.form:
+            out["args"]["form"] = self.form
+
+        else:
+            out["args"]["size"] = self.size
+
+        try:
+            out["type"] = _islands_reverse[self.__class__]
+
+        except KeyError:
+            print_ic_style(
+                f"{CC.fg.RED}invalid island type: "
+                f"{self.__class__}{CC.ctrl.ENDC}"
+            )
+
+        return out
+
     def get_collided_sides(
             self,
             top_collider: tuple[Vec2, pg.Mask],
@@ -255,11 +289,18 @@ class Island(VisibleGameEntity):
         start_pos = self.world_position
 
         # check if island is on screen
-        if any([
-            self.position.x > global_vars.screen_pixels.x + global_vars.background_position,
-            self.position.x + self.size.x < global_vars.background_position
+        if not any([
+            Updated.world_position.x < self.position.x,
+            self.position.x + self.size.x < Updated.world_position.x +
+            global_vars.screen_pixels.x,
+            Updated.world_position.y < self.position.y,
+            self.position.y + self.size.y < Updated.world_position.y +
+            global_vars.screen_pixels.y,
         ]):
             return
+
+        if self._highlight:
+            renderer.start_stencil(True)
 
         # fill island with dirt
         if self._form is ...:
@@ -549,6 +590,17 @@ class Island(VisibleGameEntity):
             ),
                 debug_surface
             )
+
+        if self._highlight:
+            renderer.enable_stencil(True)
+
+            renderer.draw_rect(
+                self.world_position - self.size / 2,
+                self.size * 2,
+                (1, 1, 1, .5)
+            )
+
+            renderer.disable_stencil()
 
 
 class GrassIsland(Island):
@@ -879,3 +931,14 @@ class PlatformIsland1(SingleBlockIsland):
 class PlatformIsland2(SingleBlockIsland):
     _texture = ("platforms", "2")
     _image_size = (44*3, 11*3)
+
+
+ISLANDS: dict[str, tp.Type[Island]] = {
+    "island.grass": GrassIsland,
+    "island.brick.gray": GrayBrickIsland,
+    "island.brick.green": GreenBrickIsland,
+    "island.pillar.1": PillarIsland,
+    "island.platform.1": PlatformIsland1,
+    "island.platform.2": PlatformIsland2,
+}
+_islands_reverse = {v: k for k, v in ISLANDS.items()}
