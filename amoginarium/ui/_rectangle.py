@@ -48,12 +48,10 @@ class Rectangle(UIComponent):
             on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
             on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
 
-            bg_color: ui_color_t | tuple[ui_color_t, ui_color_t, float, float] = Color.c_255_to_1(56.0, 254.0, 255.0),
-
-            # bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
-            # hover_bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
-            # hover_bg_color_duration: float = 0,
-            # hover_bg_color_reverse_duration: float = 0,
+            bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
+            hover_bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
+            hover_bg_color_duration: float = 0,
+            hover_bg_color_reverse_duration: float = 0,
 
             border_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
             hover_border_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
