@@ -10,7 +10,7 @@ Nilusink
 import typing as tp
 
 from ..base._textures import textures
-from ..base._groups import CollisionDestroyed, HasBars, Updated
+from ..entities import CollisionDestroyed, HasBars, Updated
 from ._base_entity import VisibleGameEntity
 from ..radar import RadarSensor, BaseSensor, VisualSensor, DetectionGroup, \
     DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED

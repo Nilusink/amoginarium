@@ -11,10 +11,7 @@ from contextlib import suppress
 from time import perf_counter
 from icecream import ic
 import typing as tp
-
-from ._groups import HasBars, CollisionDestroyed, Players, Updated, Bullets
-from ._groups import GravityAffected
-from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
+from ._groups import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
     GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related, \

@@ -19,9 +19,8 @@ from ..debugging import print_ic_style, CC
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
 from ..logic import Vec2
-from ..base import Updated, Drawn
+from ._groups import Updated, Drawn
 from amoginarium.shared._entity_hints import BaseEntityLike
-
 
 _next_entity_id = 0
 from ..logic import Vec2, rk4_update

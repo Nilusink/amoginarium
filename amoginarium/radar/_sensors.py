@@ -12,7 +12,7 @@ import typing as tp
 
 from ..debugging import run_with_debug
 from ..logic import coord_t, convert_coord, Vec2
-from ..base._groups import Players, Bullets
+from ..entities import Players, Bullets
 from ..render_bindings import renderer
 
 # if tp.TYPE_CHECKING:
@@ -83,6 +83,7 @@ class MagicSensor(BaseSensor):
     magically gets all targets inside a certain range
     of parent
     """
+
     def get_targets(self, from_entities: tp.Iterable[GameEntity] = None) -> list[GameEntity]:
         if from_entities is None:
             targets = [p for p in Players.sprites() if p.alive]
@@ -96,4 +97,3 @@ class MagicSensor(BaseSensor):
             self.parent.position + self._position_offset,
             self.detection_range,
         )]
-
