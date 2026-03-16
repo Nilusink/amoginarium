@@ -110,9 +110,9 @@ cdef class Color:
         return self
 
     cpdef Color set_rgb255(self, uint8_t r, uint8_t g, uint8_t b):  # type: (int, int, int) -> Color
-        self._r1 = r / 255
-        self._g1 = g / 255
-        self._b1 = b / 255
+        self._r1 = r / 255.0
+        self._g1 = g / 255.0
+        self._b1 = b / 255.0
         self._r255 = r
         self._g255 = g
         self._b255 = b
@@ -130,10 +130,10 @@ cdef class Color:
         return self
 
     cpdef Color set_rgba255(self, uint8_t r, uint8_t g, uint8_t b, uint8_t a):  # type: (int, int, int, int) -> Color
-        self._r1 = r / 255
-        self._g1 = g / 255
-        self._b1 = b / 255
-        self._a1 = a / 255
+        self._r1 = r / 255.0
+        self._g1 = g / 255.0
+        self._b1 = b / 255.0
+        self._a1 = a / 255.0
         self._r255 = r
         self._g255 = g
         self._b255 = b
@@ -177,4 +177,4 @@ cpdef Color fade(Color a, Color b, double t):  # type: (Color, Color, float) -> 
 
 
 cpdef tuple c_255_to_1(uint8_t r, uint8_t g, uint8_t b):  # type: (float, float, float) -> tuple[float, float, float]
-    return r / 255, g / 255, b / 255
+    return r / 255.0, g / 255.0, b / 255.0
