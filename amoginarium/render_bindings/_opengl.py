@@ -754,7 +754,8 @@ class OpenGLRenderer(BaseRenderer):
             font_size=64,
             font_family="arial",
             bold=False,
-            italic=False
+            italic=False,
+            convert_global=True
     ):
         return self.get_font(
             font_size,
@@ -764,8 +765,8 @@ class OpenGLRenderer(BaseRenderer):
         ).render(
             text,
             True,
-            color.rgb255,
-            bg_color.rgb255 if bg_color.a255 > 125 else None
+            color.rgba255,
+            bg_color.rgba255 if bg_color.a255 > 125 else None
         )
 
     def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):

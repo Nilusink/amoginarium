@@ -39,7 +39,7 @@ class TextEntity(pg.sprite.Sprite):
             color = tcolor
 
         if bg_color is ...:
-            bg_color = Color().from_1(0, 0, 0)
+            bg_color = Color().from_1(0, 0, 0, 0)
 
         elif issubclass(type(color), tp.Iterable):
             bg_color = Color().from_255(*bg_color)

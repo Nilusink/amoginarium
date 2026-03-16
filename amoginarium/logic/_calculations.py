@@ -68,7 +68,7 @@ def calculate_launch_angle_iterative(
     a_pos = position_delta + target_velocity * a_time + target_acceleration * 0.5 * a_time ** 2
 
     # launch direction unit vector
-    sol = Vec2.from_polar(angle, 1)
+    sol = Vec2().from_polar(angle, 1)
 
     return sol, a_time, a_pos
 
