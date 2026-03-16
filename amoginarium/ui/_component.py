@@ -203,10 +203,9 @@ class UIComponent(UIEntity):
         """:return: Whether a cursor is hovering over the component"""
         if self.__is_hovered_inner is None:
             self.__is_hovered_inner = False
-            col_buf = -self.__collision_buffer if self.__is_hovered_inner_last else 0
             cursor: UIComponent
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._absolute_position, buffer=col_buf):
+                if self.__is_hovered_by(cursor._absolute_position, buffer=self.__collision_buffer):
                     self.__is_hovered_inner = True
                     break
 
@@ -218,7 +217,7 @@ class UIComponent(UIEntity):
             self.__is_hovered_outer = False
             cursor: UIComponent
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._absolute_position, buffer=self.__collision_buffer):
+                if self.__is_hovered_by(cursor._absolute_position, buffer=-self.__collision_buffer):
                     self.__is_hovered_outer = True
                     break
 
@@ -265,17 +264,16 @@ class UIComponent(UIEntity):
             if hovered_inner is None or hovered_outer is None:
                 return
 
-            if hovered_outer and not self.__is_hovered_outer_last:
+            if hovered_inner and not self.__is_hovered_inner_last:
                 self.__is_hovered = True
                 for callback in self.__on_enter_callbacks:
                     callback()
-            elif self.__is_hovered_inner_last and not hovered_inner:
+            elif self.__is_hovered_outer_last and not hovered_outer:
                 self.__is_hovered = False
                 for callback in self.__on_leave_callbacks:
                     callback()
-
-            elif (self.__is_hovered_outer_last and not hovered_outer
-                  and hovered_inner and self.__is_hovered_inner_last):
+            elif (self.__is_hovered_inner_last and not hovered_inner
+                  and hovered_outer and self.__is_hovered_outer_last):
                 for callback in self.__on_buffer_callbacks:
                     callback()
 
@@ -289,7 +287,7 @@ class UIComponent(UIEntity):
         - Draw the UI and collision surface
         """
         self.__is_hovered_inner_last = self.__is_hovered_inner
-        self.__is_hovered_outer_last = self.__is_hovered_inner
+        self.__is_hovered_outer_last = self.__is_hovered_outer
         self.__is_hovered_inner = None
         self.__is_hovered_outer = None
 

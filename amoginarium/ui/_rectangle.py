@@ -15,7 +15,7 @@ from ..render_bindings import renderer
 from ..shared import global_vars
 from ..audio import SoundEffect
 
-from ._animation import Animation, MultiAnimation
+from ._animations import Animation, MultiAnimation, Vec2Animation, anim_vec2_values_t, create_animation
 from ._types import Anchor, ui_color_t
 from ._component import UIComponent
 from ._entity import UIEntity
@@ -27,9 +27,9 @@ class Rectangle(UIComponent):
     """UI rectangle with basic sounds and animations"""
     __hover_bg_color_animation: MultiAnimation[tuple[int, int, int]]
     __hover_border_color_animation: MultiAnimation[tuple[int, int, int]]
-    __hover_border_width_animation: Animation[float]
-    __hover_radius_animation: Animation[float]
-    __hover_extend_animation: MultiAnimation[tuple[float, float]]
+    __hover_border_width_animation: Animation
+    __hover_radius_animation: Animation
+    __hover_extend_animation: Vec2Animation
 
     __on_hover_sound: SoundEffect | None
     __on_leave_sound: SoundEffect | None
@@ -68,9 +68,7 @@ class Rectangle(UIComponent):
             hover_radius_duration: float = 0,
             hover_radius_reverse_duration: float = 0,
 
-            hover_extend: coord_t | float | int = 0,
-            hover_extend_duration: coord_t | float | int = 0,
-            hover_collapse_duration: coord_t | float | int = 0,
+            size_extend: anim_vec2_values_t = 0,
 
             on_hover_sound: SoundEffect | None = None,
             on_leave_sound: SoundEffect | None = None,
@@ -136,18 +134,15 @@ class Rectangle(UIComponent):
             start_values=border_color, end_values=hover_border_color, count=3,
             extend_durations_in_seconds=hover_border_color_duration,
             collapse_duration_in_seconds=hover_border_color_reverse_duration)
-        self.__hover_border_width_animation = Animation(
+        self.__hover_border_width_animation = create_animation(
             start_value=border_width, end_value=hover_border_width,
             extend_duration_seconds=hover_border_width_duration,
             collapse_duration_seconds=hover_border_width_reverse_duration)
-        self.__hover_radius_animation = Animation(
+        self.__hover_radius_animation = create_animation(
             start_value=radius, end_value=hover_radius,
             extend_duration_seconds=hover_radius_duration,
             collapse_duration_seconds=hover_radius_reverse_duration)
-        self.__hover_extend_animation = MultiAnimation(
-            start_values=0, end_values=hover_extend, count=2,
-            extend_durations_in_seconds=hover_extend_duration,
-            collapse_duration_in_seconds=hover_collapse_duration)
+        self.__hover_extend_animation = Vec2Animation(size_extend)
 
         self.add_enter_callback(self.__on_enter)
         self.add_buffer_callback(self.__on_buffer_zone)
@@ -185,8 +180,7 @@ class Rectangle(UIComponent):
 
     @property
     def _absolute_size(self) -> Vec2:
-        extend: tp.Tuple[float, float] = self.__hover_extend_animation.current_value
-        return super()._absolute_size + convert_coord(extend, Vec2) * 2
+        return super()._absolute_size + self.__hover_extend_animation.current_value * 2
 
     def _gl_draw(self) -> None:
         if self._use_collision_mask and not self._ui_changed:

@@ -118,9 +118,7 @@ class Button(Rectangle):
                          hover_radius_duration=hover_radius_duration,
                          hover_radius_reverse_duration=hover_radius_reverse_duration,
 
-                         hover_extend=hover_extend,
-                         hover_extend_duration=hover_extend_duration,
-                         hover_collapse_duration=hover_collapse_duration,
+                         size_extend=(0, hover_extend, 0, 0),
 
                          parent=parent
                          )
