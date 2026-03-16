@@ -6,10 +6,8 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from __future__ import annotations
-
 from ._single_animation import SingleAnimation
-from ._types import AnimationPhase
+from ._animation_types import AnimationPhase
 
 
 class TimedAnimation(SingleAnimation):

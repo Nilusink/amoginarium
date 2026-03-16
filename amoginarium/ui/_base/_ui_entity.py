@@ -1,5 +1,5 @@
 """
-amoginarium/entities/_ui/_ui_entity.py
+amoginarium/ui/_base/_ui_entity.py
 
 Project: amoginarium
 Created: 10.03.2026
@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import typing as tp
 
-from ..entities import BaseEntity
+from amoginarium.entities import BaseEntity
 
-from ._group import UIGroup
+from ._ui_group import UIGroup
 
 
 class UIEntity(BaseEntity):

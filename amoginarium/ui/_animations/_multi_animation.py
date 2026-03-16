@@ -6,13 +6,11 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from __future__ import annotations
-
 import typing as tp
 
-from ._single_animation import SingleAnimation
-from ._types import AnimInput, AnimationPhase
 from ._timed_animation import TimedAnimation, create_animation
+from ._animation_types import AnimInput, AnimationPhase
+from ._single_animation import SingleAnimation
 
 
 class MultiAnimation[A]:

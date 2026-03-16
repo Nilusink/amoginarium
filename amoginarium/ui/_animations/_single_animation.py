@@ -6,7 +6,7 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from ._types import AnimationPhase
+from ._animation_types import AnimationPhase
 
 
 class SingleAnimation:

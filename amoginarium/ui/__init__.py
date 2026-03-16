@@ -8,8 +8,5 @@ Authors: Nilusink, LukasKrah
 
 from ._animations import AnimationPhase, AnimInput, anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t, \
     TimedAnimation, create_animation, Animation, SingleAnimation, MultiAnimation, Vec2Animation
-from ._component import UIComponent
-from ._rectangle import Rectangle
-from ._entity import UIEntity
-from ._button import Button
-from ._cursor import UICursor
+from ._widgets import Rectangle, Button, UICursor
+from ._base import UIElement, UIEntity, UIGroup

@@ -6,20 +6,20 @@ Created: 11.03.2026
 Authors: LukasKrah
 """
 
-from ._component import UIComponent
+from amoginarium.ui._base._ui_element import UIElement
 
 import pygame as pg
 
-from ..logic import convert_coord, Vec2
-from ..entities import Cursor
-from ..shared import global_vars
+from amoginarium.logic import convert_coord, Vec2
+from amoginarium.entities import Cursor
+from amoginarium.shared import global_vars
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class UICursor(UIComponent):
+class UICursor(UIElement):
     def __init__(self) -> None:
         super().__init__((0, 0), (0, 0), _use_collision_mask=False)
 

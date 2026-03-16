@@ -12,13 +12,13 @@ from typing import Any, Callable
 # noinspection PyPackageRequirements
 import pygame as pg
 
-from ._entity import UIEntity
-from ..audio import PresetEffect, SoundEffect
-from ..render_bindings import renderer
-from ..logic import coord_t, Color, c_255_to_1, color_t
-from ._types import Anchor, ui_color_t
+from amoginarium.ui._base._ui_entity import UIEntity
+from amoginarium.audio import PresetEffect, SoundEffect
+from amoginarium.render_bindings import renderer
+from amoginarium.logic import coord_t, Color, color_t
+from amoginarium.ui._types import Anchor
 
-from ._rectangle import Rectangle
+from amoginarium.ui._widgets._rectangle import Rectangle
 
 
 class _OnHoverButtonSound(PresetEffect):

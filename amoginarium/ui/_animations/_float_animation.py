@@ -6,9 +6,7 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from __future__ import annotations
-
-from ._types import anim_float_values_t, AnimatedFloatValues
+from ._animation_types import anim_float_values_t, AnimatedFloatValues
 from ._single_animation import SingleAnimation
 from ._timed_animation import create_animation
 

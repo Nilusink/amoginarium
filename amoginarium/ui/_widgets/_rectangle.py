@@ -10,21 +10,21 @@ from __future__ import annotations
 
 import typing as tp
 
-from ..logic import coord_t, c_255_to_1, convert_coord, Vec2
-from ..render_bindings import renderer
-from ..shared import global_vars
-from ..audio import SoundEffect
+from amoginarium.logic import coord_t, Vec2
+from amoginarium.render_bindings import renderer
+from amoginarium.shared import global_vars
+from amoginarium.audio import SoundEffect
 
-from ._animations import Animation, MultiAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
+from amoginarium.ui._animations import Animation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
     anim_float_values_t, anim_color_values_t, ColorAnimation
-from ._types import Anchor, ui_color_t
-from ._component import UIComponent
-from ._entity import UIEntity
+from amoginarium.ui._types import Anchor
+from amoginarium.ui._base._ui_element import UIElement
+from amoginarium.ui._base._ui_entity import UIEntity
 
-from .temp_pygame_rendering import draw_rounded_rect
+from amoginarium.ui.temp_pygame_rendering import draw_rounded_rect
 
 
-class Rectangle(UIComponent):
+class Rectangle(UIElement):
     """UI rectangle with basic sounds and animations"""
     __hover_bg_color_animation: ColorAnimation
     __hover_border_color_animation: ColorAnimation

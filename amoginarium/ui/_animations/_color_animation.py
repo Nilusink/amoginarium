@@ -1,4 +1,3 @@
-# noinspection DuplicatedCode
 """
 amoginarium/ui/_animations/_color_animation.py
 
@@ -7,14 +6,12 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from __future__ import annotations
-
 import typing as tp
 
-from ...logic import Color, convert_color
+from amoginarium.logic import Color, convert_color
 
+from ._animation_types import anim_color_t, anim_color__time_t, AnimatedColorValues, anim_color_values_t
 from ._multi_animation import MultiAnimation
-from ._types import anim_color_t, anim_color__time_t, AnimatedColorValues, anim_color_values_t
 
 
 class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):

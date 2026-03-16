@@ -6,14 +6,12 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from __future__ import annotations
-
 import typing as tp
 
-from ...logic import Vec2
+from amoginarium.logic import Vec2
 
+from ._animation_types import anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t
 from ._multi_animation import MultiAnimation
-from ._types import anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t
 
 
 class Vec2Animation(MultiAnimation[tuple[float, float]]):

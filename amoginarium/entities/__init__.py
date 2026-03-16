@@ -1,5 +1,5 @@
 from ._groups import Drawn, Walls, Players, Bullets, HasBars, Updated, WallBouncer, WallCollider, GravityAffected, \
-    FrictionXAffected, CollisionDestroyed, Cursor
+    FrictionXAffected, CollisionDestroyed, Cursor, BaseGroup
 from ._static_turret import SniperTurret, AkTurret, MinigunTurret, MortarTurret
 from ._static_turret import FlakTurret, BaseTurret, CRAMTurret
 from ._base_entity import GameEntity, VisibleGameEntity, ImageEntity, LRImageEntity
@@ -13,6 +13,4 @@ from ._player import Player
 from ._animation import Animation, ImageAnimation, explosion
 from ._sensors import BaseSensor, Radar
 from ._spawnables import SPAWNABLES
-
 from ._island import Island
-from ._groups import _BaseGroup

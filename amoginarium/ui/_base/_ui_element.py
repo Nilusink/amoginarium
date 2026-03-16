@@ -1,26 +1,24 @@
 """
-amoginarium/entities/_ui/_ui_component.py
+amoginarium/ui/_base/_ui_element.py
 
 Project: amoginarium
 Created: 10.03.2026
 Authors: LukasKrah
 """
 
-from __future__ import annotations
-
 # noinspection PyPackageRequirements
 import pygame as pg
 import typing as tp
 
-from ..logic import Vec2, coord_t, convert_coord
-from ..shared import global_vars
-from ..entities import Cursor
+from amoginarium.logic import Vec2, coord_t, convert_coord
+from amoginarium.shared import global_vars
+from amoginarium.entities import Cursor
 
-from ._entity import UIEntity
-from ._types import Anchor
+from ._ui_entity import UIEntity
+from .._types import Anchor
 
 
-class UIComponent(UIEntity):
+class UIElement(UIEntity):
     """Basic UI component with position, size, and hovering"""
 
     # region Attributes: position and size
@@ -203,7 +201,7 @@ class UIComponent(UIEntity):
         """:return: Whether a cursor is hovering over the component"""
         if self.__is_hovered_inner is None:
             self.__is_hovered_inner = False
-            cursor: UIComponent
+            cursor: UIElement
             for cursor in Cursor.sprites():
                 if self.__is_hovered_by(cursor._absolute_position, buffer=self.__collision_buffer):
                     self.__is_hovered_inner = True
@@ -215,7 +213,7 @@ class UIComponent(UIEntity):
         """:return: Whether a cursor is hovering over the outer buffer of the component"""
         if self.__is_hovered_outer is None:
             self.__is_hovered_outer = False
-            cursor: UIComponent
+            cursor: UIElement
             for cursor in Cursor.sprites():
                 if self.__is_hovered_by(cursor._absolute_position, buffer=-self.__collision_buffer):
                     self.__is_hovered_outer = True

@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_animations/_types.py
+amoginarium/ui/_animations/_animation_types.py
 
 Project: amoginarium
 Created: 16.03.2026
@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 import typing as tp
 
-from ...logic import coord_t, color_t
+from amoginarium.logic import coord_t, color_t
 
 
 # region Single/MultiAnimation
