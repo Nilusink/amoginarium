@@ -8,13 +8,12 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from enum import Enum
 import typing as tp
 
-from ...logic import Vec2, coord_t, convert_coord
+from ...logic import Vec2
 
 from ._multi_animation import MultiAnimation
-from ._types import up_to_coord_t, AnimatedVec2Values, anim_vec2_values_t
+from ._types import anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t
 
 
 class Vec2Animation(MultiAnimation[tuple[float, float]]):
@@ -54,7 +53,7 @@ class Vec2Animation(MultiAnimation[tuple[float, float]]):
         return self.__vec2
 
     @staticmethod
-    def __convert_up_to_coord(coord: up_to_coord_t) -> tuple[float, float] | float:
+    def __convert_up_to_coord(coord: anim_vec2_t) -> tuple[float, float] | float:
         """
         Converts a Vec2 or a coordinate tuple to a tuple of floats.
         Passes single int or float values through as-is.

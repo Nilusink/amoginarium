@@ -90,8 +90,6 @@ class Button(Rectangle):
             hover_radius_reverse_duration: float = TEST_DURATION,
 
             hover_extend: coord_t | float | int = (10, 5),
-            hover_extend_duration: coord_t | float | int = TEST_DURATION,
-            hover_collapse_duration: coord_t | float | int = TEST_DURATION,
 
             on_hover_sound: SoundEffect | None = OnHoverButtonSound,
             on_leave_sound: SoundEffect | None = OnButtonLeaveSound,
@@ -110,14 +108,9 @@ class Button(Rectangle):
                          hover_border_color_duration=hover_border_color_duration,
                          hover_border_color_reverse_duration=hover_border_color_reverse_duration,
 
-                         border_width=border_width, hover_border_width=hover_border_width,
-                         hover_border_width_duration=hover_border_width_duration,
-                         hover_border_width_reverse_duration=hover_border_width_reverse_duration,
-
-                         radius=radius, hover_radius=hover_radius,
-                         hover_radius_duration=hover_radius_duration,
-                         hover_radius_reverse_duration=hover_radius_reverse_duration,
-
+                         border_width=(border_width, hover_border_width, hover_border_width_duration,
+                                       hover_border_width_reverse_duration),
+                         radius=(radius, hover_radius, hover_radius_duration, hover_radius_reverse_duration),
                          size_extend=(0, hover_extend, 0, 0),
 
                          parent=parent

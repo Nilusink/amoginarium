@@ -15,7 +15,8 @@ from ..render_bindings import renderer
 from ..shared import global_vars
 from ..audio import SoundEffect
 
-from ._animations import Animation, MultiAnimation, Vec2Animation, anim_vec2_values_t, create_animation
+from ._animations import Animation, MultiAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
+    anim_float_values_t
 from ._types import Anchor, ui_color_t
 from ._component import UIComponent
 from ._entity import UIEntity
@@ -58,15 +59,8 @@ class Rectangle(UIComponent):
             hover_border_color_duration: float = 0,
             hover_border_color_reverse_duration: float = 0,
 
-            border_width: int = 5,
-            hover_border_width: int = 5,
-            hover_border_width_duration: float = 0,
-            hover_border_width_reverse_duration: float = 0,
-
-            radius: float = 20,
-            hover_radius: float = 20,
-            hover_radius_duration: float = 0,
-            hover_radius_reverse_duration: float = 0,
+            border_width: anim_float_values_t = 5,
+            radius: anim_float_values_t = 20,
 
             size_extend: anim_vec2_values_t = 0,
 
@@ -134,14 +128,8 @@ class Rectangle(UIComponent):
             start_values=border_color, end_values=hover_border_color, count=3,
             extend_durations_in_seconds=hover_border_color_duration,
             collapse_duration_in_seconds=hover_border_color_reverse_duration)
-        self.__hover_border_width_animation = create_animation(
-            start_value=border_width, end_value=hover_border_width,
-            extend_duration_seconds=hover_border_width_duration,
-            collapse_duration_seconds=hover_border_width_reverse_duration)
-        self.__hover_radius_animation = create_animation(
-            start_value=radius, end_value=hover_radius,
-            extend_duration_seconds=hover_radius_duration,
-            collapse_duration_seconds=hover_radius_reverse_duration)
+        self.__hover_border_width_animation = create_float_animation(border_width)
+        self.__hover_radius_animation = create_float_animation(radius)
         self.__hover_extend_animation = Vec2Animation(size_extend)
 
         self.add_enter_callback(self.__on_enter)
