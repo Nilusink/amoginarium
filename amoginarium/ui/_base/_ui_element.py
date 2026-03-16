@@ -173,7 +173,7 @@ class UIElement(UIEntity):
         if not self.__use_collision_mask:
             raise ValueError("use_collision_mask is set to false")
 
-        if self.__collision_recreation:
+        if self.__collision_recreation or self.__collision_surface is None:
             self.__collision_recreation = False  #
             self.__collision_mask = None
             self.__collision_surface = pg.Surface(self._absolute_size.xy, pg.SRCALPHA, 32)

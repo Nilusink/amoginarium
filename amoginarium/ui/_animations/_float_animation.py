@@ -7,8 +7,7 @@ Authors: LukasKrah
 """
 
 from ._animation_types import anim_float_values_t, AnimatedFloatValues
-from ._single_animation import SingleAnimation
-from ._timed_animation import create_animation
+from ._complex_animation import create_animation, Animation
 
 
 class _FloatAnimationHelper:
@@ -18,64 +17,53 @@ class _FloatAnimationHelper:
     def convert(values: anim_float_values_t) -> AnimatedFloatValues:
         """
         Parses union types into the AnimatedFloatValues dataclass,
-        normalizing all inputs to floats.
+        relying on `...` for value defaults.
         """
         if isinstance(values, AnimatedFloatValues):
             return values
 
         # 1. Handle single float or int
         if isinstance(values, (int, float)):
-            norm_val = float(values)
-            return AnimatedFloatValues(
-                start_value=norm_val,
-                end_value=norm_val,
-                extend_duration_seconds=0.0,
-                collapse_duration_seconds=0.0
-            )
+            return AnimatedFloatValues(start_value=float(values))
 
-        # 2. Handle tuples representing (start, end, extend_dur, collapse_dur)
+        # 2. Handle tuples representing the parameters sequentially
         if isinstance(values, tuple):
             length = len(values)
 
-            if length == 2:
+            if 2 <= length <= 8:
                 return AnimatedFloatValues(
                     start_value=float(values[0]),
                     end_value=float(values[1]),
-                    extend_duration_seconds=0.0,
-                    collapse_duration_seconds=0.0
-                )
-
-            elif length == 3:
-                return AnimatedFloatValues(
-                    start_value=float(values[0]),
-                    end_value=float(values[1]),
-                    extend_duration_seconds=float(values[2]),
-                    collapse_duration_seconds=float(values[2])
-                )
-
-            elif length == 4:
-                return AnimatedFloatValues(
-                    start_value=float(values[0]),
-                    end_value=float(values[1]),
-                    extend_duration_seconds=float(values[2]),
-                    collapse_duration_seconds=float(values[3])
+                    extend_duration=float(values[2]) if length > 2 else ...,
+                    collapse_duration=float(values[3]) if length > 3 else ...,
+                    extend_debounce_duration=float(values[4]) if length > 4 else ...,
+                    collapse_debounce_duration=float(values[5]) if length > 5 else ...,
+                    extend_curve=values[6] if length > 6 else ...,
+                    collapse_curve=values[7] if length > 7 else ...
                 )
 
         raise ValueError(f"Unsupported conversion format: {values}")
 
 
-def create_float_animation(value: anim_float_values_t) -> SingleAnimation:
+FloatAnimation = Animation
+
+
+def create_float_animation(value: anim_float_values_t) -> Animation:
     """
-    Creates either a SingleAnimation or a TimedAnimation based on the input values.
+    Creates either a SimpleAnimation or a ComplexAnimation based on the input values.
 
     :param value: Float animation values (single value, tuple, or AnimatedFloatValues)
-    :return: The configured SingleAnimation or TimedAnimation instance.
+    :return: The configured SimpleAnimation or ComplexAnimation instance.
     """
     val = _FloatAnimationHelper.convert(value)
 
     return create_animation(
         start_value=val.start_value,
         end_value=val.end_value,
-        extend_duration_seconds=val.extend_duration_seconds,
-        collapse_duration_seconds=val.collapse_duration_seconds
+        extend_duration=val.extend_duration,
+        collapse_duration=val.collapse_duration,
+        extend_debounce_duration=val.extend_debounce_duration,
+        collapse_debounce_duration=val.collapse_debounce_duration,
+        extend_curve=val.extend_curve,
+        collapse_curve=val.collapse_curve
     )

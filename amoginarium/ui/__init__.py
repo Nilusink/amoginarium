@@ -6,7 +6,7 @@ Created: 26.03.2024
 Authors: Nilusink, LukasKrah
 """
 
-from ._animations import AnimationPhase, AnimInput, anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t, \
-    TimedAnimation, create_animation, Animation, SingleAnimation, MultiAnimation, Vec2Animation
+from ._animations import AnimationPhase, anim_input_t, anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t, \
+    ComplexAnimation, create_animation, Animation, SimpleAnimation, MultiAnimation, Vec2Animation
 from ._widgets import Rectangle, Button, UICursor
 from ._base import UIElement, UIEntity, UIGroup

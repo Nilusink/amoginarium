@@ -12,13 +12,16 @@ from typing import Any, Callable
 # noinspection PyPackageRequirements
 import pygame as pg
 
-from amoginarium.ui._base._ui_entity import UIEntity
 from amoginarium.audio import PresetEffect, SoundEffect
-from amoginarium.render_bindings import renderer
 from amoginarium.logic import coord_t, Color, color_t
-from amoginarium.ui._types import Anchor
+from amoginarium.render_bindings import renderer
+from .. import anim_vec2_values_t, AnimatedVec2Values
+from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColorValues, AnimatedFloatValues
 
-from amoginarium.ui._widgets._rectangle import Rectangle
+from .._types import Anchor
+from .._base import UIEntity
+
+from ._rectangle import Rectangle
 
 
 class _OnHoverButtonSound(PresetEffect):
@@ -36,11 +39,36 @@ class _OnButtonLeaveSound(PresetEffect):
     _sound_name = "button_leave"
 
 
+def _s_curve(x: float) -> float:
+    # Smoothstep function: an S-curve that perfectly maps 0 to 0 and 1 to 1
+    if x < 0.5:
+        return 0
+    return 1
+    return x ** 2 * (3 - 2 * x)
+
+
+def peaked_s_curve(x: float) -> float:
+    # Clamp x to the expected 0.0 to 1.0 range (optional but safe)
+    x = max(0.0, min(1.0, x))
+
+    if x <= 0.8:
+        # First S-curve: map x from [0.0, 0.8] to t in [0.0, 1.0]
+        t = x / 0.8
+        # Standard smoothstep t^2 * (3 - 2t), scaled to reach 3.0
+        return 3.0 * (t ** 2 * (3 - 2 * t))
+    else:
+        # Second S-curve: map x from [0.8, 1.0] to t in [0.0, 1.0]
+        t = (x - 0.8) / 0.2
+        # Start at 3.0 and smoothly transition down by 2.0 to reach 1.0
+        return 3.0 - 2.0 * (t ** 2 * (3 - 2 * t))
+
+
 OnHoverButtonSound = _OnHoverButtonSound()
 OnButtonLeaveSound = _OnButtonLeaveSound()
 ButtonClickSound = _ButtonClickSound()
 
-TEST_DURATION = 0.2
+ANIM_TIME: float = 3
+ANIM_DEBOUNCE: float = 1
 
 
 class Button(Rectangle):
@@ -67,47 +95,38 @@ class Button(Rectangle):
             placement_anchor: Anchor = Anchor.CENTER,
 
             fg_color: color_t = (0, 0, 0),
-            hover_fg_color: color_t = (0, 0, 0),
 
-            bg_color: color_t = (56, 254, 255),
-            hover_bg_color: color_t = (140, 255, 255),
-            hover_bg_color_duration: float = TEST_DURATION,
-            hover_bg_color_reverse_duration: float = TEST_DURATION,
+            bg_color: anim_color_values_t = AnimatedColorValues((56, 254, 255), (140, 255, 255),
+                                                                extend_duration=ANIM_TIME,
+                                                                extend_debounce_duration=ANIM_DEBOUNCE),
+            border_color: anim_color_values_t = AnimatedColorValues((33, 133, 163), (255, 255, 255),
+                                                                    extend_duration=ANIM_TIME,
+                                                                    extend_debounce_duration=ANIM_DEBOUNCE),
+            border_width: anim_float_values_t = AnimatedFloatValues(5, 10,
+                                                                    extend_duration=ANIM_TIME,
+                                                                    extend_debounce_duration=ANIM_DEBOUNCE),
+            radius: anim_float_values_t = AnimatedFloatValues(0, 60,
+                                                              extend_duration=ANIM_TIME,
+                                                              extend_debounce_duration=ANIM_DEBOUNCE),
+            size_extend: anim_vec2_values_t = AnimatedVec2Values(0, (100, 5),
+                                                                 extend_duration=ANIM_TIME,
+                                                                 extend_debounce_duration=ANIM_DEBOUNCE,
+                                                                 extend_curve=peaked_s_curve,
+                                                                 collapse_curve=lambda a: a),
 
-            border_color: color_t = (33, 133, 163),
-            hover_border_color: color_t = (255, 255, 255),
-            hover_border_color_duration: float = TEST_DURATION,
-            hover_border_color_reverse_duration: float = TEST_DURATION,
-
-            border_width: int = 5,
-            hover_border_width: int = 10,
-            hover_border_width_duration: float = TEST_DURATION,
-            hover_border_width_reverse_duration: float = TEST_DURATION,
-
-            radius: float = 20,
-            hover_radius: float = 40,
-            hover_radius_duration: float = TEST_DURATION,
-            hover_radius_reverse_duration: float = TEST_DURATION,
-
-            hover_extend: coord_t | float | int = (10, 5),
-
-            on_hover_sound: SoundEffect | None = OnHoverButtonSound,
+            on_enter_sound: SoundEffect | None = OnHoverButtonSound,
             on_leave_sound: SoundEffect | None = OnButtonLeaveSound,
             on_click_sound: SoundEffect | None = ButtonClickSound,
 
             parent: UIEntity | None = None
     ) -> None:
         super().__init__(relative_position, relative_size, placement_anchor=placement_anchor,
-                         on_hover_sound=on_hover_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
-                         bg_color=(bg_color, hover_bg_color, hover_bg_color_duration, hover_bg_color_reverse_duration),
-                         border_color=(border_color, hover_border_color, hover_border_color_duration,
-                                       hover_border_color_reverse_duration),
-
-                         border_width=(border_width, hover_border_width, hover_border_width_duration,
-                                       hover_border_width_reverse_duration),
-                         radius=(radius, hover_radius, hover_radius_duration, hover_radius_reverse_duration),
-                         size_extend=(0, hover_extend, 0.2),
-
+                         on_enter_sound=on_enter_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
+                         bg_color=bg_color,
+                         border_color=border_color,
+                         border_width=border_width,
+                         radius=radius,
+                         size_extend=size_extend,
                          parent=parent
                          )
         self.__command = command
@@ -120,8 +139,6 @@ class Button(Rectangle):
         self.__text_font: pg.font.Font = renderer.get_font(64, "Arial", False, False)
         self.__text_surface = self.__text_font.render(self.__text, True,
                                                       self.__fg_color.rgb255)
-
-        self.bg_color = Color(0, 0, 0, 0)
 
         # if self.__command is not None:
         #     self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())

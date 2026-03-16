@@ -9,7 +9,7 @@ Authors: LukasKrah
 from ._animation_types import AnimationPhase
 
 
-class SingleAnimation:
+class SimpleAnimation:
     """Basic 2-position float value animation"""
     _start_value: float
     _end_value: float
@@ -20,7 +20,7 @@ class SingleAnimation:
     def __init__(
             self,
             start_value: float,
-            end_value: float | None = None
+            end_value: float = ...
     ) -> None:
         """
         Create a basic 2-position float value animation
@@ -28,7 +28,7 @@ class SingleAnimation:
         :param end_value: Maximum extended value
         """
         self._start_value = start_value
-        self._end_value = end_value if end_value is not None else start_value
+        self._end_value = end_value if end_value != ... else start_value
 
         self._phase = AnimationPhase.AT_START
         self._current_value = start_value
@@ -70,6 +70,7 @@ class SingleAnimation:
         """:return: Whether the animation is currently in extension or contraction phase"""
         return self._phase in [AnimationPhase.EXTENDING, AnimationPhase.COLLAPSING]
 
+    # region Methods: properties
     @property
     def start_value(self) -> float:
         """:return: Start value of the animation"""
@@ -89,3 +90,5 @@ class SingleAnimation:
     def current_value(self) -> float:
         """:return: Current value of the animation"""
         return self._current_value
+
+    # endregion

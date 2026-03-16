@@ -6,15 +6,15 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-import typing as tp
+from types import EllipsisType
 
 from amoginarium.logic import Color, convert_color
 
-from ._animation_types import anim_color_t, anim_color__time_t, AnimatedColorValues, anim_color_values_t
+from ._animation_types import anim_color_t, anim_color_time_t, AnimatedColorValues, anim_color_values_t, anim_input_t
 from ._multi_animation import MultiAnimation
 
 
-class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):
+class ColorAnimation(MultiAnimation):
     """RGBA float animation for Color"""
     __color: Color
 
@@ -23,18 +23,23 @@ class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):
         Create a Color animation
         :param value: Color animation values
         """
-        val = self.__convert_anim_color_values(value)
+        parsed_value = self.__convert_anim_color_values(value)
 
         super().__init__(
-            start_values=self.__convert_color_to_tuple(val.start_value),
-            end_values=self.__convert_color_to_tuple(val.end_value),
-            extend_durations_in_seconds=self.__convert_time(val.extend_duration_seconds),
-            collapse_duration_in_seconds=self.__convert_time(val.collapse_duration_seconds),
+            start_values=self.__convert_color_to_tuple(parsed_value.start_value),
+            end_values=self.__convert_color_to_tuple(parsed_value.end_value),
+            extend_durations=self.__convert_time(parsed_value.extend_duration),
+            collapse_durations=self.__convert_time(parsed_value.collapse_duration),
+            extend_debounce_duration=self.__convert_time(parsed_value.extend_debounce_duration),
+            collapse_debounce_duration=self.__convert_time(parsed_value.collapse_debounce_duration),
+            extend_curve=parsed_value.extend_curve,
+            collapse_curve=parsed_value.collapse_curve,
             count=4
         )
 
         # Initialize the stored Color object using the current values calculated by MultiAnimation
-        self.__color = convert_color(super().current_value, convert_to=Color)
+        current = super().current_value
+        self.__color = convert_color(current if current else (0.0, 0.0, 0.0, 0.0), convert_to=Color)
 
     def update(self, delta: float) -> Color:
         """
@@ -43,7 +48,7 @@ class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):
         :return: New values of the animations
         """
         current_rgba = super().update(delta)
-        # Update the color object with the new RGBA float tuple (assuming convert_to=Color handles 0.0-1.0 scale floats)
+        # Update the color object with the new RGBA float tuple
         self.__color = convert_color(current_rgba, convert_to=Color)
         return self.__color
 
@@ -53,12 +58,15 @@ class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):
         return self.__color
 
     @staticmethod
-    def __convert_color_to_tuple(color_val: anim_color_t | None) -> tuple[float, float, float, float] | None:
+    def __convert_color_to_tuple(
+            color_val: anim_color_t | EllipsisType | None
+    ) -> EllipsisType | tuple[float, float, float, float]:
         """
         Converts a Color or a tuple to a tuple of 4 floats (RGBA).
+        Passes Ellipsis (...) through.
         """
-        if color_val is None:
-            return None
+        if color_val is ... or color_val is None:
+            return ...
 
         # Let the external convert_color function handle scaling to 0.0 - 1.0 format
         converted = tuple(convert_color(color_val, convert_to=tuple))
@@ -70,13 +78,15 @@ class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):
         return float(converted[0]), float(converted[1]), float(converted[2]), float(converted[3])
 
     @staticmethod
-    def __convert_time(time_val: anim_color__time_t | None) -> tuple[float, float, float, float] | float | None:
+    def __convert_time(
+            time_val: anim_color_time_t | anim_input_t | EllipsisType | None
+    ) -> anim_color_time_t | anim_input_t | EllipsisType:
         """
-        Normalizes time inputs. Passes scalars directly to MultiAnimation,
+        Normalizes time inputs. Passes scalars and Ellipsis (...) directly to MultiAnimation,
         or converts 4-tuples to floats.
         """
-        if time_val is None:
-            return None
+        if time_val is ... or time_val is None:
+            return ...
 
         if isinstance(time_val, (int, float)):
             return float(time_val)
@@ -84,13 +94,13 @@ class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):
         if isinstance(time_val, tuple) and len(time_val) == 4:
             return float(time_val[0]), float(time_val[1]), float(time_val[2]), float(time_val[3])
 
-        raise ValueError(f"Unsupported time format for ColorAnimation: {time_val}")
+        return time_val
 
     @staticmethod
-    def __is_single_color(val: tp.Any) -> bool:
+    def __is_single_color(val: anim_color_values_t) -> bool:
         """Helper to check if a value is a single color."""
         # Duck-typing for a Color object
-        if hasattr(val, "get_rgba1") or type(val).__name__ == "Color":
+        if hasattr(val, "get_rgba") or type(val).__name__ == "Color":
             return True
 
         # Treat a tuple of 3 or 4 numbers as a single color (not a tuple of start/end)
@@ -103,49 +113,30 @@ class ColorAnimation(MultiAnimation[tuple[float, float, float, float]]):
     @classmethod
     def __convert_anim_color_values(cls, values: anim_color_values_t) -> AnimatedColorValues:
         """
-        Parses union types into the AnimatedColorValues dataclass,
-        normalizing all color inputs.
+        Parses union types into the AnimatedColorValues dataclass.
+        Relies on default '...' values handling in down-stream logic.
         """
         if isinstance(values, AnimatedColorValues):
             return values
 
-        zero_val = 0.0  # For durations, we can pass a single float scalar directly to MultiAnimation
-
         # 1. Handle single color
         if cls.__is_single_color(values):
-            return AnimatedColorValues(
-                start_value=values,
-                end_value=values,
-                extend_duration_seconds=zero_val,
-                collapse_duration_seconds=zero_val
-            )
+            return AnimatedColorValues(start_value=values)
 
-        # 2. Handle tuples representing (start, end, extend_dur, collapse_dur)
+        # 2. Handle tuples representing the parameters sequentially
         if isinstance(values, tuple):
             length = len(values)
 
-            if length == 2:
+            if 2 <= length <= 8:
                 return AnimatedColorValues(
                     start_value=values[0],
                     end_value=values[1],
-                    extend_duration_seconds=zero_val,
-                    collapse_duration_seconds=zero_val
-                )
-
-            elif length == 3:
-                return AnimatedColorValues(
-                    start_value=values[0],
-                    end_value=values[1],
-                    extend_duration_seconds=values[2],  # Passes anim_color__time_t
-                    collapse_duration_seconds=values[2]
-                )
-
-            elif length == 4:
-                return AnimatedColorValues(
-                    start_value=values[0],
-                    end_value=values[1],
-                    extend_duration_seconds=values[2],
-                    collapse_duration_seconds=values[3]
+                    extend_duration=values[2] if length > 2 else ...,
+                    collapse_duration=values[3] if length > 3 else ...,
+                    extend_debounce_duration=values[4] if length > 4 else ...,
+                    collapse_debounce_duration=values[5] if length > 5 else ...,
+                    extend_curve=values[6] if length > 6 else ...,
+                    collapse_curve=values[7] if length > 7 else ...
                 )
 
         raise ValueError(f"Unsupported conversion format: {values}")

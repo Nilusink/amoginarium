@@ -8,75 +8,105 @@ Authors: LukasKrah
 
 import typing as tp
 
-from ._timed_animation import TimedAnimation, create_animation
-from ._animation_types import AnimInput, AnimationPhase
-from ._single_animation import SingleAnimation
+from ._animation_types import anim_input_t, AnimationPhase, anim_curve_input_t, anim_curve_t
+from ._complex_animation import ComplexAnimation, create_animation, Animation
+from ._simple_animation import SimpleAnimation
 
 
 class MultiAnimation[A]:
     """Handles multiple animations with flexibility to process scalar values or sequences."""
-    __animations: list[TimedAnimation | SingleAnimation]
+    __animations: list[Animation]
     __is_single: bool
     __count: int
 
     def __init__(
             self,
-            start_values: AnimInput,
-            end_values: AnimInput | None = None,
-            extend_durations_in_seconds: AnimInput | None = None,
-            collapse_duration_in_seconds: AnimInput | None = None,
+            start_values: anim_input_t,
+            end_values: anim_input_t | None = None,
+            *_args: tp.Any,
+            extend_durations: anim_input_t | None = None,
+            collapse_durations: anim_input_t | None = None,
+            extend_debounce_duration: anim_input_t | None = None,
+            collapse_debounce_duration: anim_input_t | None = None,
+            extend_curve: anim_curve_input_t | None = None,
+            collapse_curve: anim_curve_input_t | None = None,
             count: int | None = None
     ) -> None:
         """
         Create a MultiAnimation instance
         :param start_values: Single value or sequence of values to start the animations from.
         :param end_values: Single value or sequence of values to end the animations at.
-        :param extend_durations_in_seconds: Single value / sequence of values for the extension durations in seconds.
-        :param collapse_duration_in_seconds: Single value / sequence of values for the collapse durations in seconds.
+        :param extend_durations: Single value / sequence of values for the extension durations in seconds.
+        :param collapse_durations: Single value / sequence of values for the collapse durations in seconds.
+        :param extend_debounce_duration: Single value / sequence of values for the extension debounce in seconds.
+        :param collapse_debounce_duration: Single value / sequence of values for the collapse debounce in seconds.
+        :param extend_curve: Single curve or sequence of curves for the extension phase.
+        :param collapse_curve: Single curve or sequence of curves for the collapse phase.
         :param count: Number of animations to create. If not provided, it will be inferred from the input sequences.
         """
         self.__animations = []
 
-        # Helper to check if an input is a single scalar or None
-        def _is_single_or_none(val: AnimInput) -> bool:
-            return val is None or isinstance(val, (int, float))
+        def _is_single_or_none(val) -> bool:
+            return val in (None, ...) or not isinstance(val, (list, tuple))
 
-        # Check if ALL inputs are single scalars (or None)
+        def _safe_float(val, default=...):
+            """Safely cast to float, returning the default if val is None or Ellipsis."""
+            return float(val) if val not in (None, ...) else default
+
+        # Check if ALL inputs are single values (or None)
         all_single_or_none = (
                 _is_single_or_none(start_values) and
                 _is_single_or_none(end_values) and
-                _is_single_or_none(extend_durations_in_seconds) and
-                _is_single_or_none(collapse_duration_in_seconds)
+                _is_single_or_none(extend_durations) and
+                _is_single_or_none(collapse_durations) and
+                _is_single_or_none(extend_debounce_duration) and
+                _is_single_or_none(collapse_debounce_duration) and
+                _is_single_or_none(extend_curve) and
+                _is_single_or_none(collapse_curve)
         )
 
-        # Optimization: Use one animation if only scalars/Nones are given
         if all_single_or_none:
             self.__is_single = True
             self.__count = count if count is not None else 1
 
-            # Type hinting forces floats, handle None fallback in create_animation if necessary
-            # or explicitly cast here if they are not None.
-            s_val = float(start_values) if start_values is not None else 0.0
-            e_val = float(end_values) if end_values is not None else None
-            ex_val = float(extend_durations_in_seconds) if extend_durations_in_seconds is not None else None
-            col_val = float(collapse_duration_in_seconds) if collapse_duration_in_seconds is not None else None
+            # Use _safe_float to avoid crashing on Ellipsis
+            s_val = _safe_float(start_values, default=0.0)
+            e_val = _safe_float(end_values)
+            ex_dur = _safe_float(extend_durations)
+            col_dur = _safe_float(collapse_durations)
+            ex_deb = _safe_float(extend_debounce_duration)
+            col_deb = _safe_float(collapse_debounce_duration)
+
+            ex_curve = extend_curve if extend_curve not in (None, ...) else ...
+            col_curve = collapse_curve if collapse_curve not in (None, ...) else ...
 
             self.__animations = [
-                create_animation(s_val, e_val, ex_val, col_val)
+                create_animation(
+                    start_value=s_val,
+                    end_value=e_val,
+                    extend_duration=ex_dur,
+                    collapse_duration=col_dur,
+                    extend_debounce_duration=ex_deb,
+                    collapse_debounce_duration=col_deb,
+                    extend_curve=ex_curve,
+                    collapse_curve=col_curve
+                )
             ]
         else:
             self.__is_single = False
 
-            # Extract all arguments that are sequences (tuples or lists)
+            # Extract all arguments that are sequences
             sequences = [
-                x for x in (start_values, end_values, extend_durations_in_seconds, collapse_duration_in_seconds)
+                x for x in (
+                    start_values, end_values, extend_durations, collapse_durations,
+                    extend_debounce_duration, collapse_debounce_duration,
+                    extend_curve, collapse_curve
+                )
                 if isinstance(x, (tuple, list))
             ]
 
             if sequences:
-                # Find the maximum sequence length
                 seq_length = max(len(seq) for seq in sequences)
-
                 if count is not None and count != seq_length:
                     raise ValueError(
                         f"Provided count ({count}) does not match the longest "
@@ -86,32 +116,45 @@ class MultiAnimation[A]:
             else:
                 self.__count = count if count is not None else 1
 
-            # Helper function to normalize values into sequences of the correct length, padding None
-            def _normalize(val: AnimInput) -> tp.Tuple[float | None, ...]:
-                if val is None:
-                    return (None,) * self.__count
-                if isinstance(val, (int, float)):
-                    return (float(val),) * self.__count
+            def _normalize(val, is_numeric: bool = True) -> tp.Tuple:
+                # Map None to Ellipsis (...) so default kwargs in create_animation trigger correctly
+                if val in (None, ...):
+                    return (...,) * self.__count
 
-                # It's a sequence. Pad it with the last value (or None) if it's too short
-                norm_list = [float(v) if v is not None else None for v in val]
+                if not isinstance(val, (list, tuple)):
+                    converted = _safe_float(val) if is_numeric else val
+                    return (converted,) * self.__count
+
+                if is_numeric:
+                    norm_list = [_safe_float(v) for v in val]
+                else:
+                    norm_list = [v if v not in (None, ...) else ... for v in val]
+
+                # Pad sequence if it's too short
                 while len(norm_list) < self.__count:
-                    norm_list.append(norm_list[-1] if norm_list else None)
+                    norm_list.append(norm_list[-1] if norm_list else ...)
 
                 return tuple(norm_list)
 
             s_norm = _normalize(start_values)
             e_norm = _normalize(end_values)
-            ex_norm = _normalize(extend_durations_in_seconds)
-            red_norm = _normalize(collapse_duration_in_seconds)
+            ex_dur_norm = _normalize(extend_durations)
+            col_dur_norm = _normalize(collapse_durations)
+            ex_deb_norm = _normalize(extend_debounce_duration)
+            col_deb_norm = _normalize(collapse_debounce_duration)
+            ex_curve_norm = _normalize(extend_curve, is_numeric=False)
+            col_curve_norm = _normalize(collapse_curve, is_numeric=False)
 
-            # Create individual animations using the factory, passing Nones as allowed
             self.__animations = [
                 create_animation(
-                    start_value=s_norm[i] if s_norm[i] is not None else 0.0,
+                    start_value=s_norm[i] if s_norm[i] is not ... else 0.0,
                     end_value=e_norm[i],
-                    extend_duration_seconds=ex_norm[i],
-                    collapse_duration_seconds=red_norm[i]
+                    extend_duration=ex_dur_norm[i],
+                    collapse_duration=col_dur_norm[i],
+                    extend_debounce_duration=ex_deb_norm[i],
+                    collapse_debounce_duration=col_deb_norm[i],
+                    extend_curve=ex_curve_norm[i],
+                    collapse_curve=col_curve_norm[i]
                 )
                 for i in range(self.__count)
             ]
@@ -147,6 +190,7 @@ class MultiAnimation[A]:
         """:return: Whether any animation is currently in extension or contraction phase"""
         return any([anim.is_changing() for anim in self.__animations])
 
+    # region Methods: properties
     @property
     def start_values(self) -> A:
         """:return: Start values of the animations"""
@@ -158,14 +202,34 @@ class MultiAnimation[A]:
         return tuple(anim.end_value for anim in self.__animations)
 
     @property
-    def extend_duration_seconds(self) -> A:
+    def extend_durations(self) -> A:
         """:return: The extension durations of the animations in seconds"""
-        return tuple(anim.extend_duration_seconds for anim in self.__animations)
+        return tuple(anim.extend_duration for anim in self.__animations)
 
     @property
-    def collapse_duration_seconds(self) -> A:
+    def extend_debounce_durations(self) -> A:
+        """:return: Minimum times in extending phase before starting to extend"""
+        return tuple(anim.extend_debounce_duration for anim in self.__animations)
+
+    @property
+    def collapse_durations(self) -> A:
         """:return: The collapse durations of the animations in seconds"""
-        return tuple(anim.collapse_duration_seconds for anim in self.__animations)
+        return tuple(anim.collapse_duration for anim in self.__animations)
+
+    @property
+    def collapse_debounce_durations(self) -> A:
+        """:return: Minimum times in collapsing phase before starting to collapse"""
+        return tuple(anim.collapse_debounce_duration for anim in self.__animations)
+
+    @property
+    def extend_curves(self) -> tuple[anim_curve_t, ...]:
+        """:return: Extend curves functions"""
+        return tuple(anim.extend_curve for anim in self.__animations)
+
+    @property
+    def collapse_curves(self) -> tuple[anim_curve_t, ...]:
+        """:return: Collapse curves functions"""
+        return tuple(anim.collapse_curve for anim in self.__animations)
 
     @property
     def phase(self) -> tuple[AnimationPhase, ...]:
@@ -190,3 +254,4 @@ class MultiAnimation[A]:
     def current_time(self) -> A:
         """:return: Current times of the animations"""
         return tuple(anim.current_time for anim in self.__animations)
+    # endregion

@@ -6,15 +6,15 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-import typing as tp
+from types import EllipsisType
 
 from amoginarium.logic import Vec2
 
-from ._animation_types import anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t
+from ._animation_types import AnimatedVec2Values, anim_vec2_values_t, anim_vec2_t, anim_input_t
 from ._multi_animation import MultiAnimation
 
 
-class Vec2Animation(MultiAnimation[tuple[float, float]]):
+class Vec2Animation(MultiAnimation):
     """Double float animation for Vec2"""
     __vec2: Vec2
 
@@ -23,18 +23,25 @@ class Vec2Animation(MultiAnimation[tuple[float, float]]):
         Create a Vec2 animation
         :param value: Vec2 animation values
         """
-        value = self.__convert_anim_vec2_values(value)
+        parsed_value = self.__convert_anim_vec2_values(value)
 
         super().__init__(
-            start_values=self.__convert_up_to_coord(value.start_vec),
-            end_values=self.__convert_up_to_coord(value.end_vec),
-            extend_durations_in_seconds=self.__convert_up_to_coord(value.extend_duration_seconds),
-            collapse_duration_in_seconds=self.__convert_up_to_coord(value.collapse_duration_seconds),
+            start_values=self.__convert_up_to_coord(parsed_value.start_vec),
+            end_values=self.__convert_up_to_coord(parsed_value.end_vec),
+            extend_durations=self.__convert_up_to_coord(parsed_value.extend_duration),
+            collapse_durations=self.__convert_up_to_coord(parsed_value.collapse_duration),
+            extend_debounce_duration=self.__convert_up_to_coord(parsed_value.extend_debounce_duration),
+            collapse_debounce_duration=self.__convert_up_to_coord(parsed_value.collapse_debounce_duration),
+            extend_curve=parsed_value.extend_curve,
+            collapse_curve=parsed_value.collapse_curve,
             count=2
         )
 
         self.__vec2 = Vec2()
-        self.__vec2.xy = super().current_value
+
+        # Pull current values from MultiAnimation to initialize the vector
+        current = super().current_value
+        self.__vec2.xy = current if current else (0.0, 0.0)
 
     def update(self, delta: float) -> Vec2:
         """
@@ -51,32 +58,37 @@ class Vec2Animation(MultiAnimation[tuple[float, float]]):
         return self.__vec2
 
     @staticmethod
-    def __convert_up_to_coord(coord: anim_vec2_t) -> tuple[float, float] | float:
+    def __convert_up_to_coord(val: anim_vec2_t | anim_input_t | EllipsisType) -> anim_input_t | EllipsisType:
         """
         Converts a Vec2 or a coordinate tuple to a tuple of floats.
-        Passes single int or float values through as-is.
+        Passes single scalars, sequences, and Ellipsis (...) through.
         """
-        if isinstance(coord, (int, float)):
-            return coord
+        if val is ... or val is None:
+            return ...
 
-        if isinstance(coord, tuple) and len(coord) == 2:
-            return float(coord[0]), float(coord[1])
+        if isinstance(val, (int, float)):
+            return float(val)
+
+        if isinstance(val, tuple) and len(val) == 2:
+            # Check if it's explicitly a numeric coordinate tuple
+            if isinstance(val[0], (int, float)) and isinstance(val[1], (int, float)):
+                return float(val[0]), float(val[1])
 
         # Duck-typing check for Vec2
-        if hasattr(coord, "xy"):
-            return float(coord.xy[0]), float(coord.xy[1])
+        if hasattr(val, "xy"):
+            return float(val.xy[0]), float(val.xy[1])
 
-        raise ValueError(f"Unsupported coordinate format: {coord}")
+        # Fallback for other valid sequences that MultiAnimation will pad
+        return val
 
     @staticmethod
-    def __is_single_coordinate(val: tp.Any) -> bool:
+    def __is_single_coordinate(val: anim_vec2_values_t) -> bool:
         """Helper to check if a value is a single vector or a scalar."""
         if isinstance(val, (int, float)):
             return True
         if hasattr(val, "xy"):  # catches Vec2
             return True
-        # Treat a tuple of two numbers like (10, 20) as a single X,Y coordinate,
-        # NOT as start=10, end=20.
+        # Treat a tuple of two numbers like (10, 20) as a single X,Y coordinate
         if isinstance(val, tuple) and len(val) == 2:
             if isinstance(val[0], (int, float)) and isinstance(val[1], (int, float)):
                 return True
@@ -85,50 +97,30 @@ class Vec2Animation(MultiAnimation[tuple[float, float]]):
     @classmethod
     def __convert_anim_vec2_values(cls, values: anim_vec2_values_t) -> AnimatedVec2Values:
         """
-        Parses union types into the AnimatedVec2Values dataclass,
-        normalizing all vector inputs to tuples of floats or single numeric values.
+        Parses union types into the AnimatedVec2Values dataclass.
+        Relies on default '...' values handling in down-stream logic.
         """
         if isinstance(values, AnimatedVec2Values):
             return values
 
-        zero_val = (0.0, 0.0)
-
         # 1. Handle single coord_t, float, or int
         if cls.__is_single_coordinate(values):
-            norm_val = cls.__convert_up_to_coord(values)
-            return AnimatedVec2Values(
-                start_vec=norm_val,
-                end_vec=norm_val,
-                extend_duration_seconds=zero_val,
-                collapse_duration_seconds=zero_val
-            )
+            return AnimatedVec2Values(start_vec=values)
 
-        # 2. Handle tuples representing (start, end, extend_dur, collapse_dur)
+        # 2. Handle tuples representing the parameters sequentially
         if isinstance(values, tuple):
             length = len(values)
 
-            if length == 2:
+            if 2 <= length <= 8:
                 return AnimatedVec2Values(
-                    start_vec=cls.__convert_up_to_coord(values[0]),
-                    end_vec=cls.__convert_up_to_coord(values[1]),
-                    extend_duration_seconds=zero_val,
-                    collapse_duration_seconds=zero_val
-                )
-
-            elif length == 3:
-                return AnimatedVec2Values(
-                    start_vec=cls.__convert_up_to_coord(values[0]),
-                    end_vec=cls.__convert_up_to_coord(values[1]),
-                    extend_duration_seconds=cls.__convert_up_to_coord(values[2]),
-                    collapse_duration_seconds=cls.__convert_up_to_coord(values[2])
-                )
-
-            elif length == 4:
-                return AnimatedVec2Values(
-                    start_vec=cls.__convert_up_to_coord(values[0]),
-                    end_vec=cls.__convert_up_to_coord(values[1]),
-                    extend_duration_seconds=cls.__convert_up_to_coord(values[2]),
-                    collapse_duration_seconds=cls.__convert_up_to_coord(values[3])
+                    start_vec=values[0],
+                    end_vec=values[1],
+                    extend_duration=values[2] if length > 2 else ...,
+                    collapse_duration=values[3] if length > 3 else ...,
+                    extend_debounce_duration=values[4] if length > 4 else ...,
+                    collapse_debounce_duration=values[5] if length > 5 else ...,
+                    extend_curve=values[6] if length > 6 else ...,
+                    collapse_curve=values[7] if length > 7 else ...
                 )
 
         raise ValueError(f"Unsupported conversion format: {values}")

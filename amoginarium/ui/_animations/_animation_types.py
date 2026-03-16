@@ -23,26 +23,38 @@ class AnimationPhase(StrEnum):
     AT_END = "AT_END"
 
 
-AnimInput = tp.Union[None, float, int, tp.Sequence[tp.Union[float, int]]]
+type anim_input_t = tp.Union[None, float, int, tp.Sequence[tp.Union[float, int]]]
+
+type anim_curve_t = tp.Callable[[float], float]
+type anim_curve_input_t = tp.Union[None, anim_curve_t, tp.Sequence[anim_curve_t]]
 
 # endregion
 
 # region Vec2Animation
 # noinspection DuplicatedCode
-anim_vec2_t = coord_t | float | int
+type anim_vec2_t = coord_t | float | int
 
 
 @dataclass  # noqa
 class AnimatedVec2Values:
     """Animated color value"""
     start_vec: anim_vec2_t
-    end_vec: anim_vec2_t | None = None
-    extend_duration_seconds: anim_vec2_t | None = None
-    collapse_duration_seconds: anim_vec2_t | None = None
+    end_vec: anim_vec2_t = ...
+    extend_duration: anim_vec2_t = ...
+    collapse_duration: anim_vec2_t = ...
+    extend_debounce_duration: anim_input_t = ...
+    collapse_debounce_duration: anim_input_t = ...
+    extend_curve: anim_curve_t = ...
+    collapse_curve: anim_curve_t = ...
 
 
-anim_vec2_values_t = tp.Union[
+type anim_vec2_values_t = tp.Union[
     AnimatedVec2Values,
+    tp.Tuple[
+        anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t, anim_input_t, anim_curve_t, anim_curve_t],
+    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t, anim_input_t, anim_curve_t],
+    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t, anim_input_t],
+    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t],
     tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t],
     tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t],
     tp.Tuple[anim_vec2_t, anim_vec2_t],
@@ -52,20 +64,30 @@ anim_vec2_values_t = tp.Union[
 # endregion
 
 # region FloatAnimation
-anim_float_t = tp.Union[float, int]
+type anim_float_t = tp.Union[float, int]
 
 
 @dataclass  # noqa
 class AnimatedFloatValues:
     """Animated float value"""
     start_value: anim_float_t
-    end_value: anim_float_t | None = None
-    extend_duration_seconds: anim_float_t | None = None
-    collapse_duration_seconds: anim_float_t | None = None
+    end_value: anim_float_t = ...
+    extend_duration: anim_float_t = ...
+    collapse_duration: anim_float_t = ...
+    extend_debounce_duration: anim_input_t = ...
+    collapse_debounce_duration: anim_input_t = ...
+    extend_curve: anim_curve_t = ...
+    collapse_curve: anim_curve_t = ...
 
 
-anim_float_values_t = tp.Union[
+# noinspection DuplicatedCode
+type anim_float_values_t = tp.Union[
     AnimatedFloatValues,
+    tp.Tuple[
+        anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t, anim_input_t, anim_curve_t, anim_curve_t],
+    tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t, anim_input_t, anim_curve_t],
+    tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t, anim_input_t],
+    tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t],
     tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t],
     tp.Tuple[anim_float_t, anim_float_t, anim_float_t],
     tp.Tuple[anim_float_t, anim_float_t],
@@ -75,24 +97,36 @@ anim_float_values_t = tp.Union[
 # endregion
 
 # region ColorAnimation
-anim_color_t = color_t
+type anim_color_t = color_t
 # noinspection DuplicatedCode
-anim_color__time_t = tp.Tuple[float, float, float, float] | tp.Tuple[int, int, int, int] | float | int
+type anim_color_time_t = tp.Tuple[float, float, float, float] | tp.Tuple[int, int, int, int] | float | int
 
 
 @dataclass  # noqa
 class AnimatedColorValues:
     """Animated float value"""
     start_value: anim_color_t
-    end_value: anim_color_t | None = None
-    extend_duration_seconds: anim_color__time_t | None = None
-    collapse_duration_seconds: anim_color__time_t | None = None
+    end_value: anim_color_t = ...
+    extend_duration: anim_color_time_t = ...
+    collapse_duration: anim_color_time_t = ...
+    extend_debounce_duration: anim_input_t = ...
+    collapse_debounce_duration: anim_input_t = ...
+    extend_curve: anim_curve_t = ...
+    collapse_curve: anim_curve_t = ...
 
 
-anim_color_values_t = tp.Union[
+# noinspection DuplicatedCode
+type anim_color_values_t = tp.Union[
     AnimatedColorValues,
-    tp.Tuple[anim_color_t, anim_color_t, anim_color__time_t, anim_color__time_t],
-    tp.Tuple[anim_color_t, anim_color_t, anim_color__time_t],
+    tp.Tuple[
+        anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t,
+        anim_input_t, anim_input_t, anim_curve_t, anim_curve_t],
+    tp.Tuple[
+        anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t, anim_input_t, anim_input_t, anim_curve_t],
+    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t, anim_input_t, anim_input_t],
+    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t, anim_input_t],
+    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t],
+    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t],
     tp.Tuple[anim_color_t, anim_color_t],
     anim_color_t
 ]
