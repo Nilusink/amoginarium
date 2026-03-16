@@ -9,7 +9,7 @@ Nilusink
 """
 from ..logic import Vec2, lidar_sphere, coord_t
 from ..entities._base_entity import GameEntity
-from ..base._groups import Walls
+from ..entities import Walls
 from ._radar import RadarSensor
 
 

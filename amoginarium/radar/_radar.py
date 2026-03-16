@@ -14,7 +14,7 @@ import numpy as np
 from ..debugging import timeit
 from ..logic import coord_t, Vec2, point_in_triangle, is_related, \
     normalize_angle
-from ..base._groups import Players, Bullets, Walls
+from ..entities import Players, Bullets, Walls
 from ..entities._base_entity import GameEntity
 from ..render_bindings import renderer
 from ._sensors import BaseSensor
@@ -86,7 +86,7 @@ class RadarSensor(BaseSensor):
                         # check RCS
                         # check left and right side of target
                         size_factor = Vec2().from_polar(
-                            normalize_angle(delta.angle) + np.pi/2,
+                            normalize_angle(delta.angle) + np.pi / 2,
                             target.size.length / 2
                         )
 

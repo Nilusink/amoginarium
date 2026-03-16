@@ -13,7 +13,7 @@ import pygame as pg
 
 from ..logic import coord_t, Color, Vec2, convert_coord
 from ..render_bindings import renderer, tColor
-from ..base import Drawn, Updated
+from ._groups import Drawn, Updated
 
 
 class TextEntity(pg.sprite.Sprite):
@@ -32,17 +32,17 @@ class TextEntity(pg.sprite.Sprite):
             font_family: str = "arial"
     ) -> None:
         if color is ...:
-            color = Color.white(255)
+            color = Color().from_1(1, 1, 1)
 
         elif issubclass(type(color), tp.Iterable):
-            tcolor = Color.from_255(*color)
+            tcolor = Color().from_255(*color)
             color = tcolor
 
         if bg_color is ...:
-            bg_color = Color.black(0)
+            bg_color = Color().from_1(0, 0, 0, 0)
 
         elif issubclass(type(color), tp.Iterable):
-            bg_color = Color.from_255(*bg_color)
+            bg_color = Color().from_255(*bg_color)
 
         self._pos = convert_coord(position, Vec2)
         self._text = text

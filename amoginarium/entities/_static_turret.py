@@ -11,8 +11,7 @@ from contextlib import suppress
 from time import perf_counter
 from icecream import ic
 import typing as tp
-
-from ..base import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
+from ._groups import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
     GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
 from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
@@ -283,7 +282,7 @@ class BaseTurret(VisibleGameEntity):
         #     target_position = target.position_center
 
         position_delta = target_position - (
-            self.position + self.weapon.parent_position_offset
+                self.position + self.weapon.parent_position_offset
         )
         position_delta.y *= -1
         player_velocity.y *= -1
@@ -388,7 +387,7 @@ class BaseTurret(VisibleGameEntity):
         # weapon
         self.weapon.draw_at(
             self.position,
-            self._aiming_at.angle * (180/3.14159265)
+            self._aiming_at.angle * (180 / 3.14159265)
         )
 
         renderer.draw_textured_quad(
@@ -419,27 +418,27 @@ class BaseTurret(VisibleGameEntity):
             renderer.draw_line(
                 engage_center + min_1,
                 engage_center + self._valid_angles[0],
-                Color.white()
+                Color().from_1(1, 1, 1)
             )
 
             renderer.draw_line(
                 engage_center + min_2,
                 engage_center + self._valid_angles[1],
-                Color.white()
+                Color().from_1(1, 1, 1)
             )
 
             angle_delta = abs(normalize_angle(
                 self._valid_angles[1].angle
                 - self._valid_angles[0].angle
             ))
-            segments = int(64 * (angle_delta / (2*3.1415926)))
+            segments = int(64 * (angle_delta / (2 * 3.1415926)))
 
             renderer.draw_partial_dashed_circle(
                 engage_center,
                 self.engagement_range,
                 *self._valid_angles,
                 num_segments=segments,
-                color=Color.white(),
+                color=Color().from_1(1, 1, 1),
                 thickness=3
             )
 
@@ -458,7 +457,7 @@ class BaseTurret(VisibleGameEntity):
                 engage_center,
                 self.engagement_range,
                 64,
-                Color.white(),
+                Color().from_1(1, 1, 1),
                 3
             )
 
@@ -477,13 +476,13 @@ class BaseTurret(VisibleGameEntity):
                 renderer.draw_line(
                     self.world_position + self.weapon.parent_position_offset,
                     self._target.world_position,
-                    Color.from_255(255, 0, 0, 100)
+                    Color().from_255(255, 0, 0, 100)
                 )
                 renderer.draw_circle(
                     self._target.world_position,
                     global_vars.translate_scale(self._target.size.length / 2),
                     32,
-                    Color.from_255(255, 0, 0, 100)
+                    Color().from_255(255, 0, 0, 100)
                 )
 
             if self._target_predict is not ...:
@@ -494,13 +493,13 @@ class BaseTurret(VisibleGameEntity):
                     renderer.draw_line(
                         engage_center,
                         target - Updated.world_position,
-                        Color.from_255(50, 200, 0, 100)
+                        Color().from_255(50, 200, 0, 100)
                     )
                     renderer.draw_circle(
                         target - Updated.world_position,
                         global_vars.translate_scale(32),
                         32,
-                        Color.from_255(50, 200, 0, 100)
+                        Color().from_255(50, 200, 0, 100)
                     )
 
         super().gl_draw()
@@ -601,7 +600,7 @@ class MortarTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2().from_cartesian(23*1.5, 24*1.5),
+            Vec2().from_cartesian(23 * 1.5, 24 * 1.5),
             position,
             weapon,
             1800,
@@ -625,7 +624,7 @@ class FlakTurret(BaseTurret):
 
         super().__init__(
             coalition,
-            Vec2().from_cartesian(*self._body_texture_size)*2,
+            Vec2().from_cartesian(*self._body_texture_size) * 2,
             position,
             weapon,
             1850,

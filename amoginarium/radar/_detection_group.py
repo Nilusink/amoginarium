@@ -13,7 +13,7 @@ from time import perf_counter
 from icecream import ic
 import typing as tp
 
-from ..base._groups import Bullets, Players
+from ..entities import Bullets, Players
 from ._sensors import BaseSensor
 from ..debugging import run_with_debug, CC
 
@@ -77,6 +77,8 @@ class _DetectionGroupManager:
 
 
 detection_id: int = 0
+
+
 class DetectionGroup:
     _targets: dict[GameEntity, TargetInfo]
     _sensors: list[BaseSensor]

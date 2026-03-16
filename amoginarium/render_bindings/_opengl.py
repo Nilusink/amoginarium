@@ -126,11 +126,8 @@ class OpenGLRenderer(BaseRenderer):
         """
         # color as Color class
         if isinstance(color, Color):
-            if color.is_rgba:
-                glColor4f(*color.rgba1)
 
-            else:
-                glColor3f(*color.rgb1)
+            glColor4f(*color.rgba1)
 
             return color
 
@@ -145,7 +142,7 @@ class OpenGLRenderer(BaseRenderer):
             else:
                 raise ValueError("Invalid color: ", color)
 
-            return Color.from_1(*color)
+            return Color().from_1(*color)
 
     @staticmethod
     def check_out_of_screen(
@@ -578,7 +575,7 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         angle_delta = normalize_angle(
-                angle_end.angle - angle_start.angle
+            angle_end.angle - angle_start.angle
         ) / 2
 
         glLoadIdentity()
@@ -757,7 +754,8 @@ class OpenGLRenderer(BaseRenderer):
             font_size=64,
             font_family="arial",
             bold=False,
-            italic=False
+            italic=False,
+            convert_global=True
     ):
         return self.get_font(
             font_size,
@@ -767,8 +765,8 @@ class OpenGLRenderer(BaseRenderer):
         ).render(
             text,
             True,
-            color.rgb255,
-            bg_color.rgb255 if bg_color.a > 125 else None
+            color.rgba255,
+            bg_color.rgba255 if bg_color.a255 > 125 else None
         )
 
     def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):
