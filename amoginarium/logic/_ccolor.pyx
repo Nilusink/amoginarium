@@ -165,8 +165,8 @@ cpdef Color fade(Color a, Color b, double t):  # type: (Color, Color, float) -> 
     cdef double ar, ag, ab, aa
     cdef double br, bg, bb, ba
 
-    ar, ag, ab, aa = a.get_rgb1()
-    br, bg, bb, ba = b.get_rgb1()
+    ar, ag, ab, aa = a.get_rgba1()
+    br, bg, bb, ba = b.get_rgba1()
 
     return Color().from_1(
         ar + (br - ar) * t,
