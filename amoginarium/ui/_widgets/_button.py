@@ -117,11 +117,10 @@ class Button(Rectangle):
                                                       self.__fg_color.rgb255)
 
         # if self.__command is not None:
-        #     self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, callback=lambda *_: self.__command())
+        self.add_click_callback(lambda *_: self.__command())
 
     def _gl_draw(self) -> None:
         super()._gl_draw()
-        # text
 
         renderer.draw_pg_surf(
             self.top_left + self._absolute_size / 2,

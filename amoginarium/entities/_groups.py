@@ -541,6 +541,10 @@ class _Cursor(BaseGroup):
     ...
 
 
+class _UIEntities(BaseGroup):
+    ...
+
+
 # initialize groups
 Drawn = _Drawn()
 Walls = _Walls()
@@ -554,5 +558,4 @@ GravityAffected = _GravityAffected()
 FrictionXAffected = _FrictionXAffected()
 CollisionDestroyed = _CollisionDestroyed()
 Cursor = _Cursor()
-
-Cursor.sprites()
+UIEntities = _UIEntities()

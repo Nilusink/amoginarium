@@ -69,7 +69,7 @@ class ColorAnimation(MultiAnimation):
             return ...
 
         # Let the external convert_color function handle scaling to 0.0 - 1.0 format
-        converted = tuple(convert_color(color_val, convert_to=tuple))
+        converted = convert_color(color_val, convert_to=float)
 
         # Pad with alpha=1.0 if it's an RGB 3-tuple
         if len(converted) == 3:

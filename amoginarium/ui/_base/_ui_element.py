@@ -14,7 +14,7 @@ import typing as tp
 
 from amoginarium.logic import Vec2, coord_t, convert_coord
 from amoginarium.shared import global_vars
-from amoginarium.entities import Cursor
+from amoginarium.entities import Cursor, UIEntities
 
 from ._ui_entity import UIEntity
 
@@ -60,11 +60,12 @@ class UIElement(UIEntity):
     __is_hovered_inner_last: bool | None
     __is_hovered_outer: bool | None
     __is_hovered_outer_last: bool | None
-    __hovering_cursors: list[UICursor] | None
 
     __on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None
     __on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None
     __on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None
+
+    __on_click_callbacks: list[tp.Callable[[], tp.Any]]
 
     # endregion
 
@@ -104,6 +105,7 @@ class UIElement(UIEntity):
         self.__on_enter_callbacks = on_enter_callbacks
         self.__on_leave_callbacks = on_leave_callbacks
         self.__on_buffer_callbacks = on_buffer_callbacks
+        self.__on_click_callbacks = []
 
         self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
         self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
@@ -118,7 +120,20 @@ class UIElement(UIEntity):
         self.__last_absolute_size = None
         self.__last_absolute_position = None
         self.__collision_mask = None
-        self.__hovering_cursors = None
+
+        self.add(UIEntities)
+
+    # region temp - will be fixed with controller rework
+    def check_click(self):
+        if self.is_hovered:
+            for cb in self.__on_click_callbacks:
+                cb()
+
+    def add_click_callback(self, callback: tp.Callable[[], None]) -> None:
+        """:param callback: Callback to be called when a cursor enters the component"""
+        self.__on_click_callbacks.append(callback)
+
+    # endregion
 
     # region Methods: static absolute/relative convert
     @staticmethod
@@ -212,8 +227,6 @@ class UIElement(UIEntity):
             for cursor in Cursor.sprites():
                 if self.__is_hovered_by(cursor.absolute_position, buffer=self.__collision_buffer):
                     self.__is_hovered_inner = True
-                    if cursor not in self._hovering_cursors:
-                        self._hovering_cursors.append(cursor)
 
         return self.__is_hovered_inner
 
@@ -226,10 +239,6 @@ class UIElement(UIEntity):
                 if self.__is_hovered_by(cursor.absolute_position, buffer=-self.__collision_buffer):
                     self.__is_hovered_outer = True
                     break
-                else:
-                    if cursor in self._hovering_cursors:
-                        self._hovering_cursors.remove(cursor)
-                        print(self._hovering_cursors)
 
         return self.__is_hovered_outer
 
@@ -346,18 +355,6 @@ class UIElement(UIEntity):
     # endregion
 
     # region Methods: properties
-    @property
-    def _hovering_cursors(self) -> list[UICursor]:
-        """:return: List of hovering cursors"""
-        if self.__hovering_cursors is None:
-            self.__hovering_cursors = []
-        return self.__hovering_cursors
-
-    @_hovering_cursors.setter
-    def _hovering_cursors(self, value: list[UICursor]) -> None:
-        """:param value: List of hovering cursors"""
-        self.__hovering_cursors = value
-
     @property
     def _ui_changed(self) -> bool:
         """:return: Whether the UI has changed since the last draw"""

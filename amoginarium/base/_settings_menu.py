@@ -10,14 +10,14 @@ import pygame as pg
 
 # from ..settings import Settings
 from ..shared import global_vars
-from ..ui import Rectangle, Button
+from ..ui import Rectangle, Button, UIEntity
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class SettingsMenu(Rectangle):
+class SettingsMenu(UIEntity):
     __close_settings_callback: Callable[[], None]
 
     def __init__(
@@ -25,7 +25,7 @@ class SettingsMenu(Rectangle):
             close_settings_callback: Callable[[], None],
             update_window_callback: Callable[[], None],
     ) -> None:
-        super().__init__((0.1, 0.1), (0.9, 0.9))
+        super().__init__()
 
         self.__update_window_callback = update_window_callback
 
@@ -52,8 +52,6 @@ class SettingsMenu(Rectangle):
         )
 
         self.__close_settings_callback = close_settings_callback
-        # todo: reimplement
-        # self.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: self.__close_settings_callback())
 
     def __set_scaling(self, value: Literal["bars", "fixed_aspect_ratio", "stretching"]) -> None:
         global_vars.scaling = value

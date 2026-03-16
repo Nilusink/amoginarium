@@ -146,22 +146,23 @@ def convert_color[A: Color | int | float](
             return color.get_rgba255()
 
         else:
-            return (round(c * 255) for c in color)
+            # noinspection PyTypeChecker
+            return *(round(c * 255) for c in color),
 
     else:
         if isinstance(color, Color):
             return color.get_rgba1()
-
-        return (c / 255 for c in color)
+        # noinspection PyTypeChecker
+        return *(c / 255 for c in color),
 
 
 # @timeit(1)
 def multi_raycast_mask(
-    parent: EntityLike,
-    sprites: tp.Collection[EntityLike],
-    start: Vec2,
-    end: Vec2,
-    sample_rate: int = 10
+        parent: EntityLike,
+        sprites: tp.Collection[EntityLike],
+        start: Vec2,
+        end: Vec2,
+        sample_rate: int = 10
 ) -> list[tuple[EntityLike, Vec2]]:
     out = []
 

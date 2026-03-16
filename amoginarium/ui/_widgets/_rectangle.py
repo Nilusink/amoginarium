@@ -101,8 +101,7 @@ class Rectangle(UIElement):
         self.add_enter_callback(self.__on_cursor_enter)
         self.add_buffer_callback(self.__on_cursor_in_buffer)
         self.add_leave_callback(self.__on_cursor_leave)
-
-        # self.add_event(pg.MOUSEBUTTONUP, button=pg.BUTTON_LEFT, sound=self.__on_click_sound)
+        self.add_click_callback(lambda *_: self.__on_click_sound.play() if self.__on_click_sound is not None else None)
 
     def __on_cursor_enter(self) -> None:
         """Called when a cursor enters the rectangle"""

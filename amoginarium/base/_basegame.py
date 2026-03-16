@@ -19,7 +19,7 @@ import json
 import math
 import os
 
-from ..entities import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players
+from ..entities import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players, UIEntities
 from ..entities import Updated, GravityAffected, Drawn, FrictionXAffected
 from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
@@ -581,12 +581,6 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        # todo: reimplement
-        # EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
-        # EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
-        # EventHandler.add_event(pg.JOYDEVICEADDED, callback=self.__add_joystick)
-        # EventHandler.add_event(pg.VIDEORESIZE, callback=lambda ev: self.__window_update(*ev.size))
-
         # self.load_map("assets/maps/test.json")
 
         def start_game():
@@ -643,23 +637,13 @@ class BaseGame:
         pause_menu = PauseMenu(
             start_game, reset_game, open_settings, back_to_menu
         )
-        # todo: reimplement
-        # pause_menu.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: start_game())
 
         settings = SettingsMenu(
             close_settings,
             self.__window_update
         )
 
-        # Temporary solution
-        # game_ui_dummy: UIElement = UIElement()
-        # game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
-        # game_ui_dummy.add_fullscreen_event(pg.MOUSEWHEEL, callback=handle_zoom)
-        # todo: reimplement
         mouse_cursor = UICursor()
-
-        # game_ui_dummy: UIElement = UIElement()
-        # game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
 
         # draw background once
         while self.running:
@@ -679,13 +663,35 @@ class BaseGame:
 
             global_vars.delta = delta
 
-            # todo: reimplement
-            # EventHandler.check_events()
+            # TEMP SOLUTION - fix with controller rework
+            for event in pg.event.get():
+                if event.type == pg.VIDEORESIZE:
+                    self.__window_update(*event.size)
+                elif event.type == pg.MOUSEWHEEL:
+                    if active_scene in ["Game", "PauseSettings", "PauseMenu"]:
+                        handle_zoom(event)
+                elif event.type == pg.QUIT:
+                    self.__clean_end()
+                elif event.type == pg.JOYDEVICEADDED:
+                    self.__add_joystick(event)
+                elif event.type == pg.KEYUP:
+                    if event.key == pg.K_F11:
+                        self.__windowed_fullscreen()
+                    if event.key == pg.K_ESCAPE:
+                        if active_scene == "Game":
+                            pause_game()
+                        elif active_scene == "PauseMenu":
+                            start_game()
+                        elif active_scene == "PauseSettings":
+                            back_to_menu()
+                        elif active_scene == "StartSettings":
+                            close_settings()
+                elif event.type == pg.MOUSEBUTTONUP:
+                    if event.button == pg.BUTTON_LEFT:
+                        for sprite in UIEntities:
+                            sprite.check_click()
 
             mouse_cursor.gl_draw()
-
-            for event in pg.event.get():
-                ...
 
             if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
                 # update background music
@@ -739,7 +745,8 @@ class BaseGame:
                 _, max_player_pos = Players.get_position_extremes()
 
                 # background_pos_left = self._background.position + 60
-                Updated.world_position.y = -((global_vars.screen_size.y / global_vars.pixel_per_meter) - global_vars.screen_size.y)
+                Updated.world_position.y = -(
+                        (global_vars.screen_size.y / global_vars.pixel_per_meter) - global_vars.screen_size.y)
                 global_vars.world_position.y = Updated.world_position.y
 
                 if self._shifting:
