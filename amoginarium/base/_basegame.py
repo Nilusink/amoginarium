@@ -416,7 +416,7 @@ class BaseGame:
                     **args
                 )
 
-            except TypeError as e:
+            except TypeError:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
@@ -873,20 +873,21 @@ class BaseGame:
         pg.display.flip()
         # clock.tick(global_vars.max_fps)
 
-    @run_with_debug()
+    @run_with_debug(show_finish=True)
     def _run_logic(self) -> None:
         """
         start game logic
         """
         last = perf_counter()
         last_fps_print = 0
-        sleep(3)
+        sleep(.1)
         while self.running:
             now = perf_counter()
 
             # minimum loop time of .5 ms (so the CPU isn't stressed too much)
-            # while now - last < .00005:
-            #     now = perf_counter()
+            while now - last < .0005:
+                now = perf_counter()
+                sleep(.001)
 
             delta = now - last
 
@@ -964,7 +965,7 @@ class BaseGame:
         self._game_start = perf_counter()
 
         # self._pool.submit(self._run_logic)
-        # self._pool.submit(self._run_comms)
+        # self._pool.submit(self._run_comms)q
         self._run_pygame()
 
     @run_with_debug()
