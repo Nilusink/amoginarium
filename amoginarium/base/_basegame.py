@@ -687,7 +687,7 @@ class BaseGame:
                         elif active_scene == "PauseMenu":
                             start_game()
                         elif active_scene == "PauseSettings":
-                            back_to_menu()
+                            close_settings()
                         elif active_scene == "StartSettings":
                             close_settings()
                 elif event.type == pg.MOUSEBUTTONUP:
