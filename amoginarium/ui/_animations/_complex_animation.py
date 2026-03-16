@@ -28,6 +28,7 @@ class ComplexAnimation(SimpleAnimation):
     _linear_progress: float
     _run_start_value: float
     _run_duration: float
+    _debounce_timer: float
 
     def __init__(
             self,
@@ -69,6 +70,7 @@ class ComplexAnimation(SimpleAnimation):
         self._linear_progress = 0.0
         self._run_start_value = self._start_value
         self._run_duration = 0.0
+        self._debounce_timer = 0.0
 
     def __calc_anim_progress(self, value_progress: float) -> float:
         """
@@ -86,6 +88,12 @@ class ComplexAnimation(SimpleAnimation):
         if self._phase in (AnimationPhase.EXTENDING, AnimationPhase.AT_END):
             return
 
+        # Only debounce if starting from the absolute beginning
+        if self._phase == AnimationPhase.AT_START:
+            self._debounce_timer = self._extend_debounce_duration
+        else:
+            self._debounce_timer = 0.0
+
         self._phase = AnimationPhase.EXTENDING
         self._run_start_value = self._current_value
 
@@ -97,6 +105,12 @@ class ComplexAnimation(SimpleAnimation):
         if self._phase in (AnimationPhase.COLLAPSING, AnimationPhase.AT_START):
             return
 
+        # Only debounce if starting from the absolute end
+        if self._phase == AnimationPhase.AT_END:
+            self._debounce_timer = self._collapse_debounce_duration
+        else:
+            self._debounce_timer = 0.0
+
         self._phase = AnimationPhase.COLLAPSING
         self._run_start_value = self._current_value
 
@@ -106,6 +120,7 @@ class ComplexAnimation(SimpleAnimation):
     def stop(self) -> None:
         """Stop the animation at the current value"""
         self._phase = AnimationPhase.STOPPED
+        self._debounce_timer = 0.0
 
     def _calc(self, delta: float) -> None:
         """
@@ -114,6 +129,14 @@ class ComplexAnimation(SimpleAnimation):
         """
         if self._phase in (AnimationPhase.AT_START, AnimationPhase.AT_END, AnimationPhase.STOPPED):
             return
+
+        if self._debounce_timer >= 0.0:
+            self._debounce_timer -= delta
+            if self._debounce_timer > 0.0:
+                return
+            # Debounce finished this frame, carry over the remaining time to current_time
+            delta = -self._debounce_timer
+            self._debounce_timer = 0.0
 
         self._current_time += delta
 

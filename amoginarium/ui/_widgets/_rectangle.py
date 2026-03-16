@@ -146,11 +146,13 @@ class Rectangle(UIElement):
                 self.__extend_animation.is_changing(),
             ])
 
-        border_width = self.__border_width_animation.update(global_vars.delta)
-        border_color = self.__border_color_animation.update(global_vars.delta)
-        bg_color = self.__bg_color_animation.update(global_vars.delta)
-        radius = self.__radius_animation.update(global_vars.delta)
-        self.__extend_animation.update(global_vars.delta)
+        delta_cal = global_vars.delta
+
+        border_width = self.__border_width_animation.update(delta_cal)
+        border_color = self.__border_color_animation.update(delta_cal)
+        bg_color = self.__bg_color_animation.update(delta_cal)
+        radius = self.__radius_animation.update(delta_cal)
+        self.__extend_animation.update(delta_cal)
 
         super()._gl_draw()
 

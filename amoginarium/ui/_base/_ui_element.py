@@ -6,6 +6,8 @@ Created: 10.03.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 # noinspection PyPackageRequirements
 import pygame as pg
 import typing as tp
@@ -15,6 +17,9 @@ from amoginarium.shared import global_vars
 from amoginarium.entities import Cursor
 
 from ._ui_entity import UIEntity
+
+if tp.TYPE_CHECKING:
+    from .._widgets import UICursor
 from .._types import Anchor
 
 
@@ -55,6 +60,7 @@ class UIElement(UIEntity):
     __is_hovered_inner_last: bool | None
     __is_hovered_outer: bool | None
     __is_hovered_outer_last: bool | None
+    __hovering_cursors: list[UICursor] | None
 
     __on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None
     __on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None
@@ -112,6 +118,7 @@ class UIElement(UIEntity):
         self.__last_absolute_size = None
         self.__last_absolute_position = None
         self.__collision_mask = None
+        self.__hovering_cursors = None
 
     # region Methods: static absolute/relative convert
     @staticmethod
@@ -201,11 +208,12 @@ class UIElement(UIEntity):
         """:return: Whether a cursor is hovering over the component"""
         if self.__is_hovered_inner is None:
             self.__is_hovered_inner = False
-            cursor: UIElement
+            cursor: UICursor
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._absolute_position, buffer=self.__collision_buffer):
+                if self.__is_hovered_by(cursor.absolute_position, buffer=self.__collision_buffer):
                     self.__is_hovered_inner = True
-                    break
+                    if cursor not in self._hovering_cursors:
+                        self._hovering_cursors.append(cursor)
 
         return self.__is_hovered_inner
 
@@ -213,11 +221,15 @@ class UIElement(UIEntity):
         """:return: Whether a cursor is hovering over the outer buffer of the component"""
         if self.__is_hovered_outer is None:
             self.__is_hovered_outer = False
-            cursor: UIElement
+            cursor: UICursor
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor._absolute_position, buffer=-self.__collision_buffer):
+                if self.__is_hovered_by(cursor.absolute_position, buffer=-self.__collision_buffer):
                     self.__is_hovered_outer = True
                     break
+                else:
+                    if cursor in self._hovering_cursors:
+                        self._hovering_cursors.remove(cursor)
+                        print(self._hovering_cursors)
 
         return self.__is_hovered_outer
 
@@ -334,6 +346,18 @@ class UIElement(UIEntity):
     # endregion
 
     # region Methods: properties
+    @property
+    def _hovering_cursors(self) -> list[UICursor]:
+        """:return: List of hovering cursors"""
+        if self.__hovering_cursors is None:
+            self.__hovering_cursors = []
+        return self.__hovering_cursors
+
+    @_hovering_cursors.setter
+    def _hovering_cursors(self, value: list[UICursor]) -> None:
+        """:param value: List of hovering cursors"""
+        self.__hovering_cursors = value
+
     @property
     def _ui_changed(self) -> bool:
         """:return: Whether the UI has changed since the last draw"""

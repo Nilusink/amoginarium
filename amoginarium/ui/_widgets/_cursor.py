@@ -20,8 +20,12 @@ from amoginarium.shared import global_vars
 ##################################################
 
 class UICursor(UIElement):
+    __velocity: Vec2
+
     def __init__(self) -> None:
         super().__init__((0, 0), (0, 0), _use_collision_mask=False)
+
+        self.__velocity = Vec2()
 
         self.add(Cursor)
 
@@ -29,6 +33,15 @@ class UICursor(UIElement):
         mouse_pos = pg.mouse.get_pos()
         mouse_pos = ((mouse_pos[0] - global_vars.screen_size_offset_x) * global_vars.screen_size_fac_x,
                      (mouse_pos[1] - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
-        self._absolute_position = convert_coord(mouse_pos, Vec2)
+        new_pos = convert_coord(mouse_pos, Vec2)
+
+        self.__velocity.xy = (new_pos - self._absolute_position).xy
+
+        self._absolute_position = new_pos
 
         super()._gl_draw()
+
+    @property
+    def velocity(self) -> Vec2:
+        """:return: Cursor velocity"""
+        return self.__velocity

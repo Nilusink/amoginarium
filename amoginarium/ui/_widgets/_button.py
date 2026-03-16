@@ -16,7 +16,8 @@ from amoginarium.audio import PresetEffect, SoundEffect
 from amoginarium.logic import coord_t, Color, color_t
 from amoginarium.render_bindings import renderer
 from .. import anim_vec2_values_t, AnimatedVec2Values
-from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColorValues, AnimatedFloatValues
+from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColorValues, AnimatedFloatValues, \
+    peaked_s_curve
 
 from .._types import Anchor
 from .._base import UIEntity
@@ -39,36 +40,12 @@ class _OnButtonLeaveSound(PresetEffect):
     _sound_name = "button_leave"
 
 
-def _s_curve(x: float) -> float:
-    # Smoothstep function: an S-curve that perfectly maps 0 to 0 and 1 to 1
-    if x < 0.5:
-        return 0
-    return 1
-    return x ** 2 * (3 - 2 * x)
-
-
-def peaked_s_curve(x: float) -> float:
-    # Clamp x to the expected 0.0 to 1.0 range (optional but safe)
-    x = max(0.0, min(1.0, x))
-
-    if x <= 0.8:
-        # First S-curve: map x from [0.0, 0.8] to t in [0.0, 1.0]
-        t = x / 0.8
-        # Standard smoothstep t^2 * (3 - 2t), scaled to reach 3.0
-        return 3.0 * (t ** 2 * (3 - 2 * t))
-    else:
-        # Second S-curve: map x from [0.8, 1.0] to t in [0.0, 1.0]
-        t = (x - 0.8) / 0.2
-        # Start at 3.0 and smoothly transition down by 2.0 to reach 1.0
-        return 3.0 - 2.0 * (t ** 2 * (3 - 2 * t))
-
-
 OnHoverButtonSound = _OnHoverButtonSound()
 OnButtonLeaveSound = _OnButtonLeaveSound()
 ButtonClickSound = _ButtonClickSound()
 
-ANIM_TIME: float = 3
-ANIM_DEBOUNCE: float = 1
+ANIM_TIME: float = .2
+ANIM_DEBOUNCE: float = .0
 
 
 class Button(Rectangle):
@@ -105,12 +82,11 @@ class Button(Rectangle):
             border_width: anim_float_values_t = AnimatedFloatValues(5, 10,
                                                                     extend_duration=ANIM_TIME,
                                                                     extend_debounce_duration=ANIM_DEBOUNCE),
-            radius: anim_float_values_t = AnimatedFloatValues(0, 60,
+            radius: anim_float_values_t = AnimatedFloatValues(10, 30,
                                                               extend_duration=ANIM_TIME,
                                                               extend_debounce_duration=ANIM_DEBOUNCE),
-            size_extend: anim_vec2_values_t = AnimatedVec2Values(0, (100, 5),
+            size_extend: anim_vec2_values_t = AnimatedVec2Values(0, (10, 5),
                                                                  extend_duration=ANIM_TIME,
-                                                                 extend_debounce_duration=ANIM_DEBOUNCE,
                                                                  extend_curve=peaked_s_curve,
                                                                  collapse_curve=lambda a: a),
 

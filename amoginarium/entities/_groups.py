@@ -554,3 +554,5 @@ GravityAffected = _GravityAffected()
 FrictionXAffected = _FrictionXAffected()
 CollisionDestroyed = _CollisionDestroyed()
 Cursor = _Cursor()
+
+Cursor.sprites()
