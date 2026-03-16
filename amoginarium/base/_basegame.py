@@ -585,10 +585,12 @@ class BaseGame:
 
         def start_game():
             nonlocal active_scene
+            print("START GAME")
             active_scene = "Game"
 
         def reset_game():
             nonlocal active_scene
+            print("RESET GAME")
             active_scene = "Game"
 
             for entity in Updated.sprites():
@@ -606,11 +608,13 @@ class BaseGame:
 
         def back_to_menu():
             nonlocal active_scene
+            print("BACK TO MENU GAME")
             reset_game()
             active_scene = "StartMenu"
 
         def pause_game():
             nonlocal active_scene
+            print("PAUSE GAME")
             active_scene = "PauseMenu"
 
         def open_settings():
@@ -692,7 +696,6 @@ class BaseGame:
                             sprite.check_click()
 
             mouse_cursor.gl_draw()
-
             if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
                 # update background music
                 try:  # throws error on game end
@@ -710,12 +713,18 @@ class BaseGame:
 
                 if active_scene in ["StartSettings", "PauseSettings"]:
                     settings.group_draw()
+                    start_menu.group_hide()
+                    pause_menu.group_hide()
 
                 if active_scene == "StartMenu":
                     start_menu.group_draw()
+                    settings.group_hide()
+                    pause_menu.group_hide()
 
                 if active_scene == "PauseMenu":
                     pause_menu.group_draw()
+                    settings.group_hide()
+                    start_menu.group_hide()
 
                 pg.display.flip()
                 # debugging kopieren - @

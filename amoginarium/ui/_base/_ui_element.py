@@ -125,7 +125,7 @@ class UIElement(UIEntity):
 
     # region temp - will be fixed with controller rework
     def check_click(self):
-        if self.is_hovered:
+        if self.is_hovered and self._group.visible:
             for cb in self.__on_click_callbacks:
                 cb()
 

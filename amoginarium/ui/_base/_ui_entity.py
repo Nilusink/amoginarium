@@ -63,6 +63,19 @@ class UIEntity(BaseEntity):
             return
         self.__group.gl_draw()
 
+    @property
+    def _group(self) -> UIGroup:
+        if self.__group is None:
+            return self.root._group
+        return self.__group
+
+    def group_hide(self) -> None:
+        """Hide all in the root-group where this UI-Entity belongs to"""
+        if self.__group is None:
+            self.root.group_hide()
+            return
+        self.__group.hide()
+
     def update(self, delta: float) -> None:
         """
         Update, that is called by the update loop of the game

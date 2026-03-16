@@ -32,7 +32,7 @@ class PygameSurfaceRenderer:
             surface=surface,
             center=convert_coord(center, tuple[float, float]),
             radius=radius,
-            color=convert_color(color, tuple[int, int, int, int]),
+            color=convert_color(color, int),
             width=width,
             draw_top_right=draw_top_right,
             draw_top_left=draw_top_left,
