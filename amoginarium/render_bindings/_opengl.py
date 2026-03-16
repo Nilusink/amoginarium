@@ -145,7 +145,7 @@ class OpenGLRenderer(BaseRenderer):
             else:
                 raise ValueError("Invalid color: ", color)
 
-            return Color.from_1(*color)
+            return Color().from_1(*color)
 
     @staticmethod
     def check_out_of_screen(
@@ -768,7 +768,7 @@ class OpenGLRenderer(BaseRenderer):
             text,
             True,
             color.rgb255,
-            bg_color.rgb255 if bg_color.a > 125 else None
+            bg_color.rgb255 if bg_color.a255 > 125 else None
         )
 
     def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):

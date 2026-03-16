@@ -15,7 +15,7 @@ import pygame as pg
 from ._entity import UIEntity
 from ..audio import PresetEffect, SoundEffect
 from ..render_bindings import renderer
-from ..logic import coord_t, Color
+from ..logic import coord_t, Color, c_255_to_1
 from ._types import Anchor, ui_color_t
 
 from ._rectangle import Rectangle
@@ -66,16 +66,16 @@ class Button(Rectangle):
             command: Callable[[], None] | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
 
-            fg_color: ui_color_t = Color.c_255_to_1(0, 0, 0),
-            hover_fg_color: ui_color_t = Color.c_255_to_1(0, 0, 0),
+            fg_color: ui_color_t = c_255_to_1(0, 0, 0),
+            hover_fg_color: ui_color_t = c_255_to_1(0, 0, 0),
 
-            bg_color: ui_color_t = Color.c_255_to_1(56.0, 254.0, 255.0),
-            hover_bg_color: ui_color_t = Color.c_255_to_1(140, 255, 255),
+            bg_color: ui_color_t = c_255_to_1(56.0, 254.0, 255.0),
+            hover_bg_color: ui_color_t = c_255_to_1(140, 255, 255),
             hover_bg_color_duration: float = TEST_DURATION,
             hover_bg_color_reverse_duration: float = TEST_DURATION,
 
-            border_color: ui_color_t = Color.c_255_to_1(33, 133, 163),
-            hover_border_color: ui_color_t = Color.c_255_to_1(255, 255, 255),
+            border_color: ui_color_t = c_255_to_1(33, 133, 163),
+            hover_border_color: ui_color_t = c_255_to_1(255, 255, 255),
             hover_border_color_duration: float = TEST_DURATION,
             hover_border_color_reverse_duration: float = TEST_DURATION,
 
@@ -126,8 +126,8 @@ class Button(Rectangle):
         self.__text = text
         self.__last_mouse = False
 
-        self.__fg_color = Color.from_1(*fg_color)
-        self.__hover_fg_color = Color.from_1(*fg_color)
+        self.__fg_color = Color().from_1(*fg_color)
+        self.__hover_fg_color = Color().from_1(*fg_color)
 
         self.__text_font: pg.font.Font = renderer.get_font(64, "Arial", False, False)
         self.__text_surface = self.__text_font.render(self.__text, True,

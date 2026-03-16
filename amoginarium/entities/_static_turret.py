@@ -418,13 +418,13 @@ class BaseTurret(VisibleGameEntity):
             renderer.draw_line(
                 engage_center + min_1,
                 engage_center + self._valid_angles[0],
-                Color.white()
+                Color().from_1(1, 1, 1)
             )
 
             renderer.draw_line(
                 engage_center + min_2,
                 engage_center + self._valid_angles[1],
-                Color.white()
+                Color().from_1(1, 1, 1)
             )
 
             angle_delta = abs(normalize_angle(
@@ -438,7 +438,7 @@ class BaseTurret(VisibleGameEntity):
                 self.engagement_range,
                 *self._valid_angles,
                 num_segments=segments,
-                color=Color.white(),
+                color=Color().from_1(1, 1, 1),
                 thickness=3
             )
 
@@ -457,7 +457,7 @@ class BaseTurret(VisibleGameEntity):
                 engage_center,
                 self.engagement_range,
                 64,
-                Color.white(),
+                Color().from_1(1, 1, 1),
                 3
             )
 
@@ -476,13 +476,13 @@ class BaseTurret(VisibleGameEntity):
                 renderer.draw_line(
                     self.world_position + self.weapon.parent_position_offset,
                     self._target.world_position,
-                    Color.from_255(255, 0, 0, 100)
+                    Color().from_255(255, 0, 0, 100)
                 )
                 renderer.draw_circle(
                     self._target.world_position,
                     global_vars.translate_scale(self._target.size.length / 2),
                     32,
-                    Color.from_255(255, 0, 0, 100)
+                    Color().from_255(255, 0, 0, 100)
                 )
 
             if self._target_predict is not ...:
@@ -493,13 +493,13 @@ class BaseTurret(VisibleGameEntity):
                     renderer.draw_line(
                         engage_center,
                         target - Updated.world_position,
-                        Color.from_255(50, 200, 0, 100)
+                        Color().from_255(50, 200, 0, 100)
                     )
                     renderer.draw_circle(
                         target - Updated.world_position,
                         global_vars.translate_scale(32),
                         32,
-                        Color.from_255(50, 200, 0, 100)
+                        Color().from_255(50, 200, 0, 100)
                     )
 
         super().gl_draw()

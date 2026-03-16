@@ -333,7 +333,7 @@ def main() -> None:
         menu_frame,
         width=3,
         border_radius=1,
-        bg=Color.from_rgb(200, 200, 200),
+        bg=Color().from_rgb(200, 200, 200),
         height=80
     ).grid(0, 2)
 
@@ -349,7 +349,7 @@ def main() -> None:
         menu_frame,
         width=3,
         border_radius=1,
-        bg=Color.from_rgb(200, 200, 200),
+        bg=Color().from_rgb(200, 200, 200),
         height=80
     ).grid(0, 4)
 

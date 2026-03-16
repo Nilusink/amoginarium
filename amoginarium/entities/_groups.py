@@ -18,10 +18,8 @@ import numpy as np
 from icecream import ic
 
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord, \
-    raycast_mask, normalize_angle
+    raycast_mask, normalize_angle, fade
 from ..render_bindings import renderer
-from ..shared import GameEntityLike
-from ..debugging import timeit
 
 
 # from ..debugging import run_with_debug
@@ -321,13 +319,13 @@ class _HasBars(_BaseGroup):
                 bar_start.y += sprite.size.y / 2 + 10
 
                 t = now_len / max_len
-                color = Color.fade(
-                    Color.from_255(255, 0, 0),
-                    Color.from_255(180, 90, 20),
+                color = fade(
+                    Color().from_255(255, 0, 0),
+                    Color().from_255(180, 90, 20),
                     t * 2
-                ) if t < .5 else Color.fade(
-                    Color.from_255(180, 90, 20),
-                    Color.from_255(0, 255, 0),
+                ) if t < .5 else fade(
+                    Color().from_255(180, 90, 20),
+                    Color().from_255(0, 255, 0),
                     (t - .5) * 2
                 )
 

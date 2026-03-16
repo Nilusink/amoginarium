@@ -103,7 +103,7 @@ class PyGameRenderer(BaseRenderer):
             convert_global=True
     ):
         center = convert_coord(center, Vec2)
-        color = color if isinstance(color, Color) else Color.from_1(*color)
+        color = color if isinstance(color, Color) else Color().from_1(*color)
 
         # convert to screen realtive coords and size
         if convert_global:
@@ -126,7 +126,7 @@ class PyGameRenderer(BaseRenderer):
     ):
         start = convert_coord(start, Vec2)
         size = convert_coord(size, Vec2)
-        color = color if isinstance(color, Color) else Color.from_1(*color)
+        color = color if isinstance(color, Color) else Color().from_1(*color)
 
         if convert_global:
             start = global_vars.translate_screen_coord(start)
@@ -148,7 +148,7 @@ class PyGameRenderer(BaseRenderer):
             convert_global=True
     ):
         center = convert_coord(center, Vec2)
-        color = color if isinstance(color, Color) else Color.from_1(*color)
+        color = color if isinstance(color, Color) else Color().from_1(*color)
 
         if convert_global:
             center = global_vars.translate_screen_coord(center)
