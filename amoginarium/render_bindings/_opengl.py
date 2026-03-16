@@ -126,11 +126,8 @@ class OpenGLRenderer(BaseRenderer):
         """
         # color as Color class
         if isinstance(color, Color):
-            if color.is_rgba:
-                glColor4f(*color.rgba1)
 
-            else:
-                glColor3f(*color.rgb1)
+            glColor4f(*color.rgba1)
 
             return color
 
@@ -578,7 +575,7 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         angle_delta = normalize_angle(
-                angle_end.angle - angle_start.angle
+            angle_end.angle - angle_start.angle
         ) / 2
 
         glLoadIdentity()

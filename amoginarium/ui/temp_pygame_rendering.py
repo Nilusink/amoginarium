@@ -4,7 +4,7 @@ amoginarium/ui/temp_pygame_rendering.py
 Project: amoginarium
 """
 
-from ..logic import convert_coord, Vec2
+from ..logic import convert_coord, Vec2, convert_color
 
 import pygame as pg
 
@@ -20,7 +20,7 @@ def draw_circle(
         surface=surface,
         center=convert_coord(center, Vec2).xy,
         radius=radius,
-        color=color
+        color="white"
     )
 
 
@@ -30,7 +30,8 @@ def draw_rect(
         color,
         surface
 ):
-    pg.draw.rect(surface=surface, rect=(convert_coord(start, Vec2).xy, convert_coord(size, Vec2).xy), color=color)
+    pg.draw.rect(surface=surface, rect=(convert_coord(start, Vec2).xy, convert_coord(size, Vec2).xy),
+                 color="white")
 
 
 def draw_rounded_rect(

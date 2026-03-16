@@ -15,7 +15,7 @@ import pygame as pg
 from ._entity import UIEntity
 from ..audio import PresetEffect, SoundEffect
 from ..render_bindings import renderer
-from ..logic import coord_t, Color, c_255_to_1
+from ..logic import coord_t, Color, c_255_to_1, color_t
 from ._types import Anchor, ui_color_t
 
 from ._rectangle import Rectangle
@@ -66,16 +66,16 @@ class Button(Rectangle):
             command: Callable[[], None] | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
 
-            fg_color: ui_color_t = c_255_to_1(0, 0, 0),
-            hover_fg_color: ui_color_t = c_255_to_1(0, 0, 0),
+            fg_color: color_t = (0, 0, 0),
+            hover_fg_color: color_t = (0, 0, 0),
 
-            bg_color: ui_color_t = c_255_to_1(56.0, 254.0, 255.0),
-            hover_bg_color: ui_color_t = c_255_to_1(140, 255, 255),
+            bg_color: color_t = (56, 254, 255),
+            hover_bg_color: color_t = (140, 255, 255),
             hover_bg_color_duration: float = TEST_DURATION,
             hover_bg_color_reverse_duration: float = TEST_DURATION,
 
-            border_color: ui_color_t = c_255_to_1(33, 133, 163),
-            hover_border_color: ui_color_t = c_255_to_1(255, 255, 255),
+            border_color: color_t = (33, 133, 163),
+            hover_border_color: color_t = (255, 255, 255),
             hover_border_color_duration: float = TEST_DURATION,
             hover_border_color_reverse_duration: float = TEST_DURATION,
 
@@ -99,19 +99,14 @@ class Button(Rectangle):
     ) -> None:
         super().__init__(relative_position, relative_size, placement_anchor=placement_anchor,
                          on_hover_sound=on_hover_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
-
-                         bg_color=bg_color, hover_bg_color=hover_bg_color,
-                         hover_bg_color_duration=hover_bg_color_duration,
-                         hover_bg_color_reverse_duration=hover_bg_color_reverse_duration,
-
-                         border_color=border_color, hover_border_color=hover_border_color,
-                         hover_border_color_duration=hover_border_color_duration,
-                         hover_border_color_reverse_duration=hover_border_color_reverse_duration,
+                         bg_color=(bg_color, hover_bg_color, hover_bg_color_duration, hover_bg_color_reverse_duration),
+                         border_color=(border_color, hover_border_color, hover_border_color_duration,
+                                       hover_border_color_reverse_duration),
 
                          border_width=(border_width, hover_border_width, hover_border_width_duration,
                                        hover_border_width_reverse_duration),
                          radius=(radius, hover_radius, hover_radius_duration, hover_radius_reverse_duration),
-                         size_extend=(0, hover_extend, 0, 0),
+                         size_extend=(0, hover_extend, 0.2),
 
                          parent=parent
                          )

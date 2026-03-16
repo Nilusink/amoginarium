@@ -141,14 +141,12 @@ def create_animation(
     :return:
     """
     if end_value is None or start_value == end_value:
-        print("CREATED SINGLE ANIM")
         return SingleAnimation(start_value=start_value, end_value=end_value)
 
     has_extend_time = extend_duration_seconds is not None and extend_duration_seconds > 0.0
     has_collapse_time = collapse_duration_seconds is not None and collapse_duration_seconds > 0.0
 
     if has_extend_time or has_collapse_time:
-        print("CREATED TIMED ANIM")
         return TimedAnimation(
             start_value=start_value,
             end_value=end_value,
@@ -156,5 +154,4 @@ def create_animation(
             collapse_duration_seconds=collapse_duration_seconds
         )
 
-    print("CREATED SINGLE ANIM")
     return SingleAnimation(start_value=start_value, end_value=end_value)

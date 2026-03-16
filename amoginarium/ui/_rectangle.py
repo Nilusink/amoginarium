@@ -16,7 +16,7 @@ from ..shared import global_vars
 from ..audio import SoundEffect
 
 from ._animations import Animation, MultiAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
-    anim_float_values_t
+    anim_float_values_t, anim_color_values_t, ColorAnimation
 from ._types import Anchor, ui_color_t
 from ._component import UIComponent
 from ._entity import UIEntity
@@ -26,8 +26,8 @@ from .temp_pygame_rendering import draw_rounded_rect
 
 class Rectangle(UIComponent):
     """UI rectangle with basic sounds and animations"""
-    __hover_bg_color_animation: MultiAnimation[tuple[int, int, int]]
-    __hover_border_color_animation: MultiAnimation[tuple[int, int, int]]
+    __hover_bg_color_animation: ColorAnimation
+    __hover_border_color_animation: ColorAnimation
     __hover_border_width_animation: Animation
     __hover_radius_animation: Animation
     __hover_extend_animation: Vec2Animation
@@ -49,26 +49,17 @@ class Rectangle(UIComponent):
             on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
             on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
 
-            bg_color: ui_color_t = c_255_to_1(70, 70, 70),
-            hover_bg_color: ui_color_t = c_255_to_1(70, 70, 70),
-            hover_bg_color_duration: float = 0,
-            hover_bg_color_reverse_duration: float = 0,
-
-            border_color: ui_color_t = c_255_to_1(70, 70, 70),
-            hover_border_color: ui_color_t = c_255_to_1(70, 70, 70),
-            hover_border_color_duration: float = 0,
-            hover_border_color_reverse_duration: float = 0,
-
+            bg_color: anim_color_values_t = (70, 70, 70),
+            border_color: anim_color_values_t = (70, 70, 70),
             border_width: anim_float_values_t = 5,
             radius: anim_float_values_t = 20,
-
             size_extend: anim_vec2_values_t = 0,
 
             on_hover_sound: SoundEffect | None = None,
             on_leave_sound: SoundEffect | None = None,
             on_click_sound: SoundEffect | None = None,
 
-            _use_collision_mask: bool = True
+            _use_collision_mask: bool = False
     ) -> None:
         """
         Create a new UI rectangle
@@ -120,14 +111,8 @@ class Rectangle(UIComponent):
         self.__on_leave_sound = on_leave_sound
         self.__on_click_sound = on_click_sound
 
-        self.__hover_bg_color_animation = MultiAnimation(
-            start_values=bg_color, end_values=hover_bg_color, count=3,
-            extend_durations_in_seconds=hover_bg_color_duration,
-            collapse_duration_in_seconds=hover_bg_color_reverse_duration)
-        self.__hover_border_color_animation = MultiAnimation(
-            start_values=border_color, end_values=hover_border_color, count=3,
-            extend_durations_in_seconds=hover_border_color_duration,
-            collapse_duration_in_seconds=hover_border_color_reverse_duration)
+        self.__hover_bg_color_animation = ColorAnimation(bg_color)
+        self.__hover_border_color_animation = ColorAnimation(border_color)
         self.__hover_border_width_animation = create_float_animation(border_width)
         self.__hover_radius_animation = create_float_animation(radius)
         self.__hover_extend_animation = Vec2Animation(size_extend)
@@ -180,10 +165,10 @@ class Rectangle(UIComponent):
                 self.__hover_extend_animation.is_changing(),
             ])
 
-        border_width: float = self.__hover_border_width_animation.update(global_vars.delta)
-        border_color: ui_color_t = self.__hover_border_color_animation.update(global_vars.delta)
-        bg_color: ui_color_t = self.__hover_bg_color_animation.update(global_vars.delta)
-        radius: float = self.__hover_radius_animation.update(global_vars.delta)
+        border_width = self.__hover_border_width_animation.update(global_vars.delta)
+        border_color = self.__hover_border_color_animation.update(global_vars.delta)
+        bg_color = self.__hover_bg_color_animation.update(global_vars.delta)
+        radius = self.__hover_radius_animation.update(global_vars.delta)
         self.__hover_extend_animation.update(global_vars.delta)
 
         super()._gl_draw()
@@ -205,7 +190,7 @@ class Rectangle(UIComponent):
                 inner_radius if inner_radius > 0 else 0
             )
 
-            if self._ui_changed:
+            if self._ui_changed and self._use_collision_mask:
                 draw_rounded_rect(
                     self._collision_surface,
                     (0, 0),
