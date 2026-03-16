@@ -272,13 +272,13 @@ class Bullet(ImageEntity):
                 renderer.draw_line(
                     self.world_position,
                     self._target_pos - Updated.world_position,
-                    Color.from_255(255, 100, 0, 220)
+                    Color().from_255(255, 100, 0, 220)
                 )
                 renderer.draw_circle(
                     self._target_pos - Updated.world_position,
                     self.size.x * .5,
                     32,
-                    Color.from_255(255, 100, 0, 220)
+                    Color().from_255(255, 100, 0, 220)
                 )
 
             if self._bullet_texture is ...:
@@ -286,7 +286,7 @@ class Bullet(ImageEntity):
                     self.world_position,
                     self.size.x * .5,
                     8,
-                    Color.from_255(255, 255, 60)
+                    Color().from_255(255, 255, 60)
                 )
                 return
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import typing as tp
 
-from ..logic import coord_t, Color, convert_coord, Vec2
+from ..logic import coord_t, c_255_to_1, convert_coord, Vec2
 from ..render_bindings import renderer
 from ..shared import global_vars
 from ..audio import SoundEffect
@@ -48,13 +48,13 @@ class Rectangle(UIComponent):
             on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
             on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
 
-            bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
-            hover_bg_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
+            bg_color: ui_color_t = c_255_to_1(70, 70, 70),
+            hover_bg_color: ui_color_t = c_255_to_1(70, 70, 70),
             hover_bg_color_duration: float = 0,
             hover_bg_color_reverse_duration: float = 0,
 
-            border_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
-            hover_border_color: ui_color_t = Color.c_255_to_1(70, 70, 70),
+            border_color: ui_color_t = c_255_to_1(70, 70, 70),
+            hover_border_color: ui_color_t = c_255_to_1(70, 70, 70),
             hover_border_color_duration: float = 0,
             hover_border_color_reverse_duration: float = 0,
 
