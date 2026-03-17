@@ -237,7 +237,7 @@ class Bullet(ImageEntity):
                                         1 - max(d, 40)
                                         / (self._explosion_radius * 4)
                                 ) * (self._explosion_damage / 100)
-                        entity.acceleration += delta
+                        entity.add_acceleration(delta)
 
             explosion.draw(
                 delay=.05,
@@ -627,8 +627,8 @@ class BaseWeapon:
         # recoil
         if hasattr(self.parent, "_movement_acceleration"):
             recoil = direction * self.parent._movement_acceleration
-            recoil *= self.recoil_factor
-            self.parent.acceleration -= recoil
+            recoil *= -self.recoil_factor
+            self.parent.add_acceleration(recoil)
 
         self._current_recoil_time = self._recoil_time
 
@@ -749,7 +749,7 @@ class Minigun(BaseWeapon):
             parent,
             reload_time=3,
             recoil_time=.02,
-            recoil_factor=2,
+            recoil_factor=1.5,
             mag_size=80,
             inaccuracy=.01093606,
             bullet_speed=1600,
@@ -777,7 +777,7 @@ class Ak47(BaseWeapon):
             parent,
             reload_time=2.5,
             recoil_time=.1,
-            recoil_factor=8,
+            recoil_factor=3,
             mag_size=30,
             inaccuracy=0.03,
             bullet_size=11,

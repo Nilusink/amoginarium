@@ -368,42 +368,16 @@ class BaseTurret(VisibleGameEntity):
         return None
 
     def gl_draw(self) -> None:
-        # only draw if on screen
+        # only draw engagement range if on screen
         if (
-                self.position.x + self.size.x / 2 < Updated.world_position.x or
-                self.position.x - self.size.x / 2 > Updated.world_position.x + global_vars.screen_pixels.x or
-                self.position.y + self.size.y / 2 < Updated.world_position.y or
-                self.position.y - self.size.y / 2 > Updated.world_position.y + global_vars.screen_pixels.y
+                self.position.x + self.engagement_range < Updated.world_position.x or
+                self.position.x - self.engagement_range > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.y + self.engagement_range < Updated.world_position.y or
+                self.position.y - self.engagement_range > Updated.world_position.y + global_vars.screen_pixels.y
         ):
             return
 
         engage_center = self.world_position + self.weapon.parent_position_offset
-
-        if self._highlight:
-            renderer.start_stencil(True)
-
-        # weapon
-        self.weapon.draw_at(
-            self.position,
-            self._aiming_at.angle * (180 / 3.14159265)
-        )
-
-        renderer.draw_textured_quad(
-            self._body_texture,
-            self.world_position - self.size / 2,
-            self.size
-        )
-
-        if self._highlight:
-            renderer.enable_stencil(True)
-
-            renderer.draw_rect(
-                self.world_position - self.size,
-                self.size * 2,
-                (1, 1, 1, .5)
-            )
-
-            renderer.disable_stencil()
 
         # draw engagement range
         if self._valid_angles is not ...:
@@ -499,6 +473,41 @@ class BaseTurret(VisibleGameEntity):
                         32,
                         Color().from_255(50, 200, 0, 100)
                     )
+
+        # only draw turret if on screen
+        if (
+                self.position.x + self.size.x / 2 < Updated.world_position.x or
+                self.position.x - self.size.x / 2 > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.y + self.size.y / 2 < Updated.world_position.y or
+                self.position.y - self.size.y / 2 > Updated.world_position.y + global_vars.screen_pixels.y
+        ):
+            return
+
+        if self._highlight:
+            renderer.start_stencil(True)
+
+        # weapon
+        self.weapon.draw_at(
+            self.position,
+            self._aiming_at.angle * (180 / 3.14159265)
+        )
+
+        renderer.draw_textured_quad(
+            self._body_texture,
+            self.world_position - self.size / 2,
+            self.size
+        )
+
+        if self._highlight:
+            renderer.enable_stencil(True)
+
+            renderer.draw_rect(
+                self.world_position - self.size,
+                self.size * 2,
+                (1, 1, 1, .5)
+            )
+
+            renderer.disable_stencil()
 
         super().gl_draw()
 

@@ -239,13 +239,14 @@ class GameEntity(PositionedEntity):
         #     acc_func,
         #     delta
         # )
-        self.acceleration += self._acceleration_to_add
-        self._acceleration_to_add *= 0
+        # self.acceleration += self._acceleration_to_add
 
         # update velocity and position
-        self.velocity += self.acceleration * delta
+        self.velocity += self.acceleration * delta + self._acceleration_to_add * delta
         self.position += self.velocity * delta
         self.acceleration.x *= 0
+
+        self._acceleration_to_add *= 0
 
         # re-calculate pygame stuff
         self.last_angle = self.velocity.angle
