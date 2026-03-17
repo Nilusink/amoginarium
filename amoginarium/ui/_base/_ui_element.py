@@ -416,6 +416,7 @@ class UIElement(UIEntity):
     def absolute_size(self, value: coord_t) -> None:
         """:param value: Absolute size"""
         self.__absolute_size.xy = convert_coord(value)
+        self.__relative_size.xy = self.__absolute_to_relative(self.__absolute_size)
 
     @property
     def relative_position(self) -> Vec2:
