@@ -186,6 +186,7 @@ class BaseRenderer:
             size: coord_t,
             color: Color | tColor,
             radius: float,
+            convert_global: bool = True
             # radius_top_left: float = ...,
             # radius_top_right: float = ...,
             # radius_bottom_left: float = ...,
@@ -220,7 +221,8 @@ class BaseRenderer:
             self,
             pos: coord_t,
             surface: pg.Surface,
-            centered: bool = False
+            centered: bool = False,
+            convert_global: bool = True
     ) -> None:
         """
         draw a pygame surface

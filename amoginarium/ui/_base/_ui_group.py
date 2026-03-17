@@ -10,13 +10,18 @@ from amoginarium.entities import BaseGroup
 
 
 class UIGroup(BaseGroup):
-    __visible: bool = False
+    """UI root group"""
+    __visible: bool
 
     def __init__(self) -> None:
         super().__init__()
+        self.__visible = False
 
     def hide(self) -> None:
+        """Hide the group"""
         self.__visible = False
+        for sprite in self.sprites():
+            sprite.hide()
 
     def gl_draw(self) -> None:
         self.__visible = True
@@ -24,4 +29,5 @@ class UIGroup(BaseGroup):
 
     @property
     def visible(self) -> bool:
+        """:return: Whether the group is visible"""
         return self.__visible

@@ -8,8 +8,6 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-import typing as tp
-
 from amoginarium.entities import BaseEntity
 
 from ._ui_group import UIGroup
@@ -17,6 +15,8 @@ from ._ui_group import UIGroup
 
 class UIEntity(BaseEntity):
     """Base UI-Entity, no UI, just default entity relation / method stuff"""
+    # Note: There is no advanced group/parent/child setting after creation yet.
+    # As long as there is no need, I would keep it simple.
     __group: UIGroup | None
 
     def __init__(self, parent: UIEntity | None = None) -> None:
@@ -29,13 +29,14 @@ class UIEntity(BaseEntity):
         self._children = []
 
         if parent is None:
-            # If no parent is given, this is a root UI-Entity
+            # If no parent is given, assume this is a root UI-Entity
             self.__group = UIGroup()
             self.add(self.__group)
             self.__dict__["root"] = self
         else:
             self.__group = None
             parent._add_child(self)
+            self.add(self.group)
 
     def _add_child(self, child: UIEntity) -> None:
         """
@@ -43,38 +44,6 @@ class UIEntity(BaseEntity):
         :param child: Child UI-Entity
         """
         self._children.append(child)
-        child.add(self.__group)
-
-    def group_update(self, *args: tp.Any, **kwargs: tp.Any) -> None:
-        """
-        Update all in the root-group where this UI-Entity belongs to
-        :param args: Passed to update
-        :param kwargs: Passed to update
-        """
-        if self.__group is None:
-            self.root.group_update(args=args, kwargs=kwargs)
-            return
-        self.__group.update(args=args, kwargs=kwargs)
-
-    def group_draw(self) -> None:
-        """GL-Draw all in the root-group where this UI-Entity belongs to"""
-        if self.__group is None:
-            self.root.group_draw()
-            return
-        self.__group.gl_draw()
-
-    @property
-    def _group(self) -> UIGroup:
-        if self.__group is None:
-            return self.root._group
-        return self.__group
-
-    def group_hide(self) -> None:
-        """Hide all in the root-group where this UI-Entity belongs to"""
-        if self.__group is None:
-            self.root.group_hide()
-            return
-        self.__group.hide()
 
     def update(self, delta: float) -> None:
         """
@@ -83,6 +52,17 @@ class UIEntity(BaseEntity):
         """
         return
 
+    def hide(self) -> None:
+        """Reset the UI-Entity"""
+        return
+
     def gl_draw(self) -> None:
         """Draw, that is called by the game loop every frame"""
         return
+
+    @property
+    def group(self) -> UIGroup:
+        """:return: The group where this UI-Entity belongs to"""
+        if self.__group is None:
+            return self.root.group
+        return self.__group

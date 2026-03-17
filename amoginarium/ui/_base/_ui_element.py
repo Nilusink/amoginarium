@@ -30,13 +30,16 @@ class UIElement(UIEntity):
     __placement_anchor: Anchor
 
     __relative_position: Vec2
+    __last_relative_position: Vec2
     __absolute_position: Vec2
-    __last_absolute_position: Vec2 | None
+    __last_absolute_position: Vec2
 
     __relative_size: Vec2
+    __last_relative_size: Vec2
     __absolute_size: Vec2
-    __last_absolute_size: Vec2 | None
+    __last_absolute_size: Vec2
 
+    # Purely calculated values, therefore, these can't be set externally
     __width: float
     __height: float
     __center: Vec2
@@ -49,7 +52,7 @@ class UIElement(UIEntity):
     # region Attributes: hovering
     __collision_surface: pg.Surface | None = None
     __collision_mask: pg.Mask | None
-    __collision_buffer: int
+    __collision_buffer: int  # Note: Buffer can't be set after creation. Until needed it's better this way
     __use_collision_mask: bool
 
     __collision_recreation: bool  # Internal variable indicating the collision surface/mask needs to be recreated
@@ -107,8 +110,10 @@ class UIElement(UIEntity):
         self.__on_buffer_callbacks = on_buffer_callbacks
         self.__on_click_callbacks = []
 
-        self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
-        self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
+        self.__absolute_position = Vec2()
+        self.__absolute_position.xy = self.__relative_to_absolute(self.__relative_position)
+        self.__absolute_size = Vec2()
+        self.__absolute_size.xy = self.__relative_to_absolute(self.__relative_size)
 
         self.__is_hovered = False
         self.__is_hovered_inner = None
@@ -116,16 +121,20 @@ class UIElement(UIEntity):
         self.__is_hovered_outer = None
         self.__is_hovered_outer_last = None
         self.__ui_changed = True
+        self.__last_absolute_size = Vec2()
+        self.__last_relative_size = Vec2()
+        self.__last_absolute_position = Vec2()
+        self.__last_relative_position = Vec2()
         self.__collision_recreation = True
-        self.__last_absolute_size = None
-        self.__last_absolute_position = None
         self.__collision_mask = None
+        self.__collision_surface = None
 
         self.add(UIEntities)
 
     # region temp - will be fixed with controller rework
     def check_click(self):
-        if self.is_hovered and self._group.visible:
+        """TEMP: check if clicked"""
+        if self.is_hovered and self.group.visible:
             for cb in self.__on_click_callbacks:
                 cb()
 
@@ -137,32 +146,28 @@ class UIElement(UIEntity):
 
     # region Methods: static absolute/relative convert
     @staticmethod
-    def __relative_to_absolute(relative_value: coord_t) -> Vec2:
+    def __relative_to_absolute(relative_value: coord_t) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
         :param relative_value: Relative value to convert
         :return: Absolute value
         """
-        absolute_value = convert_coord(relative_value, Vec2)
-        absolute_value.x *= global_vars.resolution.x
-        absolute_value.y *= global_vars.resolution.y
-        return absolute_value
+        abs_x, abs_y = convert_coord(relative_value)
+        return abs_x * global_vars.resolution.x, abs_y * global_vars.resolution.y
 
     @staticmethod
-    def __absolute_to_relative(absolute_value: coord_t) -> Vec2:
+    def __absolute_to_relative(absolute_value: coord_t) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
         :param absolute_value: Absolute value to convert
         :return: Relative value
         """
-        relative_value = convert_coord(absolute_value, Vec2)
-        relative_value.x /= global_vars.resolution.x
-        relative_value.y /= global_vars.resolution.y
-        return relative_value
+        rel_x, rel_y = convert_coord(absolute_value)
+        return rel_x / global_vars.resolution.x, rel_y / global_vars.resolution.y
 
     # endregion
 
-    # region Methods: hovering
+    # region Methods: hovering (including related properties)
     def add_enter_callback(self, callback: tp.Callable[[], None]) -> None:
         """:param callback: Callback to be called when a cursor enters the component"""
         if self.__on_enter_callbacks is None:
@@ -182,9 +187,23 @@ class UIElement(UIEntity):
         self.__on_leave_callbacks.append(callback)
 
     @property
-    def _use_collision_mask(self) -> bool:
+    def use_collision_mask(self) -> bool:
         """:return: Whether a collision mask is used or just a collision box"""
         return self.__use_collision_mask
+
+    @use_collision_mask.setter
+    def use_collision_mask(self, value: bool) -> None:
+        """:param value: Whether a collision mask is used or just a collision box"""
+        if value == self.__use_collision_mask:
+            return
+        self.__use_collision_mask = value
+
+        self.__collision_mask = None
+        self.__collision_surface = None
+
+        if self.__use_collision_mask:
+            self.__collision_recreation = True
+            self.__ui_changed = True
 
     @property
     def _collision_surface(self) -> pg.Surface:
@@ -198,7 +217,7 @@ class UIElement(UIEntity):
         if self.__collision_recreation or self.__collision_surface is None:
             self.__collision_recreation = False  #
             self.__collision_mask = None
-            self.__collision_surface = pg.Surface(self._absolute_size.xy, pg.SRCALPHA, 32)
+            self.__collision_surface = pg.Surface(self.absolute_size.xy, pg.SRCALPHA, 32)
         return self.__collision_surface
 
     @property
@@ -258,8 +277,8 @@ class UIElement(UIEntity):
 
             rel_coords = (coords - self.__top_left)
 
-            rel_coords.x += -buffer if coords.x < self.center.x else buffer
-            rel_coords.y += -buffer if coords.y < self.center.y else buffer
+            rel_coords.x += -buffer if coords.x < self.__center.x else buffer
+            rel_coords.y += -buffer if coords.y < self.__center.y else buffer
 
             coords_new = convert_coord(rel_coords.xy, Vec2)
 
@@ -310,42 +329,47 @@ class UIElement(UIEntity):
         self.__is_hovered_inner = None
         self.__is_hovered_outer = None
 
-        # Scaling
-        self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
-        self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
+        # Dont change this. This way it checks if the values have been changed externally
+        new_abs_pos = self.__relative_to_absolute(self.relative_position)
+        new_abs_size = self.__relative_to_absolute(self.relative_size)
+
+        self.__last_relative_position.xy = self.relative_position.xy
+        self.__last_relative_size.xy = self.relative_size.xy
+        self.__last_absolute_position.xy = self.absolute_position.xy
+        self.__last_absolute_size.xy = self.absolute_size.xy
+
+        self.absolute_position.xy = new_abs_pos
+        self.absolute_size.xy = new_abs_size
 
         # Check if values changed
         if self.__use_collision_mask:
-            self.__last_absolute_position = self._absolute_position
-            self.__last_absolute_size = self._absolute_size
-
             if not self._ui_changed:
-                if (self._absolute_position.xy != self.__last_absolute_position.xy
-                        or self._absolute_size.xy != self.__last_absolute_size.xy):
+                if (self.absolute_position.xy != self.__last_absolute_position.xy
+                        or self.absolute_size.xy != self.__last_absolute_size.xy):
                     self._ui_changed = True
 
-        self.__width = self._absolute_size.x
-        self.__height = self._absolute_size.y
+        self.__width = self.absolute_size.x
+        self.__height = self.absolute_size.y
 
         if self.__placement_anchor == "nw":
-            self.__top_left = self._absolute_position
-            self.__top_right = self._absolute_position + convert_coord((self._absolute_size.x, 0), Vec2)
-            self.__bottom_left = self._absolute_position + convert_coord((0, self._absolute_size.y), Vec2)
-            self.__bottom_right = self._absolute_position + self._absolute_size.y
+            self.__top_left = self.absolute_position
+            self.__top_right = self.absolute_position + convert_coord((self.absolute_size.x, 0), Vec2)
+            self.__bottom_left = self.absolute_position + convert_coord((0, self.absolute_size.y), Vec2)
+            self.__bottom_right = self.absolute_position + self.absolute_size.y
 
-            self.__center = self._absolute_position + self._absolute_size / 2
+            self.__center = self.absolute_position + self.absolute_size / 2
 
         elif self.__placement_anchor == "center":
-            self.__top_left = self._absolute_position - self._absolute_size / 2
-            self.__top_right = self._absolute_position + convert_coord(
-                (self._absolute_size.x / 2, -self._absolute_size.y / 2),
+            self.__top_left = self.absolute_position - self.absolute_size / 2
+            self.__top_right = self.absolute_position + convert_coord(
+                (self.absolute_size.x / 2, -self.absolute_size.y / 2),
                 Vec2)
-            self.__bottom_left = self._absolute_position + convert_coord(
-                (-self._absolute_size.x / 2, self._absolute_size.y / 2),
+            self.__bottom_left = self.absolute_position + convert_coord(
+                (-self.absolute_size.x / 2, self.absolute_size.y / 2),
                 Vec2)
-            self.__bottom_right = self._absolute_position + self._absolute_size / 2
+            self.__bottom_right = self.absolute_position + self.absolute_size / 2
 
-            self.__center = self._absolute_position
+            self.__center = self.absolute_position
 
     def gl_draw(self) -> None:
         self._gl_draw()
@@ -369,44 +393,57 @@ class UIElement(UIEntity):
     @property
     def absolute_position(self) -> Vec2:
         """:return: Absolute position - anchor not factored in"""
-        return self._absolute_position
-
-    @property
-    def _absolute_position(self) -> Vec2:
-        """:return: Absolute position - anchor not factored in"""
+        if self.__last_relative_position.xy != self.__relative_position.xy:
+            self.__absolute_position.xy = self.__relative_to_absolute(self.__relative_position)
+            self.__last_relative_position.xy = self.__relative_position.xy
         return self.__absolute_position
 
-    @_absolute_position.setter
-    def _absolute_position(self, value: coord_t) -> None:
+    @absolute_position.setter
+    def absolute_position(self, value: coord_t) -> None:
         """:param value: Absolute position"""
-        self.__relative_position = self.__absolute_to_relative(value)
-        self.__absolute_position = convert_coord(value, Vec2)
+        self.__absolute_position.xy = convert_coord(value)
+        self.__relative_position.xy = self.__absolute_to_relative(self.__absolute_position)
 
     @property
     def absolute_size(self) -> Vec2:
         """:return: Absolute size"""
-        return self._absolute_size
-
-    @property
-    def _absolute_size(self) -> Vec2:
-        """:return: Absolute size"""
+        if self.__last_relative_size.xy != self.__relative_size.xy:
+            self.__absolute_size.xy = self.__relative_to_absolute(self.__relative_size)
+            self.__last_relative_size.xy = self.__relative_size.xy
         return self.__absolute_size
 
-    @_absolute_size.setter
-    def _absolute_size(self, value: coord_t) -> None:
+    @absolute_size.setter
+    def absolute_size(self, value: coord_t) -> None:
         """:param value: Absolute size"""
-        self.__relative_size = self.__absolute_to_relative(value)
-        self.__absolute_size = convert_coord(value, Vec2)
+        self.__absolute_size.xy = convert_coord(value)
 
     @property
     def relative_position(self) -> Vec2:
         """:return: Relative position - anchor not factored in"""
+        if self.__absolute_position.xy != self.__last_absolute_position.xy:
+            self.__relative_position.xy = self.__absolute_to_relative(self.__absolute_position)
+            self.__last_absolute_position.xy = self.__absolute_position.xy
         return self.__relative_position
+
+    @relative_position.setter
+    def relative_position(self, value: coord_t) -> None:
+        """:param value: Relative position"""
+        self.__relative_position.xy = convert_coord(value)
+        self.__absolute_position.xy = self.__relative_to_absolute(self.__relative_position)
 
     @property
     def relative_size(self) -> Vec2:
         """:return: Relative size"""
+        if self.__absolute_size.xy != self.__last_absolute_size.xy:
+            self.__relative_size.xy = self.__absolute_to_relative(self.__absolute_size)
+            self.__last_absolute_size.xy = self.__absolute_size.xy
         return self.__relative_size
+
+    @relative_size.setter
+    def relative_size(self, value: coord_t) -> None:
+        """:param value: Relative size"""
+        self.__relative_size.xy = convert_coord(value)
+        self.__absolute_size.xy = self.__relative_to_absolute(self.__relative_size)
 
     @property
     def width(self) -> float:
@@ -422,6 +459,11 @@ class UIElement(UIEntity):
     def placement_anchor(self) -> Anchor:
         """:return: Placement anchor"""
         return self.__placement_anchor
+
+    @placement_anchor.setter
+    def placement_anchor(self, value: Anchor) -> None:
+        """:param value: Placement anchor, values recalculated next frame"""
+        self.__placement_anchor = value
 
     @property
     def top_left(self) -> Vec2:

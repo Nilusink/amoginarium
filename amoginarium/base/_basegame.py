@@ -583,21 +583,26 @@ class BaseGame:
 
         # self.load_map("assets/maps/test.json")
 
+        def change_ui_view() -> None:
+            start_menu.group.hide()
+            pause_menu.group.hide()
+            settings.group.hide()
+
         def start_game():
             nonlocal active_scene
-            print("START GAME")
+            change_ui_view()
             active_scene = "Game"
 
         def reset_game():
             nonlocal active_scene
-            print("RESET GAME")
+            change_ui_view()
             active_scene = "Game"
 
             for entity in Updated.sprites():
                 entity.kill()
 
             self._background.reset_scroll()
-            global_vars.reset()
+            global_vars.hide()
             Updated.world_position *= 0
 
             self.load_map(self._last_loaded)
@@ -608,17 +613,17 @@ class BaseGame:
 
         def back_to_menu():
             nonlocal active_scene
-            print("BACK TO MENU GAME")
             reset_game()
             active_scene = "StartMenu"
 
         def pause_game():
             nonlocal active_scene
-            print("PAUSE GAME")
+            change_ui_view()
             active_scene = "PauseMenu"
 
         def open_settings():
             nonlocal active_scene
+            change_ui_view()
             if active_scene == "PauseMenu":
                 active_scene = "PauseSettings"
             else:
@@ -626,6 +631,7 @@ class BaseGame:
 
         def close_settings():
             nonlocal active_scene
+            change_ui_view()
             if active_scene == "PauseSettings":
                 active_scene = "PauseMenu"
             else:
@@ -712,19 +718,13 @@ class BaseGame:
                     HasBars.gl_draw()
 
                 if active_scene in ["StartSettings", "PauseSettings"]:
-                    settings.group_draw()
-                    start_menu.group_hide()
-                    pause_menu.group_hide()
+                    settings.group.gl_draw()
 
                 if active_scene == "StartMenu":
-                    start_menu.group_draw()
-                    settings.group_hide()
-                    pause_menu.group_hide()
+                    start_menu.group.gl_draw()
 
                 if active_scene == "PauseMenu":
-                    pause_menu.group_draw()
-                    settings.group_hide()
-                    start_menu.group_hide()
+                    pause_menu.group.gl_draw()
 
                 pg.display.flip()
                 # debugging kopieren - @
@@ -906,7 +906,7 @@ class BaseGame:
         sound_effects.update()
 
         # reset and update detection Groups
-        DETECTION_GROUP_MANAGER.reset()
+        DETECTION_GROUP_MANAGER.hide()
 
         # update entities
         GravityAffected.calculate_gravity(delta)

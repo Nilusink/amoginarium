@@ -127,6 +127,7 @@ class ComplexAnimation(SimpleAnimation):
         Update the animation
         :param delta: Time since the last update in seconds
         """
+        self._last_value = self._current_value
         if self._phase in (AnimationPhase.AT_START, AnimationPhase.AT_END, AnimationPhase.STOPPED):
             return
 
@@ -181,6 +182,14 @@ class ComplexAnimation(SimpleAnimation):
             # Map the curve over the remaining distance dynamically
             dist = self._start_value - self._run_start_value
             self._current_value = self._run_start_value + (dist * self._collapse_curve(current_relative))
+
+    def reset(self) -> None:
+        super().reset()
+        self._current_time = 0.0
+        self._linear_progress = 0.0
+        self._run_start_value = self._start_value
+        self._run_duration = 0.0
+        self._debounce_timer = 0.0
 
     # region Methods: properties
     @property

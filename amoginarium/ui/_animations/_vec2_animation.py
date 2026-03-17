@@ -17,6 +17,7 @@ from ._multi_animation import MultiAnimation
 class Vec2Animation(MultiAnimation):
     """Double float animation for Vec2"""
     __vec2: Vec2
+    __delta_vec2: Vec2
 
     def __init__(self, value: anim_vec2_values_t) -> None:
         """
@@ -38,6 +39,7 @@ class Vec2Animation(MultiAnimation):
         )
 
         self.__vec2 = Vec2()
+        self.__delta_vec2 = Vec2()
 
         # Pull current values from MultiAnimation to initialize the vector
         current = super().current_value
@@ -47,10 +49,15 @@ class Vec2Animation(MultiAnimation):
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: New values of the animations
+        :return: Value difference between current and last value
         """
-        self.__vec2.xy = super().update(delta)
-        return self.__vec2
+        self.__delta_vec2.xy = super().update(delta)
+        self.__vec2.xy = super().current_value
+        return self.__delta_vec2
+
+    def reset(self) -> None:
+        super().reset()
+        self.__vec2.xy = super().current_value
 
     @property
     def current_value(self) -> Vec2:
