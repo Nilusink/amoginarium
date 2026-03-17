@@ -15,7 +15,7 @@ from ..audio import PresetEffect
 from ..render_bindings import renderer
 from ..shared import global_vars, HasPosition
 from ..base._textures import textures
-from ..base._groups import Updated, Drawn
+from ._groups import Updated, Drawn
 from ..logic import Vec2, coord_t, convert_coord
 from ._base_entity import VisibleBaseEntity
 

@@ -6,6 +6,9 @@ Defines sprite groups
 
 Author:
 Nilusink
+
+
+# todo move to entities
 """
 from contextlib import suppress
 # from icecream import ic
@@ -15,14 +18,14 @@ import numpy as np
 from icecream import ic
 
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord, \
-    raycast_mask, normalize_angle
+    raycast_mask, normalize_angle, fade
 from ..render_bindings import renderer
-from ..shared import GameEntityLike
-from ..debugging import timeit
+
+
 # from ..debugging import run_with_debug
 
 
-class _BaseGroup(pg.sprite.Group):
+class BaseGroup(pg.sprite.Group):
     def gl_draw(self) -> None:
         """
         draw sprites using the .gl_draw function
@@ -32,10 +35,10 @@ class _BaseGroup(pg.sprite.Group):
 
     @staticmethod
     def entities_in_circle(
-        entities: list[pg.sprite.Sprite],
-        center: Vec2,
-        radius: float,
-        min_radius: float = 0
+            entities: list[pg.sprite.Sprite],
+            center: Vec2,
+            radius: float,
+            min_radius: float = 0
     ) -> list[tuple[float, tp.Any]]:
         """
         check which of the given entities are in the circle
@@ -81,9 +84,9 @@ class _BaseGroup(pg.sprite.Group):
         return sorted(out, key=lambda r: r[0])
 
     def get_entities_in_circle(
-        self,
-        center: Vec2,
-        radius: float
+            self,
+            center: Vec2,
+            radius: float
     ) -> list[tuple[float, tp.Any]]:
         """
         get all entities inside a circle, sorted by distance (closest first)
@@ -91,11 +94,11 @@ class _BaseGroup(pg.sprite.Group):
         return self.entities_in_circle(self.sprites(), center, radius)
 
 
-class _Bullets(_BaseGroup):
+class _Bullets(BaseGroup):
     ...
 
 
-class _Updated(_BaseGroup):
+class _Updated(BaseGroup):
     world_position: Vec2
     pixel_per_meter: Vec2
     screen_size: Vec2
@@ -126,11 +129,11 @@ class _Updated(_BaseGroup):
                 t.load_textures()
 
 
-class _Drawn(_BaseGroup):
+class _Drawn(BaseGroup):
     ...
 
 
-class _Walls(_BaseGroup):
+class _Walls(BaseGroup):
     # @timeit(10)
     def walls_in_line(
             self,
@@ -147,7 +150,7 @@ class _Walls(_BaseGroup):
         return walls_hit
 
 
-class _Players(_BaseGroup):
+class _Players(BaseGroup):
     _spawn_point: Vec2
 
     @property
@@ -196,12 +199,13 @@ class _Players(_BaseGroup):
         return min_pos, max_pos
 
 
-class _WallCollider(_BaseGroup):
+class _WallCollider(BaseGroup):
     """
     requires::
 
         on_wall: bool
     """
+
     @staticmethod
     def collides_with(
             sprite
@@ -253,7 +257,7 @@ class _WallCollider(_BaseGroup):
         return False
 
 
-class _GravityAffected(_BaseGroup):
+class _GravityAffected(BaseGroup):
     """
     required methods / variables:
 
@@ -280,7 +284,7 @@ class _GravityAffected(_BaseGroup):
             #         sprite.velocity.y = 0
 
 
-class _FrictionXAffected(_BaseGroup):
+class _FrictionXAffected(BaseGroup):
     @property
     def friction(self) -> float:
         return 60
@@ -292,7 +296,7 @@ class _FrictionXAffected(_BaseGroup):
                 sprite.acceleration.x *= self.friction
 
 
-class _HasBars(_BaseGroup):
+class _HasBars(BaseGroup):
     """
     required methods / variables::
 
@@ -315,13 +319,13 @@ class _HasBars(_BaseGroup):
                 bar_start.y += sprite.size.y / 2 + 10
 
                 t = now_len / max_len
-                color = Color.fade(
-                    Color.from_255(255, 0, 0),
-                    Color.from_255(180, 90, 20),
+                color = fade(
+                    Color().from_255(255, 0, 0),
+                    Color().from_255(180, 90, 20),
                     t * 2
-                ) if t < .5 else Color.fade(
-                    Color.from_255(180, 90, 20),
-                    Color.from_255(0, 255, 0),
+                ) if t < .5 else fade(
+                    Color().from_255(180, 90, 20),
+                    Color().from_255(0, 255, 0),
                     (t - .5) * 2
                 )
 
@@ -380,7 +384,7 @@ class _HasBars(_BaseGroup):
                 )
 
 
-class _WallBouncer(_BaseGroup):
+class _WallBouncer(BaseGroup):
     """
     required methods / variables::
 
@@ -388,6 +392,7 @@ class _WallBouncer(_BaseGroup):
         position: Vec2
         in_wall: Vec2 | None (optional, set by update)
     """
+
     def update(self) -> None:
         for sprite in self.sprites():
             with suppress(AttributeError):
@@ -408,21 +413,21 @@ class _WallBouncer(_BaseGroup):
 
                 pi4 = np.pi / 4
                 # ic(pi4, delta.xy, delta.angle, pos, sprite.position.xy)
-                if pi4 <= delta.angle < 3*pi4:
+                if pi4 <= delta.angle < 3 * pi4:
                     sprite.velocity.x = abs(sprite.velocity.x)
 
-                elif 3*pi4 <= delta.angle < 5*pi4:
+                elif 3 * pi4 <= delta.angle < 5 * pi4:
                     print(sprite.position)
                     sprite.velocity.x = -abs(sprite.velocity.x)
 
-                elif 5*pi4 <= delta.angle < 7*pi4:
+                elif 5 * pi4 <= delta.angle < 7 * pi4:
                     sprite.velocity.y = abs(sprite.velocity.y)
 
                 else:
                     sprite.velocity.y = -abs(sprite.velocity.y)
 
 
-class _CollisionDestroyed(_BaseGroup):
+class _CollisionDestroyed(BaseGroup):
     """
     required methods / variables::
 
@@ -432,6 +437,7 @@ class _CollisionDestroyed(_BaseGroup):
         hit(damage: float) -> None
         kill() -> None
     """
+
     @staticmethod
     def dynamic_collide(a: pg.sprite.Sprite, b: pg.sprite.Sprite) -> bool:
         """
@@ -497,7 +503,7 @@ class _CollisionDestroyed(_BaseGroup):
         # check for the first sprite to be in the second
         collision_distance = sprite1.size.length + sprite2.size.length
         return (
-            sprite1.position_center - sprite2.position_center
+                sprite1.position_center - sprite2.position_center
         ).length <= collision_distance
 
     @staticmethod
@@ -531,6 +537,14 @@ class _CollisionDestroyed(_BaseGroup):
         ])
 
 
+class _Cursor(BaseGroup):
+    ...
+
+
+class _UIEntities(BaseGroup):
+    ...
+
+
 # initialize groups
 Drawn = _Drawn()
 Walls = _Walls()
@@ -543,3 +557,5 @@ WallCollider = _WallCollider()
 GravityAffected = _GravityAffected()
 FrictionXAffected = _FrictionXAffected()
 CollisionDestroyed = _CollisionDestroyed()
+Cursor = _Cursor()
+UIEntities = _UIEntities()

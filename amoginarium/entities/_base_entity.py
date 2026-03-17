@@ -9,6 +9,8 @@ Nilusink
 """
 from __future__ import annotations
 # from OpenGL.GL import glRotated
+# from icecream import ic
+# noinspection PyPackageRequirements
 import pygame as pg
 import typing as tp
 import math as m
@@ -17,48 +19,58 @@ from ..debugging import print_ic_style, CC
 # from ..base._linked import global_vars
 from ..render_bindings import renderer
 from ..logic import Vec2
-from ..base import Updated, Drawn
+from ._groups import Updated, Drawn
 from amoginarium.shared._entity_hints import BaseEntityLike
 
-
 _next_entity_id = 0
+from ..logic import Vec2, rk4_update
+from ._groups import Updated, Drawn
 
 
 class BaseEntity(pg.sprite.Sprite):
+    """
+    Base class for all entities
+
+    Has no functionality for UI and logic other than ID and optional parent/children/root
+    """
+    __next_entity_id: int = 0  # class var
+
     _children: list[BaseEntityLike] = ...
     _current_t: float = 0
+    _parent: BaseEntityLike | None = None
+    _root: BaseEntityLike | None = None
 
-    def __init__(self, parent: BaseEntityLike = ...) -> None:
-        global _next_entity_id
-
-        # assign unique id
-        self.__id = _next_entity_id
-        _next_entity_id += 1
-
+    def __init__(self, parent: BaseEntityLike | None = None) -> None:
+        """
+        Init BaseEntity
+        :param parent: parent entity (optional)
+        """
         super().__init__()
         self._children: list[BaseEntity] = []
+
+        self.__id = BaseEntity.__next_entity_id
+        BaseEntity.__next_entity_id += 1
+
         self._parent = parent
 
     @property
     def id(self) -> int:
-        """
-        unique entity id (simplifies comparison)
-        """
+        """:return: unique entity id (simplifies comparison)"""
         return self.__id
 
     @property
     def parent(self) -> BaseEntityLike:
+        """:return: Parent entity or None"""
         return self._parent
 
     @property
-    def root(self):
-        """
-        get the root entity
-        """
-        return self._parent.root
+    def root(self) -> BaseEntity | None:
+        """return: Root entity or None"""
+        return self._parent.root if self._parent else self
 
     @property
-    def children(self) -> list[BaseEntityLike]:
+    def children(self) -> list[BaseEntityLike] | None:
+        """return: List of children or None"""
         return self._children
 
     def update(self, delta: float) -> None:
@@ -73,8 +85,11 @@ class VisibleBaseEntity(BaseEntity):
 
 
 class PositionedEntity(BaseEntity):
-    position: Vec2
-    size: Vec2
+    """
+    Basic Entity with absolute position and size
+    """
+    _position: Vec2
+    _size: Vec2
 
     def __init__(
             self,
@@ -82,40 +97,36 @@ class PositionedEntity(BaseEntity):
             size: Vec2,
             parent: BaseEntityLike = ...
     ) -> None:
-        super().__init__(parent)
+        super().__init__(parent=parent)
 
         self._position = position
         self._size = size
 
     @property
     def position(self) -> Vec2:
+        """:return: Absolute Position"""
         return self._position
 
     @position.setter
     def position(self, value: Vec2) -> None:
+        """
+        Set absolute positon
+        :param value: new position
+        """
         self._position = value
 
     @property
     def size(self) -> Vec2:
+        """:return: Absolute Size"""
         return self._size
 
-
-class UIEntity(PositionedEntity):
-    def __init__(
-            self,
-            position: Vec2,
-            size: Vec2,
-            parent: BaseEntityLike = ...
-    ) -> None:
-        super().__init__(position, size, parent)
-        self.add(Drawn)
-        self.add(Updated)
-
-    def update(self, delta: float) -> None:
-        pass
-
-    def gl_draw(self) -> None:
-        pass
+    @size.setter
+    def size(self, value: Vec2) -> None:
+        """
+        Set absolute size
+        :param value: new size
+        """
+        self._size = value
 
 
 class GameEntity(PositionedEntity):
@@ -126,13 +137,13 @@ class GameEntity(PositionedEntity):
     acceleration: Vec2
 
     def __init__(
-        self,
-        size: Vec2 = ...,
-        facing: Vec2 = ...,
-        initial_position: Vec2 = ...,
-        initial_velocity: Vec2 = ...,
-        coalition: tp.Any = ...,
-        parent: BaseEntityLike = ...
+            self,
+            size: Vec2 = ...,
+            facing: Vec2 = ...,
+            initial_position: Vec2 = ...,
+            initial_velocity: Vec2 = ...,
+            coalition: tp.Any = ...,
+            parent: BaseEntityLike = ...
     ) -> None:
         self._coalition = coalition
 

@@ -13,9 +13,9 @@ from icecream import ic
 import pygame as pg
 import typing as tp
 
-from ..base import GravityAffected, FrictionXAffected, HasBars
-from ..base import CollisionDestroyed, WallCollider, Players
-from ..base import Updated, Drawn
+from ._groups import GravityAffected, FrictionXAffected, HasBars
+from ._groups import CollisionDestroyed, WallCollider, Players
+from ._groups import Updated, Drawn
 from ..audio import DeathSound, SoundEffect
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
@@ -34,7 +34,6 @@ PLAYER_LEFT_64_PATH = "amogus64left"
 PLAYER_RIGHT_64_PATH = "amogus64right"
 PLAYER_OOB_RIGHT_64_PATH = "amogusOOB64right"
 PLAYER_OOB_LEFT_64_PATH = "amogusOOB64left"
-
 
 PIXEL_MASK = pg.mask.Mask((1, 1), True)
 PIXEL_LINE_VERTICAL = pg.mask.Mask((1, 32), True)

@@ -15,8 +15,10 @@ import numpy as np
 from ._cutility_functions import raycast_mask
 from ..debugging import timeit
 from ._cvectors import Vec2
+from ._ccolor import Color
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
+type color_t = tuple[float, float, float] | tuple[float, float, float, float] | Color
 
 
 class EntityLike(tp.Protocol):
@@ -126,13 +128,41 @@ def convert_coord[A: Vec2 | tuple | float](
     raise ValueError("Unsupported conversion: ", convert_to)
 
 
+def convert_color[A: Color | int | float](
+        color: color_t,
+        convert_to: type[A] = tuple
+) -> A | tuple[A, A, A, A]:
+    if convert_to is Color:
+        if isinstance(color, Color):
+            return color.copy()
+
+        if max(color) > 1:
+            return Color().from_255(*color)
+
+        return Color().from_1(*color)
+
+    elif convert_to is int:
+        if isinstance(color, Color):
+            return color.get_rgba255()
+
+        else:
+            # noinspection PyTypeChecker
+            return *(round(c * 255) for c in color),
+
+    else:
+        if isinstance(color, Color):
+            return color.get_rgba1()
+        # noinspection PyTypeChecker
+        return *(c / 255 for c in color),
+
+
 # @timeit(1)
 def multi_raycast_mask(
-    parent: EntityLike,
-    sprites: tp.Collection[EntityLike],
-    start: Vec2,
-    end: Vec2,
-    sample_rate: int = 10
+        parent: EntityLike,
+        sprites: tp.Collection[EntityLike],
+        start: Vec2,
+        end: Vec2,
+        sample_rate: int = 10
 ) -> list[tuple[EntityLike, Vec2]]:
     out = []
 

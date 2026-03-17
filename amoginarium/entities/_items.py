@@ -16,7 +16,7 @@ import math as m
 
 from ..shared._entity_hints import PlayerLike, BaseEntityLike
 from ..logic import coord_t, convert_coord, Vec2
-from ..base import CollisionDestroyed, Updated
+from ..entities import CollisionDestroyed, Updated
 from ._base_entity import PositionedEntity
 from ..base._textures import textures
 from ..render_bindings import renderer
@@ -133,7 +133,7 @@ class BaseItem(PositionedEntity):
         self._update_mask()
 
     def _update_mask(self) -> None:
-        angle = self._current_angle.angle * 180/m.pi
+        angle = self._current_angle.angle * 180 / m.pi
         angle = angle % 360
 
         if 90 < angle < 270:
@@ -169,7 +169,7 @@ class BaseItem(PositionedEntity):
         :returns: x out of max_out, value of current state
         """
         return self._uses_left * (
-            max_out / self._max_uses
+                max_out / self._max_uses
         ), self._uses_left
 
     def update_rect(self) -> None:
@@ -374,10 +374,10 @@ class HealingPotion(BaseItem):
 
         # acceleration influence
         acc_mag, acc_angle = self.parent.acceleration.polar
-        acc_angle *= 180/m.pi
+        acc_angle *= 180 / m.pi
 
         acceleration += m.sin(m.radians(acc_angle)) * acc_mag \
-            * self.parent.acceleration.length / 500
+                        * self.parent.acceleration.length / 500
 
         self._f_velocity += acceleration
         self._f_velocity *= damping
@@ -406,7 +406,7 @@ class HealingPotion(BaseItem):
         )
 
         fill_line = 5 + (self.size.y - 10) \
-            * (1 - self._uses_left / self._max_uses)
+                    * (1 - self._uses_left / self._max_uses)
         renderer.draw_polygon(
             [
                 self.world_position + offset + Vec2().from_cartesian(
@@ -440,7 +440,7 @@ class HealingPotion(BaseItem):
         if 90 < angle < 270:
             renderer.draw_textured_quad(
                 self._image_texture_l,
-                self.world_position+self._internal_offset+self._position_offset,
+                self.world_position + self._internal_offset + self._position_offset,
                 self._image_size,
                 rotate_angle=angle - 180
             )
@@ -448,7 +448,7 @@ class HealingPotion(BaseItem):
         else:
             renderer.draw_textured_quad(
                 self._image_texture_r,
-                self.world_position+self._internal_offset+self._position_offset,
+                self.world_position + self._internal_offset + self._position_offset,
                 self._image_size,
                 rotate_angle=angle
             )

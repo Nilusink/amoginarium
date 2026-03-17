@@ -19,8 +19,8 @@ import json
 import math
 import os
 
-from ._groups import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players
-from ._groups import Updated, GravityAffected, Drawn, FrictionXAffected
+from ..entities import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players, UIEntities
+from ..entities import Updated, GravityAffected, Drawn, FrictionXAffected
 from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
@@ -41,7 +41,7 @@ from ..communications import TCPServer
 from ..entities import explosion
 from ._textures import textures
 from ..settings import Settings
-from ..ui import UIElement, EventHandler
+from ..ui import UICursor
 
 
 class BoundFunction(tp.TypedDict):
@@ -581,25 +581,16 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
-        EventHandler.add_event(pg.QUIT, callback=self.__clean_end)
-        EventHandler.add_event(pg.KEYUP, key=pg.K_F11, callback=lambda *_: self.__windowed_fullscreen())
-        EventHandler.add_event(pg.JOYDEVICEADDED, callback=self.__add_joystick)
-        EventHandler.add_event(pg.VIDEORESIZE, callback=lambda ev: self.__window_update(*ev.size))
-
         # self.load_map("assets/maps/test.json")
 
         def start_game():
             nonlocal active_scene
+            print("START GAME")
             active_scene = "Game"
-
-            start_menu.hide()
-            settings.hide()
-            pause_menu.hide()
-
-            game_ui_dummy.show()
 
         def reset_game():
             nonlocal active_scene
+            print("RESET GAME")
             active_scene = "Game"
 
             for entity in Updated.sprites():
@@ -615,71 +606,30 @@ class BaseGame:
             for player in Players.sprites():
                 player.respawn()
 
-            # UI
-            start_menu.hide()
-            settings.hide()
-            pause_menu.hide()
-
-            game_ui_dummy.show()
-
         def back_to_menu():
             nonlocal active_scene
+            print("BACK TO MENU GAME")
             reset_game()
             active_scene = "StartMenu"
 
-            game_ui_dummy.hide()
-            settings.hide()
-            pause_menu.hide()
-
-            start_menu.show()
-
         def pause_game():
             nonlocal active_scene
+            print("PAUSE GAME")
             active_scene = "PauseMenu"
-
-            start_menu.hide()
-            settings.hide()
-            game_ui_dummy.hide()
-
-            pause_menu.show()
 
         def open_settings():
             nonlocal active_scene
             if active_scene == "PauseMenu":
                 active_scene = "PauseSettings"
-
-                pause_menu.hide()
-                start_menu.hide()
-                game_ui_dummy.hide()
-
-                settings.show()
             else:
                 active_scene = "StartSettings"
-
-                game_ui_dummy.hide()
-                pause_menu.hide()
-                start_menu.hide()
-
-                settings.show()
 
         def close_settings():
             nonlocal active_scene
             if active_scene == "PauseSettings":
                 active_scene = "PauseMenu"
-
-                start_menu.hide()
-                settings.hide()
-                game_ui_dummy.hide()
-
-                pause_menu.show()
             else:
                 active_scene = "StartMenu"
-
-                game_ui_dummy.hide()
-                pause_menu.hide()
-                settings.hide()
-
-                start_menu.show()
 
         def handle_zoom(event):
             global_vars.pixel_per_meter *= 1 + event.y / 30
@@ -691,19 +641,13 @@ class BaseGame:
         pause_menu = PauseMenu(
             start_game, reset_game, open_settings, back_to_menu
         )
-        pause_menu.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: start_game())
 
         settings = SettingsMenu(
             close_settings,
             self.__window_update
         )
 
-        # Temporary solution
-        game_ui_dummy: UIElement = UIElement()
-        game_ui_dummy.add_fullscreen_event(pg.KEYUP, key=pg.K_ESCAPE, callback=lambda *_: pause_game())
-        game_ui_dummy.add_fullscreen_event(pg.MOUSEWHEEL, callback=handle_zoom)
-
-        start_menu.show()
+        mouse_cursor = UICursor()
 
         # draw background once
         while self.running:
@@ -721,8 +665,37 @@ class BaseGame:
 
             delta *= self.time_multiplier  # slow-motion
 
-            EventHandler.check_events()
+            global_vars.delta = delta
 
+            # TEMP SOLUTION - fix with controller rework
+            for event in pg.event.get():
+                if event.type == pg.VIDEORESIZE:
+                    self.__window_update(*event.size)
+                elif event.type == pg.MOUSEWHEEL:
+                    if active_scene in ["Game", "PauseSettings", "PauseMenu"]:
+                        handle_zoom(event)
+                elif event.type == pg.QUIT:
+                    self.__clean_end()
+                elif event.type == pg.JOYDEVICEADDED:
+                    self.__add_joystick(event)
+                elif event.type == pg.KEYUP:
+                    if event.key == pg.K_F11:
+                        self.__windowed_fullscreen()
+                    if event.key == pg.K_ESCAPE:
+                        if active_scene == "Game":
+                            pause_game()
+                        elif active_scene == "PauseMenu":
+                            start_game()
+                        elif active_scene == "PauseSettings":
+                            close_settings()
+                        elif active_scene == "StartSettings":
+                            close_settings()
+                elif event.type == pg.MOUSEBUTTONUP:
+                    if event.button == pg.BUTTON_LEFT:
+                        for sprite in UIEntities:
+                            sprite.check_click()
+
+            mouse_cursor.gl_draw()
             if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
                 # update background music
                 try:  # throws error on game end
@@ -738,9 +711,20 @@ class BaseGame:
                     Drawn.gl_draw()
                     HasBars.gl_draw()
 
-                start_menu.draw_if_visible()
-                pause_menu.draw_if_visible()
-                settings.draw_if_visible()
+                if active_scene in ["StartSettings", "PauseSettings"]:
+                    settings.group_draw()
+                    start_menu.group_hide()
+                    pause_menu.group_hide()
+
+                if active_scene == "StartMenu":
+                    start_menu.group_draw()
+                    settings.group_hide()
+                    pause_menu.group_hide()
+
+                if active_scene == "PauseMenu":
+                    pause_menu.group_draw()
+                    settings.group_hide()
+                    start_menu.group_hide()
 
                 pg.display.flip()
                 # debugging kopieren - @
@@ -770,7 +754,8 @@ class BaseGame:
                 _, max_player_pos = Players.get_position_extremes()
 
                 # background_pos_left = self._background.position + 60
-                Updated.world_position.y = -((global_vars.screen_size.y / global_vars.pixel_per_meter) - global_vars.screen_size.y)
+                Updated.world_position.y = -(
+                        (global_vars.screen_size.y / global_vars.pixel_per_meter) - global_vars.screen_size.y)
                 global_vars.world_position.y = Updated.world_position.y
 
                 if self._shifting:
