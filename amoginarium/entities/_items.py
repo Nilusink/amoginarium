@@ -107,6 +107,12 @@ class BaseItem(PositionedEntity):
     def uses_left(self) -> int:
         return self._uses_left
 
+    def get_icon(self) -> tuple[int, tuple[int, int]]:
+        """
+        return the items texture and size
+        """
+        return self._image_texture_r, self._image_size
+
     def add_used_callback(self, callback: tp.Callable[[int], bool]) -> None:
         self._used_callback = callback
 
@@ -204,7 +210,12 @@ class BaseItem(PositionedEntity):
         self.update_rect()
         self._update_mask()
 
-    def draw_at(self, position: Vec2, angle: float) -> None:
+    def draw_at(
+            self,
+            position: Vec2,
+            angle: float,
+            size_fac: float = 1
+    ) -> None:
         debug_surface = self.mask.to_surface()
         renderer.draw_pg_surf(
             (
@@ -266,7 +277,12 @@ class Shield(BaseItem):
         if self._uses_left <= 0:
             self.kill(hit_by)
 
-    def draw_at(self, position: Vec2, angle: float) -> None:
+    def draw_at(
+            self,
+            position: Vec2,
+            angle: float,
+            size_fac: float = 1
+    ) -> None:
         angle = angle % 360
         delta = self._position_offset.copy()
         delta.angle += angle * (m.pi / 180)
@@ -387,7 +403,12 @@ class HealingPotion(BaseItem):
 
         super().update(delta)
 
-    def draw_at(self, position: Vec2, angle: float) -> None:
+    def draw_at(
+            self,
+            position: Vec2,
+            angle: float,
+            size_fac: float = 1
+    ) -> None:
         self._target_rotation = angle
         angle = angle % 360
         self.position = position - self.size / 2
@@ -486,6 +507,7 @@ class JetBag(BaseItem):
 
         self._in_use = False
         self._facing = True
+        self._size_fac = 1
 
         self._animation = Animation(
             self._animation_textures,
@@ -540,26 +562,41 @@ class JetBag(BaseItem):
                     self._max_uses
                 )
 
-    def draw_at(self, position: Vec2, angle: float) -> None:
+    def draw_at(
+            self,
+            position: Vec2,
+            angle: float,
+            size_fac: float = 1
+    ) -> None:
         angle = angle % 360
-        self.position = position - self.size / 2
+
+        size = self.size * size_fac
+        self._size_fac = size_fac
+
+        self.position = position - size / 2
 
         if 90 < angle < 270:
-            pos = self.world_position + self._internal_offset
-            pos -= self._position_offset
+            pos = self.world_position + self._internal_offset * size_fac
+            pos -= self._position_offset * size_fac
             renderer.draw_textured_quad(
                 self._image_texture_l,
                 pos,
-                self._image_size,
+                (
+                    self._image_size[0] * size_fac,
+                    self._image_size[1] * size_fac
+                ),
             )
             self._facing = False
 
         else:
-            pos = self.world_position + self._internal_offset
-            pos += self._position_offset
+            pos = self.world_position + self._internal_offset * size_fac
+            pos += self._position_offset * size_fac
             renderer.draw_textured_quad(
                 self._image_texture_r,
                 pos,
-                self._image_size,
+                (
+                    self._image_size[0] * size_fac,
+                    self._image_size[1] * size_fac
+                ),
             )
             self._facing = True

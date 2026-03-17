@@ -19,6 +19,7 @@ class controls:
     jump: bool = False
     reload: bool = False
     shoot: bool = False
+    inventory: bool = False
     wpn_f: bool = False
     wpn_b: bool = False
     joy_btn: bool = False
@@ -154,6 +155,10 @@ class Controller:
     @property
     def shoot(self) -> bool:
         return self._keys.shoot
+
+    @property
+    def inventory(self) -> bool:
+        return self._keys.inventory
 
     @property
     def wpn_f(self) -> bool:

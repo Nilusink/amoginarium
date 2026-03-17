@@ -43,7 +43,8 @@ class KeyboardController(Controller):
         right = pressed_keys[self._controls.right]
         self._keys.jump = pressed_keys[self._controls.press]
 
-        self._keys.shoot = pressed_keys[pg.K_e]
+        self._keys.shoot = pg.mouse.get_pressed()[0]
+        self._keys.inventory = pressed_keys[pg.K_e]
         self._keys.reload = pressed_keys[pg.K_r]
         self._keys.wpn_f = pressed_keys[pg.K_q]
         self._keys.wpn_b = pressed_keys[pg.K_TAB]

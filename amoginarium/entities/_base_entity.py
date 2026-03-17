@@ -328,10 +328,20 @@ class LRImageEntity(VisibleGameEntity):
     def update(self, delta: float) -> None:
         super().update(delta)
 
-    def gl_draw(self) -> None:
+    def gl_draw(self, draw_at: Vec2 = ..., size: Vec2 = ...) -> None:
+        if draw_at is not ...:
+            pos = draw_at
+
+        else:
+            pos = self.world_position
+
+        if size is ...:
+            size = self.size
+
+
         renderer.draw_textured_quad(
             self._texture_right if self.facing.x < 0 else self._texture_left,
-            self.world_position - self.size / 2,
-            self.size
+            pos - size / 2,
+            size
         )
         super().gl_draw()

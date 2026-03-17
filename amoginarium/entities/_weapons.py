@@ -547,6 +547,13 @@ class BaseWeapon:
             round(self._current_reload_time, 2)
         )
 
+    def get_icon(self) -> tuple[int, tuple[int, int]]:
+        """
+        return the items texture and size
+        """
+        return self._texture_id_r, self._image_size
+
+
     def update(self, delta: float) -> None:
         """
         update weapon state (like reloading, ...)
@@ -695,7 +702,12 @@ class BaseWeapon:
         if self._sound_effect is not ...:
             self._sound_effect.stop()
 
-    def draw_at(self, position: Vec2, angle: float) -> None:
+    def draw_at(
+            self,
+            position: Vec2,
+            angle: float,
+            size_fac: float = 1
+        ) -> None:
         """
         draw the weapon (centered) at a specified position
         """
@@ -709,26 +721,33 @@ class BaseWeapon:
 
         position += offset
 
+        size = self._size * size_fac
+
         if 90 < angle < 270:
             anchor = Vec2().from_cartesian(
-                self._size.x - self._image_rotate_anchor.x,
-                self._image_rotate_anchor.y
+                size.x - self._image_rotate_anchor.x * size_fac,
+                self._image_rotate_anchor.y * size_fac
             )
             renderer.draw_textured_quad(
                 self.texture_id_l,
                 (position - Updated.world_position - anchor).xy,
-                self._size.xy,
+                size.xy,
                 rotate_angle=angle - 180 + self._image_rotation_offset,
                 rotate_anchor=anchor
             )
 
         else:
+            anchor = Vec2().from_cartesian(
+                self._image_rotate_anchor.x * size_fac,
+                self._image_rotate_anchor.y * size_fac
+            )
+
             renderer.draw_textured_quad(
                 self.texture_id_r,
-                (position - Updated.world_position - self._image_rotate_anchor).xy,
-                self._size.xy,
+                (position - Updated.world_position - anchor).xy,
+                size.xy,
                 rotate_angle=angle + self._image_rotation_offset,
-                rotate_anchor=self._image_rotate_anchor
+                rotate_anchor=anchor
             )
 
         renderer.draw_circle(position - offset - Updated.world_position, 4, 4, (1, 1, 0))

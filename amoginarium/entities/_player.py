@@ -21,6 +21,7 @@ from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
 from ._items import BaseItem, Shield, HealingPotion, JetBag
 from ._charged_weapon import Bow, ChargedWeapon, RailGun
+from ..logic import Vec2, convert_coord, Color
 from ._weapons import HandThrownGrenade
 from ..render_bindings import renderer
 from ..base._textures import textures
@@ -28,7 +29,6 @@ from ..controllers import Controller
 from ..shared import Coalitions
 from ._island import Island
 from ._inventory import Inventory
-from ..logic import Vec2, convert_coord
 from ..shared import global_vars
 
 PLAYER_LEFT_64_PATH = "amogus64left"
@@ -144,6 +144,8 @@ class Player(LRImageEntity):
 
         self._last_wpn_change = 0
         self._current_weapon = 0
+        self._in_inventory = False
+        self._inventory = Inventory(30)
         self._hotbar = Inventory(10)
         self._hotbar.add_item(
             Ak47(self, False, parent_position_offset=(0, 0)),
@@ -237,7 +239,7 @@ class Player(LRImageEntity):
             self.item.stop()
 
         self._current_weapon += 1
-        if self._current_weapon >= self._hotbar.slots_used:
+        if self._current_weapon >= self._hotbar.num_slots:
             self._current_weapon = 0
 
     def previous_weapon(self) -> None:
@@ -478,6 +480,11 @@ class Player(LRImageEntity):
             wall_rider.player_contact(self, delta)
             self.velocity += wall_rider.velocity
 
+        # toggle inventory
+        if self._controller.inventory and perf_counter() - self._last_wpn_change > .1:
+            self._last_wpn_change = perf_counter()
+            self._in_inventory = not self._in_inventory
+
         super().update(delta)
 
         if wall_rider is not ...:
@@ -493,6 +500,15 @@ class Player(LRImageEntity):
             self.size.x / 2,
             self.size.y
         )
+
+    def draw_at(self, pos: Vec2, size: Vec2, angle: float) -> None:
+        super().gl_draw(pos, size)
+        if self.item:
+            self.item.draw_at(
+                pos if pos is not ... else self.position,
+                angle,
+                size.x / self.size.x if size is not ... else 1
+            )
 
     def gl_draw(self) -> None:
         # check if out of bounds
@@ -544,19 +560,70 @@ class Player(LRImageEntity):
                 )
 
         else:
-            super().gl_draw()
-            if self.item:
-                self.item.draw_at(
-                    self.position,
+            if not self._in_inventory:
+                self._hotbar.draw_at(
+                    Vec2().from_cartesian(.5, .95),
+                    .4,
+                    10,
+                    True,
+                    self._current_weapon
+                )
+
+            else:
+                # background
+                renderer.draw_rounded_rect(
+                    (
+                            global_vars.screen_pixels.x * .25,
+                            global_vars.screen_pixels.y * .1
+                    ),
+                    (
+                        global_vars.screen_pixels.x * .5,
+                        global_vars.screen_pixels.y * .8
+                    ),
+                    Color().from_255(80, 80, 80),
+                    20,
+                    False
+                )
+
+                # slots
+                self._inventory.draw_at(
+                    Vec2().from_cartesian(.5, .65),
+                    .5,
+                    10,
+                    False
+                )
+                self._hotbar.draw_at(
+                    Vec2().from_cartesian(.5, .85),
+                    .5,
+                    10,
+                    False,
+                )
+
+                # character display
+                renderer.draw_rounded_rect(
+                    (
+                            global_vars.screen_pixels.x * .28,
+                            global_vars.screen_pixels.y * .17
+                    ),
+                    (
+                        self.size.x * 3,
+                        self.size.y * 4
+                    ),
+                    Color().from_255(50, 50, 50),
+                    20,
+                    False
+                )
+                self.draw_at(
+                    Vec2().from_cartesian(
+                        global_vars.screen_pixels.x * .28 + self.size.x * 1.5,
+                        global_vars.screen_pixels.y * .17 + self.size.y * 2
+                    ),
+                    self.size * 2,
                     angle
                 )
 
-            self._hotbar.draw_at(
-                Vec2(),
-                .8,
-                5,
-                True
-            )
+            self.draw_at(..., ..., angle)
+
 
     def kill(self, killed_by=...) -> None:
         """

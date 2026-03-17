@@ -11,8 +11,9 @@ from dataclasses import dataclass
 from icecream import ic
 import typing as tp
 
-from ..logic import Vec2
-from ..ui import Rectangle, Button
+from ..logic import Vec2, Color
+from ..ui import Rectangle, AnimatedColorValues
+from ..render_bindings import renderer
 
 
 @dataclass
@@ -22,7 +23,7 @@ class ItemSlot:
 
 
 class Inventory:
-    __slots__ = ("_slots", "_num_slots", "_used_slots", "_ui")
+    __slots__ = ("_slots", "_num_slots", "_used_slots", "_ui", "_slot_colors")
 
     def __init__(
             self,
@@ -34,14 +35,39 @@ class Inventory:
             ItemSlot(None, 0) for _ in range(slots)
         ]
 
-        self._ui = Rectangle(
-            (.1, .1),
-            (.8, .8)
-        )
+        self._slot_colors = {
+            "basic": AnimatedColorValues(
+                (70, 70, 70),
+                (150, 150, 150),
+                extend_duration=.1,
+                collapse_duration=.8
+            ),
+            "border_basic": (80, 80, 80),
+            "border_highlighted": (120, 120, 120)
+        }
+
+        self._ui = {
+            "root": Rectangle(
+                (.5, .5),
+                (.8, .8),
+                bg_color = self._slot_colors["border_basic"],
+                border_color = self._slot_colors["border_basic"]
+        ), "slots": [
+            Rectangle(
+                (.5, .5),
+                (.1, .1),
+                bg_color = self._slot_colors["basic"],
+                border_color = self._slot_colors["border_basic"],
+            ) for _ in range(slots)
+        ]}
 
     @property
     def slots_used(self) -> int:
         return self._used_slots
+
+    @property
+    def num_slots(self) -> int:
+        return self._num_slots
 
     def add_item(self, item, count: int = 1) -> int:
         """
@@ -93,18 +119,82 @@ class Inventory:
             pos: Vec2,
             width: float,
             slots_per_row: int,
-            draw_background: bool = False
+            draw_background: bool = False,
+            highlight_slot: int = -1
     ) -> Vec2:
         """
         draw the inventory at a specified location
         :returns: size
         """
-        slot_size = width / (slots_per_row + 1)
+        self._ui["root"].relative_position = pos
+
+        slot_size = width / (slots_per_row + .1)
         rows = round(len(self._slots) / slots_per_row)
 
-        height = slot_size * (rows + 1)
+        self._ui["slots"][0].relative_size = slot_size, slot_size
+        self._ui["slots"][0].relative_size.y = self._ui["slots"][0].relative_size.x
+        slot_size =(
+            self._ui["slots"][0].absolute_size.x,
+            self._ui["slots"][0].absolute_size.x
+        )
 
+        width = slot_size[0] * (slots_per_row + .1)
+        height = slot_size[1] * (rows + .1)
         size = Vec2().from_cartesian(width, height)
+        self._ui["root"].absolute_size = size
 
-        # self._ui._relative_size = size
-        self._ui.group_draw()
+        if draw_background:
+            self._ui["root"].gl_draw()
+
+        start = self._ui["root"].absolute_position.copy()
+        start.x -= slot_size[0] * (slots_per_row / 2)
+        start.y -= slot_size[1] * (rows / 2)
+
+        for row in range(rows):
+            for col in range(slots_per_row):
+                slot_id = row * slots_per_row + col
+                if slot_id == highlight_slot:
+                    highlight = True
+
+                else:
+                    highlight = False
+
+                ui_slot = self._ui["slots"][slot_id]
+                ui_slot.absolute_position = (
+                    start.x + (.5 + col) * slot_size[0],
+                    start.y + (.5 + row) * slot_size[0],
+                )
+                ui_slot.absolute_size = slot_size
+
+                if highlight:
+                    ui_slot.border_color = self._slot_colors["border_highlighted"]
+
+                else:
+                    ui_slot.border_color = self._slot_colors["border_basic"]
+
+                ui_slot.gl_draw()
+
+                slot = self.get_slot(slot_id)
+                if slot.count > 0:
+                    if hasattr(slot.item, "get_icon"):
+                        texture, size = slot.item.get_icon()
+
+                        max_size = max(size)
+                        factor = (slot_size[0] * .8) / max_size
+
+                        pos = ui_slot.absolute_position
+                        pos -= ui_slot.absolute_size / 2
+                        pos.x += slot_size[0] * .1 + (max_size - size[0]) * factor / 2
+                        pos.y += slot_size[0] * .1 + (max_size - size[1]) * factor / 2
+
+                        renderer.draw_textured_quad(
+                            texture,
+                            pos,
+                            (
+                                size[0] * factor,
+                                size[1] * factor
+                            ),
+                            convert_global=False
+                        )
+
+        return size
