@@ -284,18 +284,23 @@ class Shield(BaseItem):
             size_fac: float = 1
     ) -> None:
         angle = angle % 360
-        delta = self._position_offset.copy()
+        delta = self._position_offset.copy() * size_fac
         delta.angle += angle * (m.pi / 180)
+
+        size = self.size * size_fac
 
         self._current_angle = delta
 
         if self._in_use:
-            self.position = position + delta - self.size / 2
+            self.position = position + delta - size / 2
             if 90 < angle < 270:
                 renderer.draw_textured_quad(
                     self._image_texture_l,
                     self.world_position + self._internal_offset,
-                    self._image_size,
+                    (
+                        self._image_size[0] * size_fac,
+                        self._image_size[1] * size_fac
+                    ),
                     rotate_angle=angle - 180
                 )
 
@@ -303,12 +308,15 @@ class Shield(BaseItem):
                 renderer.draw_textured_quad(
                     self._image_texture_r,
                     self.world_position + self._internal_offset,
-                    self._image_size,
+                    (
+                        self._image_size[0] * size_fac,
+                        self._image_size[1] * size_fac
+                    ),
                     rotate_angle=angle
                 )
 
         else:
-            size = Vec2().from_cartesian(*self._image_size)
+            size = Vec2().from_cartesian(*self._image_size) * size_fac
             self.position = position - size / 4
             if 90 < angle < 270:
                 renderer.draw_textured_quad(
