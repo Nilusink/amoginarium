@@ -11,6 +11,9 @@ from dataclasses import dataclass
 from icecream import ic
 import typing as tp
 
+from ..logic import Vec2
+from ..ui import Rectangle, Button
+
 
 @dataclass
 class ItemSlot:
@@ -19,7 +22,7 @@ class ItemSlot:
 
 
 class Inventory:
-    __slots__ = ("_slots", "_num_slots", "_used_slots")
+    __slots__ = ("_slots", "_num_slots", "_used_slots", "_ui")
 
     def __init__(
             self,
@@ -30,6 +33,11 @@ class Inventory:
         self._slots: list[ItemSlot] = [
             ItemSlot(None, 0) for _ in range(slots)
         ]
+
+        self._ui = Rectangle(
+            (.1, .1),
+            (.8, .8)
+        )
 
     @property
     def slots_used(self) -> int:
@@ -79,3 +87,24 @@ class Inventory:
 
     def __iter__(self):
         return iter(self._slots)
+
+    def draw_at(
+            self,
+            pos: Vec2,
+            width: float,
+            slots_per_row: int,
+            draw_background: bool = False
+    ) -> Vec2:
+        """
+        draw the inventory at a specified location
+        :returns: size
+        """
+        slot_size = width / (slots_per_row + 1)
+        rows = round(len(self._slots) / slots_per_row)
+
+        height = slot_size * (rows + 1)
+
+        size = Vec2().from_cartesian(width, height)
+
+        # self._ui._relative_size = size
+        self._ui.group_draw()

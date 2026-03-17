@@ -551,6 +551,13 @@ class Player(LRImageEntity):
                     angle
                 )
 
+            self._hotbar.draw_at(
+                Vec2(),
+                .8,
+                5,
+                True
+            )
+
     def kill(self, killed_by=...) -> None:
         """
         remove player from almost all groups
