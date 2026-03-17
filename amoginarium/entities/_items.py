@@ -62,12 +62,12 @@ class BaseItem(PositionedEntity):
     def __init__(
             self,
             parent: PlayerLike,
-            used_callback: tp.Callable[[int], bool],
+            # used_callback: tp.Callable[[int], bool],
             parent_position_offset: coord_t
     ) -> None:
         self._position_offset = convert_coord(parent_position_offset, Vec2)
         self._uses_left = self._max_uses
-        self._used_callback = used_callback
+        self._used_callback = None
 
         square_size = max(self._image_size)
         self._internal_offset = Vec2().from_cartesian(
@@ -106,6 +106,9 @@ class BaseItem(PositionedEntity):
     @property
     def uses_left(self) -> int:
         return self._uses_left
+
+    def add_used_callback(self, callback: tp.Callable[[int], bool]) -> None:
+        self._used_callback = callback
 
     def _generate_collision_mask(self) -> None:
         """
@@ -229,10 +232,10 @@ class Shield(BaseItem):
     def __init__(
             self,
             parent: PlayerLike,
-            used_callback: tp.Callable[[int], bool],
+            # used_callback: tp.Callable[[int], bool],
             parent_position_offset: coord_t
     ) -> None:
-        super().__init__(parent, used_callback, parent_position_offset)
+        super().__init__(parent, parent_position_offset)
 
         self._in_use = False
         # self.add(CollisionDestroyed)
@@ -331,10 +334,9 @@ class HealingPotion(BaseItem):
     def __init__(
             self,
             parent: PlayerLike,
-            used_callback: tp.Callable[[int], bool],
             parent_position_offset: coord_t
     ) -> None:
-        super().__init__(parent, used_callback, parent_position_offset)
+        super().__init__(parent, parent_position_offset)
         self._drinking = False
 
         self._target_rotation = 0

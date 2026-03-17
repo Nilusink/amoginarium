@@ -27,6 +27,7 @@ from ..base._textures import textures
 from ..controllers import Controller
 from ..shared import Coalitions
 from ._island import Island
+from ._inventory import Inventory
 from ..logic import Vec2, convert_coord
 from ..shared import global_vars
 
@@ -143,60 +144,46 @@ class Player(LRImageEntity):
 
         self._last_wpn_change = 0
         self._current_weapon = 0
-        self._weapons: list[dict[str, BaseWeapon | BaseItem | int]] = [
-            {
-                "item": Ak47(self, False, parent_position_offset=(0, 0)),
-                "uses": 1
-            },
-            {
-                "item": Minigun(self, False, parent_position_offset=(0, 10)),
-                "uses": 1
-            },
-            {
-                "item": Sniper(self, False),
-                "uses": 1
-            },
-            {
-                "item": HandThrownGrenade(self, False),
-                "uses": 1
-            },
-            {
-                "item": Shield(
-                    self,
-                    lambda x: self._item_used(4, x),
-                    Vec2().from_cartesian(50, 0),
-                ),
-                "uses": 1
-            },
-            {
-                "item": HealingPotion(
-                    self,
-                    lambda x: self._item_used(5, x),
-                    Vec2().from_cartesian(0, 5),
-                ),
-                "uses": 1
-            },
-            {
-                "item": JetBag(
-                    self,
-                    lambda x: self._item_used(6, x),
-                    Vec2().from_cartesian(-24, 0),
-                ),
-                "uses": 1
-            },
-            {
-                "item": Bow(self, False, parent_position_offset=(0, 0)),
-                "uses": 1
-            },
-            {
-                "item": RailGun(self, False, parent_position_offset=(0, 0)),
-                "uses": 1
-            },
-        ]
-
-        for i in range(len(self._weapons)):
-            if isinstance(self._weapons[i]["item"], BaseWeapon):
-                self._weapons[i]["item"].reload(True)
+        self._hotbar = Inventory(10)
+        self._hotbar.add_item(
+            Ak47(self, False, parent_position_offset=(0, 0)),
+            1
+        )
+        self._hotbar.add_item(
+            Minigun(self, False, parent_position_offset=(0, 10)),
+            1
+        )
+        self._hotbar.add_item(
+            Sniper(self, False),
+            1
+        )
+        self._hotbar.add_item(
+            HandThrownGrenade(self, False),
+            1
+        )
+        self._hotbar.add_item(
+            Shield(self, Vec2().from_cartesian(50, 0)),
+            1
+        )
+        self._hotbar.add_item(
+            HealingPotion(self, Vec2().from_cartesian(0, 5)),
+            1
+        )
+        self._hotbar.add_item(
+            JetBag(self, Vec2().from_cartesian(-24, 0)),
+            1
+        )
+        self._hotbar.add_item(
+            Bow(self, False, parent_position_offset=(0, 0)),
+            1
+        )
+        self._hotbar.add_item(
+            RailGun(self, False, parent_position_offset=(0, 0)),
+            1
+        )
+        for slot in self._hotbar:
+            if isinstance(slot.item, BaseWeapon):
+                slot.item.reload(True)
 
         self._last_hit = perf_counter()
 
@@ -233,11 +220,11 @@ class Player(LRImageEntity):
 
     @property
     def item(self) -> BaseWeapon | BaseItem | None:
-        if not hasattr(self, "_weapons"):
+        if not hasattr(self, "_hotbar"):
             return None
 
-        if self._weapons[self._current_weapon]["uses"] > 0:
-            return self._weapons[self._current_weapon]["item"]
+        if self._hotbar.get_count(self._current_weapon) > 0:
+            return self._hotbar.get_item(self._current_weapon)
 
         else:
             return None
@@ -250,7 +237,7 @@ class Player(LRImageEntity):
             self.item.stop()
 
         self._current_weapon += 1
-        if self._current_weapon >= len(self._weapons):
+        if self._current_weapon >= self._hotbar.slots_used:
             self._current_weapon = 0
 
     def previous_weapon(self) -> None:
@@ -262,7 +249,7 @@ class Player(LRImageEntity):
 
         self._current_weapon -= 1
         if self._current_weapon < 0:
-            self._current_weapon = len(self._weapons) - 1
+            self._current_weapon = self._hotbar.slots_used - 1
 
     def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
         """
@@ -333,9 +320,9 @@ class Player(LRImageEntity):
     def update(self, delta):
         # update reloads
         # self.weapon.update(delta)
-        for i in range(len(self._weapons)):
-            if self._weapons[i]["uses"] > 0:
-                self._weapons[i]["item"].update(delta)
+        for slot in self._hotbar:
+            if slot.count > 0:
+                slot.item.update(delta)
 
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
