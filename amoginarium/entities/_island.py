@@ -289,14 +289,12 @@ class Island(VisibleGameEntity):
         start_pos = self.world_position
 
         # check if island is on screen
-        if not any([
-            Updated.world_position.x < self.position.x,
-            self.position.x + self.size.x < Updated.world_position.x +
-            global_vars.screen_pixels.x,
-            Updated.world_position.y < self.position.y,
-            self.position.y + self.size.y < Updated.world_position.y +
-            global_vars.screen_pixels.y,
-        ]):
+        if (
+                self.position.x + self.size.x < Updated.world_position.x or
+                self.position.x > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.y + self.size.y < Updated.world_position.y or
+                self.position.y > Updated.world_position.y + global_vars.screen_pixels.y
+        ):
             return
 
         if self._highlight:

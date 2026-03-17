@@ -13,7 +13,8 @@ from icecream import ic
 import pygame as pg
 
 from amoginarium.controllers import KeyboardController
-from amoginarium.base import BaseGame, Updated, CollisionDestroyed
+from amoginarium.base import BaseGame
+from amoginarium.entities import Updated, CollisionDestroyed
 from amoginarium.ui import EventHandler, UIElement
 from amoginarium.shared import global_vars, VisibleGameEntityLike, Coalitions, \
     GameEntityLike, IslandLike
