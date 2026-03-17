@@ -264,6 +264,14 @@ class Bullet(ImageEntity):
         return True
 
     def gl_draw(self) -> None:
+        if (
+                self.position.x + self.size.x / 2 < Updated.world_position.x or
+                self.position.x - self.size.x / 2 > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.y + self.size.y / 2 < Updated.world_position.y or
+                self.position.y - self.size.y / 2 > Updated.world_position.y + global_vars.screen_pixels.y
+        ):
+            return
+
         if self._visibility_offset > 0:
             return
 
