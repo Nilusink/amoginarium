@@ -337,14 +337,23 @@ class OpenGLRenderer(BaseRenderer):
         vertices = [convert_coord(v, Vec2) for v in vertices]
 
         if convert_global:
-            vertices = [
-                global_vars.translate_screen_coord(v) for v in vertices
-            ]
+            if center:
+                vertices = [
+                    global_vars.translate_scale(v) for v in vertices
+                ]
+
+            else:
+                vertices = [
+                    global_vars.translate_screen_coord(v) for v in vertices
+                ]
 
         glLoadIdentity()  # reset previous glTranslate statements
         if center is not None:
-            center = convert_coord(center, tuple)
-            glTranslate(center[0], center[1], 0)
+            center = convert_coord(center, Vec2)
+            if convert_global:
+                center = global_vars.translate_screen_coord(center)
+
+            glTranslate(center.x, center.y, 0)
 
         self.set_color(color)
 

@@ -481,7 +481,7 @@ class Player(LRImageEntity):
             self.velocity += wall_rider.velocity
 
         # toggle inventory
-        if self._controller.inventory and perf_counter() - self._last_wpn_change > .1:
+        if self._controller.inventory and perf_counter() - self._last_wpn_change > .5:
             self._last_wpn_change = perf_counter()
             self._in_inventory = not self._in_inventory
 
@@ -597,6 +597,7 @@ class Player(LRImageEntity):
                     .5,
                     10,
                     False,
+                    self._current_weapon
                 )
 
                 # character display

@@ -719,7 +719,7 @@ class BaseWeapon:
         if self.parent.facing.x < 0:
             offset.x = -offset.x
 
-        position += offset
+        position += offset * size_fac
 
         size = self._size * size_fac
 
@@ -749,8 +749,6 @@ class BaseWeapon:
                 rotate_angle=angle + self._image_rotation_offset,
                 rotate_anchor=anchor
             )
-
-        renderer.draw_circle(position - offset - Updated.world_position, 4, 4, (1, 1, 0))
 
 
 class Minigun(BaseWeapon):

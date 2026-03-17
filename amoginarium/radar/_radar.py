@@ -65,6 +65,9 @@ class RadarSensor(BaseSensor):
         for target in targets:
             delta = target.position - center
 
+            if not hasattr(target, 'size'):
+                continue
+
             # filter by range
             if delta.length <= self.detection_range:
 
@@ -144,7 +147,8 @@ class RadarSensor(BaseSensor):
                 renderer.draw_polygon(
                     self._sphere,
                     (1, 0, 0, .5),
-                    self.parent.world_position
+                    self.parent.world_position,
+                    # convert_global=False
                 )
                 for delta in self._sphere:
                     renderer.draw_circle(
@@ -152,6 +156,13 @@ class RadarSensor(BaseSensor):
                         4,
                         4,
                         (1, .5, 0)
+                    )
+
+                for target in self.get_targets(Players.sprites() + Bullets.sprites()):
+                    renderer.draw_line(
+                        self.parent.world_position,
+                        target.world_position,
+                        (1, 1, 0)
                     )
 
         super().gl_draw()
