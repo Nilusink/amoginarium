@@ -602,7 +602,7 @@ class BaseGame:
                 entity.kill()
 
             self._background.reset_scroll()
-            global_vars.hide()
+            global_vars.reset()
             Updated.world_position *= 0
 
             self.load_map(self._last_loaded)
@@ -905,7 +905,7 @@ class BaseGame:
         sound_effects.update()
 
         # reset and update detection Groups
-        DETECTION_GROUP_MANAGER.hide()
+        DETECTION_GROUP_MANAGER.reset()
 
         # update entities
         GravityAffected.calculate_gravity(delta)
