@@ -34,8 +34,8 @@ class Rectangle(UIElement):
 
     def __init__(
             self,
-            relative_position: coord_t,
-            relative_size: coord_t,
+            position: coord_t,
+            size: coord_t,
             *_args: tp.Any,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
@@ -58,8 +58,8 @@ class Rectangle(UIElement):
     ) -> None:
         """
         Create a new UI rectangle
-        :param relative_position: Relative position of the component
-        :param relative_size: Relative size of the component
+        :param position: Relative position of the component
+        :param size: Relative size of the component
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
         :param collision_buffer: Mouse hovering buffer for edge cases
@@ -77,8 +77,8 @@ class Rectangle(UIElement):
         :param _use_collision_mask: Whether a collision mask should be used or just a collision box
         """
         super().__init__(
-            relative_position=relative_position,
-            relative_size=relative_size,
+            position=position,
+            size=size,
             parent=parent,
             placement_anchor=placement_anchor,
             collision_buffer=collision_buffer,
@@ -200,8 +200,11 @@ class Rectangle(UIElement):
                 border_radius=radius
             )
 
-    def hide(self) -> None:
-        super().hide()
+    def reset(self) -> None:
+        super().reset()
+
+        self.absolute_size -= self.__extend_animation.current_value * 2
+
         self.__extend_animation.reset()
         self.__bg_color_animation.reset()
         self.__border_color_animation.reset()

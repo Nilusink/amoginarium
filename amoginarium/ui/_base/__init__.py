@@ -8,4 +8,3 @@ Authors: LukasKrah
 
 from ._ui_element import UIElement
 from ._ui_entity import UIEntity
-from ._ui_group import UIGroup

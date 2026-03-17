@@ -74,8 +74,8 @@ class UIElement(UIEntity):
 
     def __init__(
             self,
-            relative_position: coord_t,
-            relative_size: coord_t,
+            position: coord_t,
+            size: coord_t,
             *_args: tp.Any,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
@@ -83,25 +83,42 @@ class UIElement(UIEntity):
             on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
             on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
             on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            absolute_values: bool = False,
+            _positon_relative_to_parent: bool = True,
+            _size_relative_to_parent: bool = True,
+            _scaling: bool = True,
             _use_collision_mask: bool = True,
     ) -> None:
         """
         Create a new UI component
-        :param relative_position: Relative position of the component
-        :param relative_size: Relative size of the component
+        :param position: Relative position of the component (absolute if absolute_values is set to True)
+        :param size: Relative size of the component (absolute if absolute_values is set to True)
         :param _args: Not used
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
         :param collision_buffer: Mouse hovering buffer for edge cases
         :param on_enter_callbacks: Callbacks to be called when a cursor enters the component
         :param on_leave_callbacks: Callbacks to be called when a cursor leaves the component
-        :param on_buffer_callbacks: Callbacks to be called when a cursor is right on the edge of the component
+        :param on_buffer_callbacks: Callbacks to be called when a cursor is right on the edge of the component,
+        :param absolute_values: Whether the position and size are absolute or relative
+        :param _positon_relative_to_parent: Whether the position is relative to the parent or the screen
+        :param _size_relative_to_parent: Whether the size is relative to the parent or the screen
+        :param _scaling: Whether the position and size should be scaled if the resolution is changed
         :param _use_collision_mask: Whether a collision mask should be used or just a collision box
         """
         super().__init__(parent=parent)
 
-        self.__relative_position = convert_coord(relative_position, Vec2)
-        self.__relative_size = convert_coord(relative_size, Vec2)
+        if absolute_values:
+            self.__absolute_position = convert_coord(position, Vec2)
+            self.__absolute_size = convert_coord(size, Vec2)
+            self.__relative_position = convert_coord(self.__absolute_to_relative(self.__absolute_position), Vec2)
+            self.__relative_size = convert_coord(self.__absolute_to_relative(self.__absolute_size), Vec2)
+        else:
+            self.__relative_position = convert_coord(position, Vec2)
+            self.__relative_size = convert_coord(size, Vec2)
+            self.__absolute_position = convert_coord(self.__relative_to_absolute(self.__relative_position), Vec2)
+            self.__absolute_size = convert_coord(self.__relative_to_absolute(self.__relative_size), Vec2)
+
         self.__placement_anchor = placement_anchor
         self.__collision_buffer = collision_buffer
         self.__use_collision_mask = _use_collision_mask
@@ -109,11 +126,6 @@ class UIElement(UIEntity):
         self.__on_leave_callbacks = on_leave_callbacks
         self.__on_buffer_callbacks = on_buffer_callbacks
         self.__on_click_callbacks = []
-
-        self.__absolute_position = Vec2()
-        self.__absolute_position.xy = self.__relative_to_absolute(self.__relative_position)
-        self.__absolute_size = Vec2()
-        self.__absolute_size.xy = self.__relative_to_absolute(self.__relative_size)
 
         self.__is_hovered = False
         self.__is_hovered_inner = None
@@ -134,7 +146,7 @@ class UIElement(UIEntity):
     # region temp - will be fixed with controller rework
     def check_click(self):
         """TEMP: check if clicked"""
-        if self.is_hovered and self.group.visible:
+        if self.is_hovered and self.visible:
             for cb in self.__on_click_callbacks:
                 cb()
 
@@ -375,6 +387,18 @@ class UIElement(UIEntity):
         self._gl_draw()
         self._after_draw_update()
         self._ui_changed = False
+
+    def reset(self) -> None:
+        super().reset()
+        self.__is_hovered = False
+        self.__is_hovered_inner = None
+        self.__is_hovered_inner_last = None
+        self.__is_hovered_outer = None
+        self.__is_hovered_outer_last = None
+        self.__ui_changed = True
+        self.__collision_recreation = True
+        self.__collision_mask = None
+        self.__collision_surface = None
 
     # endregion
 

@@ -9,6 +9,8 @@ Project: amoginarium
 ##################################################
 
 from typing import Callable
+
+from ..logic import convert_coord, Vec2
 from ..ui import Button, UIEntity
 
 
@@ -17,6 +19,8 @@ from ..ui import Button, UIEntity
 ##################################################
 
 class StartMenu(UIEntity):
+    call = 0
+
     def __init__(
             self,
             start_game_callback: Callable[[], None],
@@ -48,3 +52,9 @@ class StartMenu(UIEntity):
             parent=self,
             command=exit_callback,
         )
+
+    def toggle_use_collision_mask(self, *_):
+        self.but.relative_size = convert_coord((0.5, 0.5), Vec2)
+        self.but.absolute_size = convert_coord((200, 100), Vec2)
+
+        self.call += 1

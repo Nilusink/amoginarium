@@ -37,8 +37,7 @@ class BaseEntity(pg.sprite.Sprite):
 
     _children: list[BaseEntityLike] = ...
     _current_t: float = 0
-    _parent: BaseEntityLike | None = None
-    _root: BaseEntityLike | None = None
+    _parent: BaseEntityLike | None
 
     def __init__(self, parent: BaseEntityLike | None = None) -> None:
         """

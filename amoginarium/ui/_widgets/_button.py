@@ -64,8 +64,8 @@ class Button(Rectangle):
 
     def __init__(
             self,
-            relative_position: coord_t,
-            relative_size: coord_t,
+            position: coord_t,
+            size: coord_t,
             text: str,
             *_args: Any,
             command: Callable[[], None] | None = None,
@@ -96,7 +96,7 @@ class Button(Rectangle):
 
             parent: UIEntity | None = None
     ) -> None:
-        super().__init__(relative_position, relative_size, placement_anchor=placement_anchor,
+        super().__init__(position, size, placement_anchor=placement_anchor,
                          on_enter_sound=on_enter_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
                          bg_color=bg_color,
                          border_color=border_color,
