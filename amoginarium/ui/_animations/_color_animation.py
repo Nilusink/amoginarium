@@ -47,10 +47,12 @@ class ColorAnimation(MultiAnimation):
         :param delta: Time since the last update in seconds
         :return: New values of the animations
         """
-        current_rgba = super().update(delta)
-        # Update the color object with the new RGBA float tuple
-        self.__color = convert_color(current_rgba, convert_to=Color)
+        self.__color.rgb1 = super().update(delta)
         return self.__color
+
+    def reset(self) -> None:
+        super().reset()
+        self.__color.rgb1 = super().current_value
 
     @property
     def current_value(self) -> Color:

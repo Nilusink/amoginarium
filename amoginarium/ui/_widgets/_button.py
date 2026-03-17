@@ -123,7 +123,7 @@ class Button(Rectangle):
         super()._gl_draw()
 
         renderer.draw_pg_surf(
-            self.top_left + self._absolute_size / 2,
+            self.top_left + self.absolute_size / 2,
             self.__text_surface,
             centered=True,
             convert_global=False

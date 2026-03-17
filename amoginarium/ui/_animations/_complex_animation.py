@@ -182,6 +182,14 @@ class ComplexAnimation(SimpleAnimation):
             dist = self._start_value - self._run_start_value
             self._current_value = self._run_start_value + (dist * self._collapse_curve(current_relative))
 
+    def reset(self) -> None:
+        super().reset()
+        self._current_time = 0.0
+        self._linear_progress = 0.0
+        self._run_start_value = self._start_value
+        self._run_duration = 0.0
+        self._debounce_timer = 0.0
+
     # region Methods: properties
     @property
     def extend_duration(self) -> float:

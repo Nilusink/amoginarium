@@ -132,11 +132,11 @@ class Rectangle(UIElement):
         self.__radius_animation.stop()
 
     @property
-    def _absolute_size(self) -> Vec2:
-        return super()._absolute_size + self.__extend_animation.current_value * 2
+    def absolute_size(self) -> Vec2:
+        return super().absolute_size + self.__extend_animation.current_value * 2
 
     def _gl_draw(self) -> None:
-        if self._use_collision_mask and not self._ui_changed:
+        if self.use_collision_mask and not self._ui_changed:
             self._ui_changed = any([
                 self.__border_width_animation.is_changing(),
                 self.__border_color_animation.is_changing(),
@@ -190,10 +190,18 @@ class Rectangle(UIElement):
                 convert_global=False
             )
 
-        if self._ui_changed and self._use_collision_mask:
+        if self._ui_changed and self.use_collision_mask:
             PygameSurfaceRenderer.draw_rect(
                 self._collision_surface,
                 (0, 0),
                 self.absolute_size,
                 border_radius=radius
             )
+
+    def hide(self) -> None:
+        super().hide()
+        self.__extend_animation.reset()
+        self.__bg_color_animation.reset()
+        self.__border_color_animation.reset()
+        self.__border_width_animation.reset()
+        self.__radius_animation.reset()

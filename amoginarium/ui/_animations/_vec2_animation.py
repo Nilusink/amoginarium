@@ -52,6 +52,10 @@ class Vec2Animation(MultiAnimation):
         self.__vec2.xy = super().update(delta)
         return self.__vec2
 
+    def reset(self) -> None:
+        super().reset()
+        self.__vec2.xy = super().current_value
+
     @property
     def current_value(self) -> Vec2:
         """:return: Current values of the animations"""

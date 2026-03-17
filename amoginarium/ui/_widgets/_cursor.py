@@ -35,9 +35,9 @@ class UICursor(UIElement):
                      (mouse_pos[1] - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
         new_pos = convert_coord(mouse_pos, Vec2)
 
-        self.__velocity.xy = (new_pos - self._absolute_position).xy
+        self.__velocity.xy = (new_pos - self.absolute_position).xy
 
-        self._absolute_position = new_pos
+        self.absolute_position = new_pos
 
         super()._gl_draw()
 

@@ -190,6 +190,11 @@ class MultiAnimation[A]:
         """:return: Whether any animation is currently in extension or contraction phase"""
         return any([anim.is_changing() for anim in self.__animations])
 
+    def reset(self) -> None:
+        """Reset the animations to their start values"""
+        for anim in self.__animations:
+            anim.reset()
+
     # region Methods: properties
     @property
     def start_values(self) -> A:

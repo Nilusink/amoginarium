@@ -66,6 +66,11 @@ class SimpleAnimation:
         self._calc(delta)
         return self._current_value
 
+    def reset(self) -> None:
+        """Reset the animation to its start value"""
+        self._phase = AnimationPhase.AT_START
+        self._current_value = self._start_value
+
     def is_changing(self) -> bool:
         """:return: Whether the animation is currently in extension or contraction phase"""
         return self._phase in [AnimationPhase.EXTENDING, AnimationPhase.COLLAPSING]
