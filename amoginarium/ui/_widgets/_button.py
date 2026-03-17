@@ -85,7 +85,7 @@ class Button(Rectangle):
             radius: anim_float_values_t = AnimatedFloatValues(10, 30,
                                                               extend_duration=ANIM_TIME,
                                                               extend_debounce_duration=ANIM_DEBOUNCE),
-            size_extend: anim_vec2_values_t = AnimatedVec2Values(0, (10, 5),
+            size_extend: anim_vec2_values_t = AnimatedVec2Values(0, 10,
                                                                  extend_duration=ANIM_TIME,
                                                                  extend_curve=peaked_s_curve,
                                                                  collapse_curve=lambda a: a),

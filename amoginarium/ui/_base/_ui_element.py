@@ -30,12 +30,14 @@ class UIElement(UIEntity):
     __placement_anchor: Anchor
 
     __relative_position: Vec2
+    __last_relative_position: Vec2
     __absolute_position: Vec2
-    __last_absolute_position: Vec2 | None
+    __last_absolute_position: Vec2
 
     __relative_size: Vec2
+    __last_relative_size: Vec2
     __absolute_size: Vec2
-    __last_absolute_size: Vec2 | None
+    __last_absolute_size: Vec2
 
     # Purely calculated values, therefore, these can't be set externally
     __width: float
@@ -108,8 +110,10 @@ class UIElement(UIEntity):
         self.__on_buffer_callbacks = on_buffer_callbacks
         self.__on_click_callbacks = []
 
-        self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
-        self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
+        self.__absolute_position = Vec2()
+        self.__absolute_position.xy = self.__relative_to_absolute(self.__relative_position)
+        self.__absolute_size = Vec2()
+        self.__absolute_size.xy = self.__relative_to_absolute(self.__relative_size)
 
         self.__is_hovered = False
         self.__is_hovered_inner = None
@@ -117,8 +121,10 @@ class UIElement(UIEntity):
         self.__is_hovered_outer = None
         self.__is_hovered_outer_last = None
         self.__ui_changed = True
-        self.__last_absolute_size = None
-        self.__last_absolute_position = None
+        self.__last_absolute_size = Vec2()
+        self.__last_relative_size = Vec2()
+        self.__last_absolute_position = Vec2()
+        self.__last_relative_position = Vec2()
         self.__collision_recreation = True
         self.__collision_mask = None
         self.__collision_surface = None
@@ -140,28 +146,24 @@ class UIElement(UIEntity):
 
     # region Methods: static absolute/relative convert
     @staticmethod
-    def __relative_to_absolute(relative_value: coord_t) -> Vec2:
+    def __relative_to_absolute(relative_value: coord_t) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
         :param relative_value: Relative value to convert
         :return: Absolute value
         """
-        absolute_value = convert_coord(relative_value, Vec2)
-        absolute_value.x *= global_vars.resolution.x
-        absolute_value.y *= global_vars.resolution.y
-        return absolute_value
+        abs_x, abs_y = convert_coord(relative_value)
+        return abs_x * global_vars.resolution.x, abs_y * global_vars.resolution.y
 
     @staticmethod
-    def __absolute_to_relative(absolute_value: coord_t) -> Vec2:
+    def __absolute_to_relative(absolute_value: coord_t) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
         :param absolute_value: Absolute value to convert
         :return: Relative value
         """
-        relative_value = convert_coord(absolute_value, Vec2)
-        relative_value.x /= global_vars.resolution.x
-        relative_value.y /= global_vars.resolution.y
-        return relative_value
+        rel_x, rel_y = convert_coord(absolute_value)
+        return rel_x / global_vars.resolution.x, rel_y / global_vars.resolution.y
 
     # endregion
 
@@ -275,8 +277,8 @@ class UIElement(UIEntity):
 
             rel_coords = (coords - self.__top_left)
 
-            rel_coords.x += -buffer if coords.x < self.center.x else buffer
-            rel_coords.y += -buffer if coords.y < self.center.y else buffer
+            rel_coords.x += -buffer if coords.x < self.__center.x else buffer
+            rel_coords.y += -buffer if coords.y < self.__center.y else buffer
 
             coords_new = convert_coord(rel_coords.xy, Vec2)
 
@@ -327,15 +329,20 @@ class UIElement(UIEntity):
         self.__is_hovered_inner = None
         self.__is_hovered_outer = None
 
-        # Scaling
-        self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
-        self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
+        # Dont change this. This way it checks if the values have been changed externally
+        new_abs_pos = self.__relative_to_absolute(self.relative_position)
+        new_abs_size = self.__relative_to_absolute(self.relative_size)
+
+        self.__last_relative_position.xy = self.relative_position.xy
+        self.__last_relative_size.xy = self.relative_size.xy
+        self.__last_absolute_position.xy = self.absolute_position.xy
+        self.__last_absolute_size.xy = self.absolute_size.xy
+
+        self.absolute_position.xy = new_abs_pos
+        self.absolute_size.xy = new_abs_size
 
         # Check if values changed
         if self.__use_collision_mask:
-            self.__last_absolute_position = self.absolute_position
-            self.__last_absolute_size = self.absolute_size
-
             if not self._ui_changed:
                 if (self.absolute_position.xy != self.__last_absolute_position.xy
                         or self.absolute_size.xy != self.__last_absolute_size.xy):
@@ -386,46 +393,57 @@ class UIElement(UIEntity):
     @property
     def absolute_position(self) -> Vec2:
         """:return: Absolute position - anchor not factored in"""
+        if self.__last_relative_position.xy != self.__relative_position.xy:
+            self.__absolute_position.xy = self.__relative_to_absolute(self.__relative_position)
+            self.__last_relative_position.xy = self.__relative_position.xy
         return self.__absolute_position
 
     @absolute_position.setter
     def absolute_position(self, value: coord_t) -> None:
         """:param value: Absolute position"""
-        self.__relative_position = self.__absolute_to_relative(value)
-        self.__absolute_position = convert_coord(value, Vec2)
+        self.__absolute_position.xy = convert_coord(value)
+        self.__relative_position.xy = self.__absolute_to_relative(self.__absolute_position)
 
     @property
     def absolute_size(self) -> Vec2:
         """:return: Absolute size"""
+        if self.__last_relative_size.xy != self.__relative_size.xy:
+            self.__absolute_size.xy = self.__relative_to_absolute(self.__relative_size)
+            self.__last_relative_size.xy = self.__relative_size.xy
         return self.__absolute_size
 
     @absolute_size.setter
     def absolute_size(self, value: coord_t) -> None:
         """:param value: Absolute size"""
-        self.__relative_size = self.__absolute_to_relative(value)
-        self.__absolute_size = convert_coord(value, Vec2)
+        self.__absolute_size.xy = convert_coord(value)
 
     @property
     def relative_position(self) -> Vec2:
         """:return: Relative position - anchor not factored in"""
+        if self.__absolute_position.xy != self.__last_absolute_position.xy:
+            self.__relative_position.xy = self.__absolute_to_relative(self.__absolute_position)
+            self.__last_absolute_position.xy = self.__absolute_position.xy
         return self.__relative_position
 
     @relative_position.setter
     def relative_position(self, value: coord_t) -> None:
         """:param value: Relative position"""
-        self.__relative_position = convert_coord(value, Vec2)
-        self.__absolute_position = self.__relative_to_absolute(self.__relative_position)
+        self.__relative_position.xy = convert_coord(value)
+        self.__absolute_position.xy = self.__relative_to_absolute(self.__relative_position)
 
     @property
     def relative_size(self) -> Vec2:
         """:return: Relative size"""
+        if self.__absolute_size.xy != self.__last_absolute_size.xy:
+            self.__relative_size.xy = self.__absolute_to_relative(self.__absolute_size)
+            self.__last_absolute_size.xy = self.__absolute_size.xy
         return self.__relative_size
 
     @relative_size.setter
     def relative_size(self, value: coord_t) -> None:
         """:param value: Relative size"""
-        self.__relative_size = convert_coord(value, Vec2)
-        self.__absolute_size = self.__relative_to_absolute(self.__relative_size)
+        self.__relative_size.xy = convert_coord(value)
+        self.__absolute_size.xy = self.__relative_to_absolute(self.__relative_size)
 
     @property
     def width(self) -> float:

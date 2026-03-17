@@ -131,10 +131,6 @@ class Rectangle(UIElement):
         self.__border_width_animation.stop()
         self.__radius_animation.stop()
 
-    @property
-    def absolute_size(self) -> Vec2:
-        return super().absolute_size + self.__extend_animation.current_value * 2
-
     def _gl_draw(self) -> None:
         if self.use_collision_mask and not self._ui_changed:
             self._ui_changed = any([
@@ -147,11 +143,17 @@ class Rectangle(UIElement):
 
         delta_cal = global_vars.delta
 
-        border_width = self.__border_width_animation.update(delta_cal)
-        border_color = self.__border_color_animation.update(delta_cal)
-        bg_color = self.__bg_color_animation.update(delta_cal)
-        radius = self.__radius_animation.update(delta_cal)
-        self.__extend_animation.update(delta_cal)
+        self.__border_width_animation.update(delta_cal)
+        self.__border_color_animation.update(delta_cal)
+        self.__bg_color_animation.update(delta_cal)
+        self.__radius_animation.update(delta_cal)
+        extend_delta = self.__extend_animation.update(delta_cal)
+        self.absolute_size += extend_delta * 2
+
+        border_width = self.__border_width_animation.current_value
+        border_color = self.__border_color_animation.current_value
+        bg_color = self.__bg_color_animation.current_value
+        radius = self.__radius_animation.current_value
 
         super()._gl_draw()
 

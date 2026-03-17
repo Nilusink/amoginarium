@@ -16,6 +16,7 @@ class SimpleAnimation:
 
     _phase: AnimationPhase
     _current_value: float
+    _last_value: float
 
     def __init__(
             self,
@@ -32,6 +33,7 @@ class SimpleAnimation:
 
         self._phase = AnimationPhase.AT_START
         self._current_value = start_value
+        self._last_value = start_value
 
     def extend(self) -> None:
         """Start extending from current to end value"""
@@ -47,6 +49,7 @@ class SimpleAnimation:
 
     def _calc(self, _delta: float) -> None:
         """Update the animation"""
+        self._last_value = self._current_value
         if self._phase == "at_start" or self._phase == "at_end" or self._phase == "stopped":
             return
 
@@ -61,10 +64,10 @@ class SimpleAnimation:
         """
         Update the animation
         :param delta: Time since the last update in seconds
-        :return: New value of the animation
+        :return: Value difference between current and last value
         """
         self._calc(delta)
-        return self._current_value
+        return self._current_value - self._last_value
 
     def reset(self) -> None:
         """Reset the animation to its start value"""

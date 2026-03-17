@@ -178,7 +178,7 @@ class MultiAnimation[A]:
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: New values of the animations
+        :return: Value differences between current and last values
         """
         if self.__is_single:
             val = self.__animations[0].update(delta)

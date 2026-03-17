@@ -127,6 +127,7 @@ class ComplexAnimation(SimpleAnimation):
         Update the animation
         :param delta: Time since the last update in seconds
         """
+        self._last_value = self._current_value
         if self._phase in (AnimationPhase.AT_START, AnimationPhase.AT_END, AnimationPhase.STOPPED):
             return
 

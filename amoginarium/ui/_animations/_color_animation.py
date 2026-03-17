@@ -45,9 +45,10 @@ class ColorAnimation(MultiAnimation):
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: New values of the animations
+        :return: New color
         """
-        self.__color.rgb1 = super().update(delta)
+        super().update(delta)
+        self.__color.rgb1 = super().current_value
         return self.__color
 
     def reset(self) -> None:
