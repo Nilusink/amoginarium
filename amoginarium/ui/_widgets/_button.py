@@ -125,5 +125,6 @@ class Button(Rectangle):
         renderer.draw_pg_surf(
             self.top_left + self._absolute_size / 2,
             self.__text_surface,
-            centered=True
+            centered=True,
+            convert_global=False
         )

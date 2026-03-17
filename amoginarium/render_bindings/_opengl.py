@@ -644,6 +644,7 @@ class OpenGLRenderer(BaseRenderer):
             size,
             color,
             radius,
+            convert_global=True
     ) -> None:
         start = convert_coord(start, Vec2)
         size = convert_coord(size, Vec2)
@@ -657,13 +658,15 @@ class OpenGLRenderer(BaseRenderer):
             start + radius,
             radius,
             m.ceil(radius),
-            color
+            color,
+            convert_global
         )
         self.draw_circle(
             start + size - radius,
             radius,
             m.ceil(radius),
-            color
+            color,
+            convert_global
         )
         self.draw_circle(
             (
@@ -672,7 +675,8 @@ class OpenGLRenderer(BaseRenderer):
             ),
             radius,
             m.ceil(radius),
-            color
+            color,
+            convert_global
         )
         self.draw_circle(
             (
@@ -681,7 +685,8 @@ class OpenGLRenderer(BaseRenderer):
             ),
             radius,
             m.ceil(radius),
-            color
+            color,
+            convert_global
         )
 
         # fill in squares
@@ -695,7 +700,8 @@ class OpenGLRenderer(BaseRenderer):
                     size.x - 2 * radius,
                     size.y
                 ),
-                color
+                color,
+                convert_global
             )
 
         if size.y > 2 * radius:
@@ -708,7 +714,8 @@ class OpenGLRenderer(BaseRenderer):
                     size.x,
                     size.y - 2 * radius
                 ),
-                color
+                color,
+                convert_global
             )
 
     def draw_text(

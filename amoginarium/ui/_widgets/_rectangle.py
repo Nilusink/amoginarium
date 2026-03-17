@@ -161,7 +161,8 @@ class Rectangle(UIElement):
                     self.top_left,
                     self.absolute_size,
                     border_color,
-                    radius
+                    radius,
+                    convert_global=False
                 )
 
             inner_radius = radius - border_width
@@ -169,7 +170,8 @@ class Rectangle(UIElement):
                 self.top_left + border_width,
                 self.absolute_size - 2 * border_width,
                 bg_color,
-                inner_radius if inner_radius > 0 else 0
+                inner_radius if inner_radius > 0 else 0,
+                convert_global=False
             )
 
         else:
@@ -178,12 +180,14 @@ class Rectangle(UIElement):
                     self.top_left,
                     self.absolute_size,
                     border_color,
+                    convert_global=False
                 )
 
             renderer.draw_rect(
                 self.top_left + border_width,
                 self.absolute_size - 2 * border_width,
                 bg_color,
+                convert_global=False
             )
 
         if self._ui_changed and self._use_collision_mask:
