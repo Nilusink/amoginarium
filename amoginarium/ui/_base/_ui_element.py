@@ -331,11 +331,13 @@ class UIElement(UIEntity):
         """
         The draw function called in loop
 
-        It should always follow this structure in UI:
+        It should always follow this structure:
         - Compare if anything changed, requiring redrawing of the collision surface/mask
         - Call super()._gl_draw()
         - Draw the UI and collision surface
         """
+        super()._gl_draw()
+
         self.__is_hovered_inner_last = self.__is_hovered_inner
         self.__is_hovered_outer_last = self.__is_hovered_outer
         self.__is_hovered_inner = None
@@ -383,9 +385,10 @@ class UIElement(UIEntity):
 
             self.__center = self.absolute_position
 
-    def gl_draw(self) -> None:
-        self._gl_draw()
-        self._after_draw_update()
+    def gl_draw(self, recursive: bool = True, force_draw: bool = False) -> None:
+        super().gl_draw(recursive=recursive, force_draw=force_draw)
+        if force_draw or self.visible:
+            self._after_draw_update()
         self._ui_changed = False
 
     def reset(self) -> None:

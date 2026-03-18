@@ -604,19 +604,19 @@ class BaseGame:
                 start_menu.show()
             else:
                 start_menu.hide()
-                start_menu.reset_recursive()
+                start_menu.reset()
 
             if visibility.pause_menu:
                 pause_menu.show()
             else:
                 pause_menu.hide()
-                pause_menu.reset_recursive()
+                pause_menu.reset()
 
             if visibility.settings:
                 settings.show()
             else:
                 settings.hide()
-                settings.reset_recursive()
+                settings.reset()
 
         def start_game():
             nonlocal active_scene
@@ -758,9 +758,9 @@ class BaseGame:
                     Drawn.gl_draw()
                     HasBars.gl_draw()
 
-                settings.draw_if_visible_recursive()
-                start_menu.draw_if_visible_recursive()
-                pause_menu.draw_if_visible_recursive()
+                settings.gl_draw()
+                start_menu.gl_draw()
+                pause_menu.gl_draw()
 
                 pg.display.flip()
                 # debugging kopieren - @

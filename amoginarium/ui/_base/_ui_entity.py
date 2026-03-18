@@ -67,15 +67,19 @@ class UIEntity(BaseEntity):
     # endregion
 
     # region Methods: reset
-    def reset(self) -> None:
-        """Reset the UI-Entity"""
+    def _reset(self) -> None:
+        """Reset the UI-Entity. Use in inheritance for actual resetting"""
         return
 
-    def reset_recursive(self) -> None:
-        """Reset the UI-Entity and all its children recursively"""
-        self.reset()
-        for child in self._children:
-            child.reset()
+    def reset(self, recursive: bool = True) -> None:
+        """
+        Reset the UI-Entity and all its children recursively
+        :param recursive: Also reset the children tree recursively
+        """
+        self._reset()
+        if recursive:
+            for child in self._children:
+                child.reset()
 
     #endregion
 
@@ -95,118 +99,120 @@ class UIEntity(BaseEntity):
                 break
         self._root_visibility = is_root
 
-    def __show(self, is_caller: bool) -> None:
-        """Show the UI-Entity"""
-        self._visible = True if is_caller else None
-
-    def show(self) -> None:
-        """Show the UI-Entity"""
-        self._destroy_root_visibility()
-        self.__check_root_visibility()
-        self.__show(True)
-
-    def _show_recursive_attached(self, is_caller: bool) -> None:
-        """Show this UI-Entity and all its children recursively"""
-        self.__show(is_caller)
+    def _set_visibility_recursive(
+            self,
+            value: bool | None,
+            is_caller: bool = False,
+    ) -> None:
+        """
+        Set the visibility of this UI-Entity and all its children recursively. Not intended for external use.
+        :param value: New visibility
+        :param is_caller: Will not affect the visibility attributes of this UI-Entity
+        """
+        if not is_caller:
+            self._visible = value
+            self._root_visibility = False
         for child in self._children:
-            child._show_recursive_attached(False)
+            child._set_visibility_recursive(value)
 
-    def show_recursive_attached(self) -> None:
-        """Hide this UI-Entity and attach all children to this visibility"""
+    def __set_visibility(self, value: bool | None, recursive: bool = False, attach_to_parent: bool = True) -> None:
+        """
+        Set visibility of this UI-Entity.
+        :param recursive: Whether to overwrite the visibility down the children tree
+        :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
+                                 If False, the visibility of each child is individually set to hide
+                                 Only used if recursive is set to True.
+        """
         self._destroy_root_visibility()
-        if self._root_visibility:
-            self._visible = True
+
+        self._visible = value
+
+        if not recursive:
+            if not self._root_visibility:
+                self.__check_root_visibility()
         else:
-            self._show_recursive_attached(True)
-        self._root_visibility = True
+            if attach_to_parent:
+                if not self._root_visibility:
+                    self._set_visibility_recursive(None, is_caller=True)
+                    self._root_visibility = True
+            else:
+                self._set_visibility_recursive(value, is_caller=True)
 
-    def __hide(self, is_caller: bool) -> None:
-        """Hide this UI-Entity"""
-        self._visible = False if is_caller else None
+    def hide(self, recursive: bool = False, attach_to_parent: bool = True, reset: bool = True) -> None:
+        """
+        Hide this UI-Entity. By default, the children tree is attached to this visibility.
+        :param recursive: Whether to overwrite the visibility down the children tree
+        :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
+                                 If False, the visibility of each child is individually set to hide
+                                 Only used if recursive is set to True.
+        :param reset: Whether reset should be called
+        """
+        self.__set_visibility(False, recursive=recursive, attach_to_parent=attach_to_parent)
+        if reset:
+            self.reset(recursive=recursive)
 
-    def hide(self) -> None:
-        """Hide this UI-Entity"""
-        self._destroy_root_visibility()
-        self.__check_root_visibility()
-        self.__hide(True)
-
-    def _hide_recursive_attached(self, is_caller: bool) -> None:
-        """Hide this UI-Entity and all its children recursively"""
-        self.__hide(is_caller)
-        for child in self._children:
-            child._hide_recursive_attached(False)
-
-    def hide_recursive_attached(self) -> None:
-        """Hide this UI-Entity and attach all children to this visibility"""
-        self._destroy_root_visibility()
-        if self._root_visibility:
-            self._visible = False
-        else:
-            self._hide_recursive_attached(True)
-        self._root_visibility = True
-
-    def _hide_recursive_individual(self) -> None:
-        """Hide this UI-Entity and all its children recursively"""
-        self.__hide(True)
-        for child in self._children:
-            child._hide_recursive_individual()
-
-    def hide_recursive_individual(self) -> None:
-        """Hide this UI-Entity and all its children recursively"""
-        self._destroy_root_visibility()
-        self._hide_recursive_individual()
+    def show(self, recursive: bool = False, attach_to_parent: bool = True, reset: bool = False) -> None:
+        """
+        Show this UI-Entity. By default, the children tree is attached to this visibility.
+        :param recursive: Whether to overwrite the visibility down the children tree
+        :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
+                                 If False, the visibility of each child is individually set to show
+                                 Only used if recursive is set to True.
+        :param reset: Whether reset should be called
+        """
+        self.__set_visibility(True, recursive=recursive, attach_to_parent=attach_to_parent)
+        if reset:
+            self.reset(recursive=recursive)
 
     # endregion
 
     # region Methods: drawing
-    def gl_draw(self) -> None:
-        """Draw, that is called by the game loop every frame"""
+    def _gl_draw(self) -> None:
+        """
+        Draw function for this UI.
+        Use in inheritance for the actual drawing
+        """
         return
 
-    def gl_draw_recursive(self) -> None:
-        """Draw the UI-Entity and all its children recursively"""
-        self.gl_draw()
-        for child in self._children:
-            child.gl_draw_recursive()
+    def gl_draw(self, recursive: bool = True, force_draw: bool = False) -> None:
+        """
+        Draw this UI-entity.
+        :param recursive: Draw the children tree recursively
+        :param force_draw: Ignore visibility
 
-    def draw_if_visible(self) -> None:
-        """Draw the UI-Entity if it is visible"""
-        if self.visible:
-            self.gl_draw()
-
-    def draw_if_visible_recursive(self) -> None:
-        """Draw the UI-Entity and all its children recursively"""
-        if self.visible:
-            if self._root_visibility:
-                self.gl_draw_recursive()
-            else:
-                self.gl_draw()
-                for child in self._children:
-                    child.draw_if_visible_recursive()
+        Note: Only overwrite in inheritance for before/after draw updates
+        """
+        if force_draw or self.visible:
+            self._gl_draw()
+        if recursive:
+            for child in self._children:
+                child.gl_draw(force_draw=(force_draw or self._root_visibility))
 
     # endregion
 
     # region Methods: update
-    def update(self, delta: float) -> None:
+    def _update(self, delta: float) -> None:
         """
-        Update, that is called by the update loop of the game
+        Actual update function for this UI-Entity.
+        Use in inheritance for the actual updating.
         :param delta: Time since the last update in seconds
         """
         return
 
-    def update_recursive(self, delta: float) -> None:
+    def update(self, delta: float, recursive: bool = True) -> None:
         """
-        Update the UI-Entity and all its children recursively
+        Update ui entity
         :param delta: Time since the last update in seconds
+        :param recursive: Update the children tree recursively
         """
         self.update(delta)
-        for child in self._children:
-            child.update_recursive(delta)
+        if recursive:
+            for child in self._children:
+                child.update(delta)
 
     # endregion
 
     # region Properties
-
     @property
     def visible(self) -> bool:
         """:return: Whether the ui entity is visible"""

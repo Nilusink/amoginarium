@@ -26,8 +26,8 @@ class UICursor(UIElement):
         super().__init__((0, 0), (0, 0), _use_collision_mask=False)
 
         self.__velocity = Vec2()
-
         self.add(Cursor)
+        self.show()
 
     def _gl_draw(self) -> None:
         mouse_pos = pg.mouse.get_pos()
