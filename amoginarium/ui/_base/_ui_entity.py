@@ -9,6 +9,8 @@ Authors: LukasKrah
 from __future__ import annotations
 
 import typing as tp
+if tp.TYPE_CHECKING:
+    from ._ui_element import UIElement
 
 from amoginarium.entities import BaseEntity
 
@@ -145,11 +147,11 @@ class UIEntity(BaseEntity):
         :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
                                  If False, the visibility of each child is individually set to hide
                                  Only used if recursive is set to True.
-        :param reset: Whether reset should be called
+        :param reset: Whether reset should be called recursively
         """
         self.__set_visibility(False, recursive=recursive, attach_to_parent=attach_to_parent)
         if reset:
-            self.reset(recursive=recursive)
+            self.reset()
 
     def show(self, recursive: bool = False, attach_to_parent: bool = True, reset: bool = False) -> None:
         """
@@ -158,11 +160,32 @@ class UIEntity(BaseEntity):
         :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
                                  If False, the visibility of each child is individually set to show
                                  Only used if recursive is set to True.
-        :param reset: Whether reset should be called
+        :param reset: Whether reset should be called recursively
         """
         self.__set_visibility(True, recursive=recursive, attach_to_parent=attach_to_parent)
         if reset:
-            self.reset(recursive=recursive)
+            self.reset()
+
+    def set_visibility(
+            self,
+            value: bool | None,
+            recursive: bool = False,
+            attach_to_parent: bool = True,
+            reset: bool = ...
+    ) -> None:
+        """
+        Set the visibility of this UI-Entity.
+        :param value: New visibility. None means attach to the next parent visibility
+        :param recursive: Whether to overwrite the visibility down the children tree
+        :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
+                                 If False, the visibility of each child is individually set to show
+                                 Only used if recursive is set to True.
+        :param reset: Whether reset should be called recursively. Defaults to True if value is False, False otherwise.
+        """
+        self.__set_visibility(value, recursive=recursive, attach_to_parent=attach_to_parent)
+        reset = reset if reset is not ... else (value is False)
+        if reset:
+            self.reset()
 
     # endregion
 
@@ -181,12 +204,14 @@ class UIEntity(BaseEntity):
         :param force_draw: Ignore visibility
 
         Note: Only overwrite in inheritance for before/after draw updates
+        Note: Ignores parent visibility
         """
+        print("DRAW", recursive, force_draw)
         if force_draw or self.visible:
             self._gl_draw()
-        if recursive:
-            for child in self._children:
-                child.gl_draw(force_draw=(force_draw or self._root_visibility))
+            if recursive:
+                for child in self._children:
+                    child.gl_draw(force_draw=(force_draw or self._root_visibility))
 
     # endregion
 
@@ -209,6 +234,15 @@ class UIEntity(BaseEntity):
         if recursive:
             for child in self._children:
                 child.update(delta)
+
+    # endregion
+
+    # region Methods: ui-element
+    @property
+    def _next_ui_element_parent(self) -> UIElement | None:
+        if self._parent is not None:
+            return self._parent if self._parent._is_ui_element else self._parent._next_ui_element_parent
+        return None
 
     # endregion
 

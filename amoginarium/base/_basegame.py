@@ -596,27 +596,15 @@ class BaseGame:
             "PauseSettings": UIVisiblity(False, False, True),
             "Game": UIVisiblity(False, False, False),
         }
+
         # self.load_map("assets/maps/test.json")
 
         def load_ui_visibility():
             visibility = ui_visibility[active_scene]
-            if visibility.start_menu:
-                start_menu.show()
-            else:
-                start_menu.hide()
-                start_menu.reset()
-
-            if visibility.pause_menu:
-                pause_menu.show()
-            else:
-                pause_menu.hide()
-                pause_menu.reset()
-
-            if visibility.settings:
-                settings.show()
-            else:
-                settings.hide()
-                settings.reset()
+            print("LOADING VISIBILITY", visibility)
+            start_menu.set_visibility(visibility.start_menu)
+            pause_menu.set_visibility(visibility.pause_menu)
+            settings.set_visibility(visibility.settings)
 
         def start_game():
             nonlocal active_scene

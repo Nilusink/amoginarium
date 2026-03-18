@@ -54,7 +54,7 @@ class Rectangle(UIElement):
             on_leave_sound: SoundEffect | None = None,
             on_click_sound: SoundEffect | None = None,
 
-            _use_collision_mask: bool = True
+            use_collision_mask: bool = True
     ) -> None:
         """
         Create a new UI rectangle
@@ -74,7 +74,7 @@ class Rectangle(UIElement):
         :param on_enter_sound: Sound to play when the cursor enters the rectangle
         :param on_leave_sound: Sound to play when the cursor leaves the rectangle
         :param on_click_sound: Sound to play when the cursor clicks the rectangle
-        :param _use_collision_mask: Whether a collision mask should be used or just a collision box
+        :param use_collision_mask: Whether a collision mask should be used or just a collision box
         """
         super().__init__(
             position=position,
@@ -85,7 +85,7 @@ class Rectangle(UIElement):
             on_enter_callbacks=on_enter_callbacks,
             on_leave_callbacks=on_leave_callbacks,
             on_buffer_callbacks=on_buffer_callbacks,
-            _use_collision_mask=_use_collision_mask
+            use_collision_mask=use_collision_mask
         )
 
         self.__bg_color_animation = ColorAnimation(bg_color)
@@ -148,7 +148,7 @@ class Rectangle(UIElement):
         self.__bg_color_animation.update(delta_cal)
         self.__radius_animation.update(delta_cal)
         extend_delta = self.__extend_animation.update(delta_cal)
-        self.absolute_size += extend_delta * 2
+        self.absolute_size_global += extend_delta * 2
 
         border_width = self.__border_width_animation.current_value
         border_color = self.__border_color_animation.current_value
@@ -161,7 +161,7 @@ class Rectangle(UIElement):
             if border_width > 0:
                 renderer.draw_rounded_rect(
                     self.top_left,
-                    self.absolute_size,
+                    self.absolute_size_global,
                     border_color,
                     radius,
                     convert_global=False
@@ -170,7 +170,7 @@ class Rectangle(UIElement):
             inner_radius = radius - border_width
             renderer.draw_rounded_rect(
                 self.top_left + border_width,
-                self.absolute_size - 2 * border_width,
+                self.absolute_size_global - 2 * border_width,
                 bg_color,
                 inner_radius if inner_radius > 0 else 0,
                 convert_global=False
@@ -180,14 +180,14 @@ class Rectangle(UIElement):
             if border_width > 0:
                 renderer.draw_rect(
                     self.top_left,
-                    self.absolute_size,
+                    self.absolute_size_global,
                     border_color,
                     convert_global=False
                 )
 
             renderer.draw_rect(
                 self.top_left + border_width,
-                self.absolute_size - 2 * border_width,
+                self.absolute_size_global - 2 * border_width,
                 bg_color,
                 convert_global=False
             )
@@ -196,14 +196,14 @@ class Rectangle(UIElement):
             PygameSurfaceRenderer.draw_rect(
                 self._collision_surface,
                 (0, 0),
-                self.absolute_size,
+                self.absolute_size_global,
                 border_radius=radius
             )
 
-    def reset(self) -> None:
-        super().reset()
+    def _reset(self) -> None:
+        super()._reset()
 
-        self.absolute_size -= self.__extend_animation.current_value * 2
+        self.absolute_size_global -= self.__extend_animation.current_value * 2
 
         self.__extend_animation.reset()
         self.__bg_color_animation.reset()
