@@ -268,9 +268,24 @@ class GameEntity(PositionedEntity):
 
 
 class VisibleGameEntity(GameEntity):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+            self,
+            size: Vec2 = ...,
+            facing: Vec2 = ...,
+            initial_position: Vec2 = ...,
+            initial_velocity: Vec2 = ...,
+            coalition: tp.Any = ...,
+            parent: BaseEntityLike = ...
+    ) -> None:
         self._highlight = False
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            size,
+            facing,
+            initial_position,
+            initial_velocity,
+            coalition,
+            parent
+        )
 
         self.add(Drawn)
 

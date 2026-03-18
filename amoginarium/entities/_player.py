@@ -19,14 +19,14 @@ from ._groups import Updated, Drawn
 from ..audio import DeathSound, SoundEffect
 from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
-from ._items import BaseItem, Shield, HealingPotion, JetBag
+from ._items import BaseItem, Shield, HealingPotion, JetBag, VisibleItem
 from ._charged_weapon import Bow, ChargedWeapon, RailGun
+from ..shared import Coalitions, WeaponLike, ItemLike
 from ..logic import Vec2, convert_coord, Color
 from ._weapons import HandThrownGrenade
 from ..render_bindings import renderer
 from ..base._textures import textures
 from ..controllers import Controller
-from ..shared import Coalitions
 from ._island import Island
 from ._inventory import Inventory
 from ..shared import global_vars
@@ -142,49 +142,31 @@ class Player(LRImageEntity):
 
         self._groaning = SoundEffect(("groaning", "hugh_1"))
 
-        self._last_wpn_change = 0
+
         self._current_weapon = 0
+        self._weapon_change_pressed = False
         self._in_inventory = False
+        self._inventory_pressed = False
         self._inventory = Inventory(30)
         self._hotbar = Inventory(10)
-        self._hotbar.add_item(
+        items = [
             Ak47(self, False, parent_position_offset=(0, 0)),
-            1
-        )
-        self._hotbar.add_item(
             Minigun(self, False, parent_position_offset=(0, 10)),
-            1
-        )
-        self._hotbar.add_item(
             Sniper(self, False),
-            1
-        )
-        self._hotbar.add_item(
             HandThrownGrenade(self, False),
-            1
-        )
-        self._hotbar.add_item(
             Shield(self, Vec2().from_cartesian(50, 0)),
-            1
-        )
-        self._hotbar.add_item(
             HealingPotion(self, Vec2().from_cartesian(0, 5)),
-            1
-        )
-        self._hotbar.add_item(
             JetBag(self, Vec2().from_cartesian(-24, 0)),
-            1
-        )
-        self._hotbar.add_item(
             Bow(self, False, parent_position_offset=(0, 0)),
-            1
-        )
-        self._hotbar.add_item(
             RailGun(self, False, parent_position_offset=(0, 0)),
-            1
-        )
+        ]
+        for item in items:
+            self._hotbar.add_item(
+                VisibleItem(item),
+                1
+            )
         for slot in self._hotbar:
-            if isinstance(slot.item, BaseWeapon):
+            if hasattr(slot.item, "reload"):
                 slot.item.reload(True)
 
         self._last_hit = perf_counter()
@@ -221,12 +203,12 @@ class Player(LRImageEntity):
         return self._alive
 
     @property
-    def item(self) -> BaseWeapon | BaseItem | None:
+    def item(self) -> WeaponLike | ItemLike | None:
         if not hasattr(self, "_hotbar"):
             return None
 
         if self._hotbar.get_count(self._current_weapon) > 0:
-            return self._hotbar.get_item(self._current_weapon)
+            return self._hotbar.get_item(self._current_weapon).item
 
         else:
             return None
@@ -259,9 +241,8 @@ class Player(LRImageEntity):
         """
         ic(item_id, used_amount)
         with suppress(KeyError, IndexError):
-            self._weapons[item_id]["uses"] -= used_amount
-            ic(self._weapons[item_id]["uses"])
-            return self._weapons[item_id]["uses"] > 0
+            self._hotbar.use_item(self._current_weapon, used_amount)
+            return self._hotbar.get_count(self._current_weapon) > 0
 
         return False
 
@@ -410,13 +391,18 @@ class Player(LRImageEntity):
                 self.item.reload()
 
         # switch weapon
-        if self._controller.wpn_f and perf_counter() - self._last_wpn_change > .1:
-            self._last_wpn_change = perf_counter()
-            self.next_weapon()
+        if self._controller.wpn_f:
+            if not self._weapon_change_pressed:
+                self._weapon_change_pressed = True
+                self.next_weapon()
 
-        if self._controller.wpn_b and perf_counter() - self._last_wpn_change > .1:
-            self._last_wpn_change = perf_counter()
-            self.previous_weapon()
+        elif self._controller.wpn_b:
+            if not self._weapon_change_pressed:
+                self._weapon_change_pressed = True
+                self.previous_weapon()
+
+        else:
+            self._weapon_change_pressed = False
 
         # directional stuff
         # shoot
@@ -431,6 +417,7 @@ class Player(LRImageEntity):
             # shot_direction = self.facing.copy()
             # shot_direction.y = -.4
             if isinstance(self.item, BaseWeapon):
+                ic(self.item, "shoot")
                 if hasattr(self.item, "charge"):
                     self.item.charge()
 
@@ -440,6 +427,7 @@ class Player(LRImageEntity):
                     self._controller.feedback_shoot()
 
             elif self.item:
+                ic(self.item, "use")
                 self.item.use()
 
         else:
@@ -481,9 +469,13 @@ class Player(LRImageEntity):
             self.velocity += wall_rider.velocity
 
         # toggle inventory
-        if self._controller.inventory and perf_counter() - self._last_wpn_change > .5:
-            self._last_wpn_change = perf_counter()
-            self._in_inventory = not self._in_inventory
+        if self._controller.inventory:
+            if not self._inventory_pressed:
+                self._inventory_pressed = True
+                self._in_inventory = not self._in_inventory
+
+        else:
+            self._inventory_pressed = False
 
         super().update(delta)
 
@@ -560,70 +552,75 @@ class Player(LRImageEntity):
                 )
 
         else:
-            if not self._in_inventory:
-                self._hotbar.draw_at(
-                    Vec2().from_cartesian(.5, .95),
-                    .4,
-                    10,
-                    True,
-                    self._current_weapon
-                )
-
-            else:
-                # background
-                renderer.draw_rounded_rect(
-                    (
-                            global_vars.screen_pixels.x * .25,
-                            global_vars.screen_pixels.y * .1
-                    ),
-                    (
-                        global_vars.screen_pixels.x * .5,
-                        global_vars.screen_pixels.y * .8
-                    ),
-                    Color().from_255(80, 80, 80),
-                    20,
-                    False
-                )
-
-                # slots
-                self._inventory.draw_at(
-                    Vec2().from_cartesian(.5, .65),
-                    .5,
-                    10,
-                    False
-                )
-                self._hotbar.draw_at(
-                    Vec2().from_cartesian(.5, .85),
-                    .5,
-                    10,
-                    False,
-                    self._current_weapon
-                )
-
-                # character display
-                renderer.draw_rounded_rect(
-                    (
-                            global_vars.screen_pixels.x * .28,
-                            global_vars.screen_pixels.y * .17
-                    ),
-                    (
-                        self.size.x * 3,
-                        self.size.y * 4
-                    ),
-                    Color().from_255(50, 50, 50),
-                    20,
-                    False
-                )
-                self.draw_at(
-                    Vec2().from_cartesian(
-                        global_vars.screen_pixels.x * .28 + self.size.x * 1.5,
-                        global_vars.screen_pixels.y * .17 + self.size.y * 2
-                    ),
-                    self.size * 2,
-                    angle
-                )
+            # if not self._in_inventory:
+            #     self._hotbar.draw_at(
+            #         Vec2().from_cartesian(.5, .95),
+            #         .4,
+            #         10,
+            #         True,
+            #         self._current_weapon
+            #     )
+            #
+            # else:
+            #     # background
+            #     renderer.draw_rounded_rect(
+            #         (
+            #                 global_vars.screen_pixels.x * .25,
+            #                 global_vars.screen_pixels.y * .1
+            #         ),
+            #         (
+            #             global_vars.screen_pixels.x * .5,
+            #             global_vars.screen_pixels.y * .8
+            #         ),
+            #         Color().from_255(80, 80, 80),
+            #         20,
+            #         False
+            #     )
+            #
+            #     # slots
+            #     self._inventory.draw_at(
+            #         Vec2().from_cartesian(.5, .65),
+            #         .5,
+            #         10,
+            #         False
+            #     )
+            #     self._hotbar.draw_at(
+            #         Vec2().from_cartesian(.5, .85),
+            #         .5,
+            #         10,
+            #         False,
+            #         self._current_weapon
+            #     )
+            #
+            #     # character display
+            #     renderer.draw_rounded_rect(
+            #         (
+            #                 global_vars.screen_pixels.x * .28,
+            #                 global_vars.screen_pixels.y * .17
+            #         ),
+            #         (
+            #             self.size.x * 3,
+            #             self.size.y * 4
+            #         ),
+            #         Color().from_255(50, 50, 50),
+            #         20,
+            #         False
+            #     )
+            #     self.draw_at(
+            #         Vec2().from_cartesian(
+            #             global_vars.screen_pixels.x * .28 + self.size.x * 1.5,
+            #             global_vars.screen_pixels.y * .17 + self.size.y * 2
+            #         ),
+            #         self.size * 2,
+            #         angle
+            #     )
 
             self.draw_at(..., ..., angle)
+            if self.item:
+                self.item.draw_at(
+                    self.position,
+                    angle
+                )
 
 
     def kill(self, killed_by=...) -> None:

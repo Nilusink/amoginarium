@@ -7,6 +7,8 @@ various items that are not weapons
 Author:
 Nilusink
 """
+from typing import Tuple
+
 from OpenGL.GL import glBindTexture, glGetTexImage, GL_TEXTURE_2D, GL_RGBA
 from OpenGL.GL import GL_UNSIGNED_BYTE
 from icecream import ic
@@ -14,10 +16,10 @@ import typing as tp
 import pygame as pg
 import math as m
 
-from ..shared._entity_hints import PlayerLike, BaseEntityLike
+from ..shared._entity_hints import PlayerLike, BaseEntityLike, ItemLike, WeaponLike
 from ..logic import coord_t, convert_coord, Vec2
 from ..entities import CollisionDestroyed, Updated
-from ._base_entity import PositionedEntity
+from ._base_entity import PositionedEntity, VisibleGameEntity
 from ..base._textures import textures
 from ..render_bindings import renderer
 from ._animation import Animation
@@ -608,3 +610,74 @@ class JetBag(BaseItem):
                 ),
             )
             self._facing = True
+
+
+class VisibleItem(VisibleGameEntity):
+    def __init__(self, item: ItemLike | WeaponLike):
+        self._item = item
+        self._visible = False
+        super().__init__(
+            parent=item.parent
+        )
+
+    @property
+    def _position(self) -> Vec2:
+        return self._item._position
+
+    @_position.setter
+    def _position(self, value: Vec2) -> None:
+        self._item._position = value
+
+    @property
+    def _size(self) -> Vec2:
+        return self._item._size
+
+    @_size.setter
+    def _size(self, value: Vec2) -> None:
+        self._item._size = value
+
+    @property
+    def visible(self) -> bool:
+        return self._visible
+
+    @property
+    def item(self) -> ItemLike | WeaponLike:
+        return self._item
+
+    def hide(self) -> None:
+        self._visible = False
+
+    def show(self) -> None:
+        self._visible = True
+
+    def get_icon(self) -> tuple[int, tuple[int, int]]:
+        return self._item.get_icon()
+
+    def draw_at(
+            self,
+            position: Vec2,
+            angle: float,
+            size_fac: float = 1
+    ) -> None:
+        self._item.draw_at(position, angle, size_fac)
+
+    def gl_draw(self) -> None:
+        ...
+        # texture, size = self._item.get_icon()
+        #
+        # max_size = max(size)
+        # factor = (slot_size[0] * .8) / max_size
+        #
+        # pos = ui_slot.absolute_position
+        # pos -= ui_slot.absolute_size / 2
+        # pos.x += slot_size[0] * .1 + (max_size - size[0]) * factor / 2
+        # pos.y += slot_size[0] * .1 + (max_size - size[1]) * factor / 2
+        #
+        # renderer.draw_textured_quad(
+        #     texture,
+        #     pos,
+        #     (
+        #         size[0] * factor,
+        #         size[1] * factor
+        #     ),
+        #     convert_global=False

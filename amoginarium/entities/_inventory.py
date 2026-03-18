@@ -14,11 +14,16 @@ import typing as tp
 from ..logic import Vec2, Color
 from ..ui import Rectangle, AnimatedColorValues
 from ..render_bindings import renderer
+from ..shared import ItemLike, WeaponLike
+from ._items import VisibleItem
+
+
+type item_t = VisibleItem | None  # ItemLike | WeaponLike | None
 
 
 @dataclass
 class ItemSlot:
-    item: tp.Any
+    item: item_t
     count: int
 
 
@@ -58,8 +63,14 @@ class Inventory:
                 (.1, .1),
                 bg_color = self._slot_colors["basic"],
                 border_color = self._slot_colors["border_basic"],
-            ) for _ in range(slots)
+                on_enter_callbacks=[lambda x=i: self._slot_hover(x)]
+            ) for i in range(slots)
         ]}
+
+    def _slot_hover(self, slot_id: int) -> None:
+        """
+        called when a slot is hovered
+        """
 
     @property
     def slots_used(self) -> int:
@@ -69,7 +80,7 @@ class Inventory:
     def num_slots(self) -> int:
         return self._num_slots
 
-    def add_item(self, item, count: int = 1) -> int:
+    def add_item(self, item: item_t, count: int = 1) -> int:
         """
         add an item to the inventory.
         :returns: -1 if fail else item id
@@ -102,7 +113,7 @@ class Inventory:
 
         return True
 
-    def get_item(self, item_id: int):
+    def get_item(self, item_id: int) -> item_t:
         return self._slots[item_id].item
 
     def get_count(self, item_id: int) -> int:
@@ -111,7 +122,7 @@ class Inventory:
     def get_slot(self, item_id: int) -> ItemSlot:
         return self._slots[item_id]
 
-    def __iter__(self):
+    def __iter__(self) -> tp.Iterable[ItemSlot]:
         return iter(self._slots)
 
     def draw_at(

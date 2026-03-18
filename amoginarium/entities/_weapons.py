@@ -553,7 +553,6 @@ class BaseWeapon:
         """
         return self._texture_id_r, self._image_size
 
-
     def update(self, delta: float) -> None:
         """
         update weapon state (like reloading, ...)
@@ -599,6 +598,7 @@ class BaseWeapon:
 
         :returns: true if shot
         """
+        ic(direction, self.parent.position)
         # check if mag is empty
         if self._mag_state <= 0:
             if self._current_reload_time == 0:
