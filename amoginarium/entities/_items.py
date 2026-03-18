@@ -16,9 +16,10 @@ import typing as tp
 import pygame as pg
 import math as m
 
-from ..shared._entity_hints import PlayerLike, BaseEntityLike, ItemLike, WeaponLike
+from ..shared import PlayerLike, BaseEntityLike, ItemLike, WeaponLike, \
+    ItemSlot
 from ..logic import coord_t, convert_coord, Vec2
-from ..entities import CollisionDestroyed, Updated
+from ..entities import CollisionDestroyed, Updated, GravityAffected, WallCollider, Drawn
 from ._base_entity import PositionedEntity, VisibleGameEntity
 from ..base._textures import textures
 from ..render_bindings import renderer
@@ -613,28 +614,25 @@ class JetBag(BaseItem):
 
 
 class VisibleItem(VisibleGameEntity):
-    def __init__(self, item: ItemLike | WeaponLike):
+    _parent: ItemSlot
+    _drop_timeout = 2
+
+    def __init__(
+            self,
+            item: ItemLike | WeaponLike
+    ) -> None:
         self._item = item
         self._visible = False
-        super().__init__(
-            parent=item.parent
-        )
+        self.size = item._size.copy()
+        self._current_timeout = 0
+        super().__init__()
 
     @property
-    def _position(self) -> Vec2:
-        return self._item._position
+    def parent(self) -> ItemSlot | None:
+        if self._parent is ...:
+            return None
 
-    @_position.setter
-    def _position(self, value: Vec2) -> None:
-        self._item._position = value
-
-    @property
-    def _size(self) -> Vec2:
-        return self._item._size
-
-    @_size.setter
-    def _size(self, value: Vec2) -> None:
-        self._item._size = value
+        return self._parent
 
     @property
     def visible(self) -> bool:
@@ -650,6 +648,29 @@ class VisibleItem(VisibleGameEntity):
     def show(self) -> None:
         self._visible = True
 
+    def hit(self, damage: float, hit_by=...) -> None:
+        if self._current_timeout > 0:
+            return
+
+        if hasattr(hit_by, "pickup_item"):
+            ic(hit_by)
+            hit_by.pickup_item(self)
+            self._current_timeout = self._drop_timeout
+
+    def set_parent(self, parent: ItemSlot) -> None:
+        self._parent = parent
+        self.remove(GravityAffected, Drawn, CollisionDestroyed)
+
+    def remove_parent(self, at_pos: Vec2, velocity: Vec2 = ...) -> None:
+        self._parent = ...
+        self.position = at_pos.copy()
+        self._current_timeout = self._drop_timeout
+
+        if velocity is not ...:
+            self.velocity = velocity.copy()
+
+        self.add(GravityAffected, Drawn, CollisionDestroyed)
+
     def get_icon(self) -> tuple[int, tuple[int, int]]:
         return self._item.get_icon()
 
@@ -661,23 +682,29 @@ class VisibleItem(VisibleGameEntity):
     ) -> None:
         self._item.draw_at(position, angle, size_fac)
 
+    def update(self, delta: float) -> None:
+        if self.parent:
+            return
+
+        self._current_timeout -= delta
+
+        # wall stuff
+        res = WallCollider.collides_with(self)
+        if res:
+            # wall, pos = res
+            self.acceleration *= 0
+            self.velocity *= 0
+
+        super().update(delta)
+
     def gl_draw(self) -> None:
-        ...
-        # texture, size = self._item.get_icon()
-        #
-        # max_size = max(size)
-        # factor = (slot_size[0] * .8) / max_size
-        #
-        # pos = ui_slot.absolute_position
-        # pos -= ui_slot.absolute_size / 2
-        # pos.x += slot_size[0] * .1 + (max_size - size[0]) * factor / 2
-        # pos.y += slot_size[0] * .1 + (max_size - size[1]) * factor / 2
-        #
-        # renderer.draw_textured_quad(
-        #     texture,
-        #     pos,
-        #     (
-        #         size[0] * factor,
-        #         size[1] * factor
-        #     ),
-        #     convert_global=False
+        if self.parent:
+            return
+
+        self._item.draw_at(
+            self.position + Vec2().from_cartesian(
+                0,
+                -20 - m.sin(self._current_t*2) * 10
+            ),
+            0
+        )

@@ -148,7 +148,7 @@ class Player(LRImageEntity):
         self._in_inventory = False
         self._inventory_pressed = False
         self._inventory = Inventory(30)
-        self._hotbar = Inventory(10)
+        self._hotbar = Inventory(10, self._set_slot)
         items = [
             Ak47(self, False, parent_position_offset=(0, 0)),
             Minigun(self, False, parent_position_offset=(0, 10)),
@@ -166,8 +166,9 @@ class Player(LRImageEntity):
                 1
             )
         for slot in self._hotbar:
-            if hasattr(slot.item, "reload"):
-                slot.item.reload(True)
+            if slot.item:
+                if hasattr(slot.item.item, "reload"):
+                    slot.item.item.reload(True)
 
         self._last_hit = perf_counter()
 
@@ -178,6 +179,13 @@ class Player(LRImageEntity):
             WallCollider,
             Players,
             HasBars
+        )
+
+    def _set_slot(self, slot_id: int) -> None:
+        self._hotbar.drop_item(
+            slot_id,
+            self.position,
+            Vec2().from_cartesian(200, -200)
         )
 
     @property
@@ -212,6 +220,9 @@ class Player(LRImageEntity):
 
         else:
             return None
+
+    def pickup_item(self, item: VisibleItem) -> None:
+        self._hotbar.try_add_item(item, 1)
 
     def next_weapon(self) -> None:
         """
@@ -305,7 +316,7 @@ class Player(LRImageEntity):
         # self.weapon.update(delta)
         for slot in self._hotbar:
             if slot.count > 0:
-                slot.item.update(delta)
+                slot.item.item.update(delta)
 
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
@@ -417,7 +428,6 @@ class Player(LRImageEntity):
             # shot_direction = self.facing.copy()
             # shot_direction.y = -.4
             if isinstance(self.item, BaseWeapon):
-                ic(self.item, "shoot")
                 if hasattr(self.item, "charge"):
                     self.item.charge()
 
@@ -427,7 +437,6 @@ class Player(LRImageEntity):
                     self._controller.feedback_shoot()
 
             elif self.item:
-                ic(self.item, "use")
                 self.item.use()
 
         else:
@@ -552,68 +561,68 @@ class Player(LRImageEntity):
                 )
 
         else:
-            # if not self._in_inventory:
-            #     self._hotbar.draw_at(
-            #         Vec2().from_cartesian(.5, .95),
-            #         .4,
-            #         10,
-            #         True,
-            #         self._current_weapon
-            #     )
-            #
-            # else:
-            #     # background
-            #     renderer.draw_rounded_rect(
-            #         (
-            #                 global_vars.screen_pixels.x * .25,
-            #                 global_vars.screen_pixels.y * .1
-            #         ),
-            #         (
-            #             global_vars.screen_pixels.x * .5,
-            #             global_vars.screen_pixels.y * .8
-            #         ),
-            #         Color().from_255(80, 80, 80),
-            #         20,
-            #         False
-            #     )
-            #
-            #     # slots
-            #     self._inventory.draw_at(
-            #         Vec2().from_cartesian(.5, .65),
-            #         .5,
-            #         10,
-            #         False
-            #     )
-            #     self._hotbar.draw_at(
-            #         Vec2().from_cartesian(.5, .85),
-            #         .5,
-            #         10,
-            #         False,
-            #         self._current_weapon
-            #     )
-            #
-            #     # character display
-            #     renderer.draw_rounded_rect(
-            #         (
-            #                 global_vars.screen_pixels.x * .28,
-            #                 global_vars.screen_pixels.y * .17
-            #         ),
-            #         (
-            #             self.size.x * 3,
-            #             self.size.y * 4
-            #         ),
-            #         Color().from_255(50, 50, 50),
-            #         20,
-            #         False
-            #     )
-            #     self.draw_at(
-            #         Vec2().from_cartesian(
-            #             global_vars.screen_pixels.x * .28 + self.size.x * 1.5,
-            #             global_vars.screen_pixels.y * .17 + self.size.y * 2
-            #         ),
-            #         self.size * 2,
-            #         angle
-            #     )
+            if not self._in_inventory:
+                self._hotbar.draw_at(
+                    Vec2().from_cartesian(.5, .95),
+                    .4,
+                    10,
+                    True,
+                    self._current_weapon
+                )
+
+            else:
+                # background
+                renderer.draw_rounded_rect(
+                    (
+                            global_vars.screen_pixels.x * .25,
+                            global_vars.screen_pixels.y * .1
+                    ),
+                    (
+                        global_vars.screen_pixels.x * .5,
+                        global_vars.screen_pixels.y * .8
+                    ),
+                    Color().from_255(80, 80, 80),
+                    20,
+                    False
+                )
+
+                # slots
+                self._inventory.draw_at(
+                    Vec2().from_cartesian(.5, .65),
+                    .5,
+                    10,
+                    False
+                )
+                self._hotbar.draw_at(
+                    Vec2().from_cartesian(.5, .85),
+                    .5,
+                    10,
+                    False,
+                    self._current_weapon
+                )
+
+                # character display
+                renderer.draw_rounded_rect(
+                    (
+                            global_vars.screen_pixels.x * .28,
+                            global_vars.screen_pixels.y * .17
+                    ),
+                    (
+                        self.size.x * 3,
+                        self.size.y * 4
+                    ),
+                    Color().from_255(50, 50, 50),
+                    20,
+                    False
+                )
+                self.draw_at(
+                    Vec2().from_cartesian(
+                        global_vars.screen_pixels.x * .28 + self.size.x * 1.5,
+                        global_vars.screen_pixels.y * .17 + self.size.y * 2
+                    ),
+                    self.size * 2,
+                    angle
+                )
 
             self.draw_at(..., ..., angle)
             if self.item:

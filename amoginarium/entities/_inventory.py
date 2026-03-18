@@ -11,34 +11,34 @@ from dataclasses import dataclass
 from icecream import ic
 import typing as tp
 
-from ..logic import Vec2, Color
+from ..logic import Vec2
 from ..ui import Rectangle, AnimatedColorValues
 from ..render_bindings import renderer
-from ..shared import ItemLike, WeaponLike
-from ._items import VisibleItem
-
-
-type item_t = VisibleItem | None  # ItemLike | WeaponLike | None
-
-
-@dataclass
-class ItemSlot:
-    item: item_t
-    count: int
+from ..shared import ItemSlot, item_t
 
 
 class Inventory:
-    __slots__ = ("_slots", "_num_slots", "_used_slots", "_ui", "_slot_colors")
+    __slots__ = (
+        "_slots",
+        "_num_slots",
+        "_used_slots",
+        "_ui",
+        "_slot_colors",
+        "_callback"
+    )
 
     def __init__(
             self,
-            slots: int
+            slots: int,
+            select_slot_callback: tp.Callable[[int], None] = ...,
     ) -> None:
         self._num_slots = slots
         self._used_slots = 0
         self._slots: list[ItemSlot] = [
             ItemSlot(None, 0) for _ in range(slots)
         ]
+
+        self._callback = select_slot_callback
 
         self._slot_colors = {
             "basic": AnimatedColorValues(
@@ -71,6 +71,8 @@ class Inventory:
         """
         called when a slot is hovered
         """
+        if self._callback is not ...:
+            self._callback(slot_id)
 
     @property
     def slots_used(self) -> int:
@@ -94,12 +96,38 @@ class Inventory:
                     lambda c: self.use_item(item_id, c)
                 )
 
+            item.set_parent(self._slots[item_id])
+
             self._slots[item_id].count = count
             self._used_slots += 1
             return item_id
 
         else:
             return -1
+
+    def try_add_item(self, item: item_t, count: int = 1) -> int:
+        """
+        tries to add the item to the inventory. returns -1 if fail
+        """
+        if self.slots_used < self._num_slots:
+            new_item_id = -1
+            for i, slot in enumerate(self._slots):
+                if not slot.item:
+                    new_item_id = i
+                    break
+
+            else:
+                return -1
+
+            ic(new_item_id, item)
+
+            self._slots[new_item_id].item = item
+            self._slots[new_item_id].count = count
+            item.set_parent(self._slots[new_item_id])
+
+            return new_item_id
+
+        return -1
 
     def use_item(self, item_id: int, count: int = 1) -> bool:
         """
@@ -112,6 +140,20 @@ class Inventory:
             return False
 
         return True
+
+    def drop_item(self, item_id: int, pos: Vec2, vel: Vec2 = ...) -> None:
+        if not self._slots[item_id].item:
+            return
+
+        self._used_slots -= 1
+
+        # drop item
+        item = self._slots[item_id].item
+        item.remove_parent(pos, vel)
+
+        # reset slot
+        self._slots[item_id].count = 0
+        self._slots[item_id].item = None
 
     def get_item(self, item_id: int) -> item_t:
         return self._slots[item_id].item

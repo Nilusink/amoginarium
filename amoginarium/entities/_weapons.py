@@ -598,7 +598,6 @@ class BaseWeapon:
 
         :returns: true if shot
         """
-        ic(direction, self.parent.position)
         # check if mag is empty
         if self._mag_state <= 0:
             if self._current_reload_time == 0:
