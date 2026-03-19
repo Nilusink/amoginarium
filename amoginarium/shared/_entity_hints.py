@@ -132,7 +132,8 @@ class BaseItemLike(Protocol):
             self,
             position: Vec2,
             angle: float,
-            size_fac: float = 1
+            size_fac: float = 1,
+            convert_global: bool = True
     ) -> None: ...
     def stop(self) -> None: ...
 

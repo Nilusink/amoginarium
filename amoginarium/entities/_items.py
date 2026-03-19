@@ -202,11 +202,10 @@ class BaseItem(PositionedEntity):
         ...
 
     def kill(self, killed_by=...) -> None:
-        if self._used_callback(1):
+        if self._used_callback and self._used_callback(1):
             self._uses_left = self._max_uses
 
         else:
-            ic("kill")
             super().kill()
 
     def update(self, delta: float) -> None:
@@ -217,7 +216,8 @@ class BaseItem(PositionedEntity):
             self,
             position: Vec2,
             angle: float,
-            size_fac: float = 1
+            size_fac: float = 1,
+            convert_global: bool = True
     ) -> None:
         debug_surface = self.mask.to_surface()
         renderer.draw_pg_surf(
@@ -225,13 +225,15 @@ class BaseItem(PositionedEntity):
                 self.world_position.x,
                 self.world_position.y + self.size.y
             ),
-            debug_surface
+            debug_surface,
+            convert_global=convert_global
         )
 
         renderer.draw_rect(
             self.world_position,
             self.size,
-            (1, 0, 0, .2)
+            (1, 0, 0, .2),
+            convert_global=convert_global
         )
 
     def reset(self) -> None:
@@ -284,7 +286,8 @@ class Shield(BaseItem):
             self,
             position: Vec2,
             angle: float,
-            size_fac: float = 1
+            size_fac: float = 1,
+            convert_global: bool = True
     ) -> None:
         angle = angle % 360
         delta = self._position_offset.copy() * size_fac
@@ -296,45 +299,51 @@ class Shield(BaseItem):
 
         if self._in_use:
             self.position = position + delta - size / 2
+            own_pos = self.world_position if convert_global else self.position
             if 90 < angle < 270:
                 renderer.draw_textured_quad(
                     self._image_texture_l,
-                    self.world_position + self._internal_offset,
+                    own_pos + self._internal_offset,
                     (
                         self._image_size[0] * size_fac,
                         self._image_size[1] * size_fac
                     ),
-                    rotate_angle=angle - 180
+                    rotate_angle=angle - 180,
+                    convert_global=convert_global
                 )
 
             else:
                 renderer.draw_textured_quad(
                     self._image_texture_r,
-                    self.world_position + self._internal_offset,
+                    own_pos + self._internal_offset,
                     (
                         self._image_size[0] * size_fac,
                         self._image_size[1] * size_fac
                     ),
-                    rotate_angle=angle
+                    rotate_angle=angle,
+                    convert_global=convert_global
                 )
 
         else:
             size = Vec2().from_cartesian(*self._image_size) * size_fac
             self.position = position - size / 4
+            own_pos = self.world_position if convert_global else self.position
             if 90 < angle < 270:
                 renderer.draw_textured_quad(
                     self._image_texture_l,
-                    self.world_position,
+                    own_pos,
                     size / 2,
-                    rotate_angle=angle - 180
+                    rotate_angle=angle - 180,
+                    convert_global=convert_global
                 )
 
             else:
                 renderer.draw_textured_quad(
                     self._image_texture_r,
-                    self.world_position,
+                    own_pos,
                     size / 2,
-                    rotate_angle=angle
+                    rotate_angle=angle,
+                    convert_global=convert_global
                 )
 
 
@@ -418,7 +427,8 @@ class HealingPotion(BaseItem):
             self,
             position: Vec2,
             angle: float,
-            size_fac: float = 1
+            size_fac: float = 1,
+            convert_global: bool = False
     ) -> None:
         self._target_rotation = angle
         angle = angle % 360
@@ -428,37 +438,39 @@ class HealingPotion(BaseItem):
         pos += self._position_offset
 
         offset = self._position_offset
+        own_pos = self.world_position if convert_global else self.position
 
         # noinspection PyTypeChecker
         renderer.apply_stencil(
             renderer.draw_textured_quad,
             False,
             self._mask_texture,
-            self.world_position + self._internal_offset + offset,
+            own_pos + self._internal_offset + offset,
             self._image_size,
             rotate_angle=angle - (180 if 90 < angle < 270 else 0),
+            convert_global=convert_global
         )
 
         fill_line = 5 + (self.size.y - 10) \
                     * (1 - self._uses_left / self._max_uses)
         renderer.draw_polygon(
             [
-                self.world_position + offset + Vec2().from_cartesian(
+                own_pos + offset + Vec2().from_cartesian(
                     -self.size.x,
                     self.size.y
                 ),
-                self.world_position + offset + Vec2().from_cartesian(
+                own_pos + offset + Vec2().from_cartesian(
                     2 * self.size.x,
                     self.size.y
                 ),
-                self.world_position + offset + Vec2().from_cartesian(
+                own_pos + offset + Vec2().from_cartesian(
                     self.size.x / 2, fill_line
                 ) + Vec2().from_polar(
                     (self._target_rotation + self._f_tilt) * m.pi / 180,
                     self.size.x) + Vec2().from_cartesian(
                     0, 5
                 ),
-                self.world_position + offset + Vec2().from_cartesian(
+                own_pos + offset + Vec2().from_cartesian(
                     self.size.x / 2, fill_line
                 ) - Vec2().from_polar(
                     (self._target_rotation + self._f_tilt) * m.pi / 180,
@@ -466,7 +478,8 @@ class HealingPotion(BaseItem):
                     0, 5
                 ),
             ],
-            (0, .8, 0)
+            (0, .8, 0),
+            convert_global=convert_global
         )
 
         renderer.disable_stencil()
@@ -474,17 +487,19 @@ class HealingPotion(BaseItem):
         if 90 < angle < 270:
             renderer.draw_textured_quad(
                 self._image_texture_l,
-                self.world_position + self._internal_offset + self._position_offset,
+                own_pos + self._internal_offset + self._position_offset,
                 self._image_size,
-                rotate_angle=angle - 180
+                rotate_angle=angle - 180,
+                convert_global=convert_global
             )
 
         else:
             renderer.draw_textured_quad(
                 self._image_texture_r,
-                self.world_position + self._internal_offset + self._position_offset,
+                own_pos + self._internal_offset + self._position_offset,
                 self._image_size,
-                rotate_angle=angle
+                rotate_angle=angle,
+                convert_global=convert_global
             )
 
 
@@ -577,7 +592,8 @@ class JetBag(BaseItem):
             self,
             position: Vec2,
             angle: float,
-            size_fac: float = 1
+            size_fac: float = 1,
+            convert_global: bool = True
     ) -> None:
         angle = angle % 360
 
@@ -586,8 +602,10 @@ class JetBag(BaseItem):
 
         self.position = position - size / 2
 
+        own_pos = self.world_position if convert_global else self.position
+
         if 90 < angle < 270:
-            pos = self.world_position + self._internal_offset * size_fac
+            pos = own_pos + self._internal_offset * size_fac
             pos -= self._position_offset * size_fac
             renderer.draw_textured_quad(
                 self._image_texture_l,
@@ -596,11 +614,12 @@ class JetBag(BaseItem):
                     self._image_size[0] * size_fac,
                     self._image_size[1] * size_fac
                 ),
+                convert_global=convert_global
             )
             self._facing = False
 
         else:
-            pos = self.world_position + self._internal_offset * size_fac
+            pos = own_pos + self._internal_offset * size_fac
             pos += self._position_offset * size_fac
             renderer.draw_textured_quad(
                 self._image_texture_r,
@@ -609,13 +628,14 @@ class JetBag(BaseItem):
                     self._image_size[0] * size_fac,
                     self._image_size[1] * size_fac
                 ),
+                convert_global=convert_global
             )
             self._facing = True
 
 
 class VisibleItem(VisibleGameEntity):
     _parent: ItemSlot
-    _drop_timeout = 2
+    _drop_timeout = 1
 
     def __init__(
             self,
@@ -626,6 +646,7 @@ class VisibleItem(VisibleGameEntity):
         self.size = item._size.copy()
         self._current_timeout = 0
         super().__init__()
+        self.remove(GravityAffected, Drawn, CollisionDestroyed, Updated)
 
     @property
     def parent(self) -> ItemSlot | None:
@@ -644,32 +665,39 @@ class VisibleItem(VisibleGameEntity):
 
     def hide(self) -> None:
         self._visible = False
+        if not self.parent:
+            self.remove(Drawn)
 
     def show(self) -> None:
         self._visible = True
+        self.add(Drawn)
 
     def hit(self, damage: float, hit_by=...) -> None:
         if self._current_timeout > 0:
             return
 
         if hasattr(hit_by, "pickup_item"):
-            ic(hit_by)
             hit_by.pickup_item(self)
             self._current_timeout = self._drop_timeout
 
     def set_parent(self, parent: ItemSlot) -> None:
         self._parent = parent
-        self.remove(GravityAffected, Drawn, CollisionDestroyed)
+        self.remove(GravityAffected, Drawn, CollisionDestroyed, Updated)
 
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 = ...) -> None:
         self._parent = ...
+        self.acceleration *= 0
+        self.velocity *= 0
         self.position = at_pos.copy()
         self._current_timeout = self._drop_timeout
 
-        if velocity is not ...:
-            self.velocity = velocity.copy()
+        ic(at_pos, velocity)
 
-        self.add(GravityAffected, Drawn, CollisionDestroyed)
+        if velocity is not ...:
+            self.velocity.x = velocity.x
+            self.velocity.y = velocity.y
+
+        self.add(GravityAffected, Drawn, CollisionDestroyed, Updated)
 
     def get_icon(self) -> tuple[int, tuple[int, int]]:
         return self._item.get_icon()
@@ -678,9 +706,11 @@ class VisibleItem(VisibleGameEntity):
             self,
             position: Vec2,
             angle: float,
-            size_fac: float = 1
+            size_fac: float = 1,
+            convert_global: bool = True
     ) -> None:
-        self._item.draw_at(position, angle, size_fac)
+        ic(position)
+        self._item.draw_at(position, angle, size_fac, convert_global)
 
     def update(self, delta: float) -> None:
         if self.parent:
@@ -689,16 +719,17 @@ class VisibleItem(VisibleGameEntity):
         self._current_timeout -= delta
 
         # wall stuff
-        res = WallCollider.collides_with(self)
-        if res:
-            # wall, pos = res
-            self.acceleration *= 0
-            self.velocity *= 0
+        if self._current_timeout <= self._drop_timeout - .1:
+            res = WallCollider.collides_with(self)
+            if res:
+                # wall, pos = res
+                self.acceleration *= 0
+                self.velocity *= 0
 
         super().update(delta)
 
     def gl_draw(self) -> None:
-        if self.parent:
+        if self.parent and not self.visible:
             return
 
         self._item.draw_at(

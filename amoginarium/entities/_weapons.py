@@ -230,13 +230,14 @@ class Bullet(ImageEntity):
                         hit_by=self
                     )
                     if hasattr(entity, "_movement_acceleration"):
+                        d -= entity.size.length
                         delta = entity.position - self.position
                         delta = delta.normalize() \
                                 * entity._movement_acceleration \
                                 * (
                                         1 - max(d, 40)
                                         / (self._explosion_radius * 4)
-                                ) * (self._explosion_damage / 100)
+                                ) * (self._explosion_damage / 5)
                         entity.add_acceleration(delta)
 
             explosion.draw(
@@ -705,7 +706,8 @@ class BaseWeapon:
             self,
             position: Vec2,
             angle: float,
-            size_fac: float = 1
+            size_fac: float = 1,
+            convert_global: bool = True
         ) -> None:
         """
         draw the weapon (centered) at a specified position
@@ -727,12 +729,17 @@ class BaseWeapon:
                 size.x - self._image_rotate_anchor.x * size_fac,
                 self._image_rotate_anchor.y * size_fac
             )
+            pos = position - anchor
+            if convert_global:
+                pos -= Updated.world_position
+
             renderer.draw_textured_quad(
                 self.texture_id_l,
-                (position - Updated.world_position - anchor).xy,
-                size.xy,
+                pos,
+                size,
                 rotate_angle=angle - 180 + self._image_rotation_offset,
-                rotate_anchor=anchor
+                rotate_anchor=anchor,
+                convert_global=convert_global
             )
 
         else:
@@ -740,13 +747,17 @@ class BaseWeapon:
                 self._image_rotate_anchor.x * size_fac,
                 self._image_rotate_anchor.y * size_fac
             )
+            pos = position - anchor
+            if convert_global:
+                pos -= Updated.world_position
 
             renderer.draw_textured_quad(
                 self.texture_id_r,
-                (position - Updated.world_position - anchor).xy,
-                size.xy,
+                pos,
+                size,
                 rotate_angle=angle + self._image_rotation_offset,
-                rotate_anchor=anchor
+                rotate_anchor=anchor,
+                convert_global=convert_global
             )
 
 

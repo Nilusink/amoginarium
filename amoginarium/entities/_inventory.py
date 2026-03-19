@@ -24,21 +24,25 @@ class Inventory:
         "_used_slots",
         "_ui",
         "_slot_colors",
-        "_callback"
+        "_callbacks"
     )
 
     def __init__(
             self,
             slots: int,
-            select_slot_callback: tp.Callable[[int], None] = ...,
+            select_slot_callback: tp.Callable[[ItemSlot], None] = ...,
+            unselect_slot_callback: tp.Callable[[ItemSlot], None] = ...,
     ) -> None:
         self._num_slots = slots
         self._used_slots = 0
         self._slots: list[ItemSlot] = [
-            ItemSlot(None, 0) for _ in range(slots)
+            ItemSlot(None, 0, self, i) for i in range(slots)
         ]
 
-        self._callback = select_slot_callback
+        self._callbacks = {
+            "select": select_slot_callback,
+            "unselect": unselect_slot_callback
+        }
 
         self._slot_colors = {
             "basic": AnimatedColorValues(
@@ -63,7 +67,8 @@ class Inventory:
                 (.1, .1),
                 bg_color = self._slot_colors["basic"],
                 border_color = self._slot_colors["border_basic"],
-                on_enter_callbacks=[lambda x=i: self._slot_hover(x)]
+                on_enter_callbacks=[lambda x=i: self._slot_hover(x)],
+                on_leave_callbacks=[lambda x=i: self._slot_unhover(x)]
             ) for i in range(slots)
         ]}
 
@@ -71,8 +76,13 @@ class Inventory:
         """
         called when a slot is hovered
         """
-        if self._callback is not ...:
-            self._callback(slot_id)
+        ic(slot_id)
+        if self._callbacks["select"] is not ...:
+            self._callbacks["select"](self.get_slot(slot_id))
+
+    def _slot_unhover(self, slot_id: int) -> None:
+        if self._callbacks["unselect"] is not ...:
+            self._callbacks["unselect"](self.get_slot(slot_id))
 
     @property
     def slots_used(self) -> int:
@@ -89,17 +99,7 @@ class Inventory:
         """
         if self.slots_used < self._num_slots:
             item_id = self.slots_used
-            self._slots[item_id].item = item
-
-            if hasattr(item, "add_used_callback"):
-                item.add_used_callback(
-                    lambda c: self.use_item(item_id, c)
-                )
-
-            item.set_parent(self._slots[item_id])
-
-            self._slots[item_id].count = count
-            self._used_slots += 1
+            self.set_slot(item_id, item, count)
             return item_id
 
         else:
@@ -110,7 +110,6 @@ class Inventory:
         tries to add the item to the inventory. returns -1 if fail
         """
         if self.slots_used < self._num_slots:
-            new_item_id = -1
             for i, slot in enumerate(self._slots):
                 if not slot.item:
                     new_item_id = i
@@ -119,12 +118,7 @@ class Inventory:
             else:
                 return -1
 
-            ic(new_item_id, item)
-
-            self._slots[new_item_id].item = item
-            self._slots[new_item_id].count = count
-            item.set_parent(self._slots[new_item_id])
-
+            self.set_slot(new_item_id, item, count)
             return new_item_id
 
         return -1
@@ -141,19 +135,48 @@ class Inventory:
 
         return True
 
+    def set_slot(self, slot_id: int, item: item_t, count: int = 1) -> None:
+        """
+        clear said slot and set it to the new item
+        """
+        self.clear_slot(slot_id)
+
+        if not item:
+            return
+
+        # set new item
+        self._used_slots += 1
+        self._slots[slot_id].item = item
+        self._slots[slot_id].count = count
+        if hasattr(item, "add_used_callback"):
+            item.add_used_callback(
+                lambda c: self.use_item(slot_id, c)
+            )
+
+        item.set_parent(self._slots[slot_id])
+
     def drop_item(self, item_id: int, pos: Vec2, vel: Vec2 = ...) -> None:
         if not self._slots[item_id].item:
             return
-
-        self._used_slots -= 1
 
         # drop item
         item = self._slots[item_id].item
         item.remove_parent(pos, vel)
 
         # reset slot
-        self._slots[item_id].count = 0
-        self._slots[item_id].item = None
+        self.clear_slot(item_id)
+
+    def clear_slot(self,  slot_id: int) -> None:
+        """
+        remove item from slot
+        """
+        if not self._slots[slot_id].item:
+            return
+
+        self._slots[slot_id].count = 0
+        self._slots[slot_id].item = None
+        self._used_slots -= 1
+
 
     def get_item(self, item_id: int) -> item_t:
         return self._slots[item_id].item

@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 from dataclasses import dataclass
+import typing as tp
 
 from ._entity_hints import VisibleItemLike
 
@@ -19,3 +20,5 @@ type item_t = VisibleItemLike | None  # ItemLike | WeaponLike | None
 class ItemSlot:
     item: item_t
     count: int
+    parent: tp.Any
+    id: int

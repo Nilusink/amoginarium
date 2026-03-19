@@ -20,11 +20,14 @@ class controls:
     reload: bool = False
     shoot: bool = False
     inventory: bool = False
+    drop: bool = False
     wpn_f: bool = False
     wpn_b: bool = False
     joy_btn: bool = False
     joy_x: float = 0
     joy_y: float = 0
+    mouse_x: float = 0
+    mouse_y: float = 0
 
 
 class _Controllers:
@@ -161,6 +164,10 @@ class Controller:
         return self._keys.inventory
 
     @property
+    def drop(self) -> bool:
+        return self._keys.drop
+
+    @property
     def wpn_f(self) -> bool:
         return self._keys.wpn_f
 
@@ -183,6 +190,14 @@ class Controller:
     @property
     def joy_polar(self) -> Vec2:
         return Vec2().from_cartesian(self.joy_x, self.joy_y)
+
+    @property
+    def mouse_x(self) -> float:
+        return self._keys.mouse_x
+
+    @property
+    def mouse_y(self) -> float:
+        return self._keys.mouse_y
 
     @property
     def controls(self) -> controls:

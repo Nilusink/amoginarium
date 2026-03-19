@@ -21,7 +21,7 @@ from ._base_entity import LRImageEntity
 from ._weapons import Ak47, Minigun, Sniper, Mortar, Flak, BaseWeapon, CRAM
 from ._items import BaseItem, Shield, HealingPotion, JetBag, VisibleItem
 from ._charged_weapon import Bow, ChargedWeapon, RailGun
-from ..shared import Coalitions, WeaponLike, ItemLike
+from ..shared import Coalitions, WeaponLike, ItemLike, ItemSlot
 from ..logic import Vec2, convert_coord, Color
 from ._weapons import HandThrownGrenade
 from ..render_bindings import renderer
@@ -147,8 +147,18 @@ class Player(LRImageEntity):
         self._weapon_change_pressed = False
         self._in_inventory = False
         self._inventory_pressed = False
-        self._inventory = Inventory(30)
-        self._hotbar = Inventory(10, self._set_slot)
+        self._hover_slot: ItemSlot | None = None
+        self._holding_slot: ItemSlot | None = None
+        self._inventory = Inventory(
+            30,
+            self._set_slot,
+            self._remove_hover
+        )
+        self._hotbar = Inventory(
+            10,
+            self._set_slot,
+            self._remove_hover
+        )
         items = [
             Ak47(self, False, parent_position_offset=(0, 0)),
             Minigun(self, False, parent_position_offset=(0, 10)),
@@ -181,12 +191,12 @@ class Player(LRImageEntity):
             HasBars
         )
 
-    def _set_slot(self, slot_id: int) -> None:
-        self._hotbar.drop_item(
-            slot_id,
-            self.position,
-            Vec2().from_cartesian(200, -200)
-        )
+    def _set_slot(self, slot_id: ItemSlot) -> None:
+        self._hover_slot = slot_id
+
+    def _remove_hover(self, slot_id) -> None:
+        if slot_id == self._hover_slot:
+            self._hover_slot = None
 
     @property
     def max_hp(self) -> int:
@@ -244,7 +254,7 @@ class Player(LRImageEntity):
 
         self._current_weapon -= 1
         if self._current_weapon < 0:
-            self._current_weapon = self._hotbar.slots_used - 1
+            self._current_weapon = self._hotbar.num_slots - 1
 
     def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
         """
@@ -314,9 +324,9 @@ class Player(LRImageEntity):
     def update(self, delta):
         # update reloads
         # self.weapon.update(delta)
-        for slot in self._hotbar:
-            if slot.count > 0:
-                slot.item.item.update(delta)
+        for hover_slot in self._hotbar:
+            if hover_slot.count > 0:
+                hover_slot.item.item.update(delta)
 
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
@@ -416,53 +426,103 @@ class Player(LRImageEntity):
             self._weapon_change_pressed = False
 
         # directional stuff
-        # shoot
-        if self._controller.shoot:
-            mouse_pos = pg.mouse.get_pos()
-            vector = convert_coord((
-                (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
-                (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
-            ), Vec2)
-            vector -= self.world_position
+        if not self._in_inventory:
+            if self._controller.shoot:
+                mouse_pos = pg.mouse.get_pos()
+                vector = convert_coord((
+                    (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
+                    (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+                ), Vec2)
+                vector -= self.world_position
 
-            # shot_direction = self.facing.copy()
-            # shot_direction.y = -.4
-            if isinstance(self.item, BaseWeapon):
-                if hasattr(self.item, "charge"):
-                    self.item.charge()
+                # shot_direction = self.facing.copy()
+                # shot_direction.y = -.4
+                if isinstance(self.item, BaseWeapon):
+                    if hasattr(self.item, "charge"):
+                        self.item.charge()
 
-                elif self.item.shoot(
-                    vector
-                ):
-                    self._controller.feedback_shoot()
+                    elif self.item.shoot(
+                        vector
+                    ):
+                        self._controller.feedback_shoot()
 
-            elif self.item:
-                self.item.use()
+                elif self.item:
+                    self.item.use()
 
-        else:
-            if isinstance(self.item, BaseWeapon):
-                if hasattr(self.item, "charge"):
-                    item: ChargedWeapon = self.item
+            else:
+                if isinstance(self.item, BaseWeapon):
+                    if hasattr(self.item, "charge"):
+                        item: ChargedWeapon = self.item
 
-                    if item.charged > 0:
-                        mouse_pos = pg.mouse.get_pos()
-                        vector = convert_coord((
-                            (mouse_pos[ 0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
-                            (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
-                        ), Vec2)
-                        vector -= self.world_position
+                        if item.charged > 0:
+                            mouse_pos = pg.mouse.get_pos()
+                            vector = convert_coord((
+                                (mouse_pos[ 0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
+                                (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+                            ), Vec2)
+                            vector -= self.world_position
 
-                        if self.item.shoot(vector):
-                            self._controller.feedback_shoot()
+                            if self.item.shoot(vector):
+                                self._controller.feedback_shoot()
+
+                        else:
+                            self.item.stop_shooting()
 
                     else:
                         self.item.stop_shooting()
 
-                else:
-                    self.item.stop_shooting()
+                elif self.item:
+                    self.item.stop_use()
 
-            elif self.item:
-                self.item.stop_use()
+        else:
+            hover_slot = self._hover_slot
+            holding_slot = self._holding_slot
+            if holding_slot:
+                if self._controller.shoot:
+                    self._holding_slot.item.position.x = self._controller.mouse_x
+                    self._holding_slot.item.position.y = self._controller.mouse_y
+
+                else:
+                    if hover_slot:
+                        # switch slot items
+                        item1: VisibleItem = holding_slot.item
+                        count1 = holding_slot.count
+                        sid1 = holding_slot.id
+                        parent1 = holding_slot.parent
+
+                        item2: VisibleItem = hover_slot.item
+                        count2 = hover_slot.count
+                        sid2 = hover_slot.id
+                        parent2 = hover_slot.parent
+
+                        # set slots
+                        parent1.set_slot(sid1, item2, count2)
+                        parent2.set_slot(sid2, item1, count1)
+
+                        if item1:
+                            item1.hide()
+
+                        self._set_slot(parent2.get_slot(sid2))
+
+                    else:
+                        if holding_slot.item:
+                            holding_slot.item.hide()
+
+                    self._holding_slot = None
+
+            elif hover_slot:
+                if self._controller.shoot:
+                    if hover_slot.item:
+                        hover_slot.item.show()
+                        self._holding_slot = hover_slot
+
+        # drop item
+        if self._controller.drop:
+            self._hotbar.drop_item(
+                self._current_weapon,
+                self.position,
+                Vec2().from_cartesian(200, -200)
+            )
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:
@@ -502,13 +562,20 @@ class Player(LRImageEntity):
             self.size.y
         )
 
-    def draw_at(self, pos: Vec2, size: Vec2, angle: float) -> None:
-        super().gl_draw(pos, size)
+    def draw_at(
+            self,
+            pos: Vec2,
+            size: Vec2,
+            angle: float,
+            convert_global: bool = True
+    ) -> None:
+        super().gl_draw(pos, size, convert_global)
         if self.item:
             self.item.draw_at(
                 pos if pos is not ... else self.position,
                 angle,
-                size.x / self.size.x if size is not ... else 1
+                size.x / self.size.x if size is not ... else 1,
+                convert_global=convert_global
             )
 
     def gl_draw(self) -> None:
@@ -574,12 +641,12 @@ class Player(LRImageEntity):
                 # background
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_pixels.x * .25,
-                            global_vars.screen_pixels.y * .1
+                            global_vars.screen_size_real.x * .25,
+                            global_vars.screen_size_real.y * .1
                     ),
                     (
-                        global_vars.screen_pixels.x * .5,
-                        global_vars.screen_pixels.y * .8
+                        global_vars.screen_size_real.x * .5,
+                        global_vars.screen_size_real.y * .8
                     ),
                     Color().from_255(80, 80, 80),
                     20,
@@ -604,8 +671,8 @@ class Player(LRImageEntity):
                 # character display
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_pixels.x * .28,
-                            global_vars.screen_pixels.y * .17
+                            global_vars.screen_size_real.x * .28,
+                            global_vars.screen_size_real.y * .17
                     ),
                     (
                         self.size.x * 3,
@@ -617,11 +684,12 @@ class Player(LRImageEntity):
                 )
                 self.draw_at(
                     Vec2().from_cartesian(
-                        global_vars.screen_pixels.x * .28 + self.size.x * 1.5,
-                        global_vars.screen_pixels.y * .17 + self.size.y * 2
+                        global_vars.screen_size_real.x * .28 + self.size.x * 1.5,
+                        global_vars.screen_size_real.y * .17 + self.size.y * 2
                     ),
                     self.size * 2,
-                    angle
+                    angle,
+                    convert_global=False
                 )
 
             self.draw_at(..., ..., angle)
