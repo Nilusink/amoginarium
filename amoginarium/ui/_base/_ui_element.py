@@ -306,9 +306,6 @@ class UIElement(UIEntity):
                 self.__reference_absolute_global_position + self.__data.absolute_position_to_parent
         ).xy
 
-        if self.__reference_absolute_global_position.xy != (0, 0):
-            print(self.__reference_absolute_global_position.xy, self.__data.absolute_position_to_parent)
-
         self.__data.relative_position_global.xy = (
                 self.__reference_relative_global_position + self.__data.relative_position_to_parent
         ).xy

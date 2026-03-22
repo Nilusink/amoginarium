@@ -8,7 +8,9 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
+from types import EllipsisType
 import typing as tp
+
 if tp.TYPE_CHECKING:
     from ._ui_element import UIElement
 
@@ -24,6 +26,7 @@ class UIEntity(BaseEntity):
     _root_visibility: bool
     __visibility_change_root: bool
 
+    __next_ui_element_parent: UIElement | None | EllipsisType
     __is_ui_element: bool
 
     def __init__(
@@ -43,6 +46,7 @@ class UIEntity(BaseEntity):
         self._root_visibility = False
         self.__visibility_change_root = False
         self.__is_ui_element = _is_ui_element
+        self.__next_ui_element_parent = ...
 
         if parent is not None:
             parent.add_child(self)
@@ -239,9 +243,16 @@ class UIEntity(BaseEntity):
     # region Methods: ui-element
     @property
     def _next_ui_element_parent(self) -> UIElement | None:
+        """:return: Next UI-Element in the parent chain or None if there is none"""
+        if self.__next_ui_element_parent is not Ellipsis:
+            return self.__next_ui_element_parent
+
         if self._parent is not None:
-            return self._parent if self._parent._is_ui_element else self._parent._next_ui_element_parent
-        return None
+            self.__next_ui_element_parent = self._parent if self._parent._is_ui_element \
+                else self._parent._next_ui_element_parent
+        else:
+            self.__next_ui_element_parent = None
+        return self.__next_ui_element_parent
 
     # endregion
 

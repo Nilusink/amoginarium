@@ -43,12 +43,12 @@ class StartMenu(UIEntity):
             command=start_game_callback
         )
 
-        Button(
+        self.but = Button(
             (0.5, 0.5),
             (0.2, 0.12),
             "Settings",
             parent=rect,
-            command=open_settings_callback,
+            command=self.toggle_use_collision_mask,
         )
 
         Button(
@@ -60,7 +60,7 @@ class StartMenu(UIEntity):
         )
 
     def toggle_use_collision_mask(self, *_):
-        self.but.relative_size_global = convert_coord((0.5, 0.5), Vec2)
-        self.but.absolute_size_global = convert_coord((200, 100), Vec2)
+        # self.but.relative_size_global = convert_coord((0.5, 0.5), Vec2)
+        # self.but.absolute_size_global = convert_coord((200, 200), Vec2)
 
         self.call += 1
