@@ -11,7 +11,7 @@ Project: amoginarium
 from typing import Callable
 
 from ..logic import convert_coord, Vec2
-from ..ui import Button, UIEntity
+from ..ui import Button, UIEntity, Rectangle
 
 
 ##################################################
@@ -29,11 +29,17 @@ class StartMenu(UIEntity):
     ) -> None:
         super().__init__()
 
+        rect = Rectangle(
+            (0.5, 0.5),
+            (0.5, 0.5),
+            parent=self,
+        )
+
         Button(
             (0.5, 0.35),
             (0.2, 0.12),
             "New game",
-            parent=self,
+            parent=rect,
             command=start_game_callback
         )
 
@@ -41,7 +47,7 @@ class StartMenu(UIEntity):
             (0.5, 0.5),
             (0.2, 0.12),
             "Settings",
-            parent=self,
+            parent=rect,
             command=open_settings_callback,
         )
 
@@ -49,7 +55,7 @@ class StartMenu(UIEntity):
             (0.5, 0.65),
             (0.2, 0.12),
             "Exit",
-            parent=self,
+            parent=rect,
             command=exit_callback,
         )
 

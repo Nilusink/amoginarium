@@ -6,7 +6,7 @@ Created: 11.03.2026
 Authors: LukasKrah
 """
 
-from amoginarium.ui._base._ui_element import UIElement
+from .._base import UIEventElement
 
 import pygame as pg
 
@@ -19,7 +19,7 @@ from amoginarium.shared import global_vars
 #                     Code                       #
 ##################################################
 
-class UICursor(UIElement):
+class UICursor(UIEventElement):
     __velocity: Vec2
 
     def __init__(self) -> None:
@@ -37,7 +37,7 @@ class UICursor(UIElement):
 
         self.__velocity.xy = (new_pos - self.absolute_position_global).xy
 
-        self.absolute_position = new_pos
+        self.absolute_position_global = new_pos
 
         super()._gl_draw()
 

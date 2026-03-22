@@ -206,7 +206,6 @@ class UIEntity(BaseEntity):
         Note: Only overwrite in inheritance for before/after draw updates
         Note: Ignores parent visibility
         """
-        print("DRAW", recursive, force_draw)
         if force_draw or self.visible:
             self._gl_draw()
             if recursive:

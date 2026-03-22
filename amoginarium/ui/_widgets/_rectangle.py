@@ -9,18 +9,18 @@ Authors: LukasKrah
 import typing as tp
 
 from amoginarium.render_bindings import renderer
-from amoginarium.logic import coord_t, Vec2
 from amoginarium.shared import global_vars
 from amoginarium.audio import SoundEffect
+from amoginarium.logic import coord_t, Vec2
 
 from .._animations import FloatAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
     anim_float_values_t, anim_color_values_t, ColorAnimation
 from .._surface_renderer import PygameSurfaceRenderer
-from .._base import UIElement, UIEntity
+from .._base import UIEventElement, UIEntity
 from .._types import Anchor
 
 
-class Rectangle(UIElement):
+class Rectangle(UIEventElement):
     """UI rectangle with basic sounds and animations"""
     __bg_color_animation: ColorAnimation
     __border_color_animation: ColorAnimation
@@ -148,7 +148,7 @@ class Rectangle(UIElement):
         self.__bg_color_animation.update(delta_cal)
         self.__radius_animation.update(delta_cal)
         extend_delta = self.__extend_animation.update(delta_cal)
-        self.absolute_size_global += extend_delta * 2
+        self.absolute_size += extend_delta * 2
 
         border_width = self.__border_width_animation.current_value
         border_color = self.__border_color_animation.current_value
@@ -161,7 +161,7 @@ class Rectangle(UIElement):
             if border_width > 0:
                 renderer.draw_rounded_rect(
                     self.top_left,
-                    self.absolute_size_global,
+                    self.absolute_size,
                     border_color,
                     radius,
                     convert_global=False
@@ -170,7 +170,7 @@ class Rectangle(UIElement):
             inner_radius = radius - border_width
             renderer.draw_rounded_rect(
                 self.top_left + border_width,
-                self.absolute_size_global - 2 * border_width,
+                self.absolute_size - 2 * border_width,
                 bg_color,
                 inner_radius if inner_radius > 0 else 0,
                 convert_global=False
@@ -180,14 +180,14 @@ class Rectangle(UIElement):
             if border_width > 0:
                 renderer.draw_rect(
                     self.top_left,
-                    self.absolute_size_global,
+                    self.absolute_size,
                     border_color,
                     convert_global=False
                 )
 
             renderer.draw_rect(
                 self.top_left + border_width,
-                self.absolute_size_global - 2 * border_width,
+                self.absolute_size - 2 * border_width,
                 bg_color,
                 convert_global=False
             )
@@ -196,14 +196,14 @@ class Rectangle(UIElement):
             PygameSurfaceRenderer.draw_rect(
                 self._collision_surface,
                 (0, 0),
-                self.absolute_size_global,
+                self.absolute_size,
                 border_radius=radius
             )
 
     def _reset(self) -> None:
         super()._reset()
 
-        self.absolute_size_global -= self.__extend_animation.current_value * 2
+        self.absolute_size -= self.__extend_animation.current_value * 2
 
         self.__extend_animation.reset()
         self.__bg_color_animation.reset()
