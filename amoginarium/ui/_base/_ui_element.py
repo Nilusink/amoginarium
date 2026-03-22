@@ -8,22 +8,16 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from time import perf_counter_ns
-
-# noinspection PyPackageRequirements
-import pygame as pg
 import typing as tp
 from dataclasses import dataclass, field
 
-from amoginarium.logic import Vec2, coord_t, convert_coord
+from amoginarium.logic import Vec2, coord_t, convert_coord, TupleMath
 from amoginarium.shared import global_vars
-from amoginarium.entities import Cursor, UIEntities
 
 from ._ui_entity import UIEntity
 
-if tp.TYPE_CHECKING:
-    from .._widgets import UICursor
 from .._types import Anchor
+
 
 @dataclass
 class UIElementData:
@@ -39,13 +33,13 @@ class UIElementData:
     absolute_position_to_parent: Vec2 = field(default_factory=Vec2)
     relative_size_to_parent: Vec2 = field(default_factory=Vec2)
 
-    width: float = 0.0
-    height: float = 0.0
-    center: Vec2 = field(default_factory=Vec2)
-    top_left: Vec2 = field(default_factory=Vec2)
-    top_right: Vec2 = field(default_factory=Vec2)
-    bottom_left: Vec2 = field(default_factory=Vec2)
-    bottom_right: Vec2 = field(default_factory=Vec2)
+    absolute_width: float = 0.0
+    absolute_height: float = 0.0
+    absolute_center_global: Vec2 = field(default_factory=Vec2)
+    absolute_top_left_global: Vec2 = field(default_factory=Vec2)
+    absolute_top_right_global: Vec2 = field(default_factory=Vec2)
+    absolute_bottom_left_global: Vec2 = field(default_factory=Vec2)
+    absolute_bottom_right_global: Vec2 = field(default_factory=Vec2)
 
     position_is_relative_to_parent: bool = True
     size_is_relative_to_parent: bool = True
@@ -57,8 +51,8 @@ class UIElementData:
 
     def __post_init__(self):
         self.placement_anchor = Anchor.CENTER
-        self.width = 0.0
-        self.height = 0.0
+        self.absolute_width = 0.0
+        self.absolute_height = 0.0
         self.position_is_relative_to_parent = True
         self.size_is_relative_to_parent = True
         self.relative_position_global = Vec2()
@@ -68,15 +62,15 @@ class UIElementData:
         self.relative_position_to_parent = Vec2()
         self.absolute_position_to_parent = Vec2()
         self.relative_size_to_parent = Vec2()
-        self.center = Vec2()
-        self.top_left = Vec2()
-        self.top_right = Vec2()
+        self.absolute_center_global = Vec2()
+        self.absolute_top_left_global = Vec2()
+        self.absolute_top_right_global = Vec2()
 
     def copy_from(self, other: UIElementData) -> None:
         """Updates this instance with values from another in-place."""
         self.placement_anchor = other.placement_anchor
-        self.width = other.width
-        self.height = other.height
+        self.absolute_width = other.absolute_width
+        self.absolute_height = other.absolute_height
         self.position_is_relative_to_parent = other.position_is_relative_to_parent
         self.size_is_relative_to_parent = other.size_is_relative_to_parent
 
@@ -92,15 +86,62 @@ class UIElementData:
         # noinspection DuplicatedCode
         self.relative_size_to_parent.xy = other.relative_size_to_parent.xy
 
-        self.center.xy = other.center.xy
-        self.top_left.xy = other.top_left.xy
-        self.top_right.xy = other.top_right.xy
-        self.bottom_left.xy = other.bottom_left.xy
-        self.bottom_right.xy = other.bottom_right.xy
+        self.absolute_center_global.xy = other.absolute_center_global.xy
+        # noinspection DuplicatedCode
+        self.absolute_top_left_global.xy = other.absolute_top_left_global.xy
+        self.absolute_top_right_global.xy = other.absolute_top_right_global.xy
+        self.absolute_bottom_left_global.xy = other.absolute_bottom_left_global.xy
+        self.absolute_bottom_right_global.xy = other.absolute_bottom_right_global.xy
+
+        self.reference_relative_global_position.xy = other.reference_relative_global_position.xy
+        self.reference_absolute_global_position.xy = other.reference_absolute_global_position.xy
+        self.reference_relative_global_size.xy = other.reference_relative_global_size.xy
+        self.reference_absolute_size.xy = other.reference_absolute_size.xy
+
+    def __ne__(self, other: object) -> bool:
+        """Explicitly compares all values to guarantee detection of changes."""
+        if not isinstance(other, UIElementData):
+            return NotImplemented
+
+        # 1. Compare Primitives & Enums
+        if (self.absolute_width != other.absolute_width or
+                self.absolute_height != other.absolute_height or
+                self.placement_anchor != other.placement_anchor or
+                self.position_is_relative_to_parent != other.position_is_relative_to_parent or
+                self.size_is_relative_to_parent != other.size_is_relative_to_parent):
+            return True
+
+        # 2. Compare Vec2 instances by strictly extracting their .xy tuples
+        if (self.relative_position_to_parent.xy != other.relative_position_to_parent.xy or
+                self.absolute_position_to_parent.xy != other.absolute_position_to_parent.xy or
+                self.relative_size_to_parent.xy != other.relative_size_to_parent.xy or
+
+                self.relative_position_global.xy != other.relative_position_global.xy or
+                self.absolute_position_global.xy != other.absolute_position_global.xy or
+                self.relative_size_global.xy != other.relative_size_global.xy or
+                self.absolute_size.xy != other.absolute_size.xy or
+
+                self.absolute_center_global.xy != other.absolute_center_global.xy or
+                self.absolute_top_left_global.xy != other.absolute_top_left_global.xy or
+                self.absolute_top_right_global.xy != other.absolute_top_right_global.xy or
+                self.absolute_bottom_left_global.xy != other.absolute_bottom_left_global.xy or
+                self.absolute_bottom_right_global.xy != other.absolute_bottom_right_global.xy or
+
+                self.reference_relative_global_size.xy != other.reference_relative_global_size.xy or
+                self.reference_absolute_size.xy != other.reference_absolute_size.xy or
+                self.reference_absolute_global_position.xy != other.reference_absolute_global_position.xy or
+                self.reference_relative_global_position.xy != other.reference_relative_global_position.xy):
+            return True
+
+        return False
+
+    def __eq__(self, other: object) -> bool:
+        return not self.__ne__(other)
 
 
 class UIElement(UIEntity):
     """Basic UI component with position and size stuff"""
+    cursor = False
 
     __NULL_VEC2: Vec2 = Vec2()
     __ONE_VEC2: Vec2 = Vec2().from_cartesian(1, 1)
@@ -148,21 +189,18 @@ class UIElement(UIEntity):
             self.__data.relative_position_to_parent.xy = convert_coord(position)
             self.__data.relative_size_to_parent.xy = convert_coord(size)
 
-        self._update_relative_values()
-
-        self.__last_data.copy_from(self.__data)
-        self.__calc_values()
         self.__changed_since_last_draw = True
+        self.__calc_values()
 
     # region Methods: parent size/position
     @property
-    def __reference_relative_size(self) -> Vec2:
+    def __reference_relative_global_size(self) -> Vec2:
         if self._next_ui_element_parent is None or not self.__data.size_is_relative_to_parent:
             return UIElement.__ONE_VEC2
         return self._next_ui_element_parent.relative_size_global
 
     @property
-    def __reference_absolute_size(self) -> Vec2:
+    def __reference_absolute_global_size(self) -> Vec2:
         if self._next_ui_element_parent is None or not self.__data.size_is_relative_to_parent:
             return global_vars.resolution
         return self._next_ui_element_parent.absolute_size
@@ -181,9 +219,9 @@ class UIElement(UIEntity):
 
     def _update_relative_values(self) -> None:
         self.__data.reference_relative_global_position.xy = self.__reference_relative_global_position.xy
-        self.__data.reference_relative_global_size.xy = self.__reference_relative_size.xy
-        self.__data.reference_absolute_global_position.xy = self.__reference_absolute_global_position.xy
-        self.__data.reference_absolute_size.xy = self.__reference_absolute_size.xy
+        self.__data.reference_relative_global_size.xy = self.__reference_relative_global_size.xy
+        self.__data.reference_absolute_global_position.xy = self.__reference_absolute_global_position.xy  # wichtig
+        self.__data.reference_absolute_size.xy = self.__reference_absolute_global_size.xy  # sehr wichtig
 
     # endregion
 
@@ -223,76 +261,87 @@ class UIElement(UIEntity):
     # region Methods: drawing
     def __check_modifications(self) -> None:
         """
-        Detects external modifications by comparing __data to __last_data.
+        Detects external modifications by comparing data to last_data.
         Calculates relative_position_to_parent and relative_size_to_parent from the changed values.
         """
+        # Relative size to parent modified
         if self.__data.relative_size_to_parent.xy != self.__last_data.relative_size_to_parent.xy:
-            pass
+            pass  # This is one of the two from which the whole calculation bases from
+        # Relative position to parent modified
+        elif self.__data.relative_position_to_parent.xy != self.__last_data.relative_position_to_parent.xy:
+            pass  # This is one of the two from which the whole calculation bases from
+        # Absolute size modified
         elif self.__data.absolute_size.xy != self.__last_data.absolute_size.xy:
             self.__data.relative_size_to_parent.xy = self.__absolute_to_relative(self.__data.absolute_size)
+        # Relative global size modified
         elif self.__data.relative_size_global.xy != self.__last_data.relative_size_global.xy:
-            abs_size = self.__relative_to_absolute(self.__data.relative_size_global)
-            self.__data.relative_size_to_parent.xy = self.__absolute_to_relative(abs_size)
-        elif self.__data.width != self.__last_data.width or self.__data.height != self.__last_data.height:
-            self.__data.absolute_size.xy = (self.__data.width, self.__data.height)
-            self.__data.relative_size_to_parent.xy = self.__absolute_to_relative(self.__data.absolute_size)
+            self.__data.relative_size_to_parent.xy = TupleMath.div(
+                self.__data.relative_size_global.xy,
+                self.__data.reference_relative_global_size.xy
+            )
+        # absolute width or absolute height modified
+        elif self.__data.absolute_width != self.__last_data.absolute_width or self.__data.absolute_height != self.__last_data.absolute_height:
+            self.__data.relative_size_to_parent.xy = \
+                self.__absolute_to_relative((self.__data.absolute_width, self.__data.absolute_height))
 
         temp_abs_size = convert_coord(self.__relative_to_absolute(self.__data.relative_size_to_parent), Vec2)
 
-        if self.__data.relative_position_to_parent.xy != self.__last_data.relative_position_to_parent.xy:
-            pass
-        elif self.__data.absolute_position_to_parent.xy != self.__last_data.absolute_position_to_parent.xy:
-            self.__data.relative_position_to_parent.xy = self.__absolute_to_relative(self.__data.absolute_position_to_parent)
-        elif self.__data.relative_position_global.xy != self.__last_data.relative_position_global.xy:
-            self.__data.relative_position_to_parent.xy = (
-                    self.__data.relative_position_global - self.__reference_relative_global_position).xy
-        elif self.__data.absolute_position_global.xy != self.__last_data.absolute_position_global.xy:
+        if self.__data.absolute_position_to_parent.xy != self.__last_data.absolute_position_to_parent.xy:
+            self.__data.relative_position_to_parent.xy = \
+                self.__absolute_to_relative(self.__data.absolute_position_to_parent)
+        if self.__data.relative_position_global.xy != self.__last_data.relative_position_global.xy:
+            self.__data.relative_position_to_parent.xy = TupleMath.sub(
+                self.__data.relative_position_global.xy,
+                self.__reference_relative_global_position.xy
+            )
+        if self.__data.absolute_position_global.xy != self.__last_data.absolute_position_global.xy:
             abs_pos_to_parent = self.__data.absolute_position_global - self.__reference_absolute_global_position
             self.__data.relative_position_to_parent.xy = self.__absolute_to_relative(abs_pos_to_parent)
         else:
-            new_abs_global = None
-            half_size = temp_abs_size / 2
+            new_abs_global_xy = None
+            half_size = TupleMath.div(temp_abs_size.xy, (2, 2))
 
-            if self.__data.center.xy != self.__last_data.center.xy:
+            if self.__data.absolute_center_global.xy != self.__last_data.absolute_center_global.xy:
                 if self.__data.placement_anchor == "center":
-                    new_abs_global = self.__data.center
+                    new_abs_global_xy = self.__data.absolute_center_global.xy
                 elif self.__data.placement_anchor == "nw":
-                    new_abs_global = self.__data.center - half_size
+                    new_abs_global_xy = TupleMath.sub(self.__data.absolute_center_global.xy, half_size)
 
-            elif self.__data.top_left.xy != self.__last_data.top_left.xy:
+            elif self.__data.absolute_top_left_global.xy != self.__last_data.absolute_top_left_global.xy:
                 if self.__data.placement_anchor == "nw":
-                    new_abs_global = self.__data.top_left
+                    new_abs_global_xy = self.__data.absolute_top_left_global.xy
                 elif self.__data.placement_anchor == "center":
-                    new_abs_global = self.__data.top_left + half_size
+                    new_abs_global_xy = TupleMath.add(self.__data.absolute_top_left_global.xy, half_size)
 
-            elif self.__data.top_right.xy != self.__last_data.top_right.xy:
+            elif self.__data.absolute_top_right_global.xy != self.__last_data.absolute_top_right_global.xy:
                 if self.__data.placement_anchor == "nw":
-                    offset = convert_coord((temp_abs_size.x, 0), Vec2)
-                    new_abs_global = self.__data.top_right - offset
+                    new_abs_global_xy = TupleMath.sub(self.__data.absolute_top_right_global.xy, (temp_abs_size.x, 0))
                 elif self.__data.placement_anchor == "center":
-                    offset = convert_coord((temp_abs_size.x / 2, -temp_abs_size.y / 2), Vec2)
-                    new_abs_global = self.__data.top_right - offset
+                    new_abs_global_xy = TupleMath.sub(self.__data.absolute_top_right_global.xy, (temp_abs_size.x / 2, -temp_abs_size.y / 2))
 
-            elif self.__data.bottom_left.xy != self.__last_data.bottom_left.xy:
+            elif self.__data.absolute_bottom_left_global.xy != self.__last_data.absolute_bottom_left_global.xy:
                 if self.__data.placement_anchor == "nw":
-                    offset = convert_coord((0, temp_abs_size.y), Vec2)
-                    new_abs_global = self.__data.bottom_left - offset
+                    new_abs_global_xy = TupleMath.sub(self.__data.absolute_bottom_left_global.xy, (0, temp_abs_size.y))
                 elif self.__data.placement_anchor == "center":
-                    offset = convert_coord((-temp_abs_size.x / 2, temp_abs_size.y / 2), Vec2)
-                    new_abs_global = self.__data.bottom_left - offset
+                    new_abs_global_xy = TupleMath.sub(self.__data.absolute_bottom_left_global.xy, (-temp_abs_size.x / 2, temp_abs_size.y / 2))
 
-            elif self.__data.bottom_right.xy != self.__last_data.bottom_right.xy:
+            elif self.__data.absolute_bottom_right_global.xy != self.__last_data.absolute_bottom_right_global.xy:
                 if self.__data.placement_anchor == "nw":
-                    new_abs_global = self.__data.bottom_right - temp_abs_size
+                    new_abs_global_xy = TupleMath.sub(self.__data.absolute_bottom_right_global.xy, temp_abs_size.xy)
                 elif self.__data.placement_anchor == "center":
-                    new_abs_global = self.__data.bottom_right - half_size
+                    new_abs_global_xy = TupleMath.sub(self.__data.absolute_bottom_right_global.xy, half_size)
 
-            if new_abs_global is not None:
-                abs_pos_to_parent = new_abs_global - self.__reference_absolute_global_position
+            if new_abs_global_xy is not None:
+                abs_pos_to_parent_xy = TupleMath.sub(new_abs_global_xy, self.__reference_absolute_global_position.xy)
+                # Reconstruct to Vec2 only right before passing to __absolute_to_relative if it strictly expects a vector
+                abs_pos_to_parent = convert_coord(abs_pos_to_parent_xy, Vec2)
                 self.__data.relative_position_to_parent.xy = self.__absolute_to_relative(abs_pos_to_parent)
 
     def __calc_values(self) -> None:
         self._update_relative_values()
+
+        if self.__data == self.__last_data:
+            return
 
         self.__check_modifications()
 
@@ -302,52 +351,71 @@ class UIElement(UIEntity):
         self.__data.absolute_size.xy = self.__relative_to_absolute(
             self.__data.relative_size_to_parent
         )
-        self.__data.absolute_position_global.xy = (
-                self.__reference_absolute_global_position + self.__data.absolute_position_to_parent
-        ).xy
 
-        self.__data.relative_position_global.xy = (
-                self.__reference_relative_global_position + self.__data.relative_position_to_parent
-        ).xy
+        self.__data.absolute_position_global.xy = TupleMath.add(
+            self.__reference_absolute_global_position.xy,
+            self.__data.absolute_position_to_parent.xy
+        )
 
-        # self.__data.relative_size_global.xy = (
-        #         self.__reference_absolute_size * (self.__data.absolute_size / global_vars.resolution)
-        # ).xy
+        self.__data.relative_position_global.xy = TupleMath.add(
+            self.__reference_relative_global_position.xy,
+            self.__data.relative_position_to_parent.xy
+        )
 
-        # todo: what the helly?
-        calc_x = self.__data.absolute_size.x / global_vars.resolution.x
-        calc_y = self.__data.absolute_size.y / global_vars.resolution.y
+        self.__data.relative_size_global.xy = TupleMath.mul(
+            self.__data.reference_relative_global_size.xy,
+            TupleMath.div(self.__data.absolute_size.xy, global_vars.resolution.xy)
+        )
 
-        self.__data.relative_size_global.xy = (self.__data.reference_relative_global_size * convert_coord((calc_x, calc_y), Vec2)).xy
-
-        self.__data.width = self.__data.absolute_size.x
-        self.__data.height = self.__data.absolute_size.y
+        self.__data.absolute_width = self.__data.absolute_size.x
+        self.__data.absolute_height = self.__data.absolute_size.y
 
         if self.__data.placement_anchor == "nw":
-            self.__data.top_left.xy = self.__data.absolute_position_global.xy
-            self.__data.top_right.xy = (self.__data.absolute_position_global
-                                        + convert_coord((self.__data.absolute_size.x, 0), Vec2)).xy
-            self.__data.bottom_left.xy = (self.__data.absolute_position_global
-                                          + convert_coord((0, self.__data.absolute_size.y), Vec2)).xy
-            self.__data.bottom_right.xy = (self.__data.absolute_position_global + self.__data.absolute_size).xy
-
-            self.__data.center.xy = (self.__data.absolute_position_global + self.__data.absolute_size / 2).xy
+            self.__data.absolute_top_left_global.xy = self.__data.absolute_position_global.xy
+            self.__data.absolute_top_right_global.xy = TupleMath.add(
+                self.__data.absolute_position_global.xy,
+                (self.__data.absolute_size.x, 0)
+            )
+            self.__data.absolute_bottom_left_global.xy = TupleMath.add(
+                self.__data.absolute_position_global.xy,
+                (0, self.__data.absolute_size.y)
+            )
+            self.__data.absolute_bottom_right_global.xy = TupleMath.add(
+                self.__data.absolute_position_global.xy,
+                self.__data.absolute_size.xy
+            )
+            self.__data.absolute_center_global.xy = TupleMath.add(
+                self.__data.absolute_position_global.xy,
+                TupleMath.div(self.__data.absolute_size.xy, (2, 2))
+            )
 
         elif self.__data.placement_anchor == "center":
-            self.__data.top_left.xy = (self.__data.absolute_position_global - self.__data.absolute_size / 2).xy
-            self.__data.top_right.xy = (self.__data.absolute_position_global + convert_coord(
-                (self.__data.absolute_size.x / 2, -self.__data.absolute_size.y / 2),
-                Vec2)).xy
-            self.__data.bottom_left.xy = (self.__data.absolute_position_global + convert_coord(
-                (-self.__data.absolute_size.x / 2, self.__data.absolute_size.y / 2),
-                Vec2)).xy
-            self.__data.bottom_right.xy = (self.__data.absolute_position_global + self.__data.absolute_size / 2).xy
+            half_size = TupleMath.div(self.__data.absolute_size.xy, (2, 2))
 
-            self.__data.center.xy = self.__data.absolute_position_global.xy
+            self.__data.absolute_top_left_global.xy = TupleMath.sub(
+                self.__data.absolute_position_global.xy,
+                half_size
+            )
+            self.__data.absolute_top_right_global.xy = TupleMath.add(
+                self.__data.absolute_position_global.xy,
+                (self.__data.absolute_size.x / 2, -self.__data.absolute_size.y / 2)
+            )
+            self.__data.absolute_bottom_left_global.xy = TupleMath.add(
+                self.__data.absolute_position_global.xy,
+                (-self.__data.absolute_size.x / 2, self.__data.absolute_size.y / 2)
+            )
+            self.__data.absolute_bottom_right_global.xy = TupleMath.add(
+                self.__data.absolute_position_global.xy,
+                half_size
+            )
 
-    def __calc_if_modified(self) -> None:
-        if self.__data != self.__last_data:
-            self.__calc_values()
+            self.__data.absolute_center_global.xy = self.__data.absolute_position_global.xy
+
+        if not self._ui_changed:
+            if self.__data != self.__last_data:
+                self._ui_changed = True
+
+        self.__last_data.copy_from(self.__data)
 
     def _gl_draw(self) -> None:
         """
@@ -359,12 +427,6 @@ class UIElement(UIEntity):
         - Draw the UI and collision surface
         """
         self.__calc_values()
-
-        if not self._ui_changed:
-            if self.__data != self.__last_data:
-                self._ui_changed = True
-
-        self.__last_data.copy_from(self.__data)
 
         super()._gl_draw()
 
@@ -395,205 +457,205 @@ class UIElement(UIEntity):
     @property
     def placement_anchor(self) -> Anchor:
         """:return: Placement anchor"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.placement_anchor
 
     @placement_anchor.setter
     def placement_anchor(self, value: Anchor) -> None:
         """:param value: Placement anchor"""
+        self.__calc_values()
         self.__data.placement_anchor = value
-        self.__calc_if_modified()
 
     @property
     def position_is_relative_to_parent(self) -> bool:
         """:return: Whether position is relative to parent"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.position_is_relative_to_parent
 
     @position_is_relative_to_parent.setter
     def position_is_relative_to_parent(self, value: bool) -> None:
         """:param value: Set position relativity"""
+        self.__calc_values()
         self.__data.position_is_relative_to_parent = bool(value)
-        self.__calc_if_modified()
 
     @property
     def size_is_relative_to_parent(self) -> bool:
         """:return: Whether size is relative to parent"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.size_is_relative_to_parent
 
     @size_is_relative_to_parent.setter
     def size_is_relative_to_parent(self, value: bool) -> None:
         """:param value: Set size relativity"""
+        self.__calc_values()
         self.__data.size_is_relative_to_parent = bool(value)
-        self.__calc_if_modified()
 
     @property
     def width(self) -> float:
         """:return: Absolute width"""
-        self.__calc_if_modified()
-        return self.__data.width
+        self.__calc_values()
+        return self.__data.absolute_width
 
     @width.setter
     def width(self, value: float) -> None:
         """:param value: Absolute width"""
-        self.__data.width = float(value)
-        self.__calc_if_modified()
+        self.__calc_values()
+        self.__data.absolute_width = float(value)
 
     @property
     def height(self) -> float:
         """:return: Absolute height"""
-        self.__calc_if_modified()
-        return self.__data.height
+        self.__calc_values()
+        return self.__data.absolute_height
 
     @height.setter
     def height(self, value: float) -> None:
         """:param value: Absolute height"""
-        self.__data.height = float(value)
-        self.__calc_if_modified()
+        self.__calc_values()
+        self.__data.absolute_height = float(value)
 
     @property
     def relative_position_to_parent(self) -> Vec2:
         """:return: Relative position to parent"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.relative_position_to_parent
 
     @relative_position_to_parent.setter
     def relative_position_to_parent(self, value: coord_t) -> None:
         """:param value: Relative position to parent"""
+        self.__calc_values()
         self.__data.relative_position_to_parent.xy = convert_coord(value)
-        self.__calc_if_modified()
 
     @property
     def absolute_position_to_parent(self) -> Vec2:
         """:return: Absolute position to parent"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.absolute_position_to_parent
 
     @absolute_position_to_parent.setter
     def absolute_position_to_parent(self, value: coord_t) -> None:
         """:param value: Absolute position to parent"""
+        self.__calc_values()
         self.__data.absolute_position_to_parent.xy = convert_coord(value)
-        self.__calc_if_modified()
 
     @property
     def relative_size_to_parent(self) -> Vec2:
         """:return: Relative size to parent"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.relative_size_to_parent
 
     @relative_size_to_parent.setter
     def relative_size_to_parent(self, value: coord_t) -> None:
         """:param value: Relative size to parent"""
+        self.__calc_values()
         self.__data.relative_size_to_parent.xy = convert_coord(value)
-        self.__calc_if_modified()
 
     @property
     def relative_position_global(self) -> Vec2:
         """:return: Relative global position"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.relative_position_global
 
     @relative_position_global.setter
     def relative_position_global(self, value: coord_t) -> None:
         """:param value: Relative global position"""
+        self.__calc_values()
         self.__data.relative_position_global.xy = convert_coord(value)
-        self.__calc_if_modified()
 
     @property
     def absolute_position_global(self) -> Vec2:
         """:return: Absolute global position"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.absolute_position_global
 
     @absolute_position_global.setter
     def absolute_position_global(self, value: coord_t) -> None:
         """:param value: Absolute global position"""
+        self.__calc_values()
         self.__data.absolute_position_global.xy = convert_coord(value)
-        self.__calc_if_modified()
 
     @property
     def relative_size_global(self) -> Vec2:
         """:return: Relative global size"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.relative_size_global
 
     @relative_size_global.setter
     def relative_size_global(self, value: coord_t) -> None:
         """:param value: Relative global size"""
+        self.__calc_values()
         self.__data.relative_size_global.xy = convert_coord(value)
-        self.__calc_if_modified()
 
     @property
     def absolute_size(self) -> Vec2:
         """:return: Absolute size"""
-        self.__calc_if_modified()
+        self.__calc_values()
         return self.__data.absolute_size
 
     @absolute_size.setter
     def absolute_size(self, value: coord_t) -> None:
         """:param value: Absolute size"""
+        self.__calc_values()
         self.__data.absolute_size.xy = convert_coord(value)
-        self.__calc_if_modified()
 
     @property
     def center(self) -> Vec2:
         """:return: Absolute center"""
-        self.__calc_if_modified()
-        return self.__data.center
+        self.__calc_values()
+        return self.__data.absolute_center_global
 
     @center.setter
     def center(self, value: coord_t) -> None:
         """:param value: Absolute center"""
-        self.__data.center.xy = convert_coord(value)
-        self.__calc_if_modified()
+        self.__calc_values()
+        self.__data.absolute_center_global.xy = convert_coord(value)
 
     @property
     def top_left(self) -> Vec2:
         """:return: Absolute top left"""
-        self.__calc_if_modified()
-        return self.__data.top_left
+        self.__calc_values()
+        return self.__data.absolute_top_left_global
 
     @top_left.setter
     def top_left(self, value: coord_t) -> None:
         """:param value: Absolute top left"""
-        self.__data.top_left.xy = convert_coord(value)
-        self.__calc_if_modified()
+        self.__calc_values()
+        self.__data.absolute_top_left_global.xy = convert_coord(value)
 
     @property
     def top_right(self) -> Vec2:
         """:return: Absolute top right"""
-        self.__calc_if_modified()
-        return self.__data.top_right
+        self.__calc_values()
+        return self.__data.absolute_top_right_global
 
     @top_right.setter
     def top_right(self, value: coord_t) -> None:
         """:param value: Absolute top right"""
-        self.__calc_if_modified()
-        self.__data.top_right.xy = convert_coord(value)
+        self.__calc_values()
+        self.__data.absolute_top_right_global.xy = convert_coord(value)
 
     @property
     def bottom_left(self) -> Vec2:
         """:return: Absolute bottom left"""
-        self.__calc_if_modified()
-        return self.__data.bottom_left
+        self.__calc_values()
+        return self.__data.absolute_bottom_left_global
 
     @bottom_left.setter
     def bottom_left(self, value: coord_t) -> None:
         """:param value: Absolute bottom left"""
-        self.__data.bottom_left.xy = convert_coord(value)
-        self.__calc_if_modified()
+        self.__calc_values()
+        self.__data.absolute_bottom_left_global.xy = convert_coord(value)
 
     @property
     def bottom_right(self) -> Vec2:
         """:return: Absolute bottom right"""
-        self.__calc_if_modified()
-        return self.__data.bottom_right
+        self.__calc_values()
+        return self.__data.absolute_bottom_right_global
 
     @bottom_right.setter
     def bottom_right(self, value: coord_t) -> None:
         """:param value: Absolute bottom right"""
-        self.__data.bottom_right.xy = convert_coord(value)
-        self.__calc_if_modified()
+        self.__calc_values()
+        self.__data.absolute_bottom_right_global.xy = convert_coord(value)
 
     # endregion

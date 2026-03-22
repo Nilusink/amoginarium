@@ -25,6 +25,7 @@ class UICursor(UIEventElement):
     def __init__(self) -> None:
         super().__init__((0, 0), (0, 0), use_collision_mask=False)
 
+        self.cursor = True
         self.__velocity = Vec2()
         self.add(Cursor)
         self.show()
