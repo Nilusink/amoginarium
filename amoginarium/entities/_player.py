@@ -479,8 +479,8 @@ class Player(LRImageEntity):
             holding_slot = self._holding_slot
             if holding_slot:
                 if self._controller.shoot:
-                    self._holding_slot.item.position.x = self._controller.mouse_x
-                    self._holding_slot.item.position.y = self._controller.mouse_y
+                    self._holding_slot.item.position.x = self._controller.mouse_x * global_vars.screen_size_fac_x
+                    self._holding_slot.item.position.y = self._controller.mouse_y * global_vars.screen_size_fac_y
 
                 else:
                     if hover_slot:
@@ -641,12 +641,12 @@ class Player(LRImageEntity):
                 # background
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_size_real.x * .25,
-                            global_vars.screen_size_real.y * .1
+                            global_vars.screen_size.x * .25,
+                            global_vars.screen_size.y * .1
                     ),
                     (
-                        global_vars.screen_size_real.x * .5,
-                        global_vars.screen_size_real.y * .8
+                        global_vars.screen_size.x * .5,
+                        global_vars.screen_size.y * .8
                     ),
                     Color().from_255(80, 80, 80),
                     20,
@@ -671,8 +671,8 @@ class Player(LRImageEntity):
                 # character display
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_size_real.x * .28,
-                            global_vars.screen_size_real.y * .17
+                            global_vars.screen_size.x * .28,
+                            global_vars.screen_size.y * .17
                     ),
                     (
                         self.size.x * 3,
@@ -684,8 +684,8 @@ class Player(LRImageEntity):
                 )
                 self.draw_at(
                     Vec2().from_cartesian(
-                        global_vars.screen_size_real.x * .28 + self.size.x * 1.5,
-                        global_vars.screen_size_real.y * .17 + self.size.y * 2
+                        global_vars.screen_size.x * .28 + self.size.x * 1.5,
+                        global_vars.screen_size.y * .17 + self.size.y * 2
                     ),
                     self.size * 2,
                     angle,
@@ -698,7 +698,6 @@ class Player(LRImageEntity):
                     self.position,
                     angle
                 )
-
 
     def kill(self, killed_by=...) -> None:
         """
