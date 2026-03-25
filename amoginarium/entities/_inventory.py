@@ -202,27 +202,27 @@ class Inventory:
         draw the inventory at a specified location
         :returns: size
         """
-        self._ui["root"].relative_position = pos
+        self._ui["root"].position.relative_global = pos
 
         slot_size = width / (slots_per_row + .1)
         rows = round(len(self._slots) / slots_per_row)
 
-        self._ui["slots"][0].relative_size = slot_size, slot_size
-        self._ui["slots"][0].relative_size.y = self._ui["slots"][0].relative_size.x
+        self._ui["slots"][0].size.relative_global = slot_size, slot_size
+        self._ui["slots"][0].size.relative_global.y = self._ui["slots"][0].size.relative_global.x
         slot_size =(
-            self._ui["slots"][0].absolute_size.x,
-            self._ui["slots"][0].absolute_size.x
+            self._ui["slots"][0].size.absolute.x,
+            self._ui["slots"][0].size.absolute.x
         )
 
         width = slot_size[0] * (slots_per_row + .1)
         height = slot_size[1] * (rows + .1)
         size = Vec2().from_cartesian(width, height)
-        self._ui["root"].absolute_size = size
+        self._ui["root"].size.absolute = size
 
         if draw_background:
-            self._ui["root"].gl_draw()
+            self._ui["root"].gl_draw(force_draw=True)
 
-        start = self._ui["root"].absolute_position.copy()
+        start = self._ui["root"].position.absolute_global.copy()
         start.x -= slot_size[0] * (slots_per_row / 2)
         start.y -= slot_size[1] * (rows / 2)
 
@@ -236,11 +236,11 @@ class Inventory:
                     highlight = False
 
                 ui_slot = self._ui["slots"][slot_id]
-                ui_slot.absolute_position = (
+                ui_slot.position.absolute_global = (
                     start.x + (.5 + col) * slot_size[0],
                     start.y + (.5 + row) * slot_size[0],
                 )
-                ui_slot.absolute_size = slot_size
+                ui_slot.size.absolute = slot_size
 
                 if highlight:
                     ui_slot.border_color = self._slot_colors["border_highlighted"]
@@ -248,7 +248,7 @@ class Inventory:
                 else:
                     ui_slot.border_color = self._slot_colors["border_basic"]
 
-                ui_slot.gl_draw()
+                ui_slot.gl_draw(force_draw=True)
 
                 slot = self.get_slot(slot_id)
                 if slot.count > 0:
@@ -258,8 +258,8 @@ class Inventory:
                         max_size = max(size)
                         factor = (slot_size[0] * .8) / max_size
 
-                        pos = ui_slot.absolute_position
-                        pos -= ui_slot.absolute_size / 2
+                        pos = ui_slot.position.absolute_global
+                        pos -= ui_slot.size.absolute / 2
                         pos.x += slot_size[0] * .1 + (max_size - size[0]) * factor / 2
                         pos.y += slot_size[0] * .1 + (max_size - size[1]) * factor / 2
 
