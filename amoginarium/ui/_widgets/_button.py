@@ -13,7 +13,7 @@ import typing as tp
 import pygame as pg
 
 from amoginarium.audio import PresetEffect, SoundEffect
-from amoginarium.logic import coord_t, Color, color_t
+from amoginarium.logic import coord_t, Color, color_t, TupleMath
 from amoginarium.render_bindings import renderer
 
 from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColorValues, AnimatedFloatValues, \
@@ -123,16 +123,6 @@ class Button(Rectangle):
             on_leave_sound=on_leave_sound,
             on_click_sound=on_click_sound,
         )
-
-        super().__init__(position, size, placement_anchor=placement_anchor,
-                         on_enter_sound=on_enter_sound, on_leave_sound=on_leave_sound, on_click_sound=on_click_sound,
-                         bg_color=bg_color,
-                         border_color=border_color,
-                         border_width=border_width,
-                         radius=radius,
-                         size_extend=size_extend,
-                         parent=parent
-                         )
         self.__command = command
         self.__text = text
         self.__last_mouse = False

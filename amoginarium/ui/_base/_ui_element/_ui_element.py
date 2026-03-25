@@ -53,7 +53,7 @@ class UIElement(UIEntity):
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
         :param absolute_values: Whether the position and size are absolute or relative
-        :param positon_is_relative_to_parent: Whether the position is relative to the parent or the screen
+        :param relative_to_parent: Whether position and size is relative to the parent or the screen
         :param size_is_relative_to_parent: Whether the size is relative to the parent or the screen
         :param parent_reference_position: What reference position of the parent component to use
         """
@@ -69,15 +69,21 @@ class UIElement(UIEntity):
         self.__data.placement_anchor = placement_anchor
         self.__data.parent_reference_position = parent_reference_position
 
+        self._update_relative_values()
         if absolute_values:
-            self.__data.position.relative_to_parent = convert_coord(self.__absolute_to_relative(position))
-            self.__data.size.relative_to_parent = convert_coord(self.__absolute_to_relative(size))
+            self.__data.position.relative_to_parent = self.__absolute_to_relative(position, calc_for="position")
+            self.__data.size.relative_to_parent = self.__absolute_to_relative(size)
         else:
-            self.__data.position.relative_to_parent = convert_coord(position)
-            self.__data.size.relative_to_parent = convert_coord(size)
+            self.__data.position.relative_to_parent = position
+            self.__data.size.relative_to_parent = size
 
         self.__changed_since_last_draw = True
-        self.__calc_values()
+        self.__calc_values(pass_check=True)
+
+    def data_info(self):
+        print(self.__data.__dict__)
+        print(self.__data.width.__dict__)
+        print(self.__data.height.__dict__)
 
     # region Methods: absolute/relative convert
     def _update_relative_values(self) -> None:
@@ -109,28 +115,63 @@ class UIElement(UIEntity):
             self.__data.reference_size.relative_global = self.__ONE_VEC2
             self.__data.reference_size.relative_to_parent = self.__ONE_VEC2
 
-    def __relative_to_absolute(self, relative_value: coord_t, reference: coord_t | None = None) -> tuple[float, float]:
+        if self._next_ui_element_parent is not None:
+            self.__data.reference_size_for_position.copy_from(self._next_ui_element_parent._size)
+        else:
+            self.__data.reference_size_for_position.absolute = global_vars.resolution
+            self.__data.reference_size_for_position.relative_global = self.__ONE_VEC2
+            self.__data.reference_size_for_position.relative_to_parent = self.__ONE_VEC2
+
+    def __relative_to_absolute(
+            self,
+            relative_value: coord_t,
+            reference: coord_t | None = None,
+            calc_for: tp.Literal["position", "size"] = "size"
+    ) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
         :param relative_value: Relative value to convert
         :param reference: Absolute reference value to convert relative coords to
+        :param calc_for: Whether the transformation is for size or position
         :return: Absolute value
         """
         return TupleMath.mul(
             convert_coord(relative_value),
-            convert_coord(reference if reference else self.__data.reference_size.absolute)
+            convert_coord(
+                reference if reference else (
+                    self.__data.reference_size.absolute if (
+                            calc_for == "size" and self.__data.size_is_relative_to_parent
+                    ) else (
+                        self.__data.reference_size_for_position.absolute if (
+                                calc_for == "position" and self.__data.position_is_relative_to_parent
+                        ) else global_vars.resolution)
+                ))
         )
 
-    def __absolute_to_relative(self, absolute_value: coord_t, reference: coord_t | None = None) -> tuple[float, float]:
+    def __absolute_to_relative(
+            self,
+            absolute_value: coord_t,
+            reference: coord_t | None = None,
+            calc_for: tp.Literal["position", "size"] = "size"
+    ) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
         :param absolute_value: Absolute value to convert
         :param reference: Absolute reference value to convert relative coords to
+        :param calc_for: Whether the transformation is for size or position
         :return: Relative value
         """
         return TupleMath.div(
             convert_coord(absolute_value),
-            convert_coord(reference if reference else self.__data.reference_size.absolute)
+            convert_coord(
+                reference if reference else (
+                    self.__data.reference_size.absolute if (
+                            calc_for == "size" and self.__data.size_is_relative_to_parent
+                    ) else (
+                        self.__data.reference_size_for_position.absolute if (
+                                calc_for == "position" and self.__data.position_is_relative_to_parent
+                        ) else global_vars.resolution)
+                ))
         )
 
     # endregion
@@ -238,16 +279,19 @@ class UIElement(UIEntity):
                                 TupleMath.sub(
                                     self.__data.position.absolute_global.xy,
                                     self.__data.reference_position.absolute_global.xy
-                                )
+                                ),
+                                calc_for="position"
                             )
                         case UIElementValueTypesEnum.ABSOLUTE_TO_PARENT:
                             self.__data.position.relative_to_parent = self.__absolute_to_relative(
-                                self.__data.position.absolute_to_parent
+                                self.__data.position.absolute_to_parent, calc_for="position"
                             )
                         case UIElementValueTypesEnum.RELATIVE_GLOBAL:
-                            self.__data.position.relative_to_parent = TupleMath.sub(
-                                self.__data.position.relative_global.xy,
-                                self.__data.reference_position.relative_global.xy
+                            self.__data.position.relative_to_parent = TupleMath.div(
+                                TupleMath.sub(
+                                    self.__data.position.relative_global.xy,
+                                    self.__data.reference_position.relative_global.xy),
+                                self.__data.reference_size_for_position.relative_global.xy
                             )
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
                             ...  # Calculations bases from here, no action needed
@@ -260,7 +304,7 @@ class UIElement(UIEntity):
                                 self.__data.size.absolute
                             )
                         case UIElementValueTypesEnum.RELATIVE_GLOBAL:
-                            self.__data.size.relative_to_parent = TupleMath.mul(
+                            self.__data.size.relative_to_parent = TupleMath.div(
                                 self.__data.size.relative_global.xy,
                                 self.__data.reference_size.relative_global.xy
                             )
@@ -284,16 +328,18 @@ class UIElement(UIEntity):
         return is_neq
 
     # noinspection DuplicatedCode
-    def __calc_values(self) -> None:
+    def __calc_values(self, pass_check: bool = False) -> None:
         self._update_relative_values()
 
-        if not self.__check_modifications():
-            return
+        if not pass_check:
+            if not self.__check_modifications():
+                return
 
         # position relative to parent and size relative to parent are always true already
 
         # region Position
-        self.__data.position.absolute_to_parent = self.__relative_to_absolute(self.__data.position.relative_to_parent)
+        self.__data.position.absolute_to_parent = self.__relative_to_absolute(
+            self.__data.position.relative_to_parent, calc_for="position")
         self.__data.position.absolute_global = TupleMath.add(
             self.__data.reference_position.absolute_global.xy,
             self.__data.position.absolute_to_parent.xy

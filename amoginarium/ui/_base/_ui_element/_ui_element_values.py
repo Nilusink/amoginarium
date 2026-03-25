@@ -519,6 +519,7 @@ class UIElementData:
 
     reference_position: tp.Final[UIElementValueVec2]
     reference_size: tp.Final[UIElementValueVec2OneAbsolute]
+    reference_size_for_position: tp.Final[UIElementValueVec2OneAbsolute]
 
     def __init__(self) -> None:
         """
@@ -542,6 +543,7 @@ class UIElementData:
 
         self.reference_position = UIElementValueVec2(UIElementValueNamesEnum.REFERENCE_POSITION)
         self.reference_size = UIElementValueVec2OneAbsolute(UIElementValueNamesEnum.REFERENCE_SIZE)
+        self.reference_size_for_position = UIElementValueVec2OneAbsolute(UIElementValueNamesEnum.REFERENCE_SIZE)
 
     def copy_from(self, other: UIElementData) -> None:
         """
@@ -555,6 +557,7 @@ class UIElementData:
 
         self.reference_position.copy_from(other.reference_position)
         self.reference_size.copy_from(other.reference_size)
+        self.reference_size_for_position.copy_from(other.reference_size_for_position)
 
         self.position.copy_from(other.position)
         self.size.copy_from(other.size)
@@ -629,6 +632,10 @@ class UIElementData:
             return True, val_name, val_type
 
         is_neq, val_name, val_type = self.reference_size.not_equal(other.reference_size)
+        if is_neq:
+            return True, val_name, val_type
+
+        is_neq, val_name, val_type = self.reference_size_for_position.not_equal(other.reference_size_for_position)
         if is_neq:
             return True, val_name, val_type
 
