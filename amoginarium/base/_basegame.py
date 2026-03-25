@@ -7,6 +7,8 @@ Defines the core game
 Author:
 Nilusink
 """
+from dataclasses import dataclass
+
 import numpy
 from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glLoadIdentity, glOrtho, GL_MODELVIEW, \
     glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
@@ -581,27 +583,43 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
+        @dataclass(frozen=True)
+        class UIVisiblity:
+            start_menu: bool
+            pause_menu: bool
+            settings: bool
+
+        ui_visibility: dict = {
+            "StartMenu": UIVisiblity(True, False, False),
+            "PauseMenu": UIVisiblity(False, True, False),
+            "StartSettings": UIVisiblity(False, False, True),
+            "PauseSettings": UIVisiblity(False, False, True),
+            "Game": UIVisiblity(False, False, False),
+        }
+
         # self.load_map("assets/maps/test.json")
 
-        def change_ui_view() -> None:
-            start_menu.group.hide()
-            pause_menu.group.hide()
-            settings.group.hide()
+        def load_ui_visibility():
+            visibility = ui_visibility[active_scene]
+            start_menu.set_visibility(visibility.start_menu)
+            pause_menu.set_visibility(visibility.pause_menu)
+            settings.set_visibility(visibility.settings)
 
         def start_game():
             nonlocal active_scene
-            change_ui_view()
             active_scene = "Game"
 
-        def reset_game():
+            load_ui_visibility()
+
+        def reset_game(primary_call: bool = True):
             nonlocal active_scene
-            change_ui_view()
             active_scene = "Game"
 
             for entity in Updated.sprites():
                 entity.kill()
 
             self._background.reset_scroll()
+            global_vars.reset()
             Updated.world_position *= 0
 
             self.load_map(self._last_loaded)
@@ -610,31 +628,40 @@ class BaseGame:
             for player in Players.sprites():
                 player.respawn()
 
+            if primary_call:
+                load_ui_visibility()
+
         def back_to_menu():
             nonlocal active_scene
-            reset_game()
+            reset_game(False)
             active_scene = "StartMenu"
+
+            load_ui_visibility()
 
         def pause_game():
             nonlocal active_scene
-            change_ui_view()
             active_scene = "PauseMenu"
+
+            load_ui_visibility()
 
         def open_settings():
             nonlocal active_scene
-            change_ui_view()
             if active_scene == "PauseMenu":
                 active_scene = "PauseSettings"
             else:
                 active_scene = "StartSettings"
 
+            load_ui_visibility()
+
         def close_settings():
             nonlocal active_scene
-            change_ui_view()
+
             if active_scene == "PauseSettings":
                 active_scene = "PauseMenu"
             else:
                 active_scene = "StartMenu"
+
+            load_ui_visibility()
 
         def handle_zoom(event):
             global_vars.pixel_per_meter *= 1 + event.y / 30
@@ -651,6 +678,8 @@ class BaseGame:
             close_settings,
             self.__window_update
         )
+
+        start_menu.show()
 
         mouse_cursor = UICursor()
 
@@ -716,14 +745,9 @@ class BaseGame:
                     Drawn.gl_draw()
                     HasBars.gl_draw()
 
-                if active_scene in ["StartSettings", "PauseSettings"]:
-                    settings.group.gl_draw()
-
-                if active_scene == "StartMenu":
-                    start_menu.group.gl_draw()
-
-                if active_scene == "PauseMenu":
-                    pause_menu.group.gl_draw()
+                settings.gl_draw()
+                start_menu.gl_draw()
+                pause_menu.gl_draw()
 
                 pg.display.flip()
                 # debugging kopieren - @
@@ -903,6 +927,9 @@ class BaseGame:
 
         # update sounds
         sound_effects.update()
+
+        # reset and update detection Groups
+        DETECTION_GROUP_MANAGER.reset()
 
         # update entities
         GravityAffected.calculate_gravity(delta)

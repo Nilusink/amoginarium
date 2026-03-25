@@ -658,74 +658,139 @@ class OpenGLRenderer(BaseRenderer):
         start = convert_coord(start, Vec2)
         size = convert_coord(size, Vec2)
 
-        # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, size):
             return
 
-        # circles at edges
-        self.draw_circle(
-            start + radius,
-            radius,
-            m.ceil(radius),
-            color,
-            convert_global
-        )
-        self.draw_circle(
-            start + size - radius,
-            radius,
-            m.ceil(radius),
-            color,
-            convert_global
-        )
-        self.draw_circle(
-            (
-                start.x + size.x - radius,
-                start.y + radius
-            ),
-            radius,
-            m.ceil(radius),
-            color,
-            convert_global
-        )
-        self.draw_circle(
-            (
-                start.x + radius,
-                start.y + size.y - radius
-            ),
-            radius,
-            m.ceil(radius),
-            color,
-            convert_global
-        )
+        if convert_global:
+            start = global_vars.translate_screen_coord(start)
+            size = global_vars.translate_scale(size)
 
-        # fill in squares
-        if size.x > 2 * radius:
-            self.draw_rect(
-                (
-                    start.x + radius,
-                    start.y
-                ),
-                (
-                    size.x - 2 * radius,
-                    size.y
-                ),
-                color,
-                convert_global
-            )
+        glLoadIdentity()
+        glTranslate(start.x, start.y, 0)
+        self.set_color(color)
 
-        if size.y > 2 * radius:
-            self.draw_rect(
-                (
-                    start.x,
-                    start.y + radius
-                ),
-                (
-                    size.x,
-                    size.y - 2 * radius
-                ),
-                color,
-                convert_global
-            )
+        # Prevent radius from breaking if it is larger than the rect
+        radius = min(radius, size.x / 2, size.y / 2)
+
+        # Adjust smoothness based on the radius
+        segments = max(4, int(radius / 2))
+
+        glBegin(GL_POLYGON)
+
+        # Top-Left Arc
+        for i in range(segments + 1):
+            angle = m.pi + (i / segments) * (m.pi / 2)
+            glVertex2f(radius + m.cos(angle) * radius, radius + m.sin(angle) * radius)
+
+        # Top-Right Arc
+        for i in range(segments + 1):
+            angle = 1.5 * m.pi + (i / segments) * (m.pi / 2)
+            glVertex2f(size.x - radius + m.cos(angle) * radius, radius + m.sin(angle) * radius)
+
+        # Bottom-Right Arc
+        for i in range(segments + 1):
+            angle = 0.0 + (i / segments) * (m.pi / 2)
+            glVertex2f(size.x - radius + m.cos(angle) * radius, size.y - radius + m.sin(angle) * radius)
+
+        # Bottom-Left Arc
+        for i in range(segments + 1):
+            angle = 0.5 * m.pi + (i / segments) * (m.pi / 2)
+            glVertex2f(radius + m.cos(angle) * radius, size.y - radius + m.sin(angle) * radius)
+
+        glEnd()
+
+    def draw_rounded_border(
+            self,
+            start,
+            size,
+            color,
+            radius,
+            border_width,
+            convert_global=True
+    ) -> None:
+        start = convert_coord(start, Vec2)
+        size = convert_coord(size, Vec2)
+
+        if OpenGLRenderer.check_out_of_screen(start, size):
+            return
+
+        if convert_global:
+            start = global_vars.translate_screen_coord(start)
+            size = global_vars.translate_scale(size)
+
+        glLoadIdentity()
+        glTranslate(start.x, start.y, 0)
+        self.set_color(color)
+
+        radius = min(radius, size.x / 2, size.y / 2)
+        inner_radius = max(0, radius - border_width)
+        segments = max(4, int(radius / 2))
+
+        glBegin(GL_TRIANGLE_STRIP)
+
+        # Helper to generate the outer and inner vertices for the ring
+        def add_arc(cx, cy, start_angle, end_angle):
+            for i in range(segments + 1):
+                angle = start_angle + (i / segments) * (end_angle - start_angle)
+                glVertex2f(cx + m.cos(angle) * radius, cy + m.sin(angle) * radius)             # Outer
+                glVertex2f(cx + m.cos(angle) * inner_radius, cy + m.sin(angle) * inner_radius) # Inner
+
+        # Trace the perimeter
+        add_arc(radius, radius, m.pi, 1.5 * m.pi)                   # Top-Left
+        add_arc(size.x - radius, radius, 1.5 * m.pi, 2.0 * m.pi)    # Top-Right
+        add_arc(size.x - radius, size.y - radius, 0.0, 0.5 * m.pi)  # Bottom-Right
+        add_arc(radius, size.y - radius, 0.5 * m.pi, m.pi)          # Bottom-Left
+
+        # Connect back to the very first vertices to seal the loop seamlessly
+        glVertex2f(radius + m.cos(m.pi) * radius, radius + m.sin(m.pi) * radius)
+        glVertex2f(radius + m.cos(m.pi) * inner_radius, radius + m.sin(m.pi) * inner_radius)
+
+        glEnd()
+
+    def draw_border(
+            self,
+            start,
+            size,
+            color,
+            border_width,
+            convert_global=True
+    ) -> None:
+        start = convert_coord(start, Vec2)
+        size = convert_coord(size, Vec2)
+
+        if OpenGLRenderer.check_out_of_screen(start, size):
+            return
+
+        if convert_global:
+            start = global_vars.translate_screen_coord(start)
+            size = global_vars.translate_scale(size)
+
+        glLoadIdentity()
+        glTranslate(start.x, start.y, 0)
+        self.set_color(color)
+
+        bw = border_width
+
+        glBegin(GL_TRIANGLE_STRIP)
+
+        # Trace the hollow frame (Outer vertex, Inner vertex)
+        glVertex2f(0, 0)
+        glVertex2f(bw, bw)
+
+        glVertex2f(size.x, 0)
+        glVertex2f(size.x - bw, bw)
+
+        glVertex2f(size.x, size.y)
+        glVertex2f(size.x - bw, size.y - bw)
+
+        glVertex2f(0, size.y)
+        glVertex2f(bw, size.y - bw)
+
+        # Close the loop
+        glVertex2f(0, 0)
+        glVertex2f(bw, bw)
+
+        glEnd()
 
     def draw_text(
             self,
