@@ -601,7 +601,6 @@ class BaseGame:
 
         def load_ui_visibility():
             visibility = ui_visibility[active_scene]
-            print("LOADING VISIBILITY", visibility)
             start_menu.set_visibility(visibility.start_menu)
             pause_menu.set_visibility(visibility.pause_menu)
             settings.set_visibility(visibility.settings)

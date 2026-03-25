@@ -80,11 +80,6 @@ class UIElement(UIEntity):
         self.__changed_since_last_draw = True
         self.__calc_values(pass_check=True)
 
-    def data_info(self):
-        print(self.__data.__dict__)
-        print(self.__data.width.__dict__)
-        print(self.__data.height.__dict__)
-
     # region Methods: absolute/relative convert
     def _update_relative_values(self) -> None:
         """Update reference position and size"""
