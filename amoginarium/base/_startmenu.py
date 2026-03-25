@@ -8,28 +8,23 @@ Project: amoginarium
 #                    Imports                     #
 ##################################################
 
-from typing import Callable
+import typing as tp
 
-from ..logic import convert_coord, Vec2
-from ..ui import Button, UIEntity, Rectangle, UIElement
-from ..ui._types import Anchor, Positions
+from amoginarium.ui import Button, Rectangle
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class StartMenu(UIEntity):
-    call = 0
-
+class StartMenu(Rectangle):
     def __init__(
             self,
-            start_game_callback: Callable[[], None],
-            open_settings_callback: Callable[[], None],
-            exit_callback: Callable[[], None],
+            start_game_callback: tp.Callable[[], None],
+            open_settings_callback: tp.Callable[[], None],
+            exit_callback: tp.Callable[[], None],
     ) -> None:
-        super().__init__()
-        current_parent = Rectangle((0.5, 0.5), (0.2, 0.4), parent=self, bg_color=(70, 70, 70, 150), border_width=0)
+        super().__init__((0.5, 0.5), (0.2, 0.4), bg_color=(70, 70, 70, 150), border_width=0)
 
         padding = 0.08
         but_width = 1 - padding * 2
@@ -39,7 +34,7 @@ class StartMenu(UIEntity):
             (0.5, padding + but_height / 2),
             (but_width, but_height),
             "New game",
-            parent=current_parent,
+            parent=self,
             command=start_game_callback
         )
 
@@ -47,14 +42,13 @@ class StartMenu(UIEntity):
             (0.5, 0.5),
             (but_width, but_height),
             "Settings",
-            parent=current_parent,
-            command=open_settings_callback
+            parent=self
         )
 
         Button(
             (0.5, 1 - (padding + but_height / 2)),
             (but_width, but_height),
             "Exit",
-            parent=current_parent,
+            parent=self,
             command=exit_callback,
         )
