@@ -178,7 +178,7 @@ class MultiAnimation[A]:
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: New values of the animations
+        :return: Value differences between current and last values
         """
         if self.__is_single:
             val = self.__animations[0].update(delta)
@@ -189,6 +189,11 @@ class MultiAnimation[A]:
     def is_changing(self) -> bool:
         """:return: Whether any animation is currently in extension or contraction phase"""
         return any([anim.is_changing() for anim in self.__animations])
+
+    def reset(self) -> None:
+        """Reset the animations to their start values"""
+        for anim in self.__animations:
+            anim.reset()
 
     # region Methods: properties
     @property

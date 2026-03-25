@@ -7,6 +7,8 @@ Defines the core game
 Author:
 Nilusink
 """
+from dataclasses import dataclass
+
 import numpy
 from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glLoadIdentity, glOrtho, GL_MODELVIEW, \
     glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
@@ -581,16 +583,36 @@ class BaseGame:
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
+        @dataclass(frozen=True)
+        class UIVisiblity:
+            start_menu: bool
+            pause_menu: bool
+            settings: bool
+
+        ui_visibility: dict = {
+            "StartMenu": UIVisiblity(True, False, False),
+            "PauseMenu": UIVisiblity(False, True, False),
+            "StartSettings": UIVisiblity(False, False, True),
+            "PauseSettings": UIVisiblity(False, False, True),
+            "Game": UIVisiblity(False, False, False),
+        }
+
         # self.load_map("assets/maps/test.json")
+
+        def load_ui_visibility():
+            visibility = ui_visibility[active_scene]
+            start_menu.set_visibility(visibility.start_menu)
+            pause_menu.set_visibility(visibility.pause_menu)
+            settings.set_visibility(visibility.settings)
 
         def start_game():
             nonlocal active_scene
-            print("START GAME")
             active_scene = "Game"
 
-        def reset_game():
+            load_ui_visibility()
+
+        def reset_game(primary_call: bool = True):
             nonlocal active_scene
-            print("RESET GAME")
             active_scene = "Game"
 
             for entity in Updated.sprites():
@@ -606,16 +628,21 @@ class BaseGame:
             for player in Players.sprites():
                 player.respawn()
 
+            if primary_call:
+                load_ui_visibility()
+
         def back_to_menu():
             nonlocal active_scene
-            print("BACK TO MENU GAME")
-            reset_game()
+            reset_game(False)
             active_scene = "StartMenu"
+
+            load_ui_visibility()
 
         def pause_game():
             nonlocal active_scene
-            print("PAUSE GAME")
             active_scene = "PauseMenu"
+
+            load_ui_visibility()
 
         def open_settings():
             nonlocal active_scene
@@ -624,12 +651,17 @@ class BaseGame:
             else:
                 active_scene = "StartSettings"
 
+            load_ui_visibility()
+
         def close_settings():
             nonlocal active_scene
+
             if active_scene == "PauseSettings":
                 active_scene = "PauseMenu"
             else:
                 active_scene = "StartMenu"
+
+            load_ui_visibility()
 
         def handle_zoom(event):
             global_vars.pixel_per_meter *= 1 + event.y / 30
@@ -646,6 +678,8 @@ class BaseGame:
             close_settings,
             self.__window_update
         )
+
+        start_menu.show()
 
         mouse_cursor = UICursor()
 
@@ -711,20 +745,9 @@ class BaseGame:
                     Drawn.gl_draw()
                     HasBars.gl_draw()
 
-                if active_scene in ["StartSettings", "PauseSettings"]:
-                    settings.group_draw()
-                    start_menu.group_hide()
-                    pause_menu.group_hide()
-
-                if active_scene == "StartMenu":
-                    start_menu.group_draw()
-                    settings.group_hide()
-                    pause_menu.group_hide()
-
-                if active_scene == "PauseMenu":
-                    pause_menu.group_draw()
-                    settings.group_hide()
-                    start_menu.group_hide()
+                settings.gl_draw()
+                start_menu.gl_draw()
+                pause_menu.gl_draw()
 
                 pg.display.flip()
                 # debugging kopieren - @

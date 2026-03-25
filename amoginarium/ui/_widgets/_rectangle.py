@@ -9,18 +9,18 @@ Authors: LukasKrah
 import typing as tp
 
 from amoginarium.render_bindings import renderer
-from amoginarium.logic import coord_t, Vec2
 from amoginarium.shared import global_vars
 from amoginarium.audio import SoundEffect
+from amoginarium.logic import coord_t
 
 from .._animations import FloatAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
     anim_float_values_t, anim_color_values_t, ColorAnimation
 from .._surface_renderer import PygameSurfaceRenderer
-from .._base import UIElement, UIEntity
-from .._types import Anchor
+from .._base import UIEventElement, UIEntity
+from .._types import Anchor, Positions
 
 
-class Rectangle(UIElement):
+class Rectangle(UIEventElement):
     """UI rectangle with basic sounds and animations"""
     __bg_color_animation: ColorAnimation
     __border_color_animation: ColorAnimation
@@ -34,12 +34,21 @@ class Rectangle(UIElement):
 
     def __init__(
             self,
-            relative_position: coord_t,
-            relative_size: coord_t,
+            position: coord_t,
+            size: coord_t,
             *_args: tp.Any,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
+            absolute_values: bool = False,
+            positon_is_relative_to_parent: bool = True,
+            size_is_relative_to_parent: bool = True,
+            parent_reference_position: Positions = Positions.TOP_LEFT,
+
             collision_buffer: int = 1,
+            use_collision_mask: bool = True,
+            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
 
             bg_color: anim_color_values_t = (70, 70, 70),
             border_color: anim_color_values_t = (70, 70, 70),
@@ -47,19 +56,14 @@ class Rectangle(UIElement):
             radius: anim_float_values_t = 20,
             size_extend: anim_vec2_values_t = 0,
 
-            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
             on_enter_sound: SoundEffect | None = None,
             on_leave_sound: SoundEffect | None = None,
             on_click_sound: SoundEffect | None = None,
-
-            _use_collision_mask: bool = True
     ) -> None:
         """
         Create a new UI rectangle
-        :param relative_position: Relative position of the component
-        :param relative_size: Relative size of the component
+        :param position: Relative position of the component
+        :param size: Relative size of the component
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
         :param collision_buffer: Mouse hovering buffer for edge cases
@@ -74,18 +78,22 @@ class Rectangle(UIElement):
         :param on_enter_sound: Sound to play when the cursor enters the rectangle
         :param on_leave_sound: Sound to play when the cursor leaves the rectangle
         :param on_click_sound: Sound to play when the cursor clicks the rectangle
-        :param _use_collision_mask: Whether a collision mask should be used or just a collision box
+        :param use_collision_mask: Whether a collision mask should be used or just a collision box
         """
         super().__init__(
-            relative_position=relative_position,
-            relative_size=relative_size,
+            position=position,
+            size=size,
             parent=parent,
             placement_anchor=placement_anchor,
+            absolute_values=absolute_values,
+            positon_is_relative_to_parent=positon_is_relative_to_parent,
+            size_is_relative_to_parent=size_is_relative_to_parent,
+            parent_reference_position=parent_reference_position,
             collision_buffer=collision_buffer,
+            use_collision_mask=use_collision_mask,
             on_enter_callbacks=on_enter_callbacks,
             on_leave_callbacks=on_leave_callbacks,
             on_buffer_callbacks=on_buffer_callbacks,
-            _use_collision_mask=_use_collision_mask
         )
 
         self.__bg_color_animation = ColorAnimation(bg_color)
@@ -131,12 +139,8 @@ class Rectangle(UIElement):
         self.__border_width_animation.stop()
         self.__radius_animation.stop()
 
-    @property
-    def _absolute_size(self) -> Vec2:
-        return super()._absolute_size + self.__extend_animation.current_value * 2
-
     def _gl_draw(self) -> None:
-        if self._use_collision_mask and not self._ui_changed:
+        if self.use_collision_mask and not self._ui_changed:
             self._ui_changed = any([
                 self.__border_width_animation.is_changing(),
                 self.__border_color_animation.is_changing(),
@@ -147,49 +151,74 @@ class Rectangle(UIElement):
 
         delta_cal = global_vars.delta
 
-        border_width = self.__border_width_animation.update(delta_cal)
-        border_color = self.__border_color_animation.update(delta_cal)
-        bg_color = self.__bg_color_animation.update(delta_cal)
-        radius = self.__radius_animation.update(delta_cal)
-        self.__extend_animation.update(delta_cal)
+        self.__border_width_animation.update(delta_cal)
+        self.__border_color_animation.update(delta_cal)
+        self.__bg_color_animation.update(delta_cal)
+        self.__radius_animation.update(delta_cal)
+        extend_delta = self.__extend_animation.update(delta_cal)
+        self.size.absolute += extend_delta * 2
+
+        border_width = self.__border_width_animation.current_value
+        border_color = self.__border_color_animation.current_value
+        bg_color = self.__bg_color_animation.current_value
+        radius = self.__radius_animation.current_value
 
         super()._gl_draw()
 
         if radius > 0:
             if border_width > 0:
-                renderer.draw_rounded_rect(
-                    self.top_left,
-                    self.absolute_size,
+                # 1. Swapped to the hollow rounded border
+                renderer.draw_rounded_border(
+                    self.top_left.absolute_global,
+                    self.size.absolute,
                     border_color,
-                    radius
+                    radius,
+                    border_width,
+                    convert_global=False
                 )
 
             inner_radius = radius - border_width
             renderer.draw_rounded_rect(
-                self.top_left + border_width,
-                self.absolute_size - 2 * border_width,
+                self.top_left.absolute_global + border_width,
+                self.size.absolute - 2 * border_width,
                 bg_color,
-                inner_radius if inner_radius > 0 else 0
+                inner_radius if inner_radius > 0 else 0,
+                convert_global=False
             )
 
         else:
             if border_width > 0:
-                renderer.draw_rect(
-                    self.top_left,
-                    self.absolute_size,
+                # 2. Swapped to the hollow sharp border
+                renderer.draw_border(
+                    self.top_left.absolute_global,
+                    self.size.absolute,
                     border_color,
+                    border_width,
+                    convert_global=False
                 )
 
             renderer.draw_rect(
-                self.top_left + border_width,
-                self.absolute_size - 2 * border_width,
+                self.top_left.absolute_global + border_width,
+                self.size.absolute - 2 * border_width,
                 bg_color,
+                convert_global=False
             )
 
-        if self._ui_changed and self._use_collision_mask:
+        if self._ui_changed and self.use_collision_mask:
             PygameSurfaceRenderer.draw_rect(
                 self._collision_surface,
                 (0, 0),
-                self.absolute_size,
+                self.size.absolute,
                 border_radius=radius
             )
+
+    def _reset(self) -> None:
+        super()._reset()
+
+        self.size.absolute -= self.__extend_animation.current_value * 2
+
+        self.__extend_animation.reset()
+        self.__bg_color_animation.reset()
+        self.__border_color_animation.reset()
+        self.__border_width_animation.reset()
+        self.__radius_animation.reset()

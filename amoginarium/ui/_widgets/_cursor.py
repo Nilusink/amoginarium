@@ -6,7 +6,7 @@ Created: 11.03.2026
 Authors: LukasKrah
 """
 
-from amoginarium.ui._base._ui_element import UIElement
+from .._base import UIEventElement
 
 import pygame as pg
 
@@ -19,15 +19,16 @@ from amoginarium.shared import global_vars
 #                     Code                       #
 ##################################################
 
-class UICursor(UIElement):
+class UICursor(UIEventElement):
     __velocity: Vec2
 
     def __init__(self) -> None:
-        super().__init__((0, 0), (0, 0), _use_collision_mask=False)
+        super().__init__((0, 0), (0, 0), use_collision_mask=False)
 
+        self.cursor = True
         self.__velocity = Vec2()
-
         self.add(Cursor)
+        self.show()
 
     def _gl_draw(self) -> None:
         mouse_pos = pg.mouse.get_pos()
@@ -35,9 +36,9 @@ class UICursor(UIElement):
                      (mouse_pos[1] - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
         new_pos = convert_coord(mouse_pos, Vec2)
 
-        self.__velocity.xy = (new_pos - self._absolute_position).xy
+        self.__velocity.xy = (new_pos - self.position.absolute_global).xy
 
-        self._absolute_position = new_pos
+        self.absolute_position_global = new_pos
 
         super()._gl_draw()
 
