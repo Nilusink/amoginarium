@@ -49,16 +49,7 @@ class AnimatedVec2Values:
 
 
 type anim_vec2_values_t = tp.Union[
-    AnimatedVec2Values,
-    tp.Tuple[
-        anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t, anim_input_t, anim_curve_t, anim_curve_t],
-    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t, anim_input_t, anim_curve_t],
-    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t, anim_input_t],
-    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_input_t],
-    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t, anim_vec2_t],
-    tp.Tuple[anim_vec2_t, anim_vec2_t, anim_vec2_t],
-    tp.Tuple[anim_vec2_t, anim_vec2_t],
-    anim_vec2_t
+    AnimatedVec2Values, anim_vec2_t
 ]
 
 # endregion
@@ -82,16 +73,7 @@ class AnimatedFloatValues:
 
 # noinspection DuplicatedCode
 type anim_float_values_t = tp.Union[
-    AnimatedFloatValues,
-    tp.Tuple[
-        anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t, anim_input_t, anim_curve_t, anim_curve_t],
-    tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t, anim_input_t, anim_curve_t],
-    tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t, anim_input_t],
-    tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t, anim_input_t],
-    tp.Tuple[anim_float_t, anim_float_t, anim_float_t, anim_float_t],
-    tp.Tuple[anim_float_t, anim_float_t, anim_float_t],
-    tp.Tuple[anim_float_t, anim_float_t],
-    anim_float_t
+    AnimatedFloatValues, anim_float_t
 ]
 
 # endregion
@@ -117,18 +99,7 @@ class AnimatedColorValues:
 
 # noinspection DuplicatedCode
 type anim_color_values_t = tp.Union[
-    AnimatedColorValues,
-    tp.Tuple[
-        anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t,
-        anim_input_t, anim_input_t, anim_curve_t, anim_curve_t],
-    tp.Tuple[
-        anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t, anim_input_t, anim_input_t, anim_curve_t],
-    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t, anim_input_t, anim_input_t],
-    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t, anim_input_t],
-    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t, anim_color_time_t],
-    tp.Tuple[anim_color_t, anim_color_t, anim_color_time_t],
-    tp.Tuple[anim_color_t, anim_color_t],
-    anim_color_t
+    AnimatedColorValues, anim_color_t
 ]
 
 # endregion

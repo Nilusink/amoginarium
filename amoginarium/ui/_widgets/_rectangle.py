@@ -11,13 +11,13 @@ import typing as tp
 from amoginarium.render_bindings import renderer
 from amoginarium.shared import global_vars
 from amoginarium.audio import SoundEffect
-from amoginarium.logic import coord_t, Vec2
+from amoginarium.logic import coord_t
 
 from .._animations import FloatAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
     anim_float_values_t, anim_color_values_t, ColorAnimation
 from .._surface_renderer import PygameSurfaceRenderer
 from .._base import UIEventElement, UIEntity
-from .._types import Anchor
+from .._types import Anchor, Positions
 
 
 class Rectangle(UIEventElement):
@@ -39,7 +39,16 @@ class Rectangle(UIEventElement):
             *_args: tp.Any,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
+            absolute_values: bool = False,
+            positon_is_relative_to_parent: bool = True,
+            size_is_relative_to_parent: bool = True,
+            parent_reference_position: Positions = Positions.TOP_LEFT,
+
             collision_buffer: int = 1,
+            use_collision_mask: bool = True,
+            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
 
             bg_color: anim_color_values_t = (70, 70, 70),
             border_color: anim_color_values_t = (70, 70, 70),
@@ -47,14 +56,9 @@ class Rectangle(UIEventElement):
             radius: anim_float_values_t = 20,
             size_extend: anim_vec2_values_t = 0,
 
-            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
             on_enter_sound: SoundEffect | None = None,
             on_leave_sound: SoundEffect | None = None,
             on_click_sound: SoundEffect | None = None,
-
-            use_collision_mask: bool = True
     ) -> None:
         """
         Create a new UI rectangle
@@ -81,11 +85,15 @@ class Rectangle(UIEventElement):
             size=size,
             parent=parent,
             placement_anchor=placement_anchor,
+            absolute_values=absolute_values,
+            positon_is_relative_to_parent=positon_is_relative_to_parent,
+            size_is_relative_to_parent=size_is_relative_to_parent,
+            parent_reference_position=parent_reference_position,
             collision_buffer=collision_buffer,
+            use_collision_mask=use_collision_mask,
             on_enter_callbacks=on_enter_callbacks,
             on_leave_callbacks=on_leave_callbacks,
             on_buffer_callbacks=on_buffer_callbacks,
-            use_collision_mask=use_collision_mask
         )
 
         self.__bg_color_animation = ColorAnimation(bg_color)
@@ -148,7 +156,7 @@ class Rectangle(UIEventElement):
         self.__bg_color_animation.update(delta_cal)
         self.__radius_animation.update(delta_cal)
         extend_delta = self.__extend_animation.update(delta_cal)
-        self.absolute_size += extend_delta * 2
+        self.size.absolute += extend_delta * 2
 
         border_width = self.__border_width_animation.current_value
         border_color = self.__border_color_animation.current_value
@@ -160,8 +168,8 @@ class Rectangle(UIEventElement):
         if radius > 0:
             if border_width > 0:
                 renderer.draw_rounded_rect(
-                    self.top_left,
-                    self.absolute_size,
+                    self.top_left.absolute_global,
+                    self.size.absolute,
                     border_color,
                     radius,
                     convert_global=False
@@ -169,8 +177,8 @@ class Rectangle(UIEventElement):
 
             inner_radius = radius - border_width
             renderer.draw_rounded_rect(
-                self.top_left + border_width,
-                self.absolute_size - 2 * border_width,
+                self.top_left.absolute_global + border_width,
+                self.size.absolute - 2 * border_width,
                 bg_color,
                 inner_radius if inner_radius > 0 else 0,
                 convert_global=False
@@ -179,15 +187,15 @@ class Rectangle(UIEventElement):
         else:
             if border_width > 0:
                 renderer.draw_rect(
-                    self.top_left,
-                    self.absolute_size,
+                    self.top_left.absolute_global,
+                    self.size.absolute,
                     border_color,
                     convert_global=False
                 )
 
             renderer.draw_rect(
-                self.top_left + border_width,
-                self.absolute_size - 2 * border_width,
+                self.top_left.absolute_global + border_width,
+                self.size.absolute - 2 * border_width,
                 bg_color,
                 convert_global=False
             )
@@ -196,14 +204,14 @@ class Rectangle(UIEventElement):
             PygameSurfaceRenderer.draw_rect(
                 self._collision_surface,
                 (0, 0),
-                self.absolute_size,
+                self.size.absolute,
                 border_radius=radius
             )
 
     def _reset(self) -> None:
         super()._reset()
 
-        self.absolute_size -= self.__extend_animation.current_value * 2
+        self.size.absolute -= self.__extend_animation.current_value * 2
 
         self.__extend_animation.reset()
         self.__bg_color_animation.reset()

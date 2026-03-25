@@ -16,4 +16,13 @@ class Anchor(StrEnum):
     CENTER = "center"
 
 
+class Positions(StrEnum):
+    """UI Positions of each element"""
+    TOP_LEFT = "top_left"
+    TOP_RIGHT = "top_right"
+    BOTTOM_LEFT = "bottom_left"
+    BOTTOM_RIGHT = "bottom_right"
+    CENTER = "center"
+
+
 ui_color_t = tp.Union[tuple[int, int, int], tuple[int, int, int, int]]  # Temporary solution

@@ -36,7 +36,7 @@ class UICursor(UIEventElement):
                      (mouse_pos[1] - global_vars.screen_size_offset_y) * global_vars.screen_size_fac_y)
         new_pos = convert_coord(mouse_pos, Vec2)
 
-        self.__velocity.xy = (new_pos - self.absolute_position_global).xy
+        self.__velocity.xy = (new_pos - self.position.absolute_global).xy
 
         self.absolute_position_global = new_pos
 

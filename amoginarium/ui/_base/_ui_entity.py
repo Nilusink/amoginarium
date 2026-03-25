@@ -11,10 +11,10 @@ from __future__ import annotations
 from types import EllipsisType
 import typing as tp
 
+from amoginarium.entities import BaseEntity
+
 if tp.TYPE_CHECKING:
     from ._ui_element import UIElement
-
-from amoginarium.entities import BaseEntity
 
 
 class UIEntity(BaseEntity):
@@ -77,6 +77,7 @@ class UIEntity(BaseEntity):
         """Reset the UI-Entity. Use in inheritance for actual resetting"""
         return
 
+    @tp.final
     def reset(self, recursive: bool = True) -> None:
         """
         Reset the UI-Entity and all its children recursively
@@ -201,6 +202,21 @@ class UIEntity(BaseEntity):
         """
         return
 
+    def _before_gl_draw(self, drawn: bool) -> None:
+        """
+        Called before gl_draw
+        :param: Whether the UI-entity will be drawn
+        """
+        return
+
+    def _after_gl_draw(self, drawn: bool) -> None:
+        """
+        Called after gl_draw
+        :param: Whether the UI-entity was drawn
+        """
+        return
+
+    @tp.final
     def gl_draw(self, recursive: bool = True, force_draw: bool = False) -> None:
         """
         Draw this UI-entity.
@@ -210,11 +226,14 @@ class UIEntity(BaseEntity):
         Note: Only overwrite in inheritance for before/after draw updates
         Note: Ignores parent visibility
         """
-        if force_draw or self.visible:
+        draw: bool = force_draw or self.visible
+        self._before_gl_draw(draw)
+        if draw:
             self._gl_draw()
             if recursive:
                 for child in self._children:
                     child.gl_draw(force_draw=(force_draw or self._root_visibility))
+        self._after_gl_draw(draw)
 
     # endregion
 
@@ -227,6 +246,7 @@ class UIEntity(BaseEntity):
         """
         return
 
+    @tp.final
     def update(self, delta: float, recursive: bool = True) -> None:
         """
         Update ui entity
