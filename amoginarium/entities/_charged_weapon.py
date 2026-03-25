@@ -232,6 +232,12 @@ class RailGun(ChargedWeapon):
             self._image_size,
         )]
 
+    def get_icon(self) -> tuple[int, tuple[int, int]]:
+        """
+        return the items texture and size
+        """
+        return self.texture_id_r, self._image_size
+
     @staticmethod
     def _recoil_curve(value: float) -> float:
         return value**2

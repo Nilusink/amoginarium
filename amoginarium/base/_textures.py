@@ -133,7 +133,7 @@ class _Textures:
                     set(texture["mirror"]) == set(mirror),
                     is_same_size
                 ]):
-                    return Texture
+                    return texture
 
         return None
 

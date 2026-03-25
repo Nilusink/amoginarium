@@ -35,6 +35,8 @@ class KeyboardController(Controller):
 
     def update(self, delta):
         pressed_keys = pg.key.get_pressed()
+        mouse_buttons = pg.mouse.get_pressed(5)
+        pos = pg.mouse.get_pos()
 
         # read controls
         up = pressed_keys[self._controls.up]
@@ -43,11 +45,17 @@ class KeyboardController(Controller):
         right = pressed_keys[self._controls.right]
         self._keys.jump = pressed_keys[self._controls.press]
 
-        self._keys.shoot = pressed_keys[pg.K_e]
+        self._keys.shoot = mouse_buttons[0]
+        self._keys.inventory = pressed_keys[pg.K_e]
+        self._keys.drop = pressed_keys[pg.K_q]
         self._keys.reload = pressed_keys[pg.K_r]
-        self._keys.wpn_f = pressed_keys[pg.K_q]
-        self._keys.wpn_b = pressed_keys[pg.K_TAB]
+
+        self._keys.wpn_f = pressed_keys[pg.K_TAB]
+        self._keys.wpn_b = False
 
         # set joystick position (using wasd keys)
         self._keys.joy_x = -left + right
         self._keys.joy_y = -down + up
+
+        self._keys.mouse_x = pos[0]
+        self._keys.mouse_y = pos[1]

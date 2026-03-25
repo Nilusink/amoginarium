@@ -111,6 +111,23 @@ class Rectangle(UIEventElement):
         self.add_leave_callback(self.__on_cursor_leave)
         self.add_click_callback(lambda *_: self.__on_click_sound.play() if self.__on_click_sound is not None else None)
 
+    @property
+    def bg_color(self) -> ColorAnimation:
+        return self.__bg_color_animation
+
+    @bg_color.setter
+    def bg_color(self, value) -> None:
+        self.__bg_color_animation = ColorAnimation(value)
+
+    @property
+    def border_color(self) -> ColorAnimation:
+        return self.__border_color_animation
+
+    @border_color.setter
+    def border_color(self, value) -> None:
+        self.__border_color_animation = ColorAnimation(value)
+
+
     def __on_cursor_enter(self) -> None:
         """Called when a cursor enters the rectangle"""
         if self.__on_hover_sound is not None:

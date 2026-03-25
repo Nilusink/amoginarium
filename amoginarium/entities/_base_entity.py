@@ -238,13 +238,14 @@ class GameEntity(PositionedEntity):
         #     acc_func,
         #     delta
         # )
-        self.acceleration += self._acceleration_to_add
-        self._acceleration_to_add *= 0
+        # self.acceleration += self._acceleration_to_add
 
         # update velocity and position
-        self.velocity += self.acceleration * delta
+        self.velocity += self.acceleration * delta + self._acceleration_to_add * delta
         self.position += self.velocity * delta
         self.acceleration.x *= 0
+
+        self._acceleration_to_add *= 0
 
         # re-calculate pygame stuff
         self.last_angle = self.velocity.angle
@@ -266,9 +267,24 @@ class GameEntity(PositionedEntity):
 
 
 class VisibleGameEntity(GameEntity):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(
+            self,
+            size: Vec2 = ...,
+            facing: Vec2 = ...,
+            initial_position: Vec2 = ...,
+            initial_velocity: Vec2 = ...,
+            coalition: tp.Any = ...,
+            parent: BaseEntityLike = ...
+    ) -> None:
         self._highlight = False
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            size,
+            facing,
+            initial_position,
+            initial_velocity,
+            coalition,
+            parent
+        )
 
         self.add(Drawn)
 
@@ -326,10 +342,26 @@ class LRImageEntity(VisibleGameEntity):
     def update(self, delta: float) -> None:
         super().update(delta)
 
-    def gl_draw(self) -> None:
+    def gl_draw(
+            self,
+            draw_at: Vec2 = ...,
+            size: Vec2 = ...,
+            convert_global: bool = True
+    ) -> None:
+        if draw_at is not ...:
+            pos = draw_at
+
+        else:
+            pos = self.world_position
+
+        if size is ...:
+            size = self.size
+
+
         renderer.draw_textured_quad(
             self._texture_right if self.facing.x < 0 else self._texture_left,
-            self.world_position - self.size / 2,
-            self.size
+            pos - size / 2,
+            size,
+            convert_global=convert_global
         )
         super().gl_draw()

@@ -230,14 +230,15 @@ class Bullet(ImageEntity):
                         hit_by=self
                     )
                     if hasattr(entity, "_movement_acceleration"):
+                        d -= entity.size.length
                         delta = entity.position - self.position
                         delta = delta.normalize() \
                                 * entity._movement_acceleration \
                                 * (
                                         1 - max(d, 40)
                                         / (self._explosion_radius * 4)
-                                ) * (self._explosion_damage / 100)
-                        entity.acceleration += delta
+                                ) * (self._explosion_damage / 5)
+                        entity.add_acceleration(delta)
 
             explosion.draw(
                 delay=.05,
@@ -547,6 +548,12 @@ class BaseWeapon:
             round(self._current_reload_time, 2)
         )
 
+    def get_icon(self) -> tuple[int, tuple[int, int]]:
+        """
+        return the items texture and size
+        """
+        return self._texture_id_r, self._image_size
+
     def update(self, delta: float) -> None:
         """
         update weapon state (like reloading, ...)
@@ -627,8 +634,8 @@ class BaseWeapon:
         # recoil
         if hasattr(self.parent, "_movement_acceleration"):
             recoil = direction * self.parent._movement_acceleration
-            recoil *= self.recoil_factor
-            self.parent.acceleration -= recoil
+            recoil *= -self.recoil_factor
+            self.parent.add_acceleration(recoil)
 
         self._current_recoil_time = self._recoil_time
 
@@ -695,7 +702,13 @@ class BaseWeapon:
         if self._sound_effect is not ...:
             self._sound_effect.stop()
 
-    def draw_at(self, position: Vec2, angle: float) -> None:
+    def draw_at(
+            self,
+            position: Vec2,
+            angle: float,
+            size_fac: float = 1,
+            convert_global: bool = True
+        ) -> None:
         """
         draw the weapon (centered) at a specified position
         """
@@ -707,31 +720,45 @@ class BaseWeapon:
         if self.parent.facing.x < 0:
             offset.x = -offset.x
 
-        position += offset
+        position += offset * size_fac
+
+        size = self._size * size_fac
 
         if 90 < angle < 270:
             anchor = Vec2().from_cartesian(
-                self._size.x - self._image_rotate_anchor.x,
-                self._image_rotate_anchor.y
+                size.x - self._image_rotate_anchor.x * size_fac,
+                self._image_rotate_anchor.y * size_fac
             )
+            pos = position - anchor
+            if convert_global:
+                pos -= Updated.world_position
+
             renderer.draw_textured_quad(
                 self.texture_id_l,
-                (position - Updated.world_position - anchor).xy,
-                self._size.xy,
+                pos,
+                size,
                 rotate_angle=angle - 180 + self._image_rotation_offset,
-                rotate_anchor=anchor
+                rotate_anchor=anchor,
+                convert_global=convert_global
             )
 
         else:
+            anchor = Vec2().from_cartesian(
+                self._image_rotate_anchor.x * size_fac,
+                self._image_rotate_anchor.y * size_fac
+            )
+            pos = position - anchor
+            if convert_global:
+                pos -= Updated.world_position
+
             renderer.draw_textured_quad(
                 self.texture_id_r,
-                (position - Updated.world_position - self._image_rotate_anchor).xy,
-                self._size.xy,
+                pos,
+                size,
                 rotate_angle=angle + self._image_rotation_offset,
-                rotate_anchor=self._image_rotate_anchor
+                rotate_anchor=anchor,
+                convert_global=convert_global
             )
-
-        renderer.draw_circle(position - offset - Updated.world_position, 4, 4, (1, 1, 0))
 
 
 class Minigun(BaseWeapon):
@@ -749,7 +776,7 @@ class Minigun(BaseWeapon):
             parent,
             reload_time=3,
             recoil_time=.02,
-            recoil_factor=2,
+            recoil_factor=1.5,
             mag_size=80,
             inaccuracy=.01093606,
             bullet_speed=1600,
@@ -777,7 +804,7 @@ class Ak47(BaseWeapon):
             parent,
             reload_time=2.5,
             recoil_time=.1,
-            recoil_factor=8,
+            recoil_factor=3,
             mag_size=30,
             inaccuracy=0.03,
             bullet_size=11,
