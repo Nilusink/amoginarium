@@ -8,8 +8,8 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-import typing as tp
 from dataclasses import dataclass, field
+import typing as tp
 
 from amoginarium.logic import Vec2, coord_t, convert_coord, TupleMath
 from amoginarium.shared import global_vars
@@ -19,118 +19,297 @@ from ._ui_entity import UIEntity
 from .._types import Anchor
 
 
-@dataclass
+T = tp.TypeVar('T')
+
+
+class LazyProp(tp.Generic[T]):
+    """
+    Descriptor that lazily initializes an attribute upon first access.
+    """
+
+    def __init__(self, factory: tp.Callable[[], T], writable: bool = True):
+        """
+        :param factory: A callable that returns the initial value.
+        :param writable: Determines if the property can be reassigned after initialization.
+        """
+        self.factory = factory
+        self.writable = writable
+
+    def __set_name__(self, owner, name):
+        """
+        :param owner: The class that owns the descriptor.
+        :param name: The name of the descriptor assigned in the owner class.
+        """
+        self.private_name = f"_{name}"
+
+    def __get__(self, instance, owner) -> T:
+        """
+        :param instance: The instance accessed, or None if accessed via the class.
+        :param owner: The owner class.
+        :return: The lazily initialized value of type T.
+        """
+        if instance is None:
+            return self
+
+        if not hasattr(instance, self.private_name):
+            setattr(instance, self.private_name, self.factory())
+
+        return getattr(instance, self.private_name)
+
+    def __set__(self, instance, value: T):
+        """
+        :param instance: The instance where the value is being set.
+        :param value: The value to assign to the property.
+        :raises AttributeError: If the property was initialized with writable=False.
+        """
+        if not self.writable:
+            raise AttributeError(f"Cannot set read-only attribute '{self.private_name.lstrip('_')}'")
+        setattr(instance, self.private_name, value)
+
+
+class LazyVec2(LazyProp[Vec2]):
+    """
+    Specific descriptor for Vec2 that mutates the existing instance's .xy
+    values instead of replacing the object reference.
+    """
+
+    def __set__(self, instance, value: coord_t):
+        """
+        :param instance: The instance where the value is being set.
+        :param value: The coordinate value (tuple, list, or Vec2) to apply to .xy.
+        :raises AttributeError: If the property was initialized with writable=False.
+        """
+        current_vec = self.__get__(instance, type(instance))
+        current_vec.xy = convert_coord(value)
+
+
+class UIElementValueFloat:
+    """
+    Absolute/Relative and global/to parent metrics for a single float value.
+    """
+    absolute_global: float = LazyProp(float)
+    absolute_to_parent: float = LazyProp(float)
+    relative_global: float = LazyProp(float)
+    relative_to_parent: float = LazyProp(float)
+
+    def copy_from(self, other: 'UIElementValueFloat') -> None:
+        """Copies values only if they have been lazily initialized in the source."""
+        if '_absolute_global' in other.__dict__:
+            self.absolute_global = other.__dict__['_absolute_global']
+        if '_absolute_to_parent' in other.__dict__:
+            self.absolute_to_parent = other.__dict__['_absolute_to_parent']
+        if '_relative_global' in other.__dict__:
+            self.relative_global = other.__dict__['_relative_global']
+        if '_relative_to_parent' in other.__dict__:
+            self.relative_to_parent = other.__dict__['_relative_to_parent']
+
+    def __ne__(self, other: 'UIElementValueFloat') -> bool:
+        """Checks for inequality without triggering lazy initialization."""
+        if '_absolute_global' in self.__dict__ or '_absolute_global' in other.__dict__:
+            if self.absolute_global != other.absolute_global: return True
+
+        if '_absolute_to_parent' in self.__dict__ or '_absolute_to_parent' in other.__dict__:
+            if self.absolute_to_parent != other.absolute_to_parent: return True
+
+        if '_relative_global' in self.__dict__ or '_relative_global' in other.__dict__:
+            if self.relative_global != other.relative_global: return True
+
+        if '_relative_to_parent' in self.__dict__ or '_relative_to_parent' in other.__dict__:
+            if self.relative_to_parent != other.relative_to_parent: return True
+
+        return False
+
+    def __eq__(self, other: 'UIElementValueFloat') -> bool:
+        return not self.__ne__(other)
+
+
+class UIElementValueFloatOneAbsolute:
+    """
+    Float value representation containing a single absolute value alongside relative metrics.
+    """
+    absolute: float = LazyProp(float)
+    relative_global: float = LazyProp(float)
+    relative_to_parent: float = LazyProp(float)
+
+    def copy_from(self, other: 'UIElementValueFloatOneAbsolute') -> None:
+        if '_absolute' in other.__dict__:
+            self.absolute = other.__dict__['_absolute']
+        if '_relative_global' in other.__dict__:
+            self.relative_global = other.__dict__['_relative_global']
+        if '_relative_to_parent' in other.__dict__:
+            self.relative_to_parent = other.__dict__['_relative_to_parent']
+
+    def __ne__(self, other: 'UIElementValueFloatOneAbsolute') -> bool:
+        if '_absolute' in self.__dict__ or '_absolute' in other.__dict__:
+            if self.absolute != other.absolute: return True
+
+        if '_relative_global' in self.__dict__ or '_relative_global' in other.__dict__:
+            if self.relative_global != other.relative_global: return True
+
+        if '_relative_to_parent' in self.__dict__ or '_relative_to_parent' in other.__dict__:
+            if self.relative_to_parent != other.relative_to_parent: return True
+
+        return False
+
+    def __eq__(self, other: 'UIElementValueFloatOneAbsolute') -> bool:
+        return not self.__ne__(other)
+
+
+class UIElementValueVec2:
+    """
+    Absolute/Relative and global/to parent of a Vec2 value crossed.
+    Values can be set like coord_t, but get is always Vec2.
+    """
+    absolute_global: coord_t = LazyVec2(Vec2, writable=False)
+    absolute_to_parent: coord_t = LazyVec2(Vec2, writable=False)
+    relative_global: coord_t = LazyVec2(Vec2, writable=False)
+    relative_to_parent: coord_t = LazyVec2(Vec2, writable=False)
+
+    def copy_from(self, other: 'UIElementValueVec2') -> None:
+        # We assign the `.xy` tuple to self so it hits LazyVec2.__set__ and mutates in place
+        if '_absolute_global' in other.__dict__:
+            self.absolute_global = other.__dict__['_absolute_global'].xy
+        if '_absolute_to_parent' in other.__dict__:
+            self.absolute_to_parent = other.__dict__['_absolute_to_parent'].xy
+        if '_relative_global' in other.__dict__:
+            self.relative_global = other.__dict__['_relative_global'].xy
+        if '_relative_to_parent' in other.__dict__:
+            self.relative_to_parent = other.__dict__['_relative_to_parent'].xy
+
+    def __ne__(self, other: 'UIElementValueVec2') -> bool:
+        if '_absolute_global' in self.__dict__ or '_absolute_global' in other.__dict__:
+            if self.absolute_global.xy != other.absolute_global.xy: return True
+
+        if '_absolute_to_parent' in self.__dict__ or '_absolute_to_parent' in other.__dict__:
+            if self.absolute_to_parent.xy != other.absolute_to_parent.xy: return True
+
+        if '_relative_global' in self.__dict__ or '_relative_global' in other.__dict__:
+            if self.relative_global.xy != other.relative_global.xy: return True
+
+        if '_relative_to_parent' in self.__dict__ or '_relative_to_parent' in other.__dict__:
+            if self.relative_to_parent.xy != other.relative_to_parent.xy: return True
+
+        return False
+
+    def __eq__(self, other: 'UIElementValueVec2') -> bool:
+        return not self.__ne__(other)
+
+
+class UIElementValueVec2OneAbsolute:
+    """
+    Vec2 value representation containing a single absolute value alongside relative metrics.
+    Values can be set like coord_t, but get is always Vec2.
+    """
+    absolute: coord_t = LazyVec2(Vec2, writable=False)
+    relative_global: coord_t = LazyVec2(Vec2, writable=False)
+    relative_to_parent: coord_t = LazyVec2(Vec2, writable=False)
+
+    def copy_from(self, other: 'UIElementValueVec2OneAbsolute') -> None:
+        if '_absolute' in other.__dict__:
+            self.absolute = other.__dict__['_absolute'].xy
+        if '_relative_global' in other.__dict__:
+            self.relative_global = other.__dict__['_relative_global'].xy
+        if '_relative_to_parent' in other.__dict__:
+            self.relative_to_parent = other.__dict__['_relative_to_parent'].xy
+
+    def __ne__(self, other: 'UIElementValueVec2OneAbsolute') -> bool:
+        if '_absolute' in self.__dict__ or '_absolute' in other.__dict__:
+            if self.absolute.xy != other.absolute.xy: return True
+
+        if '_relative_global' in self.__dict__ or '_relative_global' in other.__dict__:
+            if self.relative_global.xy != other.relative_global.xy: return True
+
+        if '_relative_to_parent' in self.__dict__ or '_relative_to_parent' in other.__dict__:
+            if self.relative_to_parent.xy != other.relative_to_parent.xy: return True
+
+        return False
+
+    def __eq__(self, other: 'UIElementValueVec2OneAbsolute') -> bool:
+        return not self.__ne__(other)
+
+
+
 class UIElementData:
-    """Position data for UIElement that can all influence each other"""
-    placement_anchor: Anchor = Anchor.CENTER
+    """
+    Position data for UIElement that can all influence each other
+    Everything with a default value None is only calculated when used
+    """
+    placement_anchor: Anchor
 
-    relative_position_global: Vec2 = field(default_factory=Vec2)
-    absolute_position_global: Vec2 = field(default_factory=Vec2)
-    relative_size_global: Vec2 = field(default_factory=Vec2)
-    absolute_size: Vec2 = field(default_factory=Vec2)
+    position: UIElementValueVec2
+    size: UIElementValueVec2OneAbsolute
 
-    relative_position_to_parent: Vec2 = field(default_factory=Vec2)
-    absolute_position_to_parent: Vec2 = field(default_factory=Vec2)
-    relative_size_to_parent: Vec2 = field(default_factory=Vec2)
-
-    absolute_width: float = 0.0
-    absolute_height: float = 0.0
-    absolute_center_global: Vec2 = field(default_factory=Vec2)
-    absolute_top_left_global: Vec2 = field(default_factory=Vec2)
-    absolute_top_right_global: Vec2 = field(default_factory=Vec2)
-    absolute_bottom_left_global: Vec2 = field(default_factory=Vec2)
-    absolute_bottom_right_global: Vec2 = field(default_factory=Vec2)
+    width: UIElementValueFloatOneAbsolute
+    height: UIElementValueFloatOneAbsolute
+    center: UIElementValueVec2
+    top_left: UIElementValueVec2
+    top_right: UIElementValueVec2
+    bottom_left: UIElementValueVec2
+    bottom_right: UIElementValueVec2
 
     position_is_relative_to_parent: bool = True
     size_is_relative_to_parent: bool = True
 
-    reference_relative_global_size: Vec2 = field(default_factory=Vec2)
-    reference_absolute_size: Vec2 = field(default_factory=Vec2)
-    reference_absolute_global_position: Vec2 = field(default_factory=Vec2)
-    reference_relative_global_position: Vec2 = field(default_factory=Vec2)
+    reference_ui_element: UIEntity | None
 
-    def __post_init__(self):
+    def __init__(self) -> None:
         self.placement_anchor = Anchor.CENTER
-        self.absolute_width = 0.0
-        self.absolute_height = 0.0
+        self.position = UIElementValueVec2()
+        self.size = UIElementValueVec2OneAbsolute()
+
+        self.width = UIElementValueFloatOneAbsolute()
+        self.height = UIElementValueFloatOneAbsolute()
+        self.center = UIElementValueVec2()
+        self.top_left = UIElementValueVec2()
+        self.top_right = UIElementValueVec2()
+        self.bottom_left = UIElementValueVec2()
+        self.bottom_right = UIElementValueVec2()
+
         self.position_is_relative_to_parent = True
         self.size_is_relative_to_parent = True
-        self.relative_position_global = Vec2()
-        self.absolute_position_global = Vec2()
-        self.relative_size_global = Vec2()
-        self.absolute_size = Vec2()
-        self.relative_position_to_parent = Vec2()
-        self.absolute_position_to_parent = Vec2()
-        self.relative_size_to_parent = Vec2()
-        self.absolute_center_global = Vec2()
-        self.absolute_top_left_global = Vec2()
-        self.absolute_top_right_global = Vec2()
+
+        self.reference_ui_element = None
 
     def copy_from(self, other: UIElementData) -> None:
         """Updates this instance with values from another in-place."""
         self.placement_anchor = other.placement_anchor
-        self.absolute_width = other.absolute_width
-        self.absolute_height = other.absolute_height
         self.position_is_relative_to_parent = other.position_is_relative_to_parent
         self.size_is_relative_to_parent = other.size_is_relative_to_parent
 
-        # Vec2 instances (Mutate in-place to avoid new memory allocations)
-        # noinspection DuplicatedCode
-        self.relative_position_global.xy = other.relative_position_global.xy
-        self.absolute_position_global.xy = other.absolute_position_global.xy
-        self.relative_size_global.xy = other.relative_size_global.xy
-        self.absolute_size.xy = other.absolute_size.xy
+        self.position.copy_from(other.position)
+        self.size.copy_from(other.size)
 
-        self.relative_position_to_parent.xy = other.relative_position_to_parent.xy
-        self.absolute_position_to_parent.xy = other.absolute_position_to_parent.xy
-        # noinspection DuplicatedCode
-        self.relative_size_to_parent.xy = other.relative_size_to_parent.xy
-
-        self.absolute_center_global.xy = other.absolute_center_global.xy
-        # noinspection DuplicatedCode
-        self.absolute_top_left_global.xy = other.absolute_top_left_global.xy
-        self.absolute_top_right_global.xy = other.absolute_top_right_global.xy
-        self.absolute_bottom_left_global.xy = other.absolute_bottom_left_global.xy
-        self.absolute_bottom_right_global.xy = other.absolute_bottom_right_global.xy
-
-        self.reference_relative_global_position.xy = other.reference_relative_global_position.xy
-        self.reference_absolute_global_position.xy = other.reference_absolute_global_position.xy
-        self.reference_relative_global_size.xy = other.reference_relative_global_size.xy
-        self.reference_absolute_size.xy = other.reference_absolute_size.xy
+        self.width.copy_from(other.width)
+        self.height.copy_from(other.height)
+        self.center.copy_from(other.center)
+        self.top_left.copy_from(other.top_left)
+        self.top_right.copy_from(other.top_right)
+        self.bottom_left.copy_from(other.bottom_left)
+        self.bottom_right.copy_from(other.bottom_right)
 
     def __ne__(self, other: object) -> bool:
         """Explicitly compares all values to guarantee detection of changes."""
         if not isinstance(other, UIElementData):
             return NotImplemented
 
-        # 1. Compare Primitives & Enums
-        if (self.absolute_width != other.absolute_width or
-                self.absolute_height != other.absolute_height or
-                self.placement_anchor != other.placement_anchor or
-                self.position_is_relative_to_parent != other.position_is_relative_to_parent or
-                self.size_is_relative_to_parent != other.size_is_relative_to_parent):
+        if (
+                self.placement_anchor != other.placement_anchor
+                or self.position_is_relative_to_parent != other.position_is_relative_to_parent
+                or self.size_is_relative_to_parent != other.size_is_relative_to_parent
+        ):
             return True
 
-        # 2. Compare Vec2 instances by strictly extracting their .xy tuples
-        if (self.relative_position_to_parent.xy != other.relative_position_to_parent.xy or
-                self.absolute_position_to_parent.xy != other.absolute_position_to_parent.xy or
-                self.relative_size_to_parent.xy != other.relative_size_to_parent.xy or
-
-                self.relative_position_global.xy != other.relative_position_global.xy or
-                self.absolute_position_global.xy != other.absolute_position_global.xy or
-                self.relative_size_global.xy != other.relative_size_global.xy or
-                self.absolute_size.xy != other.absolute_size.xy or
-
-                self.absolute_center_global.xy != other.absolute_center_global.xy or
-                self.absolute_top_left_global.xy != other.absolute_top_left_global.xy or
-                self.absolute_top_right_global.xy != other.absolute_top_right_global.xy or
-                self.absolute_bottom_left_global.xy != other.absolute_bottom_left_global.xy or
-                self.absolute_bottom_right_global.xy != other.absolute_bottom_right_global.xy or
-
-                self.reference_relative_global_size.xy != other.reference_relative_global_size.xy or
-                self.reference_absolute_size.xy != other.reference_absolute_size.xy or
-                self.reference_absolute_global_position.xy != other.reference_absolute_global_position.xy or
-                self.reference_relative_global_position.xy != other.reference_relative_global_position.xy):
+        if (
+                self.width != other.width
+                or self.height != other.height
+                or self.center != other.center
+                or self.top_left != other.top_left
+                or self.top_right != other.top_right
+                or self.bottom_left != other.bottom_left
+                or self.bottom_right != other.bottom_right
+                or self.position != other.position
+                or self.size != other.size
+        ):
             return True
 
         return False
@@ -143,13 +322,15 @@ class UIElement(UIEntity):
     """Basic UI component with position and size stuff"""
     cursor = False
 
-    __NULL_VEC2: Vec2 = Vec2()
-    __ONE_VEC2: Vec2 = Vec2().from_cartesian(1, 1)
+    __NULL_VEC2: tp.Final[Vec2] = Vec2()
+    __ONE_VEC2: tp.Final[Vec2] = Vec2().from_cartesian(1, 1)
 
     __data: UIElementData
     __last_data: UIElementData
 
     __changed_since_last_draw: bool
+
+    __absolute_values: bool
 
     def __init__(
             self,
@@ -175,6 +356,8 @@ class UIElement(UIEntity):
         """
         super().__init__(parent=parent, _is_ui_element=True)
 
+        self.__absolute_values = absolute_values
+
         self.__data = UIElementData()
         self.__last_data = UIElementData()
 
@@ -183,11 +366,11 @@ class UIElement(UIEntity):
         self.__data.placement_anchor = placement_anchor
 
         if absolute_values:
-            self.__data.relative_position_to_parent.xy = convert_coord(self.__absolute_to_relative(position))
-            self.__data.relative_size_to_parent.xy = convert_coord(self.__absolute_to_relative(size))
+            self.__data.position.relative_to_parent.xy = convert_coord(self.__absolute_to_relative(position))
+            self.__data.size.relative_to_parent.xy = convert_coord(self.__absolute_to_relative(size))
         else:
-            self.__data.relative_position_to_parent.xy = convert_coord(position)
-            self.__data.relative_size_to_parent.xy = convert_coord(size)
+            self.__data.position.relative_to_parent.xy = convert_coord(position)
+            self.__data.size.relative_to_parent.xy = convert_coord(size)
 
         self.__changed_since_last_draw = True
         self.__calc_values()
@@ -264,15 +447,16 @@ class UIElement(UIEntity):
         Detects external modifications by comparing data to last_data.
         Calculates relative_position_to_parent and relative_size_to_parent from the changed values.
         """
+        return
         # Relative size to parent modified
         if self.__data.relative_size_to_parent.xy != self.__last_data.relative_size_to_parent.xy:
             pass  # This is one of the two from which the whole calculation bases from
         # Relative position to parent modified
-        elif self.__data.relative_position_to_parent.xy != self.__last_data.relative_position_to_parent.xy:
+        elif self.__data.position_relative_to_parent.xy != self.__last_data.position_relative_to_parent.xy:
             pass  # This is one of the two from which the whole calculation bases from
         # Absolute size modified
-        elif self.__data.absolute_size.xy != self.__last_data.absolute_size.xy:
-            self.__data.relative_size_to_parent.xy = self.__absolute_to_relative(self.__data.absolute_size)
+        elif self.__data.size_absolute.xy != self.__last_data.size_absolute.xy:
+            self.__data.relative_size_to_parent.xy = self.__absolute_to_relative(self.__data.size_absolute)
         # Relative global size modified
         elif self.__data.relative_size_global.xy != self.__last_data.relative_size_global.xy:
             self.__data.relative_size_to_parent.xy = TupleMath.div(
@@ -286,17 +470,17 @@ class UIElement(UIEntity):
 
         temp_abs_size = convert_coord(self.__relative_to_absolute(self.__data.relative_size_to_parent), Vec2)
 
-        if self.__data.absolute_position_to_parent.xy != self.__last_data.absolute_position_to_parent.xy:
-            self.__data.relative_position_to_parent.xy = \
-                self.__absolute_to_relative(self.__data.absolute_position_to_parent)
-        if self.__data.relative_position_global.xy != self.__last_data.relative_position_global.xy:
-            self.__data.relative_position_to_parent.xy = TupleMath.sub(
-                self.__data.relative_position_global.xy,
+        if self.__data.position_absolute_to_parent.xy != self.__last_data.position_absolute_to_parent.xy:
+            self.__data.position_relative_to_parent.xy = \
+                self.__absolute_to_relative(self.__data.position_absolute_to_parent)
+        if self.__data.position_relative_global.xy != self.__last_data.position_relative_global.xy:
+            self.__data.position_relative_to_parent.xy = TupleMath.sub(
+                self.__data.position_relative_global.xy,
                 self.__reference_relative_global_position.xy
             )
-        if self.__data.absolute_position_global.xy != self.__last_data.absolute_position_global.xy:
-            abs_pos_to_parent = self.__data.absolute_position_global - self.__reference_absolute_global_position
-            self.__data.relative_position_to_parent.xy = self.__absolute_to_relative(abs_pos_to_parent)
+        if self.__data.position_absolute_global.xy != self.__last_data.position_absolute_global.xy:
+            abs_pos_to_parent = self.__data.position_absolute_global - self.__reference_absolute_global_position
+            self.__data.position_relative_to_parent.xy = self.__absolute_to_relative(abs_pos_to_parent)
         else:
             new_abs_global_xy = None
             half_size = TupleMath.div(temp_abs_size.xy, (2, 2))
@@ -335,7 +519,7 @@ class UIElement(UIEntity):
                 abs_pos_to_parent_xy = TupleMath.sub(new_abs_global_xy, self.__reference_absolute_global_position.xy)
                 # Reconstruct to Vec2 only right before passing to __absolute_to_relative if it strictly expects a vector
                 abs_pos_to_parent = convert_coord(abs_pos_to_parent_xy, Vec2)
-                self.__data.relative_position_to_parent.xy = self.__absolute_to_relative(abs_pos_to_parent)
+                self.__data.position_relative_to_parent.xy = self.__absolute_to_relative(abs_pos_to_parent)
 
     def __calc_values(self) -> None:
         self._update_relative_values()
@@ -343,73 +527,75 @@ class UIElement(UIEntity):
         if self.__data == self.__last_data:
             return
 
+        return
+
         self.__check_modifications()
 
-        self.__data.absolute_position_to_parent.xy = self.__relative_to_absolute(
-            self.__data.relative_position_to_parent
+        self.__data.position_absolute_to_parent.xy = self.__relative_to_absolute(
+            self.__data.position_relative_to_parent
         )
-        self.__data.absolute_size.xy = self.__relative_to_absolute(
+        self.__data.size_absolute.xy = self.__relative_to_absolute(
             self.__data.relative_size_to_parent
         )
 
-        self.__data.absolute_position_global.xy = TupleMath.add(
+        self.__data.position_absolute_global.xy = TupleMath.add(
             self.__reference_absolute_global_position.xy,
-            self.__data.absolute_position_to_parent.xy
+            self.__data.position_absolute_to_parent.xy
         )
 
-        self.__data.relative_position_global.xy = TupleMath.add(
+        self.__data.position_relative_global.xy = TupleMath.add(
             self.__reference_relative_global_position.xy,
-            self.__data.relative_position_to_parent.xy
+            self.__data.position_relative_to_parent.xy
         )
 
         self.__data.relative_size_global.xy = TupleMath.mul(
             self.__data.reference_relative_global_size.xy,
-            TupleMath.div(self.__data.absolute_size.xy, global_vars.resolution.xy)
+            TupleMath.div(self.__data.size_absolute.xy, global_vars.resolution.xy)
         )
 
-        self.__data.absolute_width = self.__data.absolute_size.x
-        self.__data.absolute_height = self.__data.absolute_size.y
+        self.__data.absolute_width = self.__data.size_absolute.x
+        self.__data.absolute_height = self.__data.size_absolute.y
 
         if self.__data.placement_anchor == "nw":
-            self.__data.absolute_top_left_global.xy = self.__data.absolute_position_global.xy
+            self.__data.absolute_top_left_global.xy = self.__data.position_absolute_global.xy
             self.__data.absolute_top_right_global.xy = TupleMath.add(
-                self.__data.absolute_position_global.xy,
-                (self.__data.absolute_size.x, 0)
+                self.__data.position_absolute_global.xy,
+                (self.__data.size_absolute.x, 0)
             )
             self.__data.absolute_bottom_left_global.xy = TupleMath.add(
-                self.__data.absolute_position_global.xy,
-                (0, self.__data.absolute_size.y)
+                self.__data.position_absolute_global.xy,
+                (0, self.__data.size_absolute.y)
             )
             self.__data.absolute_bottom_right_global.xy = TupleMath.add(
-                self.__data.absolute_position_global.xy,
-                self.__data.absolute_size.xy
+                self.__data.position_absolute_global.xy,
+                self.__data.size_absolute.xy
             )
             self.__data.absolute_center_global.xy = TupleMath.add(
-                self.__data.absolute_position_global.xy,
-                TupleMath.div(self.__data.absolute_size.xy, (2, 2))
+                self.__data.position_absolute_global.xy,
+                TupleMath.div(self.__data.size_absolute.xy, (2, 2))
             )
 
         elif self.__data.placement_anchor == "center":
-            half_size = TupleMath.div(self.__data.absolute_size.xy, (2, 2))
+            half_size = TupleMath.div(self.__data.size_absolute.xy, (2, 2))
 
             self.__data.absolute_top_left_global.xy = TupleMath.sub(
-                self.__data.absolute_position_global.xy,
+                self.__data.position_absolute_global.xy,
                 half_size
             )
             self.__data.absolute_top_right_global.xy = TupleMath.add(
-                self.__data.absolute_position_global.xy,
-                (self.__data.absolute_size.x / 2, -self.__data.absolute_size.y / 2)
+                self.__data.position_absolute_global.xy,
+                (self.__data.size_absolute.x / 2, -self.__data.size_absolute.y / 2)
             )
             self.__data.absolute_bottom_left_global.xy = TupleMath.add(
-                self.__data.absolute_position_global.xy,
-                (-self.__data.absolute_size.x / 2, self.__data.absolute_size.y / 2)
+                self.__data.position_absolute_global.xy,
+                (-self.__data.size_absolute.x / 2, self.__data.size_absolute.y / 2)
             )
             self.__data.absolute_bottom_right_global.xy = TupleMath.add(
-                self.__data.absolute_position_global.xy,
+                self.__data.position_absolute_global.xy,
                 half_size
             )
 
-            self.__data.absolute_center_global.xy = self.__data.absolute_position_global.xy
+            self.__data.absolute_center_global.xy = self.__data.position_absolute_global.xy
 
         if not self._ui_changed:
             if self.__data != self.__last_data:
@@ -502,41 +688,62 @@ class UIElement(UIEntity):
         self.__calc_values()
         self.__data.absolute_width = float(value)
 
+    def __calc_height_absolute(self) -> None:
+        ...
+
+    def __calc_height_relative_global(self) -> None:
+        ...
+
+    def __calc_height_relative_to_parent(self) -> None:
+        ...
+
     @property
-    def height(self) -> float:
+    def height(self) -> UIElementValueFloatOneAbsolute:
         """:return: Absolute height"""
         self.__calc_values()
-        return self.__data.absolute_height
+        return self.__data.height
 
-    @height.setter
-    def height(self, value: float) -> None:
-        """:param value: Absolute height"""
-        self.__calc_values()
-        self.__data.absolute_height = float(value)
-
-    @property
-    def relative_position_to_parent(self) -> Vec2:
-        """:return: Relative position to parent"""
-        self.__calc_values()
-        return self.__data.relative_position_to_parent
-
-    @relative_position_to_parent.setter
-    def relative_position_to_parent(self, value: coord_t) -> None:
-        """:param value: Relative position to parent"""
-        self.__calc_values()
-        self.__data.relative_position_to_parent.xy = convert_coord(value)
+    # @height.setter
+    # def height(self, value: float) -> None:
+    #     """:param value: Absolute height"""
+    #     self.__calc_values()
+    #     self.__data.absolute_height = float(value)
 
     @property
-    def absolute_position_to_parent(self) -> Vec2:
-        """:return: Absolute position to parent"""
+    def position(self) -> UIElementValueVec2:
         self.__calc_values()
-        return self.__data.absolute_position_to_parent
+        return self.__data.position
 
-    @absolute_position_to_parent.setter
-    def absolute_position_to_parent(self, value: coord_t) -> None:
-        """:param value: Absolute position to parent"""
-        self.__calc_values()
-        self.__data.absolute_position_to_parent.xy = convert_coord(value)
+    @position.setter
+    def position(self, value: coord_t) -> None:
+        if self.__absolute_values:
+            self.__data.position.absolute_to_parent = value
+        else:
+            self.__data.position.relative_to_parent = value
+
+    # @property
+    # def relative_position_to_parent(self) -> Vec2:
+    #     """:return: Relative position to parent"""
+    #     self.__calc_values()
+    #     return self.__data.position_relative_to_parent
+    #
+    # @relative_position_to_parent.setter
+    # def relative_position_to_parent(self, value: coord_t) -> None:
+    #     """:param value: Relative position to parent"""
+    #     self.__calc_values()
+    #     self.__data.position_relative_to_parent.xy = convert_coord(value)
+    #
+    # @property
+    # def absolute_position_to_parent(self) -> Vec2:
+    #     """:return: Absolute position to parent"""
+    #     self.__calc_values()
+    #     return self.__data.position_absolute_to_parent
+    #
+    # @absolute_position_to_parent.setter
+    # def absolute_position_to_parent(self, value: coord_t) -> None:
+    #     """:param value: Absolute position to parent"""
+    #     self.__calc_values()
+    #     self.__data.position_absolute_to_parent.xy = convert_coord(value)
 
     @property
     def relative_size_to_parent(self) -> Vec2:
@@ -550,29 +757,29 @@ class UIElement(UIEntity):
         self.__calc_values()
         self.__data.relative_size_to_parent.xy = convert_coord(value)
 
-    @property
-    def relative_position_global(self) -> Vec2:
-        """:return: Relative global position"""
-        self.__calc_values()
-        return self.__data.relative_position_global
-
-    @relative_position_global.setter
-    def relative_position_global(self, value: coord_t) -> None:
-        """:param value: Relative global position"""
-        self.__calc_values()
-        self.__data.relative_position_global.xy = convert_coord(value)
-
-    @property
-    def absolute_position_global(self) -> Vec2:
-        """:return: Absolute global position"""
-        self.__calc_values()
-        return self.__data.absolute_position_global
-
-    @absolute_position_global.setter
-    def absolute_position_global(self, value: coord_t) -> None:
-        """:param value: Absolute global position"""
-        self.__calc_values()
-        self.__data.absolute_position_global.xy = convert_coord(value)
+    # @property
+    # def relative_position_global(self) -> Vec2:
+    #     """:return: Relative global position"""
+    #     self.__calc_values()
+    #     return self.__data.position_relative_global
+    #
+    # @relative_position_global.setter
+    # def relative_position_global(self, value: coord_t) -> None:
+    #     """:param value: Relative global position"""
+    #     self.__calc_values()
+    #     self.__data.position_relative_global.xy = convert_coord(value)
+    #
+    # @property
+    # def absolute_position_global(self) -> Vec2:
+    #     """:return: Absolute global position"""
+    #     self.__calc_values()
+    #     return self.__data.position_absolute_global
+    #
+    # @absolute_position_global.setter
+    # def absolute_position_global(self, value: coord_t) -> None:
+    #     """:param value: Absolute global position"""
+    #     self.__calc_values()
+    #     self.__data.position_absolute_global.xy = convert_coord(value)
 
     @property
     def relative_size_global(self) -> Vec2:
@@ -590,13 +797,13 @@ class UIElement(UIEntity):
     def absolute_size(self) -> Vec2:
         """:return: Absolute size"""
         self.__calc_values()
-        return self.__data.absolute_size
+        return self.__data.size_absolute
 
     @absolute_size.setter
     def absolute_size(self, value: coord_t) -> None:
         """:param value: Absolute size"""
         self.__calc_values()
-        self.__data.absolute_size.xy = convert_coord(value)
+        self.__data.size_absolute.xy = convert_coord(value)
 
     @property
     def center(self) -> Vec2:
