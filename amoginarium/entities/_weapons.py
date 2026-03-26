@@ -346,6 +346,13 @@ class Bullet(ImageEntity):
                 )
                 return
 
+            # draw trail
+            renderer.draw_line(
+                self.world_position,
+                self._last_pos,
+                Color().from_255(255, 255, 60)
+            )
+
             # draw image if given
             self._texture_id = self._bullet_texture
 
