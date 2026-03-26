@@ -566,11 +566,11 @@ class JetBag(BaseItem):
             if self._uses_left > 0:
                 self._uses_left -= delta
 
-                if hasattr(self.parent, "_movement_acceleration"):
+                if hasattr(self.parent, "_impulse_resistance_factor"):
                     # noinspection PyProtectedMember
                     recoil = Vec2().from_cartesian(
                         0,
-                        -(self.parent._movement_acceleration / 16)
+                        -self.parent._impulse_resistance_factor
                     )
                     recoil.length *= self._acceleration
                     ic(recoil)

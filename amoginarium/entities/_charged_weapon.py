@@ -26,7 +26,7 @@ class ChargedWeapon(BaseWeapon):
             parent,
             reload_time: float,
             recoil_time: float,
-            recoil_factor: tuple[float, float],
+            weapon_recoil_factor: tuple[float, float],
             charge_time: float,
             mag_size: int,
             inaccuracy: float,
@@ -47,7 +47,6 @@ class ChargedWeapon(BaseWeapon):
             parent,
             reload_time,
             recoil_time,
-            0,
             mag_size,
             inaccuracy,
             0,
@@ -61,10 +60,10 @@ class ChargedWeapon(BaseWeapon):
             bullet_lifetime,
             sound_effect,
             bullet_type,
-            bullet_visibility_offset
+            bullet_visibility_offset,
         )
         self._bullet_speed_range = bullet_speed
-        self._recoil_range = recoil_factor
+        self._recoil_range = weapon_recoil_factor
         self._explosion_radius_range = bullet_explosion_radius
         self._explosion_damage_range = bullet_explosion_damage
         self._charge_time = charge_time
@@ -179,7 +178,7 @@ class Bow(ChargedWeapon):
             parent,
             reload_time=3,
             recoil_time=.02,
-            recoil_factor=(.5, 10),
+            weapon_recoil_factor=(.5, 10),
             charge_time=2,
             mag_size=80,
             inaccuracy=.01093606,
@@ -208,7 +207,7 @@ class RailGun(ChargedWeapon):
             parent,
             reload_time=30,
             recoil_time=.1,
-            recoil_factor=(.5, 50),
+            weapon_recoil_factor=(.5, 50),
             charge_time=10,
             mag_size=1,
             inaccuracy=.01093606,
