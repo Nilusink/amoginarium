@@ -47,7 +47,7 @@ class Player(LRImageEntity):
     _player_oob_right_2_texture: int = ...
     _player_oob_left_1_texture: int = ...
     _player_oob_left_2_texture: int = ...
-    _movement_acceleration: float = 800
+    _movement_acceleration: float = 16
     _heal_per_second: float = 2
     _time_to_heal: float = 5
     _max_speed: float = 1000
@@ -391,14 +391,14 @@ class Player(LRImageEntity):
         # accelerate right
         if self._controller.joy_x > 0:
             if self.velocity.x < self._max_speed:
-                self.velocity.x += self._movement_acceleration * delta
+                self.velocity.x += self._movement_acceleration * delta * global_vars.acceleration_factor
 
             # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
-                self.velocity.x -= self._movement_acceleration * delta
+                self.velocity.x -= self._movement_acceleration * delta * global_vars.acceleration_factor
 
             # self.facing.x = -1
 

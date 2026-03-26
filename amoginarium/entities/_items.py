@@ -7,8 +7,6 @@ various items that are not weapons
 Author:
 Nilusink
 """
-from typing import Tuple
-
 from OpenGL.GL import glBindTexture, glGetTexImage, GL_TEXTURE_2D, GL_RGBA
 from OpenGL.GL import GL_UNSIGNED_BYTE
 from icecream import ic
@@ -17,7 +15,7 @@ import pygame as pg
 import math as m
 
 from ..shared import PlayerLike, BaseEntityLike, ItemLike, WeaponLike, \
-    ItemSlot
+    ItemSlot, global_vars
 from ..logic import coord_t, convert_coord, Vec2
 from ..entities import CollisionDestroyed, Updated, GravityAffected, WallCollider, Drawn
 from ._base_entity import PositionedEntity, VisibleGameEntity
@@ -511,7 +509,7 @@ class JetBag(BaseItem):
     _animation_textures: list[int] = ...
     _max_uses: int = 5
     _reload_per_second: float = .2
-    _recoil_factor = 1
+    _acceleration = 19 * global_vars.acceleration_factor
 
     @classmethod
     def load_textures(cls) -> None:
@@ -572,9 +570,10 @@ class JetBag(BaseItem):
                     # noinspection PyProtectedMember
                     recoil = Vec2().from_cartesian(
                         0,
-                        -self.parent._movement_acceleration
+                        -(self.parent._movement_acceleration / 16)
                     )
-                    recoil *= self._recoil_factor
+                    recoil.length *= self._acceleration
+                    ic(recoil)
                     self.parent.add_acceleration(recoil)
 
             else:

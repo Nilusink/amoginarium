@@ -20,6 +20,7 @@ from icecream import ic
 from ..logic import Vec2, is_related, Color, coord_t, convert_coord, \
     raycast_mask, normalize_angle, fade
 from ..render_bindings import renderer
+from ..shared import global_vars
 
 
 # from ..debugging import run_with_debug
@@ -267,7 +268,7 @@ class _GravityAffected(BaseGroup):
 
     @property
     def gravity(self) -> float:
-        return 9.81 * 50
+        return 9.81 * global_vars.acceleration_factor
 
     def calculate_gravity(self, _delta: float) -> None:
         for sprite in self.sprites():
