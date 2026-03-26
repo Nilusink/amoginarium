@@ -679,6 +679,7 @@ class OpenGLRenderer(BaseRenderer):
         if convert_global:
             start = global_vars.translate_screen_coord(start)
             end = global_vars.translate_screen_coord(end)
+            thickness = global_vars.translate_scale(thickness)
 
         direction = end - start
 

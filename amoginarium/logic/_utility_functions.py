@@ -12,7 +12,7 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
-from ._cutility_functions import raycast_mask
+from ._cutility_functions import raycast_mask, infinite_lines_intersect
 from ..debugging import timeit
 from ._cvectors import Vec2
 from ._ccolor import Color
@@ -167,6 +167,16 @@ def multi_raycast_mask(
     out = []
 
     for sprite in sprites:
+        if hasattr(sprite, "last_pos"):
+            if infinite_lines_intersect(
+                sprite.position,
+                sprite.last_pos,
+                start,
+                end
+            ):
+                out.append((sprite, sprite.position))
+                continue
+
         if not all([
             sprite,
             hasattr(sprite, "rect"),

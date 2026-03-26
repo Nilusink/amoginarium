@@ -67,6 +67,7 @@ class Bullet(ImageEntity):
         self._casing = casing
         self._base_damage = base_damage
         self._ttl = time_to_life
+        self._o_ttl = time_to_life
         self._initial_velocity = initial_velocity
         self._explosion_radius = explosion_radius
         self._explosion_damage = explosion_damage
@@ -144,6 +145,10 @@ class Bullet(ImageEntity):
     def recoil_fac(self) -> float:
         return self.get_recoil_fac(self.weight, self.velocity.length)
 
+    @property
+    def last_pos(self) -> Vec2:
+        return self._last_pos
+
     @classmethod
     def _weight_from_size(cls, size: Vec2 | float) -> float:
         if isinstance(size, Vec2):
@@ -179,12 +184,10 @@ class Bullet(ImageEntity):
         self._visibility_offset -= delta
 
         if any([
-            self.position.y > 2000,
-            self.position.x < Updated.world_position.x - 2000,
-            self.position.x > Updated.world_position.x + 4000,
             self._ttl <= 0,
             self.on_ground
         ]):
+            ic(self._ttl, self._o_ttl)
             if self.kill():
                 return
 
@@ -231,6 +234,7 @@ class Bullet(ImageEntity):
                     with suppress(AttributeError):
                         other.hit(dmg, self)
 
+    @run_with_debug()
     def kill(self, killed_by: tp.Self = ...) -> bool:
         if all([
             self._casing,
@@ -366,12 +370,6 @@ class Bullet(ImageEntity):
             self._texture_id = self._casing_texture
 
         super().gl_draw()
-
-        # renderer.draw_line(
-        #     self.position - Updated.world_position,
-        #     self._last_pos - Updated.world_position,
-        #     (1, 1, 0, 1)
-        # )
 
 
 class MortarShell(Bullet):

@@ -257,6 +257,8 @@ class BaseTurret(VisibleGameEntity):
                 continue
 
             if self.available_targets[target]["shot_at"] >= 0:
+                sol = self._get_firing_solution(target)
+                self.available_targets[target]["solution"] = sol
                 self.available_targets[target]["shot_at"] -= delta
 
             elif self.available_targets[target]["shot_at"] > -1:
@@ -279,11 +281,13 @@ class BaseTurret(VisibleGameEntity):
         if new_target is not None:
             self._last_shot = perf_counter()
             self._target_predict = [new_target.target_predict]
-            self.__shoot_at(new_target)
+            self.__shoot_at(self._get_firing_solution(new_target.target, 25))
 
         # aim but don't shoot
         elif simulate_target is not None:
             self._target_predict = [simulate_target.target_predict]
+            self._aiming_at = simulate_target.angle.copy()
+            self._aiming_at.normalize()
 
         else:
             self._target = ...
@@ -298,7 +302,11 @@ class BaseTurret(VisibleGameEntity):
 
         super().update(delta)
 
-    def _get_firing_solution(self, target: VisibleGameEntityLike) -> TargetSolution | None:
+    def _get_firing_solution(
+            self,
+            target: VisibleGameEntityLike,
+            recalc: int = 5
+    ) -> TargetSolution | None:
         """
         aim at specified target
         :param target: target to aim at
@@ -345,7 +353,7 @@ class BaseTurret(VisibleGameEntity):
                 player_velocity,
                 player_acceleration,
                 self.weapon.bullet_speed,
-                16,
+                recalc,
                 # 2 * position_delta.length / self.weapon.bullet_speed,
                 self._aim_type,
                 # *2 because for some reason I gave bullets 2x gravity

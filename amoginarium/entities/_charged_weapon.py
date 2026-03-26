@@ -206,7 +206,7 @@ class RailGun(ChargedWeapon):
         super().__init__(
             parent,
             reload_time=30,
-            recoil_time=.1,
+            recoil_time=1,
             weapon_recoil_factor=(.5, 50),
             charge_time=10,
             mag_size=1,
