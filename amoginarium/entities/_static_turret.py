@@ -7,10 +7,13 @@ defines a player
 Author:
 Nilusink
 """
+from dataclasses import dataclass
 from contextlib import suppress
 from time import perf_counter
 from icecream import ic
 import typing as tp
+import numpy as np
+
 from ._groups import HasBars, CollisionDestroyed, Players, Updated, Bullets, \
     GravityAffected
 from ._weapons import BaseWeapon, Sniper, Ak47, Minigun, Mortar, Flak, CRAM
@@ -19,9 +22,20 @@ from ..logic import Vec2, calculate_launch_angle, Color, is_related, \
 from ._base_entity import VisibleGameEntity
 from ..radar import RadarSensor, BaseSensor, VisualSensor, DetectionGroup, \
     DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
-from ..shared import global_vars, Coalitions
+from ..shared import global_vars, Coalitions, VisibleGameEntityLike
 from ..render_bindings import renderer
 from ..base._textures import textures
+
+
+@dataclass
+class TargetSolution:
+    target: VisibleGameEntityLike
+    target_predict: Vec2
+    angle: Vec2
+    tof: float
+
+
+type target_solution_t = TargetSolution | None
 
 
 class BaseTurret(VisibleGameEntity):
@@ -145,7 +159,7 @@ class BaseTurret(VisibleGameEntity):
         self.weapon.stop()
         super().kill(killed_by)
 
-    def get_next_target(self, include_all: bool = False) -> tp.Any:
+    def get_next_target(self, include_all: bool = False) -> target_solution_t:
         """
         returns the next best target to shoot at
         """
@@ -154,11 +168,32 @@ class BaseTurret(VisibleGameEntity):
                 targets, key=lambda t: self.available_targets[t]["distance"]
         ):
             t = self.available_targets[target]
+            # don't even aim if predicted impact is oor
+            if t["distance"] > self.engagement_range:
+                continue
+
             if include_all:
-                return target
+                return t["solution"]
 
             if t["shot_at"] < -.5:
-                return target
+                # check if firing solution inside engagement envelope
+                if self._valid_angles is not ...:
+                    angle_delta = normalize_angle(
+                        self._valid_angles[1].angle
+                        - self._valid_angles[0].angle
+                    )
+                    start2 = self._valid_angles[0].angle + angle_delta
+                    end2 = self._valid_angles[1].angle - angle_delta
+
+                    # check if firing-solution is inside engagement envelope
+                    if not any([
+                        self._valid_angles[0].angle < t["solution"].angle.angle < start2,
+                        self._valid_angles[
+                            1].angle > t["solution"].angle.angle > end2,
+                    ]):
+                        continue
+
+                return t["solution"]
 
         # all targets have been shot at, so shoot at nothing
         # and reset shot_ats
@@ -186,36 +221,36 @@ class BaseTurret(VisibleGameEntity):
         ]
 
         # only check targets inside engagement envelope
-        if self._valid_angles is not ...:
-            targets = Players.entities_in_partial_circle(
-                targets,
-                self.position,
-                self.engagement_range,
-                *self._valid_angles,
-                min_radius=self.min_range
-            )
-
-        else:
-            targets = Players.entities_in_circle(
-                targets,
-                self.position,
-                self.engagement_range,
-                min_radius=self.min_range
-            )
+        # if self._valid_angles is not ...:
+        #     targets = Players.entities_in_partial_circle(
+        #         targets,
+        #         self.position,
+        #         self.engagement_range,
+        #         *self._valid_angles,
+        #         min_radius=self.min_range
+        #     )
+        #
+        # else:
+        #     targets = Players.entities_in_circle(
+        #         targets,
+        #         self.position,
+        #         self.engagement_range,
+        #         min_radius=self.min_range
+        #     )
 
         # filter stuff shot by myself
-        targets = [e for e in targets if not is_related(self, e[1], depth=4)]
+        targets = [e for e in targets if not is_related(self, e, depth=4)]
         # targets = []
 
         for target in targets:
-            if target[1] not in self.available_targets:
-                self.available_targets[target[1]] = {
+            if target not in self.available_targets:
+                self.available_targets[target] = {
                     "shot_at": -self._number_target_taps,
-                    "distance": target[0]
+                    "distance": None,
+                    "solution": None
                 }
 
         # make list only contain the entities
-        targets = [value[1] for value in targets]
         for target in self.available_targets.copy():
             if target not in targets:
                 self.available_targets.pop(target)
@@ -227,19 +262,28 @@ class BaseTurret(VisibleGameEntity):
             elif self.available_targets[target]["shot_at"] > -1:
                 self.available_targets[target]["shot_at"] = -self._number_target_taps
 
+            else:
+                sol = self._get_firing_solution(target)
+                self.available_targets[target]["solution"] = sol
+                if not sol:
+                    self.available_targets[target]["distance"] = np.inf
+                    continue
+
+                self.available_targets[target]["distance"] = (
+                    sol.target_predict
+                    - self.position + self.weapon.parent_position_offset
+                ).length
+
         new_target = self.get_next_target()
         simulate_target = self.get_next_target(True)
         if new_target is not None:
             self._last_shot = perf_counter()
-            self._target_predict = [
-                self.__shoot_at(new_target),
-            ]
+            self._target_predict = [new_target.target_predict]
+            self.__shoot_at(new_target)
 
         # aim but don't shoot
         elif simulate_target is not None:
-            self._target_predict = [
-                self.__shoot_at(simulate_target, True),
-            ]
+            self._target_predict = [simulate_target.target_predict]
 
         else:
             self._target = ...
@@ -254,15 +298,11 @@ class BaseTurret(VisibleGameEntity):
 
         super().update(delta)
 
-    def __shoot_at(
-            self,
-            target: VisibleGameEntity,
-            simulate: bool = False
-    ) -> Vec2 | None:
+    def _get_firing_solution(self, target: VisibleGameEntityLike) -> TargetSolution | None:
         """
-        shoot at specified target
-        :param target:
-        :param simulate: calculate & aim but don't shoot
+        aim at specified target
+        :param target: target to aim at
+        :returns:
         """
         player_velocity = target.velocity.copy()
         player_acceleration = target.acceleration.copy()
@@ -324,48 +364,58 @@ class BaseTurret(VisibleGameEntity):
             if predict.length < self.min_range:
                 return
 
-            if self._valid_angles is not ...:
-                angle_delta = normalize_angle(
-                    self._valid_angles[1].angle
-                    - self._valid_angles[0].angle
-                )
-                start2 = self._valid_angles[0].angle + angle_delta
-                end2 = self._valid_angles[1].angle - angle_delta
-
-                # check if firing-solution is inside engagement envelope
-                if not any([
-                    self._valid_angles[0].angle < aiming_angle.angle < start2,
-                    self._valid_angles[1].angle > aiming_angle.angle > end2,
-                ]):
-                    return
-
             tof = min(
                 tof,
                 1.3 * self.engagement_range / self.weapon.bullet_speed
             )
 
-            self._aiming_at = aiming_angle.copy()
-            self._aiming_at.normalize()
-
-            if simulate:
-                return target_predict
-
-            shot = self.weapon.shoot(
-                aiming_angle,
-                tof if self.airburst_munition else ...,
-                target_pos=target_predict
+            return TargetSolution(
+                target_predict=target_predict,
+                angle=aiming_angle,
+                target=target,
+                tof=tof,
             )
 
-            if shot:
-                if self.available_targets[target]["shot_at"] < -1:
-                    self.available_targets[target]["shot_at"] += 1
-
-                else:
-                    self.available_targets[target]["shot_at"] = tof
-
-            return target_predict
-
         return None
+
+    def __shoot_at(
+            self,
+            solution: TargetSolution,
+    ) -> None:
+        """
+        shoot at specified target
+        :param solution: where to shoot to
+        """
+        self._aiming_at = solution.angle.copy()
+        self._aiming_at.normalize()
+
+        if self._valid_angles is not ...:
+            angle_delta = normalize_angle(
+                self._valid_angles[1].angle
+                - self._valid_angles[0].angle
+            )
+            start2 = self._valid_angles[0].angle + angle_delta
+            end2 = self._valid_angles[1].angle - angle_delta
+
+            # check if firing-solution is inside engagement envelope
+            if not any([
+                self._valid_angles[0].angle < solution.angle.angle < start2,
+                self._valid_angles[1].angle > solution.angle.angle > end2,
+            ]):
+                return
+
+        shot = self.weapon.shoot(
+            solution.angle,
+            solution.tof if self.airburst_munition else ...,
+            target_pos=solution.target_predict
+        )
+
+        if shot:
+            if self.available_targets[solution.target]["shot_at"] < -1:
+                self.available_targets[solution.target]["shot_at"] += 1
+
+            else:
+                self.available_targets[solution.target]["shot_at"] = solution.tof
 
     def gl_draw(self) -> None:
         # only draw engagement range if on screen

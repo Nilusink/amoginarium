@@ -6,6 +6,7 @@ import sys
 
 sys.setrecursionlimit(10000)
 
+
 def main():
     game = BaseGame(debug=True, show_targets=False, time_multiplier=1)
 
