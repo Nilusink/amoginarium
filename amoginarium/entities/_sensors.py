@@ -100,21 +100,17 @@ class BaseDetector(VisibleGameEntity):
 
     def gl_draw(self) -> None:
         # only draw if on screen
-        if not any([
-            Updated.world_position.x < self.position.x - self.size.x / 2,
-            self.position.x + self.size.x / 2 < Updated.world_position.x +
-            global_vars.screen_pixels.x,
-            Updated.world_position.y < self.position.y - self.size.y / 2,
-            self.position.y + self.size.y / 2 < Updated.world_position.y +
-            global_vars.screen_pixels.y,
-        ]):
-            return
-
-        renderer.draw_textured_quad(
-            self._body_texture,
-            self.world_position - self.size / 2,
-            self.size.xy
-        )
+        if not (
+            self.position.x + self.size.x < Updated.world_position.x or
+            self.position.x - self.size.y > Updated.world_position.x + global_vars.screen_pixels.x or
+            self.position.y + self.size.x < Updated.world_position.y or
+            self.position.y - self.size.y > Updated.world_position.y + global_vars.screen_pixels.y
+        ):
+            renderer.draw_textured_quad(
+                self._body_texture,
+                self.world_position - self.size / 2,
+                self.size.xy
+            )
 
         super().gl_draw()
 

@@ -573,7 +573,6 @@ class JetBag(BaseItem):
                         -self.parent._impulse_resistance_factor
                     )
                     recoil.length *= self._acceleration
-                    ic(recoil)
                     self.parent.add_acceleration(recoil)
 
             else:
