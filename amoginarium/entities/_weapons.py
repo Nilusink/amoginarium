@@ -347,10 +347,16 @@ class Bullet(ImageEntity):
                 return
 
             # draw trail
-            renderer.draw_line(
+            renderer.draw_thick_line(
                 self.world_position,
-                self._last_pos,
-                Color().from_255(255, 255, 60)
+                self._last_pos - Updated.world_position,
+                Color().from_255(
+                    255,
+                    255,
+                    60,
+                    min(255, int((self.velocity.length / 10000) * 255))
+                ),
+                self.size.length / 3,
             )
 
             # draw image if given

@@ -692,7 +692,7 @@ class OpenGLRenderer(BaseRenderer):
         self.set_color(color)
 
         # normalize perpendicular
-        length = direction.length()
+        length = direction.length
         if length == 0:
             return
 
