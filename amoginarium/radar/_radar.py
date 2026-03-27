@@ -100,7 +100,7 @@ class RadarSensor(BaseSensor):
                         if da >= self._min_rcs:
                             out.append(target)
 
-                            if not is_related(self.parent, target, 4):
+                            if self.parent.coalition is not target.coalition:
                                 t1 += position_offset
                                 t2 += position_offset
 

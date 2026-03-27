@@ -32,7 +32,7 @@ from ..radar import DETECTION_GROUP_MANAGER
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
 from ..entities import Player, GrassIsland, ISLANDS, Radar, SPAWNABLES
 from ..controllers import Controllers, Controller, GameController
-from ..debugging import run_with_debug, print_ic_style, CC, timeit
+from ..debugging import run_with_debug, print_ic_style, CC, timeit, cum_timer
 from ._scrolling_background import ParalaxBackground
 from ..shared import global_vars, Coalitions
 from ..logic import SimpleLock, Vec2, convert_coord
@@ -865,6 +865,10 @@ class BaseGame:
                 clock.tick(global_vars.max_fps)
 
         ic("pygame end")
+        times = cum_timer.get_times()
+        for func, values in sorted(times.items(), key=lambda e: e[1][0]):
+            print_ic_style(f"{func}, called {values[1]} times {round(values[2], 3)}µs each, totaling {round(values[0] / 1000, 2)}ms")
+
         self.end()
 
     def draw_entities_only(self) -> None:

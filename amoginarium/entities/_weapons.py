@@ -204,7 +204,7 @@ class Bullet(ImageEntity):
                 Updated.sprites(),
                 self._last_pos,
                 self.position,
-                1
+                10
             )
 
             for other, pos in entities_hit:

@@ -280,11 +280,16 @@ class BaseTurret(VisibleGameEntity):
         simulate_target = self.get_next_target(True)
         if new_target is not None:
             self._last_shot = perf_counter()
-            self._target_predict = [new_target.target_predict]
-            self.__shoot_at(self._get_firing_solution(new_target.target, 25))
+            solution = self._get_firing_solution(new_target.target, 25)
+            if solution is None:
+                new_target = None
+
+            else:
+                self._target_predict = [solution.target_predict]
+                self.__shoot_at(solution)
 
         # aim but don't shoot
-        elif simulate_target is not None:
+        if new_target is None and simulate_target is not None:
             self._target_predict = [simulate_target.target_predict]
             self._aiming_at = simulate_target.angle.copy()
             self._aiming_at.normalize()

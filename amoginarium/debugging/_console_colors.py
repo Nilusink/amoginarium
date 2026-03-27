@@ -9,7 +9,7 @@ Nilusink
 """
 import os
 
-from ..logic import BetterDict
+from ..logic._utility_classes import BetterDict
 
 if os.name == "nt":
     os.system("color")
