@@ -12,8 +12,7 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
-from ._cutility_functions import raycast_mask, infinite_lines_intersect as ili, raycast_size as rs
-from ..debugging import timeit, cum_timer
+from ._cutility_functions import raycast_mask, infinite_lines_intersect, raycast_size
 from ._cvectors import Vec2
 from ._ccolor import Color
 
@@ -21,8 +20,12 @@ type coord_t = tuple[int, int] | tuple[float, float] | Vec2
 type color_t = tuple[float, float, float] | tuple[float, float, float, float] | Color
 
 
-infinite_lines_intersect = cum_timer.time_this(ili)
-raycast_size = cum_timer.time_this(rs)
+# from ._cutility_functions import raycast_mask as rm, infinite_lines_intersect as ili, raycast_size as rs
+# from ..debugging import timeit, cum_timer
+# infinite_lines_intersect = cum_timer.time_this(ili)
+# raycast_size = cum_timer.time_this(rs)
+# raycast_mask = cum_timer.time_this(rm)
+
 
 class EntityLike(tp.Protocol):
     position: Vec2
@@ -101,12 +104,16 @@ def multi_raycast_mask(
                 continue
 
         if hasattr(sprite, "form"):  # check if island
-            res = cum_timer.time_this(raycast_mask)(
-                sprite,
-                start,
-                end,
-                sample_rate
-            )
+            if raycast_size(start, end, sprite.position, sprite.size.length * 2):
+                res = raycast_mask(
+                    sprite,
+                    start,
+                    end,
+                    sample_rate
+                )
+
+            else:
+                continue
 
         elif hasattr(sprite, "is_bullet"):  # check if game entity
             res = raycast_size(start, end, sprite.position, sprite.size.length)
