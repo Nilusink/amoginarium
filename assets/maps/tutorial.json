@@ -67,12 +67,40 @@
             "size": [1024, 64]
         },
         {
-            "pos": [16384, 800],
-            "size": [2048, 64]
-        },        {
+            "type": "island.brick.green",
+            "args": {
+                "pos": [16100, 650],
+                "form": [
+                    [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+                    [0, 0, 0, 0, 0, 1, 1, 1, 1],
+                    [1, 0, 0, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1]
+                ]
+            }
+        },
+        {
+            "type": "island.brick.green",
+            "args": {
+                "pos": [16500, 350],
+                "form": [
+                    [0, 1],
+                    [1, 1]
+                ]
+            }
+        },
+        {
+            "pos": [17084, 800],
+            "size": [1248, 64]
+        },
+        {
             "pos": [18432, 800],
             "size": [1300, 64]
-        },        {
+        },
+        {
             "pos": [20100, 700],
             "size": [256, 64]
         },
@@ -95,9 +123,8 @@
     ],
     "entities": [
         {
-            "type": "turret.static.ak47",
-            "pos": [2700, 705],
-            "group": 0
+            "type": "turret.static.sniper",
+            "pos": [2700, 705]
         },
         {
             "type": "instructions.text",
@@ -228,11 +255,27 @@
         },
         {
             "type": "turret.static.cram",
-            "pos": [16200, 750]
+            "pos": [16260, 870],
+            "group": 0
         },
         {
             "type": "turret.static.mortar",
-            "pos": [16300, 650]
+            "pos": [16440, 795],
+            "group": 0
+        },
+        {
+            "type": "turret.static.flak",
+            "pos": [16555, 651],
+            "group": 0
+        },
+        {
+            "type": "sensor.static.radar",
+            "pos": [16540, 390],
+            "args": {
+                "detection_range": 3000,
+                "min_rcs": 0.0001
+            },
+            "group": 0
         },
         {
             "type": "instructions.text",
@@ -274,15 +317,6 @@
         {
             "type": "turret.static.flak",
             "pos": [21500, 400]
-        },
-        {
-            "type": "sensor.static.radar",
-            "pos": [3500, 400],
-            "args": {
-                "detection_range": 5000,
-                "min_rcs": 0.0001
-            },
-            "group": 0
         }
     ]
 }

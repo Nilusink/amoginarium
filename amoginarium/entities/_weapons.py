@@ -975,7 +975,7 @@ class Flak(BaseWeapon):
             inaccuracy=.0100002,
             bullet_size=18,
             # bullet_speed=1400*2,  # can shoot down bullets, but is too op
-            bullet_speed=1400,
+            bullet_speed=1700,
             bullet_damage=30,
             barrel_length=0,
             parent_position_offset=parent_position_offset,

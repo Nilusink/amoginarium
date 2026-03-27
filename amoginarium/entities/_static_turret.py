@@ -180,6 +180,9 @@ class BaseTurret(VisibleGameEntity):
             if t["distance"] > self.engagement_range:
                 continue
 
+            if not t["solution"]:
+                continue
+
             if include_all:
                 return t["solution"]
 
@@ -716,7 +719,7 @@ class FlakTurret(BaseTurret):
             Vec2().from_cartesian(*self._body_texture_size) * 2,
             position,
             weapon,
-            1850,
+            2300,
             300,
             airburst_munition=True,
             intercept_bullets=False,
