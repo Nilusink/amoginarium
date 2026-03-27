@@ -7,6 +7,7 @@ from ._calculations import calculate_launch_angle_iterative, rk4_update
 from ._cvectors import Vec2, normalize_angle
 from ._cutility_functions import raycast_size
 from ._ccolor import Color, fade, c_255_to_1
+from ._cutility_functions import add_tuple
 
 
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord, is_related

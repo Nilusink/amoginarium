@@ -123,7 +123,6 @@ class BaseTurret(VisibleGameEntity):
 
         if not detection_group:
             self.detection_group = DetectionGroup(str(self.id))
-            ic(self.detection_group, self)
 
         else:
             self.detection_group = detection_group

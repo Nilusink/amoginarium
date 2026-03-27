@@ -177,3 +177,7 @@ cpdef Vec2 raycast_size(Vec2 a, Vec2 b, Vec2 center, double radius):
         return a.add_vec2(d.mul_double(t2))
 
     return None
+
+
+cpdef object add_tuple(object t1, object t2):
+    return t1[0] + t2[0], t1[1] + t2[1]

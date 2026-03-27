@@ -8,23 +8,17 @@ Author:
 Nilusink
 """
 from __future__ import annotations
-# from OpenGL.GL import glRotated
-from icecream import ic
-# noinspection PyPackageRequirements
 import pygame as pg
 import typing as tp
 import math as m
 
-from ..debugging import print_ic_style, CC
-# from ..base._linked import global_vars
+from ..debugging import print_ic_style, CC, cum_timer
 from ..render_bindings import renderer
-from ..logic import Vec2
-from ._groups import Updated, Drawn
 from amoginarium.shared._entity_hints import BaseEntityLike
+from ._groups import Updated, Drawn
+from ..logic import Vec2
 
 _next_entity_id = 0
-from ..logic import Vec2, rk4_update
-from ._groups import Updated, Drawn
 
 
 class BaseEntity(pg.sprite.Sprite):

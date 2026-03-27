@@ -77,7 +77,6 @@ class Inventory:
         """
         called when a slot is hovered
         """
-        ic(slot_id)
         if self._callbacks["select"] is not ...:
             self._callbacks["select"](self.get_slot(slot_id))
 

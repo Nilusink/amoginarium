@@ -68,3 +68,8 @@ def raycast_size(a: Vec2, b: Vec2, center: Vec2, radius: float) -> Vec2:
     """
     checks if the line from a to b intersects the circle at center+radius
     """
+
+def add_tuple(t1: tuple[float, float], t2: tuple[float, float]) -> float: #tuple[float, float]:
+    """
+    add two 2-dimensional tuples together
+    """
