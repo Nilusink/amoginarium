@@ -28,7 +28,8 @@ from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
 from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
     create_moving_island
-from ..radar import DETECTION_GROUP_MANAGER
+from ..radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
+    DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_RED, DETECTION_GLOBAL_NEUTRAL
 from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
 from ..entities import Player, GrassIsland, ISLANDS, Radar, SPAWNABLES
 from ..controllers import Controllers, Controller, GameController
@@ -397,6 +398,11 @@ class BaseGame:
                 )
 
         # load entities
+        detection_groups: dict[int, DetectionGroup] = {
+            -1: DETECTION_GLOBAL_BLUE,
+            -2: DETECTION_GLOBAL_RED,
+            -3: DETECTION_GLOBAL_NEUTRAL,
+        }
         for entity in data["entities"]:
             self._update_loading_screen(27, "spawning entities")
             if entity["type"] not in SPAWNABLES:
@@ -410,6 +416,13 @@ class BaseGame:
             args = {}
             if "args" in entity:
                 args = entity["args"]
+
+            if "group" in entity:
+                group = entity["group"]
+                if group not in detection_groups:
+                    detection_groups[group] = DetectionGroup(str(group))
+
+                args["detection_group"] = detection_groups[group]
 
             try:
                 SPAWNABLES[entity["type"]](

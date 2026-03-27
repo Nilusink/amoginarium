@@ -94,7 +94,7 @@ class PositionedEntity(BaseEntity):
             self,
             position: Vec2,
             size: Vec2,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None
     ) -> None:
         super().__init__(parent=parent)
 
@@ -142,7 +142,7 @@ class GameEntity(PositionedEntity):
             initial_position: Vec2 = ...,
             initial_velocity: Vec2 = ...,
             coalition: tp.Any = ...,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None
     ) -> None:
         self._coalition = coalition
 
@@ -284,7 +284,7 @@ class VisibleGameEntity(GameEntity):
             initial_position: Vec2 = ...,
             initial_velocity: Vec2 = ...,
             coalition: tp.Any = ...,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None
     ) -> None:
         self._highlight = False
         super().__init__(

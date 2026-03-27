@@ -187,7 +187,6 @@ class Bullet(ImageEntity):
             self._ttl <= 0,
             self.on_ground
         ]):
-            ic(self._ttl, self._o_ttl)
             if self.kill():
                 return
 
@@ -234,7 +233,6 @@ class Bullet(ImageEntity):
                     with suppress(AttributeError):
                         other.hit(dmg, self)
 
-    @run_with_debug()
     def kill(self, killed_by: tp.Self = ...) -> bool:
         if all([
             self._casing,
@@ -246,7 +244,6 @@ class Bullet(ImageEntity):
                 CollisionDestroyed,
                 GravityAffected
             )
-            ic("casing")
             return True
 
         # bullet hit knockback

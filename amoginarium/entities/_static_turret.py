@@ -83,7 +83,8 @@ class BaseTurret(VisibleGameEntity):
             intercept_players: bool = True,
             target_taps: int = -1,
             valid_angles: tuple[Vec2, Vec2] = ...,
-            sensors: tp.Iterable[BaseSensor] = None
+            sensors: tp.Iterable[BaseSensor] = None,
+            detection_group: DetectionGroup = None,
     ) -> None:
         self._set_pos = position.copy()
         position.y -= size.y / 2
@@ -120,6 +121,13 @@ class BaseTurret(VisibleGameEntity):
 
         self.add(CollisionDestroyed, HasBars)
 
+        if not detection_group:
+            self.detection_group = DetectionGroup(str(self.id))
+            ic(self.detection_group, self)
+
+        else:
+            self.detection_group = detection_group
+
         # create detection sensor
         self._sphere = []
         if sensors is not None:
@@ -135,15 +143,15 @@ class BaseTurret(VisibleGameEntity):
     def hp(self) -> int:
         return self._hp
 
-    @property
-    def detection_group(self) -> DetectionGroup:
-        if self.coalition == Coalitions.red:
-            return DETECTION_GLOBAL_RED
-
-        elif self.coalition == Coalitions.blue:
-            return DETECTION_GLOBAL_BLUE
-
-        return DETECTION_GLOBAL_NEUTRAL
+    # @property
+    # def detection_group(self) -> DetectionGroup:
+    #     if self.coalition == Coalitions.red:
+    #         return DETECTION_GLOBAL_RED
+    #
+    #     elif self.coalition == Coalitions.blue:
+    #         return DETECTION_GLOBAL_BLUE
+    #
+    #     return DETECTION_GLOBAL_NEUTRAL
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
@@ -220,27 +228,8 @@ class BaseTurret(VisibleGameEntity):
             ])
         ]
 
-        # only check targets inside engagement envelope
-        # if self._valid_angles is not ...:
-        #     targets = Players.entities_in_partial_circle(
-        #         targets,
-        #         self.position,
-        #         self.engagement_range,
-        #         *self._valid_angles,
-        #         min_radius=self.min_range
-        #     )
-        #
-        # else:
-        #     targets = Players.entities_in_circle(
-        #         targets,
-        #         self.position,
-        #         self.engagement_range,
-        #         min_radius=self.min_range
-        #     )
-
         # filter stuff shot by myself
         targets = [e for e in targets if not is_related(self, e, depth=4)]
-        # targets = []
 
         for target in targets:
             if target not in self.available_targets:
@@ -505,6 +494,9 @@ class BaseTurret(VisibleGameEntity):
                     3
                 )
 
+        # draw sensor ranges
+        super().gl_draw()
+
         # targets
         if global_vars.show_targets:
             if self._target is not ...:
@@ -572,8 +564,6 @@ class BaseTurret(VisibleGameEntity):
 
             renderer.disable_stencil()
 
-        super().gl_draw()
-
         # debug_surface = self.mask.to_surface()
         # renderer.draw_pg_surf(
         #     (
@@ -588,7 +578,12 @@ class SniperTurret(BaseTurret):
     _cid = "turret.static.sniper"
     _max_hp: int = 40
 
-    def __init__(self, coalition: Coalitions, position: Vec2) -> None:
+    def __init__(
+            self,
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
         weapon = Sniper(self, True, parent_position_offset=(0, -13))
         weapon.reload(True)
@@ -601,7 +596,8 @@ class SniperTurret(BaseTurret):
             2400,
             sensors=[
                 VisualSensor(self, 2500, sphere_accuracy=256)
-            ]
+            ],
+            **kwargs
         )
 
 
@@ -609,7 +605,12 @@ class AkTurret(BaseTurret):
     _cid = "turret.static.ak47"
     _max_hp: int = 60
 
-    def __init__(self, coalition: Coalitions, position: Vec2) -> None:
+    def __init__(
+            self,
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
         weapon = Ak47(self, False, parent_position_offset=(0, -13))
         weapon.reload(True)
@@ -622,7 +623,8 @@ class AkTurret(BaseTurret):
             1500,
             sensors=[
                 VisualSensor(self, 1500)
-            ]
+            ],
+            **kwargs
         )
 
 
@@ -630,7 +632,12 @@ class MinigunTurret(BaseTurret):
     _cid = "turret.static.minigun"
     _max_hp: int = 60
 
-    def __init__(self, coalition: Coalitions, position: Vec2) -> None:
+    def __init__(
+            self,
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
         weapon = Minigun(self, False, parent_position_offset=(0, -13))
         weapon.reload(True)
@@ -643,7 +650,8 @@ class MinigunTurret(BaseTurret):
             2000,
             sensors=[
                 VisualSensor(self, 1500)
-            ]
+            ],
+            **kwargs
         )
 
 
@@ -663,7 +671,12 @@ class MortarTurret(BaseTurret):
                 cls._body_texture_size
             )
 
-    def __init__(self, coalition: Coalitions, position: Vec2) -> None:
+    def __init__(
+            self,
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
         self._coalition = coalition  # needed becauuse the weapon wants it
         weapon = Mortar(self, False, parent_position_offset=(0, -13))
         weapon.reload(True)
@@ -676,7 +689,8 @@ class MortarTurret(BaseTurret):
             1800,
             sensors=[
                 RadarSensor(self, 1500)
-            ]
+            ],
+            **kwargs
         )
 
 
@@ -687,7 +701,12 @@ class FlakTurret(BaseTurret):
     _body_texture_size = (98, 44)
     _aim_type = "low"
 
-    def __init__(self, coalition: Coalitions, position: Vec2) -> None:
+    def __init__(
+            self,
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
         weapon = Flak(self, True, parent_position_offset=(16, -26))
         weapon.reload(True)
@@ -708,7 +727,8 @@ class FlakTurret(BaseTurret):
             ),
             sensors=[
                 VisualSensor(self, 1700)
-            ]
+            ],
+            **kwargs
         )
 
 
@@ -719,7 +739,12 @@ class CRAMTurret(BaseTurret):
     _body_texture_size = (64, 128)
     _aim_type = "low"
 
-    def __init__(self, coalition: Coalitions, position: Vec2) -> None:
+    def __init__(
+            self,
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
         weapon = CRAM(
             self,
@@ -750,5 +775,6 @@ class CRAMTurret(BaseTurret):
                     sphere_accuracy=256,
                     min_rcs=.04
                 )
-            ]
+            ],
+            **kwargs
         )
