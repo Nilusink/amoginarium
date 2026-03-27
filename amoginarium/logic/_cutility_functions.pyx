@@ -1,3 +1,4 @@
+# cython: boundscheck=False, wraparound=False, cdivision=True
 cimport cython
 from ._cvectors cimport Vec2
 from libc.stdint cimport uint8_t
@@ -72,3 +73,8 @@ cpdef bint point_in_triangle(
     cdef double v = (dot00 * dot12 - dot01 * dot02) * inv
 
     return (u >= 0) and (v >= 0) and (u + v <= 1)
+
+
+cpdef bint infinite_lines_intersect(Vec2 a, Vec2 b, Vec2 c, Vec2 d):
+    cdef double denom = (b.x - a.x)*(d.y - c.y) - (b.y - a.y)*(d.x - c.x)
+    return denom != 0  # not parallel

@@ -95,8 +95,8 @@
     ],
     "entities": [
         {
-            "type": "turret.static.ak47",
-            "pos": [1700, 805]
+            "type": "turret.static.cram",
+            "pos": [2700, 705]
         },
         {
             "type": "instructions.text",
@@ -273,6 +273,14 @@
         {
             "type": "turret.static.flak",
             "pos": [21500, 400]
+        },
+        {
+            "type": "sensor.static.radar",
+            "pos": [3500, 400],
+            "args": {
+                "detection_range": 5000,
+                "min_rcs": 0.0001
+            }
         }
     ]
 }

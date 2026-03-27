@@ -9,7 +9,7 @@ Nilusink
 """
 from __future__ import annotations
 # from OpenGL.GL import glRotated
-# from icecream import ic
+from icecream import ic
 # noinspection PyPackageRequirements
 import pygame as pg
 import typing as tp
@@ -151,6 +151,7 @@ class GameEntity(PositionedEntity):
         position = Vec2() if initial_position is ... else initial_position
         self.velocity = Vec2() if initial_velocity is ... else initial_velocity
         self.acceleration = Vec2()
+        self._velocity_to_add = Vec2()
         self._acceleration_to_add = Vec2()
 
         super().__init__(position, size, parent)
@@ -204,9 +205,17 @@ class GameEntity(PositionedEntity):
             "pos": self.position
         }
 
+    def add_velocity(self, value: Vec2) -> None:
+        """
+        add velocity to the entity and guarantee that it will be valid
+        (for short bursts)
+        """
+        self._velocity_to_add += value
+
     def add_acceleration(self, value: Vec2) -> None:
         """
         add acceleration to the entity and guarantee that it will be valid
+        (for long accelerations)
         """
         self._acceleration_to_add += value
 
@@ -241,10 +250,11 @@ class GameEntity(PositionedEntity):
         # self.acceleration += self._acceleration_to_add
 
         # update velocity and position
-        self.velocity += self.acceleration * delta + self._acceleration_to_add * delta
+        self.velocity += (self._acceleration_to_add + self.acceleration) * delta + self._velocity_to_add
         self.position += self.velocity * delta
         self.acceleration.x *= 0
 
+        self._velocity_to_add *= 0
         self._acceleration_to_add *= 0
 
         # re-calculate pygame stuff

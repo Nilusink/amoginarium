@@ -32,3 +32,9 @@ def point_in_triangle(
     p: point to test
     a,b,c: triangle vertices
     """
+
+
+def infinite_lines_intersect(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool:
+    """
+    check if the lines between a-b and c-d intersect (infinite, no bounds)
+    """

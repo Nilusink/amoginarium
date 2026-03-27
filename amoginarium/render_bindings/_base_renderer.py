@@ -180,6 +180,19 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    def draw_thick_line(
+            self,
+            start: coord_t,
+            end: coord_t,
+            color: Color | tColor,
+            thickness: float = 1.0,
+            global_position: bool = True,
+            convert_global: bool = True
+    ) -> None:
+        """
+        draw a line with thickness using a quad
+        """
+
     def draw_rounded_rect(
             self,
             start: coord_t,

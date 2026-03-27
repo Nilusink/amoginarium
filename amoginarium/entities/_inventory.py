@@ -59,18 +59,19 @@ class Inventory:
             "root": Rectangle(
                 (.5, .5),
                 (.8, .8),
-                bg_color = self._slot_colors["border_basic"],
-                border_color = self._slot_colors["border_basic"]
-        ), "slots": [
-            Rectangle(
-                (.5, .5),
-                (.1, .1),
-                bg_color = self._slot_colors["basic"],
-                border_color = self._slot_colors["border_basic"],
-                on_enter_callbacks=[lambda x=i: self._slot_hover(x)],
-                on_leave_callbacks=[lambda x=i: self._slot_unhover(x)]
-            ) for i in range(slots)
-        ]}
+                bg_color=self._slot_colors["border_basic"],
+                border_color=self._slot_colors["border_basic"]
+            ), "slots": [
+                Rectangle(
+                    (.5, .5),
+                    (.1, .1),
+                    bg_color=self._slot_colors["basic"],
+                    border_color=self._slot_colors["border_basic"],
+                    on_enter_callbacks=[lambda x=i: self._slot_hover(x)],
+                    on_leave_callbacks=[lambda x=i: self._slot_unhover(x)]
+                ) for i in range(slots)
+                ]
+        }
 
     def _slot_hover(self, slot_id: int) -> None:
         """
