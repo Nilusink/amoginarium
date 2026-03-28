@@ -118,10 +118,6 @@ class _Updated(BaseGroup):
                 t.load_textures()
 
 
-class _Drawn(BaseGroup):
-    ...
-
-
 class _Walls(BaseGroup):
     # @timeit(10)
     def walls_in_line(
@@ -444,7 +440,6 @@ class _UIEntities(BaseGroup):
 
 
 # initialize groups
-Drawn = _Drawn()
 Walls = _Walls()
 Players = _Players()
 Bullets = _Bullets()

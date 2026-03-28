@@ -8,8 +8,26 @@ Author:
 Nilusink
 """
 import os
+import typing as tp
+from icecream import ic
 
-from amoginarium.shared.utility._utility_classes import BetterDict
+class BetterDict:
+    """
+    each element is also accessible with instance.element
+    """
+
+    def __init__(self, **initial) -> None:
+        for key, value in initial.items():
+            setattr(self, key, value)
+
+    def __setitem__(self, key: str, value: tp.Any) -> None:
+        setattr(self, key, value)
+
+    def __getitem__(self, item: str) -> tp.Any:
+        return self.__dict__[item]
+
+    def __delitem__(self, key) -> None:
+        delattr(self, key)
 
 if os.name == "nt":
     os.system("color")
@@ -107,3 +125,14 @@ def terminal_link(uri, label=None):
     escape_mask = '\033]8;{};{}\033\\{}\033]8;;\033\\'
 
     return escape_mask.format(parameters, uri, label)
+
+
+if __name__  == "__main__":
+    def p():
+        t = 1243.1251
+        t1, t2 = str(t).split(".")
+
+        return f"(logic: {os.getpid()}) {t1: >4}.{t2: <4} |> "
+
+    ic.configureOutput(prefix=p)
+    ic("hellow")

@@ -21,15 +21,12 @@ import json
 import math
 import os
 
-from ..logic.entities import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players, UIEntities
-from ..logic.entities import Updated, GravityAffected, Drawn, FrictionXAffected
 from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
-from amoginarium.logic.entities import create_moving_island
-from amoginarium.logic.radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
-    DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_RED, DETECTION_GLOBAL_NEUTRAL
-from amoginarium.logic.entities import Player, GrassIsland, ISLANDS, SPAWNABLES
+from ..logic.radar import DetectionGroup, DETECTION_GLOBAL_BLUE, \
+    DETECTION_GLOBAL_RED, DETECTION_GLOBAL_NEUTRAL
+from ..logic.entities import SPAWNABLES
 from amoginarium.shared.controllers import Controllers, Controller, GameController
 from amoginarium.shared.debugging import run_with_debug, print_ic_style, CC, cum_timer
 from ._scrolling_background import ParalaxBackground
@@ -38,8 +35,6 @@ from amoginarium.shared.utility import SimpleLock, Vec2, convert_coord
 from amoginarium.logic.audio import sounds, sound_effects
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.logic.audio import BackgroundPlayer
-from ..communications import TCPServer
-from amoginarium.logic.entities import explosion
 from ._textures import textures
 from amoginarium.shared.settings import Settings
 from amoginarium.graphics.ui import UICursor
@@ -117,12 +112,6 @@ class BaseGame:
         self._controllers_cid = Controllers.on_new_controller(
             self._add_controller
         )
-
-        # other things
-        # self._in_next_loop: list[BoundFunction] = []
-
-        # server setup
-        self._server = TCPServer(("0.0.0.0", game_port))
 
         # initialize pygame (logic) and renderer
         pg.init()
@@ -286,13 +275,13 @@ class BaseGame:
         self._update_loading_screen(21)
         textures.load_images("assets/images/animations/flame")
 
-        for island in ISLANDS.values():
-            island.load_textures()
-
-        for entity in Updated.sprites():
-            if hasattr(entity, "load_textures"):
-                entity.load_textures()
-        self._update_loading_screen(22)
+        # for island in ISLANDS.values():
+        #     island.load_textures()
+        #
+        # for entity in Updated.sprites():
+        #     if hasattr(entity, "load_textures"):
+        #         entity.load_textures()
+        # self._update_loading_screen(22)
 
         for spwanable in SPAWNABLES.values():
             if hasattr(spwanable, "load_textures"):
@@ -300,8 +289,8 @@ class BaseGame:
 
         self._update_loading_screen(23)
 
-        Player.load_textures()
-        explosion.load_textures(size=(512, 512))
+        # Player.load_textures()
+        # explosion.load_textures(size=(512, 512))
 
         self._update_loading_screen(24, "loading map")
 
@@ -343,7 +332,9 @@ class BaseGame:
 
         pg.display.set_caption(f"amoginarium - {data["name"]}")
         self._update_loading_screen(25)
-        Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
+
+        # Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
+
         self._update_loading_screen(25)
 
         # set background
@@ -360,40 +351,40 @@ class BaseGame:
             self._background.load_textures()
 
         # load islands
-        for island in data["platforms"]:
-            self._update_loading_screen(26, "spawning islands")
-            island_type = GrassIsland
-            if "type" in island:
-                if island["type"] in ISLANDS:
-                    island_type = ISLANDS[island["type"]]
-
-            if "args" in island:
-                i = island_type(**island["args"])
-
-            elif "size" in island:
-                i = island_type(
-                    Vec2().from_cartesian(*island["pos"]),
-                    size=Vec2().from_cartesian(*island["size"]),
-                )
-
-            elif "form" in island:
-                i = island_type(
-                    Vec2().from_cartesian(*island["pos"]),
-                    form=island["form"],
-                )
-
-            else:
-                print_ic_style(
-                    f"{CC.fg.RED}invalid island: "
-                    f"{CC.fg.YELLOW}{island}"
-                )
-                continue
-
-            if "move" in island:
-                create_moving_island(
-                    i,
-                    **island["move"]
-                )
+        # for island in data["platforms"]:
+        #     self._update_loading_screen(26, "spawning islands")
+        #     island_type = GrassIsland
+        #     if "type" in island:
+        #         if island["type"] in ISLANDS:
+        #             island_type = ISLANDS[island["type"]]
+        #
+        #     if "args" in island:
+        #         i = island_type(**island["args"])
+        #
+        #     elif "size" in island:
+        #         i = island_type(
+        #             Vec2().from_cartesian(*island["pos"]),
+        #             size=Vec2().from_cartesian(*island["size"]),
+        #         )
+        #
+        #     elif "form" in island:
+        #         i = island_type(
+        #             Vec2().from_cartesian(*island["pos"]),
+        #             form=island["form"],
+        #         )
+        #
+        #     else:
+        #         print_ic_style(
+        #             f"{CC.fg.RED}invalid island: "
+        #             f"{CC.fg.YELLOW}{island}"
+        #         )
+        #         continue
+        #
+        #     if "move" in island:
+        #         create_moving_island(
+        #             i,
+        #             **island["move"]
+        #         )
 
         # load entities
         detection_groups: dict[int, DetectionGroup] = {
@@ -626,18 +617,9 @@ class BaseGame:
             nonlocal active_scene
             active_scene = "Game"
 
-            for entity in Updated.sprites():
-                entity.kill()
-
             self._background.reset_scroll()
-            global_vars.reset()
-            Updated.world_position *= 0
 
             self.load_map(self._last_loaded)
-
-            # respawn players
-            for player in Players.sprites():
-                player.respawn()
 
             if primary_call:
                 load_ui_visibility()
@@ -895,90 +877,6 @@ class BaseGame:
 
         pg.display.flip()
         # clock.tick(global_vars.max_fps)
-
-    @run_with_debug(show_finish=True)
-    def _run_logic(self) -> None:
-        """
-        start game logic
-        """
-        last = perf_counter()
-        last_fps_print = 0
-        sleep(.1)
-        while self.running:
-            now = perf_counter()
-
-            # minimum loop time of .5 ms (so the CPU isn't stressed too much)
-            while now - last < .0005:
-                now = perf_counter()
-                sleep(.001)
-
-            delta = now - last
-
-            # only update fps every 200ms (for readability)
-            if now - last_fps_print > .2:
-                self._logic_fps = int(1 / delta)
-                last_fps_print = now
-
-            self._update_logic(delta, now)
-
-            last = now
-
-        ic("logic end")
-
-    def _update_logic(self, delta, now) -> float:
-        start = perf_counter()
-
-        # check for new controllers
-        if len(self._new_controllers) > 0:
-            self._new_controllers_lock.aquire()
-            tmp = self._new_controllers.copy()
-            self._new_controllers.clear()
-            self._new_controllers_lock.release()
-
-            for new_controller in tmp:
-                # spawn new player
-                Player(coalition=Coalitions.blue, controller=new_controller)
-                ic(new_controller, Player)
-
-        # update sounds
-        sound_effects.update()
-
-        # reset and update detection Groups
-        DETECTION_GROUP_MANAGER.reset()
-
-        # update entities
-        GravityAffected.calculate_gravity(delta)
-        FrictionXAffected.calculate_friction(delta)
-        WallBouncer.update()
-
-        Bullets.update(delta)
-        DETECTION_GROUP_MANAGER.update_detection()
-        Updated.update(delta)
-
-        CollisionDestroyed.update()
-
-        # sleep(.3)
-
-        logic_time = perf_counter() - start
-        self._logic_loop_times.append(
-            (now - self._game_start, logic_time)
-        )
-        self._n_bullets_times.append(
-            (now - self._game_start, len(Bullets.sprites()), logic_time)
-        )
-
-        return logic_time
-
-    def _run_comms(self) -> None:
-        """
-        start communications
-        """
-        # asyncio.run(self._server.run())
-        ic("comms end")
-
-        # TODO: controller latency in graph
-
-        return
 
     def mainloop(self) -> None:
         """
