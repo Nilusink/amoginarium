@@ -13,7 +13,7 @@ from icecream import ic
 import pygame as pg
 
 from ..shared import global_vars
-from ..render_bindings import renderer
+from amoginarium.graphics.render_bindings import renderer
 from ..base._textures import textures
 
 

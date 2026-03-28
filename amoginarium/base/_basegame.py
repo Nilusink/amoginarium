@@ -21,30 +21,28 @@ import json
 import math
 import os
 
-from ..entities import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players, UIEntities
-from ..entities import Updated, GravityAffected, Drawn, FrictionXAffected
+from ..logic.entities import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players, UIEntities
+from ..logic.entities import Updated, GravityAffected, Drawn, FrictionXAffected
 from ._pausemenu import PauseMenu
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
-from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
-    create_moving_island
-from ..radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
+from amoginarium.logic.entities import create_moving_island
+from amoginarium.logic.radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
     DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_RED, DETECTION_GLOBAL_NEUTRAL
-from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
-from ..entities import Player, GrassIsland, ISLANDS, Radar, SPAWNABLES
-from ..controllers import Controllers, Controller, GameController
-from ..debugging import run_with_debug, print_ic_style, CC, timeit, cum_timer
+from amoginarium.logic.entities import Player, GrassIsland, ISLANDS, SPAWNABLES
+from amoginarium.shared.controllers import Controllers, Controller, GameController
+from amoginarium.shared.debugging import run_with_debug, print_ic_style, CC, cum_timer
 from ._scrolling_background import ParalaxBackground
 from ..shared import global_vars, Coalitions
-from ..logic import SimpleLock, Vec2, convert_coord
-from ..audio import sounds, sound_effects
-from ..render_bindings import renderer
-from ..audio import BackgroundPlayer
+from amoginarium.shared.utility import SimpleLock, Vec2, convert_coord
+from amoginarium.logic.audio import sounds, sound_effects
+from amoginarium.graphics.render_bindings import renderer
+from amoginarium.logic.audio import BackgroundPlayer
 from ..communications import TCPServer
-from ..entities import explosion
+from amoginarium.logic.entities import explosion
 from ._textures import textures
-from ..settings import Settings
-from ..ui import UICursor
+from amoginarium.shared.settings import Settings
+from amoginarium.graphics.ui import UICursor
 
 
 class BoundFunction(tp.TypedDict):

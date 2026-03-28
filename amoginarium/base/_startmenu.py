@@ -10,9 +10,7 @@ Project: amoginarium
 
 from typing import Callable
 
-from ..logic import convert_coord, Vec2
-from ..ui import Button, UIEntity, Rectangle, UIElement
-from ..ui._types import Anchor, Positions
+from amoginarium.graphics.ui import Button, UIEntity, Rectangle
 
 
 ##################################################

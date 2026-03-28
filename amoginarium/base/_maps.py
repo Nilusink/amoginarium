@@ -9,7 +9,7 @@ import typing as tp
 
 from icecream import ic
 
-from amoginarium.logic import Vec2
+from amoginarium.shared.utility import Vec2
 import pygame as pg
 
 

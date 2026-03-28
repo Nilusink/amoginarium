@@ -5,10 +5,9 @@ Project: amoginarium
 """
 
 from typing import Literal, Callable
-import pygame as pg
 
 from ..shared import global_vars
-from ..ui import Rectangle, Button, UIEntity
+from amoginarium.graphics.ui import Rectangle, Button, UIEntity
 
 
 ##################################################

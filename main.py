@@ -1,5 +1,5 @@
 #! venv/bin/python
-from amoginarium.controllers import KeyboardController
+from amoginarium.shared.controllers import KeyboardController
 from amoginarium.base import BaseGame
 
 import sys
@@ -12,7 +12,8 @@ def main():
 
     # create initial controller
     KeyboardController.get()
-    game.load_map("assets/maps/tutorial.json")
+    # game.load_map("assets/maps/tutorial.json")
+    game.load_map("testing_map.json")
     game.mainloop()
 
 
