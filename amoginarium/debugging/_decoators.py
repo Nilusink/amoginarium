@@ -117,3 +117,45 @@ def timeit(
             return result
         return wrapper
     return decorator
+
+
+class _CumTimer:
+    """
+    cumulative timing for all functions over one frame
+    """
+    def __init__(self) -> None:
+        self._func_times: dict[str, list[float | int]] = {}
+
+    def time_this[**A, R](self, func: tp.Callable[[A], R]):
+        def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
+            start = perf_counter_ns()
+            res = func(*args, **kwargs)
+            time_taken = (perf_counter_ns() - start) / 1000
+
+            fname = func.__name__
+            if not fname in self._func_times:
+                self._func_times[fname] = [time_taken, 1]
+                return res
+
+            self._func_times[fname][0] += time_taken
+            self._func_times[fname][1] += 1
+            return res
+        return wrapper
+
+    def get_times(self) -> dict[str, list[float | int]]:
+        """
+        get all cumulated times and reset
+        """
+        out = {}
+        for key in self._func_times:
+            out[key] = [
+                self._func_times[key][0],
+                self._func_times[key][1],
+                self._func_times[key][0] / self._func_times[key][1],
+            ]
+
+        self._func_times.clear()
+        return out
+
+
+cum_timer = _CumTimer()

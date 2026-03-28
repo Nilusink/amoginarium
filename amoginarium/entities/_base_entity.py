@@ -8,23 +8,17 @@ Author:
 Nilusink
 """
 from __future__ import annotations
-# from OpenGL.GL import glRotated
-from icecream import ic
-# noinspection PyPackageRequirements
 import pygame as pg
 import typing as tp
 import math as m
 
-from ..debugging import print_ic_style, CC
-# from ..base._linked import global_vars
+from ..debugging import print_ic_style, CC, cum_timer
 from ..render_bindings import renderer
-from ..logic import Vec2
-from ._groups import Updated, Drawn
 from amoginarium.shared._entity_hints import BaseEntityLike
+from ._groups import Updated, Drawn
+from ..logic import Vec2
 
 _next_entity_id = 0
-from ..logic import Vec2, rk4_update
-from ._groups import Updated, Drawn
 
 
 class BaseEntity(pg.sprite.Sprite):
@@ -94,7 +88,7 @@ class PositionedEntity(BaseEntity):
             self,
             position: Vec2,
             size: Vec2,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None
     ) -> None:
         super().__init__(parent=parent)
 
@@ -142,7 +136,7 @@ class GameEntity(PositionedEntity):
             initial_position: Vec2 = ...,
             initial_velocity: Vec2 = ...,
             coalition: tp.Any = ...,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None
     ) -> None:
         self._coalition = coalition
 
@@ -284,7 +278,7 @@ class VisibleGameEntity(GameEntity):
             initial_position: Vec2 = ...,
             initial_velocity: Vec2 = ...,
             coalition: tp.Any = ...,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None
     ) -> None:
         self._highlight = False
         super().__init__(

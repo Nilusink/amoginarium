@@ -687,15 +687,15 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(start, direction):
             return
 
-        if global_position:
-            glPushMatrix()
-
         self.set_color(color)
 
         # normalize perpendicular
         length = direction.length
         if length == 0:
             return
+
+        if global_position:
+            glPushMatrix()
 
         dir_norm = direction / length
 

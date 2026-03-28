@@ -32,7 +32,8 @@ class BaseDetector(VisibleGameEntity):
             initial_position: Vec2 = ...,
             initial_velocity: Vec2 = ...,
             coalition: tp.Any = ...,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None,
+            detection_group: DetectionGroup = ...,
     ) -> None:
         super().__init__(
             size,
@@ -61,20 +62,26 @@ class BaseDetector(VisibleGameEntity):
 
         self.add(CollisionDestroyed, HasBars)
 
+        if not detection_group:
+            self.detection_group = DetectionGroup(str(self.id))
+
+        else:
+            self.detection_group = detection_group
+
         if sensors is not None:
             for sensor in sensors:
                 self._children.append(sensor)
                 self.detection_group.add_sensor(sensor)
 
-    @property
-    def detection_group(self) -> DetectionGroup:
-        if self.coalition == Coalitions.red:
-            return DETECTION_GLOBAL_RED
-
-        elif self.coalition == Coalitions.blue:
-            return DETECTION_GLOBAL_BLUE
-
-        return DETECTION_GLOBAL_NEUTRAL
+    # @property
+    # def detection_group(self) -> DetectionGroup:
+    #     if self.coalition == Coalitions.red:
+    #         return DETECTION_GLOBAL_RED
+    #
+    #     elif self.coalition == Coalitions.blue:
+    #         return DETECTION_GLOBAL_BLUE
+    #
+    #     return DETECTION_GLOBAL_NEUTRAL
 
     @property
     def max_hp(self) -> int:
@@ -83,6 +90,10 @@ class BaseDetector(VisibleGameEntity):
     @property
     def hp(self) -> int:
         return self._hp
+
+    @property
+    def engagement_range(self) -> float:
+        return max(s.detection_range for s in self._children)
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
@@ -100,11 +111,12 @@ class BaseDetector(VisibleGameEntity):
 
     def gl_draw(self) -> None:
         # only draw if on screen
+        er = self.engagement_range
         if not (
-            self.position.x + self.size.x < Updated.world_position.x or
-            self.position.x - self.size.y > Updated.world_position.x + global_vars.screen_pixels.x or
-            self.position.y + self.size.x < Updated.world_position.y or
-            self.position.y - self.size.y > Updated.world_position.y + global_vars.screen_pixels.y
+            self.position.x + er < Updated.world_position.x or
+            self.position.x - er > Updated.world_position.x + global_vars.screen_pixels.x or
+            self.position.y + er < Updated.world_position.y or
+            self.position.y - er > Updated.world_position.y + global_vars.screen_pixels.y
         ):
             renderer.draw_textured_quad(
                 self._body_texture,
@@ -127,7 +139,8 @@ class Radar(BaseDetector):
             detection_range: float = 2000,
             min_rcs: float = .001,
             sphere_accuracy: int = 512,
-            parent: BaseEntityLike = ...
+            parent: BaseEntityLike = None,
+            detection_group: DetectionGroup = None
     ) -> None:
         super().__init__(
             [
@@ -141,5 +154,6 @@ class Radar(BaseDetector):
             size=Vec2().from_cartesian(*self._body_texture_size),
             initial_position=position,
             coalition=coalition,
-            parent=parent
+            parent=parent,
+            detection_group=detection_group
         )

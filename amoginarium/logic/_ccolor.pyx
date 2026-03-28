@@ -24,33 +24,73 @@ cdef class Color:
     def r1(self):
         return self._r1
 
-    @property
-    def g1(self):
-        return self._g1
-
-    @property
-    def b1(self):
-        return self._b1
-
-    @property
-    def a1(self):
-        return self._a1
+    @r1.setter
+    def r1(self, value):
+        self._r1 = value
+        self._r255 = int(round(value * 255))
 
     @property
     def r255(self):
         return self._r255
 
+    @r255.setter
+    def r255(self, value):
+        self._r255 = value
+        self._r1 = value / 255.0
+
+    @property
+    def g1(self):
+        return self._g1
+
+    @g1.setter
+    def g1(self, value):
+        self._g1 = value
+        self._g255 = int(round(value * 255))
+
     @property
     def g255(self):
         return self._g255
+
+    @g255.setter
+    def g255(self, value):
+        self._g255 = value
+        self._g1 = value / 255.0
+
+    @property
+    def b1(self):
+        return self._b1
+
+    @b1.setter
+    def b1(self, value):
+        self._b1 = value
+        self._b255 = int(round(value * 255))
 
     @property
     def b255(self):
         return self._b255
 
+    @b255.setter
+    def b255(self, value):
+        self._b255 = value
+        self._b1 = value / 255.0
+
+    @property
+    def a1(self):
+        return self._a1
+
+    @a1.setter
+    def a1(self, value):
+        self._a1 = value
+        self._a255 = int(round(value * 255))
+
     @property
     def a255(self):
         return self._a255
+
+    @a255.setter
+    def a255(self, value):
+        self._a255 = value
+        self._a1 = value / 255.0
     # endregion
 
     # region tuple properties

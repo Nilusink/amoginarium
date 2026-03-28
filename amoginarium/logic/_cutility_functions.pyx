@@ -4,6 +4,74 @@ from ._cvectors cimport Vec2
 from libc.stdint cimport uint8_t
 
 
+cpdef object convert_coord(object coord, object convert_to = tuple):
+    if convert_to is Vec2:
+        if isinstance(coord, Vec2):
+            return (<Vec2>coord).copy()
+        return Vec2().from_cartesian(coord[0], coord[1])
+
+    elif convert_to is tuple:
+        if isinstance(coord, tuple):
+            return coord
+        return (<Vec2>coord).xy
+
+    elif convert_to is int:
+        if isinstance(coord, Vec2):
+            coord = (<Vec2>coord).xy
+        return int(coord[0]), int(coord[1])
+
+    else:
+        raise ValueError("Unsupported conversion:", convert_to)
+
+
+cpdef bint is_related(object a, object b, int depth=2):
+    cdef bint is_same
+    cdef object a_parent, b_parent
+    cdef object a_coal, b_coal
+
+    # depth 1
+    is_same = (a == b)
+    if depth <= 1:
+        return is_same
+
+    elif is_same:
+        return True
+
+    # fetch parents once (no exceptions)
+    a_parent = getattr(a, "parent", None)
+    b_parent = getattr(b, "parent", None)
+
+    # parent relation
+    if a_parent is b or b_parent is a:
+        if depth <= 2:
+            return True
+    elif depth <= 2:
+        return is_same
+
+    # sibling check
+    if depth <= 3:
+        if a_parent is not None and b_parent is not None:
+            if a_parent == b_parent:
+                return True
+        return is_same or (a_parent is b or b_parent is a)
+
+    # coalition check
+    a_coal = getattr(a, "coalition", None)
+    b_coal = getattr(b, "coalition", None)
+
+    if depth <= 4:
+        if a_coal is not None and a_coal == b_coal:
+            return True
+
+        return (
+            is_same or
+            (a_parent is b or b_parent is a) or
+            (a_parent is not None and a_parent == b_parent)
+        )
+
+    return False
+
+
 cpdef Vec2 raycast_mask(
         object sprite,
         Vec2 start,
@@ -78,3 +146,38 @@ cpdef bint point_in_triangle(
 cpdef bint infinite_lines_intersect(Vec2 a, Vec2 b, Vec2 c, Vec2 d):
     cdef double denom = (b.x - a.x)*(d.y - c.y) - (b.y - a.y)*(d.x - c.x)
     return denom != 0  # not parallel
+
+
+cpdef Vec2 raycast_size(Vec2 a, Vec2 b, Vec2 center, double radius):
+    cdef Vec2 d = b.sub_vec2(a)  # direction: b - a
+    cdef Vec2 f = a.sub_vec2(center)  # from center to start
+
+    cdef double A = d.dot(d)
+    cdef double B = 2.0 * f.dot(d)
+    cdef double C = f.dot(f) - radius * radius
+
+    if A == 0.0:
+        return None
+
+    cdef double discriminant = B * B - 4.0 * A * C
+    cdef double sqrt_disc, t1, t2
+
+    if discriminant < 0.0:
+        return None  # no hit
+
+    sqrt_disc = discriminant ** 0.5
+
+    # nearer intersection first
+    t1 = (-B - sqrt_disc) / (2.0 * A)
+    if 0.0 <= t1 <= 1.0:
+        return a.add_vec2(d.mul_double(t1))
+
+    t2 = (-B + sqrt_disc) / (2.0 * A)
+    if 0.0 <= t2 <= 1.0:
+        return a.add_vec2(d.mul_double(t2))
+
+    return None
+
+
+cpdef object add_tuple(object t1, object t2):
+    return t1[0] + t2[0], t1[1] + t2[1]

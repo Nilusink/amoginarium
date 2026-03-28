@@ -22,9 +22,9 @@ from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..audio import CRAM as CRAMSound
 from ..debugging import run_with_debug, timeit
 from ..logic import Vec2, Color, convert_coord, coord_t, multi_raycast_mask, \
-    is_related
+    is_related, color_t, convert_color
 from ._base_entity import ImageEntity, GameEntity
-from ..render_bindings import renderer
+from ..render_bindings import renderer, tColor
 from ..shared import global_vars
 from ..base._textures import textures
 from ._animation import explosion
@@ -59,7 +59,9 @@ class Bullet(ImageEntity):
             target_pos: Vec2 = ...,
             size: Vec2 | int = 10,
             no_gravity=False,
-            visibility_offset: float = 0
+            visibility_offset: float = 0,
+            trace: bool = True,
+            trace_color: color_t = ...
     ) -> None:
         if not isinstance(size, Vec2):
             size = Vec2().from_cartesian(size, size)
@@ -73,11 +75,16 @@ class Bullet(ImageEntity):
         self._explosion_damage = explosion_damage
         self._target_pos = target_pos
         self._visibility_offset = visibility_offset
+        self._trace = trace
+        if trace_color is not ...:
+            self._trace_color = convert_color(trace_color, Color)
+
+        else:
+            self._trace_color = Color().from_255(255, 255, 60)
 
         self._start_time = perf_counter()
 
         # load textures
-        # isize = size.xy if self._image_size is ... else self._image_size
         isize = size.xy
         self._bullet_texture, _ = textures.get_texture(
             self._bullet_image[0],
@@ -187,7 +194,6 @@ class Bullet(ImageEntity):
             self._ttl <= 0,
             self.on_ground
         ]):
-            ic(self._ttl, self._o_ttl)
             if self.kill():
                 return
 
@@ -204,7 +210,7 @@ class Bullet(ImageEntity):
                 Updated.sprites(),
                 self._last_pos,
                 self.position,
-                1
+                10
             )
 
             for other, pos in entities_hit:
@@ -234,7 +240,6 @@ class Bullet(ImageEntity):
                     with suppress(AttributeError):
                         other.hit(dmg, self)
 
-    @run_with_debug()
     def kill(self, killed_by: tp.Self = ...) -> bool:
         if all([
             self._casing,
@@ -246,7 +251,6 @@ class Bullet(ImageEntity):
                 CollisionDestroyed,
                 GravityAffected
             )
-            ic("casing")
             return True
 
         # bullet hit knockback
@@ -350,18 +354,15 @@ class Bullet(ImageEntity):
                 )
                 return
 
-            # draw trail
-            renderer.draw_thick_line(
-                self.world_position,
-                self._last_pos - Updated.world_position,
-                Color().from_255(
-                    255,
-                    255,
-                    60,
-                    min(255, int((self.velocity.length / 10000) * 255))
-                ),
-                self.size.length / 3,
-            )
+            # draw trace
+            if self._trace:
+                self._trace_color.a1 = min([1, self.velocity.length / 10000])
+                renderer.draw_thick_line(
+                    self.world_position,
+                    self._last_pos - Updated.world_position,
+                    self._trace_color,
+                    self.size.length / 3,
+                )
 
             # draw image if given
             self._texture_id = self._bullet_texture
@@ -406,7 +407,8 @@ class MortarShell(Bullet):
             target_pos,
             size,
             no_gravity,
-            **kwargs
+            **kwargs,
+            trace_color=Color().from_1(1, 1, 1)
         )
 
 
@@ -973,7 +975,7 @@ class Flak(BaseWeapon):
             inaccuracy=.0100002,
             bullet_size=18,
             # bullet_speed=1400*2,  # can shoot down bullets, but is too op
-            bullet_speed=1400,
+            bullet_speed=1700,
             bullet_damage=30,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
