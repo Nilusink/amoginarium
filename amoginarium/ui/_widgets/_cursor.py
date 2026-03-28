@@ -38,7 +38,7 @@ class UICursor(UIEventElement):
 
         self.__velocity.xy = (new_pos - self.position.absolute_global).xy
 
-        self.absolute_position_global = new_pos
+        self.position.absolute_global = new_pos
 
         super()._gl_draw()
 

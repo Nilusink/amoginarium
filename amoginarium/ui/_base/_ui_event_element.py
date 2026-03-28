@@ -194,7 +194,7 @@ class UIEventElement(UIElement):
             self.__is_hovered_inner = False
             cursor: UICursor
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor.absolute_position_global, buffer=self.__collision_buffer):
+                if self.__is_hovered_by(cursor.position.absolute_global, buffer=self.__collision_buffer):
                     self.__is_hovered_inner = True
 
         return self.__is_hovered_inner
@@ -205,7 +205,7 @@ class UIEventElement(UIElement):
             self.__is_hovered_outer = False
             cursor: UICursor
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor.absolute_position_global, buffer=-self.__collision_buffer):
+                if self.__is_hovered_by(cursor.position.absolute_global, buffer=-self.__collision_buffer):
                     self.__is_hovered_outer = True
                     break
 

@@ -919,7 +919,8 @@ class Sniper(BaseWeapon):
             drop_casings=drop_casings,
             sound_effect=s,
             bullet_visibility_offset=.04,
-            bullet_type=SniperBullet
+            bullet_type=SniperBullet,
+            weapon_recoil_factor=5,
         )
 
 
