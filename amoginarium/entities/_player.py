@@ -13,7 +13,7 @@ from icecream import ic
 import pygame as pg
 import typing as tp
 
-from ._groups import GravityAffected, FrictionXAffected, HasBars
+from ._groups import GravityAffected, FrictionXAffected, HasBars, Walls
 from ._groups import CollisionDestroyed, WallCollider, Players
 from ._groups import Updated, Drawn
 from ..audio import DeathSound, SoundEffect
@@ -322,42 +322,29 @@ class Player(LRImageEntity):
         )
 
     def _move_and_slide(self, delta: float, wall: Island) -> None:
-        """
-        Sub-stepped Kinematic Character Controller.
-        Slices movement into small chunks to guarantee we never teleport past the collision masks,
-        and separates X/Y movement for perfect wall sliding.
-        """
         total_displacement = self.velocity * delta
 
-        # Determine a safe distance to move per check (e.g., a third of the player's height).
-        # This guarantees we can never jump entirely through a wall in one step.
         safe_step_size = self.size.y / 3.0
 
-        # Total distance we intend to travel this frame
         distance = (total_displacement.x**2 + total_displacement.y**2) ** 0.5
 
-        # Number of steps needed (minimum of 1)
         steps = int(distance // safe_step_size) + 1
 
-        # The fraction of the displacement we move per micro-step
         step_x = total_displacement.x / steps
         step_y = total_displacement.y / steps
 
         for _ in range(steps):
-            # --- 1. Move X and check ---
             self.position.x += step_x
             self.update_rect()
             on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
 
-            # If moving right and hit a right wall
             if on_right and step_x > 0:
-                self.position.x -= step_x  # Step back out of the wall
-                self.velocity.x = 0        # Kill horizontal momentum
-                step_x = 0                 # Stop moving X for remaining sub-steps
+                self.position.x -= step_x
+                self.velocity.x = 0
+                step_x = 0
                 if self.velocity.x > 12:
                     self._controller.feedback_collide()
 
-            # If moving left and hit a left wall
             elif on_left and step_x < 0:
                 self.position.x -= step_x
                 self.velocity.x = 0
@@ -365,12 +352,10 @@ class Player(LRImageEntity):
                 if self.velocity.x < -12:
                     self._controller.feedback_collide()
 
-            # --- 2. Move Y and check ---
             self.position.y += step_y
             self.update_rect()
             on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
 
-            # If falling (moving down) and hit the floor (on_top of the wall)
             if on_top and step_y > 0:
                 self.position.y -= step_y
                 self.velocity.y = 0
@@ -382,7 +367,6 @@ class Player(LRImageEntity):
                 if self.velocity.y > 450:
                     self._groaning.play()
 
-            # If jumping (moving up) and hit the ceiling (on_bottom of the wall)
             elif on_bottom and step_y < 0:
                 self.position.y -= step_y
                 self.velocity.y = 0
@@ -413,104 +397,118 @@ class Player(LRImageEntity):
         if self._controller.jump and self.on_ground:
             self.velocity.y = -400
 
-        # --- SUB-STEPPED KINEMATIC COLLISION ---
-        # 1. Calculate the intended total movement
+        # wall collision
         total_dx = self.velocity.x * delta
         total_dy = self.velocity.y * delta
 
-        # 2. Break movement into chunks smaller than the player to prevent tunneling
-        distance = (total_dx**2 + total_dy**2) ** 0.5
-        safe_step_size = self.size.y / 4.0
-        steps = int(distance // safe_step_size) + 1
+        aabb_box = pg.Rect(
+            self.rect.left + min(0, total_dx),
+            self.rect.top + min(0, total_dy),
+            self.rect.width + abs(total_dx),
+            self.rect.height + abs(total_dy)
+        )
 
-        step_x = total_dx / steps
-        step_y = total_dy / steps
+        target_islands = []
+        for wall in Walls.sprites():
+            wall: Island
+            if aabb_box.colliderect(wall.rect):
+                target_islands.append(wall)
 
         self._on_ground = False
         wall_rider: Island = ...
 
-        for _ in range(steps):
-            # Move X
-            if step_x != 0:
-                self.position.x += step_x
-                self.update_rect()
-                in_wall = WallCollider.collides_with(self)
-                if in_wall:
-                    wall, _ = in_wall
-                    on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
+        if not target_islands:
+            self.position.x += total_dx
+            self.position.y += total_dy
+            self.update_rect()
 
-                    if step_x > 0 and on_right:
-                        self.position.x -= step_x  # Exact float step-back (keeps stability)
-                        # Inch forward to close the gap instantly
-                        while True:
-                            self.position.x += 1
-                            self.update_rect()
-                            if self.collide_wall(wall)[1]:
-                                self.position.x -= 1
-                                self.update_rect()
+        else:
+            distance = (total_dx**2 + total_dy**2) ** 0.5
+            safe_step_size = self.size.y / 4.0
+            steps = int(distance // safe_step_size) + 1
+
+            step_x = total_dx / steps
+            step_y = total_dy / steps
+
+            for _ in range(steps):
+                # Move X
+                if step_x != 0:
+                    self.position.x += step_x
+                    self.update_rect()
+
+                    for wall in target_islands:
+                        if pg.sprite.collide_rect(self, wall):
+                            on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
+
+                            if on_right or on_left:
+                                if step_x > 0 and on_right:
+                                    self.position.x -= step_x
+                                    while True:
+                                        self.position.x += 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[1]:
+                                            self.position.x -= 1
+                                            self.update_rect()
+                                            break
+                                    self.velocity.x = 0
+                                    step_x = 0
+
+                                elif step_x < 0 and on_left:
+                                    self.position.x -= step_x
+                                    while True:
+                                        self.position.x -= 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[3]:
+                                            self.position.x += 1
+                                            self.update_rect()
+                                            break
+                                    self.velocity.x = 0
+                                    step_x = 0
                                 break
-                        self.velocity.x = 0
-                        step_x = 0
+                if step_y != 0:
+                    self.position.y += step_y
+                    self.update_rect()
 
-                    elif step_x < 0 and on_left:
-                        self.position.x -= step_x
-                        while True:
-                            self.position.x -= 1
-                            self.update_rect()
-                            if self.collide_wall(wall)[3]:
-                                self.position.x += 1
-                                self.update_rect()
+                    for wall in target_islands:
+                        if pg.sprite.collide_rect(self, wall):
+                            on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
+
+                            if on_top or on_bottom:
+                                wall_rider = wall
+                                if step_y > 0 and on_top:
+                                    self.position.y -= step_y
+                                    while True:
+                                        self.position.y += 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[0]:
+                                            self.position.y -= 1
+                                            self.update_rect()
+                                            break
+
+                                    if self.velocity.y > 3:
+                                        self._controller.feedback_collide()
+                                    if self.velocity.y > 450:
+                                        self._groaning.play()
+
+                                    self.velocity.y = 0
+                                    step_y = 0
+                                    self._on_ground = True
+
+                                elif step_y < 0 and on_bottom:
+                                    self.position.y -= step_y
+                                    while True:
+                                        self.position.y -= 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[2]:
+                                            self.position.y += 1
+                                            self.update_rect()
+                                            break
+
+                                    if self.velocity.y < -3:
+                                        self._controller.feedback_collide()
+                                    self.velocity.y = 0
+                                    step_y = 0
                                 break
-                        self.velocity.x = 0
-                        step_x = 0
-
-            # Move Y
-            if step_y != 0:
-                self.position.y += step_y
-                self.update_rect()
-                in_wall = WallCollider.collides_with(self)
-                if in_wall:
-                    wall, _ = in_wall
-                    wall_rider = wall
-                    on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
-
-                    if step_y >= 0 and on_top:
-                        self.position.y -= step_y  # Exact float step-back
-
-                        # Inch down to close the gap instantly
-                        while True:
-                            self.position.y += 1
-                            self.update_rect()
-                            if self.collide_wall(wall)[0]:
-                                self.position.y -= 1
-                                self.update_rect()
-                                break
-
-                        if self.velocity.y > 3:
-                            self._controller.feedback_collide()
-                        if self.velocity.y > 450:
-                            self._groaning.play()
-
-                        self.velocity.y = 0
-                        step_y = 0
-                        self._on_ground = True
-
-                    elif step_y < 0 and on_bottom:
-                        self.position.y -= step_y
-
-                        while True:
-                            self.position.y -= 1
-                            self.update_rect()
-                            if self.collide_wall(wall)[2]:
-                                self.position.y += 1
-                                self.update_rect()
-                                break
-
-                        if self.velocity.y < -3:
-                            self._controller.feedback_collide()
-                        self.velocity.y = 0
-                        step_y = 0
-        # ---------------------------------------
 
         # reload
         if self._controller.reload:
@@ -545,9 +543,7 @@ class Player(LRImageEntity):
                     if hasattr(self.item, "charge"):
                         self.item.charge()
 
-                    elif self.item.shoot(
-                            vector
-                    ):
+                    elif self.item.shoot(vector):
                         self._controller.feedback_shoot()
 
                 elif self.item:
