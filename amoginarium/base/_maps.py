@@ -54,7 +54,7 @@ class Maps:
         # # spwan a lot of bulllets
         # Players.spawn_point = Vec2().from_cartesian(950, -100)
         # n_bullets = 150
-        # x_spacing = global_vars.screen_size.x / n_bullets
+        # x_spacing = pv.global_vars.screen_size.x / n_bullets
 
         # for i in range(n_bullets):
         #     Bullet(

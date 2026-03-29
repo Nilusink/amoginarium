@@ -9,10 +9,10 @@ from multiprocessing.shared_memory import SharedMemory
 import pygame as pg
 import typing as tp
 
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import Coalitions, global_vars
-from .._sharing import base_entity_t
-from amoginarium.shared.utility import Vec2
+from ...shared.debugging import print_ic_style, CC
+from ...shared import Coalitions, base_entity_t
+from ...shared.utility import Vec2
+from ... import pv
 
 
 class BaseLogicEntity:
@@ -37,7 +37,7 @@ class BaseLogicEntity:
 
         # data block
         self.__id = id
-        self.__shm = (base_entity_t * MAX_CAMS).from_buffer(cams_shm.buf)
+        self.__shm = ... #(base_entity_t * MAX_CAMS).from_buffer(cams_shm.buf)
 
     # region properties
     @property
@@ -191,7 +191,7 @@ class LogicGameEntity(PositionedLogicEntity):
     # region properties
     @property
     def world_position(self) -> Vec2:
-        return self.position - global_vars.world_position
+        return self.position - pv.global_vars.world_position
 
     @property
     def is_bullet(self) -> bool:

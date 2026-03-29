@@ -16,7 +16,7 @@ import math as m
 import random
 
 from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import global_vars
+from amoginarium.shared import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.base._textures import textures
 from ._base_entity import VisibleGameEntity
@@ -289,9 +289,9 @@ class Island(VisibleGameEntity):
         # check if island is on screen
         if (
                 self.position.x + self.size.x < Updated.world_position.x or
-                self.position.x > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.x > Updated.world_position.x + pv.global_vars.screen_pixels.x or
                 self.position.y + self.size.y < Updated.world_position.y or
-                self.position.y > Updated.world_position.y + global_vars.screen_pixels.y
+                self.position.y > Updated.world_position.y + pv.global_vars.screen_pixels.y
         ):
             return
 

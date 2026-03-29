@@ -10,10 +10,8 @@ Nilusink
 import typing as tp
 import numpy as np
 
-from amoginarium.shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
-from amoginarium.logic.entities import Players, Bullets
-from amoginarium.logic.entities import GameEntity
-from amoginarium.graphics.render_bindings import renderer
+from ...shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
+from ..entities import Players, Bullets, PositionedLogicEntity, LogicGameEntity
 from ._sensors import BaseSensor
 
 
@@ -22,7 +20,7 @@ class RadarSensor(BaseSensor):
 
     def __init__(
             self,
-            parent: GameEntity,
+            parent: PositionedLogicEntity,
             detection_range: float,
             position_offset: coord_t = ...,
             sphere_accuracy: int = 128,
@@ -50,8 +48,8 @@ class RadarSensor(BaseSensor):
 
     def _check_in_sphere(
             self,
-            targets: tp.Iterable[GameEntity]
-    ) -> list[GameEntity]:
+            targets: tp.Iterable[LogicGameEntity]
+    ) -> list[LogicGameEntity]:
         """
         check if a target is inside the calculated sphere
         """
@@ -109,8 +107,8 @@ class RadarSensor(BaseSensor):
 
     def get_targets(
             self,
-            from_entities: tp.Iterable[GameEntity] = None
-    ) -> list[GameEntity]:
+            from_entities: tp.Iterable[LogicGameEntity] = None
+    ) -> list[LogicGameEntity]:
         if from_entities is None:
             targets = [p for p in Players.sprites() if p.alive]
             targets.extend(Bullets.sprites())
@@ -128,39 +126,39 @@ class RadarSensor(BaseSensor):
             # funny stuff
             self._sphere = self._calculate_sphere()
 
-    def gl_draw(self, draw: bool = True) -> None:
-        # detection sphere
-        if draw:
-            po = self.parent.world_position + self._position_offset
-            for sector in self._highlighted_sectors:
-                t1 = self._sphere[sector] + po
-                t2 = self._sphere[(sector + 1) % self._sphere_accuracy] + po
-                renderer.draw_polygon(
-                    (self.parent.world_position + self._position_offset, t1, t2),
-                    (.4, .4, 1, .2)
-                )
-            self._highlighted_sectors.clear()
-
-            if self._debug and self._sphere:
-                renderer.draw_polygon(
-                    self._sphere,
-                    (1, 0, 0, .5),
-                    self.parent.world_position,
-                    # convert_global=False
-                )
-                for delta in self._sphere:
-                    renderer.draw_circle(
-                        self.parent.world_position + delta,
-                        4,
-                        4,
-                        (1, .5, 0)
-                    )
-
-                for target in self.get_targets(Players.sprites() + Bullets.sprites()):
-                    renderer.draw_line(
-                        self.parent.world_position,
-                        target.world_position,
-                        (1, 1, 0)
-                    )
-
-        super().gl_draw()
+    # def gl_draw(self, draw: bool = True) -> None:
+    #     # detection sphere
+    #     if draw:
+    #         po = self.parent.world_position + self._position_offset
+    #         for sector in self._highlighted_sectors:
+    #             t1 = self._sphere[sector] + po
+    #             t2 = self._sphere[(sector + 1) % self._sphere_accuracy] + po
+    #             renderer.draw_polygon(
+    #                 (self.parent.world_position + self._position_offset, t1, t2),
+    #                 (.4, .4, 1, .2)
+    #             )
+    #         self._highlighted_sectors.clear()
+    #
+    #         if self._debug and self._sphere:
+    #             renderer.draw_polygon(
+    #                 self._sphere,
+    #                 (1, 0, 0, .5),
+    #                 self.parent.world_position,
+    #                 # convert_global=False
+    #             )
+    #             for delta in self._sphere:
+    #                 renderer.draw_circle(
+    #                     self.parent.world_position + delta,
+    #                     4,
+    #                     4,
+    #                     (1, .5, 0)
+    #                 )
+    #
+    #             for target in self.get_targets(Players.sprites() + Bullets.sprites()):
+    #                 renderer.draw_line(
+    #                     self.parent.world_position,
+    #                     target.world_position,
+    #                     (1, 1, 0)
+    #                 )
+    #
+    #     super().gl_draw()

@@ -15,7 +15,7 @@ import numpy as np
 
 from amoginarium.shared.utility import Vec2, Color, convert_coord
 from ._base_renderer import BaseRenderer
-from amoginarium.shared import global_vars
+from amoginarium.shared import pv
 
 # define types
 type TextureID = pg.Surface
@@ -32,10 +32,10 @@ class PyGameRenderer(BaseRenderer):
         window_size = (screen_info.current_w, screen_info.current_h)
 
         # set global screen size and ppm
-        global_vars.screen_size = Vec2().from_cartesian(*window_size)
-        global_vars.screen_size_real = Vec2().from_cartesian(*window_size)
-        global_vars.pixel_per_meter = window_size[0] / 1920
-        global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
+        pv.global_vars.screen_size = Vec2().from_cartesian(*window_size)
+        pv.global_vars.screen_size_real = Vec2().from_cartesian(*window_size)
+        pv.global_vars.pixel_per_meter = window_size[0] / 1920
+        pv.global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
 
         self.screen = pg.display.set_mode(window_size, pg.RESIZABLE)
         # self.lowest_layer = pg.Surface(window_size, pg.SRCALPHA, 32)
@@ -83,8 +83,8 @@ class PyGameRenderer(BaseRenderer):
 
         # convert to screen realtive coords and size
         if convert_global:
-            pos = global_vars.translate_screen_coord(pos)
-            size = global_vars.translate_scale(size)
+            pos = pv.global_vars.translate_screen_coord(pos)
+            size = pv.global_vars.translate_scale(size)
 
         # resize image if necessary
         if texture_id.get_size() != size.xy:
@@ -106,8 +106,8 @@ class PyGameRenderer(BaseRenderer):
 
         # convert to screen realtive coords and size
         if convert_global:
-            center = global_vars.translate_screen_coord(center)
-            radius = global_vars.translate_scale(radius)
+            center = pv.global_vars.translate_screen_coord(center)
+            radius = pv.global_vars.translate_scale(radius)
 
         pg.draw.circle(
             self.screen,
@@ -128,8 +128,8 @@ class PyGameRenderer(BaseRenderer):
         color = color if isinstance(color, Color) else Color().from_1(*color)
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            size = global_vars.translate_scale(size)
+            start = pv.global_vars.translate_screen_coord(start)
+            size = pv.global_vars.translate_scale(size)
 
         pg.draw.rect(
             self.screen,
@@ -150,8 +150,8 @@ class PyGameRenderer(BaseRenderer):
         color = color if isinstance(color, Color) else Color().from_1(*color)
 
         if convert_global:
-            center = global_vars.translate_screen_coord(center)
-            radius = global_vars.translate_scale(radius)
+            center = pv.global_vars.translate_screen_coord(center)
+            radius = pv.global_vars.translate_scale(radius)
 
         for i in range(num_segments):
             i1 = i * 2
@@ -195,8 +195,8 @@ class PyGameRenderer(BaseRenderer):
         end = convert_coord(end, Vec2)
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            end = global_vars.translate_scale(end)
+            start = pv.global_vars.translate_screen_coord(start)
+            end = pv.global_vars.translate_scale(end)
 
         pg.draw.line(
             self.screen,

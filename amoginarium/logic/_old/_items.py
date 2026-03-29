@@ -15,7 +15,7 @@ import pygame as pg
 import math as m
 
 from amoginarium.shared import PlayerLike, BaseEntityLike, ItemLike, WeaponLike, \
-    ItemSlot, global_vars
+    ItemSlot, pv.global_vars
 from amoginarium.shared.utility import coord_t, convert_coord, Vec2
 from ..entities import CollisionDestroyed, Updated, GravityAffected, WallCollider, Drawn
 from ._base_entity import PositionedEntity, VisibleGameEntity
@@ -509,7 +509,7 @@ class JetBag(BaseItem):
     _animation_textures: list[int] = ...
     _max_uses: int = 5
     _reload_per_second: float = .2
-    _acceleration = 19 * global_vars.acceleration_factor
+    _acceleration = 19 * pv.global_vars.acceleration_factor
 
     @classmethod
     def load_textures(cls) -> None:

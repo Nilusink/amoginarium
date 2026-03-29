@@ -134,5 +134,8 @@ if __name__  == "__main__":
 
         return f"(logic: {os.getpid()}) {t1: >4}.{t2: <4} |> "
 
-    ic.configureOutput(prefix=p)
-    ic("hellow")
+    for i in range(8, 16):
+        print(f"{get_fg_color(i)}x")
+
+    # ic.configureOutput(prefix=p)
+    # ic("hellow")

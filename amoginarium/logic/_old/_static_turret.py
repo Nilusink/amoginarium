@@ -21,7 +21,7 @@ from amoginarium.shared.utility import Vec2, calculate_launch_angle, Color, is_r
     normalize_angle
 from ._base_entity import VisibleGameEntity
 from amoginarium.logic.radar import RadarSensor, BaseSensor, VisualSensor, DetectionGroup
-from amoginarium.shared import global_vars, Coalitions, VisibleGameEntityLike
+from amoginarium.shared import pv, Coalitions, VisibleGameEntityLike
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.base._textures import textures
 
@@ -424,9 +424,9 @@ class BaseTurret(VisibleGameEntity):
         # only draw engagement range if on screen
         if (
                 self.position.x + self.engagement_range < Updated.world_position.x or
-                self.position.x - self.engagement_range > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.x - self.engagement_range > Updated.world_position.x + pv.global_vars.screen_pixels.x or
                 self.position.y + self.engagement_range < Updated.world_position.y or
-                self.position.y - self.engagement_range > Updated.world_position.y + global_vars.screen_pixels.y
+                self.position.y - self.engagement_range > Updated.world_position.y + pv.global_vars.screen_pixels.y
         ):
             return
 
@@ -499,7 +499,7 @@ class BaseTurret(VisibleGameEntity):
         super().gl_draw()
 
         # targets
-        if global_vars.show_targets:
+        if pv.global_vars.show_targets:
             if self._target is not ...:
                 renderer.draw_line(
                     self.world_position + self.weapon.parent_position_offset,
@@ -508,7 +508,7 @@ class BaseTurret(VisibleGameEntity):
                 )
                 renderer.draw_circle(
                     self._target.world_position,
-                    global_vars.translate_scale(self._target.size.length / 2),
+                    pv.global_vars.translate_scale(self._target.size.length / 2),
                     32,
                     Color().from_255(255, 0, 0, 100)
                 )
@@ -525,7 +525,7 @@ class BaseTurret(VisibleGameEntity):
                     )
                     renderer.draw_circle(
                         target - Updated.world_position,
-                        global_vars.translate_scale(32),
+                        pv.global_vars.translate_scale(32),
                         32,
                         Color().from_255(50, 200, 0, 100)
                     )
@@ -533,9 +533,9 @@ class BaseTurret(VisibleGameEntity):
         # only draw turret if on screen
         if (
                 self.position.x + self.size.x / 2 < Updated.world_position.x or
-                self.position.x - self.size.x / 2 > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.x - self.size.x / 2 > Updated.world_position.x + pv.global_vars.screen_pixels.x or
                 self.position.y + self.size.y / 2 < Updated.world_position.y or
-                self.position.y - self.size.y / 2 > Updated.world_position.y + global_vars.screen_pixels.y
+                self.position.y - self.size.y / 2 > Updated.world_position.y + pv.global_vars.screen_pixels.y
         ):
             return
 

@@ -8,10 +8,9 @@ Authors: LukasKrah
 
 import typing as tp
 
-from amoginarium.graphics.render_bindings import renderer
-from amoginarium.shared import global_vars
-from amoginarium.logic.audio import SoundEffect
-from amoginarium.shared.utility import coord_t
+from ...logic_dummies import GraphicsSoundEffect
+from ...render_bindings import renderer
+from ....shared.utility import coord_t
 
 from .._animations import FloatAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
     anim_float_values_t, anim_color_values_t, ColorAnimation
@@ -28,9 +27,9 @@ class Rectangle(UIEventElement):
     __radius_animation: FloatAnimation
     __extend_animation: Vec2Animation
 
-    __on_hover_sound: SoundEffect | None
-    __on_leave_sound: SoundEffect | None
-    __on_click_sound: SoundEffect | None
+    __on_hover_sound: GraphicsSoundEffect | None
+    __on_leave_sound: GraphicsSoundEffect | None
+    __on_click_sound: GraphicsSoundEffect | None
 
     def __init__(
             self,
@@ -56,9 +55,9 @@ class Rectangle(UIEventElement):
             radius: anim_float_values_t = 20,
             size_extend: anim_vec2_values_t = 0,
 
-            on_enter_sound: SoundEffect | None = None,
-            on_leave_sound: SoundEffect | None = None,
-            on_click_sound: SoundEffect | None = None,
+            on_enter_sound: GraphicsSoundEffect | None = None,
+            on_leave_sound: GraphicsSoundEffect | None = None,
+            on_click_sound: GraphicsSoundEffect | None = None,
     ) -> None:
         """
         Create a new UI rectangle
@@ -109,7 +108,7 @@ class Rectangle(UIEventElement):
         self.add_enter_callback(self.__on_cursor_enter)
         self.add_buffer_callback(self.__on_cursor_in_buffer)
         self.add_leave_callback(self.__on_cursor_leave)
-        self.add_click_callback(lambda *_: self.__on_click_sound.play() if self.__on_click_sound is not None else None)
+        self.add_click_callback(lambda: self.__on_click_sound.play() if self.__on_click_sound is not None else None)
 
     @property
     def bg_color(self) -> ColorAnimation:
@@ -156,7 +155,7 @@ class Rectangle(UIEventElement):
         self.__border_width_animation.stop()
         self.__radius_animation.stop()
 
-    def _gl_draw(self) -> None:
+    def _gl_draw(self, delta_cal: float) -> None:
         if self.use_collision_mask and not self._ui_changed:
             self._ui_changed = any([
                 self.__border_width_animation.is_changing(),
@@ -165,8 +164,6 @@ class Rectangle(UIEventElement):
                 self.__radius_animation.is_changing(),
                 self.__extend_animation.is_changing(),
             ])
-
-        delta_cal = global_vars.delta
 
         self.__border_width_animation.update(delta_cal)
         self.__border_color_animation.update(delta_cal)
@@ -180,7 +177,7 @@ class Rectangle(UIEventElement):
         bg_color = self.__bg_color_animation.current_value
         radius = self.__radius_animation.current_value
 
-        super()._gl_draw()
+        super()._gl_draw(delta_cal)
 
         if radius > 0:
             if border_width > 0:

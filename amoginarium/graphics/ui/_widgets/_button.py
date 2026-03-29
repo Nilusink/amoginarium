@@ -12,9 +12,10 @@ import typing as tp
 # noinspection PyPackageRequirements
 import pygame as pg
 
-from amoginarium.logic.audio import PresetEffect, SoundEffect
-from amoginarium.shared.utility import coord_t, Color, color_t
-from amoginarium.graphics.render_bindings import renderer
+# from amoginarium.logic.audio import PresetEffect, SoundEffect
+from ....shared.utility import coord_t, Color, color_t
+from ...render_bindings import renderer
+from ...logic_dummies import PresetGraphicsSoundEffect, GraphicsSoundEffect
 
 from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColorValues, AnimatedFloatValues, \
     peaked_s_curve, anim_vec2_values_t, AnimatedVec2Values
@@ -24,17 +25,17 @@ from .._base import UIEntity
 from ._rectangle import Rectangle
 
 
-class _OnHoverButtonSound(PresetEffect):
+class _OnHoverButtonSound(PresetGraphicsSoundEffect):
     volume = .5
     _sound_name = "button_hover"
 
 
-class _ButtonClickSound(PresetEffect):
+class _ButtonClickSound(PresetGraphicsSoundEffect):
     volume = 1
     _sound_name = "button_click"
 
 
-class _OnButtonLeaveSound(PresetEffect):
+class _OnButtonLeaveSound(PresetGraphicsSoundEffect):
     volume = .5
     _sound_name = "button_leave"
 
@@ -96,9 +97,9 @@ class Button(Rectangle):
                                                                  extend_curve=peaked_s_curve,
                                                                  collapse_curve=lambda a: a),
 
-            on_enter_sound: SoundEffect | None = OnHoverButtonSound,
-            on_leave_sound: SoundEffect | None = OnButtonLeaveSound,
-            on_click_sound: SoundEffect | None = ButtonClickSound
+            on_enter_sound: GraphicsSoundEffect | None = OnHoverButtonSound,
+            on_leave_sound: GraphicsSoundEffect | None = OnButtonLeaveSound,
+            on_click_sound: GraphicsSoundEffect | None = ButtonClickSound
     ) -> None:
         super().__init__(
             position=position,
@@ -135,10 +136,10 @@ class Button(Rectangle):
                                                       self.__fg_color.rgb255)
 
         # if self.__command is not None:
-        self.add_click_callback(lambda *_: self.__command())
+        self.add_click_callback(lambda: self.__command())
 
-    def _gl_draw(self) -> None:
-        super()._gl_draw()
+    def _gl_draw(self, delta_cal: float) -> None:
+        super()._gl_draw(delta_cal)
 
         renderer.draw_pg_surf(
             self.center.absolute_global,

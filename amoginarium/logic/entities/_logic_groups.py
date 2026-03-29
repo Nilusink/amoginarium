@@ -13,9 +13,9 @@ import pygame as pg
 import typing as tp
 import numpy as np
 
-from amoginarium.shared.utility import Vec2, is_related, convert_coord, raycast_mask, \
+from ...shared.utility import Vec2, is_related, convert_coord, raycast_mask, \
     normalize_angle, coord_t
-from amoginarium.shared import global_vars, BaseLogicEntityLike
+from ...shared import GlobalVars, BaseLogicEntityLike
 
 
 class BaseGroup(pg.sprite.Group):
@@ -252,7 +252,7 @@ class _GravityAffected(BaseGroup):
 
     @property
     def gravity(self) -> float:
-        return 9.81 * global_vars.acceleration_factor
+        return 9.81 * pv.global_vars.acceleration_factor
 
     def calculate_gravity(self, _delta: float) -> None:
         for sprite in self.sprites():
@@ -431,14 +431,6 @@ class _CollisionDestroyed(BaseGroup):
         ])
 
 
-class _Cursor(BaseGroup):
-    ...
-
-
-class _UIEntities(BaseGroup):
-    ...
-
-
 # initialize groups
 Walls = _Walls()
 Players = _Players()
@@ -449,5 +441,3 @@ WallCollider = _WallCollider()
 GravityAffected = _GravityAffected()
 FrictionXAffected = _FrictionXAffected()
 CollisionDestroyed = _CollisionDestroyed()
-Cursor = _Cursor()
-UIEntities = _UIEntities()

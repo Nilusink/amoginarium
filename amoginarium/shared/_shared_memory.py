@@ -46,8 +46,7 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
 _shm: SharedMemory = ...
 def get_entity_memory() -> SharedMemory:
     global _shm
-    if _shm is None:
-        print("new shared")
+    if _shm is ...:
         _shm = shared_memory.SharedMemory(
             create=True,
             size=ctypes.sizeof(base_entity_t) * MAX_ENTITIES

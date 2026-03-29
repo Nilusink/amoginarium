@@ -13,7 +13,7 @@ from amoginarium.base._textures import textures
 from ..entities import CollisionDestroyed, HasBars, Updated
 from ._base_entity import VisibleGameEntity
 from amoginarium.logic.radar import RadarSensor, BaseSensor, DetectionGroup
-from amoginarium.shared import BaseEntityLike, global_vars
+from amoginarium.shared import BaseEntityLike, pv.global_vars
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared.utility import Vec2
 
@@ -113,9 +113,9 @@ class BaseDetector(VisibleGameEntity):
         er = self.engagement_range
         if not (
             self.position.x + er < Updated.world_position.x or
-            self.position.x - er > Updated.world_position.x + global_vars.screen_pixels.x or
+            self.position.x - er > Updated.world_position.x + pv.global_vars.screen_pixels.x or
             self.position.y + er < Updated.world_position.y or
-            self.position.y - er > Updated.world_position.y + global_vars.screen_pixels.y
+            self.position.y - er > Updated.world_position.y + pv.global_vars.screen_pixels.y
         ):
             renderer.draw_textured_quad(
                 self._body_texture,

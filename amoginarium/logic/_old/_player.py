@@ -29,7 +29,7 @@ from amoginarium.base._textures import textures
 from amoginarium.shared.controllers import Controller
 from ._island import Island
 from ._inventory import Inventory
-from amoginarium.shared import global_vars
+from amoginarium.shared import pv
 
 PLAYER_LEFT_64_PATH = "amogus64left"
 PLAYER_RIGHT_64_PATH = "amogus64right"
@@ -391,14 +391,14 @@ class Player(LRImageEntity):
         # accelerate right
         if self._controller.joy_x > 0:
             if self.velocity.x < self._max_speed:
-                self.velocity.x += self._impulse_resistance_factor * delta * global_vars.acceleration_factor * 12
+                self.velocity.x += self._impulse_resistance_factor * delta * pv.global_vars.acceleration_factor * 12
 
             # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
-                self.velocity.x -= self._impulse_resistance_factor * delta * global_vars.acceleration_factor * 12
+                self.velocity.x -= self._impulse_resistance_factor * delta * pv.global_vars.acceleration_factor * 12
 
             # self.facing.x = -1
 
@@ -430,8 +430,8 @@ class Player(LRImageEntity):
             if self._controller.shoot:
                 mouse_pos = pg.mouse.get_pos()
                 vector = convert_coord((
-                    (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
-                    (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+                    (mouse_pos[0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
+                    (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
                 ), Vec2)
                 vector -= self.world_position
 
@@ -457,8 +457,8 @@ class Player(LRImageEntity):
                         if item.charged > 0:
                             mouse_pos = pg.mouse.get_pos()
                             vector = convert_coord((
-                                (mouse_pos[ 0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
-                                (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+                                (mouse_pos[ 0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
+                                (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
                             ), Vec2)
                             vector -= self.world_position
 
@@ -479,8 +479,8 @@ class Player(LRImageEntity):
             holding_slot = self._holding_slot
             if holding_slot:
                 if self._controller.shoot:
-                    self._holding_slot.item.position.x = self._controller.mouse_x * global_vars.screen_size_fac_x
-                    self._holding_slot.item.position.y = self._controller.mouse_y * global_vars.screen_size_fac_y
+                    self._holding_slot.item.position.x = self._controller.mouse_x * pv.global_vars.screen_size_fac_x
+                    self._holding_slot.item.position.y = self._controller.mouse_y * pv.global_vars.screen_size_fac_y
 
                 else:
                     if hover_slot:
@@ -583,8 +583,8 @@ class Player(LRImageEntity):
         # left of screen
         mouse_pos = pg.mouse.get_pos()
         vector = convert_coord((
-            (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
-            (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+            (mouse_pos[0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
+            (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
         ), Vec2)
         vector -= self.world_position
         if vector.x == 0:
@@ -641,12 +641,12 @@ class Player(LRImageEntity):
                 # background
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_size.x * .25,
-                            global_vars.screen_size.y * .1
+                            pv.global_vars.screen_size.x * .25,
+                            pv.global_vars.screen_size.y * .1
                     ),
                     (
-                        global_vars.screen_size.x * .5,
-                        global_vars.screen_size.y * .8
+                        pv.global_vars.screen_size.x * .5,
+                        pv.global_vars.screen_size.y * .8
                     ),
                     Color().from_255(80, 80, 80),
                     20,
@@ -671,8 +671,8 @@ class Player(LRImageEntity):
                 # character display
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_size.x * .28,
-                            global_vars.screen_size.y * .17
+                            pv.global_vars.screen_size.x * .28,
+                            pv.global_vars.screen_size.y * .17
                     ),
                     (
                         self.size.x * 3,
@@ -684,8 +684,8 @@ class Player(LRImageEntity):
                 )
                 self.draw_at(
                     Vec2().from_cartesian(
-                        global_vars.screen_size.x * .28 + self.size.x * 1.5,
-                        global_vars.screen_size.y * .17 + self.size.y * 2
+                        pv.global_vars.screen_size.x * .28 + self.size.x * 1.5,
+                        pv.global_vars.screen_size.y * .17 + self.size.y * 2
                     ),
                     self.size * 2,
                     angle,

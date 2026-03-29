@@ -11,11 +11,10 @@ from traceback import format_exc
 from time import perf_counter_ns
 from icecream import ic
 import typing as tp
-import inspect
 
 
-from ._console_colors import CC, get_fg_color, terminal_link
-from ._utils import get_caller_name
+from ._utils import get_caller_name, print_with_prefix
+from ._console_colors import CC, get_fg_color
 
 
 def run_with_debug(
@@ -31,7 +30,10 @@ def run_with_debug(
     def decorator[**A, R](func: tp.Callable[A, R]):
         def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
             # get caller name
-            prefix = ic.prefix()
+            prefix = ic.prefix
+            if not isinstance(prefix, str):
+                prefix = prefix()
+
             prefix_time = prefix[:-3]
             prefix_arrow = prefix[-3:]
 
@@ -42,7 +44,7 @@ def run_with_debug(
 
             if ic.enabled and show_call:
                 context = get_caller_name(True)
-                print(
+                ic.outputFunction(
                     f"{get_fg_color(36)}{prefix_time}"
                     f"{get_fg_color(247)}{prefix_arrow}{CC.fg.GREEN}"
                     f"running {CC.fg.MAGENTA}{func_name}"
@@ -51,7 +53,8 @@ def run_with_debug(
                     f"{context["file"]}\", line {CC.fg.MAGENTA}{context["line"]}"
                     f"{get_fg_color(36)}" +
                     (f" with {args, kwargs}" if show_args else "") +
-                    f"{CC.ctrl.ENDC}"
+                    f"{CC.ctrl.ENDC}",
+                    color=False
                 )
 
             # execute function
@@ -59,11 +62,12 @@ def run_with_debug(
                 val = func(*args, **kwargs)
 
                 if ic.enabled and show_finish:
-                    print(
+                    ic.outputFunction(
                         f"{get_fg_color(36)}{prefix_time}"
                         f"{get_fg_color(247)}{prefix_arrow}{CC.fg.GREEN}"
                         f"finished {CC.fg.MAGENTA}{func_name}"
-                        f"{CC.ctrl.ENDC}"
+                        f"{CC.ctrl.ENDC}",
+                        color=False
                     )
 
                 return val

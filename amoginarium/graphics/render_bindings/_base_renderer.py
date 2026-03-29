@@ -26,7 +26,7 @@ type TextureID = tp.Any
 class BaseRenderer:
     def init(self, title: str) -> None:
         """
-        initialize the renderer and global_vars
+        initialize the renderer and pv.global_vars
         """
         raise NotImplementedError
 

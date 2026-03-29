@@ -12,8 +12,8 @@ from __future__ import annotations
 import pygame as pg
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord
-from amoginarium.logic.entities import Cursor, UIEntities
+from ....shared.utility import Vec2, coord_t, convert_coord
+from ...entities import UIEntities, Cursor
 
 from .._types import Anchor, Positions
 
@@ -243,7 +243,7 @@ class UIEventElement(UIElement):
     # endregion
 
     # region Methods: Drawing & Updates
-    def _gl_draw(self) -> None:
+    def _gl_draw(self, delta_cal: float):
         """
         The draw function called in loop. Updates hover state trackers and handles
         collision surface recreation flags before calling the parent UIElement draw.
@@ -253,7 +253,7 @@ class UIEventElement(UIElement):
         self.__is_hovered_inner = None
         self.__is_hovered_outer = None
 
-        super()._gl_draw()
+        super()._gl_draw(delta_cal)
 
         if self.__use_collision_mask and self._ui_changed:
             self.__collision_recreation = True

@@ -8,16 +8,17 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
+from icecream import ic
 from types import EllipsisType
 import typing as tp
 
-from amoginarium.logic.entities import BaseEntity
+from ...entities import BaseGraphicsEntity
 
 if tp.TYPE_CHECKING:
     from ._ui_element import UIElement
 
 
-class UIEntity(BaseEntity):
+class UIEntity(BaseGraphicsEntity):
     """Base UI-Entity, no UI, just default entity relation / method stuff"""
     _parent: UIEntity | None
     _children: list[UIEntity]
@@ -195,7 +196,7 @@ class UIEntity(BaseEntity):
     # endregion
 
     # region Methods: drawing
-    def _gl_draw(self) -> None:
+    def _gl_draw(self, delta_cal: float):
         """
         Draw function for this UI.
         Use in inheritance for the actual drawing
@@ -217,9 +218,10 @@ class UIEntity(BaseEntity):
         return
 
     @tp.final
-    def gl_draw(self, recursive: bool = True, force_draw: bool = False) -> None:
+    def gl_draw(self, delta_cal: float, recursive: bool = True, force_draw: bool = False) -> None:
         """
         Draw this UI-entity.
+        :param delta_cal: delta used for animation calculations
         :param recursive: Draw the children tree recursively
         :param force_draw: Ignore visibility
 
@@ -229,10 +231,10 @@ class UIEntity(BaseEntity):
         draw: bool = force_draw or self.visible
         self._before_gl_draw(draw)
         if draw:
-            self._gl_draw()
+            self._gl_draw(delta_cal)
             if recursive:
                 for child in self._children:
-                    child.gl_draw(force_draw=(force_draw or self._root_visibility))
+                    child.gl_draw(delta_cal, force_draw=(force_draw or self._root_visibility))
         self._after_gl_draw(draw)
 
     # endregion

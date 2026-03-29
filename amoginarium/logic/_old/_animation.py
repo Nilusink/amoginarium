@@ -139,7 +139,7 @@ def play_animation(
     #
     #         position -= size / 2
     #
-    #         key = global_vars.set_in_loop(
+    #         key = pv.global_vars.set_in_loop(
     #             renderer.draw_textured_quad,
     #             texture,
     #             position.xy,
@@ -147,7 +147,7 @@ def play_animation(
     #         )
     #
     #         time.sleep(delay)
-    #         global_vars.reset_in_loop(key)
+    #         pv.global_vars.reset_in_loop(key)
     #
     # Thread(target=inner).start()
 

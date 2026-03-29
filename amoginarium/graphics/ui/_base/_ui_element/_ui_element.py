@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord, TupleMath
-from amoginarium.shared import global_vars
+from .....shared.utility import Vec2, coord_t, convert_coord, TupleMath
+from ..... import pv
 
 from ..._types import Anchor, Positions
 
@@ -106,14 +106,14 @@ class UIElement(UIEntity):
         if self.__data.size_is_relative_to_parent and self._next_ui_element_parent is not None:
             self.__data.reference_size.copy_from(self._next_ui_element_parent._size)
         else:
-            self.__data.reference_size.absolute = global_vars.resolution
+            self.__data.reference_size.absolute = pv.global_vars.get_resolution()
             self.__data.reference_size.relative_global = self.__ONE_VEC2
             self.__data.reference_size.relative_to_parent = self.__ONE_VEC2
 
         if self._next_ui_element_parent is not None:
             self.__data.reference_size_for_position.copy_from(self._next_ui_element_parent._size)
         else:
-            self.__data.reference_size_for_position.absolute = global_vars.resolution
+            self.__data.reference_size_for_position.absolute = pv.global_vars.get_resolution()
             self.__data.reference_size_for_position.relative_global = self.__ONE_VEC2
             self.__data.reference_size_for_position.relative_to_parent = self.__ONE_VEC2
 
@@ -139,7 +139,7 @@ class UIElement(UIEntity):
                     ) else (
                         self.__data.reference_size_for_position.absolute if (
                                 calc_for == "position" and self.__data.position_is_relative_to_parent
-                        ) else global_vars.resolution)
+                        ) else pv.global_vars.get_resolution())
                 ))
         )
 
@@ -165,7 +165,7 @@ class UIElement(UIEntity):
                     ) else (
                         self.__data.reference_size_for_position.absolute if (
                                 calc_for == "position" and self.__data.position_is_relative_to_parent
-                        ) else global_vars.resolution)
+                        ) else pv.global_vars.get_resolution())
                 ))
         )
 
@@ -537,7 +537,7 @@ class UIElement(UIEntity):
         self._ui_changed = True
         self.__last_data.copy_from(self.__data)
 
-    def _gl_draw(self) -> None:
+    def _gl_draw(self, delta_cal: float):
         """
         The draw function called in loop
 
@@ -548,7 +548,7 @@ class UIElement(UIEntity):
         """
         self.__calc_values()
 
-        super()._gl_draw()
+        super()._gl_draw(delta_cal)
 
     def _after_gl_draw(self, drawn: bool) -> None:
         super()._after_gl_draw(drawn)

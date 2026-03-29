@@ -23,7 +23,7 @@ from amoginarium.shared.utility import Vec2, Color, convert_coord, coord_t, mult
     is_related, color_t, convert_color
 from ._base_entity import ImageEntity, GameEntity
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.shared import global_vars
+from amoginarium.shared import pv
 from amoginarium.base._textures import textures
 from ._animation import explosion
 from amoginarium.logic.entities import WallCollider
@@ -320,9 +320,9 @@ class Bullet(ImageEntity):
     def gl_draw(self) -> None:
         if (
                 self.position.x + self.size.x / 2 < Updated.world_position.x or
-                self.position.x - self.size.x / 2 > Updated.world_position.x + global_vars.screen_pixels.x or
+                self.position.x - self.size.x / 2 > Updated.world_position.x + pv.global_vars.screen_pixels.x or
                 self.position.y + self.size.y / 2 < Updated.world_position.y or
-                self.position.y - self.size.y / 2 > Updated.world_position.y + global_vars.screen_pixels.y
+                self.position.y - self.size.y / 2 > Updated.world_position.y + pv.global_vars.screen_pixels.y
         ):
             return
 
@@ -330,7 +330,7 @@ class Bullet(ImageEntity):
             return
 
         if not self._casing:
-            if global_vars.show_targets and self._target_pos is not ...:
+            if pv.global_vars.show_targets and self._target_pos is not ...:
                 renderer.draw_line(
                     self.world_position,
                     self._target_pos - Updated.world_position,

@@ -15,7 +15,7 @@ import pygame as pg
 from amoginarium.base import BaseGame
 from amoginarium.logic.entities import Updated, CollisionDestroyed
 from amoginarium.graphics.ui import EventHandler
-from amoginarium.shared import global_vars, VisibleGameEntityLike, \
+from amoginarium.shared import pv, VisibleGameEntityLike, \
     GameEntityLike
 from amoginarium.shared.utility import convert_coord, Vec2
 from amoginarium.logic.map import save_map

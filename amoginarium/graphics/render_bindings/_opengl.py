@@ -32,9 +32,9 @@ import typing as tp
 import numpy as np
 import math as m
 
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle
+from ...shared.utility import Vec2, Color, convert_coord, normalize_angle
 from ._base_renderer import BaseRenderer, tColor
-from amoginarium.shared import global_vars
+from ... import pv
 
 # define types
 type TextureID = int
@@ -46,7 +46,7 @@ class OpenGLRenderer(BaseRenderer):
             size: int,
             family: str,
             bold: bool = False,
-            italic: bool = False
+            italic: bool = False,
     ) -> pg.font.Font:
         # check if font exists
         if size in self._fonts:
@@ -68,6 +68,8 @@ class OpenGLRenderer(BaseRenderer):
         return new_font
 
     def init(self, title):
+        pv.global_vars = pv.global_vars
+
         ic("using OpenGL backend")
 
         pg.font.init()
@@ -86,25 +88,30 @@ class OpenGLRenderer(BaseRenderer):
         window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
 
         # set global screen size and ppm
-        global_vars.screen_size = Vec2().from_cartesian(*window_size)
-        global_vars.screen_size_real = Vec2().from_cartesian(
+        pv.global_vars.set_screen_size(Vec2().from_cartesian(*window_size))
+        pv.global_vars.set_screen_size_real(Vec2().from_cartesian(
             screen_info.current_w,
             screen_info.current_h
-        )
-        ic(global_vars.screen_size_real.xy)
-        global_vars.resolution = Vec2().from_cartesian(*window_size)
-        global_vars.screen_size_fac_x = 1
-        global_vars.screen_size_offset_x = 0
-        global_vars.screen_size_fac_y = 1
-        global_vars.screen_size_offset_y = 0
-        global_vars.pixel_per_meter = 1
+        ))
+        pv.global_vars.set_resolution(Vec2().from_cartesian(*window_size))
+
+        ic(pv.global_vars.get_resolution(), window_size)
+
+        screen_fac = Vec2().from_cartesian(1, 1)
+        screen_offset = Vec2().from_cartesian(0, 0)
+
+        pv.global_vars.set_screen_size_fac(screen_fac)
+        pv.global_vars.set_screen_size_offset(screen_offset)
+        pv.global_vars.set_pixel_per_meter(1)
 
         # set max fps to monitor refresh rate
-        global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
+        pv.global_vars.set_max_fps(
+            max(pg.display.get_desktop_refresh_rates())
+        )
 
         pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode(
-            global_vars.screen_size.xy,
+            pv.global_vars.get_screen_size().xy,
             DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
         )
         # self.font = pg.font.SysFont(None, 24)
@@ -115,7 +122,7 @@ class OpenGLRenderer(BaseRenderer):
         glClearColor(*(0, 0, 0, 255))
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluOrtho2D(0, *global_vars.screen_size.xy, 0)
+        gluOrtho2D(0, *pv.global_vars.get_screen_size().xy, 0)
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -160,7 +167,7 @@ class OpenGLRenderer(BaseRenderer):
 
         # 200 for buffering
         # return any([
-        #     pos.x > global_vars.screen_size.x + 200,
+        #     pos.x > pv.global_vars.screen_size.x + 200,
         #     pos.x + size.x < -200
         # ])
 
@@ -236,9 +243,9 @@ class OpenGLRenderer(BaseRenderer):
 
         # convert to screen relative coords and size
         if convert_global:
-            pos = global_vars.translate_screen_coord(pos)
-            size = global_vars.translate_scale(size)
-            rotate_anchor = global_vars.translate_scale(rotate_anchor)
+            pos = pv.global_vars.translate_screen_coord(pos)
+            size = pv.global_vars.translate_scale(size)
+            rotate_anchor = pv.global_vars.translate_scale(rotate_anchor)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(pos, size):
@@ -341,19 +348,19 @@ class OpenGLRenderer(BaseRenderer):
         if convert_global:
             if center:
                 vertices = [
-                    global_vars.translate_scale(v) for v in vertices
+                    pv.global_vars.translate_scale(v) for v in vertices
                 ]
 
             else:
                 vertices = [
-                    global_vars.translate_screen_coord(v) for v in vertices
+                    pv.global_vars.translate_screen_coord(v) for v in vertices
                 ]
 
         glPushMatrix()  # reset previous glTranslate statements
         if center is not None:
             center = convert_coord(center, Vec2)
             if convert_global:
-                center = global_vars.translate_screen_coord(center)
+                center = pv.global_vars.translate_screen_coord(center)
 
             glTranslate(center.x, center.y, 0)
 
@@ -379,8 +386,8 @@ class OpenGLRenderer(BaseRenderer):
 
         # convert to screen realtive coords and size
         if convert_global:
-            center = global_vars.translate_screen_coord(center)
-            radius = global_vars.translate_scale(radius)
+            center = pv.global_vars.translate_screen_coord(center)
+            radius = pv.global_vars.translate_scale(radius)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
@@ -414,8 +421,8 @@ class OpenGLRenderer(BaseRenderer):
 
         # convert to screen realtive coords and size
         if convert_global:
-            center = global_vars.translate_screen_coord(center)
-            radius = global_vars.translate_scale(radius)
+            center = pv.global_vars.translate_screen_coord(center)
+            radius = pv.global_vars.translate_scale(radius)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
@@ -459,8 +466,8 @@ class OpenGLRenderer(BaseRenderer):
 
         # convert to screen relative coords and size
         if convert_global:
-            center = global_vars.translate_screen_coord(center)
-            radius = global_vars.translate_scale(radius)
+            center = pv.global_vars.translate_screen_coord(center)
+            radius = pv.global_vars.translate_scale(radius)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
@@ -505,8 +512,8 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            size = global_vars.translate_scale(size)
+            start = pv.global_vars.translate_screen_coord(start)
+            size = pv.global_vars.translate_scale(size)
 
         glPushMatrix()  # reset previous glTranslate statements
         glTranslate(start.x, start.y, 0)
@@ -533,8 +540,8 @@ class OpenGLRenderer(BaseRenderer):
         center = convert_coord(center, Vec2)
 
         if convert_global:
-            center = global_vars.translate_screen_coord(center)
-            radius = global_vars.translate_scale(radius)
+            center = pv.global_vars.translate_screen_coord(center)
+            radius = pv.global_vars.translate_scale(radius)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
@@ -585,8 +592,8 @@ class OpenGLRenderer(BaseRenderer):
         angle_start = convert_coord(angle_start, Vec2)
         angle_end = convert_coord(angle_end, Vec2)
         if convert_global:
-            center = global_vars.translate_screen_coord(center)
-            radius = global_vars.translate_scale(radius)
+            center = pv.global_vars.translate_screen_coord(center)
+            radius = pv.global_vars.translate_scale(radius)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
@@ -641,8 +648,8 @@ class OpenGLRenderer(BaseRenderer):
         end = convert_coord(end, Vec2)
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            end = global_vars.translate_screen_coord(end)
+            start = pv.global_vars.translate_screen_coord(start)
+            end = pv.global_vars.translate_screen_coord(end)
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, end - start):
@@ -677,9 +684,9 @@ class OpenGLRenderer(BaseRenderer):
         end = convert_coord(end, Vec2)
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            end = global_vars.translate_screen_coord(end)
-            thickness = global_vars.translate_scale(thickness)
+            start = pv.global_vars.translate_screen_coord(start)
+            end = pv.global_vars.translate_screen_coord(end)
+            thickness = pv.global_vars.translate_scale(thickness)
 
         direction = end - start
 
@@ -736,8 +743,8 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            size = global_vars.translate_scale(size)
+            start = pv.global_vars.translate_screen_coord(start)
+            size = pv.global_vars.translate_scale(size)
 
         glPushMatrix()
         glTranslate(start.x, start.y, 0)
@@ -791,8 +798,8 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            size = global_vars.translate_scale(size)
+            start = pv.global_vars.translate_screen_coord(start)
+            size = pv.global_vars.translate_scale(size)
 
         glPushMatrix()
         glTranslate(start.x, start.y, 0)
@@ -840,8 +847,8 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         if convert_global:
-            start = global_vars.translate_screen_coord(start)
-            size = global_vars.translate_scale(size)
+            start = pv.global_vars.translate_screen_coord(start)
+            size = pv.global_vars.translate_scale(size)
 
         glPushMatrix()
         glTranslate(start.x, start.y, 0)
@@ -893,8 +900,8 @@ class OpenGLRenderer(BaseRenderer):
         pos = convert_coord(pos, Vec2)
 
         if convert_global:
-            pos = global_vars.translate_screen_coord(pos)
-            font_size = global_vars.translate_scale(font_size)
+            pos = pv.global_vars.translate_screen_coord(pos)
+            font_size = pv.global_vars.translate_scale(font_size)
 
         # weird conversion because pygame is ass
         text_surface: pg.Surface = self.generate_pg_surf_text(
@@ -936,16 +943,19 @@ class OpenGLRenderer(BaseRenderer):
         pos = convert_coord(pos, Vec2)
 
         if convert_global:
-            pos = global_vars.translate_screen_coord(pos)
-            # font_size = global_vars.translate_scale(font_size)
+            pos = pv.global_vars.translate_screen_coord(pos)
+            # font_size = pv.global_vars.translate_scale(font_size)
 
         text_data = pg.image.tostring(surface, "RGBA", True)
         text_size: tuple[int, int] = surface.get_size()
 
-        pos.y = global_vars.screen_size.y - pos.y
+        screen_size = pv.global_vars.get_screen_size()
+        screen_size_fac = pv.global_vars.get_screen_size_fac()
+        screen_size_offset = pv.global_vars.get_screen_size_offset()
+        pos.y = screen_size.y - pos.y
 
-        pos.x = (pos.x / global_vars.screen_size_fac_x) + global_vars.screen_size_offset_x
-        pos.y = (pos.y / global_vars.screen_size_fac_y) + global_vars.screen_size_offset_y
+        pos.x = (pos.x / screen_size_fac.x) + screen_size_offset.x
+        pos.y = (pos.y / screen_size_fac.y) + screen_size_offset.y
 
         if centered:
             pos.x -= text_size[0] / 2

@@ -9,27 +9,28 @@ Nilusink
 """
 import typing as tp
 
-from amoginarium.shared.utility import coord_t, convert_coord, Vec2
-from amoginarium.logic.entities import Players, Bullets
-from amoginarium.graphics.render_bindings import renderer
+from ...shared.utility import coord_t, convert_coord, Vec2
+from ..entities import PositionedLogicEntity, LogicGameEntity
+from ..entities import Players, Bullets
 
 # if tp.TYPE_CHECKING:
-from amoginarium.logic.entities import GameEntity, VisibleBaseEntity
+# from ..entities import GameEntity, VisibleBaseEntity, Players, Bullets
 
 
-class BaseSensor(VisibleBaseEntity):
-    _parent: GameEntity
+class BaseSensor:
+    _parent: PositionedLogicEntity
     _visible: bool
 
     def __init__(
             self,
-            parent: GameEntity,
+            parent: PositionedLogicEntity,
             detection_range: float,
             position_offset: coord_t = ...,
             visible: bool = True
     ) -> None:
         self._detection_range = detection_range
         self._visible = visible
+        self._parent = parent
         if position_offset is ...:
             self._position_offset = Vec2()
 
@@ -38,14 +39,12 @@ class BaseSensor(VisibleBaseEntity):
 
         self._detection_group = None
 
-        super().__init__(parent)
-
     @property
     def detection_range(self) -> float:
         return self._detection_range
 
     @property
-    def parent(self) -> GameEntity:
+    def parent(self) -> PositionedLogicEntity:
         return self._parent
 
     def group_add(self, group) -> None:
@@ -53,27 +52,17 @@ class BaseSensor(VisibleBaseEntity):
 
     def get_targets(
             self,
-            from_entities: tp.Iterable[GameEntity] = None
-    ) -> list[GameEntity]:
+            from_entities: tp.Iterable[LogicGameEntity] = None
+    ) -> list[LogicGameEntity]:
         raise NotImplementedError
 
     def kill(self, *_args, **_kwargs) -> None:
         if self._detection_group:
             self._detection_group.remove_sensor(self)
 
-        super().kill()
-
-    def gl_draw(self, draw: bool = True) -> None:
-        if self._visible and draw:
-            renderer.draw_line_circle(
-                self.parent.world_position + self._position_offset,
-                self.detection_range,  # * ((self._current_t % a_time) / a_time)**2,
-                64,
-                (.3, .3, 1, .6),
-                thickness=1
-            )
-
-        super().gl_draw()
+    @tp.final
+    def gl_draw(self) -> None:
+        raise RuntimeError("trying to gl_draw in logic")
 
 
 class MagicSensor(BaseSensor):
@@ -82,7 +71,10 @@ class MagicSensor(BaseSensor):
     of parent
     """
 
-    def get_targets(self, from_entities: tp.Iterable[GameEntity] = None) -> list[GameEntity]:
+    def get_targets(
+            self,
+            from_entities: tp.Iterable[LogicGameEntity] = None
+    ) -> list[LogicGameEntity]:
         if from_entities is None:
             targets = [p for p in Players.sprites() if p.alive]
             targets.extend(Bullets.sprites())

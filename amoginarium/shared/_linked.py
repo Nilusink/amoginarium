@@ -8,6 +8,8 @@ Author:
 Nilusink
 """
 from multiprocessing import Value
+from ctypes import c_double, c_int8
+from icecream import ic
 from enum import Enum
 import typing as tp
 
@@ -19,24 +21,24 @@ _A = tp.TypeVar("_A", int, float, Vec2)
 
 
 _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
-    "screen_size_x": float,
-    "screen_size_y": float,
-    "screen_size_real_x": float,
-    "screen_size_real_y": float,
-    "screen_size_fac_x": float,
-    "screen_size_fac_y": float,
-    "screen_size_offset_x": float,
-    "screen_size_offset_y": float,
-    "acceleration_factor": float,
-    "scaling": int,
-    "resolution_x": float,
-    "resolution_y": float,
-    "pixel_per_meter": float,
-    "world_position_x": float,
-    "world_position_y": float,
-    "time": float,
-    "max_fps": float,
-    "background_position": float
+    "screen_size_x": c_double,
+    "screen_size_y": c_double,
+    "screen_size_real_x": c_double,
+    "screen_size_real_y": c_double,
+    "screen_size_fac_x": c_double,
+    "screen_size_fac_y": c_double,
+    "screen_size_offset_x": c_double,
+    "screen_size_offset_y": c_double,
+    "acceleration_factor": c_double,
+    "scaling": c_int8,
+    "resolution_x": c_double,
+    "resolution_y": c_double,
+    "pixel_per_meter": c_double,
+    "world_position_x": c_double,
+    "world_position_y": c_double,
+    "time": c_double,
+    "max_fps": c_double,
+    "background_position": c_double
 }
 
 
@@ -78,6 +80,9 @@ class GlobalVars:
         self._pixel_per_meter = 1
         self._scaling = 0
         self._time = 0
+
+    def get_values(self) -> dict[str, Value]:
+        return self.__values
 
     def get_screen_size(self) -> Vec2:
         return self._screen_size.copy()
@@ -128,6 +133,16 @@ class GlobalVars:
 
         self.__values["world_position_x"].value = position.x
         self.__values["world_position_y"].value = position.y
+
+    def get_resolution(self) -> Vec2:
+        return self._resolution.copy()
+
+    def set_resolution(self, resolution: Vec2) -> None:
+        self._resolution.x = resolution.x
+        self._resolution.y = resolution.y
+
+        self.__values["resolution_x"].value = resolution.x
+        self.__values["resolution_y"].value = resolution.y
 
     def get_acceleration_factor(self) -> float:
         return self._acceleration_factor
@@ -230,4 +245,3 @@ class GlobalVars:
         self._pixel_per_meter = self.__values["pixel_per_meter"].value
         self._scaling = self.__values["scaling"].value
         self._time = self.__values["time"].value
-
