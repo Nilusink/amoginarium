@@ -8,17 +8,8 @@ Author:
 Nilusink
 """
 from multiprocessing.shared_memory import SharedMemory
-
-"""
-_memory_types.py
-22.03.2026
-
-defines structure for shared memory
-
-Author:
-Nilusink
-"""
 from multiprocessing import shared_memory, Lock
+import typing as tp
 import ctypes
 
 
@@ -38,6 +29,12 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
         ("size_x", ctypes.c_double),
         ("size_y", ctypes.c_double),
         ("alive", ctypes.c_bool),
+
+        # misc parameters for sharing data with base process
+        ("param0", ctypes.c_float),
+        ("param1", ctypes.c_float),
+        ("param2", ctypes.c_float),
+        ("param3", ctypes.c_float),
     ]
 # endregion
 
@@ -54,7 +51,7 @@ def get_entity_memory() -> SharedMemory:
 
     return _shm
 
-_lock: Lock = ...
+_lock: tp.Any | None = None
 def get_write_lock() -> Lock:
     global _lock
     if _lock is None:
@@ -62,6 +59,7 @@ def get_write_lock() -> Lock:
 
     return _lock
 # endregion
+
 
 if __name__ == "__main__":
     print(ctypes.sizeof(base_entity_t))

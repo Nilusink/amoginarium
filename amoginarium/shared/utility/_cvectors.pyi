@@ -63,3 +63,6 @@ class Vec2:
     def from_polar(self, angle: float, length: float) -> Vec2:
         ...
 
+
+def normalize_angle(value: float) -> float:
+    ...

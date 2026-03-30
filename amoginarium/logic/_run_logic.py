@@ -10,7 +10,7 @@ Nilusink
 from multiprocessing.shared_memory import SharedMemory
 from multiprocessing.connection import Connection
 from time import perf_counter, sleep, perf_counter_ns
-from multiprocessing import Queue, Lock, Value
+from multiprocessing import Queue, Value, synchronize
 from icecream import ic
 from queue import Empty
 import typing as tp
@@ -20,8 +20,7 @@ import json
 import os
 
 from ..shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
-from ..shared import CommandType, Coalitions
-from ..shared.controllers import Controllers, Controller, GameController
+from ..shared import ProcessCommandType, Coalitions
 from ..shared.debugging import print_ic_style, CC, run_with_debug
 from ..shared.debugging import print_with_prefix, get_fg_color
 from ..shared.utility import Vec2
@@ -29,6 +28,7 @@ from .. import pv
 from .radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
     DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
 from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect
+from .controllers import Controllers, Controller, KeyboardController
 from .entities import *
 
 
@@ -38,7 +38,7 @@ class LogicProcess:
             shm: SharedMemory,
             command_in_queue: Queue,
             command_out_queue: Queue,
-            write_lock: Lock,
+            write_lock: synchronize.Lock,
             global_vars: GlobalVars,
             base_comm: Connection,
             process_comm: Connection,
@@ -53,15 +53,23 @@ class LogicProcess:
                 **kwargs
             )
         )
+        ic(shm)
 
         pv.set_shared_process_values(
-            global_vars,
-            command_in_queue,
-            command_out_queue,
-            write_lock,
-            shm,
-            base_comm,
-            process_comm
+            g_vars=global_vars,
+            command_in_queue=command_in_queue,
+            command_out_queue=command_out_queue,
+            shared_memory=shm,
+            write_lock=write_lock,
+            base_comm=base_comm,
+            process_comm=process_comm,
+            # global_vars,
+            # command_in_queue,
+            # command_out_queue,
+            # write_lock,
+            # shm,
+            # base_comm,
+            # process_comm
         )
 
         # initialize pygame
@@ -74,7 +82,7 @@ class LogicProcess:
 
         local_buffer = bytearray(ctypes.sizeof(base_entity_t) * MAX_ENTITIES)
 
-        self.__entity_buffer = (base_entity_t * MAX_ENTITIES).from_buffer(shm.buf)
+        self.__entity_buffer = pv.E_BUFF
         self._runtime_buffer = (base_entity_t * MAX_ENTITIES).from_buffer(local_buffer)
 
         # controller setup
@@ -93,6 +101,9 @@ class LogicProcess:
 
         # preload sounds
         self.preload()
+
+        # create keyboard controller
+        KeyboardController.get()
 
         self._running = True
         self._paused = False
@@ -119,6 +130,8 @@ class LogicProcess:
         sounds.load_sounds("assets/audio/effects/groaning")
         sounds.load_sounds("assets/audio/effects/death")
 
+        self._background_player.assign_scope("background")
+
         end = perf_counter_ns()
         load_time = round((end - start) / 1e6, 2)
         ic(load_time)
@@ -132,103 +145,6 @@ class LogicProcess:
             f"{get_fg_color(36)}{t1: >4}.{t2: <4}{get_fg_color(247)} | "
             f"{get_fg_color(12)}logic{get_fg_color(247)} |> "
         )
-
-    def _add_controller(self, controller: Controller) -> None:
-        """
-        appends a new controller to the queue
-        """
-        self._new_controllers.append(controller)
-
-    def update_entities(self, delta: float) -> None:
-        """
-        update all entities
-        """
-        start = perf_counter()
-
-        # update commands
-        while True:
-            try:
-                item: ProcessCommand = self._ciq.get_nowait()
-
-            except Empty:
-                break
-
-            if item.type == CommandType.quit:
-                self._running = False
-                return
-
-            elif item.type == CommandType.reset:
-                self.reset_game()
-                return
-
-            elif item.type == CommandType.pause:
-                self._paused = True
-
-            elif item.type == CommandType.unpause:
-                self._paused = False
-
-            elif item.type == CommandType.load_map:
-                self.load_map(**item.kwargs)
-
-            elif item.type == CommandType.play_sound:
-                kwargs = item.kwargs
-                s = SoundEffect(kwargs["sound_name"])
-                kwargs.pop("sound_name")
-                s.play(**kwargs)
-
-            else:
-                ic(item)
-
-        if self._paused:
-            return
-
-        # check for new controllers
-        # if len(self._new_controllers) > 0:
-        #     self._new_controllers_lock.aquire()
-        #     tmp = self._new_controllers.copy()
-        #     self._new_controllers.clear()
-        #     self._new_controllers_lock.release()
-        #
-        #     for new_controller in tmp:
-        #         # spawn new player
-        #         Player(coalition=Coalitions.blue, controller=new_controller)
-        #         ic(new_controller, Player)
-
-        # update sounds
-        try:  # throws error on game end
-            self._background_player.update()
-
-        except pg.error:
-            return
-
-        sound_effects.update()
-
-        # reset and update detection Groups
-        DETECTION_GROUP_MANAGER.reset()
-
-        # update entities
-        GravityAffected.calculate_gravity(delta)
-        FrictionXAffected.calculate_friction(delta)
-        WallBouncer.update()
-
-        Bullets.update(delta)
-        DETECTION_GROUP_MANAGER.update_detection()
-        Updated.update(delta)
-
-        CollisionDestroyed.update()
-
-        # update world position
-        _, max_player_pos = Players.get_position_extremes()
-
-        # background_pos_left = self._background.position + 60
-        screen_size = self._global_vars.get_screen_size()
-        Updated.world_position.y = -(
-                (screen_size.y / self._global_vars.get_pixel_per_meter())
-                - screen_size.y
-        )
-        self._global_vars.set_world_position(Updated.world_position)
-
-        # TODO: world shifting
 
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
@@ -247,7 +163,7 @@ class LogicProcess:
 
         pg.display.set_caption(f"amoginarium - {data["name"]}")
 
-        # Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
+        Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
 
         # load islands
         # for island in data["platforms"]:
@@ -325,6 +241,114 @@ class LogicProcess:
                     f"\"{CC.fg.YELLOW}{args}{CC.fg.RED}\""
                 )
 
+    def _add_controller(self, controller: Controller) -> None:
+        """
+        appends a new controller to the queue
+        """
+        self._new_controllers.append(controller)
+
+    def update_entities(self, delta: float) -> None:
+        """
+        update all entities
+        """
+        start = perf_counter()
+
+        # update commands
+        while True:
+            try:
+                item: ProcessCommand = self._ciq.get_nowait()
+
+            except Empty:
+                break
+
+            if item.type == ProcessCommandType.quit:
+                self._running = False
+                return
+
+            elif item.type == ProcessCommandType.reset:
+                self.reset_game()
+                return
+
+            elif item.type == ProcessCommandType.pause:
+                self._paused = True
+                ic("pause")
+
+            elif item.type == ProcessCommandType.unpause:
+                self._paused = False
+                ic("unpause")
+
+            elif item.type == ProcessCommandType.load_map:
+                self.load_map(**item.kwargs)
+
+            elif item.type == ProcessCommandType.play_sound:
+                kwargs = item.kwargs
+                s = SoundEffect(kwargs["sound_name"])
+                kwargs.pop("sound_name")
+                s.play(**kwargs)
+
+            else:
+                ic(item)
+
+        # update pygame events
+        # for event in pg.event.get():
+
+        # check for new controllers
+        if len(self._new_controllers) > 0:
+            tmp = self._new_controllers.copy()
+            self._new_controllers.clear()
+
+            for new_controller in tmp:
+                # spawn new player
+                if Players.spawn_point:
+                    Player(
+                        runtime_buffer=self._runtime_buffer,
+                        coalition=Coalitions.blue,
+                        controller=new_controller
+                    )
+                    ic(new_controller, Player)
+
+                else:
+                    self._new_controllers.append(new_controller)
+
+        if self._paused:
+            return
+
+        # update sounds
+        try:  # throws error on game end
+            self._background_player.update()
+
+        except pg.error:
+            return
+
+        sound_effects.update()
+
+        # reset and update detection Groups
+        DETECTION_GROUP_MANAGER.reset()
+
+        # update entities
+        GravityAffected.calculate_gravity(delta)
+        FrictionXAffected.calculate_friction(delta)
+        WallBouncer.update()
+
+        Bullets.update(delta)
+        DETECTION_GROUP_MANAGER.update_detection()
+        Updated.update(delta)
+
+        CollisionDestroyed.update()
+
+        # update world position
+        _, max_player_pos = Players.get_position_extremes()
+
+        # background_pos_left = self._background.position + 60
+        screen_size = self._global_vars.get_screen_size()
+        Updated.world_position.y = -(
+                (screen_size.y / self._global_vars.get_pixel_per_meter())
+                - screen_size.y
+        )
+        self._global_vars.set_world_position(Updated.world_position)
+
+        # TODO: world shifting
+
     def update_memory(self) -> None:
         """
         copy runtime buffer to memory buffer
@@ -353,7 +377,7 @@ def run_continuous(
         shm: SharedMemory,
         command_in_queue: Queue,
         command_out_queue: Queue,
-        write_lock: Lock,
+        write_lock: synchronize.Lock,
         global_vars_values: dict[str, Value],
         base_comm: Connection,
         process_comm: Connection,

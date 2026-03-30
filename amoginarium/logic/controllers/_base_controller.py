@@ -11,7 +11,8 @@ from dataclasses import dataclass
 from icecream import ic
 import typing as tp
 
-from amoginarium.shared.utility import Vec2
+from ...shared.debugging import run_with_debug
+from ...shared.utility import Vec2
 
 
 @dataclass

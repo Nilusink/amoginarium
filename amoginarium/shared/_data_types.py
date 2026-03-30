@@ -25,7 +25,11 @@ class ItemSlot:
     id: int
 
 
-class CommandType(Enum):
+class DummyCIDs(Enum):
+    player = "dummy.player"
+
+
+class ProcessCommandType(Enum):
     # process control
     quit = 0
     reset = 1
@@ -33,14 +37,18 @@ class CommandType(Enum):
     unpause = 3
 
     # logic control
-    load_map = 4
+    load_map = 4  # {"map_path": <path to map file>}
 
     # sound stuff
-    play_sound = 5
+    play_sound = 5  # {"loops": int, "maxtime": float, "fade_ms": float, "sound_name": <name of sound>}
+
+
+class BaseCommandType(Enum):
+    spawn_dummy = 0  # {"id": <sync id>, "cid": DummyCIDs, **kwargs}
 
 
 @dataclass
 class ProcessCommand:
-    type: CommandType
+    type: ProcessCommandType | BaseCommandType
     args: tp.Iterable = field(default_factory=list)
     kwargs: dict[str, tp.Any] = field(default_factory=dict)

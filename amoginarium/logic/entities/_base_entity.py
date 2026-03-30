@@ -5,18 +5,20 @@ _base_entity.py
 defines the most basic form of logic entity
 """
 from __future__ import annotations
-from multiprocessing.shared_memory import SharedMemory
+from ctypes import Array
 import pygame as pg
 import typing as tp
 
+from ...shared import Coalitions, base_entity_t, ENTITY_COUNTER
 from ...shared.debugging import print_ic_style, CC
-from ...shared import Coalitions, base_entity_t
 from ...shared.utility import Vec2
 from ... import pv
 
 
 class BaseLogicEntity:
-    __slots__ = ["_parent", "_children", "_lifetime", "__id", "__shm", "__g"]
+    __slots__ = [
+        "_parent", "_children", "_lifetime", "__id", "_runtime_buffer", "__g",
+    ]
 
     _children: list[tp.Self]
     _lifetime: float
@@ -24,8 +26,7 @@ class BaseLogicEntity:
 
     def __init__(
             self,
-            id: int,
-            shm: SharedMemory,
+            runtime_buffer: Array[base_entity_t],
             parent: tp.Self | None = None,
     ) -> None:
         # pygame groups
@@ -36,8 +37,10 @@ class BaseLogicEntity:
         self._lifetime = 0
 
         # data block
-        self.__id = id
-        self.__shm = ... #(base_entity_t * MAX_CAMS).from_buffer(cams_shm.buf)
+        self.__id = ENTITY_COUNTER.get_id()
+        self._runtime_buffer = runtime_buffer
+
+        self._runtime_buffer[self.__id].alive = True
 
     # region properties
     @property
@@ -83,7 +86,7 @@ class BaseLogicEntity:
                 group.remove_internal(self)
                 self.__g.remove(group)
 
-    def kill(self) -> None:
+    def kill(self, killed_by = ...) -> None:
         """
         remove entity from all groups
         """
@@ -94,6 +97,9 @@ class BaseLogicEntity:
         # commit suicide
         for group in self.__g:
             group.remove_internal(self)
+
+        self._runtime_buffer[self.__id] = False
+        ENTITY_COUNTER.pop_id(self.__id)
 
         self.__g.clear()
 
@@ -106,17 +112,16 @@ class BaseLogicEntity:
         """
         self._lifetime += delta
 
-        # update shared memory
-        self.__shm[self.__id].pos_x = 0
-
     @tp.final
-    def update(self, delta: float) -> None:
+    def update(self, delta: float, recursive: bool = True) -> None:
         """
         update entity and their children
         """
         self._update(delta)
-        for child in self._children:
-            child.update(delta)
+
+        if recursive:
+            for child in self._children:
+                child.update(delta)
     # endregion
 
 
@@ -129,15 +134,23 @@ class PositionedLogicEntity(BaseLogicEntity):
 
     def __init__(
             self,
-            id: int,
-            shm: SharedMemory,
+            runtime_buffer: Array[base_entity_t],
             size: Vec2,
             position: Vec2,
             parent: tp.Self | None = None,
     ) -> None:
-        super().__init__(id=id, shm=shm, parent=parent)
+        super().__init__(runtime_buffer=runtime_buffer, parent=parent)
         self.position = position
         self.size = size
+
+    def _update(self, delta: float) -> None:
+        # update shared memory
+        self._runtime_buffer[self.id].pos_x = self.position.x
+        self._runtime_buffer[self.id].pos_y = self.position.y
+        self._runtime_buffer[self.id].size_x = self.size.x
+        self._runtime_buffer[self.id].size_y = self.size.y
+
+        super()._update(delta)
 
 
 class LogicGameEntity(PositionedLogicEntity):
@@ -156,8 +169,7 @@ class LogicGameEntity(PositionedLogicEntity):
 
     def __init__(
             self,
-            id: int,
-            shm: SharedMemory,
+            runtime_buffer: Array[base_entity_t],
             size: Vec2,
             position: Vec2,
             initial_velocity: Vec2 | None = None,
@@ -165,8 +177,7 @@ class LogicGameEntity(PositionedLogicEntity):
             coalition: Coalitions = ...
     ) -> None:
         super().__init__(
-            id=id,
-            shm=shm,
+            runtime_buffer=runtime_buffer,
             size=size,
             position=position,
             parent=parent
@@ -186,6 +197,9 @@ class LogicGameEntity(PositionedLogicEntity):
 
         else:
             self._coalition = coalition
+
+        self.velocity = initial_velocity
+        self.acceleration = Vec2()
         # endregion
 
     # region properties
@@ -274,5 +288,9 @@ class LogicGameEntity(PositionedLogicEntity):
 
         # update timer
         super()._update(delta)
+
+        # update runtime buffer
+        self._runtime_buffer[self.id].facing_x = self.facing.x
+        self._runtime_buffer[self.id].facing_y = self.facing.y
 
     # endregion

@@ -11,17 +11,24 @@ import typing as tp
 
 
 class BaseGraphicsEntity:
-    __slots__ = ["__g", "_children", "_parent"]
+    __slots__ = [
+        "__g", "_children", "_parent", "_root_visibility", "_highlight"
+    ]
 
+    _cid: str = ...
+
+    visible: bool = True
     _parent: tp.Self | None
     _children: list[tp.Self]
 
-    def __init__(self, parent: tp.Self | None) -> None:
+    def __init__(self, parent: tp.Self | None = None) -> None:
         # pygame groups
         self.__g = []
 
         self._parent = parent
         self._children = []
+        self._root_visibility = False
+        self._highlight = False
 
     # region Methods: pygame
     def add(self, *groups) -> None:
@@ -60,4 +67,67 @@ class BaseGraphicsEntity:
 
         self.__g.clear()
 
+    # endregion
+
+    # region class methods
+    @classmethod
+    def cid(cls) -> str:
+        if cls._cid is ...:
+            raise ValueError("__cid is not defined for " + cls.__name__)
+
+        return cls._cid
+    # endregion
+
+    # region highlighting
+    def highlight(self) -> None:
+        self._highlight = True
+
+    def stop_highlight(self) -> None:
+        self._highlight = False
+
+    # endregion
+
+    # region gl_draw
+    def _gl_draw(self, delta_cal: float):
+        """
+        Draw function for this UI.
+        Use in inheritance for the actual drawing
+        """
+        return
+
+    def _before_gl_draw(self, drawn: bool) -> None:
+        """
+        Called before gl_draw
+        :param: Whether the UI-entity will be drawn
+        """
+        return
+
+    def _after_gl_draw(self, drawn: bool) -> None:
+        """
+        Called after gl_draw
+        :param: Whether the UI-entity was drawn
+        """
+        return
+
+    @tp.final
+    def gl_draw(self, delta_cal: float, recursive: bool = True, force_draw: bool = False) -> None:
+        """
+        Draw this UI-entity.
+        :param delta_cal: delta used for animation calculations
+        :param recursive: Draw the children tree recursively
+        :param force_draw: Ignore visibility
+
+        Note: Only overwrite in inheritance for before/after draw updates
+        Note: Ignores parent visibility
+        """
+        draw: bool = force_draw or self.visible
+        self._before_gl_draw(draw)
+
+        if draw:
+            self._gl_draw(delta_cal)
+            if recursive:
+                for child in self._children:
+                    child.gl_draw(delta_cal, force_draw=(force_draw or self._root_visibility))
+
+        self._after_gl_draw(draw)
     # endregion

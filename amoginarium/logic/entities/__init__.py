@@ -3,3 +3,4 @@ from ._logic_groups import Walls, Players, Bullets, Updated, \
     CollisionDestroyed
 from ._spawnables import SPAWNABLES
 from ._base_entity import BaseLogicEntity, PositionedLogicEntity, LogicGameEntity
+from ._player import Player

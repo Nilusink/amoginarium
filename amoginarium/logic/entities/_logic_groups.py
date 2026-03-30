@@ -16,6 +16,7 @@ import numpy as np
 from ...shared.utility import Vec2, is_related, convert_coord, raycast_mask, \
     normalize_angle, coord_t
 from ...shared import GlobalVars, BaseLogicEntityLike
+from ... import pv
 
 
 class BaseGroup(pg.sprite.Group):
@@ -252,7 +253,7 @@ class _GravityAffected(BaseGroup):
 
     @property
     def gravity(self) -> float:
-        return 9.81 * pv.global_vars.acceleration_factor
+        return 9.81 * pv.global_vars.get_acceleration_factor()
 
     def calculate_gravity(self, _delta: float) -> None:
         for sprite in self.sprites():

@@ -13,23 +13,23 @@ from time import perf_counter, strftime, time, perf_counter_ns, sleep
 from multiprocessing import Process
 from dataclasses import dataclass
 from icecream import ic, colorizedStderrPrint
+from queue import Empty
 import typing as tp
 import pygame as pg
 import numpy
 import json
-import math
 
 # from ..shared.controllers import Controllers, Controller, GameController
 from .. import pv
 from ..shared.debugging import run_with_debug, print_ic_style, cum_timer
 from ..shared.debugging import print_with_prefix, CC, get_fg_color
-from ..shared import GlobalVars, generate_global_vars
 from ..shared.utility import Vec2, convert_coord
-from ..shared import get_entity_memory, get_write_lock, ProcessCommand, CommandType
+from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
 from ..shared.settings import Settings
 from ..graphics.render_bindings import renderer
 from ..graphics.ui import UICursor
 from ..graphics.entities import UIEntities, Drawn
+from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES
 from ..logic import run_continuous
 from ._scrolling_background import ParalaxBackground
 from ._settings_menu import SettingsMenu
@@ -103,7 +103,7 @@ class BaseGame:
         self._logic_process.start()
 
         # pause logic process until game start
-        pv.COQ.put(ProcessCommand(type=CommandType.pause))
+        pv.COQ.put(ProcessCommand(type=ProcessCommandType.pause))
 
         self.global_vars = pv.global_vars
         self.global_vars.show_targets = show_targets
@@ -310,7 +310,7 @@ class BaseGame:
         """
         # issue load command
         pv.COQ.put(ProcessCommand(
-            type=CommandType.load_map,
+            type=ProcessCommandType.load_map,
             kwargs={"map_path": map_path}
         ))
 
@@ -502,6 +502,8 @@ class BaseGame:
             active_scene = "Game"
 
             load_ui_visibility()
+            # unpause game
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def reset_game(primary_call: bool = True):
             nonlocal active_scene
@@ -527,6 +529,7 @@ class BaseGame:
             active_scene = "PauseMenu"
 
             load_ui_visibility()
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.pause))
 
         def open_settings():
             nonlocal active_scene
@@ -575,6 +578,27 @@ class BaseGame:
             while pv.BASE_COMM.poll(0):
                 msg = pv.BASE_COMM.recv()
                 colorizedStderrPrint(msg)
+
+            # update commands
+            while True:
+                try:
+                    item: ProcessCommand = pv.CIQ.get_nowait()
+
+                except Empty:
+                    break
+
+                if item.type == BaseCommandType.spawn_dummy:
+                    ic(item)
+                    # try to spawn graphics dummy
+                    cid = item.kwargs.pop("cid")
+
+                    if cid in GRAPHICS_SPAWNABLES:
+                        sync_id = item.kwargs.pop("id")
+                        GRAPHICS_SPAWNABLES[cid](
+                            sync_id=sync_id,
+                            **item.kwargs
+                        )
+                        ic("spawned", cid)
 
             glClearColor(0.0, 0.0, 0.1, 1)
 
@@ -702,7 +726,7 @@ class BaseGame:
         """
         # send end to process
         pv.COQ.put(ProcessCommand(
-            type=CommandType.quit
+            type=ProcessCommandType.quit
         ))
 
         # check if end has already been called

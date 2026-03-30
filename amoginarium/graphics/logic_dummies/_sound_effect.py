@@ -7,8 +7,8 @@ dummy for playing a sound effect, sends command instead of creating a sound
 Author:
 Nilusink
 """
+from ...shared import ProcessCommandType, ProcessCommand
 from ... import pv
-from ...shared import CommandType, ProcessCommand
 
 
 class GraphicsSoundEffect:
@@ -24,7 +24,7 @@ class GraphicsSoundEffect:
             fade_ms: int = 0,
     ) -> None:
         pv.COQ.put(ProcessCommand(
-            type=CommandType.play_sound,
+            type=ProcessCommandType.play_sound,
             kwargs={
                 "loops": loops,
                 "maxtime": maxtime,

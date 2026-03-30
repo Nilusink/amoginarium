@@ -313,8 +313,6 @@ class VisibleGameEntity(GameEntity):
 
 
 class ImageEntity(VisibleGameEntity):
-    _original_image: pg.surface.Surface
-
     def __init__(self, texture_id: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
