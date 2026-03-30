@@ -4,3 +4,4 @@ from ._logic_groups import Walls, Players, Bullets, Updated, \
 from ._spawnables import SPAWNABLES
 from ._base_entity import BaseLogicEntity, PositionedLogicEntity, LogicGameEntity
 from ._player import Player
+from ._island import ISLANDS, Island, GrassIsland

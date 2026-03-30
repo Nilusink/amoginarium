@@ -9,6 +9,7 @@ Nilusink
 
 """
 from contextlib import suppress
+from icecream import ic
 import pygame as pg
 import typing as tp
 import numpy as np
@@ -260,14 +261,6 @@ class _GravityAffected(BaseGroup):
             sprite: tp.Any
 
             sprite.acceleration.y = self.gravity
-
-            # with suppress(AttributeError):
-            #     if sprite.on_ground and sprite.velocity.y > 0:
-            #         while sprite.on_ground:
-            #             sprite.position.y -= 0.01
-
-            #         sprite.position.y += 0.01
-            #         sprite.velocity.y = 0
 
 
 class _FrictionXAffected(BaseGroup):

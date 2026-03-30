@@ -29,6 +29,12 @@ class DummyCIDs(Enum):
     player = "dummy.player"
 
 
+class IslandCIDs(Enum):
+    grass_island = "island.grass"
+    gray_brick_island = "island.brick.gray"
+    green_brick_island = "island.brick.green"
+
+
 class ProcessCommandType(Enum):
     # process control
     quit = 0
@@ -45,10 +51,11 @@ class ProcessCommandType(Enum):
 
 class BaseCommandType(Enum):
     spawn_dummy = 0  # {"id": <sync id>, "cid": DummyCIDs, **kwargs}
+    spawn_island = 1  # {"id": <sync id>, "cid": IslandCIDs, "size" OR "form"}
 
 
 @dataclass
 class ProcessCommand:
     type: ProcessCommandType | BaseCommandType
     args: tp.Iterable = field(default_factory=list)
-    kwargs: dict[str, tp.Any] = field(default_factory=dict)
+    kwargs: tp.Mapping[str, tp.Any] = field(default_factory=dict)

@@ -28,8 +28,8 @@ from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
 from ..shared.settings import Settings
 from ..graphics.render_bindings import renderer
 from ..graphics.ui import UICursor
-from ..graphics.entities import UIEntities, Drawn
-from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES
+from ..graphics.entities import UIEntities, Drawn, SyncedEntities
+from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS
 from ..logic import run_continuous
 from ._scrolling_background import ParalaxBackground
 from ._settings_menu import SettingsMenu
@@ -81,7 +81,7 @@ class BaseGame:
                 s,
                 prefix=self.time_since_start(),
                 **kwargs
-            )
+            ),
         )
 
         # multiprocessing setup
@@ -270,17 +270,17 @@ class BaseGame:
         self._update_loading_screen(21)
         textures.load_images("assets/images/animations/flame")
 
-        # for island in ISLANDS.values():
-        #     island.load_textures()
+        for island in ISLANDS.values():
+            island.load_textures()
         #
         # for entity in Updated.sprites():
         #     if hasattr(entity, "load_textures"):
         #         entity.load_textures()
         # self._update_loading_screen(22)
 
-        # for spwanable in SPAWNABLES.values():
-        #     if hasattr(spwanable, "load_textures"):
-        #         spwanable.load_textures()
+        for spwanable in GRAPHICS_SPAWNABLES.values():
+            if hasattr(spwanable, "load_textures"):
+                spwanable.load_textures()
 
         self._update_loading_screen(23)
 
@@ -600,6 +600,18 @@ class BaseGame:
                         )
                         ic("spawned", cid)
 
+                elif item.type == BaseCommandType.spawn_island:
+                    ic(item)
+                    # try to spawn graphics dummy
+                    cid = item.kwargs.pop("cid")
+
+                    if cid in ISLANDS:
+                        sync_id = item.kwargs.pop("id")
+                        ISLANDS[cid](
+                            sync_id=sync_id,
+                            **item.kwargs
+                        )
+
             glClearColor(0.0, 0.0, 0.1, 1)
 
             # 2. Clear the entire window buffer with that black color
@@ -651,15 +663,12 @@ class BaseGame:
                 self._background.draw(delta)
 
                 if active_scene in ["PauseMenu", "PauseSettings"]:
+                    SyncedEntities.update_from_buffer()
                     Drawn.gl_draw(delta)
-                    # HasBars.gl_draw()
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)
                 pause_menu.gl_draw(delta)
-
-                pg.display.flip()
-                # debugging kopieren - @
 
             elif active_scene == "Game":
                 # only update fps every 200ms (for readability)
@@ -670,21 +679,20 @@ class BaseGame:
                 # draw background
                 self._background.draw(delta)
 
-                # pv.global_vars.pixel_per_meter *= .999
-
                 # handle groups
+                SyncedEntities.update_from_buffer()
                 Drawn.gl_draw(delta)
 
             pg.display.flip()
 
             # update global vars
-            self.global_vars.update()
+            # self.global_vars.update()
 
-            self._pygame_loop_times.append(
-                (now - self._game_start, perf_counter() - now)
-            )
             self._total_loop_times.append(
                 (now - self._game_start, delta)
+            )
+            self._n_bullets_times.append(
+                (now - self._game_start, 1, 1)
             )
             last = now
 
@@ -754,7 +762,6 @@ class BaseGame:
         with open("debug.json", "w") as out:
             json.dump({
                 "logic": self._logic_loop_times,
-                "comms": self._comms_loop_times,
                 "bullets": self._n_bullets_times,
                 "pygame": self._pygame_loop_times,
                 "total": self._total_loop_times

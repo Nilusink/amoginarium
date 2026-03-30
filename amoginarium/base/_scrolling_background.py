@@ -15,6 +15,7 @@ import pygame as pg
 from ..graphics.render_bindings import renderer
 from ..base._textures import textures
 from .. import pv
+from ..shared.debugging import run_with_debug
 
 
 class ScrollingBackground:

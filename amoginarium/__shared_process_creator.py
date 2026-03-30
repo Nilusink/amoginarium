@@ -49,7 +49,6 @@ class _ProcessValues:
         self.COQ = Queue()
         self.BASE_COMM, self.PROCESS_COMM = Pipe()
 
-    @run_with_debug(show_args=True)
     def set_shared_process_values(
             self,
             g_vars: GlobalVars,

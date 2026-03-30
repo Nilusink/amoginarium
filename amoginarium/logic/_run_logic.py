@@ -63,13 +63,6 @@ class LogicProcess:
             write_lock=write_lock,
             base_comm=base_comm,
             process_comm=process_comm,
-            # global_vars,
-            # command_in_queue,
-            # command_out_queue,
-            # write_lock,
-            # shm,
-            # base_comm,
-            # process_comm
         )
 
         # initialize pygame
@@ -166,40 +159,41 @@ class LogicProcess:
         Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
 
         # load islands
-        # for island in data["platforms"]:
-        #     self._update_loading_screen(26, "spawning islands")
-        #     island_type = GrassIsland
-        #     if "type" in island:
-        #         if island["type"] in ISLANDS:
-        #             island_type = ISLANDS[island["type"]]
-        #
-        #     if "args" in island:
-        #         i = island_type(**island["args"])
-        #
-        #     elif "size" in island:
-        #         i = island_type(
-        #             Vec2().from_cartesian(*island["pos"]),
-        #             size=Vec2().from_cartesian(*island["size"]),
-        #         )
-        #
-        #     elif "form" in island:
-        #         i = island_type(
-        #             Vec2().from_cartesian(*island["pos"]),
-        #             form=island["form"],
-        #         )
-        #
-        #     else:
-        #         print_ic_style(
-        #             f"{CC.fg.RED}invalid island: "
-        #             f"{CC.fg.YELLOW}{island}"
-        #         )
-        #         continue
-        #
-        #     if "move" in island:
-        #         create_moving_island(
-        #             i,
-        #             **island["move"]
-        #         )
+        for island in data["platforms"]:
+            island_type = GrassIsland
+            if "type" in island:
+                if island["type"] in ISLANDS:
+                    island_type = ISLANDS[island["type"]]
+
+            if "args" in island:
+                i = island_type(self._runtime_buffer, **island["args"])
+
+            elif "size" in island:
+                i = island_type(
+                    self._runtime_buffer,
+                    Vec2().from_cartesian(*island["pos"]),
+                    size=Vec2().from_cartesian(*island["size"]),
+                )
+
+            elif "form" in island:
+                i = island_type(
+                    self._runtime_buffer,
+                    Vec2().from_cartesian(*island["pos"]),
+                    form=island["form"],
+                )
+
+            else:
+                print_ic_style(
+                    f"{CC.fg.RED}invalid island: "
+                    f"{CC.fg.YELLOW}{island}"
+                )
+                continue
+
+            # if "move" in island:
+            #     create_moving_island(
+            #         i,
+            #         **island["move"]
+            #     )
 
         # load entities
         detection_groups: dict[int, DetectionGroup] = {
@@ -247,9 +241,11 @@ class LogicProcess:
         """
         self._new_controllers.append(controller)
 
-    def update_entities(self, delta: float) -> None:
+    def update_entities(self, delta: float) -> bool:
         """
         update all entities
+
+        :returns: True if update, false if paused
         """
         start = perf_counter()
 
@@ -263,19 +259,17 @@ class LogicProcess:
 
             if item.type == ProcessCommandType.quit:
                 self._running = False
-                return
+                return False
 
             elif item.type == ProcessCommandType.reset:
                 self.reset_game()
-                return
+                return False
 
             elif item.type == ProcessCommandType.pause:
                 self._paused = True
-                ic("pause")
 
             elif item.type == ProcessCommandType.unpause:
                 self._paused = False
-                ic("unpause")
 
             elif item.type == ProcessCommandType.load_map:
                 self.load_map(**item.kwargs)
@@ -305,20 +299,19 @@ class LogicProcess:
                         coalition=Coalitions.blue,
                         controller=new_controller
                     )
-                    ic(new_controller, Player)
 
                 else:
                     self._new_controllers.append(new_controller)
 
         if self._paused:
-            return
+            return False
 
         # update sounds
         try:  # throws error on game end
             self._background_player.update()
 
         except pg.error:
-            return
+            return False
 
         sound_effects.update()
 
@@ -348,6 +341,8 @@ class LogicProcess:
         self._global_vars.set_world_position(Updated.world_position)
 
         # TODO: world shifting
+
+        return True
 
     def update_memory(self) -> None:
         """
@@ -403,13 +398,18 @@ def run_continuous(
     ic("logic process start")
 
     last_run = perf_counter()
+    last_update_success = False
     while lp.running:
         # calculate time since last loop
         now = perf_counter()
-        delta = last_run - now
+        if last_update_success:
+            delta = last_run - now
+
+        else:
+            delta = 0
 
         # update entities
-        lp.update_entities(delta)
+        last_update_success = lp.update_entities(delta)
 
         # don't update if paused
         if lp.paused:

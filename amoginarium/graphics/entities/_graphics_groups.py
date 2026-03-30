@@ -32,6 +32,13 @@ class _Cursor(BaseGroup):
     ...
 
 
+class _SyncedEntities(BaseGroup):
+    def update_from_buffer(self) -> None:
+        for entity in self.sprites():
+            entity.update_from_buffer(True)
+
+
 Drawn = _Drawn()
 Cursor = _Cursor()
 UIEntities = _UIEntities()
+SyncedEntities = _SyncedEntities()

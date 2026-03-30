@@ -5,6 +5,7 @@ _base_entity.py
 defines the most basic form of logic entity
 """
 from __future__ import annotations
+from icecream import ic
 from ctypes import Array
 import pygame as pg
 import typing as tp
@@ -12,6 +13,7 @@ import typing as tp
 from ...shared import Coalitions, base_entity_t, ENTITY_COUNTER
 from ...shared.debugging import print_ic_style, CC
 from ...shared.utility import Vec2
+from ._logic_groups import Updated
 from ... import pv
 
 
@@ -41,6 +43,8 @@ class BaseLogicEntity:
         self._runtime_buffer = runtime_buffer
 
         self._runtime_buffer[self.__id].alive = True
+
+        self.add(Updated)
 
     # region properties
     @property
@@ -86,7 +90,7 @@ class BaseLogicEntity:
                 group.remove_internal(self)
                 self.__g.remove(group)
 
-    def kill(self, killed_by = ...) -> None:
+    def kill(self, killed_by=...) -> None:
         """
         remove entity from all groups
         """
@@ -198,8 +202,11 @@ class LogicGameEntity(PositionedLogicEntity):
         else:
             self._coalition = coalition
 
-        self.velocity = initial_velocity
+        self.update_rect()
+        self._generate_collision_mask()
+
         self.acceleration = Vec2()
+        self.facing = Vec2()
         # endregion
 
     # region properties
@@ -219,7 +226,7 @@ class LogicGameEntity(PositionedLogicEntity):
     def serializable(self) -> bool:
         return self._cid is not ...
 
-    #endregion
+    # endregion
 
     # region class methods
     @classmethod

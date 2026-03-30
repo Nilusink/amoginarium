@@ -13,7 +13,7 @@ from icecream import ic
 from enum import Enum
 import typing as tp
 
-from .debugging import get_caller_name, print_ic_style, CC
+from .debugging import get_caller_name, print_ic_style, CC, run_with_debug
 from .utility import Vec2
 
 # idk how to do this with the pythin 3.12 typehinting
@@ -80,6 +80,28 @@ class GlobalVars:
         self._pixel_per_meter = 1
         self._scaling = 0
         self._time = 0
+
+        self._set_from_current()
+
+    def _set_from_current(self) -> None:
+        self.__values["screen_size_x"].value = self._screen_size.x
+        self.__values["screen_size_y"].value = self._screen_size.y
+        self.__values["screen_size_real_x"].value = self._screen_size_real.x
+        self.__values["screen_size_real_y"].value = self._screen_size_real.y
+        self.__values["screen_size_fac_x"].value = self._screen_size_fac.x
+        self.__values["screen_size_fac_y"].value = self._screen_size_fac.y
+        self.__values["screen_size_offset_x"].value = self._screen_size_offset.x
+        self.__values["screen_size_offset_y"].value = self._screen_size_offset.y
+        self.__values["acceleration_factor"].value = self._acceleration_factor
+        self.__values["scaling"].value = self._scaling
+        self.__values["resolution_x"].value = self._resolution.x
+        self.__values["resolution_y"].value = self._resolution.y
+        self.__values["pixel_per_meter"].value = self._pixel_per_meter
+        self.__values["world_position_x"].value = self._world_position.x
+        self.__values["world_position_y"].value = self._world_position.y
+        self.__values["time"].value = self._time
+        self.__values["max_fps"].value = self._max_fps
+        self.__values["background_position"].value = self._background_position
 
     def get_values(self) -> dict[str, Value]:
         return self.__values

@@ -13,7 +13,7 @@ import typing as tp
 import ctypes
 
 
-# region constatns
+# region constants
 MAX_ENTITIES: int = 10_000
 # endregion
 

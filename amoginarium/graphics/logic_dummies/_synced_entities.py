@@ -12,7 +12,7 @@ import typing as tp
 import math as m
 
 from ...shared.utility import Vec2
-from ..entities import BaseGraphicsEntity, Drawn
+from ..entities import BaseGraphicsEntity, Drawn, SyncedEntities
 from ..render_bindings import renderer
 from ... import pv
 
@@ -49,7 +49,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         self._update_from_buffer()
 
-        self.add(Drawn)
+        self.add(Drawn, SyncedEntities)
 
     # region buffer control
     def _update_from_buffer(self) -> None:
@@ -135,10 +135,6 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
 
         if size is ...:
             size = self.size
-
-
-        if self.pos.length > 0:
-            ic("render", self.pos, self.size)
 
         renderer.draw_textured_quad(
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
