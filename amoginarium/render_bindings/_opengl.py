@@ -100,7 +100,7 @@ class OpenGLRenderer(BaseRenderer):
         global_vars.pixel_per_meter = 1
 
         # set max fps to monitor refresh rate
-        global_vars.max_fps = max(pg.display.get_desktop_refresh_rates())
+        global_vars.max_fps = 300
 
         pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode(

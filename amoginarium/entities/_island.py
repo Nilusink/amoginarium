@@ -23,7 +23,7 @@ from ..render_bindings import renderer
 from ..base._textures import textures
 from ._base_entity import VisibleGameEntity
 from ..logic import Vec2, coord_t, convert_coord
-from ._groups import Walls, Updated
+from ._groups import Walls, Updated, GridSystem, _GridCell
 
 
 class _PolyMatcher:
@@ -38,6 +38,9 @@ class _PolyMatcher:
 
     def __repr__(self) -> str:
         return self.__str__()
+
+
+from amoginarium.debugging._decoators import cum_timer
 
 
 class Island(VisibleGameEntity):
@@ -68,6 +71,8 @@ class Island(VisibleGameEntity):
 
     _image_size: tuple[int, int] = (64, 64)
     debug = False
+
+    __grid_groups: list[_GridCell] = []
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
@@ -112,6 +117,8 @@ class Island(VisibleGameEntity):
 
         self.add(Walls)
         self.update_rect()
+        for group in GridSystem.get_cells_by_pos(self.rect.topleft[0], self.rect.topright[0]):
+            self.add(group.walls)
 
     @classmethod
     def random_between(
@@ -157,13 +164,74 @@ class Island(VisibleGameEntity):
 
     def _generate_collision_mask(self) -> None:
         """
-        generate the mask used for collision
+        generate the mask used for collision and an optimized list of collision rects.
         """
-        # start = time.perf_counter_ns()
+        self.collision_rects: list[pg.Rect] = []
+
         if self._form is ...:
+            # The entire island is a single rectangle
+            self.collision_rects.append(
+                pg.Rect(self.position.x, self.position.y, self.size.x, self.size.y)
+            )
             return super()._generate_collision_mask()
 
-        # collide sprite and rect
+        n_rows = len(self._form)
+        n_columns = max(len(row) for row in self._form)
+
+        # --- 1. RECTANGLE MERGING (Greedy Meshing) ---
+        visited = [[False] * n_columns for _ in range(n_rows)]
+
+        for row in range(n_rows):
+            for col in range(n_columns):
+                try:
+                    island_type = self._form[row][col]
+                except IndexError:
+                    island_type = -1
+
+                if island_type > 0 and not visited[row][col]:
+                    # Find maximum width for this row segment
+                    width = 0
+                    while col + width < n_columns:
+                        try:
+                            next_val = self._form[row][col + width]
+                        except IndexError:
+                            next_val = -1
+
+                        if next_val > 0 and not visited[row][col + width]:
+                            width += 1
+                        else:
+                            break
+
+                    # Find maximum height maintaining that exact width
+                    height = 1
+                    valid_row = True
+                    while row + height < n_rows and valid_row:
+                        for w in range(width):
+                            try:
+                                check_val = self._form[row + height][col + w]
+                            except IndexError:
+                                check_val = -1
+
+                            if check_val <= 0 or visited[row + height][col + w]:
+                                valid_row = False
+                                break
+                        if valid_row:
+                            height += 1
+
+                    # Mark this merged block as visited
+                    for r in range(row, row + height):
+                        for c in range(col, col + width):
+                            visited[r][c] = True
+
+                    # Generate the rect in world coordinates
+                    rect_x = self.position.x + col * self._image_size[0]
+                    rect_y = self.position.y + row * self._image_size[1]
+                    rect_w = width * self._image_size[0]
+                    rect_h = height * self._image_size[1]
+
+                    self.collision_rects.append(pg.Rect(rect_x, rect_y, rect_w, rect_h))
+
+        # --- 2. ORIGINAL MASK GENERATION ---
         entity_mask = pg.Mask(self.size.xy)
         block_mask = self._get_block_mask()
         special_mask = None
@@ -171,8 +239,6 @@ class Island(VisibleGameEntity):
         if isinstance(block_mask, tuple):
             block_mask, special_mask = block_mask
 
-        n_rows = len(self._form)
-        n_columns = max(len(row) for row in self._form)
         for row in range(n_rows):
             row_offset = self._image_size[1] * row
 
@@ -181,7 +247,6 @@ class Island(VisibleGameEntity):
 
                 try:
                     island_type = self._form[row][column]
-
                 except IndexError:
                     island_type = -1
 
@@ -196,11 +261,41 @@ class Island(VisibleGameEntity):
                     )
 
         self.mask = entity_mask
-        # end = time.perf_counter_ns()
-        # calc_time = (end - start) / 1000
-        # classname = self.__class__.__name__
-        # ic(classname, calc_time, "µs")
 
+    @cum_timer.time_this
+    def single_rect_collide(self, other: "Island") -> tuple[int, int] | None:
+        """
+        Collision check using optimized rectangles. Returns the top-left-most
+        relative intersection point (x, y) like pg.sprite.collide_mask.
+        """
+        if not hasattr(self, 'collision_rects'):
+            return None
+
+        # Check if the other entity has optimized collision rects. If not, fallback to its main rect.
+        other_rects = getattr(other, 'collision_rects', [other.rect])
+
+        best_point = None
+
+        for my_rect in self.collision_rects:
+            for their_rect in other_rects:
+                if my_rect.colliderect(their_rect):
+                    # Get the overlapping rectangle area
+                    clip = my_rect.clip(their_rect)
+
+                    # Calculate relative offset to self.rect's top-left, matching collide_mask format
+                    rel_x = int(clip.x - self.rect.x)
+                    rel_y = int(clip.y - self.rect.y)
+
+                    if best_point is None:
+                        best_point = (rel_x, rel_y)
+                    else:
+                        # Find the highest intersection point, resolving ties with the left-most coordinate
+                        if rel_y < best_point[1] or (rel_y == best_point[1] and rel_x < best_point[0]):
+                            best_point = (rel_x, rel_y)
+
+        return best_point
+
+    @cum_timer.time_this
     def collide(self, other) -> tuple[int, int] | None:
         """
         more precise collision for islands

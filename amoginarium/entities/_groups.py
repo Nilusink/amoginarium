@@ -199,6 +199,62 @@ class _Players(BaseGroup):
 
         return min_pos, max_pos
 
+from amoginarium.debugging._decoators import cum_timer
+
+# class _GridCell:
+#     wall_group: BaseGroup = BaseGroup()
+#     __bullet_group: BaseGroup = BaseGroup()
+#
+#     def add_wall(self, wall: pg.sprite.Sprite) -> None:
+#         wall.add(self.wall_group)
+#
+#     def remove_wall(self, wall: pg.sprite.Sprite) -> None:
+#         wall.remove(self.wall_group)
+#
+#     def add_bullet(self, bullet: pg.sprite.Sprite) -> None:
+#         bullet.add(self.__bullet_group)
+#
+#     def remove_bullet(self, bullet: pg.sprite.Sprite) -> None:
+#         bullet.remove(self.__bullet_group)
+#
+#     def bullet_group(self) -> BaseGroup:
+#         return self.__bullet_group
+
+
+class _GridCell:
+    __walls: BaseGroup
+    __bullets: BaseGroup
+
+    def __init__(self) -> None:
+        self.__walls = BaseGroup()
+        self.__bullets = BaseGroup()
+
+    @property
+    def walls(self) -> BaseGroup:
+        return self.__walls
+
+    @property
+    def bullets(self) -> BaseGroup:
+        return self.__bullets
+
+
+class _GridSystem:
+    __grid_cells: dict[int, _GridCell] = {}
+
+    def __init__(self) -> None:
+        for row_num in range(-1000, 2000):
+            self.__grid_cells[row_num] = _GridCell()
+
+    def get_cells_by_num(self, min_row: int, max_row: int) -> list[_GridCell]:
+        return [self.__grid_cells[i] for i in range(min_row, max_row + 1)]
+
+    def get_cells_by_pos(self, from_x: float, to_x: float) -> list[_GridCell]:
+        return self.get_cells_by_num(int(from_x / 500), int(to_x / 500))
+
+    def get_num(self, from_x: float, to_x: float) -> tuple[int, int]:
+        return int(from_x / 500), int(to_x / 500)
+
+GridSystem = _GridSystem()
 
 class _WallCollider(BaseGroup):
     """
@@ -208,22 +264,34 @@ class _WallCollider(BaseGroup):
     """
 
     @staticmethod
+    @cum_timer.time_this
     def collides_with(
             sprite
     ) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
-        for wall in Walls.sprites():
-            sprite: tp.Any
-            wall: tp.Any
-
-            # use collide_rect first, because performance and stuff
-            if pg.sprite.collide_rect(wall, sprite):
-                pos = wall.collide(sprite)
-                if pos is not None:
-                    return wall, pos
-
+        for group in GridSystem.get_cells_by_pos(sprite.rect.topleft[0], sprite.rect.bottomright[0]):
+            for wall in group.walls.sprites():
+                if pg.sprite.collide_rect(wall, sprite):
+                    pos = wall.collide(sprite)
+                    if pos is not None:
+                        return wall, pos
         return False
 
     @staticmethod
+    @cum_timer.time_this
+    def collides_with_groups(
+            sprite,
+            groups: list[_GridCell]
+    ) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
+        for group in groups:
+            for wall in group.walls.sprites():
+                if pg.sprite.collide_rect(wall, sprite):
+                    pos = wall.single_rect_collide(sprite)
+                    if pos is not None:
+                        return wall, pos
+        return False
+
+    @staticmethod
+    @cum_timer.time_this
     def on_ground(
             sprite,
             alt_pos: coord_t = ...,
@@ -398,7 +466,7 @@ class _WallBouncer(BaseGroup):
         for sprite in self.sprites():
             with suppress(AttributeError):
                 sprite: tp.Any
-                in_wall = WallCollider.collides_with(sprite)
+                in_wall = sprite.collision
 
                 if not in_wall:
                     sprite.in_wall = None
@@ -457,7 +525,10 @@ class _CollisionDestroyed(BaseGroup):
 
     # @profile
     # @timeit(10)
+    @cum_timer.time_this
     def update(self) -> None:
+        # todo: WHAT THE HELL IS THIS
+        return
         for sprite in CollisionDestroyed.sprites():
 
             with suppress(AttributeError):
@@ -467,7 +538,7 @@ class _CollisionDestroyed(BaseGroup):
 
                     # pg.sprite.collide_mask()
 
-                    if 1:
+                    if 0:
                         if all([
                             pg.sprite.collide_mask(sprite, other),
                             not is_related(sprite, other, 2)

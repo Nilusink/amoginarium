@@ -12,10 +12,11 @@ from time import perf_counter
 from random import randint
 from icecream import ic
 import typing as tp
+import pygame as pg
 import numpy as np
 
 from ._groups import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn, \
-    WallBouncer
+    WallBouncer, GridSystem, _GridCell
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect, Mortar as MortarSound
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
@@ -42,6 +43,10 @@ class Bullet(ImageEntity):
     _hp: int = -1
     _weight: float | None = None
 
+    _old_grid_num: tuple[int, int] | None
+    _cells: list[_GridCell]
+    _collision: bool | tuple[pg.sprite.Sprite, tuple[int, int]]
+
     def __new__(cls, *args, **kwargs) -> "Bullet":
         return super(Bullet, cls).__new__(cls)
 
@@ -65,6 +70,10 @@ class Bullet(ImageEntity):
     ) -> None:
         if not isinstance(size, Vec2):
             size = Vec2().from_cartesian(size, size)
+
+        self._old_grid_num = None
+        self._cells = []
+        self._collision = False
 
         self._casing = casing
         self._base_damage = base_damage
@@ -115,9 +124,21 @@ class Bullet(ImageEntity):
         if not casing:
             self.add(Bullets, CollisionDestroyed)
 
+    def __update_collision(self) -> None:
+        new_num = GridSystem.get_num(self.rect.topleft[0], self.rect.topright[0])
+        if new_num != self._old_grid_num:
+            self._old_grid_num = new_num
+            self._cells = GridSystem.get_cells_by_num(*new_num)
+
+        self._collision = WallCollider.collides_with_groups(self, self._cells)
+
+    @property
+    def collision(self) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
+        return self._collision
+
     @property
     def on_ground(self) -> bool:
-        return WallCollider.collides_with(self)
+        return self._collision
 
     @property
     def damage(self) -> float:
@@ -189,6 +210,8 @@ class Bullet(ImageEntity):
     def update(self, delta):
         self._ttl -= delta
         self._visibility_offset -= delta
+
+        self.__update_collision()
 
         if any([
             self._ttl <= 0,
@@ -1037,9 +1060,9 @@ class HandThrownGrenade(BaseWeapon):
         super().__init__(
             parent,
             reload_time=5,
-            recoil_time=2,
+            recoil_time=0.000001,
             weapon_recoil_factor=.5,
-            mag_size=1,
+            mag_size=5000,
             inaccuracy=.01,
             bullet_speed=800,
             bullet_damage=0,
@@ -1047,7 +1070,7 @@ class HandThrownGrenade(BaseWeapon):
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_size=32,
-            bullet_lifetime=5,
+            bullet_lifetime=50,
             bullet_explosion_damage=50,
             bullet_explosion_radius=150,
             # sound_effect=CRAMSound(),
