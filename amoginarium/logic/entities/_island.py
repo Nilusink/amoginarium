@@ -51,7 +51,6 @@ class Island(LogicGameEntity):
             damage: float = ...,
             bounce: float = ...
     ) -> None:
-        ic(pos, size)
         if size is ... and form is ...:
             raise ValueError("either size or form have to be given!")
 

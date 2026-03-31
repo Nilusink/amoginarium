@@ -203,8 +203,10 @@ class _IslandTextureManager:
         return IslandTextures(**out_tex)
 
     def get_textures(self, island: tp.Type[Island], texture_size: int) -> IslandTextures:
+        ic("getting", island.cid(), island.get_scope(), texture_size)
         if island in self._textures:
             if texture_size in self._textures[island]:
+                ic("return existing")
                 return self._textures[island][texture_size]
         
         else:
@@ -599,7 +601,7 @@ class Island(SyncedGraphicsEntity):
 
 
 class GrassIsland(Island):
-    _scope = "bricks_gray"
+    _scope = "dirt_islands"
     _cid = IslandCIDs.grass_island
 
 

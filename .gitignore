@@ -137,6 +137,7 @@ dmypy.json
 .idea/
 .vscode/
 debug.json
+logic_debug.json
 basics_erste_klasse.py
 settings.json
 

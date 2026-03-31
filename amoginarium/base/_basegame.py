@@ -118,13 +118,8 @@ class BaseGame:
             ic.disable()
 
         # debugging
-        self._logic_loop_times: list[tuple[float, float]] = []
         self._pygame_loop_times: list[tuple[float, float]] = []
-        self._comms_loop_times: list[tuple[float, float]] = []
         self._total_loop_times: list[tuple[float, float]] = []
-
-        # time since start, n_bullets, loop_time
-        self._n_bullets_times: list[tuple[float, float, float]] = []
 
         self._pygame_fps: int = 0
         self._logic_fps: int = 0
@@ -240,7 +235,7 @@ class BaseGame:
         # load entity textures
         textures.load_images("assets/images/textures.zip")
         self._update_loading_screen(11)
-        textures.load_images("assets/images/dirt_islands.zip")
+        textures.load_images("assets/images/dirt_islands")
         self._update_loading_screen(12)
         textures.load_images("assets/images/bricks_gray")
         self._update_loading_screen(13)
@@ -601,13 +596,12 @@ class BaseGame:
                         ic("spawned", cid)
 
                 elif item.type == BaseCommandType.spawn_island:
-                    ic(item)
                     # try to spawn graphics dummy
                     cid = item.kwargs.pop("cid")
 
                     if cid in ISLANDS:
                         sync_id = item.kwargs.pop("id")
-                        ISLANDS[cid](
+                        i = ISLANDS[cid](
                             sync_id=sync_id,
                             **item.kwargs
                         )
@@ -691,8 +685,8 @@ class BaseGame:
             self._total_loop_times.append(
                 (now - self._game_start, delta)
             )
-            self._n_bullets_times.append(
-                (now - self._game_start, 1, 1)
+            self._pygame_loop_times.append(
+                (now - self._game_start, perf_counter() - now)
             )
             last = now
 
@@ -761,8 +755,6 @@ class BaseGame:
         ic("writing debug data")
         with open("debug.json", "w") as out:
             json.dump({
-                "logic": self._logic_loop_times,
-                "bullets": self._n_bullets_times,
                 "pygame": self._pygame_loop_times,
                 "total": self._total_loop_times
             }, out)

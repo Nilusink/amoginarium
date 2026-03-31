@@ -12,6 +12,8 @@ import json
 
 red = 'tab:red'
 data = json.load(open("debug.json", "r"))
+logic_data = json.load(open("logic_debug.json", "r"))
+data.update(logic_data)
 
 pygame_xs = []
 pygame_ys = []

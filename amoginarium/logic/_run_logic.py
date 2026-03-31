@@ -89,6 +89,10 @@ class LogicProcess:
         self._background_player = BackgroundPlayer()
         self._background_player.volume = .6
 
+        # debugging
+        self._logic_loop_times: list[tuple[float, float]] = []
+        self._n_bullets_times: list[tuple[float, float, float]] = []
+
         # copy once to make sure starting value is the same
         self._runtime_buffer[:] = self.__entity_buffer
 
@@ -249,6 +253,13 @@ class LogicProcess:
         """
         start = perf_counter()
 
+        self._logic_loop_times.append(
+            (start - self._start, delta)
+        )
+        self._n_bullets_times.append(
+            (start - self._start, Bullets.__len__(), delta)
+        )
+
         # update commands
         while True:
             try:
@@ -259,6 +270,7 @@ class LogicProcess:
 
             if item.type == ProcessCommandType.quit:
                 self._running = False
+                self.end()
                 return False
 
             elif item.type == ProcessCommandType.reset:
@@ -367,6 +379,13 @@ class LogicProcess:
         for player in Players.sprites():
             player.respawn()
 
+    def end(self) -> None:
+        with open("logic_debug.json", "w") as out:
+            json.dump({
+                "logic": self._logic_loop_times,
+                "bullets": self._n_bullets_times
+            }, out)
+
 
 def run_continuous(
         shm: SharedMemory,
@@ -403,7 +422,7 @@ def run_continuous(
         # calculate time since last loop
         now = perf_counter()
         if last_update_success:
-            delta = last_run - now
+            delta = now - last_run
 
         else:
             delta = 0

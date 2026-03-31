@@ -88,6 +88,15 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     # endregion
 
+    # region draw
+    def _before_gl_draw(self, drawn: bool) -> None:
+        if not self.alive and self.visible:
+            self.visible = False
+
+        elif self.alive and not self.visible:
+            self.visible = True
+    # endregion
+
 
 class SyncedImageEntity(SyncedGraphicsEntity):
     __slots__ = ["_texture_id"]

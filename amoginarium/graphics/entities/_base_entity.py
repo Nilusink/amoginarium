@@ -12,16 +12,23 @@ import typing as tp
 
 class BaseGraphicsEntity:
     __slots__ = [
-        "__g", "_children", "_parent", "_root_visibility", "_highlight"
+        "__g", "_children", "_parent", "_root_visibility", "_highlight",
+        "visible"
     ]
 
     _cid: str = ...
 
-    visible: bool = True
+    visible: bool
     _parent: tp.Self | None
     _children: list[tp.Self]
 
     def __init__(self, parent: tp.Self | None = None) -> None:
+        try:  # ui implements visible as property without setter
+            self.visible = True
+
+        except AttributeError:
+            pass
+
         # pygame groups
         self.__g = []
 
