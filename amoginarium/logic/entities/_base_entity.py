@@ -102,7 +102,7 @@ class BaseLogicEntity:
         for group in self.__g:
             group.remove_internal(self)
 
-        self._runtime_buffer[self.__id] = False
+        self._runtime_buffer[self.__id].alive = False
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__g.clear()
@@ -206,7 +206,7 @@ class LogicGameEntity(PositionedLogicEntity):
         self._generate_collision_mask()
 
         self.acceleration = Vec2()
-        self.facing = Vec2()
+        self.facing = Vec2().from_polar(0, 1)
         # endregion
 
     # region properties

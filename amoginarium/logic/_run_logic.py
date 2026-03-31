@@ -95,6 +95,8 @@ class LogicProcess:
 
         # preload sounds
         self.preload()
+        self._last_spawn = perf_counter()
+        self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), Vec2())
 
         self._running = True
         self._paused = False
@@ -315,6 +317,34 @@ class LogicProcess:
             return False
 
         sound_effects.update()
+
+        # test stuff
+        if start - self._last_spawn > .05:
+            self._last_spawn = start
+            Bullet(
+                self._runtime_buffer,
+                parent=self._dummy_dad,
+                coalition=Coalitions.red,
+                initial_position=Vec2().from_cartesian(
+                    500, 750
+                ),
+                initial_velocity=Vec2().from_cartesian(
+                    300, -1500
+                ),
+                time_to_life=15
+            )
+            Bullet(
+                self._runtime_buffer,
+                parent=self._dummy_dad,
+                coalition=Coalitions.red,
+                initial_position=Vec2().from_cartesian(
+                    700, 750
+                ),
+                initial_velocity=Vec2().from_cartesian(
+                    400, -1000
+                ),
+                time_to_life=15
+            )
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()

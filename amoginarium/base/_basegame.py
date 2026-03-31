@@ -618,7 +618,6 @@ class BaseGame:
                     break
 
                 if item.type == BaseCommandType.spawn_dummy:
-                    ic(item)
                     # try to spawn graphics dummy
                     cid = item.kwargs.pop("cid")
 
@@ -628,7 +627,6 @@ class BaseGame:
                             sync_id=sync_id,
                             **item.kwargs
                         )
-                        ic("spawned", cid)
 
                 elif item.type == BaseCommandType.spawn_island:
                     # try to spawn graphics dummy
@@ -636,7 +634,7 @@ class BaseGame:
 
                     if cid in ISLANDS:
                         sync_id = item.kwargs.pop("id")
-                        i = ISLANDS[cid](
+                        ISLANDS[cid](
                             sync_id=sync_id,
                             **item.kwargs
                         )

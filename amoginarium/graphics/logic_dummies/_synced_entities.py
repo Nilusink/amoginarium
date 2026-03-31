@@ -20,7 +20,7 @@ from ... import pv
 class SyncedGraphicsEntity(BaseGraphicsEntity):
     __slots__ = [
         "pos", "facing", "size", "alive", "param0", "param1", "param2",
-        "param3", "__id"
+        "param3", "__id", "__was_alive"
     ]
     pos: Vec2
     facing: Vec2
@@ -32,7 +32,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     param2: float
     param3: float
 
-    def __init__(self, sync_id: int, parent: tp.Self | None = None) -> None:
+    def __init__(self, sync_id: int, parent: BaseGraphicsEntity | None = None) -> None:
         self.__id = sync_id
         super().__init__(parent)
 
@@ -47,6 +47,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.param2 = 0
         self.param3 = 0
 
+        self.__was_alive = False
         self._update_from_buffer()
 
         self.add(Drawn, SyncedEntities)
@@ -66,6 +67,14 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.size.y = pv.E_BUFF[self.__id].size_y
 
         self.alive = pv.E_BUFF[self.__id].alive
+
+        if not self.__was_alive:
+            if self.alive:
+                self.__was_alive = True
+
+        else:
+            if not self.alive:
+                self.kill()
 
         self.param0 = pv.E_BUFF[self.__id].param0
         self.param1 = pv.E_BUFF[self.__id].param1
@@ -105,7 +114,7 @@ class SyncedImageEntity(SyncedGraphicsEntity):
             self,
             sync_id: int,
             texture_id: int,
-            parent: tp.Self | None = None
+            parent: BaseGraphicsEntity | None = None
     ) -> None:
         self._texture_id = texture_id
         super().__init__(sync_id, parent)
