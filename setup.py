@@ -12,15 +12,15 @@ import os
 
 extensions = []
 
-base_package = "amoginarium"
+cpp_files = ["_minrect.pyx", "_minrect_dirty.pyx"]
 
 for root, _, files in os.walk("amoginarium"):
     for file in files:
         if file.endswith(".pyx"):
             path = os.path.join(root, file)
-
             module = path.replace(os.sep, ".")[:-4]  # remove .pyx
-            extensions.append(Extension(module, [path]))
+
+            extensions.append(Extension(module, [path], language=("c++" if file in cpp_files else None)))
 
 setup(
     ext_modules=cythonize(

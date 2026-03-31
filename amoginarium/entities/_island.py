@@ -17,6 +17,8 @@ import math as m
 import random
 import time
 
+from amoginarium.logic import find_minimum_rectangles_dirty
+
 from ..debugging import print_ic_style, CC
 from ..shared import global_vars
 from ..render_bindings import renderer
@@ -71,6 +73,7 @@ class Island(VisibleGameEntity):
 
     _image_size: tuple[int, int] = (64, 64)
     debug = False
+    DEBUG_DRAW_COLLISION_RECTS: tp.ClassVar[bool] = True
 
     __grid_groups: list[_GridCell] = []
 
@@ -178,60 +181,38 @@ class Island(VisibleGameEntity):
         n_rows = len(self._form)
         n_columns = max(len(row) for row in self._form)
 
-        # --- 1. RECTANGLE MERGING (Greedy Meshing) ---
-        visited = [[False] * n_columns for _ in range(n_rows)]
-
-        for row in range(n_rows):
-            for col in range(n_columns):
+        # --- 1. PREPARE BITMAP FOR CYTHON ---
+        # Convert the potentially jagged _form array into a strict rectangular 0/1 bitmap
+        bitmap = [[0] * n_columns for _ in range(n_rows)]
+        for r in range(n_rows):
+            for c in range(n_columns):
                 try:
-                    island_type = self._form[row][col]
+                    # island_type > 0 means it's a solid block
+                    if self._form[r][c] > 0:
+                        bitmap[r][c] = 1
                 except IndexError:
-                    island_type = -1
+                    # Jagged edge, leave as 0
+                    pass
 
-                if island_type > 0 and not visited[row][col]:
-                    # Find maximum width for this row segment
-                    width = 0
-                    while col + width < n_columns:
-                        try:
-                            next_val = self._form[row][col + width]
-                        except IndexError:
-                            next_val = -1
+        # --- 2. RECTANGLE MERGING (Cython Optimized Greedy Meshing) ---
+        raw_rects = find_minimum_rectangles_dirty(bitmap)
+        print(len(raw_rects))
 
-                        if next_val > 0 and not visited[row][col + width]:
-                            width += 1
-                        else:
-                            break
+        for r1, c1, r2, c2 in raw_rects:
+            # Calculate cell dimensions
+            width_cells = c2 - c1 + 1
+            height_cells = r2 - r1 + 1
 
-                    # Find maximum height maintaining that exact width
-                    height = 1
-                    valid_row = True
-                    while row + height < n_rows and valid_row:
-                        for w in range(width):
-                            try:
-                                check_val = self._form[row + height][col + w]
-                            except IndexError:
-                                check_val = -1
+            # Translate to Pygame world coordinates
+            print("CALCING", c1, r1, self._image_size)
+            rect_x = self.position.x + c1 * self._image_size[0]
+            rect_y = self.position.y + r1 * self._image_size[1]
+            rect_w = width_cells * self._image_size[0]
+            rect_h = height_cells * self._image_size[1]
 
-                            if check_val <= 0 or visited[row + height][col + w]:
-                                valid_row = False
-                                break
-                        if valid_row:
-                            height += 1
+            self.collision_rects.append(pg.Rect(rect_x, rect_y, rect_w, rect_h))
 
-                    # Mark this merged block as visited
-                    for r in range(row, row + height):
-                        for c in range(col, col + width):
-                            visited[r][c] = True
-
-                    # Generate the rect in world coordinates
-                    rect_x = self.position.x + col * self._image_size[0]
-                    rect_y = self.position.y + row * self._image_size[1]
-                    rect_w = width * self._image_size[0]
-                    rect_h = height * self._image_size[1]
-
-                    self.collision_rects.append(pg.Rect(rect_x, rect_y, rect_w, rect_h))
-
-        # --- 2. ORIGINAL MASK GENERATION ---
+        # --- 3. ORIGINAL MASK GENERATION ---
         entity_mask = pg.Mask(self.size.xy)
         block_mask = self._get_block_mask()
         special_mask = None
@@ -683,6 +664,16 @@ class Island(VisibleGameEntity):
             ),
                 debug_surface
             )
+
+        if Island.DEBUG_DRAW_COLLISION_RECTS and hasattr(self, 'collision_rects'):
+            for rect in self.collision_rects:
+                # Renders a semi-transparent red overlay over each collision rect
+                renderer.draw_border(
+                    (self.world_position.x + rect.x - self.position.x, self.world_position.y + rect.y - self.position.y),
+                    (rect.w, rect.h),
+                    (1.0, 0.0, 0.0, 0.4),
+                    3
+                )
 
         if self._highlight:
             renderer.enable_stencil(True)
