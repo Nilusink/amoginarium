@@ -50,7 +50,9 @@ class BaseRenderer:
             size: coord_t,
             convert_global: bool = True,
             rotate_angle: float = 0,
-            rotate_anchor: coord_t = ...
+            rotate_anchor: coord_t = ...,
+            pixel_perfect: bool = False
+
     ) -> None:
         """
         draw a rectangle with a texture

@@ -9,16 +9,17 @@ Nilusink
 """
 import typing as tp
 
-from amoginarium.logic.audio import PresetEffect
 from amoginarium.graphics.render_bindings import renderer
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord
 from amoginarium.shared import HasPosition
 from amoginarium.base._textures import textures
-from amoginarium.logic.entities import Updated, Drawn
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord
-from ._base_entity import VisibleBaseEntity
+from amoginarium import pv
+
+from ._graphics_groups import Drawn
+from ._base_entity import BaseGraphicsEntity
 
 
-class Animation(VisibleBaseEntity):
+class Animation(BaseGraphicsEntity):
     def __init__(
             self,
             textures: tp.Sequence[int],
@@ -72,16 +73,16 @@ class Animation(VisibleBaseEntity):
 
         self._current_image = 0
         self._current_t = self._delay
-        self.add(Updated, Drawn)
+        self.add(Drawn)
         self._playing = True
 
     def stop(self) -> None:
         # self.kill()
-        self.remove(Updated, Drawn)
+        self.remove(Drawn)
         self._playing = False
 
-    def update(self, delta):
-        self._current_t -= delta
+    def _gl_draw(self, delta_cal: float):
+        self._current_t -= delta_cal
         if self._current_t <= 0:
             if (self._current_image + 1) >= len(self._textures):
                 if self._loop:
@@ -95,7 +96,6 @@ class Animation(VisibleBaseEntity):
 
             self._current_t = self._delay
 
-    def gl_draw(self) -> None:
         if self._current_image >= len(self._textures):
             self.stop()
             return
@@ -104,8 +104,9 @@ class Animation(VisibleBaseEntity):
 
         renderer.draw_textured_quad(
             texture,
-            self.position - (self._size / 2) - Updated.world_position,
-            self._size
+            self.position - (self._size / 2) - pv.global_vars.get_world_position(),
+            self._size,
+            pixel_perfect=True
         )
 
 
@@ -128,28 +129,6 @@ def play_animation(
         position_reference,
         position_offset
     ).play()
-    # # TODO: convert to entity / gl_draw
-    # if position is ... and position_reference is ...:
-    #     raise ValueError("position and position_reference weren't given")
-    #
-    # def inner():
-    #     for size, texture in zip(sizes, textures):
-    #         if position_reference is not ...:
-    #             position = position_reference.world_position
-    #
-    #         position -= size / 2
-    #
-    #         key = pv.global_vars.set_in_loop(
-    #             renderer.draw_textured_quad,
-    #             texture,
-    #             position.xy,
-    #             size.xy
-    #         )
-    #
-    #         time.sleep(delay)
-    #         pv.global_vars.reset_in_loop(key)
-    #
-    # Thread(target=inner).start()
 
 
 class ImageAnimation:
@@ -162,10 +141,8 @@ class ImageAnimation:
     def __init__(
             self,
             animation_scope: str,
-            sound_effect: type[PresetEffect] = ...
     ) -> None:
         self._scope = animation_scope
-        self._sound_effect = sound_effect
 
     def load_textures(self, size: Vec2 = None) -> None:
         """
@@ -190,10 +167,7 @@ class ImageAnimation:
         either position or position_reference have to be given
         """
         if self._textures is ...:
-            self.load_textures()
-
-        if self._sound_effect is not ...:
-            self._sound_effect().play()
+            self.load_textures() #Vec2().from_cartesian(256, 256))
 
         Animation(
             self._textures,

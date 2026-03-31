@@ -73,6 +73,7 @@ class Bullet(LogicGameEntity):
             coalition=coalition,
             parent=parent
         )
+        runtime_buffer[self.id].param0 = explosion_radius
         self._last_pos = self.position.copy()
 
         self.remove(Updated)
@@ -274,14 +275,6 @@ class Bullet(LogicGameEntity):
 
                         entity.add_velocity(delta)
             #
-            # explosion.draw(
-            #     delay=.05,
-            #     size=Vec2().from_cartesian(
-            #         self._explosion_radius * 2,
-            #         self._explosion_radius * 2
-            #     ),
-            #     position=self.position.copy()
-            # )
 
             if self._explosion_radius > 64:
                 exp = LargeExplosion()

@@ -14,6 +14,7 @@ from amoginarium.shared import DummyCIDs
 from amoginarium.base._textures import textures
 
 from ._synced_entities import SyncedImageEntity, BaseGraphicsEntity
+from ..entities._animation import explosion
 
 
 BULLET_PATH = "bullet"
@@ -49,6 +50,17 @@ class BulletDummy(SyncedImageEntity):
         self._spawn_time = spawn_time
 
         super().__init__(sync_id, _bullet_image, parent)
+
+    def kill(self) -> None:
+        if self.param0 > 0:
+            explosion.draw(
+                delay=.05,
+                size=Vec2().from_cartesian(
+                    self.param0 * 2,
+                    self.param0 * 2
+                ),
+                position=self.pos.copy()
+            )
 
 
 class MortarShell(BulletDummy):

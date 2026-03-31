@@ -20,7 +20,7 @@ from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
 from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE
+from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, GL_NEAREST
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GL import glPushMatrix, glPopMatrix
 from OpenGL.GLU import gluOrtho2D
@@ -221,7 +221,8 @@ class OpenGLRenderer(BaseRenderer):
             size,
             convert_global=True,
             rotate_angle=0,
-            rotate_anchor: Vec2 | tuple[float, float] = ...
+            rotate_anchor: Vec2 | tuple[float, float] = ...,
+            pixel_perfect: bool = False
     ):
         """
         :param texture_id: texture id
@@ -230,6 +231,7 @@ class OpenGLRenderer(BaseRenderer):
         :param convert_global: whether to convert the texture to global coords
         :param rotate_angle: angle to rotate the image at
         :param rotate_anchor: at what pixel to rotate at
+        :param pixel_perfect: scaling without alpha
         """
         pos = convert_coord(pos, Vec2)
         size = convert_coord(size, Vec2)
@@ -259,8 +261,13 @@ class OpenGLRenderer(BaseRenderer):
         glEnable(GL_TEXTURE_2D)
         glBindTexture(GL_TEXTURE_2D, texture_id)
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        if pixel_perfect:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        else:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 
         # rotate
         if rotate_angle != 0:
