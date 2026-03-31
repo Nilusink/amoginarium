@@ -20,18 +20,18 @@ BULLET_PATH = "bullet"
 
 
 class BulletDummy(SyncedImageEntity):
-    __slots__ = []
+    __slots__ = ["_spawn_time"]
 
-    _cid = DummyCIDs.bullet
+    _cid = DummyCIDs.base_bullet
     _bullet_image: str = (BULLET_PATH, "x")
-    _casing_image: str = (BULLET_PATH, "x")
 
     def __init__(
             self,
             sync_id: int,
+            spawn_time: float,
             size: int = 64,
             parent: BaseGraphicsEntity | None = None,
-            no_gravity = False,
+            no_gravity=False,
             visibility_offset: float = 0,
             trace: bool = True,
             trace_color: color_t = ...
@@ -46,4 +46,16 @@ class BulletDummy(SyncedImageEntity):
             self._bullet_image[1]
         )
 
+        self._spawn_time = spawn_time
+
         super().__init__(sync_id, _bullet_image, parent)
+
+
+class MortarShell(BulletDummy):
+    _bullet_image: str = ("mortar_shell", "")
+    _cid = DummyCIDs.mortar_bullet
+
+
+class Grenade(BulletDummy):
+    _bullet_image: str = ("grenade", "")
+    _cid = DummyCIDs.grenade

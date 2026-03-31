@@ -20,7 +20,7 @@ from amoginarium import pv
 
 from ..audio import LargeExplosion
 from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
-from ._logic_groups import WallCollider
+from ._logic_groups import WallCollider, WallBouncer
 from ._base_entity import LogicGameEntity
 
 
@@ -31,6 +31,7 @@ class Bullet(LogicGameEntity):
     _base_damage: float = 1
     _hp: int = -1
     _weight: float | None = None
+    _cid = DummyCIDs.base_bullet
 
     def __init__(
             self,
@@ -84,7 +85,12 @@ class Bullet(LogicGameEntity):
         # spawn dummy
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": DummyCIDs.bullet}
+            kwargs={
+                "id": self.id,
+                "cid": self.cid(),
+                "spawn_time": self._start_time,
+                "visibility_offset": self._visibility_offset,
+            }
         ))
 
     @property
@@ -290,3 +296,109 @@ class Bullet(LogicGameEntity):
 
         super().kill()
         return True
+
+
+class MortarShell(Bullet):
+    _hp = .5
+    _weight = 8
+    _cid = DummyCIDs.mortar_bullet
+
+    def __init__(
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            base_damage: float = 40,
+            casing: bool = False,
+            time_to_life: float = 10,
+            explosion_radius: float = 200,
+            explosion_damage: float = 50,
+            target_pos: Vec2 = ...,
+            size=Vec2().from_cartesian(40, 20),
+            no_gravity=False,
+            **kwargs
+    ) -> None:
+        super().__init__(
+            runtime_buffer,
+            parent,
+            coalition,
+            initial_position,
+            initial_velocity,
+            base_damage,
+            casing,
+            time_to_life,
+            explosion_radius,
+            explosion_damage,
+            target_pos,
+            size,
+            no_gravity,
+            **kwargs,
+        )
+
+
+class Grenade(Bullet):
+    _hp = .05
+    _bounce_friction = .7
+    _cid = DummyCIDs.grenade
+
+    def __init__(
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            base_damage: float = 0,
+            casing: bool = False,
+            time_to_life: float = 5,
+            explosion_radius: float = 150,
+            explosion_damage: float = 50,
+            target_pos: Vec2 = ...,
+            size=20,
+            no_gravity=False,
+            **kwargs
+    ) -> None:
+        super().__init__(
+            runtime_buffer,
+            parent,
+            coalition,
+            initial_position,
+            initial_velocity,
+            base_damage,
+            casing,
+            time_to_life,
+            explosion_radius,
+            explosion_damage,
+            target_pos,
+            size,
+            no_gravity,
+            **kwargs
+        )
+
+        self.in_wall = None
+        self.add(WallBouncer)
+
+    def update(self, delta):
+        if self.in_wall is not None:
+            pi4 = np.pi / 4
+            if 7 * pi4 <= self.in_wall.angle or self.in_wall.angle < pi4:
+                self.acceleration.y = 0
+
+        super().update(delta)
+
+    def kill(self, killed_by=...):
+        # can only be killed by bullets and ttl
+        if killed_by is not ...:
+            if issubclass(killed_by.__class__, Bullet):
+                self._ttl = 0
+
+        if self._ttl > 0:
+            return False
+
+        return super().kill(killed_by)
+
+
+class SniperBullet(Bullet):
+    _weight = 5

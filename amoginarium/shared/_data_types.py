@@ -28,7 +28,9 @@ class ItemSlot:
 
 class DummyCIDs(Enum):
     player = "dummy.player"
-    bullet = "dummy.bullet"  # {"spawn_time": float}
+    base_bullet = "dummy.bullet.base"  # {"spawn_time": float, "visibility_offset": float}
+    mortar_bullet = "dummy.bullet.mortar"  # -- "" --
+    grenade = "dummy.bullet.grenade"  # -- "" --
 
 
 class IslandCIDs(Enum):
