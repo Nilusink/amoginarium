@@ -29,6 +29,7 @@ from ..shared.settings import Settings
 from ..graphics.render_bindings import renderer
 from ..graphics.ui import UICursor
 from ..graphics.entities import UIEntities, Drawn, SyncedEntities
+from ..graphics.controllers import Controller, Controllers, KeyboardController
 from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS
 from ..logic import run_continuous
 from ._scrolling_background import ParalaxBackground
@@ -95,6 +96,7 @@ class BaseGame:
                 "write_lock": pv.WRITE_LOCK,
                 "global_vars_values": pv.global_vars.get_values(),
                 "shm": pv.SHM,
+                "c_shm": pv.C_SHM,
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start
@@ -141,6 +143,16 @@ class BaseGame:
         self._update_loading_screen(1)
 
         self.__windowed_fullscreen()
+
+        # controller setup
+        self._new_controllers: list[Controller] = []
+
+        # self._controllers_cid = Controllers.on_new_controller(
+        #     self._add_controller
+        # )
+
+        # create keyboard controller
+        KeyboardController.get()
 
         # add decorator with callback to self.end
         for func in ("_run_pygame",):
@@ -343,6 +355,12 @@ class BaseGame:
             f"{get_fg_color(36)}{t1: >4}.{t2: <4}{get_fg_color(247)} | "
             f"{get_fg_color(14)}base {get_fg_color(247)} |> "
         )
+
+    def _add_controller(self, controller: Controller) -> None:
+        """
+        appends a new controller to the queue
+        """
+        self._new_controllers.append(controller)
 
     def __clean_end(self, *_args: tp.Any, **_kwargs: tp.Any) -> None:
         ic("pygame end")
@@ -573,6 +591,23 @@ class BaseGame:
             while pv.BASE_COMM.poll(0):
                 msg = pv.BASE_COMM.recv()
                 colorizedStderrPrint(msg)
+
+            # # check for new controllers
+            # if len(self._new_controllers) > 0:
+            #     tmp = self._new_controllers.copy()
+            #     self._new_controllers.clear()
+            #
+            #     for new_controller in tmp:
+            #         # spawn new player
+            #         if Players.spawn_point:
+            #             Player(
+            #                 runtime_buffer=self._runtime_buffer,
+            #                 coalition=Coalitions.blue,
+            #                 controller=new_controller
+            #             )
+            #
+            #         else:
+            #             self._new_controllers.append(new_controller)
 
             # update commands
             while True:

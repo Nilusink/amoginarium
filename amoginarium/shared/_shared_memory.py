@@ -15,6 +15,7 @@ import ctypes
 
 # region constants
 MAX_ENTITIES: int = 10_000
+MAX_CONTROLLERS: int = 8
 # endregion
 
 
@@ -36,20 +37,51 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
         ("param2", ctypes.c_float),
         ("param3", ctypes.c_float),
     ]
+
+
+class base_controller_t(ctypes.Structure):
+    _pack_ = 1
+    _fields_ = [
+        ("jump", ctypes.c_bool),
+        ("reload", ctypes.c_bool),
+        ("shoot", ctypes.c_bool),
+        ("inventory", ctypes.c_bool),
+        ("drop", ctypes.c_bool),
+        ("wpn_f", ctypes.c_bool),
+        ("wpn_b", ctypes.c_bool),
+        ("joy_btn", ctypes.c_float),
+        ("joy_x", ctypes.c_float),
+        ("joy_y", ctypes.c_float),
+        ("mouse_x", ctypes.c_float),
+        ("mouse_y", ctypes.c_float),
+    ]
 # endregion
 
 
 # region methods
-_shm: SharedMemory = ...
+_e_shm: SharedMemory = ...
 def get_entity_memory() -> SharedMemory:
-    global _shm
-    if _shm is ...:
-        _shm = shared_memory.SharedMemory(
+    global _e_shm
+    if _e_shm is ...:
+        _e_shm = shared_memory.SharedMemory(
             create=True,
             size=ctypes.sizeof(base_entity_t) * MAX_ENTITIES
         )
 
-    return _shm
+    return _e_shm
+
+
+_c_shm: SharedMemory = ...
+def get_controller_memory() -> SharedMemory:
+    global _c_shm
+    if _c_shm is ...:
+        _c_shm = shared_memory.SharedMemory(
+            create=True,
+            size=ctypes.sizeof(base_controller_t) * MAX_CONTROLLERS
+        )
+
+    return _c_shm
+
 
 _lock: tp.Any | None = None
 def get_write_lock() -> Lock:
@@ -62,4 +94,4 @@ def get_write_lock() -> Lock:
 
 
 if __name__ == "__main__":
-    print(ctypes.sizeof(base_entity_t))
+    print(ctypes.sizeof(base_controller_t))

@@ -203,7 +203,6 @@ class _IslandTextureManager:
         return IslandTextures(**out_tex)
 
     def get_textures(self, island: tp.Type[Island], texture_size: int) -> IslandTextures:
-        ic("getting", island.cid(), island.get_scope(), texture_size)
         if island in self._textures:
             if texture_size in self._textures[island]:
                 ic("return existing")

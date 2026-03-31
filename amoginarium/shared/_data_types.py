@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 from dataclasses import dataclass, field
+
 from enum import Enum
 import typing as tp
 
@@ -48,6 +49,9 @@ class ProcessCommandType(Enum):
     # sound stuff
     play_sound = 5  # {"loops": int, "maxtime": float, "fade_ms": float, "sound_name": <name of sound>}
 
+    # entity spawning
+    spawn_player = 6  # {"controller_id": int}
+
 
 class BaseCommandType(Enum):
     spawn_dummy = 0  # {"id": <sync id>, "cid": DummyCIDs, **kwargs}
@@ -58,4 +62,4 @@ class BaseCommandType(Enum):
 class ProcessCommand:
     type: ProcessCommandType | BaseCommandType
     args: tp.Iterable = field(default_factory=list)
-    kwargs: tp.Mapping[str, tp.Any] = field(default_factory=dict)
+    kwargs: dict[str, tp.Any] = field(default_factory=dict)

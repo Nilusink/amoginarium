@@ -12,4 +12,5 @@ from ._data_types import ItemSlot, item_t, ProcessCommand, ProcessCommandType, \
 from ._logic_entity_hints import BaseLogicEntityLike
 from ._entity_counter import ENTITY_COUNTER
 from ._shared_memory import MAX_ENTITIES, base_entity_t, get_entity_memory, \
-    get_write_lock
+    get_write_lock, base_controller_t, MAX_CONTROLLERS, get_controller_memory
+from ._controlls import Controls

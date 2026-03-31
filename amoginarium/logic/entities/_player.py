@@ -25,9 +25,9 @@ from ...shared import Coalitions, WeaponLike, ItemLike, ItemSlot, base_entity_t
 from ...shared import ProcessCommand, BaseCommandType, DummyCIDs
 from ...shared.utility import Vec2, convert_coord, Color
 # from ._weapons import HandThrownGrenade
-from ..controllers import Controller
 # from ._island import Island
 # from ._inventory import Inventory
+from ..graphics_dummies import Controller
 from ... import pv
 from ._island import Island
 

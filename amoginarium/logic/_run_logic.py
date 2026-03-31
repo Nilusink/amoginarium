@@ -28,7 +28,7 @@ from .. import pv
 from .radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
     DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
 from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect
-from .controllers import Controllers, Controller, KeyboardController
+from .graphics_dummies import Controller
 from .entities import *
 
 
@@ -36,6 +36,7 @@ class LogicProcess:
     def __init__(
             self,
             shm: SharedMemory,
+            c_shm: SharedMemory,
             command_in_queue: Queue,
             command_out_queue: Queue,
             write_lock: synchronize.Lock,
@@ -53,13 +54,16 @@ class LogicProcess:
                 **kwargs
             )
         )
-        ic(shm)
+
+        # map loading status
+        self._map_loading = False
 
         pv.set_shared_process_values(
             g_vars=global_vars,
             command_in_queue=command_in_queue,
             command_out_queue=command_out_queue,
             shared_memory=shm,
+            controller_memory=c_shm,
             write_lock=write_lock,
             base_comm=base_comm,
             process_comm=process_comm,
@@ -78,13 +82,6 @@ class LogicProcess:
         self.__entity_buffer = pv.E_BUFF
         self._runtime_buffer = (base_entity_t * MAX_ENTITIES).from_buffer(local_buffer)
 
-        # controller setup
-        self._new_controllers: list[Controller] = []
-
-        self._controllers_cid = Controllers.on_new_controller(
-            self._add_controller
-        )
-
         # initialize sound stuff
         self._background_player = BackgroundPlayer()
         self._background_player.volume = .6
@@ -98,9 +95,6 @@ class LogicProcess:
 
         # preload sounds
         self.preload()
-
-        # create keyboard controller
-        KeyboardController.get()
 
         self._running = True
         self._paused = False
@@ -153,6 +147,8 @@ class LogicProcess:
             ic(map_path)
             if not os.path.isfile(map_path):
                 raise FileNotFoundError(f"Couldn't find map \"{map_path}\"")
+
+        self._map_loading = True
 
         # load map data
         data = json.load(open(map_path, "r"))
@@ -239,11 +235,7 @@ class LogicProcess:
                     f"\"{CC.fg.YELLOW}{args}{CC.fg.RED}\""
                 )
 
-    def _add_controller(self, controller: Controller) -> None:
-        """
-        appends a new controller to the queue
-        """
-        self._new_controllers.append(controller)
+        self._map_loading = False
 
     def update_entities(self, delta: float) -> bool:
         """
@@ -292,28 +284,20 @@ class LogicProcess:
                 kwargs.pop("sound_name")
                 s.play(**kwargs)
 
-            else:
-                ic(item)
-
-        # update pygame events
-        # for event in pg.event.get():
-
-        # check for new controllers
-        if len(self._new_controllers) > 0:
-            tmp = self._new_controllers.copy()
-            self._new_controllers.clear()
-
-            for new_controller in tmp:
-                # spawn new player
+            elif item.type == ProcessCommandType.spawn_player:
                 if Players.spawn_point:
+                    ic(item)
                     Player(
-                        runtime_buffer=self._runtime_buffer,
-                        coalition=Coalitions.blue,
-                        controller=new_controller
+                        self._runtime_buffer,
+                        Controller(item.kwargs.pop("controller_id")),
+                        **item.kwargs
                     )
 
                 else:
-                    self._new_controllers.append(new_controller)
+                    self._ciq.put(item)
+
+            else:
+                ic(item)
 
         if self._paused:
             return False
@@ -389,6 +373,7 @@ class LogicProcess:
 
 def run_continuous(
         shm: SharedMemory,
+        c_shm: SharedMemory,
         command_in_queue: Queue,
         command_out_queue: Queue,
         write_lock: synchronize.Lock,
@@ -405,6 +390,7 @@ def run_continuous(
 
     lp = LogicProcess(
         shm,
+        c_shm,
         command_in_queue,
         command_out_queue,
         write_lock,
