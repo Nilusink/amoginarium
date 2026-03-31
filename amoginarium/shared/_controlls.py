@@ -7,8 +7,8 @@ synced controller controls
 Author:
 Nilusink
 """
-from multiprocessing.shared_memory import SharedMemory
 from ctypes import Array
+from icecream import ic
 
 from ._shared_memory import base_controller_t
 

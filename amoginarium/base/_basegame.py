@@ -652,8 +652,9 @@ class BaseGame:
             self.global_vars.set_time(time())
 
             delta = now - last
-
             delta *= self.time_multiplier  # slow-motion
+
+            world_pos = self.global_vars.get_world_position()
 
             # TEMP SOLUTION - fix with controller rework
             for event in pg.event.get():
@@ -705,7 +706,11 @@ class BaseGame:
                     self._pygame_fps = int(1 / delta)
                     last_fps_print = now
 
+                # update controllers
+                Controllers.update()
+
                 # draw background
+                self._background.set_position(world_pos.x)
                 self._background.draw(delta)
 
                 # handle groups
@@ -715,7 +720,7 @@ class BaseGame:
             pg.display.flip()
 
             # update global vars
-            # self.global_vars.update()
+            self.global_vars.update()
 
             self._total_loop_times.append(
                 (now - self._game_start, delta)

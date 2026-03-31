@@ -76,6 +76,10 @@ class _Controllers:
             kwargs={"controller_id": cid}
         ))
 
+    def update(self) -> None:
+        for controller in self._controllers:
+            controller.update(0)
+
     def _on_new_controller(self, controller: "Controller") -> None:
         """
         actual callback method

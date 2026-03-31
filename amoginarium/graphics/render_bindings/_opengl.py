@@ -95,8 +95,6 @@ class OpenGLRenderer(BaseRenderer):
         ))
         pv.global_vars.set_resolution(Vec2().from_cartesian(*window_size))
 
-        ic(pv.global_vars.get_resolution(), window_size)
-
         screen_fac = Vec2().from_cartesian(1, 1)
         screen_offset = Vec2().from_cartesian(0, 0)
 

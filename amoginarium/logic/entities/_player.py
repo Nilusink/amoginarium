@@ -280,6 +280,7 @@ class Player(LogicGameEntity):
         # for hover_slot in self._hotbar:
         #     if hover_slot.count > 0:
         #         hover_slot.item.item.update(delta)
+        acc_fac = pv.global_vars.get_acceleration_factor()
 
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
@@ -338,20 +339,17 @@ class Player(LogicGameEntity):
             if self._on_ground:
                 wall_rider = wall
 
-        # update controls
-        self._controller.update(delta)
-
         # accelerate right
         if self._controller.joy_x > 0:
             if self.velocity.x < self._max_speed:
-                self.velocity.x += self._impulse_resistance_factor * delta * pv.global_vars.acceleration_factor * 12
+                self.velocity.x += self._impulse_resistance_factor * delta * acc_fac * 12
 
             # self.facing.x = 1
 
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
-                self.velocity.x -= self._impulse_resistance_factor * delta * pv.global_vars.acceleration_factor * 12
+                self.velocity.x -= self._impulse_resistance_factor * delta * acc_fac * 12
 
             # self.facing.x = -1
 

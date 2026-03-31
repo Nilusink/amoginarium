@@ -47,3 +47,7 @@ class BackgroundPlayer:
         """
         if self._playing is ... or not self._playing.get_busy():
             self.start()
+
+    def stop(self) -> None:
+        if self._playing is not ... and self._playing.get_busy():
+            self._playing.stop()

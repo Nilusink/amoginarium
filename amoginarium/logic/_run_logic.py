@@ -21,7 +21,7 @@ import os
 
 from ..shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
 from ..shared import ProcessCommandType, Coalitions
-from ..shared.debugging import print_ic_style, CC, run_with_debug
+from ..shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
 from ..shared.debugging import print_with_prefix, get_fg_color
 from ..shared.utility import Vec2
 from .. import pv
@@ -237,6 +237,7 @@ class LogicProcess:
 
         self._map_loading = False
 
+    @cum_timer.time_this
     def update_entities(self, delta: float) -> bool:
         """
         update all entities
@@ -286,7 +287,7 @@ class LogicProcess:
 
             elif item.type == ProcessCommandType.spawn_player:
                 if Players.spawn_point:
-                    ic(item)
+                    ic(item, Players.spawn_point)
                     Player(
                         self._runtime_buffer,
                         Controller(item.kwargs.pop("controller_id")),
@@ -309,6 +310,10 @@ class LogicProcess:
         except pg.error:
             return False
 
+        # wait when map is loading
+        if self._map_loading:
+            return False
+
         sound_effects.update()
 
         # reset and update detection Groups
@@ -327,25 +332,43 @@ class LogicProcess:
 
         # update world position
         _, max_player_pos = Players.get_position_extremes()
+        world_position = pv.global_vars.get_world_position()
 
-        # background_pos_left = self._background.position + 60
-        screen_size = self._global_vars.get_screen_size()
-        Updated.world_position.y = -(
-                (screen_size.y / self._global_vars.get_pixel_per_meter())
-                - screen_size.y
-        )
+        screen_pixels = (
+            pv.global_vars.get_screen_size() / pv.global_vars.get_pixel_per_meter()
+        ) / 2
+
+        if max_player_pos.x > world_position.x + screen_pixels.x * 1.4:
+            x = max_player_pos.x - screen_pixels.x * 1.4
+            Updated.world_position.x = x
+
+        elif max_player_pos.x < world_position.x + screen_pixels.x * .6:
+            x = max_player_pos.x - screen_pixels.x * .6
+            Updated.world_position.x = x
+
+        if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
+            y = max_player_pos.y - screen_pixels.y * 1.4
+            Updated.world_position.y = y
+
+        elif max_player_pos.y < world_position.y + screen_pixels.y * .6:
+            y = max_player_pos.y - screen_pixels.y * .6
+            Updated.world_position.y = y
+
         self._global_vars.set_world_position(Updated.world_position)
-
-        # TODO: world shifting
 
         return True
 
+    @cum_timer.time_this
     def update_memory(self) -> None:
         """
         copy runtime buffer to memory buffer
         """
         self._write_lock.acquire()
-        self.__entity_buffer[:] = self._runtime_buffer
+        ctypes.memmove(
+            ctypes.addressof(self.__entity_buffer),
+            ctypes.addressof(self._runtime_buffer),
+            ctypes.sizeof(self.__entity_buffer),
+        )
         self._write_lock.release()
 
     def reset_game(self) -> None:
@@ -364,6 +387,10 @@ class LogicProcess:
             player.respawn()
 
     def end(self) -> None:
+        # stop background music
+        self._background_player.stop()
+
+        # write debug data
         with open("logic_debug.json", "w") as out:
             json.dump({
                 "logic": self._logic_loop_times,
@@ -385,7 +412,7 @@ def run_continuous(
     """
     run the logic process continuously
     """
-    global_vars = GlobalVars(global_vars_values)
+    global_vars = GlobalVars(global_vars_values, False)
     global_vars.update()
 
     lp = LogicProcess(
@@ -428,5 +455,10 @@ def run_continuous(
         pv.global_vars.update()
 
         last_run = now
+
+    times = cum_timer.get_times()
+    for func, values in sorted(times.items(), key=lambda e: e[1][0]):
+        print_ic_style(
+            f"{func}, called {values[1]} times {round(values[2], 3)}µs each, totaling {round(values[0] / 1000, 2)}ms")
 
     ic("logic quit")

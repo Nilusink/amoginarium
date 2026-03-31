@@ -13,7 +13,7 @@ from icecream import ic
 from enum import Enum
 import typing as tp
 
-from .debugging import get_caller_name, print_ic_style, CC, run_with_debug
+from .debugging import cum_timer
 from .utility import Vec2
 
 # idk how to do this with the pythin 3.12 typehinting
@@ -63,7 +63,7 @@ class BoundFunction(tp.TypedDict):
 
 
 class GlobalVars:
-    def __init__(self, values: dict[str, Value]) -> None:
+    def __init__(self, values: dict[str, Value], set: bool = True) -> None:
         self.__values = values
 
         self._screen_size = Vec2()
@@ -81,7 +81,8 @@ class GlobalVars:
         self._scaling = 0
         self._time = 0
 
-        self._set_from_current()
+        if set:
+            self._set_from_current()
 
     def _set_from_current(self) -> None:
         self.__values["screen_size_x"].value = self._screen_size.x
@@ -243,6 +244,7 @@ class GlobalVars:
         self.__values["world_position_x"].value = 0
         self.__values["world_position_y"].value = 0
 
+    @cum_timer.time_this
     def update(self) -> None:
         """
         update from Values

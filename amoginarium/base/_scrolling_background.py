@@ -121,7 +121,7 @@ class ParalaxBackground:
         # tmp = pv.global_vars.world_position
         # tmp.x = self.position
         # pv.global_vars.world_position = tmp
-        pv.global_vars.background_position = self.position
+        # pv.global_vars.background_position = self.position
 
     def reset_scroll(self) -> None:
         self._animation_counter = 0

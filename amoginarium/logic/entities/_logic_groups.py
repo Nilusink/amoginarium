@@ -138,14 +138,17 @@ class _Walls(BaseGroup):
 
 
 class _Players(BaseGroup):
-    _spawn_point: Vec2
+    _spawn_point: Vec2 = None
 
     @property
-    def spawn_point(self) -> Vec2:
+    def spawn_point(self) -> Vec2 | None:
         """
         player spawn point
         """
-        return Updated.world_position + self._spawn_point.copy()
+        if self._spawn_point:
+            return Updated.world_position + self._spawn_point.copy()
+
+        return None
 
     @spawn_point.setter
     def spawn_point(self, point: Vec2) -> None:
