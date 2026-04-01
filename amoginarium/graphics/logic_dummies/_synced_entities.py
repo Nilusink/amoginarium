@@ -85,6 +85,9 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.param4 = pv.E_BUFF[self.__id].param4
 
     def update_from_buffer(self, recursive: bool = True) -> None:
+        """
+        update entity values from shared buffer
+        """
         self._update_from_buffer()
 
         if recursive:
@@ -96,6 +99,9 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     # region properties
     @property
     def world_position(self) -> Vec2:
+        """
+        entity position - world position offset
+        """
         return self.pos - pv.global_vars.get_world_position()
 
     # endregion

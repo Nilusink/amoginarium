@@ -134,6 +134,7 @@ class PositionedLogicEntity(BaseLogicEntity):
     # don't use properties for position and size for faster access
     __slots__ = ["position", "size"]
 
+    _cid: str = ...  # for serialization
     position: Vec2
     size: Vec2
 
@@ -148,6 +149,15 @@ class PositionedLogicEntity(BaseLogicEntity):
         self.position = position
         self.size = size
 
+    # region class methods
+    @classmethod
+    def cid(cls) -> str:
+        if cls._cid is ...:
+            raise ValueError("__cid is not defined for " + cls.__name__)
+
+        return cls._cid
+    # endregion
+
     def _update(self, delta: float) -> None:
         # update shared memory
         self._runtime_buffer[self.id].pos_x = self.position.x
@@ -159,8 +169,6 @@ class PositionedLogicEntity(BaseLogicEntity):
 
 
 class LogicGameEntity(PositionedLogicEntity):
-    _cid: str = ...  # for serialization
-
     __slots__ = [
         "facing", "velocity", "acceleration", "_coalition", "_velocity_to_add",
         "_acceleration_to_add", "mask", "rect", "__world_position"
@@ -228,15 +236,6 @@ class LogicGameEntity(PositionedLogicEntity):
     def serializable(self) -> bool:
         return self._cid is not ...
 
-    # endregion
-
-    # region class methods
-    @classmethod
-    def cid(cls) -> str:
-        if cls._cid is ...:
-            raise ValueError("__cid is not defined for " + cls.__name__)
-
-        return cls._cid
     # endregion
 
     # region methods

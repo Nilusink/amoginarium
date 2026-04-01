@@ -728,7 +728,7 @@ class BaseGame:
             )
             last = now
 
-            clock.tick(self.global_vars.get_max_fps())
+            # clock.tick(self.global_vars.get_max_fps())
 
         ic("pygame end")
         times = cum_timer.get_times()

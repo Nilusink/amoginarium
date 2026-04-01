@@ -20,6 +20,9 @@ type item_t = VisibleItemLike | None  # ItemLike | WeaponLike | None
 
 @dataclass
 class ItemSlot:
+    """
+    A slot in a players inventory
+    """
     item: item_t
     count: int
     parent: tp.Any
@@ -27,6 +30,9 @@ class ItemSlot:
 
 
 class DummyCIDs(Enum):
+    """
+    Component IDs for Graphics dummies
+    """
     player = "dummy.player"
     base_bullet = "dummy.bullet.base"  # {"spawn_time": float, "visibility_offset": float}
     mortar_bullet = "dummy.bullet.mortar"  # -- "" --
@@ -34,12 +40,18 @@ class DummyCIDs(Enum):
 
 
 class IslandCIDs(Enum):
+    """
+    Component IDs for Graphics islands
+    """
     grass_island = "island.grass"
     gray_brick_island = "island.brick.gray"
     green_brick_island = "island.brick.green"
 
 
 class TurretCIDs(Enum):
+    """
+    Component IDs for Graphics turrets
+    """
     minigun = "turret.static.minigun"
     sniper = "turret.static.sniper"
     ak47 = "turret.static.ak47"
@@ -49,7 +61,23 @@ class TurretCIDs(Enum):
     base = "turret.static.base"
 
 
+class WeaponCIDs(Enum):
+    """
+    Component IDs for Graphics weapons
+    """
+    minigun = "weapon.minigun"
+    sniper = "weapon.sniper"
+    ak47 = "weapon.ak47"
+    mortar = "weapon.mortar"
+    flak = "weapon.flak"
+    cram = "weapon.cram"
+    base = "weapon.base"
+
+
 class ProcessCommandType(Enum):
+    """
+    Commands sent from base to process
+    """
     # process control
     quit = 0
     reset = 1
@@ -67,12 +95,18 @@ class ProcessCommandType(Enum):
 
 
 class BaseCommandType(Enum):
+    """
+    commands sent from process to base
+    """
     spawn_dummy = 0  # {"id": <sync id>, "cid": DummyCIDs, **kwargs}
     spawn_island = 1  # {"id": <sync id>, "cid": IslandCIDs, "size" OR "form"}
 
 
 @dataclass
 class ProcessCommand:
+    """
+    Base command type (all commands)
+    """
     type: ProcessCommandType | BaseCommandType
     args: tp.Iterable = field(default_factory=list)
     kwargs: dict[str, tp.Any] = field(default_factory=dict)

@@ -107,6 +107,7 @@ class OpenGLRenderer(BaseRenderer):
             max(pg.display.get_desktop_refresh_rates())
         )
 
+        pg.display.gl_set_attribute(pg.GL_SWAP_CONTROL, 1)
         pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode(
             pv.global_vars.get_screen_size().xy,

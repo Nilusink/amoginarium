@@ -7,21 +7,29 @@ implements weapons for players and turrets
 Author:
 Nilusink
 """
+from typing_extensions import deprecated
 from random import random
 from ctypes import Array
 import typing as tp
 
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t
-from amoginarium.shared import base_entity_t
+from amoginarium.shared import base_entity_t, WeaponCIDs, ProcessCommand
+from amoginarium.shared import BaseCommandType, DummyCIDs
+from amoginarium.shared.debugging import print_ic_style, run_with_debug
+from amoginarium import pv
 
 from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, Shotgun
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound
-from ._base_entity import LogicGameEntity
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
+from ._base_entity import LogicGameEntity, PositionedLogicEntity
 
 
-class BaseWeapon:
+class BaseWeapon(PositionedLogicEntity):
+    """
+    basic functionality of all weapons
+    """
+    _cid = WeaponCIDs.base
     _no_bullet_gravity: bool = False
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
@@ -52,12 +60,20 @@ class BaseWeapon:
             bullet_lifetime=4,
             sound_effect: ContinuousSoundEffect | PresetEffect = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
-            bullet_visibility_offset: float = 0, # time offset
-            weapon_recoil_factor: float = 1
+            bullet_visibility_offset: float = 0,  # time offset
+            weapon_recoil_factor: float = 1,
+            size: Vec2 = ...
     ) -> None:
-        self.parent = parent
+        if size is ...:
+            size = Vec2().from_cartesian(20, 20)
+
+        super().__init__(
+            runtime_buffer=runtime_buffer,
+            parent=parent,
+            position=Vec2(),
+            size=size
+        )
         self._coalition = parent.coalition
-        self._runtime_buffer = runtime_buffer
         self._mag_size = mag_size
         self._inaccuracy = inaccuracy
         self._reload_time = reload_time
@@ -79,33 +95,64 @@ class BaseWeapon:
         self._bullet_type = bullet_type
         self._bullet_visibility_offset = bullet_visibility_offset
 
+        pv.COQ.put(ProcessCommand(
+            type=BaseCommandType.spawn_dummy,
+            kwargs={"id": self.id, "cid": DummyCIDs.player}
+        ))
+        print_ic_style(self.__class__.__name__, {"id": self.id, "cid": DummyCIDs.player})
+
+    # region properties
     @property
     def mag_size(self) -> int:
+        """
+        max mag size
+        """
         return self.mag_size
 
     @property
     def recoil_factor(self) -> float:
+        """
+        recoil modifier
+        """
         return self._recoil_factor
 
     @property
     def bullet_speed(self) -> float:
+        """
+        muzzle velocity of bullet
+        """
         return self._bullet_speed
 
     @property
     def bullet_explosion_radius(self) -> float:
+        """
+        explosion radius of bullet on destroy
+        """
         return self._bullet_explosion_radius
 
     @property
     def bullet_explosion_damage(self) -> float:
+        """
+        explosion damage of bullet
+        """
         return self._bullet_explosion_damage
 
     @property
     def parent_position_offset(self) -> Vec2:
+        """
+        offset to parent center
+        """
         return self._parent_position_offset.copy()
 
     @property
+    @deprecated("replaced by bullet_visibility_offset")
     def barrel_length(self) -> float:
+        """
+        length of weapon barrel (unused)
+        """
         return self._barrel_length
+
+    # endregion
 
     def get_mag_state(
             self,
@@ -123,17 +170,19 @@ class BaseWeapon:
 
         return (
             (
-                    (
-                            self._reload_time - self._current_reload_time
-                    ) / self._reload_time
+                (
+                    self._reload_time - self._current_reload_time
+                ) / self._reload_time
             ) * max_out,
             round(self._current_reload_time, 2)
         )
 
-    def update(self, delta: float) -> None:
+    def _update(self, delta: float) -> None:
         """
         update weapon state (like reloading, ...)
         """
+        self.position = self.parent.position + self._parent_position_offset
+
         # reload time
         if self._current_reload_time > 0:
             self._current_reload_time -= delta
@@ -158,7 +207,12 @@ class BaseWeapon:
         # if self._current_sound_time < 0:
         #     self._current_sound_time = 0
 
+        super()._update(delta)
+
     def stop_shooting(self):
+        """
+        stop shooting the weapon (sound)
+        """
         if hasattr(self._sound_effect, "done"):
             if self._sound_effect.playing:
                 self._sound_effect.done()
@@ -278,6 +332,9 @@ class BaseWeapon:
 
 
 class Minigun(BaseWeapon):
+    """
+    Minigun
+    """
     def __init__(
             self,
             parent,
@@ -303,6 +360,9 @@ class Minigun(BaseWeapon):
 
 
 class Ak47(BaseWeapon):
+    """
+    Ak-47
+    """
     def __init__(
             self,
             parent,
@@ -329,6 +389,9 @@ class Ak47(BaseWeapon):
 
 
 class Sniper(BaseWeapon):
+    """
+    Basic Sniper
+    """
     def __init__(
             self,
             parent,
@@ -359,6 +422,9 @@ class Sniper(BaseWeapon):
 
 
 class Mortar(BaseWeapon):
+    """
+    Mortar
+    """
     def __init__(
             self,
             parent,
@@ -387,7 +453,11 @@ class Mortar(BaseWeapon):
             bullet_visibility_offset=.025
         )
 
+
 class Flak(BaseWeapon):
+    """
+    Flak Canon
+    """
     def __init__(
             self,
             parent,
@@ -419,6 +489,9 @@ class Flak(BaseWeapon):
 
 
 class CRAM(BaseWeapon):
+    """
+    CRAM Minigun
+    """
     def __init__(
             self,
             parent,
@@ -448,6 +521,10 @@ class CRAM(BaseWeapon):
 
 
 class HandThrownGrenade(BaseWeapon):
+    """
+    A grenade ... thrown by ...
+    your hand
+    """
     def __init__(
             self,
             parent,
