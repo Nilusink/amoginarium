@@ -15,17 +15,19 @@ import typing as tp
 # from ._sensors import Radar
 # from ._text_entity import TextEntity
 from ._base_entity import LogicGameEntity
+from ._static_turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret
+from ._static_turrets import FlakTurret, CRAMTurret
 
 
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
-    e.cid(): e for e in [
-        # SniperTurret,
-        # AkTurret,
-        # MinigunTurret,
-        # MortarTurret,
-        # FlakTurret,
-        # CRAMTurret,
+    e.cid().value: e for e in [
+        MinigunTurret,
+        SniperTurret,
+        AkTurret,
+        MortarTurret,
+        FlakTurret,
+        CRAMTurret,
         # Radar,
         # TextEntity,
     ]

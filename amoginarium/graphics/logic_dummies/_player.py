@@ -27,6 +27,9 @@ PIXEL_LINE_VERTICAL = pg.mask.Mask((1, 32), True)
 
 
 class PlayerDummy(SyncedLRImageEntity):
+    """
+    `param0` health (0-1)
+    """
     __slots__ = []
 
     _cid = DummyCIDs.player

@@ -28,7 +28,13 @@ SQR2 = np.sqrt(2)
 
 
 class Bullet(LogicGameEntity):
-    _base_damage: float = 1
+    __slots__ = [
+        "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
+        "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
+        "_base_damage", "_last_pos"
+    ]
+
+    _base_damage: float
     _hp: int = -1
     _weight: float | None = None
     _cid = DummyCIDs.base_bullet
@@ -394,4 +400,8 @@ class Grenade(Bullet):
 
 
 class SniperBullet(Bullet):
+    _weight = 5
+
+
+class FlakBullet(Bullet):
     _weight = 5

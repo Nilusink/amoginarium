@@ -22,7 +22,7 @@ class BaseLogicEntity:
         "_parent", "_children", "_lifetime", "__id", "_runtime_buffer", "__g",
     ]
 
-    _children: list[tp.Self]
+    _children: list[BaseLogicEntity]
     _lifetime: float
     _parent: tp.Self | None
 
@@ -125,7 +125,8 @@ class BaseLogicEntity:
 
         if recursive:
             for child in self._children:
-                child.update(delta)
+                update = getattr(child, "update", lambda _: ...)
+                update(delta)
     # endregion
 
 
@@ -162,7 +163,7 @@ class LogicGameEntity(PositionedLogicEntity):
 
     __slots__ = [
         "facing", "velocity", "acceleration", "_coalition", "_velocity_to_add",
-        "_acceleration_to_add", "mask", "rect"
+        "_acceleration_to_add", "mask", "rect", "__world_position"
     ]
 
     mask: pg.Mask
@@ -206,13 +207,14 @@ class LogicGameEntity(PositionedLogicEntity):
         self._generate_collision_mask()
 
         self.acceleration = Vec2()
+        self.__world_position = Vec2()  # actual world position
         self.facing = Vec2().from_polar(0, 1)
         # endregion
 
     # region properties
     @property
     def world_position(self) -> Vec2:
-        return self.position - pv.global_vars.world_position
+        return self.position - self.__world_position
 
     @property
     def is_bullet(self) -> bool:
@@ -220,7 +222,7 @@ class LogicGameEntity(PositionedLogicEntity):
 
     @property
     def coalition(self) -> Coalitions:
-        return self.coalition
+        return self._coalition
 
     @property
     def serializable(self) -> bool:
@@ -283,6 +285,8 @@ class LogicGameEntity(PositionedLogicEntity):
         )
 
     def _update(self, delta: float) -> None:
+        self.__world_position = pv.global_vars.get_world_position()
+
         # update velocity and position
         self.velocity += (self._acceleration_to_add + self.acceleration) * delta + self._velocity_to_add
         self.position += self.velocity * delta

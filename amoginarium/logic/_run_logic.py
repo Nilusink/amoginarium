@@ -11,7 +11,7 @@ from multiprocessing.shared_memory import SharedMemory
 from multiprocessing.connection import Connection
 from time import perf_counter, sleep, perf_counter_ns
 from multiprocessing import Queue, Value, synchronize
-from icecream import ic
+from icecream import ic, colorize
 from queue import Empty
 import typing as tp
 import pygame as pg
@@ -25,7 +25,7 @@ from ..shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
 from ..shared.debugging import print_with_prefix, get_fg_color
 from ..shared.utility import Vec2
 from .. import pv
-from .radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
+from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, \
     DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
 from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect
 from .graphics_dummies import Controller
@@ -225,6 +225,7 @@ class LogicProcess:
 
             try:
                 SPAWNABLES[entity["type"]](
+                    runtime_buffer=self._runtime_buffer,
                     coalition=Coalitions.red,
                     position=Vec2().from_cartesian(*entity["pos"]),
                     **args
@@ -234,7 +235,7 @@ class LogicProcess:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
-                    f"\"{CC.fg.YELLOW}{args}{CC.fg.RED}\""
+                    f"\"{CC.fg.YELLOW}{args.__repr__()}{CC.fg.RED}\""
                 )
 
         self._map_loading = False
@@ -252,7 +253,7 @@ class LogicProcess:
             (start - self._start, delta)
         )
         self._n_bullets_times.append(
-            (start - self._start, Bullets.__len__(), delta)
+            (start - self._start, Bullets.__len__() + Updated.__len__(), delta)
         )
 
         # update commands
@@ -319,7 +320,7 @@ class LogicProcess:
         sound_effects.update()
 
         # test stuff
-        if start - self._last_spawn > .05:
+        if start - self._last_spawn > .2:
             self._last_spawn = start
             # Bullet(
             #     self._runtime_buffer,
@@ -333,18 +334,19 @@ class LogicProcess:
             #     ),
             #     time_to_life=15
             # )
-            Grenade(
-                self._runtime_buffer,
-                parent=self._dummy_dad,
-                coalition=Coalitions.red,
-                initial_position=Vec2().from_cartesian(
-                    700, 750
-                ),
-                initial_velocity=Vec2().from_cartesian(
-                    400, -100
-                ),
-                time_to_life=5
-            )
+            # MortarShell(
+            #     self._runtime_buffer,
+            #     parent=self._dummy_dad,
+            #     coalition=Coalitions.red,
+            #     initial_position=Vec2().from_cartesian(
+            #         700, 750
+            #     ),
+            #     initial_velocity=Vec2().from_cartesian(
+            #         500, -1200
+            #     ),
+            #     time_to_life=5
+            # )
+            pass
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()
@@ -417,6 +419,22 @@ class LogicProcess:
             player.respawn()
 
     def end(self) -> None:
+        # print entity stats
+        entities = Updated.sprites() + Bullets.sprites()
+        entities = [e.__class__.__name__ for e in entities]
+        unique = set(entities)
+        print_ic_style(CC.fg.YELLOW + "entities: " + CC.ctrl.ENDC)
+        for entity in unique:
+            print_ic_style(colorize(f"\t{entity}: {entities.count(entity)}"))
+
+        # print debug stats
+        times = cum_timer.get_times()
+        for func, values in sorted(times.items(), key=lambda e: e[1][0]):
+            print_ic_style(
+                f"{func}, called {values[1]} times {round(values[2], 3)}µs each,"
+                f" totaling {round(values[0] / 1000, 2)}ms"
+            )
+
         # stop background music
         self._background_player.stop()
 
@@ -485,10 +503,5 @@ def run_continuous(
         pv.global_vars.update()
 
         last_run = now
-
-    times = cum_timer.get_times()
-    for func, values in sorted(times.items(), key=lambda e: e[1][0]):
-        print_ic_style(
-            f"{func}, called {values[1]} times {round(values[2], 3)}µs each, totaling {round(values[0] / 1000, 2)}ms")
 
     ic("logic quit")

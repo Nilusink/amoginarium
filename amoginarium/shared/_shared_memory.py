@@ -25,17 +25,18 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
     _fields_ = [
         ("pos_x", ctypes.c_double),
         ("pos_y", ctypes.c_double),
-        ("facing_x", ctypes.c_double),
-        ("facing_y", ctypes.c_double),
-        ("size_x", ctypes.c_double),
-        ("size_y", ctypes.c_double),
+        ("facing_x", ctypes.c_float),
+        ("facing_y", ctypes.c_float),
+        ("size_x", ctypes.c_float),
+        ("size_y", ctypes.c_float),
         ("alive", ctypes.c_bool),
 
         # misc parameters for sharing data with base process
         ("param0", ctypes.c_float),
         ("param1", ctypes.c_float),
         ("param2", ctypes.c_float),
-        ("param3", ctypes.c_float),
+        ("param3", ctypes.c_uint64),
+        ("param4", ctypes.c_uint64),
     ]
 
 
@@ -94,4 +95,4 @@ def get_write_lock() -> Lock:
 
 
 if __name__ == "__main__":
-    print(ctypes.sizeof(base_controller_t))
+    print(ctypes.sizeof(base_entity_t) * MAX_ENTITIES)

@@ -10,8 +10,9 @@ Nilusink
 import typing as tp
 import numpy as np
 
-from ...shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
-from ..entities import Players, Bullets, PositionedLogicEntity, LogicGameEntity
+from amoginarium.shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
+from amoginarium.logic.entities._base_entity import PositionedLogicEntity, LogicGameEntity
+from amoginarium.logic.entities._logic_groups import Players, Bullets
 from ._sensors import BaseSensor
 
 

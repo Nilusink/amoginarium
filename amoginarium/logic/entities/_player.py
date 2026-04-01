@@ -18,7 +18,7 @@ import ctypes
 from . import GravityAffected, FrictionXAffected, Updated, LogicGameEntity
 from . import CollisionDestroyed, WallCollider, Players
 from ..audio import DeathSound, SoundEffect
-# from ._weapons import Ak47, Minigun, Sniper, BaseWeapon
+from ._weapons import BaseWeapon, Minigun
 # from ._items import Shield, HealingPotion, JetBag, VisibleItem
 # from ._charged_weapon import Bow, ChargedWeapon, RailGun
 from ...shared import Coalitions, WeaponLike, ItemLike, ItemSlot, base_entity_t
@@ -26,15 +26,12 @@ from ...shared import ProcessCommand, BaseCommandType, DummyCIDs
 from ...shared.utility import Vec2, convert_coord, Color
 # from ._weapons import HandThrownGrenade
 # from ._island import Island
-# from ._inventory import Inventory
+from ._inventory import Inventory
 from ..graphics_dummies import Controller
 from ... import pv
 from ._island import Island
+from ._visible_item import VisibleItem
 
-PLAYER_LEFT_64_PATH = "amogus64left"
-PLAYER_RIGHT_64_PATH = "amogus64right"
-PLAYER_OOB_RIGHT_64_PATH = "amogusOOB64right"
-PLAYER_OOB_LEFT_64_PATH = "amogusOOB64left"
 
 PIXEL_MASK = pg.mask.Mask((1, 1), True)
 PIXEL_LINE_VERTICAL = pg.mask.Mask((1, 32), True)
@@ -92,37 +89,37 @@ class Player(LogicGameEntity):
         self._inventory_pressed = False
         self._hover_slot: ItemSlot | None = None
         self._holding_slot: ItemSlot | None = None
-        # self._inventory = Inventory(
-        #     30,
-        #     self._set_slot,
-        #     self._remove_hover
-        # )
-        # self._hotbar = Inventory(
-        #     10,
-        #     self._set_slot,
-        #     self._remove_hover
-        # )
-        # items = [
-        #     Ak47(self, False, parent_position_offset=(0, 0)),
-        #     Minigun(self, False, parent_position_offset=(0, 10)),
-        #     Sniper(self, False),
-        #     HandThrownGrenade(self, False),
-        #     Shield(self, Vec2().from_cartesian(50, 0)),
-        #     HealingPotion(self, Vec2().from_cartesian(0, 5)),
-        #     JetBag(self, Vec2().from_cartesian(-24, 0)),
-        #     Bow(self, False, parent_position_offset=(0, 0)),
-        #     RailGun(self, False, parent_position_offset=(0, 0)),
-        # ]
-        # for item in items:
-        #     self._hotbar.add_item(
-        #         VisibleItem(item),
-        #         1
-        #     )
-        #
-        # for slot in self._hotbar:
-        #     if slot.item:
-        #         if hasattr(slot.item.item, "reload"):
-        #             slot.item.item.reload(True)
+        self._inventory = Inventory(
+            30,
+            self._set_slot,
+            self._remove_hover
+        )
+        self._hotbar = Inventory(
+            10,
+            self._set_slot,
+            self._remove_hover
+        )
+        items = [
+            # Ak47(self, False, parent_position_offset=(0, 0)),
+            Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
+            # Sniper(self, False),
+            # HandThrownGrenade(self, False),
+            # Shield(self, Vec2().from_cartesian(50, 0)),
+            # HealingPotion(self, Vec2().from_cartesian(0, 5)),
+            # JetBag(self, Vec2().from_cartesian(-24, 0)),
+            # Bow(self, False, parent_position_offset=(0, 0)),
+            # RailGun(self, False, parent_position_offset=(0, 0)),
+        ]
+        for item in items:
+            self._hotbar.add_item(
+                VisibleItem(self._runtime_buffer, item),
+                1
+            )
+
+        for slot in self._hotbar:
+            if slot.item:
+                if hasattr(slot.item.item, "reload"):
+                    slot.item.item.reload(True)
 
         self._last_hit = perf_counter()
 
@@ -174,51 +171,50 @@ class Player(LogicGameEntity):
 
     @property
     def item(self) -> WeaponLike | ItemLike | None:
-        return None
-        # if not hasattr(self, "_hotbar"):
-        #     return None
-        #
-        # if self._hotbar.get_count(self._current_weapon) > 0:
-        #     return self._hotbar.get_item(self._current_weapon).item
-        #
-        # else:
-        #     return None
+        if not hasattr(self, "_hotbar"):
+            return None
 
-    # def pickup_item(self, item: VisibleItem) -> None:
-    #     self._hotbar.try_add_item(item, 1)
+        if self._hotbar.get_count(self._current_weapon) > 0:
+            return self._hotbar.get_item(self._current_weapon).item
+
+        else:
+            return None
+
+    def pickup_item(self, item: VisibleItem) -> None:
+        self._hotbar.try_add_item(item, 1)
 
     def next_weapon(self) -> None:
         """
         switches to the next weapon
         """
-        # if self.item:
-        #     self.item.stop()
-        #
-        # self._current_weapon += 1
-        # if self._current_weapon >= self._hotbar.num_slots:
-        #     self._current_weapon = 0
+        if self.item:
+            self.item.stop()
+
+        self._current_weapon += 1
+        if self._current_weapon >= self._hotbar.num_slots:
+            self._current_weapon = 0
 
     def previous_weapon(self) -> None:
         """
         switches to the previous weapon
         """
-        # if self.item:
-        #     self.item.stop()
-        #
-        # self._current_weapon -= 1
-        # if self._current_weapon < 0:
-        #     self._current_weapon = self._hotbar.num_slots - 1
+        if self.item:
+            self.item.stop()
 
-    # def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
-    #     """
-    #     remove used_amount from set item
-    #     """
-    #     ic(item_id, used_amount)
-    #     with suppress(KeyError, IndexError):
-    #         self._hotbar.use_item(self._current_weapon, used_amount)
-    #         return self._hotbar.get_count(self._current_weapon) > 0
-    #
-    #     return False
+        self._current_weapon -= 1
+        if self._current_weapon < 0:
+            self._current_weapon = self._hotbar.num_slots - 1
+
+    def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
+        """
+        remove used_amount from set item
+        """
+        ic(item_id, used_amount)
+        with suppress(KeyError, IndexError):
+            self._hotbar.use_item(self._current_weapon, used_amount)
+            return self._hotbar.get_count(self._current_weapon) > 0
+
+        return False
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
@@ -276,11 +272,13 @@ class Player(LogicGameEntity):
 
     def _update(self, delta):
         # update reloads
-        # self.weapon.update(delta)
-        # for hover_slot in self._hotbar:
-        #     if hover_slot.count > 0:
-        #         hover_slot.item.item.update(delta)
+        for hover_slot in self._hotbar:
+            if hover_slot.count > 0:
+                hover_slot.item.item.update(delta)
+
         acc_fac = pv.global_vars.get_acceleration_factor()
+        ppm = pv.global_vars.get_pixel_per_meter()
+        ssf = pv.global_vars.get_screen_size_fac()
 
         # stay on ground if touching ground
         in_wall = WallCollider.collides_with(self)
@@ -358,9 +356,9 @@ class Player(LogicGameEntity):
             self.velocity.y = -400
 
         # reload
-        # if self._controller.reload:
-        #     if isinstance(self.item, BaseWeapon):
-        #         self.item.reload()
+        if self._controller.reload:
+            if isinstance(self.item, BaseWeapon):
+                self.item.reload()
 
         # switch weapon
         if self._controller.wpn_f:
@@ -377,53 +375,53 @@ class Player(LogicGameEntity):
             self._weapon_change_pressed = False
 
         # directional stuff
-        # if not self._in_inventory:
-        #     if self._controller.shoot:
-        #         mouse_pos = pg.mouse.get_pos()
-        #         vector = convert_coord((
-        #             (mouse_pos[0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
-        #             (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
-        #         ), Vec2)
-        #         vector -= self.world_position
-        #
-        #         # shot_direction = self.facing.copy()
-        #         # shot_direction.y = -.4
-        #         if isinstance(self.item, BaseWeapon):
-        #             if hasattr(self.item, "charge"):
-        #                 self.item.charge()
-        #
-        #             elif self.item.shoot(
-        #                 vector
-        #             ):
-        #                 self._controller.feedback_shoot()
-        #
-        #         elif self.item:
-        #             self.item.use()
-        #
-        #     else:
-        #         if isinstance(self.item, BaseWeapon):
-        #             if hasattr(self.item, "charge"):
-        #                 item: ChargedWeapon = self.item
-        #
-        #                 if item.charged > 0:
-        #                     mouse_pos = pg.mouse.get_pos()
-        #                     vector = convert_coord((
-        #                         (mouse_pos[ 0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
-        #                         (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
-        #                     ), Vec2)
-        #                     vector -= self.world_position
-        #
-        #                     if self.item.shoot(vector):
-        #                         self._controller.feedback_shoot()
-        #
-        #                 else:
-        #                     self.item.stop_shooting()
-        #
-        #             else:
-        #                 self.item.stop_shooting()
-        #
-        #         elif self.item:
-        #             self.item.stop_use()
+        if not self._in_inventory:
+            if self._controller.shoot:
+                mouse_pos = self._controller.mouse_x, self._controller.mouse_y
+                vector = convert_coord((
+                    (mouse_pos[0] / ppm) * ssf.x,
+                    (mouse_pos[1] / ppm) * ssf.y,
+                ), Vec2)
+                vector -= self.world_position
+
+                # shot_direction = self.facing.copy()
+                # shot_direction.y = -.4
+                if isinstance(self.item, BaseWeapon):
+                    if hasattr(self.item, "charge"):
+                        self.item.charge()
+
+                    elif self.item.shoot(
+                        vector
+                    ):
+                        self._controller.feedback_shoot()
+
+                elif self.item:
+                    self.item.use()
+
+            else:
+                if isinstance(self.item, BaseWeapon):
+                    if hasattr(self.item, "charge"):
+                        item: ... = self.item
+
+                        if item.charged > 0:
+                            mouse_pos = pg.mouse.get_pos()
+                            vector = convert_coord((
+                                (mouse_pos[ 0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
+                                (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
+                            ), Vec2)
+                            vector -= self.world_position
+
+                            if self.item.shoot(vector):
+                                self._controller.feedback_shoot()
+
+                        else:
+                            self.item.stop_shooting()
+
+                    else:
+                        self.item.stop_shooting()
+
+                elif self.item:
+                    self.item.stop_use()
         #
         # else:
         #     hover_slot = self._hover_slot

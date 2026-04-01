@@ -39,6 +39,16 @@ class IslandCIDs(Enum):
     green_brick_island = "island.brick.green"
 
 
+class TurretCIDs(Enum):
+    minigun = "turret.static.minigun"
+    sniper = "turret.static.sniper"
+    ak47 = "turret.static.ak47"
+    mortar = "turret.static.mortar"
+    flak = "turret.static.flak"
+    cram = "turret.static.cram"
+    base = "turret.static.base"
+
+
 class ProcessCommandType(Enum):
     # process control
     quit = 0

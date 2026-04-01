@@ -21,6 +21,9 @@ BULLET_PATH = "bullet"
 
 
 class BulletDummy(SyncedImageEntity):
+    """
+    `param0` explosion size
+    """
     __slots__ = ["_spawn_time"]
 
     _cid = DummyCIDs.base_bullet

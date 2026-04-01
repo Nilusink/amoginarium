@@ -176,6 +176,11 @@ class Mortar(PresetEffect):
     _sound_name = "mortar"
 
 
+class ReloadGeneric(PresetEffect):
+    volume = .4
+    _sound_name = "reload_generic"
+
+
 def sound_effect_wrapper(sound_name: str, volume: float = 1) -> SoundEffect:
     """
     returns an already set sound effect

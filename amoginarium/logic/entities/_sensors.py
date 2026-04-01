@@ -9,9 +9,9 @@ Nilusink
 """
 import typing as tp
 
-from ...shared.utility import coord_t, convert_coord, Vec2
-from ..entities import PositionedLogicEntity, LogicGameEntity
-from ..entities import Players, Bullets
+from amoginarium.shared.utility import coord_t, convert_coord, Vec2
+from amoginarium.logic.entities._base_entity import PositionedLogicEntity, LogicGameEntity
+from amoginarium.logic.entities._logic_groups import Players, Bullets
 
 # if tp.TYPE_CHECKING:
 # from ..entities import GameEntity, VisibleBaseEntity, Players, Bullets

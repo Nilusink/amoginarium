@@ -20,7 +20,7 @@ from ... import pv
 class SyncedGraphicsEntity(BaseGraphicsEntity):
     __slots__ = [
         "pos", "facing", "size", "alive", "param0", "param1", "param2",
-        "param3", "__id", "__was_alive"
+        "param3", "__id", "__was_alive", "param4"
     ]
     pos: Vec2
     facing: Vec2
@@ -30,7 +30,8 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     param0: float
     param1: float
     param2: float
-    param3: float
+    param3: int
+    param4: int
 
     def __init__(self, sync_id: int, parent: BaseGraphicsEntity | None = None) -> None:
         self.__id = sync_id
@@ -46,6 +47,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.param1 = 0
         self.param2 = 0
         self.param3 = 0
+        self.param4 = 0
 
         self.__was_alive = False
         self._update_from_buffer()
@@ -80,6 +82,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.param1 = pv.E_BUFF[self.__id].param1
         self.param2 = pv.E_BUFF[self.__id].param2
         self.param3 = pv.E_BUFF[self.__id].param3
+        self.param4 = pv.E_BUFF[self.__id].param4
 
     def update_from_buffer(self, recursive: bool = True) -> None:
         self._update_from_buffer()

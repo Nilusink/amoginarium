@@ -13,6 +13,8 @@ import typing as tp
 from ._synced_entities import SyncedGraphicsEntity
 from ._player import PlayerDummy
 from ._bullet import BulletDummy, MortarShell, Grenade
+from ._turrets import SniperTurretDummy, AkTurretDummy, MinigunTurretDummy
+from ._turrets import MortarTurretDummy, FlakTurretDummy, CRAMTurretDummy
 
 # noinspection PyTypeChecker
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
@@ -21,10 +23,11 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         BulletDummy,
         MortarShell,
         Grenade,
-        # MortarTurret,
-        # FlakTurret,
-        # CRAMTurret,
-        # Radar,
-        # TextEntity,
+        SniperTurretDummy,
+        AkTurretDummy,
+        MinigunTurretDummy,
+        MortarTurretDummy,
+        FlakTurretDummy,
+        CRAMTurretDummy
     ]
 }

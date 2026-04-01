@@ -77,9 +77,10 @@ class Animation(BaseGraphicsEntity):
         self._playing = True
 
     def stop(self) -> None:
-        # self.kill()
-        self.remove(Drawn)
+        self.kill()
+        # self.remove(Drawn)
         self._playing = False
+        del self
 
     def _gl_draw(self, delta_cal: float):
         self._current_t -= delta_cal

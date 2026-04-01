@@ -6,6 +6,7 @@ from ._cvectors import Vec2, normalize_angle
 from ._cutility_functions import raycast_size
 from ._ccolor import Color, fade, c_255_to_1
 from ._cutility_functions import add_tuple
+from ._constants import SQ2, MASK16, MASK32, MASK64
 
 
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord, is_related
