@@ -15,8 +15,12 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
+from amoginarium.collision_detection import collision_detection_aabb_aabb_minkowski_raycast
+
+if tp.TYPE_CHECKING:
+    from amoginarium.entities import Island
 from ._groups import GravityAffected, CollisionDestroyed, Bullets, Updated, Drawn, \
-    WallBouncer, GridSystem, _GridCell
+    WallBouncer, GridSystem, _GridCell, Walls
 from ..audio import PresetEffect, LargeExplosion, Shotgun, sound_effect_wrapper
 from ..audio import ContinuousSoundEffect, Mortar as MortarSound
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
@@ -117,6 +121,8 @@ class Bullet(ImageEntity):
         )
         self._last_pos = self.position.copy()
 
+        self.kill_next = False
+
         self.remove(Updated)
         if not no_gravity:
             self.add(GravityAffected)
@@ -130,7 +136,16 @@ class Bullet(ImageEntity):
             self._old_grid_num = new_num
             self._cells = GridSystem.get_cells_by_num(*new_num)
 
-        self._collision = WallCollider.collides_with_groups(self, self._cells)
+        for group in [Walls]:
+            wall: Island
+            for wall in group.sprites():
+                if pg.sprite.collide_rect(wall, self):
+                    pos = self._collide_with_island(wall)
+                    if pos is not None:
+                        self._collision = wall, pos
+                        return
+
+        self._collision = False
 
     @property
     def collision(self) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
@@ -138,7 +153,7 @@ class Bullet(ImageEntity):
 
     @property
     def on_ground(self) -> bool:
-        return self._collision
+        return self._collision is not False
 
     @property
     def damage(self) -> float:
@@ -207,61 +222,79 @@ class Bullet(ImageEntity):
     def hit_someone(self, target_hp: float) -> None:
         self.kill()
 
+    def _collide_with_island(self, island: Island) -> tuple[int, int] | None:
+        for island_rect in island.collision_rects:
+            result = collision_detection_aabb_aabb_minkowski_raycast(
+                self_size=(0, 0),
+                self_position_old=self.position.xy,
+                self_position_new=self._last_pos.xy,
+                other_size=island_rect.size,
+                other_position_old=(island_rect.x, island_rect.y),
+                other_position_new=(island_rect.x, island_rect.y),
+            )
+            if result is not None:
+                return result[0]
+
     def update(self, delta):
         self._ttl -= delta
         self._visibility_offset -= delta
 
-        self.__update_collision()
-
-        if any([
-            self._ttl <= 0,
-            self.on_ground
-        ]):
-            if self.kill():
-                return
+        self._last_pos = self.position.copy()
 
         # double gravity (because why not)
         self.acceleration.y *= 2
 
-        self._last_pos = self.position.copy()
         super().update(delta)
+        self.__update_collision()
+        if self._collision is not False:
+            self.position.xy = self._collision[1]
 
-        # check if bullet has hit someone
-        if self.velocity.length > 2000:
-            entities_hit = multi_raycast_mask(
-                self,
-                Updated.sprites(),
-                self._last_pos,
-                self.position,
-                10
-            )
+        if any([
+            self._ttl <= 0,
+            self.kill_next
+        ]):
+            if self.kill():
+                return
 
-            for other, pos in entities_hit:
-                if not is_related(self, other):
-                    self.position = pos
+        self.kill_next = self.on_ground
 
-                    try:
-                        dmg = other.damage
-
-                    except AttributeError:
-                        dmg = 0
-
-                    self.hit(dmg, other)
-
-                    with suppress(AttributeError):
-                        hp = other.hp
-                        if dmg != 0:
-                            self.hit_someone(target_hp=hp)
-
-                    # bullet is sprite
-                    try:
-                        dmg = self.damage
-
-                    except AttributeError:
-                        dmg = 0
-
-                    with suppress(AttributeError):
-                        other.hit(dmg, self)
+        # # check if bullet has hit someone
+        # # check if bullet has hit someone
+        # if self.velocity.length > 2000:
+        #     entities_hit = multi_raycast_mask(
+        #         self,
+        #         Updated.sprites(),
+        #         self._last_pos,
+        #         self.position,
+        #         10
+        #     )
+        #
+        #     for other, pos in entities_hit:
+        #         if not is_related(self, other):
+        #             self.position = pos
+        #
+        #             try:
+        #                 dmg = other.damage
+        #
+        #             except AttributeError:
+        #                 dmg = 0
+        #
+        #             self.hit(dmg, other)
+        #
+        #             with suppress(AttributeError):
+        #                 hp = other.hp
+        #                 if dmg != 0:
+        #                     self.hit_someone(target_hp=hp)
+        #
+        #             # bullet is sprite
+        #             try:
+        #                 dmg = self.damage
+        #
+        #             except AttributeError:
+        #                 dmg = 0
+        #
+        #             with suppress(AttributeError):
+        #                 other.hit(dmg, self)
 
     def kill(self, killed_by: tp.Self = ...) -> bool:
         if all([
@@ -930,11 +963,11 @@ class Sniper(BaseWeapon):
         super().__init__(
             parent,
             reload_time=5,
-            recoil_time=2,
-            mag_size=6,
+            recoil_time=0.1,
+            mag_size=600,
             inaccuracy=.00500002,
             bullet_size=15,
-            bullet_speed=2500,
+            bullet_speed=25000,
             bullet_damage=15,
             barrel_length=0,
             bullet_lifetime=10,
@@ -943,7 +976,7 @@ class Sniper(BaseWeapon):
             sound_effect=s,
             bullet_visibility_offset=.04,
             bullet_type=SniperBullet,
-            weapon_recoil_factor=5,
+            weapon_recoil_factor=0,
         )
 
 
