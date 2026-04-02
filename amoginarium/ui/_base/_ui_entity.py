@@ -27,13 +27,11 @@ class UIEntity(BaseEntity):
     __visibility_change_root: bool
 
     __next_ui_element_parent: UIElement | None | EllipsisType
-    __is_ui_element: bool
 
     def __init__(
             self,
             parent: UIEntity | None = None,
             *args: tp.Any,
-            _is_ui_element: bool = False
     ) -> None:
         """
         Create base UI-Entity
@@ -45,7 +43,6 @@ class UIEntity(BaseEntity):
         self._visible = None  # Default visibility is attach to next parent visibility
         self._root_visibility = False
         self.__visibility_change_root = False
-        self.__is_ui_element = _is_ui_element
         self.__next_ui_element_parent = ...
 
         if parent is not None:
@@ -176,7 +173,7 @@ class UIEntity(BaseEntity):
             value: bool | None,
             recursive: bool = False,
             attach_to_parent: bool = True,
-            reset: bool = ...
+            reset: bool | EllipsisType = ...
     ) -> None:
         """
         Set the visibility of this UI-Entity.
@@ -261,18 +258,24 @@ class UIEntity(BaseEntity):
     # endregion
 
     # region Methods: ui-element
+    def _next_ui_element_parent_recursion(self) -> UIElement | None:
+        """:return: Next UI-Element in the parent chain or None if there is none"""
+        if self._parent is not None:
+            return self._parent._next_ui_element_parent_recursion()
+        else:
+            return None
+
     @property
     def _next_ui_element_parent(self) -> UIElement | None:
         """:return: Next UI-Element in the parent chain or None if there is none"""
-        if self.__next_ui_element_parent is not Ellipsis:
-            return self.__next_ui_element_parent
+        if not isinstance(parent := self.__next_ui_element_parent, EllipsisType):
+            return parent
 
         if self._parent is not None:
-            self.__next_ui_element_parent = self._parent if self._parent._is_ui_element \
-                else self._parent._next_ui_element_parent
+            self.__next_ui_element_parent = self._parent._next_ui_element_parent_recursion()
         else:
             self.__next_ui_element_parent = None
-        return self.__next_ui_element_parent
+        return self.__next_ui_element_parent  # type: ignore
 
     # endregion
 
@@ -286,7 +289,7 @@ class UIEntity(BaseEntity):
         return self._visible if self._visible is not None else parent_vis
 
     @property
-    def parent(self) -> UIEntity:
+    def parent(self) -> UIEntity | None:
         """:return: Parent entity or None"""
         return self._parent
 
@@ -310,10 +313,5 @@ class UIEntity(BaseEntity):
     def root(self) -> UIEntity:
         """return: Root entity or None"""
         return self._parent.root if self._parent else self
-
-    @property
-    def _is_ui_element(self) -> bool:
-        """:return: Whether the entity has a size and positon"""
-        return self.__is_ui_element
 
     # endregion

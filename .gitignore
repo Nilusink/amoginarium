@@ -146,3 +146,6 @@ ideas.md
 *.c
 
 unused/
+
+logic_debug.json
+test*.py

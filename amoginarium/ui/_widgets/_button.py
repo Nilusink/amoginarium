@@ -45,7 +45,9 @@ ButtonClickSound = _ButtonClickSound()
 
 ANIM_TIME: float = .2
 
+from .._debug import draw_debug_bounds
 
+@draw_debug_bounds
 class Button(Rectangle):
     """
     a button, what did you expect?
@@ -135,7 +137,8 @@ class Button(Rectangle):
                                                       self.__fg_color.rgb255)
 
         # if self.__command is not None:
-        self.add_click_callback(lambda *_: self.__command())
+        if self.__command is not None:
+            self.add_click_callback(lambda *_: self.__command())
 
     def _gl_draw(self) -> None:
         super()._gl_draw()

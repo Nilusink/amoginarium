@@ -39,9 +39,9 @@ class UIEventElement(UIElement):
     __is_hovered_outer: bool | None
     __is_hovered_outer_last: bool | None
 
-    __on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None
-    __on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None
-    __on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None
+    __on_enter_callbacks: list[tp.Callable[[], tp.Any]]
+    __on_leave_callbacks: list[tp.Callable[[], tp.Any]]
+    __on_buffer_callbacks: list[tp.Callable[[], tp.Any]]
     __on_click_callbacks: list[tp.Callable[[], tp.Any]]
 
     def __init__(
@@ -222,6 +222,7 @@ class UIEventElement(UIElement):
             (self.top_left.absolute_global.x + buffer) <= coords.x <= (self.bottom_right.absolute_global.x - buffer),
             (self.top_left.absolute_global.y + buffer) <= coords.y <= (self.bottom_right.absolute_global.y - buffer)
         ]):
+            print("KICK IN")
             if not self.__use_collision_mask:
                 return True
 

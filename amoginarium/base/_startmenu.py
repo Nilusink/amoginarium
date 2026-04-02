@@ -10,7 +10,7 @@ Project: amoginarium
 
 import typing as tp
 
-from amoginarium.ui import Button, Rectangle
+from amoginarium.ui import Button, Rectangle, Anchor
 
 
 ##################################################
@@ -38,11 +38,13 @@ class StartMenu(Rectangle):
             command=start_game_callback
         )
 
-        Button(
+        self.count = 0
+        self.but = Button(
             (0.5, 0.5),
             (but_width, but_height),
             "Settings",
-            parent=self
+            parent=self,
+            command=open_settings_callback
         )
 
         Button(

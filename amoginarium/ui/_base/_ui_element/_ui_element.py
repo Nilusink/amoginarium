@@ -8,6 +8,7 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
+from types import EllipsisType
 import typing as tp
 
 from amoginarium.logic import Vec2, coord_t, convert_coord, TupleMath
@@ -23,8 +24,8 @@ from ._ui_element_values import UIElementData, UIElementValueNamesEnum, UIElemen
 
 class UIElement(UIEntity):
     """Basic UI component with position and size stuff"""
-    __NULL_VEC2: tp.Final[Vec2] = Vec2()
-    __ONE_VEC2: tp.Final[Vec2] = Vec2().from_cartesian(1, 1)
+    __NULL_VEC2: tp.ClassVar[Vec2] = Vec2()
+    __ONE_VEC2: tp.ClassVar[Vec2] = Vec2().from_cartesian(1, 1)
 
     __data: UIElementData
     __last_data: UIElementData
@@ -57,7 +58,7 @@ class UIElement(UIEntity):
         :param size_is_relative_to_parent: Whether the size is relative to the parent or the screen
         :param parent_reference_position: What reference position of the parent component to use
         """
-        super().__init__(parent=parent, _is_ui_element=True)
+        super().__init__(parent=parent)
 
         self.__absolute_values = absolute_values
 
@@ -223,30 +224,32 @@ class UIElement(UIEntity):
                         raise ValueError(f"Invalid value type: {value_type}.")
 
                     half_size_xy = TupleMath.div(size_xy, (2, 2))
-                    offset_xy = (0.0, 0.0)
 
                     match value_name:
-                        case UIElementValueNamesEnum.CENTER:
-                            if self.__data.placement_anchor == Anchor.NW:
-                                offset_xy = half_size_xy
                         case UIElementValueNamesEnum.TOP_LEFT:
-                            if self.__data.placement_anchor == Anchor.CENTER:
-                                offset_xy = (-half_size_xy[0], -half_size_xy[1])
+                            mod_coord = (0.0, 0.0)
                         case UIElementValueNamesEnum.TOP_RIGHT:
-                            if self.__data.placement_anchor == Anchor.NW:
-                                offset_xy = (size_xy[0], 0.0)
-                            elif self.__data.placement_anchor == Anchor.CENTER:
-                                offset_xy = (half_size_xy[0], -half_size_xy[1])
+                            mod_coord = (size_xy[0], 0.0)
                         case UIElementValueNamesEnum.BOTTOM_LEFT:
-                            if self.__data.placement_anchor == Anchor.NW:
-                                offset_xy = (0.0, size_xy[1])
-                            elif self.__data.placement_anchor == Anchor.CENTER:
-                                offset_xy = (-half_size_xy[0], half_size_xy[1])
+                            mod_coord = (0.0, size_xy[1])
                         case UIElementValueNamesEnum.BOTTOM_RIGHT:
-                            if self.__data.placement_anchor == Anchor.NW:
-                                offset_xy = size_xy
-                            elif self.__data.placement_anchor == Anchor.CENTER:
-                                offset_xy = half_size_xy
+                            mod_coord = size_xy
+                        case UIElementValueNamesEnum.CENTER:
+                            mod_coord = half_size_xy
+
+                    match self.__data.placement_anchor:
+                        case Anchor.NW:
+                            anchor_coord = (0.0, 0.0)
+                        case Anchor.NE:
+                            anchor_coord = (size_xy[0], 0.0)
+                        case Anchor.SW:
+                            anchor_coord = (0.0, size_xy[1])
+                        case Anchor.SE:
+                            anchor_coord = size_xy
+                        case Anchor.CENTER:
+                            anchor_coord = half_size_xy
+
+                    offset_xy = (mod_coord[0] - anchor_coord[0], mod_coord[1] - anchor_coord[1])
 
                     match value_type:
                         case UIElementValueTypesEnum.ABSOLUTE_GLOBAL:
@@ -365,174 +368,51 @@ class UIElement(UIEntity):
         self.__data.height.relative_to_parent = self.__data.size.relative_to_parent.y
         # endregion
 
-        half_size_absolute = TupleMath.div(self.__data.size.absolute.xy, (2, 2))
-        half_size_relative_global = TupleMath.div(self.__data.size.relative_global.xy, (2, 2))
-        half_size_relative_to_parent = TupleMath.div(self.__data.size.relative_to_parent.xy, (2, 2))
-
+        # region Positions
         match self.__data.placement_anchor:
-            case Anchor.CENTER:
-                # region Center
-                self.__data.center.copy_from(self.__data.position)
-                # endregion
-
-                # region Top Left
-                self.__data.top_left.absolute_global = TupleMath.sub(
-                    self.__data.position.absolute_global.xy,
-                    half_size_absolute
-                )
-                self.__data.top_left.absolute_to_parent = TupleMath.sub(
-                    self.__data.position.absolute_to_parent.xy,
-                    half_size_absolute
-                )
-                self.__data.top_left.relative_global = TupleMath.sub(
-                    self.__data.position.relative_global.xy,
-                    half_size_relative_global
-                )
-                self.__data.top_left.relative_to_parent = TupleMath.sub(
-                    self.__data.position.relative_to_parent.xy,
-                    half_size_relative_to_parent
-                )
-                # endregion
-
-                # region Top Right
-                self.__data.top_right.absolute_global = TupleMath.add(
-                    self.__data.position.absolute_global.xy,
-                    (half_size_absolute[0], -half_size_absolute[1])
-                )
-                self.__data.top_right.absolute_to_parent = TupleMath.add(
-                    self.__data.position.absolute_to_parent.xy,
-                    (half_size_absolute[0], -half_size_absolute[1])
-                )
-                self.__data.top_right.relative_global = TupleMath.add(
-                    self.__data.position.relative_global.xy,
-                    (half_size_relative_global[0], -half_size_relative_global[1])
-                )
-                self.__data.top_right.relative_to_parent = TupleMath.add(
-                    self.__data.position.relative_to_parent.xy,
-                    (half_size_relative_to_parent[0], -half_size_relative_to_parent[1])
-                )
-                # endregion
-
-                # region Bottom Left
-                self.__data.bottom_left.absolute_global = TupleMath.add(
-                    self.__data.position.absolute_global.xy,
-                    (-half_size_absolute[0], half_size_absolute[1])
-                )
-                self.__data.bottom_left.absolute_to_parent = TupleMath.add(
-                    self.__data.position.absolute_to_parent.xy,
-                    (-half_size_absolute[0], half_size_absolute[1])
-                )
-                self.__data.bottom_left.relative_global = TupleMath.add(
-                    self.__data.position.relative_global.xy,
-                    (-half_size_relative_global[0], half_size_relative_global[1])
-                )
-                self.__data.bottom_left.relative_to_parent = TupleMath.add(
-                    self.__data.position.relative_to_parent.xy,
-                    (-half_size_relative_to_parent[0], half_size_relative_to_parent[1])
-                )
-                # endregion
-
-                # region Bottom Right (FIXED: Was writing to top_left)
-                self.__data.bottom_right.absolute_global = TupleMath.add(
-                    self.__data.position.absolute_global.xy,
-                    half_size_absolute
-                )
-                self.__data.bottom_right.absolute_to_parent = TupleMath.add(
-                    self.__data.position.absolute_to_parent.xy,
-                    half_size_absolute
-                )
-                self.__data.bottom_right.relative_global = TupleMath.add(
-                    self.__data.position.relative_global.xy,
-                    half_size_relative_global
-                )
-                self.__data.bottom_right.relative_to_parent = TupleMath.add(
-                    self.__data.position.relative_to_parent.xy,
-                    half_size_relative_to_parent
-                )
-                # endregion
-
             case Anchor.NW:
-                # region Center
-                self.__data.center.absolute_global = TupleMath.add(
-                    self.__data.position.absolute_global.xy,
-                    half_size_absolute
-                )
-                self.__data.center.absolute_to_parent = TupleMath.add(
-                    self.__data.position.absolute_to_parent.xy,
-                    half_size_absolute
-                )
-                self.__data.center.relative_global = TupleMath.add(
-                    self.__data.position.relative_global.xy,
-                    half_size_relative_global
-                )
-                self.__data.center.relative_to_parent = TupleMath.add(
-                    self.__data.position.relative_to_parent.xy,
-                    half_size_relative_to_parent
-                )
-                # endregion
-
-                # region Top Left
-                self.__data.top_left.copy_from(self.__data.position)
-                # endregion
-
-                # region Top Right (FIXED: Was writing to bottom_left)
-                self.__data.top_right.absolute_global = TupleMath.add(
-                    self.__data.position.absolute_global.xy,
-                    (self.__data.size.absolute.x, 0)
-                )
-                self.__data.top_right.absolute_to_parent = TupleMath.add(
-                    self.__data.position.absolute_to_parent.xy,
-                    (self.__data.size.absolute.x, 0)
-                )
-                self.__data.top_right.relative_global = TupleMath.add(
-                    self.__data.position.relative_global.xy,
-                    (self.__data.size.relative_global.x, 0)
-                )
-                self.__data.top_right.relative_to_parent = TupleMath.add(
-                    self.__data.position.relative_to_parent.xy,
-                    (self.__data.size.relative_to_parent.x, 0)
-                )
-                # endregion
-
-                # region Bottom Left
-                self.__data.bottom_left.absolute_global = TupleMath.add(
-                    self.__data.position.absolute_global.xy,
-                    (0, self.__data.size.absolute.y)
-                )
-                self.__data.bottom_left.absolute_to_parent = TupleMath.add(
-                    self.__data.position.absolute_to_parent.xy,
-                    (0, self.__data.size.absolute.y)
-                )
-                self.__data.bottom_left.relative_global = TupleMath.add(
-                    self.__data.position.relative_global.xy,
-                    (0, self.__data.size.relative_global.y)
-                )
-                self.__data.bottom_left.relative_to_parent = TupleMath.add(
-                    self.__data.position.relative_to_parent.xy,
-                    (0, self.__data.size.relative_to_parent.y)
-                )
-                # endregion
-
-                # region Bottom Right (FIXED: Was writing to bottom_left)
-                self.__data.bottom_right.absolute_global = TupleMath.add(
-                    self.__data.position.absolute_global.xy,
-                    self.__data.size.absolute.xy
-                )
-                self.__data.bottom_right.absolute_to_parent = TupleMath.add(
-                    self.__data.position.absolute_to_parent.xy,
-                    self.__data.size.absolute.xy
-                )
-                self.__data.bottom_right.relative_global = TupleMath.add(
-                    self.__data.position.relative_global.xy,
-                    self.__data.size.relative_global.xy
-                )
-                self.__data.bottom_right.relative_to_parent = TupleMath.add(
-                    self.__data.position.relative_to_parent.xy,
-                    self.__data.size.relative_to_parent.xy
-                )
-                # endregion
+                ax, ay = 0.0, 0.0
+            case Anchor.NE:
+                ax, ay = 1.0, 0.0
+            case Anchor.SW:
+                ax, ay = 0.0, 1.0
+            case Anchor.SE:
+                ax, ay = 1.0, 1.0
+            case Anchor.CENTER:
+                ax, ay = 0.5, 0.5
             case _:
                 raise ValueError(f"Invalid anchor: {self.__data.placement_anchor}")
+
+        pos = self.__data.position
+        sz_abs = self.__data.size.absolute.xy
+        sz_rg = self.__data.size.relative_global.xy
+        sz_rtp = self.__data.size.relative_to_parent.xy
+
+        targets = [
+            (self.__data.top_left, 0.0, 0.0),
+            (self.__data.top_right, 1.0, 0.0),
+            (self.__data.bottom_left, 0.0, 1.0),
+            (self.__data.bottom_right, 1.0, 1.0),
+            (self.__data.center, 0.5, 0.5),
+        ]
+
+        for target_obj, px, py in targets:
+            if px == ax and py == ay:
+                target_obj.copy_from(pos)
+                continue
+
+            dx, dy = px - ax, py - ay
+
+            off_abs = (sz_abs[0] * dx, sz_abs[1] * dy)
+            off_rg = (sz_rg[0] * dx, sz_rg[1] * dy)
+            off_rtp = (sz_rtp[0] * dx, sz_rtp[1] * dy)
+
+            target_obj.absolute_global = TupleMath.add(pos.absolute_global.xy, off_abs)
+            target_obj.absolute_to_parent = TupleMath.add(pos.absolute_to_parent.xy, off_abs)
+            target_obj.relative_global = TupleMath.add(pos.relative_global.xy, off_rg)
+            target_obj.relative_to_parent = TupleMath.add(pos.relative_to_parent.xy, off_rtp)
+
+        # endregion
 
         self._ui_changed = True
         self.__last_data.copy_from(self.__data)
@@ -564,6 +444,9 @@ class UIElement(UIEntity):
     # endregion
 
     # region Methods: properties
+    def _next_ui_element_parent_recursion(self) -> UIElement:
+        return self
+
     @property
     def _ui_changed(self) -> bool:
         """:return: Whether the UI has changed since the last draw"""

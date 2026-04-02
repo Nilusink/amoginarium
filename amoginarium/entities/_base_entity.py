@@ -27,7 +27,7 @@ from ..logic import Vec2, rk4_update
 from ._groups import Updated, Drawn
 
 
-class BaseEntity(pg.sprite.Sprite):
+class BaseEntity(pg.sprite.Sprite, BaseEntityLike):
     """
     Base class for all entities
 
@@ -44,7 +44,7 @@ class BaseEntity(pg.sprite.Sprite):
         Init BaseEntity
         :param parent: parent entity (optional)
         """
-        super().__init__()
+        pg.sprite.Sprite.__init__(self)
         self._children: list[BaseEntity] = []
 
         self.__id = BaseEntity.__next_entity_id
@@ -58,12 +58,12 @@ class BaseEntity(pg.sprite.Sprite):
         return self.__id
 
     @property
-    def parent(self) -> BaseEntityLike:
+    def parent(self) -> BaseEntityLike | None:
         """:return: Parent entity or None"""
         return self._parent
 
     @property
-    def root(self) -> BaseEntity | None:
+    def root(self) -> BaseEntityLike | None:
         """return: Root entity or None"""
         return self._parent.root if self._parent else self
 
