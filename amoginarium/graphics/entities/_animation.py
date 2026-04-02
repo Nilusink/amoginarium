@@ -15,7 +15,7 @@ from amoginarium.shared import HasPosition
 from amoginarium.base._textures import textures
 from amoginarium import pv
 
-from ._graphics_groups import Drawn
+from ._graphics_groups import Drawn_0
 from ._base_entity import BaseGraphicsEntity
 
 
@@ -73,7 +73,7 @@ class Animation(BaseGraphicsEntity):
 
         self._current_image = 0
         self._current_t = self._delay
-        self.add(Drawn)
+        self.add(Drawn_0)
         self._playing = True
 
     def stop(self) -> None:

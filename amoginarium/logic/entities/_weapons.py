@@ -23,10 +23,11 @@ from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, Shotgun
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
-from ._base_entity import BaseLogicEntity, LogicGameEntity, PositionedLogicEntity
+from ._logic_groups import CollisionDestroyed, Updated
+from ._base_entity import LogicGameEntity
 
 
-class BaseWeapon(PositionedLogicEntity):
+class BaseWeapon(LogicGameEntity):
     """
     basic functionality of all weapons
     """
@@ -66,7 +67,7 @@ class BaseWeapon(PositionedLogicEntity):
             size: Vec2 | EllipsisType = ...
     ) -> None:
         if size is ...:
-            size = Vec2().from_cartesian(20, 20)
+            size: Vec2 = Vec2().from_cartesian(20, 20)
 
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -74,6 +75,10 @@ class BaseWeapon(PositionedLogicEntity):
             position=Vec2(),
             size=size
         )
+
+        # unless you want the sniper to kill its own bullet
+        self.remove(CollisionDestroyed, Updated)
+
         self._coalition = parent.coalition
         self._mag_size = mag_size
         self._inaccuracy = inaccuracy
@@ -96,15 +101,19 @@ class BaseWeapon(PositionedLogicEntity):
         self._bullet_type = bullet_type
         self._bullet_visibility_offset = bullet_visibility_offset
 
+        self._runtime_buffer[self.id].param0 = 1
+
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": DummyCIDs.player}
+            kwargs={"id": self.id, "cid": self.cid()}
         ))
-        print_ic_style(self.__class__.__name__, {"id": self.id, "cid": DummyCIDs.player})
 
     # region properties
     @property
-    def parent(self) -> PositionedLogicEntity:
+    def parent(self) -> LogicGameEntity:
+        """
+        Weapon parent (player / turret)
+        """
         return self._parent
 
     @property
@@ -138,7 +147,7 @@ class BaseWeapon(PositionedLogicEntity):
     @property
     def bullet_explosion_damage(self) -> float:
         """
-        explosion damage of bullet
+        explosion damage from bullet
         """
         return self._bullet_explosion_damage
 
@@ -288,6 +297,7 @@ class BaseWeapon(PositionedLogicEntity):
         else:
             bullet_lifetime = bullet_tof
 
+        bullet_lifetime: float
         self._bullet_type(
             runtime_buffer=self._runtime_buffer,
             parent=self.parent,
@@ -340,6 +350,8 @@ class Minigun(BaseWeapon):
     """
     Minigun
     """
+    _cid = WeaponCIDs.minigun
+
     def __init__(
             self,
             parent,
@@ -368,6 +380,8 @@ class Ak47(BaseWeapon):
     """
     Ak-47
     """
+    _cid = WeaponCIDs.ak47
+
     def __init__(
             self,
             parent,
@@ -397,6 +411,8 @@ class Sniper(BaseWeapon):
     """
     Basic Sniper
     """
+    _cid = WeaponCIDs.sniper
+
     def __init__(
             self,
             parent,
@@ -430,6 +446,8 @@ class Mortar(BaseWeapon):
     """
     Mortar
     """
+    _cid = WeaponCIDs.mortar
+
     def __init__(
             self,
             parent,
@@ -463,6 +481,8 @@ class Flak(BaseWeapon):
     """
     Flak Canon
     """
+    _cid = WeaponCIDs.flak
+
     def __init__(
             self,
             parent,
@@ -497,6 +517,8 @@ class CRAM(BaseWeapon):
     """
     CRAM Minigun
     """
+    _cid = WeaponCIDs.cram
+
     def __init__(
             self,
             parent,
@@ -530,6 +552,8 @@ class HandThrownGrenade(BaseWeapon):
     A grenade ... thrown by ...
     your hand
     """
+    _cid = WeaponCIDs.h_grenade
+
     def __init__(
             self,
             parent,

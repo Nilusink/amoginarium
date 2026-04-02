@@ -551,6 +551,9 @@ class Player(LRImageEntity):
         if wall_rider is not ...:
             self.velocity -= wall_rider.velocity
 
+        if self.angle:
+            self.item.item.facing.angle = self.facing.angle
+
         if self.position.y > 2000:
             self.kill()
 

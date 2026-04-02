@@ -370,8 +370,8 @@ class LogicProcess:
             pv.global_vars.get_screen_size() / pv.global_vars.get_pixel_per_meter()
         ) / 2
 
-        if max_player_pos.x > world_position.x + screen_pixels.x * 1.4:
-            x = max_player_pos.x - screen_pixels.x * 1.4
+        if max_player_pos.x > world_position.x + screen_pixels.x:
+            x = max_player_pos.x - screen_pixels.x
             Updated.world_position.x = x
 
         elif max_player_pos.x < world_position.x + screen_pixels.x * .6:

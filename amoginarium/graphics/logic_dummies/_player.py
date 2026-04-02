@@ -12,7 +12,7 @@ import pygame as pg
 import typing as tp
 
 from ._synced_entities import SyncedLRImageEntity
-from ..entities import Drawn
+from ..entities import Drawn_0
 from ...base._textures import textures
 from ...shared import DummyCIDs
 from ...shared.utility import Vec2
@@ -50,6 +50,9 @@ class PlayerDummy(SyncedLRImageEntity):
 
     @classmethod
     def load_textures(cls) -> None:
+        """
+        Load the textures for player
+        """
         cls._player_right_64_texture, _ = textures.get_texture(
             PLAYER_RIGHT_64_PATH,
             (64, 64)
@@ -102,11 +105,5 @@ class PlayerDummy(SyncedLRImageEntity):
                 mirror="x"
             )
 
-    def _gl_draw(
-            self,
-            delta_cal: float,
-            draw_at: Vec2 = ...,
-            size: Vec2 = ...,
-            convert_global: bool = True
-    ):
-        super()._gl_draw(delta_cal, draw_at, size, convert_global)
+    def _gl_draw(self, delta_cal: float):
+        super()._gl_draw(delta_cal)

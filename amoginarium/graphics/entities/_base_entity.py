@@ -7,24 +7,25 @@ Graphics base entity
 Author:
 Nilusink
 """
+from icecream import ic
 import typing as tp
 
 
 class BaseGraphicsEntity:
     __slots__ = [
         "__g", "_children", "_parent", "_root_visibility", "_highlight",
-        "visible"
+        "_visible"
     ]
 
     _cid: str = ...
 
-    visible: bool
+    _visible: bool
     _parent: tp.Self | None
     _children: list[tp.Self]
 
     def __init__(self, parent: tp.Self | None = None) -> None:
         try:  # ui implements visible as property without setter
-            self.visible = True
+            self._visible = True
 
         except AttributeError:
             pass
@@ -36,6 +37,16 @@ class BaseGraphicsEntity:
         self._children = []
         self._root_visibility = False
         self._highlight = False
+
+    # region properties
+    @property
+    def visible(self) -> bool:
+        """
+        returns current visibility state
+        """
+        return self._visible
+
+    # endregion
 
     # region Methods: pygame
     def add(self, *groups) -> None:

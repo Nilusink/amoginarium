@@ -30,6 +30,7 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
         ("size_x", ctypes.c_float),
         ("size_y", ctypes.c_float),
         ("alive", ctypes.c_bool),
+        ("flags", ctypes.c_uint16),  # (0=visible, )
 
         # misc parameters for sharing data with base process
         ("param0", ctypes.c_float),

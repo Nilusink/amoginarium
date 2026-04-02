@@ -18,7 +18,7 @@ import ctypes
 from . import GravityAffected, FrictionXAffected, Updated, LogicGameEntity
 from . import CollisionDestroyed, WallCollider, Players
 from ..audio import DeathSound, SoundEffect
-from ._weapons import BaseWeapon, Minigun
+from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
 # from ._items import Shield, HealingPotion, JetBag, VisibleItem
 # from ._charged_weapon import Bow, ChargedWeapon, RailGun
 from ...shared import Coalitions, WeaponLike, ItemLike, ItemSlot, base_entity_t
@@ -100,10 +100,10 @@ class Player(LogicGameEntity):
             self._remove_hover
         )
         items = [
-            # Ak47(self, False, parent_position_offset=(0, 0)),
+            Ak47(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
-            # Sniper(self, False),
-            # HandThrownGrenade(self, False),
+            Sniper(self, self._runtime_buffer, False),
+            HandThrownGrenade(self, self._runtime_buffer, False),
             # Shield(self, Vec2().from_cartesian(50, 0)),
             # HealingPotion(self, Vec2().from_cartesian(0, 5)),
             # JetBag(self, Vec2().from_cartesian(-24, 0)),
@@ -118,8 +118,11 @@ class Player(LogicGameEntity):
 
         for slot in self._hotbar:
             if slot.item:
+                slot.item.item.hide()
                 if hasattr(slot.item.item, "reload"):
                     slot.item.item.reload(True)
+
+        self.item.show()
 
         self._last_hit = perf_counter()
 
@@ -189,10 +192,14 @@ class Player(LogicGameEntity):
         """
         if self.item:
             self.item.stop()
+            self.item.hide()
 
         self._current_weapon += 1
         if self._current_weapon >= self._hotbar.num_slots:
             self._current_weapon = 0
+
+        if self.item:
+            self.item.show()
 
     def previous_weapon(self) -> None:
         """
@@ -200,10 +207,14 @@ class Player(LogicGameEntity):
         """
         if self.item:
             self.item.stop()
+            self.item.hide()
 
         self._current_weapon -= 1
         if self._current_weapon < 0:
             self._current_weapon = self._hotbar.num_slots - 1
+
+        if self.item:
+            self.item.show()
 
     def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
         """
@@ -374,25 +385,27 @@ class Player(LogicGameEntity):
         else:
             self._weapon_change_pressed = False
 
+        mouse_pos = self._controller.mouse_x, self._controller.mouse_y
+        vector = convert_coord(
+            (
+                (mouse_pos[0] / ppm) * ssf.x,
+                (mouse_pos[1] / ppm) * ssf.y,
+            ),
+            Vec2,
+        )
+        vector -= self.world_position
+        self.facing.angle = vector.angle
+
         # directional stuff
         if not self._in_inventory:
             if self._controller.shoot:
-                mouse_pos = self._controller.mouse_x, self._controller.mouse_y
-                vector = convert_coord((
-                    (mouse_pos[0] / ppm) * ssf.x,
-                    (mouse_pos[1] / ppm) * ssf.y,
-                ), Vec2)
-                vector -= self.world_position
-
                 # shot_direction = self.facing.copy()
                 # shot_direction.y = -.4
                 if isinstance(self.item, BaseWeapon):
                     if hasattr(self.item, "charge"):
                         self.item.charge()
 
-                    elif self.item.shoot(
-                        vector
-                    ):
+                    elif self.item.shoot(self.facing):
                         self._controller.feedback_shoot()
 
                 elif self.item:
@@ -500,6 +513,9 @@ class Player(LogicGameEntity):
         if wall_rider is not ...:
             self.velocity -= wall_rider.velocity
 
+        if self.item:
+            self.item.facing.angle = self.facing.angle
+
         self._runtime_buffer[self.id].param0 = self._max_hp / self._hp
 
         if self.position.y > 2000:
@@ -521,10 +537,10 @@ class Player(LogicGameEntity):
         self._alive = False
 
         self._death_sound.play()
-        if hasattr(self.item, "kill"):
+        if hasattr(self.item, "stop_use"):
             self.item.stop_use()
 
-        else:
+        elif hasattr(self.item, "stop_shooting"):
             self.item.stop_shooting()
 
         # remove from every group except players

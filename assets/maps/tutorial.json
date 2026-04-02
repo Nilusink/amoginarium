@@ -123,7 +123,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.ak47",
+            "type": "turret.static.cram",
             "pos": [2700, 705]
         },
         {

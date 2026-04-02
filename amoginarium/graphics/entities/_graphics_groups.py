@@ -38,7 +38,8 @@ class _SyncedEntities(BaseGroup):
             entity.update_from_buffer(True)
 
 
-Drawn = _Drawn()
+Drawn_0 = _Drawn()
+Drawn_1 = _Drawn()
 Cursor = _Cursor()
 UIEntities = _UIEntities()
 SyncedEntities = _SyncedEntities()

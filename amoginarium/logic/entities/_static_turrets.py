@@ -44,6 +44,10 @@ type target_solution_t = TargetSolution | None
 
 
 class BaseTurret(LogicGameEntity):
+    """
+    base turret type
+    """
+
     size: Vec2
     weapon: BaseWeapon
     _max_hp: int = 80
@@ -148,6 +152,7 @@ class BaseTurret(LogicGameEntity):
 
     def kill(self, killed_by=...):
         self.weapon.stop()
+        self.weapon.kill(killed_by)
         super().kill(killed_by)
 
     def get_next_target(self, include_all: bool = False) -> target_solution_t:
@@ -284,6 +289,9 @@ class BaseTurret(LogicGameEntity):
             self.weapon.reload()
 
         super()._update(delta)
+
+        # set facing of weapon
+        self.weapon.facing.angle = self._aiming_at.angle
 
         # update parameters
         ## bars

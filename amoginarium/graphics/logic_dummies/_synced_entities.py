@@ -7,25 +7,30 @@ Shared memory synced graphics entities
 Author:
 Nilusink
 """
-from icecream import ic
-import typing as tp
+
+from types import EllipsisType
 import math as m
 
 from ...shared.utility import Vec2
-from ..entities import BaseGraphicsEntity, Drawn, SyncedEntities
+from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
 from ... import pv
 
 
 class SyncedGraphicsEntity(BaseGraphicsEntity):
+    """
+    Graphics entity synced with logic entity (via SHM)
+    """
+
     __slots__ = [
         "pos", "facing", "size", "alive", "param0", "param1", "param2",
-        "param3", "__id", "__was_alive", "param4"
+        "param3", "__id", "__was_alive", "param4", "_logic_visibility"
     ]
     pos: Vec2
     facing: Vec2
     size: Vec2
     alive: bool
+    _logic_visibility: bool
 
     param0: float
     param1: float
@@ -42,6 +47,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.facing = Vec2()
         self.size = Vec2()
         self.alive = True
+        self._logic_visibility = False
 
         self.param0 = 0
         self.param1 = 0
@@ -52,9 +58,28 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.__was_alive = False
         self._update_from_buffer()
 
-        self.add(Drawn, SyncedEntities)
+        self.add(Drawn_0, SyncedEntities)
+
+    # region properties
+    @property
+    def visible(self) -> bool:
+        return self._visible and self._logic_visibility
+
+    # endregion
 
     # region buffer control
+    def _get_bit(self, param: str, bit_index: int) -> bool:
+        """
+        get one single bits value
+
+        :param param: param to get bit from
+        :param bit_index: which bit to get
+        :return: bit value
+        """
+        value = getattr(pv.E_BUFF[self.__id], param)
+
+        return value & (1 << bit_index)
+
     def _update_from_buffer(self) -> None:
         """
         update entity values from shared buffer
@@ -69,6 +94,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.size.y = pv.E_BUFF[self.__id].size_y
 
         self.alive = pv.E_BUFF[self.__id].alive
+        self._logic_visibility = self._get_bit("flags", 0)
 
         if not self.__was_alive:
             if self.alive:
@@ -108,11 +134,11 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     # region draw
     def _before_gl_draw(self, drawn: bool) -> None:
-        if not self.alive and self.visible:
-            self.visible = False
+        if not self.alive and self._visible:
+            self._visible = False
 
-        elif self.alive and not self.visible:
-            self.visible = True
+        elif self.alive and not self._visible:
+            self._visible = True
     # endregion
 
 
@@ -145,27 +171,16 @@ class SyncedImageEntity(SyncedGraphicsEntity):
 
 
 class SyncedLRImageEntity(SyncedGraphicsEntity):
+    """
+    entity with two textures used depending on facing.x
+    """
+
     __slots__ = ["_texture_id_l", "_texture_id_r"]
 
-    def _gl_draw(
-            self,
-            delta_cal: float,
-            draw_at: Vec2 = ...,
-            size: Vec2 = ...,
-            convert_global: bool = True
-    ):
-        if draw_at is not ...:
-            pos = draw_at
-
-        else:
-            pos = self.world_position
-
-        if size is ...:
-            size = self.size
+    def _gl_draw(self, delta_cal: float):
 
         renderer.draw_textured_quad(
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
-            pos - size / 2,
-            size,
-            convert_global=convert_global
+            self.world_position - self.size / 2,
+            self.size,
         )

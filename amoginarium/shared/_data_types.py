@@ -71,6 +71,7 @@ class WeaponCIDs(Enum):
     mortar = "weapon.mortar"
     flak = "weapon.flak"
     cram = "weapon.cram"
+    h_grenade = "weapon.grenade.hand"
     base = "weapon.base"
 
 

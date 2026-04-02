@@ -8,14 +8,17 @@ Author:
 Nilusink
 """
 from contextlib import suppress
+from types import EllipsisType
 from time import perf_counter
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import numpy as np
 
 from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
+from amoginarium.shared.debugging import run_with_debug
 from amoginarium import pv
 
 from ..audio import LargeExplosion
@@ -28,6 +31,9 @@ SQR2 = np.sqrt(2)
 
 
 class Bullet(LogicGameEntity):
+    """
+    basic logic bullet
+    """
     __slots__ = [
         "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
@@ -51,13 +57,13 @@ class Bullet(LogicGameEntity):
             time_to_life: float = 2,
             explosion_radius: float = -1,
             explosion_damage: float = 0,
-            target_pos: Vec2 = ...,
+            target_pos: Vec2 | EllipsisType = ...,
             size: Vec2 | int = 10,
             no_gravity=False,
             visibility_offset: float = 0,
     ) -> None:
         if not isinstance(size, Vec2):
-            size = Vec2().from_cartesian(size, size)
+            size: Vec2 = Vec2().from_cartesian(size, size)
 
         self._casing = casing
         self._base_damage = base_damage
@@ -99,6 +105,7 @@ class Bullet(LogicGameEntity):
                 "visibility_offset": self._visibility_offset,
             }
         ))
+        ic(self.cid())
 
     @property
     def on_ground(self) -> bool:
@@ -171,7 +178,7 @@ class Bullet(LogicGameEntity):
     def hit_someone(self, target_hp: float) -> None:
         self.kill()
 
-    def update(self, delta):
+    def _update(self, delta):
         self._ttl -= delta
         self._visibility_offset -= delta
 
@@ -186,14 +193,14 @@ class Bullet(LogicGameEntity):
         self.acceleration.y *= 2
 
         self._last_pos = self.position.copy()
-        super().update(delta)
+        super()._update(delta)
         self.facing.angle = self.velocity.angle
 
         # check if bullet has hit someone
         if self.velocity.length > 2000:
             entities_hit = multi_raycast_mask(
                 self,
-                Updated.sprites(),
+                CollisionDestroyed.sprites(),
                 self._last_pos,
                 self.position,
                 10
@@ -226,7 +233,9 @@ class Bullet(LogicGameEntity):
                     with suppress(AttributeError):
                         other.hit(dmg, self)
 
+    @run_with_debug()
     def kill(self, killed_by: tp.Self = ...) -> bool:
+        ic(killed_by, self.position)
         if all([
             self._casing,
             not Updated.out_of_bounds_x(self)

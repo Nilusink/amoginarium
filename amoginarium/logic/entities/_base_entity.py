@@ -44,6 +44,7 @@ class BaseLogicEntity:
         self._runtime_buffer = runtime_buffer
 
         self._runtime_buffer[self.__id].alive = True
+        self._set_bit("flags", 0, True)  # set visible
 
         self.add(Updated)
 
@@ -66,6 +67,32 @@ class BaseLogicEntity:
     @property
     def children(self) -> list[BaseLogicEntity]:
         return self._children
+    # endregion
+
+    # region bitwise fun
+    def _set_bit(self, param: str, bit_index: int, value: bool) -> None:
+        """
+        set (or reset) on specified bit
+
+        :param param: what parameter to set the bit at
+        :param bit_index: bit to set
+        :param value: what to set the bit to
+        """
+
+        # get value from buffer
+        attribute = getattr(self._runtime_buffer[self.id], param)
+
+        # set bit (bitwise or)
+        if value:
+            attribute |= (1 << bit_index)
+
+        # reset bit (bitwise and with inverted mask)
+        else:
+            attribute &= ~(1 << bit_index)
+
+        # write value to buffer
+        setattr(self._runtime_buffer[self.id], param, attribute)
+
     # endregion
 
     # region pygame methods
@@ -97,6 +124,7 @@ class BaseLogicEntity:
         """
         # kill children first
         for child in self._children:
+            ic(child)
             child.kill()
 
         # commit suicide
@@ -110,7 +138,7 @@ class BaseLogicEntity:
 
     # endregion
 
-    # region entity methods
+    # region update methods
     def _update(self, delta: float) -> None:
         """
         actual update function for the entity
@@ -128,6 +156,21 @@ class BaseLogicEntity:
             for child in self._children:
                 update = getattr(child, "update", lambda _: ...)
                 update(delta)
+    # endregion
+
+    # region visibility
+    def show(self) -> None:
+        """
+        set visibility to 1
+        """
+        self._set_bit("flags", 0, True)
+
+    def hide(self) -> None:
+        """
+        set visibility to 0
+        """
+        self._set_bit("flags", 0, False)
+
     # endregion
 
 

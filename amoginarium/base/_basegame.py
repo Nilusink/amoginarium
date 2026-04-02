@@ -28,7 +28,7 @@ from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
 from ..shared.settings import Settings
 from ..graphics.render_bindings import renderer
 from ..graphics.ui import UICursor
-from ..graphics.entities import UIEntities, Drawn, SyncedEntities
+from ..graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities
 from ..graphics.controllers import Controller, Controllers, KeyboardController
 from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS
 from ..logic import run_continuous
@@ -628,6 +628,12 @@ class BaseGame:
                             **item.kwargs
                         )
 
+                    else:
+                        print_ic_style(
+                            f"{CC.bfg.YELLOW}Unknown spawned item{CC.ctrl.ENDC}"
+                            f": {cid} ({item})"
+                        )
+
                 elif item.type == BaseCommandType.spawn_island:
                     # try to spawn graphics dummy
                     cid = item.kwargs.pop("cid")
@@ -692,7 +698,7 @@ class BaseGame:
 
                 if active_scene in ["PauseMenu", "PauseSettings"]:
                     SyncedEntities.update_from_buffer()
-                    Drawn.gl_draw(delta)
+                    Drawn_0.gl_draw(delta)
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)
@@ -713,7 +719,8 @@ class BaseGame:
 
                 # handle groups
                 SyncedEntities.update_from_buffer()
-                Drawn.gl_draw(delta)
+                Drawn_0.gl_draw(delta)
+                Drawn_1.gl_draw(delta)
 
             pg.display.flip()
 
@@ -745,7 +752,7 @@ class BaseGame:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         self._background.draw(0)
-        Drawn.gl_draw()
+        Drawn_0.gl_draw()
 
         pg.display.flip()
 
