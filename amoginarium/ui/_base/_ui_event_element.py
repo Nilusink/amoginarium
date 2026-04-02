@@ -222,7 +222,6 @@ class UIEventElement(UIElement):
             (self.top_left.absolute_global.x + buffer) <= coords.x <= (self.bottom_right.absolute_global.x - buffer),
             (self.top_left.absolute_global.y + buffer) <= coords.y <= (self.bottom_right.absolute_global.y - buffer)
         ]):
-            print("KICK IN")
             if not self.__use_collision_mask:
                 return True
 
