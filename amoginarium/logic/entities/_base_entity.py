@@ -5,12 +5,13 @@ _base_entity.py
 defines the most basic form of logic entity
 """
 from __future__ import annotations
+from types import EllipsisType
 from icecream import ic
 from ctypes import Array
 import pygame as pg
 import typing as tp
 
-from ...shared import Coalitions, base_entity_t, ENTITY_COUNTER
+from ...shared import Coalitions, base_entity_t, ENTITY_COUNTER, CIDType
 from ...shared.debugging import print_ic_style, CC
 from ...shared.utility import Vec2
 from ._logic_groups import Updated
@@ -24,12 +25,12 @@ class BaseLogicEntity:
 
     _children: list[BaseLogicEntity]
     _lifetime: float
-    _parent: tp.Self | None
+    _parent: BaseLogicEntity | None
 
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
-            parent: tp.Self | None = None,
+            parent: BaseLogicEntity | None = None,
     ) -> None:
         # pygame groups
         self.__g = []
@@ -52,18 +53,18 @@ class BaseLogicEntity:
         return self.__id
 
     @property
-    def parent(self) -> tp.Self | None:
+    def parent(self) -> BaseLogicEntity | None:
         return self._parent
 
     @property
-    def root(self) -> tp.Self:
+    def root(self) -> BaseLogicEntity:
         if self._parent:
             return self._parent.root
 
         return self
 
     @property
-    def children(self) -> list[tp.Self]:
+    def children(self) -> list[BaseLogicEntity]:
         return self._children
     # endregion
 
@@ -134,7 +135,7 @@ class PositionedLogicEntity(BaseLogicEntity):
     # don't use properties for position and size for faster access
     __slots__ = ["position", "size"]
 
-    _cid: str = ...  # for serialization
+    _cid: CIDType | EllipsisType = ...  # for serialization
     position: Vec2
     size: Vec2
 
@@ -143,7 +144,7 @@ class PositionedLogicEntity(BaseLogicEntity):
             runtime_buffer: Array[base_entity_t],
             size: Vec2,
             position: Vec2,
-            parent: tp.Self | None = None,
+            parent: BaseLogicEntity | None = None,
     ) -> None:
         super().__init__(runtime_buffer=runtime_buffer, parent=parent)
         self.position = position
@@ -151,7 +152,7 @@ class PositionedLogicEntity(BaseLogicEntity):
 
     # region class methods
     @classmethod
-    def cid(cls) -> str:
+    def cid(cls) -> CIDType:
         if cls._cid is ...:
             raise ValueError("__cid is not defined for " + cls.__name__)
 
@@ -187,7 +188,7 @@ class LogicGameEntity(PositionedLogicEntity):
             position: Vec2,
             initial_velocity: Vec2 | None = None,
             parent: tp.Self | None = None,
-            coalition: Coalitions = ...
+            coalition: Coalitions | EllipsisType = ...
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,

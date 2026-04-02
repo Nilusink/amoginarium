@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 from typing_extensions import deprecated
+from types import EllipsisType
 from random import random
 from ctypes import Array
 import typing as tp
@@ -15,14 +16,14 @@ import typing as tp
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t
 from amoginarium.shared import base_entity_t, WeaponCIDs, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
-from amoginarium.shared.debugging import print_ic_style, run_with_debug
+from amoginarium.shared.debugging import print_ic_style
 from amoginarium import pv
 
 from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, Shotgun
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
-from ._base_entity import LogicGameEntity, PositionedLogicEntity
+from ._base_entity import BaseLogicEntity, LogicGameEntity, PositionedLogicEntity
 
 
 class BaseWeapon(PositionedLogicEntity):
@@ -58,11 +59,11 @@ class BaseWeapon(PositionedLogicEntity):
             bullet_explosion_damage: float = 0,
             drop_casings: bool = False,
             bullet_lifetime=4,
-            sound_effect: ContinuousSoundEffect | PresetEffect = ...,
+            sound_effect: ContinuousSoundEffect | PresetEffect | EllipsisType = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
             bullet_visibility_offset: float = 0,  # time offset
             weapon_recoil_factor: float = 1,
-            size: Vec2 = ...
+            size: Vec2 | EllipsisType = ...
     ) -> None:
         if size is ...:
             size = Vec2().from_cartesian(20, 20)
@@ -85,7 +86,7 @@ class BaseWeapon(PositionedLogicEntity):
         self._bullet_damage = bullet_damage
         self._bullet_size = bullet_size
         self._barrel_length = barrel_length
-        self._parent_position_offset = convert_coord(
+        self._parent_position_offset: Vec2 = convert_coord(
             parent_position_offset, Vec2
         )
         self._bullet_explosion_radius = bullet_explosion_radius
@@ -102,6 +103,10 @@ class BaseWeapon(PositionedLogicEntity):
         print_ic_style(self.__class__.__name__, {"id": self.id, "cid": DummyCIDs.player})
 
     # region properties
+    @property
+    def parent(self) -> PositionedLogicEntity:
+        return self._parent
+
     @property
     def mag_size(self) -> int:
         """
@@ -220,8 +225,8 @@ class BaseWeapon(PositionedLogicEntity):
     def shoot(
             self,
             direction: Vec2,
-            bullet_tof: float = ...,
-            target_pos: Vec2 = ...
+            bullet_tof: float | EllipsisType = ...,
+            target_pos: Vec2 | EllipsisType = ...
     ) -> bool:
         """
         shoot a bullet and check for recoil and reload

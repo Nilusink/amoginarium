@@ -74,6 +74,9 @@ class WeaponCIDs(Enum):
     base = "weapon.base"
 
 
+type CIDType = DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs
+
+
 class ProcessCommandType(Enum):
     """
     Commands sent from base to process
