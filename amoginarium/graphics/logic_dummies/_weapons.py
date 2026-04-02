@@ -109,8 +109,6 @@ class WeaponDummy(SyncedLRImageEntity):
                 rotate_anchor=anchor,
             )
 
-        renderer.draw_circle(pos, 4, 4, (1, 0, 0))
-
 
 class Minigun(WeaponDummy):
     _cid = WeaponCIDs.minigun

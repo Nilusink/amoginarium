@@ -24,6 +24,13 @@ class Controls:
             c_shm: Array[base_controller_t],
             initialize: bool = False
      ) -> None:
+        """
+        setup controller
+
+        :param id: controller id (for shm)
+        :param c_shm: controller shared memory buffer
+        :param initialize: whether to initialize all values to default or not
+        """
         self._shm_id = id
         self._shm = c_shm
 

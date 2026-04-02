@@ -8,31 +8,37 @@ Author:
 Nilusink
 """
 from multiprocessing.shared_memory import SharedMemory
+from multiprocessing.sharedctypes import Synchronized
 from multiprocessing.connection import Connection
 from time import perf_counter, sleep, perf_counter_ns
-from multiprocessing import Queue, Value, synchronize
+from multiprocessing import Queue, synchronize
 from icecream import ic, colorize
 from queue import Empty
-import typing as tp
 import pygame as pg
 import ctypes
 import json
 import os
 
-from ..shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
-from ..shared import ProcessCommandType, Coalitions
-from ..shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
-from ..shared.debugging import print_with_prefix, get_fg_color
-from ..shared.utility import Vec2
-from .. import pv
-from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, \
-    DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
+from amoginarium.shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
+from amoginarium.shared import ProcessCommandType, Coalitions
+from amoginarium.shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
+from amoginarium.shared.debugging import print_with_prefix, get_fg_color
+from amoginarium.shared.utility import Vec2
+from amoginarium import pv
+
+from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL
+from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE
+from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
+from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
+from .entities import GravityAffected, FrictionXAffected
 from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect
 from .graphics_dummies import Controller
-from .entities import *
 
 
 class LogicProcess:
+    """
+    Logic Process data
+    """
     def __init__(
             self,
             shm: SharedMemory,
@@ -44,7 +50,7 @@ class LogicProcess:
             base_comm: Connection,
             process_comm: Connection,
             start_time: float
-    ):
+    ) -> None:
         self._start = start_time
         ic.configureOutput(
             prefix="",
@@ -101,16 +107,24 @@ class LogicProcess:
         self._running = True
         self._paused = False
 
+    # region properties
     @property
     def running(self) -> bool:
+        """:return: logic process alive"""
         return self._running
 
     @property
     def paused(self) -> bool:
+        """:return: logic process paused"""
         return self._paused
+
+    # endregion
 
     @run_with_debug(reraise_errors=True, show_finish=True)
     def preload(self) -> None:
+        """
+        preloads sound effects
+        """
         start = perf_counter_ns()
         # load sounds
         sounds.load_sounds("assets/audio/background")
@@ -130,6 +144,7 @@ class LogicProcess:
         ic(load_time)
 
     def get_ic_prefix(self) -> str:
+        """get terminal prefix for icecream"""
         t = round(perf_counter() - self._start, 4)
 
         t1, t2 = str(t).split(".")
@@ -139,10 +154,8 @@ class LogicProcess:
             f"{get_fg_color(12)}logic{get_fg_color(247)} |> "
         )
 
-    def load_map(self, map_path: tp.LiteralString) -> None:
-        """
-        load a map from a json file
-        """
+    def load_map(self, map_path: str) -> None:
+        """load a map from a json file"""
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
@@ -452,7 +465,7 @@ def run_continuous(
         command_in_queue: Queue,
         command_out_queue: Queue,
         write_lock: synchronize.Lock,
-        global_vars_values: dict[str, Value],
+        global_vars_values: dict[str, Synchronized],
         base_comm: Connection,
         process_comm: Connection,
         start_time: float

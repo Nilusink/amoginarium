@@ -14,7 +14,7 @@ import ctypes
 
 
 # region constants
-MAX_ENTITIES: int = 10_000
+MAX_ENTITIES: int = 5_000
 MAX_CONTROLLERS: int = 8
 # endregion
 
@@ -25,12 +25,10 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
     _fields_ = [
         ("pos_x", ctypes.c_double),
         ("pos_y", ctypes.c_double),
-        ("facing_x", ctypes.c_float),
-        ("facing_y", ctypes.c_float),
-        ("size_x", ctypes.c_float),
-        ("size_y", ctypes.c_float),
-        ("alive", ctypes.c_bool),
-        ("flags", ctypes.c_uint16),  # (0=visible, )
+        ("facing", ctypes.c_uint16),  # angle (r*10_000)
+        ("size_x", ctypes.c_uint16),
+        ("size_y", ctypes.c_uint16),
+        ("flags", ctypes.c_uint16),  # (0=alive, 1=visible, )
 
         # misc parameters for sharing data with base process
         ("param0", ctypes.c_float),
@@ -96,4 +94,4 @@ def get_write_lock() -> Lock:
 
 
 if __name__ == "__main__":
-    print(ctypes.sizeof(base_entity_t) * MAX_ENTITIES)
+    print(ctypes.sizeof(base_controller_t) * MAX_ENTITIES)

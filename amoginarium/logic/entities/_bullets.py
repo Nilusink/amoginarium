@@ -12,7 +12,6 @@ from types import EllipsisType
 from time import perf_counter
 from ctypes import Array
 from icecream import ic
-import typing as tp
 import numpy as np
 
 from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related
@@ -63,7 +62,7 @@ class Bullet(LogicGameEntity):
             visibility_offset: float = 0,
     ) -> None:
         if not isinstance(size, Vec2):
-            size: Vec2 = Vec2().from_cartesian(size, size)
+            size: Vec2 = Vec2().from_cartesian(size, size)  # type: ignore
 
         self._casing = casing
         self._base_damage = base_damage
@@ -107,6 +106,7 @@ class Bullet(LogicGameEntity):
         ))
         ic(self.cid())
 
+    # region properties
     @property
     def on_ground(self) -> bool:
         return WallCollider.collides_with(self)
@@ -131,10 +131,12 @@ class Bullet(LogicGameEntity):
 
     @property
     def is_bullet(self) -> bool:
+        """yes"""
         return True
 
     @property
     def weight(self) -> float:
+        """bullet weight (depending on size if not specified)"""
         if self._weight:
             return self._weight
 
@@ -142,14 +144,20 @@ class Bullet(LogicGameEntity):
 
     @property
     def recoil_fac(self) -> float:
+        """weapons recoil \"dampener\""""
         return self.get_recoil_fac(self.weight, self.velocity.length)
 
     @property
     def last_pos(self) -> Vec2:
+        """bullets previous position"""
         return self._last_pos
 
+    # endregion
+
+    # region class methods
     @classmethod
     def _weight_from_size(cls, size: Vec2 | float) -> float:
+        """calculate weight from size"""
         if isinstance(size, Vec2):
             return size.length / 100
 
@@ -157,6 +165,7 @@ class Bullet(LogicGameEntity):
 
     @classmethod
     def get_weight(cls, size: Vec2 | float) -> float:
+        """bullet weight (depending on size if not specified)"""
         if cls._weight:
             return cls._weight
 
@@ -164,9 +173,13 @@ class Bullet(LogicGameEntity):
 
     @classmethod
     def get_recoil_fac(cls, weight: float, velocity: float) -> float:
+        """weapons recoil \"dampener\""""
         return (weight / 2.5) * (velocity / 10)
 
-    def hit(self, _damage: float, hit_by: tp.Self = ...) -> None:
+    # endregion
+
+    def hit(self, _damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
+        """bullet was hit by someone"""
         if self._hp <= 0 or not issubclass(hit_by.__class__, Bullet):
             self.kill(killed_by=hit_by)
 
@@ -176,6 +189,7 @@ class Bullet(LogicGameEntity):
                 self.kill(killed_by=hit_by)
 
     def hit_someone(self, target_hp: float) -> None:
+        """bullet has hit someone else"""
         self.kill()
 
     def _update(self, delta):
@@ -234,7 +248,7 @@ class Bullet(LogicGameEntity):
                         other.hit(dmg, self)
 
     @run_with_debug()
-    def kill(self, killed_by: tp.Self = ...) -> bool:
+    def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
         ic(killed_by, self.position)
         if all([
             self._casing,
@@ -323,7 +337,7 @@ class MortarShell(Bullet):
             time_to_life: float = 10,
             explosion_radius: float = 200,
             explosion_damage: float = 50,
-            target_pos: Vec2 = ...,
+            target_pos: Vec2 | EllipsisType = ...,
             size=Vec2().from_cartesian(40, 20),
             no_gravity=False,
             **kwargs
@@ -363,7 +377,7 @@ class Grenade(Bullet):
             time_to_life: float = 5,
             explosion_radius: float = 150,
             explosion_damage: float = 50,
-            target_pos: Vec2 = ...,
+            target_pos: Vec2 | EllipsisType = ...,
             size=20,
             no_gravity=False,
             **kwargs
@@ -388,13 +402,13 @@ class Grenade(Bullet):
         self.in_wall = None
         self.add(WallBouncer)
 
-    def update(self, delta):
+    def _update(self, delta):
         if self.in_wall is not None:
             pi4 = np.pi / 4
             if 7 * pi4 <= self.in_wall.angle or self.in_wall.angle < pi4:
                 self.acceleration.y = 0
 
-        super().update(delta)
+        super()._update(delta)
 
     def kill(self, killed_by=...):
         # can only be killed by bullets and ttl

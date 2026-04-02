@@ -8,7 +8,6 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
 import math as m
 
 from ...shared.utility import Vec2
@@ -44,7 +43,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         # initialize defaults
         self.pos = Vec2()
-        self.facing = Vec2()
+        self.facing = Vec2().from_polar(0, 1)
         self.size = Vec2()
         self.alive = True
         self._logic_visibility = False
@@ -87,14 +86,13 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.pos.x = pv.E_BUFF[self.__id].pos_x
         self.pos.y = pv.E_BUFF[self.__id].pos_y
 
-        self.facing.x = pv.E_BUFF[self.__id].facing_x
-        self.facing.y = pv.E_BUFF[self.__id].facing_y
+        self.facing.angle = pv.E_BUFF[self.__id].facing / 10_000
 
         self.size.x = pv.E_BUFF[self.__id].size_x
         self.size.y = pv.E_BUFF[self.__id].size_y
 
-        self.alive = pv.E_BUFF[self.__id].alive
-        self._logic_visibility = self._get_bit("flags", 0)
+        self.alive = self._get_bit("flags", 0)
+        self._logic_visibility = self._get_bit("flags", 1)
 
         if not self.__was_alive:
             if self.alive:

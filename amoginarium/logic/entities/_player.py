@@ -13,24 +13,21 @@ from ctypes import Array
 from icecream import ic
 import pygame as pg
 import typing as tp
-import ctypes
 
-from . import GravityAffected, FrictionXAffected, Updated, LogicGameEntity
-from . import CollisionDestroyed, WallCollider, Players
-from ..audio import DeathSound, SoundEffect
-from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
-# from ._items import Shield, HealingPotion, JetBag, VisibleItem
-# from ._charged_weapon import Bow, ChargedWeapon, RailGun
 from ...shared import Coalitions, WeaponLike, ItemLike, ItemSlot, base_entity_t
 from ...shared import ProcessCommand, BaseCommandType, DummyCIDs
-from ...shared.utility import Vec2, convert_coord, Color
-# from ._weapons import HandThrownGrenade
-# from ._island import Island
-from ._inventory import Inventory
-from ..graphics_dummies import Controller
+from ...shared.utility import Vec2, convert_coord
 from ... import pv
-from ._island import Island
+
+from ..audio import DeathSound, SoundEffect
+from ..graphics_dummies import Controller
+from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
+from ._logic_groups import GravityAffected, FrictionXAffected, Updated
+from ._logic_groups import CollisionDestroyed, WallCollider, Players
+from ._base_entity import LogicGameEntity
 from ._visible_item import VisibleItem
+from ._inventory import Inventory
+from ._island import Island
 
 
 PIXEL_MASK = pg.mask.Mask((1, 1), True)

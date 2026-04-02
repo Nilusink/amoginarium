@@ -11,14 +11,17 @@ from ctypes import Array
 import pygame as pg
 import typing as tp
 
-from ...shared import Coalitions, base_entity_t, ENTITY_COUNTER, CIDType
-from ...shared.debugging import print_ic_style, CC
-from ...shared.utility import Vec2
+from amoginarium.shared import Coalitions, base_entity_t, ENTITY_COUNTER, CIDType
+from amoginarium.shared.debugging import print_ic_style, CC
+from amoginarium.shared.utility import Vec2, normalize_angle
+
 from ._logic_groups import Updated
 from ... import pv
 
 
 class BaseLogicEntity:
+    """most basic type of logics entity"""
+
     __slots__ = [
         "_parent", "_children", "_lifetime", "__id", "_runtime_buffer", "__g",
     ]
@@ -43,22 +46,25 @@ class BaseLogicEntity:
         self.__id = ENTITY_COUNTER.get_id()
         self._runtime_buffer = runtime_buffer
 
-        self._runtime_buffer[self.__id].alive = True
-        self._set_bit("flags", 0, True)  # set visible
+        self._set_bit("flags", 0, True)  # set alive
+        self._set_bit("flags", 1, True)  # set visible
 
         self.add(Updated)
 
     # region properties
     @property
     def id(self) -> int:
+        """entity id (+ buffer location)"""
         return self.__id
 
     @property
     def parent(self) -> BaseLogicEntity | None:
+        """entities parent if present"""
         return self._parent
 
     @property
     def root(self) -> BaseLogicEntity:
+        """root entity; entity parent if present else self"""
         if self._parent:
             return self._parent.root
 
@@ -66,6 +72,7 @@ class BaseLogicEntity:
 
     @property
     def children(self) -> list[BaseLogicEntity]:
+        """all children of entity"""
         return self._children
     # endregion
 
@@ -131,7 +138,7 @@ class BaseLogicEntity:
         for group in self.__g:
             group.remove_internal(self)
 
-        self._runtime_buffer[self.__id].alive = False
+        self._set_bit("flags", 0, False)  # set alive
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__g.clear()
@@ -175,6 +182,8 @@ class BaseLogicEntity:
 
 
 class PositionedLogicEntity(BaseLogicEntity):
+    """a logic entity with position and size"""
+
     # don't use properties for position and size for faster access
     __slots__ = ["position", "size"]
 
@@ -196,7 +205,10 @@ class PositionedLogicEntity(BaseLogicEntity):
     # region class methods
     @classmethod
     def cid(cls) -> CIDType:
-        if cls._cid is ...:
+        """
+        :return: the entities' component ID 
+        """
+        if isinstance(cls._cid, EllipsisType):
             raise ValueError("__cid is not defined for " + cls.__name__)
 
         return cls._cid
@@ -206,8 +218,8 @@ class PositionedLogicEntity(BaseLogicEntity):
         # update shared memory
         self._runtime_buffer[self.id].pos_x = self.position.x
         self._runtime_buffer[self.id].pos_y = self.position.y
-        self._runtime_buffer[self.id].size_x = self.size.x
-        self._runtime_buffer[self.id].size_y = self.size.y
+        self._runtime_buffer[self.id].size_x = int(self.size.x)
+        self._runtime_buffer[self.id].size_y = int(self.size.y)
 
         super()._update(delta)
 
@@ -266,24 +278,29 @@ class LogicGameEntity(PositionedLogicEntity):
     # region properties
     @property
     def world_position(self) -> Vec2:
+        """entity position on screen"""
         return self.position - self.__world_position
 
     @property
     def is_bullet(self) -> bool:
+        """no"""
         return False
 
     @property
     def coalition(self) -> Coalitions:
+        """which coalition the entity belongs to"""
         return self._coalition
 
     @property
     def serializable(self) -> bool:
+        """whether the entity is serializable or not"""
         return self._cid is not ...
 
     # endregion
 
     # region methods
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict | None:
+        """convert the entity to a dict if possible"""
         if not self.serializable:
             print_ic_style(
                 f"{CC.fg.RED}Entity of type {self.__class__.__name__} is not"
@@ -317,9 +334,11 @@ class LogicGameEntity(PositionedLogicEntity):
 
     @staticmethod
     def on_ground() -> bool:
+        """is entity on ground?"""
         return True
 
     def update_rect(self) -> None:
+        """update position rectangle"""
         self.rect = pg.Rect(
             self.position.x - self.size.x / 2,
             self.position.y - self.size.y / 2,
@@ -331,7 +350,9 @@ class LogicGameEntity(PositionedLogicEntity):
         self.__world_position = pv.global_vars.get_world_position()
 
         # update velocity and position
-        self.velocity += (self._acceleration_to_add + self.acceleration) * delta + self._velocity_to_add
+        self.velocity += (
+            self._acceleration_to_add + self.acceleration
+        ) * delta + self._velocity_to_add
         self.position += self.velocity * delta
         self.acceleration.x *= 0
 
@@ -344,7 +365,8 @@ class LogicGameEntity(PositionedLogicEntity):
         super()._update(delta)
 
         # update runtime buffer
-        self._runtime_buffer[self.id].facing_x = self.facing.x
-        self._runtime_buffer[self.id].facing_y = self.facing.y
+        self._runtime_buffer[self.id].facing = int(
+            normalize_angle(self.facing.angle) * 10_000
+        )
 
     # endregion

@@ -7,17 +7,14 @@ globals
 Author:
 Nilusink
 """
-from multiprocessing import Value
+from multiprocessing.sharedctypes import Synchronized
 from ctypes import c_double, c_int8
-from icecream import ic
+from multiprocessing import Value
 from enum import Enum
 import typing as tp
 
 from .debugging import cum_timer
 from .utility import Vec2
-
-# idk how to do this with the pythin 3.12 typehinting
-_A = tp.TypeVar("_A", int, float, Vec2)
 
 
 _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
@@ -42,7 +39,10 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
 }
 
 
-def generate_global_vars() -> dict[str, Value]:
+def generate_global_vars() -> dict[str, Synchronized]:
+    """
+    generate multiprocessing Values for global vars
+    """
     out = {}
     for key, value in _GLOBAL_VARS_VALUES.items():
         out[key] = Value(value)
@@ -63,7 +63,7 @@ class BoundFunction(tp.TypedDict):
 
 
 class GlobalVars:
-    def __init__(self, values: dict[str, Value], set: bool = True) -> None:
+    def __init__(self, values: dict[str, Synchronized], set: bool = True) -> None:
         self.__values = values
 
         self._screen_size = Vec2()
@@ -104,7 +104,7 @@ class GlobalVars:
         self.__values["max_fps"].value = self._max_fps
         self.__values["background_position"].value = self._background_position
 
-    def get_values(self) -> dict[str, Value]:
+    def get_values(self) -> dict[str, Synchronized]:
         return self.__values
 
     def get_screen_size(self) -> Vec2:
@@ -219,7 +219,7 @@ class GlobalVars:
     def screen_pixels(self) -> Vec2:
         return self._screen_size_real / self._pixel_per_meter
 
-    def translate_scale(self, value: _A) -> _A:
+    def translate_scale[A: float | int | Vec2](self, value: A) -> A:
         """
         translate an absolute value to a screen-size relative value
         """
