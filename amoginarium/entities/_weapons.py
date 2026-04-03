@@ -22,15 +22,16 @@ from ..audio import Minigun as MinigunSound, AK47 as AK47Sound
 from ..audio import CRAM as CRAMSound
 from ..debugging import run_with_debug, timeit
 from ..logic import Vec2, Color, convert_coord, coord_t, multi_raycast_mask, \
-    is_related
+    is_related, color_t, convert_color
 from ._base_entity import ImageEntity, GameEntity
-from ..render_bindings import renderer
+from ..render_bindings import renderer, tColor
 from ..shared import global_vars
 from ..base._textures import textures
 from ._animation import explosion
 from ._groups import WallCollider
 
 BULLET_PATH = "bullet"
+SQR2 = np.sqrt(2)
 
 
 class Bullet(ImageEntity):
@@ -39,6 +40,7 @@ class Bullet(ImageEntity):
     _image_size: tuple[int, int] = ...
     _base_damage: float = 1
     _hp: int = -1
+    _weight: float | None = None
 
     def __new__(cls, *args, **kwargs) -> "Bullet":
         return super(Bullet, cls).__new__(cls)
@@ -57,7 +59,9 @@ class Bullet(ImageEntity):
             target_pos: Vec2 = ...,
             size: Vec2 | int = 10,
             no_gravity=False,
-            visibility_offset: float = 0
+            visibility_offset: float = 0,
+            trace: bool = True,
+            trace_color: color_t = ...
     ) -> None:
         if not isinstance(size, Vec2):
             size = Vec2().from_cartesian(size, size)
@@ -65,16 +69,22 @@ class Bullet(ImageEntity):
         self._casing = casing
         self._base_damage = base_damage
         self._ttl = time_to_life
+        self._o_ttl = time_to_life
         self._initial_velocity = initial_velocity
         self._explosion_radius = explosion_radius
         self._explosion_damage = explosion_damage
         self._target_pos = target_pos
         self._visibility_offset = visibility_offset
+        self._trace = trace
+        if trace_color is not ...:
+            self._trace_color = convert_color(trace_color, Color)
+
+        else:
+            self._trace_color = Color().from_255(255, 255, 60)
 
         self._start_time = perf_counter()
 
         # load textures
-        # isize = size.xy if self._image_size is ... else self._image_size
         isize = size.xy
         self._bullet_texture, _ = textures.get_texture(
             self._bullet_image[0],
@@ -131,6 +141,39 @@ class Bullet(ImageEntity):
     def is_bullet(self) -> bool:
         return True
 
+    @property
+    def weight(self) -> float:
+        if self._weight:
+            return self._weight
+
+        return self._weight_from_size(self.size)
+
+    @property
+    def recoil_fac(self) -> float:
+        return self.get_recoil_fac(self.weight, self.velocity.length)
+
+    @property
+    def last_pos(self) -> Vec2:
+        return self._last_pos
+
+    @classmethod
+    def _weight_from_size(cls, size: Vec2 | float) -> float:
+        if isinstance(size, Vec2):
+            return size.length / 100
+
+        return (size * SQR2) / 100
+
+    @classmethod
+    def get_weight(cls, size: Vec2 | float) -> float:
+        if cls._weight:
+            return cls._weight
+
+        return cls._weight_from_size(size)
+
+    @classmethod
+    def get_recoil_fac(cls, weight: float, velocity: float) -> float:
+        return (weight / 2.5) * (velocity / 10)
+
     def hit(self, _damage: float, hit_by: tp.Self = ...) -> None:
         if self._hp <= 0 or not issubclass(hit_by.__class__, Bullet):
             self.kill(killed_by=hit_by)
@@ -148,9 +191,6 @@ class Bullet(ImageEntity):
         self._visibility_offset -= delta
 
         if any([
-            self.position.y > 2000,
-            self.position.x < Updated.world_position.x - 2000,
-            self.position.x > Updated.world_position.x + 4000,
             self._ttl <= 0,
             self.on_ground
         ]):
@@ -170,7 +210,7 @@ class Bullet(ImageEntity):
                 Updated.sprites(),
                 self._last_pos,
                 self.position,
-                1
+                10
             )
 
             for other, pos in entities_hit:
@@ -200,7 +240,6 @@ class Bullet(ImageEntity):
                     with suppress(AttributeError):
                         other.hit(dmg, self)
 
-    # @timeit(10)
     def kill(self, killed_by: tp.Self = ...) -> bool:
         if all([
             self._casing,
@@ -214,31 +253,47 @@ class Bullet(ImageEntity):
             )
             return True
 
+        # bullet hit knockback
+        if all([
+            killed_by != self,
+            not issubclass(killed_by.__class__, Bullet)
+        ]):
+            if hasattr(killed_by, "_impulse_resistance_factor"):
+                recoil = Vec2().from_polar(
+                    self.velocity.angle,
+                    self.recoil_fac
+                ) * killed_by._impulse_resistance_factor
+
+                killed_by.add_velocity(recoil)
+
         # explode
         if self._explosion_radius > 0:
             for d, entity in CollisionDestroyed.get_entities_in_circle(
                     self.position,
-                    self._explosion_radius
+                    self._explosion_radius * 2
             ):
                 if all([
                     entity != self,
-                    not issubclass(killed_by.__class__, Bullet)
+                    not issubclass(entity.__class__, Bullet)
                 ]):
-                    entity.hit(
-                        (1 - .8 * d / self._explosion_radius)
-                        * self._explosion_damage,
-                        hit_by=self
-                    )
-                    if hasattr(entity, "_movement_acceleration"):
+                    if hasattr(entity, "hit"):
+                        entity.hit(
+                            (1 - .8 * d / (self._explosion_radius*2))
+                            * self._explosion_damage,
+                            hit_by=self
+                        )
+
+                    if hasattr(entity, "_impulse_resistance_factor"):
                         d -= entity.size.length
+                        d = max(d, 1)
                         delta = entity.position - self.position
                         delta = delta.normalize() \
-                                * entity._movement_acceleration \
-                                * (
-                                        1 - max(d, 40)
-                                        / (self._explosion_radius * 4)
-                                ) * (self._explosion_damage / 5)
-                        entity.add_acceleration(delta)
+                            * entity._impulse_resistance_factor \
+                            * (
+                                1 - d / (self._explosion_radius * 1)
+                            ) * self._explosion_damage * 4
+
+                        entity.add_velocity(delta)
 
             explosion.draw(
                 delay=.05,
@@ -299,6 +354,16 @@ class Bullet(ImageEntity):
                 )
                 return
 
+            # draw trace
+            if self._trace:
+                self._trace_color.a1 = min([1, self.velocity.length / 10000])
+                renderer.draw_thick_line(
+                    self.world_position,
+                    self._last_pos - Updated.world_position,
+                    self._trace_color,
+                    self.size.length / 3,
+                )
+
             # draw image if given
             self._texture_id = self._bullet_texture
 
@@ -307,16 +372,11 @@ class Bullet(ImageEntity):
 
         super().gl_draw()
 
-        # renderer.draw_line(
-        #     self.position - Updated.world_position,
-        #     self._last_pos - Updated.world_position,
-        #     (1, 1, 0, 1)
-        # )
-
 
 class MortarShell(Bullet):
     _bullet_image: str = ("mortar_shell", "")
     _hp = .5
+    _weight = 8
 
     def __init__(
             self,
@@ -347,7 +407,8 @@ class MortarShell(Bullet):
             target_pos,
             size,
             no_gravity,
-            **kwargs
+            **kwargs,
+            trace_color=Color().from_1(1, 1, 1)
         )
 
 
@@ -411,6 +472,14 @@ class Grenade(Bullet):
         return super().kill(killed_by)
 
 
+class SniperBullet(Bullet):
+    _weight = 5
+
+
+class FlakBullet(Bullet):
+    _weight = 5
+
+
 class BaseWeapon:
     _image_name: str = "amogus64right"
     _image_size: tuple[int, int] = (16, 16)
@@ -434,7 +503,6 @@ class BaseWeapon:
             parent,
             reload_time: float,
             recoil_time: float,
-            recoil_factor: float,
             mag_size: int,
             inaccuracy: float,
             bullet_speed: float,
@@ -448,7 +516,8 @@ class BaseWeapon:
             bullet_lifetime=4,
             sound_effect: ContinuousSoundEffect | PresetEffect = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
-            bullet_visibility_offset: float = 0  # time offset
+            bullet_visibility_offset: float = 0, # time offset
+            weapon_recoil_factor: float = 1
     ) -> None:
         self.parent = parent
         self._coalition = parent.coalition
@@ -459,7 +528,7 @@ class BaseWeapon:
         self._reload_time = reload_time
         self._bullet_speed = bullet_speed
         self._drop_casings = drop_casings
-        self._recoil_factor = recoil_factor
+        self._recoil_factor = weapon_recoil_factor
         self._bullet_damage = bullet_damage
         self._bullet_size = bullet_size
         self._barrel_length = barrel_length
@@ -629,13 +698,19 @@ class BaseWeapon:
         offset = randint(-255, 255) / 255
         offset *= self._inaccuracy
         direction.angle += offset
-        direction.normalize()
 
         # recoil
-        if hasattr(self.parent, "_movement_acceleration"):
-            recoil = direction * self.parent._movement_acceleration
-            recoil *= -self.recoil_factor
-            self.parent.add_acceleration(recoil)
+        if hasattr(self.parent, "_impulse_resistance_factor"):
+            recoil = Vec2().from_polar(
+                direction.angle,
+                self._bullet_type.get_recoil_fac(
+                    self._bullet_type.get_weight(self._bullet_size),
+                    self.bullet_speed + self.parent.velocity.length
+                )
+            ) * -self.parent._impulse_resistance_factor
+
+            recoil *= self.recoil_factor
+            self.parent.add_velocity(recoil)
 
         self._current_recoil_time = self._recoil_time
 
@@ -776,7 +851,6 @@ class Minigun(BaseWeapon):
             parent,
             reload_time=3,
             recoil_time=.02,
-            recoil_factor=1.5,
             mag_size=80,
             inaccuracy=.01093606,
             bullet_speed=1600,
@@ -804,7 +878,6 @@ class Ak47(BaseWeapon):
             parent,
             reload_time=2.5,
             recoil_time=.1,
-            recoil_factor=3,
             mag_size=30,
             inaccuracy=0.03,
             bullet_size=11,
@@ -835,7 +908,6 @@ class Sniper(BaseWeapon):
             parent,
             reload_time=5,
             recoil_time=2,
-            recoil_factor=50,
             mag_size=6,
             inaccuracy=.00500002,
             bullet_size=15,
@@ -846,7 +918,8 @@ class Sniper(BaseWeapon):
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             sound_effect=s,
-            bullet_visibility_offset=.04
+            bullet_visibility_offset=.04,
+            bullet_type=SniperBullet
         )
 
 
@@ -866,7 +939,6 @@ class Mortar(BaseWeapon):
             parent,
             reload_time=4,
             recoil_time=0,
-            recoil_factor=100,
             mag_size=1,
             inaccuracy=.00100002,
             bullet_size=Vec2().from_cartesian(40, 20),
@@ -899,12 +971,11 @@ class Flak(BaseWeapon):
             parent,
             reload_time=3,
             recoil_time=.15,
-            recoil_factor=80,
             mag_size=4,
             inaccuracy=.0100002,
             bullet_size=18,
             # bullet_speed=1400*2,  # can shoot down bullets, but is too op
-            bullet_speed=1400,
+            bullet_speed=1700,
             bullet_damage=30,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
@@ -913,7 +984,8 @@ class Flak(BaseWeapon):
             bullet_explosion_damage=40,
             bullet_lifetime=5,
             sound_effect=Shotgun().set_volume(.8),
-            bullet_visibility_offset=.13
+            bullet_visibility_offset=.13,
+            bullet_type=FlakBullet
         )
 
 
@@ -933,7 +1005,6 @@ class CRAM(BaseWeapon):
             parent,
             reload_time=8,
             recoil_time=.005,
-            recoil_factor=2,
             mag_size=800,
             inaccuracy=.001093606,
             bullet_speed=3000,
@@ -966,7 +1037,7 @@ class HandThrownGrenade(BaseWeapon):
             parent,
             reload_time=5,
             recoil_time=2,
-            recoil_factor=2,
+            weapon_recoil_factor=.5,
             mag_size=1,
             inaccuracy=.01,
             bullet_speed=800,

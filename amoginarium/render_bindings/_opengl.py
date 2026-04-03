@@ -22,6 +22,7 @@ from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
 from OpenGL.GL import glGetIntegerv, GL_STENCIL_BITS, GL_ALPHA_TEST, GL_FALSE
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
+from OpenGL.GL import glPushMatrix, glPopMatrix
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
@@ -247,7 +248,7 @@ class OpenGLRenderer(BaseRenderer):
         glColor3f(1, 1, 1)
 
         glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
+        glPushMatrix()
         glTranslate(*pos.xy, 0)
 
         glEnable(GL_TEXTURE_2D)
@@ -277,6 +278,7 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
         glDisable(GL_TEXTURE_2D)
         glFlush()
+        glPopMatrix()
 
         # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
 
@@ -347,7 +349,7 @@ class OpenGLRenderer(BaseRenderer):
                     global_vars.translate_screen_coord(v) for v in vertices
                 ]
 
-        glLoadIdentity()  # reset previous glTranslate statements
+        glPushMatrix()  # reset previous glTranslate statements
         if center is not None:
             center = convert_coord(center, Vec2)
             if convert_global:
@@ -363,6 +365,7 @@ class OpenGLRenderer(BaseRenderer):
             glVertex2f(*vertice.xy)
 
         glEnd()
+        glPopMatrix()
 
     def draw_circle(
             self,
@@ -383,7 +386,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
             return
 
-        glLoadIdentity()  # reset previous glTranslate statements
+        glPushMatrix()  # reset previous glTranslate statements
         glTranslate(center.x, center.y, 0)
 
         self.set_color(color)
@@ -396,6 +399,7 @@ class OpenGLRenderer(BaseRenderer):
             glVertex2f(cosine, sine)
 
         glEnd()
+        glPopMatrix()
 
     def draw_line_circle(
             self,
@@ -417,7 +421,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
             return
 
-        glLoadIdentity()  # reset previous glTranslate statements
+        glPushMatrix()  # reset previous glTranslate statements
         glTranslate(center.x, center.y, 0)
 
         self.set_color(color)
@@ -437,6 +441,7 @@ class OpenGLRenderer(BaseRenderer):
             glVertex2f(inner * c, inner * s)
 
         glEnd()
+        glPopMatrix()
 
     def draw_partial_circle(
             self,
@@ -466,7 +471,7 @@ class OpenGLRenderer(BaseRenderer):
                 - normalize_angle(angle_start.angle)
         )
 
-        glLoadIdentity()  # reset previous glTranslate statements
+        glPushMatrix()  # reset previous glTranslate statements
         glTranslate(center.x, center.y, 0)
 
         self.set_color(color)
@@ -483,6 +488,7 @@ class OpenGLRenderer(BaseRenderer):
             glVertex2f(*pos.xy)
 
         glEnd()
+        glPopMatrix()
 
     def draw_rect(
             self,
@@ -502,7 +508,7 @@ class OpenGLRenderer(BaseRenderer):
             start = global_vars.translate_screen_coord(start)
             size = global_vars.translate_scale(size)
 
-        glLoadIdentity()  # reset previous glTranslate statements
+        glPushMatrix()  # reset previous glTranslate statements
         glTranslate(start.x, start.y, 0)
 
         self.set_color(color)
@@ -513,6 +519,7 @@ class OpenGLRenderer(BaseRenderer):
         glVertex2f(size.x, size.y)
         glVertex2f(0, size.y)
         glEnd()
+        glPopMatrix()
 
     def draw_dashed_circle(
             self,
@@ -533,7 +540,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
             return
 
-        glLoadIdentity()
+        glPushMatrix()
         glTranslate(center.x, center.y, 0)
 
         self.set_color(color)
@@ -561,6 +568,8 @@ class OpenGLRenderer(BaseRenderer):
             glVertex2f(cosine2 * radius, sine2 * radius)
             glEnd()
 
+        glPopMatrix()
+
     def draw_partial_dashed_circle(
             self,
             center,
@@ -587,7 +596,7 @@ class OpenGLRenderer(BaseRenderer):
             angle_end.angle - angle_start.angle
         ) / 2
 
-        glLoadIdentity()
+        glPushMatrix()
         glTranslate(center.x, center.y, 0)
 
         self.set_color(color)
@@ -615,6 +624,8 @@ class OpenGLRenderer(BaseRenderer):
             glVertex2f(*(pos2 * radius).xy)
             glEnd()
 
+        glPopMatrix()
+
     def draw_line(
             self,
             start,
@@ -638,7 +649,7 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         if global_position:
-            glLoadIdentity()  # reset previous glTranslate statements
+            glPushMatrix()  # reset previous glTranslate statements
 
         self.set_color(color)
 
@@ -646,6 +657,69 @@ class OpenGLRenderer(BaseRenderer):
         glVertex2f(*start.xy)
         glVertex2f(*end.xy)
         glEnd()
+
+        if global_position:
+            glPopMatrix()
+
+    def draw_thick_line(
+            self,
+            start,
+            end,
+            color,
+            thickness=1.0,
+            global_position=True,
+            convert_global=True
+    ):
+        """
+        draw a line with thickness using a quad
+        """
+        start = convert_coord(start, Vec2)
+        end = convert_coord(end, Vec2)
+
+        if convert_global:
+            start = global_vars.translate_screen_coord(start)
+            end = global_vars.translate_screen_coord(end)
+            thickness = global_vars.translate_scale(thickness)
+
+        direction = end - start
+
+        # only draw if on screen
+        if OpenGLRenderer.check_out_of_screen(start, direction):
+            return
+
+        self.set_color(color)
+
+        # normalize perpendicular
+        length = direction.length
+        if length == 0:
+            return
+
+        if global_position:
+            glPushMatrix()
+
+        dir_norm = direction / length
+
+        # perpendicular vector (rotate 90°)
+        perp = Vec2().from_cartesian(-dir_norm.y, dir_norm.x)
+
+        # half thickness offset
+        offset = perp * (thickness * 0.5)
+
+        # quad corners
+        v1 = start + offset
+        v2 = start - offset
+        v3 = end - offset
+        v4 = end + offset
+
+        glBegin(GL_QUADS)
+        glVertex2f(*v1.xy)
+        glVertex2f(*v2.xy)
+        glVertex2f(*v3.xy)
+        glVertex2f(*v4.xy)
+        glEnd()
+
+        if global_position:
+            glPopMatrix()
 
     def draw_rounded_rect(
             self,
@@ -665,7 +739,7 @@ class OpenGLRenderer(BaseRenderer):
             start = global_vars.translate_screen_coord(start)
             size = global_vars.translate_scale(size)
 
-        glLoadIdentity()
+        glPushMatrix()
         glTranslate(start.x, start.y, 0)
         self.set_color(color)
 
@@ -699,6 +773,8 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnd()
 
+        glPopMatrix()
+
     def draw_rounded_border(
             self,
             start,
@@ -718,7 +794,7 @@ class OpenGLRenderer(BaseRenderer):
             start = global_vars.translate_screen_coord(start)
             size = global_vars.translate_scale(size)
 
-        glLoadIdentity()
+        glPushMatrix()
         glTranslate(start.x, start.y, 0)
         self.set_color(color)
 
@@ -747,6 +823,8 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnd()
 
+        glPopMatrix()
+
     def draw_border(
             self,
             start,
@@ -765,7 +843,7 @@ class OpenGLRenderer(BaseRenderer):
             start = global_vars.translate_screen_coord(start)
             size = global_vars.translate_scale(size)
 
-        glLoadIdentity()
+        glPushMatrix()
         glTranslate(start.x, start.y, 0)
         self.set_color(color)
 
@@ -791,6 +869,8 @@ class OpenGLRenderer(BaseRenderer):
         glVertex2f(bw, bw)
 
         glEnd()
+
+        glPopMatrix()
 
     def draw_text(
             self,

@@ -12,13 +12,19 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
-from ._cutility_functions import raycast_mask
-from ..debugging import timeit
+from ._cutility_functions import raycast_mask, infinite_lines_intersect, raycast_size
 from ._cvectors import Vec2
 from ._ccolor import Color
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
 type color_t = tuple[float, float, float] | tuple[float, float, float, float] | Color
+
+
+# from ._cutility_functions import raycast_mask as rm, infinite_lines_intersect as ili, raycast_size as rs
+# from ..debugging import timeit, cum_timer
+# infinite_lines_intersect = cum_timer.time_this(ili)
+# raycast_size = cum_timer.time_this(rs)
+# raycast_mask = cum_timer.time_this(rm)
 
 
 class EntityLike(tp.Protocol):
@@ -43,89 +49,6 @@ def is_parent(parent: object, child: object) -> bool:
         return False
 
     return parent == child.parent
-
-
-# @run_with_debug(show_args=True)
-def is_related(a: object, b: object, depth: int = 2) -> bool:
-    """
-    check if either is parent or child or self
-
-    depths:
-    1: true if a == b
-    2: true if a == b or parent
-    3: true if all of the above or siblings
-    4: coalition
-    """
-    is_same = a == b
-    if depth <= 1:
-        return is_same
-
-    is_parented = False
-
-    try:
-        is_parented = is_parented or a.parent == b
-    except AttributeError:
-        pass
-
-    try:
-        is_parented = is_parented or b.parent == a
-    except AttributeError:
-        pass
-
-    if depth <= 2:
-        return is_same or is_parented
-
-    try:
-        if a.parent is not ... and b.parent is not ...:
-            is_sibling = a.parent == b.parent
-
-        else:
-            is_sibling = False
-
-    except AttributeError:
-        is_sibling = False
-
-    if depth <= 3:
-        return is_same or is_parented or is_sibling
-
-    try:
-        is_coalition = a.coalition == b.coalition
-
-    except AttributeError:
-        is_coalition = False
-
-    if depth <= 4:
-        return is_same or is_parented or is_sibling or is_coalition
-
-    return False
-
-
-def convert_coord[A: Vec2 | tuple | float](
-        coord: coord_t,
-        convert_to: type[A] = tuple
-) -> A | tuple[float, float] | tuple[A, A]:
-    """
-    accepts both tuple and Vec2
-    """
-    if convert_to is Vec2:
-        if isinstance(coord, Vec2):
-            return coord.copy()
-
-        return Vec2().from_cartesian(*coord)
-
-    if convert_to is tuple:
-        if isinstance(coord, tuple):
-            return coord
-
-        return coord.xy
-
-    if convert_to is int:
-        if isinstance(coord, Vec2):
-            coord = coord.xy
-
-        return int(coord[0]), int(coord[1])
-
-    raise ValueError("Unsupported conversion: ", convert_to)
 
 
 def convert_color[A: Color | int | float](
@@ -167,27 +90,45 @@ def multi_raycast_mask(
     out = []
 
     for sprite in sprites:
-        if not all([
-            sprite,
-            hasattr(sprite, "rect"),
-            hasattr(sprite, "mask"),
-            not is_related(sprite, parent, depth=2)
-        ]):
+        if sprite.parent == parent:
             continue
 
-        res = raycast_mask(
-            sprite,
-            start,
-            end,
-            sample_rate
-        )
+        if hasattr(sprite, "last_pos"):
+            if infinite_lines_intersect(
+                sprite.position,
+                sprite.last_pos,
+                start,
+                end
+            ):
+                out.append((sprite, sprite.position))
+                continue
+
+        if hasattr(sprite, "form"):  # check if island
+            if raycast_size(start, end, sprite.position, sprite.size.length * 2):
+                res = raycast_mask(
+                    sprite,
+                    start,
+                    end,
+                    sample_rate
+                )
+
+            else:
+                continue
+
+        elif hasattr(sprite, "is_bullet"):  # check if game entity
+            res = raycast_size(start, end, sprite.position, sprite.size.length)
+            if not res:
+                continue
+
+        else:
+            continue
+
         if res.length > 0:
             out.append((sprite, res))
 
     return out
 
 
-@timeit(1)
 def lidar_sphere(
         position: Vec2,
         radius: float,

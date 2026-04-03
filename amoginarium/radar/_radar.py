@@ -100,11 +100,9 @@ class RadarSensor(BaseSensor):
                         if da >= self._min_rcs:
                             out.append(target)
 
-                            if not is_related(self.parent, target, 4):
-                                t1 += position_offset
-                                t2 += position_offset
-
-                                self._highlighted_sectors.append((t1, t2))
+                            if self.parent.coalition is not target.coalition:
+                                if angle_index not in self._highlighted_sectors:
+                                    self._highlighted_sectors.append(angle_index)
 
                     continue
 
@@ -136,9 +134,12 @@ class RadarSensor(BaseSensor):
     def gl_draw(self, draw: bool = True) -> None:
         # detection sphere
         if draw:
+            po = self.parent.world_position + self._position_offset
             for sector in self._highlighted_sectors:
+                t1 = self._sphere[sector] + po
+                t2 = self._sphere[(sector + 1) % self._sphere_accuracy] + po
                 renderer.draw_polygon(
-                    (self.parent.world_position + self._position_offset, *sector),
+                    (self.parent.world_position + self._position_offset, t1, t2),
                     (.4, .4, 1, .2)
                 )
             self._highlighted_sectors.clear()
