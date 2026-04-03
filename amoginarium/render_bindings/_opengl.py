@@ -21,8 +21,8 @@ from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
 from OpenGL.GL import glGetIntegerv, GL_STENCIL_BITS, GL_ALPHA_TEST, GL_FALSE
+from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef, glDeleteTextures
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
-from OpenGL.GL import glPushMatrix, glPopMatrix
 from OpenGL.GLU import gluOrtho2D
 from pygame.locals import DOUBLEBUF, OPENGL
 from icecream import ic
@@ -32,15 +32,19 @@ import typing as tp
 import numpy as np
 import math as m
 
+from amoginarium.debugging import cum_timer
+
 from ..logic import Vec2, Color, convert_coord, normalize_angle
 from ._base_renderer import BaseRenderer, tColor
 from ..shared import global_vars
+from ._opengl_fonts import GLFont
 
 # define types
 type TextureID = int
 
 
 class OpenGLRenderer(BaseRenderer):
+    __fonts: dict[tuple[str, int, bool, bool], GLFont]
     def get_font(
             self,
             size: int,
@@ -71,6 +75,9 @@ class OpenGLRenderer(BaseRenderer):
         ic("using OpenGL backend")
 
         pg.font.init()
+
+        self.__fonts = {}
+        self.__surf_cache = {}
 
         self._fonts = {
             32: [
@@ -872,12 +879,13 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
 
+    @cum_timer.time_this
     def draw_text(
             self,
             pos,
             text,
-            color,
-            bg_color,
+            color=(255, 255, 255),
+            bg_color=(0, 0, 0, 0),
             centered=False,
             font_size=64,
             font_family="arial",
@@ -892,20 +900,45 @@ class OpenGLRenderer(BaseRenderer):
 
         pos = convert_coord(pos, Vec2)
 
+        # 1. Handle scaling natively via OpenGL to save memory
+        scale = 1.0
         if convert_global:
             pos = global_vars.translate_screen_coord(pos)
-            font_size = global_vars.translate_scale(font_size)
+            # Assuming translate_scale returns a multiplier (e.g., 1.5)
+            # We apply this to the render scale, NOT the base font_size
+            scale = global_vars.translate_scale(1.0)
 
-        # weird conversion because pygame is ass
-        text_surface: pg.Surface = self.generate_pg_surf_text(
-            text, color, bg_color, font_size, font_family, bold, italic
-        )
-        # text_surface.set_alpha(color.a)
+            # 2. Check the cache (key MUST include bold/italic to prevent overwriting)
+        font_key = (font_family, font_size, bold, italic)
 
-        # draw text
-        self.draw_pg_surf(pos, text_surface, centered)
+        if font_key not in self.__fonts:
+            # Create and cache the texture atlas if it doesn't exist
+            self.__fonts[font_key] = GLFont(font_family, font_size, bold, italic)
 
-        return text_surface.get_size()
+        font = self.__fonts[font_key]
+
+        # 3. Calculate text dimensions for centering and background
+        text_width, text_height = font.get_dimensions(text, scale)
+
+        if centered:
+            pos.x -= text_width / 2
+            pos.y -= text_height / 2
+
+        # 4. Draw Background Quad (Implement this in your class if needed)
+        if bg_color.a255 > 0:
+            self.draw_rect(pos.xy, (text_width, text_height), bg_color, convert_global)
+
+        # 5. Delegate the text rendering to the GLFont class
+        # We pass the color so the GLFont can tint the white texture atlas
+        glPushMatrix()
+        self._draw_text_intern(font, text, pos.x, pos.y, scale, color.rgba255)
+        glPopMatrix()
+
+        return text_width, text_height
+
+    @cum_timer.time_this
+    def _draw_text_intern(self, font, test, posx, posy, scale, color):#
+        font.draw(test, posx, posy, scale, color)
 
     def generate_pg_surf_text(
             self,
@@ -930,36 +963,73 @@ class OpenGLRenderer(BaseRenderer):
             bg_color.rgba255 if bg_color.a255 > 125 else None
         )
 
-    def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):
+    @cum_timer.time_this
+    def draw_pg_surf(
+            self,
+            pos,
+            surface: pg.Surface,
+            centered=False,
+            scale=1.0,
+            convert_global=True,
+            is_dynamic=False
+    ):
         pos = convert_coord(pos, Vec2)
 
-        pos = convert_coord(pos, Vec2)
+        w, h = surface.get_width(), surface.get_height()
+        scaled_w = w * scale
+        scaled_h = h * scale
 
         if convert_global:
             pos = global_vars.translate_screen_coord(pos)
-            # font_size = global_vars.translate_scale(font_size)
-
-        text_data = pg.image.tostring(surface, "RGBA", True)
-        text_size: tuple[int, int] = surface.get_size()
-
-        pos.y = global_vars.screen_size.y - pos.y
-
-        pos.x = (pos.x / global_vars.screen_size_fac_x) + global_vars.screen_size_offset_x
-        pos.y = (pos.y / global_vars.screen_size_fac_y) + global_vars.screen_size_offset_y
+            scale = global_vars.translate_scale(scale)
+            scaled_w = w * scale
+            scaled_h = h * scale
 
         if centered:
-            pos.x -= text_size[0] / 2
-            pos.y -= text_size[1] / 2
+            pos.x -= scaled_w / 2
+            pos.y -= scaled_h / 2
 
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(pos, text_size):
+        if OpenGLRenderer.check_out_of_screen(pos, Vec2(scaled_w, scaled_h)):
             return
 
-        glWindowPos2d(*pos.xy)
-        glDrawPixels(
-            surface.get_width(),
-            surface.get_height(),
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            text_data
-        )
+        surf_id = id(surface)
+
+        if not is_dynamic and surf_id in self.__surf_cache:
+            tex_id = self.__surf_cache[surf_id]
+        else:
+            text_data = pg.image.tostring(surface, "RGBA", False)
+            tex_id = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, tex_id)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+            if not is_dynamic:
+                self.__surf_cache[surf_id] = tex_id
+
+        glEnable(GL_TEXTURE_2D)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        glBindTexture(GL_TEXTURE_2D, tex_id)
+
+        glPushMatrix()
+        glTranslatef(pos.x, pos.y, 0)
+        glColor4f(1.0, 1.0, 1.0, 1.0)
+
+        glBegin(GL_QUADS)
+        glTexCoord2f(0, 0)
+        glVertex2f(0, 0)
+        glTexCoord2f(0, 1)
+        glVertex2f(0, scaled_h)
+        glTexCoord2f(1, 1)
+        glVertex2f(scaled_w, scaled_h)
+        glTexCoord2f(1, 0)
+        glVertex2f(scaled_w, 0)
+        glEnd()
+
+        glPopMatrix()
+        glDisable(GL_TEXTURE_2D)
+
+        if is_dynamic:
+            glDeleteTextures(1, [tex_id])

@@ -45,9 +45,7 @@ ButtonClickSound = _ButtonClickSound()
 
 ANIM_TIME: float = .2
 
-from .._debug import draw_debug_bounds
 
-@draw_debug_bounds
 class Button(Rectangle):
     """
     a button, what did you expect?

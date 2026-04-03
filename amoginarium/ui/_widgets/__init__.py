@@ -9,3 +9,5 @@ Authors: LukasKrah
 from ._rectangle import Rectangle
 from ._cursor import UICursor
 from ._button import Button
+from ._entry import UIEntry
+from ._entry import UIEntry

@@ -10,7 +10,7 @@ Project: amoginarium
 
 import typing as tp
 
-from amoginarium.ui import Button, Rectangle, Anchor
+from amoginarium.ui import Button, Rectangle, Anchor, UIEntry
 
 
 ##################################################
