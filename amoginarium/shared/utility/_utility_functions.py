@@ -94,16 +94,15 @@ def multi_raycast_mask(
             continue
 
         if hasattr(sprite, "last_pos"):
-            if infinite_lines_intersect(
-                sprite.position,
-                sprite.last_pos,
-                start,
-                end
-            ):
-                out.append((sprite, sprite.position))
+            if raycast_size(start, end, sprite.position, sprite.size.length * 2):
+                res = raycast_mask(sprite, start, end, sample_rate)
+
+                if not res:
+                    continue
+            else:
                 continue
 
-        if hasattr(sprite, "form"):  # check if island
+        elif hasattr(sprite, "form"):  # check if island
             if raycast_size(start, end, sprite.position, sprite.size.length * 2):
                 res = raycast_mask(
                     sprite,
@@ -117,6 +116,7 @@ def multi_raycast_mask(
 
         elif hasattr(sprite, "is_bullet"):  # check if game entity
             res = raycast_size(start, end, sprite.position, sprite.size.length)
+
             if not res:
                 continue
 

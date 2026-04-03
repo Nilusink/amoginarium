@@ -23,14 +23,14 @@ from amoginarium.shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessC
 from amoginarium.shared import ProcessCommandType, Coalitions
 from amoginarium.shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
 from amoginarium.shared.debugging import print_with_prefix, get_fg_color
-from amoginarium.shared.utility import Vec2
+from amoginarium.shared.utility import Vec2, calculate_launch_angle
 from amoginarium import pv
 
 from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL
 from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE
 from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
 from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
-from .entities import GravityAffected, FrictionXAffected
+from .entities import GravityAffected, FrictionXAffected, MortarShell, Mortar
 from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect
 from .graphics_dummies import Controller
 
@@ -39,17 +39,18 @@ class LogicProcess:
     """
     Logic Process data
     """
+
     def __init__(
-            self,
-            shm: SharedMemory,
-            c_shm: SharedMemory,
-            command_in_queue: Queue,
-            command_out_queue: Queue,
-            write_lock: synchronize.Lock,
-            global_vars: GlobalVars,
-            base_comm: Connection,
-            process_comm: Connection,
-            start_time: float
+        self,
+        shm: SharedMemory,
+        c_shm: SharedMemory,
+        command_in_queue: Queue,
+        command_out_queue: Queue,
+        write_lock: synchronize.Lock,
+        global_vars: GlobalVars,
+        base_comm: Connection,
+        process_comm: Connection,
+        start_time: float,
     ) -> None:
         self._start = start_time
         ic.configureOutput(
@@ -76,7 +77,8 @@ class LogicProcess:
         )
 
         # initialize pygame
-        pg.mixer.init()
+        pg.mixer.init(buffer=1024)
+        pg.mixer.set_num_channels(64)
 
         self._write_lock = write_lock
         self._ciq = command_in_queue
@@ -102,10 +104,30 @@ class LogicProcess:
         # preload sounds
         self.preload()
         self._last_spawn = perf_counter()
-        self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), Vec2())
 
         self._running = True
         self._paused = False
+
+        self._v = 3000
+        self._b_vel, *_ = calculate_launch_angle(
+            Vec2().from_cartesian(6000, -65),
+            Vec2(),
+            Vec2(),
+            self._v,
+            aim_type="high",
+            g=GravityAffected.gravity * 2
+        )
+        self._b_vel.y *= -1
+        ic(self._b_vel)
+        self._b_start = Vec2().from_cartesian(700, 700)
+        self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
+        self._w = Mortar(
+            self._dummy_dad,
+            self._runtime_buffer,
+            bullet_speed=self._v
+        )
+        self._w.reload(True)
+        self._w.facing = self._b_vel
 
     # region properties
     @property
@@ -333,19 +355,19 @@ class LogicProcess:
         sound_effects.update()
 
         # test stuff
-        if start - self._last_spawn > .2:
+        self._dummy_dad.update(delta)
+        self._w.update(delta)
+        if start - self._last_spawn > .5:
             self._last_spawn = start
-            # Bullet(
+            self._w.shoot(self._b_vel, 10)
+            self._w._stop_recoil()
+            # MortarShell(
             #     self._runtime_buffer,
             #     parent=self._dummy_dad,
-            #     coalition=Coalitions.red,
-            #     initial_position=Vec2().from_cartesian(
-            #         500, 750
-            #     ),
-            #     initial_velocity=Vec2().from_cartesian(
-            #         300, -1500
-            #     ),
-            #     time_to_life=15
+            #     coalition=Coalitions.blue,
+            #     initial_position=self._b_start,
+            #     initial_velocity=self._b_vel,
+            #     time_to_life=8
             # )
             # MortarShell(
             #     self._runtime_buffer,
@@ -468,7 +490,8 @@ def run_continuous(
         global_vars_values: dict[str, Synchronized],
         base_comm: Connection,
         process_comm: Connection,
-        start_time: float
+        start_time: float,
+        time_multiplier: float
 ) -> None:
     """
     run the logic process continuously
@@ -485,7 +508,7 @@ def run_continuous(
         global_vars,
         base_comm,
         process_comm,
-        start_time
+        start_time,
     )
 
     ic("logic process start")
@@ -496,7 +519,7 @@ def run_continuous(
         # calculate time since last loop
         now = perf_counter()
         if last_update_success:
-            delta = now - last_run
+            delta = (now - last_run) * time_multiplier
 
         else:
             delta = 0

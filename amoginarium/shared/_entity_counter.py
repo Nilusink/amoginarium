@@ -23,15 +23,24 @@ class _EntityCounter:
 
     def __init__(self) -> None:
         self._used_ids: set[int] = set()
+        self._current_id: int = 0
 
     def get_id(self) -> int:
-        for i in range(MAX_ENTITIES):
-            if i not in self._used_ids:
-                self._used_ids.add(i)
-                return i
+        """
+        get next free entity id
+        """
+        start_id = self._current_id
+        while True:
+            if self._current_id not in self._used_ids:
+                eid = self._current_id
+                self._used_ids.add(eid)
+                self._current_id = (self._current_id + 1) % MAX_ENTITIES
+                return eid
 
-        else:
-            raise RuntimeError("entity limit reached")
+            self._current_id = (self._current_id + 1) % MAX_ENTITIES
+
+            if self._current_id == start_id:
+                raise RuntimeError("entity limit reached")
 
     def pop_id(self, id: int) -> bool:
         """

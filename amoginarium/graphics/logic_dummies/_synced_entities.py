@@ -157,8 +157,8 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         renderer.draw_textured_quad(
             self._texture_id,
             (
-                self.pos.x - world_position.x,
-                self.pos.y - world_position.y
+                self.pos.x - world_position.x - self.size.x / 2,
+                self.pos.y - world_position.y - self.size.y / 2
             ),
             (
                 self.size.x,

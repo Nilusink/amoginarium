@@ -331,12 +331,16 @@ class BaseWeapon(LogicGameEntity):
                 self._sound_effect.done()
 
         self._current_reload_time = 0 if instant else self._reload_time
+        self._current_recoil_time = 0
 
         if instant:
             self._mag_state = self._mag_size
 
         else:
             self._mag_state = 0
+
+    def _stop_recoil(self) -> None:
+        self._current_recoil_time = 0
 
     def stop(self) -> None:
         """
@@ -453,17 +457,18 @@ class Mortar(BaseWeapon):
             parent,
             runtime_buffer: Array[base_entity_t],
             drop_casings: bool = False,
-            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
+            bullet_speed=1400
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
-            reload_time=4,
+            reload_time=8,
             recoil_time=0,
-            mag_size=1,
+            mag_size=8,
             inaccuracy=.00100002,
             bullet_size=Vec2().from_cartesian(40, 20),
-            bullet_speed=1400,
+            bullet_speed=bullet_speed,
             bullet_damage=40,
             barrel_length=10,
             parent_position_offset=parent_position_offset,

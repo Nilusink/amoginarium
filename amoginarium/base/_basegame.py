@@ -99,7 +99,8 @@ class BaseGame:
                 "c_shm": pv.C_SHM,
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
-                "start_time": self._game_start
+                "start_time": self._game_start,
+                "time_multiplier": time_multiplier
             }
         )
         self._logic_process.start()
@@ -129,7 +130,7 @@ class BaseGame:
 
         # initialize pygame (logic) and renderer
         pg.init()
-        pg.mixer.init(channels=64, buffer=1024)
+        # pg.mixer.init(channels=64, buffer=1024)
         renderer.init("amoginarium")
 
         self._loading_screen_steps = 28

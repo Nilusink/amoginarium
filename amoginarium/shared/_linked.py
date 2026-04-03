@@ -63,6 +63,8 @@ class BoundFunction(tp.TypedDict):
 
 
 class GlobalVars:
+    show_targets: bool = False
+
     def __init__(self, values: dict[str, Synchronized], set: bool = True) -> None:
         self.__values = values
 

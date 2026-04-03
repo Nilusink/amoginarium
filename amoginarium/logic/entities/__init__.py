@@ -9,3 +9,4 @@ from ._bullets import Bullet, MortarShell, Grenade, SniperBullet
 from ._detection_group import DETECTION_GROUP_MANAGER, DetectionGroup, \
     DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
 from ._sensors import BaseSensor, MagicSensor
+from ._weapons import Mortar

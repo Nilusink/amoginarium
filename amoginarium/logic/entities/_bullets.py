@@ -14,10 +14,9 @@ from ctypes import Array
 from icecream import ic
 import numpy as np
 
-from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related
+from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related, convert_coord
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
-from amoginarium.shared.debugging import run_with_debug
 from amoginarium import pv
 
 from ..audio import LargeExplosion
@@ -95,16 +94,19 @@ class Bullet(LogicGameEntity):
             self.add(Bullets, CollisionDestroyed)
 
         # spawn dummy
+        kwargs = {
+            "id": self.id,
+            "cid": self.cid(),
+            "spawn_time": self._start_time,
+            "visibility_offset": self._visibility_offset,
+        }
+        if not isinstance(self._target_pos, EllipsisType):
+            kwargs["target_pos"] = self._target_pos.xy  # ignore: type
+
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={
-                "id": self.id,
-                "cid": self.cid(),
-                "spawn_time": self._start_time,
-                "visibility_offset": self._visibility_offset,
-            }
+            kwargs=kwargs
         ))
-        ic(self.cid())
 
     # region properties
     @property
@@ -247,9 +249,10 @@ class Bullet(LogicGameEntity):
                     with suppress(AttributeError):
                         other.hit(dmg, self)
 
-    @run_with_debug()
+        # update velocity
+        self._runtime_buffer[self.id].param1 = self.velocity.length
+
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
-        ic(killed_by, self.position)
         if all([
             self._casing,
             not Updated.out_of_bounds_x(self)

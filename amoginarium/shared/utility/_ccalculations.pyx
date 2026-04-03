@@ -21,7 +21,7 @@ cpdef tuple calculate_launch_angle(
     :param recalculate: how often the position is being recalculated, basically a precision parameter
     :param aim_type: either "high" - "h" or "low" - "l". Defines if the lower or higher curve should be aimed for
     :param g: gravitation inflicted on target
-    :return: where to aim, tof, predicted position
+    :return: ``target_angle@launch_velocity``, ``tof``, ``predicted_position``
     """
     if recalculate < 0:
         recalculate = 0
@@ -76,5 +76,5 @@ cpdef tuple calculate_launch_angle(
     else:
         angle = solutions[0] if solutions[0] < solutions[1] else solutions[1]
 
-    sol = Vec2().from_polar(angle, 1)
+    sol = Vec2().from_polar(angle, launch_speed)
     return sol, a_time, a_pos

@@ -14,6 +14,7 @@ from icecream import ic
 from ctypes import Array
 import typing as tp
 import numpy as np
+import ctypes
 
 from amoginarium.shared import Coalitions, VisibleGameEntityLike, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
@@ -86,6 +87,7 @@ class BaseTurret(LogicGameEntity):
         self.intercept_bullets = intercept_bullets
         self.intercept_players = intercept_players
         self.available_targets = {}
+        self._target_predict = []
         self._last_shot = perf_counter()
         self._aiming_at = Vec2().from_cartesian(-1, 0)
         self._valid_angles = valid_angles
@@ -266,18 +268,16 @@ class BaseTurret(LogicGameEntity):
                 new_target = None
 
             else:
-                self._target_predict = [solution.target_predict]
                 self.__shoot_at(solution)
 
         # aim but don't shoot
         if new_target is None and simulate_target is not None:
-            self._target_predict = [simulate_target.target_predict]
             self._aiming_at = simulate_target.angle.copy()
             self._aiming_at.normalize()
 
         else:
             self._target = None
-            self._target_predict = []
+            # self._target_predict = []
 
         self.facing.angle = self._aiming_at.angle
 
@@ -301,12 +301,12 @@ class BaseTurret(LogicGameEntity):
         ## target
         if self._target_predict:
             target = self._target_predict[0]
-            target_pos_x = int(target.x) & MASK32
-            target_pos_y = (int(target.y) & MASK32) << 32
-            self._runtime_buffer[self.id].param3 = target_pos_x | target_pos_y
+            x32 = ctypes.c_int32(int(target.x)).value
+            y32 = ctypes.c_int32(int(target.y)).value
+            self._runtime_buffer[self.id].param3 = ctypes.c_uint64(
+                x32 & MASK32
+            ).value | (ctypes.c_uint64(y32 & MASK32).value << 32)
 
-        # else:
-        #     self._runtime_buffer[self.id].param3 = MASK64
 
         ## range
         param4 = int(self.min_range) & MASK16
@@ -347,7 +347,7 @@ class BaseTurret(LogicGameEntity):
         #     target_position = target.position_center
 
         position_delta = target_position - (
-                self.position + self.weapon.parent_position_offset
+            self.position + self.weapon.parent_position_offset
         )
         position_delta.y *= -1
         player_velocity.y *= -1
@@ -359,9 +359,6 @@ class BaseTurret(LogicGameEntity):
             player_velocity.x *= -1
             player_acceleration.x *= -1
             mirror = True
-
-        # try to negate effects of bullet spawning off-center
-        # position_delta.length -= self.weapon.barrel_length / 2
 
         # try to predict where the player is going to be
         with suppress(ValueError):
@@ -383,6 +380,10 @@ class BaseTurret(LogicGameEntity):
             if mirror:
                 aiming_angle.x *= -1
                 predict.x *= -1
+
+            # check if inside range
+            if predict.length > self.engagement_range:
+                return None
 
             target_predict = self.position + self.weapon.parent_position_offset + predict
 
@@ -436,6 +437,7 @@ class BaseTurret(LogicGameEntity):
         )
 
         if shot:
+            self._target_predict = [solution.target_predict]
             if self.available_targets[solution.target]["shot_at"] < -1:
                 self.available_targets[solution.target]["shot_at"] += 1
 
@@ -630,7 +632,7 @@ class CRAMTurret(BaseTurret):
             Vec2().from_cartesian(64, 128),
             position,
             weapon,
-            1900,
+            5000,
             150,
             intercept_bullets=True,
             intercept_players=False,
@@ -641,11 +643,11 @@ class CRAMTurret(BaseTurret):
                 Vec2().from_cartesian(.5, 1)
             ),
             sensors=[
-                RadarSensor(
+                MagicSensor(
                     self,
-                    1500,
-                    sphere_accuracy=256,
-                    min_rcs=.04
+                    12000,
+                    # sphere_accuracy=256,
+                    # min_rcs=.04
                 )
             ],
             **kwargs

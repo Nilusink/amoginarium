@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 from icecream import ic
+import ctypes
 
 from amoginarium.base._textures import textures
 from amoginarium.shared.utility import Vec2, Color, normalize_angle, MASK32
@@ -64,10 +65,9 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         update targeting pos before drawing
         """
         if self.param3 < MASK64:
-            self._target_pos = Vec2().from_cartesian(
-                self.param3 & MASK32,
-                self.param3 >> 32 & MASK32
-            )
+            x = ctypes.c_int32(self.param3 & MASK32).value
+            y = ctypes.c_int32((self.param3 >> 32) & MASK32).value
+            self._target_pos = Vec2().from_cartesian(x, y)
 
         else:
             self._target_pos = None
@@ -100,7 +100,6 @@ class BaseTurretDummy(SyncedGraphicsEntity):
             return
 
         engage_center = self.world_position
-
 
         # draw engagement range
         if self._angles[0] > 0:
@@ -174,7 +173,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         super()._gl_draw(delta_cal)
 
         # targets
-        if 1:
+        if pv.global_vars.show_targets:
             if self._target_pos:
                 renderer.draw_line(
                     self.world_position,
