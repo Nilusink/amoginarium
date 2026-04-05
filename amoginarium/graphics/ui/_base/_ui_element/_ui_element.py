@@ -537,7 +537,7 @@ class UIElement(UIEntity):
         self._ui_changed = True
         self.__last_data.copy_from(self.__data)
 
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         """
         The draw function called in loop
 
@@ -550,7 +550,7 @@ class UIElement(UIEntity):
 
         super()._gl_draw(delta_cal)
 
-    def _after_gl_draw(self, drawn: bool) -> None:
+    def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         super()._after_gl_draw(drawn)
         self._ui_changed = False
 

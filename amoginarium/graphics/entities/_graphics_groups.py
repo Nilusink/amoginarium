@@ -25,7 +25,13 @@ class _UIEntities(BaseGroup):
 
 
 class _Drawn(BaseGroup):
-    ...
+    def __init__(self, layer: int) -> None:
+        self._layer = layer
+        super().__init__()
+
+    def gl_draw(self, delta_cal: float) -> None:
+        for sprite in self.sprites():
+            sprite.gl_draw(delta_cal, layer=self._layer)
 
 
 class _Cursor(BaseGroup):
@@ -38,8 +44,8 @@ class _SyncedEntities(BaseGroup):
             entity.update_from_buffer(True)
 
 
-Drawn_0 = _Drawn()
-Drawn_1 = _Drawn()
+Drawn_0 = _Drawn(0)
+Drawn_1 = _Drawn(1)
 Cursor = _Cursor()
 UIEntities = _UIEntities()
 SyncedEntities = _SyncedEntities()

@@ -24,7 +24,9 @@ from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, GL_NEAREST
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GL import glPushMatrix, glPopMatrix
 from OpenGL.GLU import gluOrtho2D
+
 from pygame.locals import DOUBLEBUF, OPENGL
+from types import EllipsisType
 from icecream import ic
 from PIL import Image
 import pygame as pg
@@ -32,7 +34,7 @@ import typing as tp
 import numpy as np
 import math as m
 
-from ...shared.utility import Vec2, Color, convert_coord, normalize_angle
+from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade
 from ._base_renderer import BaseRenderer, tColor
 from ... import pv
 
@@ -979,3 +981,66 @@ class OpenGLRenderer(BaseRenderer):
             GL_UNSIGNED_BYTE,
             text_data
         )
+
+    def draw_bar(
+        self,
+        pos,
+        size,
+        colors,
+        progress,
+        convert_global=True,
+        background_color=...
+    ) -> None:
+        """
+        draw a progress? bar at the specified location (using specified color gradient
+        """
+        pos: Vec2 = convert_coord(pos, Vec2)  # ignore: type
+        size: Vec2 = convert_coord(size, Vec2)  # ignore: type
+
+        if len(colors) == 1:
+            color: Color = colors[0]
+
+        elif len(colors) == 2:
+            color: Color = fade(colors[0], colors[1], progress)  # ignore: type
+        
+        elif len(colors) == 3:
+            color: Color = (
+                fade(colors[0], colors[1], progress)
+                if progress < 0.5
+                else fade(colors[1], colors[2], progress)
+            )  # ignore: type
+        
+        else:
+            raise RuntimeError(f"Invalid colors for \"draw_bar\": {colors}")
+
+        if isinstance(background_color, EllipsisType):
+            background_color: Color = Color().from_1(0, 0, 0, .5)
+
+        if convert_global:
+            pos = pv.global_vars.translate_screen_coord(pos)
+            size = pv.global_vars.translate_scale(size)
+
+        glPushMatrix()  # reset previous glTranslate statements
+        glTranslate(pos.x, pos.y, 0)
+
+        # draw progress
+        self.set_color(color)
+
+        glBegin(GL_POLYGON)
+        glVertex2f(0, 0)
+        glVertex2f(size.x * progress, 0)
+        glVertex2f(size.x * progress, size.y)
+        glVertex2f(0, size.y)
+        glEnd()
+
+        # draw background bar
+        self.set_color(background_color)
+
+        glBegin(GL_POLYGON)
+        glVertex2f(size.x * progress, 0)
+        glVertex2f(size.x, 0)
+        glVertex2f(size.x, size.y)
+        glVertex2f(size.x * progress, size.y)
+        glEnd()
+
+        glPopMatrix()

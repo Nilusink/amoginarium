@@ -295,8 +295,7 @@ class BaseTurret(LogicGameEntity):
 
         # update parameters
         ## bars
-        self._runtime_buffer[self.id].param0 = self._max_hp / self._hp
-        self._runtime_buffer[self.id].param1 = self.weapon.get_mag_state(1)[0]
+        self._runtime_buffer[self.id].param0 = self._hp / self._max_hp
 
         ## target
         if self._target_predict:

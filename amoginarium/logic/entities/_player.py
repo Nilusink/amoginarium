@@ -61,10 +61,10 @@ class Player(LogicGameEntity):
         self._alive = True
 
         if not size:
-            size = Vec2().from_cartesian(64, 64)
+            size: Vec2 = Vec2().from_cartesian(64, 64)
 
         if not position:
-            position = Players.spawn_point
+            position: Vec2 = Players.spawn_point
 
         self._initial_position = position.copy()
         self._death_sound = DeathSound()
@@ -513,7 +513,7 @@ class Player(LogicGameEntity):
         if self.item:
             self.item.facing.angle = self.facing.angle
 
-        self._runtime_buffer[self.id].param0 = self._max_hp / self._hp
+        self._runtime_buffer[self.id].param0 = self._hp / self._max_hp
 
         if self.position.y > 2000:
             self.kill()

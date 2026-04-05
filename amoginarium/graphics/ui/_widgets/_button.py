@@ -138,7 +138,7 @@ class Button(Rectangle):
         # if self.__command is not None:
         self.add_click_callback(lambda: self.__command())
 
-    def _gl_draw(self, delta_cal: float) -> None:
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal)
 
         renderer.draw_pg_surf(

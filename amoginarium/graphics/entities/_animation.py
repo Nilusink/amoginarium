@@ -82,7 +82,7 @@ class Animation(BaseGraphicsEntity):
         self._playing = False
         del self
 
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         self._current_t -= delta_cal
         if self._current_t <= 0:
             if (self._current_image + 1) >= len(self._textures):

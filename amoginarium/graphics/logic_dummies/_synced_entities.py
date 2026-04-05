@@ -51,8 +51,6 @@ class _SyncedEntitiesManager:
 
         :returns: None if not found, entity if present
         """
-        print_ic_style(f"getting parent with id {sync_id}")
-
         if sync_id not in self._entities:
             return None
 
@@ -189,7 +187,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     # endregion
 
     # region draw
-    def _before_gl_draw(self, drawn: bool) -> None:
+    def _before_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         if not self.alive and self._visible:
             self._visible = False
 
@@ -210,7 +208,7 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         self._texture_id = texture_id
         super().__init__(sync_id, parent)
 
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         world_position = pv.global_vars.get_world_position()
         renderer.draw_textured_quad(
             self._texture_id,
@@ -233,7 +231,7 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
 
     __slots__ = ["_texture_id_l", "_texture_id_r"]
 
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
 
         renderer.draw_textured_quad(
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,

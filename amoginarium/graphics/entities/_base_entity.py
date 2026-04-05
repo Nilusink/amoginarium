@@ -7,7 +7,7 @@ Graphics base entity
 Author:
 Nilusink
 """
-from icecream import ic
+from __future__ import annotations
 import typing as tp
 
 
@@ -45,6 +45,10 @@ class BaseGraphicsEntity:
         returns current visibility state
         """
         return self._visible
+
+    @property
+    def parent(self) -> BaseGraphicsEntity:
+        return self._parent
 
     # endregion
 
@@ -106,46 +110,49 @@ class BaseGraphicsEntity:
     # endregion
 
     # region gl_draw
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         """
         Draw function for this UI.
         Use in inheritance for the actual drawing
         """
         return
 
-    def _before_gl_draw(self, drawn: bool) -> None:
+    def _before_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
         Called before gl_draw
-        :param: Whether the UI-entity will be drawn
+        :param drawn: Whether the UI-entity will be drawn
+        :param layer: what layer the draw function has been called by
         """
         return
 
-    def _after_gl_draw(self, drawn: bool) -> None:
+    def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
         Called after gl_draw
-        :param: Whether the UI-entity was drawn
+        :param drawn: Whether the UI-entity was drawn
+        :param layer: what layer the draw function has been called by
         """
         return
 
     @tp.final
-    def gl_draw(self, delta_cal: float, recursive: bool = True, force_draw: bool = False) -> None:
+    def gl_draw(self, delta_cal: float, recursive: bool = True, force_draw: bool = False, layer: int = 0) -> None:
         """
         Draw this UI-entity.
         :param delta_cal: delta used for animation calculations
         :param recursive: Draw the children tree recursively
         :param force_draw: Ignore visibility
+        :param layer: what layer the draw function has been called by
 
         Note: Only overwrite in inheritance for before/after draw updates
         Note: Ignores parent visibility
         """
         draw: bool = force_draw or self.visible
-        self._before_gl_draw(draw)
+        self._before_gl_draw(draw, layer=layer)
 
         if draw:
-            self._gl_draw(delta_cal)
+            self._gl_draw(delta_cal, layer=layer)
             if recursive:
                 for child in self._children:
-                    child.gl_draw(delta_cal, force_draw=(force_draw or self._root_visibility))
+                    child.gl_draw(delta_cal, force_draw=(force_draw or self._root_visibility), layer=layer)
 
         self._after_gl_draw(draw)
     # endregion

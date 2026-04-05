@@ -30,7 +30,7 @@ class UICursor(UIEventElement):
         self.add(Cursor)
         self.show()
 
-    def _gl_draw(self, delta_cal: float) -> None:
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         mouse_pos = pg.mouse.get_pos()
         screen_size_offset = pv.global_vars.get_screen_size_offset()
         screen_size_fac = pv.global_vars.get_screen_size_fac()

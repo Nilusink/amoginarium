@@ -7,15 +7,16 @@ graphics dummy for player
 Author:
 Nilusink
 """
-from icecream import ic
 import pygame as pg
-import typing as tp
 
+from amoginarium.base._textures import textures
+from amoginarium.shared.utility import Color
+from amoginarium.shared import DummyCIDs
+
+from ..entities import Drawn_1
 from ._synced_entities import SyncedLRImageEntity
-from ..entities import Drawn_0
-from ...base._textures import textures
-from ...shared import DummyCIDs
-from ...shared.utility import Vec2
+from ..render_bindings import renderer
+
 
 PLAYER_LEFT_64_PATH = "amogus64left"
 PLAYER_RIGHT_64_PATH = "amogus64right"
@@ -30,7 +31,7 @@ class PlayerDummy(SyncedLRImageEntity):
     """
     `param0` health (0-1)
     """
-    __slots__ = []
+    __slots__ = ["_hp_colors"]
 
     _cid = DummyCIDs.player
 
@@ -88,6 +89,7 @@ class PlayerDummy(SyncedLRImageEntity):
             parent: int | None = None
     ) -> None:
         super().__init__(sync_id, parent)
+        self.add(Drawn_1)
 
         # load textures
         if size == 64:
@@ -104,6 +106,24 @@ class PlayerDummy(SyncedLRImageEntity):
                 (size, size),
                 mirror="x"
             )
+        
+        # defaults
+        self._hp_colors = (
+            Color().from_255(255, 0, 0),
+            Color().from_255(180, 90, 20),
+            Color().from_255(0, 255, 0)
+        )
 
-    def _gl_draw(self, delta_cal: float):
-        super()._gl_draw(delta_cal)
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
+        if layer == 0:
+            super()._gl_draw(delta_cal, layer)
+
+        elif layer == 1:
+            # draw health bar
+            owp = self.world_position
+            renderer.draw_bar(
+                (owp.x - self.size.x / 2, owp.y + self.size.y / 2 + 10),
+                (self.size.x, 7),
+                self._hp_colors,
+                self.param0,
+            )

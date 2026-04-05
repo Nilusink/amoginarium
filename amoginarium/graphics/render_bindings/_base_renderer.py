@@ -7,6 +7,7 @@ prototype renderer
 Author:
 Nilusink
 """
+from types import EllipsisType
 from PIL import Image
 import pygame as pg
 import typing as tp
@@ -259,3 +260,13 @@ class BaseRenderer:
         generates a pygame surface from a text
         """
         raise NotImplementedError
+
+    def draw_bar(
+        self,
+        pos: coord_t,
+        size: coord_t,
+        colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
+        progress: float,
+        convert_global: bool = True,
+        background_color: Color | EllipsisType = ...,
+    ) -> None: ...

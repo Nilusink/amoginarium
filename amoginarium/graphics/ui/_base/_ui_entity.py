@@ -196,21 +196,21 @@ class UIEntity(BaseGraphicsEntity):
     # endregion
 
     # region Methods: drawing
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         """
         Draw function for this UI.
         Use in inheritance for the actual drawing
         """
         return
 
-    def _before_gl_draw(self, drawn: bool) -> None:
+    def _before_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
         Called before gl_draw
         :param: Whether the UI-entity will be drawn
         """
         return
 
-    def _after_gl_draw(self, drawn: bool) -> None:
+    def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
         Called after gl_draw
         :param: Whether the UI-entity was drawn

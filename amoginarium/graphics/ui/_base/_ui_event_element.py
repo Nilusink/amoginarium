@@ -243,7 +243,7 @@ class UIEventElement(UIElement):
     # endregion
 
     # region Methods: Drawing & Updates
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         """
         The draw function called in loop. Updates hover state trackers and handles
         collision surface recreation flags before calling the parent UIElement draw.
@@ -258,7 +258,7 @@ class UIEventElement(UIElement):
         if self.__use_collision_mask and self._ui_changed:
             self.__collision_recreation = True
 
-    def _after_gl_draw(self, drawn: bool) -> None:
+    def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         super()._after_gl_draw(drawn)
         if drawn:
             if self.__on_enter_callbacks or self.__on_leave_callbacks or self.__on_buffer_callbacks:

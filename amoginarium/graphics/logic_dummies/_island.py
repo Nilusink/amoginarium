@@ -281,7 +281,7 @@ class Island(SyncedGraphicsEntity):
 
         self.pos = convert_coord(pos, Vec2)
 
-    def _gl_draw(self, delta_cal: float) -> None:
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         start_pos = self.world_position
         world_position = pv.global_vars.get_world_position()
         screen_pixels = pv.global_vars.screen_pixels

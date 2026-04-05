@@ -230,6 +230,7 @@ class BaseWeapon(LogicGameEntity):
         #     self._current_sound_time = 0
 
         super()._update(delta)
+        self._runtime_buffer[self.id].param1, _ = self.get_mag_state(1)
 
     def stop_shooting(self):
         """

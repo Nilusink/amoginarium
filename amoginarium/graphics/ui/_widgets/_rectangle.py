@@ -155,7 +155,7 @@ class Rectangle(UIEventElement):
         self.__border_width_animation.stop()
         self.__radius_animation.stop()
 
-    def _gl_draw(self, delta_cal: float) -> None:
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         if self.use_collision_mask and not self._ui_changed:
             self._ui_changed = any([
                 self.__border_width_animation.is_changing(),

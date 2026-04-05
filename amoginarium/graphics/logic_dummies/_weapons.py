@@ -11,8 +11,8 @@ Nilusink
 import typing as tp
 import math as m
 
+from amoginarium.shared.utility import Vec2, Color
 from amoginarium.base._textures import textures
-from amoginarium.shared.utility import Vec2
 from amoginarium.shared import WeaponCIDs
 from amoginarium import pv
 
@@ -24,10 +24,11 @@ from ..entities import Drawn_1, Drawn_0
 class WeaponDummy(SyncedLRImageEntity):
     """
     ``param0`` size fac
+    ``param1`` mag state
     ``param3`` charge state if applicable
     """
 
-    __slots__ = []
+    __slots__ = ["_bar_colors"]
 
     _cid = WeaponCIDs.base
     _image_name: str = "minigun"
@@ -68,8 +69,9 @@ class WeaponDummy(SyncedLRImageEntity):
         )
         self.remove(Drawn_0)
         self.add(Drawn_1)
+        self._bar_colors = (Color().from_1(.55, .55, 1),)
 
-    def _gl_draw(self, delta_cal):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         """
         Draw weapon (centered) at a specified position
 
@@ -109,6 +111,22 @@ class WeaponDummy(SyncedLRImageEntity):
                 rotate_angle=angle,
                 rotate_anchor=anchor,
             )
+
+        # draw ammo bar
+        if self.parent:
+            pos = self.parent.world_position
+            size = self.parent.size
+
+        else:
+            pos = self.world_position
+            size = self.size
+
+        renderer.draw_bar(
+            (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5*7),
+            (size.x, 7),
+            self._bar_colors,
+            self.param1,
+        )
 
 
 class Minigun(WeaponDummy):

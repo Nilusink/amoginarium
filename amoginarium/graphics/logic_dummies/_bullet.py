@@ -89,7 +89,7 @@ class BulletDummy(SyncedImageEntity):
 
         super().kill()
 
-    def _gl_draw(self, delta_cal: float):
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
         if self._visibility_offset > 0:
             self._visibility_offset -= delta_cal
             self._last_pos.length = 0
