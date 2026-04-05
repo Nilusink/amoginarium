@@ -32,9 +32,9 @@ import typing as tp
 import numpy as np
 import math as m
 
-from amoginarium.debugging import cum_timer
+from amoginarium.debugging import cum_timer, get_caller_name
 
-from ..logic import Vec2, Color, convert_coord, normalize_angle
+from ..logic import Vec2, Color, convert_coord, normalize_angle, coord_t
 from ._base_renderer import BaseRenderer, tColor
 from ..shared import global_vars
 from ._opengl_fonts import GLFont
@@ -160,12 +160,18 @@ class OpenGLRenderer(BaseRenderer):
         """
         check if a rect is on the screen
         """
-        # pos = convert_coord(pos, Vec2)
-        # size = convert_coord(size, Vec2)
+        pos = convert_coord(pos)
+        size = convert_coord(size)
 
-        return False
-
+        # return False
         # 200 for buffering
+        return (
+                pos[0] + size[0] < 0
+                or pos[0] > global_vars.resolution.x
+                or pos[1] + size[1] < 0
+                or pos[1] > global_vars.resolution.y
+        )
+
         # return any([
         #     pos.x > global_vars.screen_size.x + 200,
         #     pos.x + size.x < -200
@@ -174,7 +180,7 @@ class OpenGLRenderer(BaseRenderer):
     @staticmethod
     def load_texture(
             image,
-            size=None,
+            size: coord_t | None = None,
             mirror=""
     ) -> tuple[TextureID, tuple[int, int]]:
         # for debugging
@@ -249,6 +255,7 @@ class OpenGLRenderer(BaseRenderer):
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(pos, size):
+            print("SKIP TEXTURED QUAD", get_caller_name(True))
             return
 
         # reset color
@@ -382,7 +389,7 @@ class OpenGLRenderer(BaseRenderer):
             color,
             convert_global=True,
     ):
-        center = convert_coord(center, Vec2)
+        center: Vec2 = convert_coord(center, Vec2)
 
         # convert to screen realtive coords and size
         if convert_global:
@@ -390,7 +397,8 @@ class OpenGLRenderer(BaseRenderer):
             radius = global_vars.translate_scale(radius)
 
         # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
+        if OpenGLRenderer.check_out_of_screen((center.x - radius, center.y - radius), (radius * 2, radius * 2)):
+            print("SKIP CIRCLE", get_caller_name(True))
             return
 
         glPushMatrix()  # reset previous glTranslate statements
@@ -425,7 +433,8 @@ class OpenGLRenderer(BaseRenderer):
             radius = global_vars.translate_scale(radius)
 
         # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
+        if OpenGLRenderer.check_out_of_screen((center.x - radius, center.y - radius), (radius * 2, radius * 2)):
+            print("SKIP LINE CIRCLE", get_caller_name(True))
             return
 
         glPushMatrix()  # reset previous glTranslate statements
@@ -470,7 +479,8 @@ class OpenGLRenderer(BaseRenderer):
             radius = global_vars.translate_scale(radius)
 
         # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
+        if OpenGLRenderer.check_out_of_screen((center.x - radius, center.y - radius), (radius * 2, radius * 2)):
+            print("SKIP PARTIAL CIRCLE", get_caller_name(True))
             return
 
         angle_delta = (
@@ -509,6 +519,7 @@ class OpenGLRenderer(BaseRenderer):
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, size):
+            print("SKIP RECT", get_caller_name(True))
             return
 
         if convert_global:
@@ -544,7 +555,9 @@ class OpenGLRenderer(BaseRenderer):
             radius = global_vars.translate_scale(radius)
 
         # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
+        if OpenGLRenderer.check_out_of_screen((center.x - radius, center.y - radius),
+                                              (radius * 2 + thickness, radius * 2 + thickness)):
+            print("SKIP DASHED CIRCLE", get_caller_name(True))
             return
 
         glPushMatrix()
@@ -596,7 +609,9 @@ class OpenGLRenderer(BaseRenderer):
             radius = global_vars.translate_scale(radius)
 
         # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
+        if OpenGLRenderer.check_out_of_screen((center.x - radius, center.y - radius),
+                                              (radius * 2 + thickness, radius * 2 + thickness)):
+            print("SKIP PARTIAL DASHED CIRCLE", get_caller_name(True))
             return
 
         angle_delta = normalize_angle(
@@ -653,6 +668,7 @@ class OpenGLRenderer(BaseRenderer):
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, end - start):
+            print("SKIP LINE", get_caller_name(True))
             return
 
         if global_position:
@@ -692,6 +708,7 @@ class OpenGLRenderer(BaseRenderer):
 
         # only draw if on screen
         if OpenGLRenderer.check_out_of_screen(start, direction):
+            print("SKIP THICK LINE", get_caller_name(True))
             return
 
         self.set_color(color)
@@ -740,6 +757,7 @@ class OpenGLRenderer(BaseRenderer):
         size = convert_coord(size, Vec2)
 
         if OpenGLRenderer.check_out_of_screen(start, size):
+            print("SKIP ROUNDED RECT", get_caller_name(True))
             return
 
         if convert_global:
@@ -795,6 +813,7 @@ class OpenGLRenderer(BaseRenderer):
         size = convert_coord(size, Vec2)
 
         if OpenGLRenderer.check_out_of_screen(start, size):
+            print("SKIP ROUNDED BORDER", get_caller_name(True))
             return
 
         if convert_global:
@@ -844,6 +863,7 @@ class OpenGLRenderer(BaseRenderer):
         size = convert_coord(size, Vec2)
 
         if OpenGLRenderer.check_out_of_screen(start, size):
+            print("SKIP BORDER", get_caller_name(True))
             return
 
         if convert_global:
@@ -879,7 +899,6 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
 
-    @cum_timer.time_this
     def draw_text(
             self,
             pos,
@@ -931,14 +950,10 @@ class OpenGLRenderer(BaseRenderer):
         # 5. Delegate the text rendering to the GLFont class
         # We pass the color so the GLFont can tint the white texture atlas
         glPushMatrix()
-        self._draw_text_intern(font, text, pos.x, pos.y, scale, color.rgba255)
+        font.draw(text, pos.x, pos.y, scale, color.rgba255)
         glPopMatrix()
 
         return text_width, text_height
-
-    @cum_timer.time_this
-    def _draw_text_intern(self, font, test, posx, posy, scale, color):#
-        font.draw(test, posx, posy, scale, color)
 
     def generate_pg_surf_text(
             self,
@@ -963,7 +978,6 @@ class OpenGLRenderer(BaseRenderer):
             bg_color.rgba255 if bg_color.a255 > 125 else None
         )
 
-    @cum_timer.time_this
     def draw_pg_surf(
             self,
             pos,
@@ -990,6 +1004,7 @@ class OpenGLRenderer(BaseRenderer):
             pos.y -= scaled_h / 2
 
         if OpenGLRenderer.check_out_of_screen(pos, Vec2(scaled_w, scaled_h)):
+            print("SKIP PG SURF", get_caller_name(True))
             return
 
         surf_id = id(surface)

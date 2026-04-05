@@ -10,6 +10,7 @@ Nilusink
 from PIL import Image
 import pygame as pg
 import typing as tp
+import abc
 
 from ..logic import Color, coord_t
 
@@ -23,27 +24,30 @@ type tColor = Color3 | Color4
 type TextureID = tp.Any
 
 
-class BaseRenderer:
+class BaseRenderer(abc.ABC):
+    @abc.abstractmethod
     def init(self, title: str) -> None:
         """
         initialize the renderer and global_vars
+        :param title: Window title
         """
         raise NotImplementedError
 
     @staticmethod
+    @abc.abstractmethod
     def load_texture(
             image: Image.Image,
             size: coord_t | None = None,
-            mirror: tp.Literal["x", "y", "xy", "yx"] = "",
+            mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         load an image texture
-
         :returns: texture_id, (width, height)
         """
         raise NotImplementedError
 
     @staticmethod
+    @abc.abstractmethod
     def draw_textured_quad(
             texture_id: TextureID,
             pos: coord_t,
@@ -57,6 +61,8 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    # region Stencil
+    @abc.abstractmethod
     def apply_stencil[**A](
             self,
             stencil_func: tp.Callable[A, tp.Any],
@@ -66,23 +72,20 @@ class BaseRenderer:
     ) -> None: ...
 
     @staticmethod
+    @abc.abstractmethod
     def start_stencil(show_stencil: bool = False) -> None: ...
 
     @staticmethod
+    @abc.abstractmethod
     def enable_stencil(show_stencil: bool = False) -> None: ...
 
+    @abc.abstractmethod
     def disable_stencil(self) -> None: ...
 
-    def draw_polygon(
-            self,
-            vertices: tp.Iterable[coord_t],
-            color: Color | tColor,
-            center: coord_t = None,
-            convert_global: bool = True
-    ) -> None:
-        raise NotImplementedError
+    # endregion
 
     @staticmethod
+    @abc.abstractmethod
     def check_out_of_screen(
             pos,
             size,
@@ -92,6 +95,18 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    # region Drawing
+    @abc.abstractmethod
+    def draw_polygon(
+            self,
+            vertices: tp.Iterable[coord_t],
+            color: Color | tColor,
+            center: coord_t = None,
+            convert_global: bool = True
+    ) -> None:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def draw_circle(
             self,
             center: coord_t,
@@ -105,6 +120,7 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_line_circle(
             self,
             center: coord_t,
@@ -116,6 +132,7 @@ class BaseRenderer:
     ):
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_partial_circle(
             self,
             center: coord_t,
@@ -128,6 +145,7 @@ class BaseRenderer:
     ):
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_rect(
             self,
             start: coord_t,
@@ -140,6 +158,7 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_dashed_circle(
             self,
             center: coord_t,
@@ -154,6 +173,7 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_partial_dashed_circle(
             self,
             center: coord_t,
@@ -167,6 +187,7 @@ class BaseRenderer:
     ):
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_line(
             self,
             start: coord_t,
@@ -180,6 +201,7 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_thick_line(
             self,
             start: coord_t,
@@ -193,6 +215,7 @@ class BaseRenderer:
         draw a line with thickness using a quad
         """
 
+    @abc.abstractmethod
     def draw_rounded_rect(
             self,
             start: coord_t,
@@ -210,6 +233,7 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_text(
             self,
             pos: coord_t,
@@ -230,6 +254,7 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_pg_surf(
             self,
             pos: coord_t,
@@ -242,6 +267,7 @@ class BaseRenderer:
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def generate_pg_surf_text(
             self,
             text: str,
@@ -257,3 +283,5 @@ class BaseRenderer:
         generates a pygame surface from a text
         """
         raise NotImplementedError
+
+    # endregion

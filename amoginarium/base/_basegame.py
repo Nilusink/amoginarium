@@ -698,6 +698,7 @@ class BaseGame:
 
         # draw background once
         while self.running:
+            print("\nNEW RUN")
             glClearColor(0.0, 0.0, 0.1, 1)
 
             # 2. Clear the entire window buffer with that black color
