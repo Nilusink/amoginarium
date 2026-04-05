@@ -7,13 +7,59 @@ Shared memory synced graphics entities
 Author:
 Nilusink
 """
-
+from __future__ import annotations
 import math as m
 
-from ...shared.utility import Vec2
+from amoginarium.shared.debugging import print_ic_style
+from amoginarium.shared.utility import Vec2
+
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
 from ... import pv
+
+
+class _SyncedEntitiesManager:
+    __slots__ = ["_entities"]
+    
+    def __init__(self) -> None:
+        self._entities: dict[int, SyncedGraphicsEntity] = {}
+
+    def add_entity(self, sync_id: int, entity: SyncedGraphicsEntity) -> None:
+        """
+        add an entity to the manager
+        """
+        if sync_id in self._entities:
+            raise RuntimeError(f"entity with id {sync_id} already in manager")
+
+        self._entities[sync_id] = entity
+
+    def del_entity(self, sync_id: int) -> bool:
+        """
+        remove an entity from the manager
+
+        :returns: true if entity was removed, false if not present
+        """
+        if sync_id not in self._entities:
+            return False
+
+        self._entities.pop(sync_id)
+        return True
+
+    def get_entity(self, sync_id: int) -> SyncedGraphicsEntity | None:
+        """
+        get a graphics entity by ID
+
+        :returns: None if not found, entity if present
+        """
+        print_ic_style(f"getting parent with id {sync_id}")
+
+        if sync_id not in self._entities:
+            return None
+
+        return self._entities[sync_id]
+
+
+SE_MANAGER = _SyncedEntitiesManager()
 
 
 class SyncedGraphicsEntity(BaseGraphicsEntity):
@@ -37,8 +83,13 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     param3: int
     param4: int
 
-    def __init__(self, sync_id: int, parent: BaseGraphicsEntity | None = None) -> None:
+    def __init__(self, sync_id: int, parent: int | None = None) -> None:
         self.__id = sync_id
+
+        # try to get parent by sync_id
+        if isinstance(parent, int):
+            parent: SyncedGraphicsEntity | None = SE_MANAGER.get_entity(parent)
+
         super().__init__(parent)
 
         # initialize defaults
@@ -57,12 +108,29 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.__was_alive = False
         self._update_from_buffer()
 
+        # add to manager
+        SE_MANAGER.add_entity(self.__id, self)
+
         self.add(Drawn_0, SyncedEntities)
+
+    # region entity management
+    def kill(self) -> None:
+        SE_MANAGER.del_entity(self.__id)
+        super().kill()
+
+    # endregion
 
     # region properties
     @property
     def visible(self) -> bool:
         return self._visible and self._logic_visibility
+
+    @property
+    def world_position(self) -> Vec2:
+        """
+        entity position - world position offset
+        """
+        return self.pos - pv.global_vars.get_world_position()
 
     # endregion
 
@@ -120,16 +188,6 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     # endregion
 
-    # region properties
-    @property
-    def world_position(self) -> Vec2:
-        """
-        entity position - world position offset
-        """
-        return self.pos - pv.global_vars.get_world_position()
-
-    # endregion
-
     # region draw
     def _before_gl_draw(self, drawn: bool) -> None:
         if not self.alive and self._visible:
@@ -147,7 +205,7 @@ class SyncedImageEntity(SyncedGraphicsEntity):
             self,
             sync_id: int,
             texture_id: int,
-            parent: BaseGraphicsEntity | None = None
+            parent: int | None = None
     ) -> None:
         self._texture_id = texture_id
         super().__init__(sync_id, parent)

@@ -100,13 +100,9 @@ class BaseWeapon(LogicGameEntity):
         self._sound_effect = sound_effect
         self._bullet_type = bullet_type
         self._bullet_visibility_offset = bullet_visibility_offset
+        self._spawned_graphics = False
 
         self._runtime_buffer[self.id].param0 = 1
-
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": self.cid()}
-        ))
 
     # region properties
     @property
@@ -195,6 +191,18 @@ class BaseWeapon(LogicGameEntity):
         """
         update weapon state (like reloading, ...)
         """
+        # spawn graphics entity if not done yet
+        # (wait until update so parent has gotten its id)
+        if not self._spawned_graphics:
+            # spawn graphics entity
+            pv.COQ.put(
+                ProcessCommand(
+                    type=BaseCommandType.spawn_dummy,
+                    kwargs={"id": self.id, "cid": self.cid(), "parent": self.parent.id},
+                )
+            )
+            self._spawned_graphics = True
+
         self.position = self.parent.position + self._parent_position_offset
 
         # reload time

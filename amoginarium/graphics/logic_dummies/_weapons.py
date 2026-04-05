@@ -61,9 +61,10 @@ class WeaponDummy(SyncedLRImageEntity):
 
         return super().__new__(cls)
 
-    def __init__(self, sync_id: int) -> None:
+    def __init__(self, sync_id: int, parent: int) -> None:
         super().__init__(
-            sync_id=sync_id
+            sync_id=sync_id,
+            parent=parent
         )
         self.remove(Drawn_0)
         self.add(Drawn_1)

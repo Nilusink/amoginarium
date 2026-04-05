@@ -85,7 +85,7 @@ class PlayerDummy(SyncedLRImageEntity):
             self,
             sync_id: int,
             size: int = 64,
-            parent: tp.Self | None = None
+            parent: int | None = None
     ) -> None:
         super().__init__(sync_id, parent)
 

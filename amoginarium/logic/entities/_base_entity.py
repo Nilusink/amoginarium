@@ -35,6 +35,7 @@ class BaseLogicEntity:
             runtime_buffer: Array[base_entity_t],
             parent: BaseLogicEntity | None = None,
     ) -> None:
+
         # pygame groups
         self.__g = []
 
