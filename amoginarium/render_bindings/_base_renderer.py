@@ -10,10 +10,10 @@ Nilusink
 from PIL import Image
 import pygame as pg
 import typing as tp
+from types import EllipsisType
 import abc
 
-from ..logic import Color, coord_t
-
+from ..logic import Color, coord_t, Vec2
 
 # define types
 type Color3 = tuple[float, float, float]
@@ -22,9 +22,14 @@ type tColor = Color3 | Color4
 
 # depending on the renderer, TextureID will be a different type
 type TextureID = tp.Any
+type TextID = tp.Any
 
 
 class BaseRenderer(abc.ABC):
+    """
+    Abstract Renderer Class
+    """
+
     @abc.abstractmethod
     def init(self, title: str) -> None:
         """
@@ -33,31 +38,42 @@ class BaseRenderer(abc.ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
     @abc.abstractmethod
     def load_texture(
+            self,
             image: Image.Image,
             size: coord_t | None = None,
             mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
     ) -> tuple[TextureID, tuple[int, int]]:
         """
-        load an image texture
+        Load an image texture (saves it internally)
+        :param image: Image to load
+        :param size: Size of image or None
+        :param mirror: Axes to mirror the image on
         :returns: texture_id, (width, height)
         """
         raise NotImplementedError
 
-    @staticmethod
     @abc.abstractmethod
     def draw_textured_quad(
+            self,
             texture_id: TextureID,
             pos: coord_t,
             size: coord_t,
             convert_global: bool = True,
             rotate_angle: float = 0,
-            rotate_anchor: coord_t = ...
+            rotate_anchor: Vec2 | tuple[float, float] | EllipsisType = ...,
+            offscreen_check: bool = True
     ) -> None:
         """
-        draw a rectangle with a texture
+        Draw a rectangle with a texture
+        :param texture_id: ID of the texture to draw
+        :param pos: Absolute position on window
+        :param size: Absolute size on window
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param rotate_angle: Angle in degrees to rotate the image at
+        :param rotate_anchor: At what pixel to rotate at
+        :param offscreen_check: Whether to check it the element is on the window before drawing
         """
         raise NotImplementedError
 
@@ -71,22 +87,20 @@ class BaseRenderer(abc.ABC):
             **kwargs: A.kwargs
     ) -> None: ...
 
-    @staticmethod
     @abc.abstractmethod
-    def start_stencil(show_stencil: bool = False) -> None: ...
+    def start_stencil(self, show_stencil: bool = False) -> None: ...
 
-    @staticmethod
     @abc.abstractmethod
-    def enable_stencil(show_stencil: bool = False) -> None: ...
+    def enable_stencil(self, show_stencil: bool = False) -> None: ...
 
     @abc.abstractmethod
     def disable_stencil(self) -> None: ...
 
     # endregion
 
-    @staticmethod
     @abc.abstractmethod
     def check_out_of_screen(
+            self,
             pos,
             size,
     ) -> bool:

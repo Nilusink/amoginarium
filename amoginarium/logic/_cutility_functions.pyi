@@ -16,14 +16,38 @@ class EntityLike(tp.Protocol):
     rect: pg.Rect
 
 
-def convert_coord[A: Vec2 | tuple | float](
-        coord: coord_t,
-        convert_to: type[A] = tuple
-) -> A | tuple[float, float] | tuple[A, A]:
-    """
-    accepts both tuple and Vec2
-    """
+# def convert_coord[A: Vec2 | tuple | float](
+#         coord: coord_t,
+#         convert_to: type[A] = tuple
+# ) -> A | tuple[float, float] | tuple[A, A]:
+#     """
+#     accepts both tuple and Vec2
 
+T = tp.TypeVar(
+    'T',
+    tuple[int, int],
+    tuple[float, float],
+    tuple[int, float],
+    tuple[float, int]
+)
+
+@tp.overload
+def convert_coord(coord: coord_t, convert_to: type[int]) -> tuple[int, int]: ...
+
+@tp.overload
+def convert_coord(coord: coord_t, convert_to: type[Vec2]) -> Vec2: ...
+
+@tp.overload
+def convert_coord(coord: T, convert_to: type[tuple]) -> T: ...
+
+@tp.overload
+def convert_coord(coord: Vec2, convert_to: type[tuple]) -> tuple[float, float]: ...
+
+@tp.overload
+def convert_coord(coord: T) -> T: ...
+
+@tp.overload
+def convert_coord(coord: Vec2) -> tuple[float, float]: ...
 
 def is_related(a: object, b: object, depth: int = 2) -> bool:
     """
@@ -69,7 +93,8 @@ def raycast_size(a: Vec2, b: Vec2, center: Vec2, radius: float) -> Vec2:
     checks if the line from a to b intersects the circle at center+radius
     """
 
-def add_tuple(t1: tuple[float, float], t2: tuple[float, float]) -> float: #tuple[float, float]:
+
+def add_tuple(t1: tuple[float, float], t2: tuple[float, float]) -> float:  #tuple[float, float]:
     """
     add two 2-dimensional tuples together
     """

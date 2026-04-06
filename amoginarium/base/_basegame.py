@@ -14,6 +14,8 @@ from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glL
     glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
 from concurrent.futures import ThreadPoolExecutor
 from time import perf_counter, strftime, time, perf_counter_ns, sleep
+
+from OpenGL.GL import glFlush
 from icecream import ic
 import typing as tp
 import pygame as pg
@@ -698,7 +700,6 @@ class BaseGame:
 
         # draw background once
         while self.running:
-            print("\nNEW RUN")
             glClearColor(0.0, 0.0, 0.1, 1)
 
             # 2. Clear the entire window buffer with that black color
@@ -865,6 +866,7 @@ class BaseGame:
                 #     0, 0,
                 #     self.font
                 # )
+                glFlush()
 
                 pg.display.flip()
 
@@ -881,7 +883,8 @@ class BaseGame:
         ic("pygame end")
         times = cum_timer.get_times()
         for func, values in sorted(times.items(), key=lambda e: e[1][0]):
-            print_ic_style(f"{func}, called {values[1]} times {round(values[2], 3)}µs each, totaling {round(values[0] / 1000, 2)}ms")
+            print_ic_style(
+                f"{func}, called {values[1]} times {round(values[2], 3)}µs each, totaling {round(values[0] / 1000, 2)}ms")
 
         self.end()
 
