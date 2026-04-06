@@ -7,10 +7,13 @@ basic inventory, can be used by all entities (players, chests, ...)
 Author:
 Nilusink
 """
+
+from icecream import ic
 import typing as tp
 
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import ItemSlot
+from amoginarium.shared import ItemSlot, INVENTORY_COUNTER
+from amoginarium import pv
 
 from ._visible_item import VisibleItem
 
@@ -24,7 +27,8 @@ class Inventory:
         "_used_slots",
         "_ui",
         "_slot_colors",
-        "_callbacks"
+        "_callbacks",
+        "__id"
     )
 
     def __init__(
@@ -33,46 +37,50 @@ class Inventory:
             select_slot_callback: tp.Callable[[ItemSlot], None] = ...,
             unselect_slot_callback: tp.Callable[[ItemSlot], None] = ...,
     ) -> None:
+        self.__id = INVENTORY_COUNTER.get_id()
+
         self._num_slots = slots
         self._used_slots = 0
         self._slots: list[ItemSlot] = [
             ItemSlot(None, 0, self, i) for i in range(slots)
         ]
 
+        # init SHM
+        self._buff.size = self._num_slots
+        self._buff.hover = 255  # 255 := invalid
+        self._buff.selected = 255
+
+        self._set_flag(0, True)  # alive
+        self._set_flag(1, False)  # visible
+
+        # set all slots to 255 (invalid item)
+        for i in range(slots):
+            self._buff.slots[i].item_id = 255
+
         self._callbacks = {
             "select": select_slot_callback,
             "unselect": unselect_slot_callback
         }
 
-        # self._slot_colors = {
-        #     "basic": AnimatedColorValues(
-        #         (70, 70, 70),
-        #         (150, 150, 150),
-        #         extend_duration=.1,
-        #         collapse_duration=.8
-        #     ),
-        #     "border_basic": (80, 80, 80),
-        #     "border_highlighted": (120, 120, 120)
-        # }
-        #
-        # self._ui = {
-        #     "root": Rectangle(
-        #         (.5, .5),
-        #         (.8, .8),
-        #         bg_color=self._slot_colors["border_basic"],
-        #         border_color=self._slot_colors["border_basic"]
-        #     ), "slots": [
-        #         Rectangle(
-        #             (.5, .5),
-        #             (.1, .1),
-        #             bg_color=self._slot_colors["basic"],
-        #             border_color=self._slot_colors["border_basic"],
-        #             on_enter_callbacks=[lambda x=i: self._slot_hover(x)],
-        #             on_leave_callbacks=[lambda x=i: self._slot_unhover(x)]
-        #         ) for i in range(slots)
-        #         ]
-        # }
+    # region flag access
+    def _set_flag(self, flag_id: int, value: bool) -> None:
+        """
+        set (or reset) a specified flag
 
+        :param flag_id: the flag to set
+        :param value: what to set the flag to
+        """
+        flags = self._buff.flags
+
+        if value:
+            self._buff.flags = flags | (1 << flag_id)
+
+        else:
+            self._buff.flags = flags & ~(1 << flag_id)
+
+    # endregion
+
+    # region slot hover
     def _slot_hover(self, slot_id: int) -> None:
         """
         called when a slot is hovered
@@ -84,6 +92,9 @@ class Inventory:
         if self._callbacks["unselect"] is not ...:
             self._callbacks["unselect"](self.get_slot(slot_id))
 
+    # endregion
+
+    # region properties
     @property
     def slots_used(self) -> int:
         return self._used_slots
@@ -92,6 +103,17 @@ class Inventory:
     def num_slots(self) -> int:
         return self._num_slots
 
+    @property
+    def id(self) -> int:
+        return self.__id
+
+    @property
+    def _buff(self):
+        return pv.I_BUFF[self.__id]
+
+    # endregion
+
+    # region logic interface
     def add_item(self, item: item_t, count: int = 1) -> int:
         """
         add an item to the inventory.
@@ -130,6 +152,7 @@ class Inventory:
         :returns: True if there is more than 0 left of item
         """
         self._slots[item_id].count -= count
+        self._buff.slots[item_id].count -= count
         if self._slots[item_id].count <= 0:
             return False
 
@@ -148,6 +171,9 @@ class Inventory:
         self._used_slots += 1
         self._slots[slot_id].item = item
         self._slots[slot_id].count = count
+        self._buff.slots[slot_id].item_id = item.item_id
+        self._buff.slots[slot_id].count = count
+
         if hasattr(item, "add_used_callback"):
             item.add_used_callback(
                 lambda c: self.use_item(slot_id, c)
@@ -173,10 +199,15 @@ class Inventory:
         if not self._slots[slot_id].item:
             return
 
+        self._buff.slots[slot_id].count = 0
+        self._buff.slots[slot_id].item_id = 0
         self._slots[slot_id].count = 0
         self._slots[slot_id].item = None
         self._used_slots -= 1
 
+    # endregion
+
+    # region getters
     def get_item(self, item_id: int) -> item_t:
         return self._slots[item_id].item
 
@@ -185,6 +216,27 @@ class Inventory:
 
     def get_slot(self, item_id: int) -> ItemSlot:
         return self._slots[item_id]
+
+    # endregion
+
+    # region graphics interface
+    def show(self) -> None:
+        """show the inventory"""
+        self._set_flag(1, True)
+
+    def hide(self) -> None:
+        """hide the inventory"""
+        self._set_flag(1, False)
+
+    def set_highlight(self, slot: int) -> None:
+        """set one slot to be highlighted"""
+        self._buff.selected = slot
+
+    def kill(self) -> None:
+        """kill the inventory"""
+        self._set_flag(0, False)
+
+    # endregion
 
     def __iter__(self) -> tp.Iterable[ItemSlot]:
         return iter(self._slots)

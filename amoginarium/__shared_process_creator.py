@@ -13,15 +13,18 @@ from multiprocessing import Queue, Lock, Pipe
 from ctypes import Array, memset, sizeof, addressof
 from icecream import ic
 
+from .shared import inventory_t
 from .shared import generate_global_vars, get_write_lock, get_entity_memory
 from .shared import GlobalVars, base_entity_t, MAX_ENTITIES, base_controller_t
-from .shared import MAX_CONTROLLERS, get_controller_memory
+from .shared import MAX_CONTROLLERS, get_controller_memory, get_inventory_memory
+from .shared import MAX_INVENTORIES
 
 
 class _ProcessValues:
     global_vars: GlobalVars = ...
     SHM: SharedMemory = ...  # entity memory
     C_SHM: SharedMemory = ...  # controller memory
+    I_SHM: SharedMemory = ... # inventory memory
     WRITE_LOCK: Lock = ...
     COQ: Queue = ...
     CIQ: Queue = ...
@@ -30,6 +33,7 @@ class _ProcessValues:
 
     E_BUFF: Array[base_entity_t] = ...
     C_BUFF: Array[base_controller_t] = ...
+    I_BUFF: Array[inventory_t] = ...
 
     def create_shared_process_values(self) -> None:
         if self.global_vars is not ...:
@@ -38,10 +42,12 @@ class _ProcessValues:
         self.global_vars = GlobalVars(generate_global_vars())
         self.SHM = get_entity_memory()
         self.C_SHM = get_controller_memory()
+        self.I_SHM = get_inventory_memory()
         self.E_BUFF = (base_entity_t * MAX_ENTITIES).from_buffer(self.SHM.buf)
         self.C_BUFF = (base_controller_t * MAX_CONTROLLERS).from_buffer(self.C_SHM.buf)
+        self.I_BUFF = (inventory_t * MAX_INVENTORIES).from_buffer(self.I_SHM.buf)
 
-        # initialize shared memory to all 0s
+        # initialize shared memories to all 0s
         memset(
             addressof(self.E_BUFF),
             0,
@@ -51,6 +57,11 @@ class _ProcessValues:
             addressof(self.C_BUFF),
             0,
             sizeof(self.C_BUFF)
+        )
+        memset(
+            addressof(self.I_BUFF),
+            0,
+            sizeof(self.I_BUFF)
         )
 
         self.WRITE_LOCK = get_write_lock()
@@ -65,6 +76,7 @@ class _ProcessValues:
             command_out_queue: Queue,
             shared_memory: SharedMemory,
             controller_memory: SharedMemory,
+            inventory_memory: SharedMemory,
             write_lock: Lock,
             base_comm: Connection,
             process_comm: Connection
@@ -77,8 +89,10 @@ class _ProcessValues:
         self.global_vars = g_vars
         self.SHM = shared_memory
         self.C_SHM = controller_memory
+        self.I_SHM = inventory_memory
         self.E_BUFF = (base_entity_t * MAX_ENTITIES).from_buffer(self.SHM.buf)
         self.C_BUFF = (base_controller_t * MAX_CONTROLLERS).from_buffer(self.C_SHM.buf)
+        self.I_BUFF = (inventory_t * MAX_INVENTORIES).from_buffer(self.I_SHM.buf)
         self.WRITE_LOCK = write_lock
         self.COQ = command_out_queue
         self.CIQ = command_in_queue

@@ -44,6 +44,7 @@ class LogicProcess:
         self,
         shm: SharedMemory,
         c_shm: SharedMemory,
+        i_shm: SharedMemory,
         command_in_queue: Queue,
         command_out_queue: Queue,
         write_lock: synchronize.Lock,
@@ -71,6 +72,7 @@ class LogicProcess:
             command_out_queue=command_out_queue,
             shared_memory=shm,
             controller_memory=c_shm,
+            inventory_memory=i_shm,
             write_lock=write_lock,
             base_comm=base_comm,
             process_comm=process_comm,
@@ -484,6 +486,7 @@ class LogicProcess:
 def run_continuous(
         shm: SharedMemory,
         c_shm: SharedMemory,
+        i_shm: SharedMemory,
         command_in_queue: Queue,
         command_out_queue: Queue,
         write_lock: synchronize.Lock,
@@ -502,6 +505,7 @@ def run_continuous(
     lp = LogicProcess(
         shm,
         c_shm,
+        i_shm,
         command_in_queue,
         command_out_queue,
         write_lock,

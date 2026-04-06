@@ -7,8 +7,9 @@ Various data types
 Author:
 Nilusink
 """
-from dataclasses import dataclass, field
 
+from dataclasses import dataclass, field
+from icecream import ic
 from enum import Enum
 import typing as tp
 
@@ -75,6 +76,37 @@ class WeaponCIDs(Enum):
     base = "weapon.base"
 
 
+class _CIDRegister:
+    """represent all item CIDs as ints"""
+
+    __slots__ = ["_cids"]
+    
+    def __init__(self, *enums: tp.Iterable[Enum]) -> None:
+        self._cids: dict[str, int] = {}
+
+        i = 1  # start with 1 because 0 is no item
+        for enum in enums:
+            for name in getattr(enum, "_value2member_map_").keys():
+                self._cids[name] = i
+                i += 1
+
+    def get_id(self, cid: str | tp.Any) -> int:
+        """
+        get the corresponding ID from n CID
+
+        :param cid: original CID
+        :returns: corresponding ID, 0 if not found
+        """
+        if not isinstance(cid, str):
+            cid: str = cid.value
+
+        if cid in self._cids:
+            return self._cids[cid]
+
+        return 0
+
+
+CID_REGISTER = _CIDRegister(WeaponCIDs)  #, TurretCIDs, IslandCIDs, DummyCIDs)
 type CIDType = DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs
 
 

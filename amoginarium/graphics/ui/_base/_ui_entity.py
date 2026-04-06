@@ -52,27 +52,6 @@ class UIEntity(BaseGraphicsEntity):
         if parent is not None:
             parent.add_child(self)
 
-    # region Methods: children
-    def add_child(self, child: UIEntity) -> None:
-        """
-        Add a child UI-Entity to this UI-Entity
-        :param child: Child UI-Entity
-        """
-        if child not in self._children:
-            self._children.append(child)
-            child.parent = self
-
-    def remove_child(self, child: UIEntity) -> None:
-        """
-        Remove a child UI-Entity from this UI-Entity
-        :param child: Child UI-Entity
-        """
-        if child in self._children:
-            self._children.remove(child)
-            child.parent = None
-
-    # endregion
-
     # region Methods: reset
     def _reset(self) -> None:
         """Reset the UI-Entity. Use in inheritance for actual resetting"""

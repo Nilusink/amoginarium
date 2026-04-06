@@ -16,12 +16,12 @@ from amoginarium.base._textures import textures
 from amoginarium.shared import WeaponCIDs
 from amoginarium import pv
 
-from ._synced_entities import SyncedLRImageEntity
+from ._synced_entities import SyncedLRImageEntity, Iconifyable
 from ..render_bindings import renderer
 from ..entities import Drawn_1, Drawn_0
 
 
-class WeaponDummy(SyncedLRImageEntity):
+class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     """
     ``param0`` size fac
     ``param1`` mag state
@@ -127,6 +127,10 @@ class WeaponDummy(SyncedLRImageEntity):
             self._bar_colors,
             self.param1,
         )
+
+    @classmethod
+    def get_icon(cls) -> tuple[int, tuple[int, int]]:
+        return cls._texture_id_r, cls._image_size
 
 
 class Minigun(WeaponDummy):

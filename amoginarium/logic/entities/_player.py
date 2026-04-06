@@ -96,6 +96,7 @@ class Player(LogicGameEntity):
             self._set_slot,
             self._remove_hover
         )
+        self._hotbar.set_highlight(0)
         items = [
             Ak47(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
@@ -137,6 +138,8 @@ class Player(LogicGameEntity):
             kwargs={
                 "id": self.id,
                 "cid": DummyCIDs.player,
+                "i_id": self._inventory.id,
+                "h_id": self._hotbar.id,
             },
         ))
 
@@ -198,6 +201,8 @@ class Player(LogicGameEntity):
         if self.item:
             self.item.show()
 
+        self._hotbar.set_highlight(self._current_weapon)
+
     def previous_weapon(self) -> None:
         """
         switches to the previous weapon
@@ -212,6 +217,8 @@ class Player(LogicGameEntity):
 
         if self.item:
             self.item.show()
+
+        self._hotbar.set_highlight(self._current_weapon)
 
     def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
         """
@@ -501,6 +508,7 @@ class Player(LogicGameEntity):
             if not self._inventory_pressed:
                 self._inventory_pressed = True
                 self._in_inventory = not self._in_inventory
+                self._set_bit("flags", 2, self._in_inventory)
 
         else:
             self._inventory_pressed = False

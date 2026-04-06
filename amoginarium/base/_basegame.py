@@ -28,7 +28,7 @@ from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
 from ..shared.settings import Settings
 from ..graphics.render_bindings import renderer
 from ..graphics.ui import UICursor
-from ..graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities
+from ..graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities, Drawn_2
 from ..graphics.controllers import Controller, Controllers, KeyboardController
 from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS
 from ..logic import run_continuous
@@ -97,6 +97,7 @@ class BaseGame:
                 "global_vars_values": pv.global_vars.get_values(),
                 "shm": pv.SHM,
                 "c_shm": pv.C_SHM,
+                "i_shm": pv.I_SHM,
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start,
@@ -700,6 +701,7 @@ class BaseGame:
                 if active_scene in ["PauseMenu", "PauseSettings"]:
                     SyncedEntities.update_from_buffer()
                     Drawn_0.gl_draw(delta)
+                    Drawn_0.gl_draw(delta)
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)
@@ -722,6 +724,7 @@ class BaseGame:
                 SyncedEntities.update_from_buffer()
                 Drawn_0.gl_draw(delta)
                 Drawn_1.gl_draw(delta)
+                Drawn_2.gl_draw(delta)
 
             pg.display.flip()
 
@@ -754,6 +757,7 @@ class BaseGame:
 
         self._background.draw(0)
         Drawn_0.gl_draw()
+        Drawn_1.gl_draw()
 
         pg.display.flip()
 

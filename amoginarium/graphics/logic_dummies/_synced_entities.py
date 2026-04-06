@@ -8,6 +8,8 @@ Author:
 Nilusink
 """
 from __future__ import annotations
+from abc import ABC, abstractmethod
+from contextlib import suppress
 import math as m
 
 from amoginarium.shared.debugging import print_ic_style
@@ -182,7 +184,8 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         if recursive:
             for child in self._children:
-                child._update_from_buffer()
+                with suppress(AttributeError):
+                    child._update_from_buffer()
 
     # endregion
 
@@ -238,3 +241,21 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
             self.world_position - self.size / 2,
             self.size,
         )
+
+
+class Iconifyable(ABC):
+    """entities that can be represented in an icon"""
+
+    def __init__(self, *args, **kwargs) -> None:
+
+        # call next class in MRO
+        super().__init__(*args, **kwargs)
+
+    @abstractmethod
+    def get_icon(self) -> tuple[int, tuple[int, int]]:
+        """
+        get icon of item
+
+        :returns: icon texture id, icon size
+        """
+        raise NotImplementedError

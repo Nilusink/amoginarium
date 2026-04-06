@@ -10,7 +10,7 @@ Nilusink
 from ctypes import Array
 from icecream import ic
 
-from amoginarium.shared import base_entity_t, ItemSlot
+from amoginarium.shared import base_entity_t, ItemSlot, CID_REGISTER
 from amoginarium.shared.utility import Vec2
 
 from ._logic_groups import GravityAffected, CollisionDestroyed, Updated
@@ -49,6 +49,10 @@ class VisibleItem(LogicGameEntity):
     @property
     def item(self):
         return self._item
+
+    @property
+    def item_id(self) -> int:
+        return CID_REGISTER.get_id(self.item.cid())
 
     def hide(self) -> None:
         if self._visible:

@@ -8,22 +8,17 @@ Author:
 Nilusink
 """
 from __future__ import annotations
+from icecream import ic
 
-from ._shared_memory import MAX_ENTITIES
+from .debugging import run_with_debug
+from ._shared_memory import MAX_ENTITIES, MAX_INVENTORIES
 
 
 class _EntityCounter:
-    _instance: _EntityCounter = ...
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is ...:
-            cls._instance = super().__new__(cls)
-
-        return cls._instance
-
-    def __init__(self) -> None:
+    def __init__(self, size: int) -> None:
         self._used_ids: set[int] = set()
         self._current_id: int = 0
+        self._size = size
 
     def get_id(self) -> int:
         """
@@ -34,12 +29,13 @@ class _EntityCounter:
             if self._current_id not in self._used_ids:
                 eid = self._current_id
                 self._used_ids.add(eid)
-                self._current_id = (self._current_id + 1) % MAX_ENTITIES
+                self._current_id = (self._current_id + 1) % self._size
                 return eid
 
-            self._current_id = (self._current_id + 1) % MAX_ENTITIES
+            self._current_id = (self._current_id + 1) % self._size
 
             if self._current_id == start_id:
+                # ic(start_id, self._current_id, len(self._used_ids), self._size, self._used_ids)
                 raise RuntimeError("entity limit reached")
 
     def pop_id(self, id: int) -> bool:
@@ -53,4 +49,5 @@ class _EntityCounter:
         return True
 
 
-ENTITY_COUNTER = _EntityCounter()
+ENTITY_COUNTER = _EntityCounter(MAX_ENTITIES)
+INVENTORY_COUNTER = _EntityCounter(MAX_INVENTORIES)

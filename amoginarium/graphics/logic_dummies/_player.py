@@ -7,15 +7,18 @@ graphics dummy for player
 Author:
 Nilusink
 """
+from types import EllipsisType
 import pygame as pg
 
 from amoginarium.base._textures import textures
 from amoginarium.shared.utility import Color
 from amoginarium.shared import DummyCIDs
+from amoginarium import pv
 
-from ..entities import Drawn_1
-from ._synced_entities import SyncedLRImageEntity
+from ..entities import Drawn_1, Drawn_2
 from ..render_bindings import renderer
+from ._synced_entities import SyncedLRImageEntity
+from ._inventory import Inventory
 
 
 PLAYER_LEFT_64_PATH = "amogus64left"
@@ -31,7 +34,7 @@ class PlayerDummy(SyncedLRImageEntity):
     """
     `param0` health (0-1)
     """
-    __slots__ = ["_hp_colors"]
+    __slots__ = ["_hp_colors", "_hotbar", "_inventory"]
 
     _cid = DummyCIDs.player
 
@@ -85,11 +88,13 @@ class PlayerDummy(SyncedLRImageEntity):
     def __init__(
             self,
             sync_id: int,
+            i_id: int,
+            h_id: int,
             size: int = 64,
             parent: int | None = None
     ) -> None:
         super().__init__(sync_id, parent)
-        self.add(Drawn_1)
+        self.add(Drawn_1, Drawn_2)
 
         # load textures
         if size == 64:
@@ -113,6 +118,10 @@ class PlayerDummy(SyncedLRImageEntity):
             Color().from_255(180, 90, 20),
             Color().from_255(0, 255, 0)
         )
+        
+        # inventories
+        self._hotbar: Inventory = Inventory(h_id, self)
+        self._inventory: Inventory = Inventory(i_id, self)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         if layer == 0:
@@ -127,3 +136,44 @@ class PlayerDummy(SyncedLRImageEntity):
                 self._hp_colors,
                 self.param0,
             )
+
+        elif layer == 2:
+            # draw inventory
+            if self._get_bit("flags", 2):  # in inventory
+                screen_size = pv.global_vars.get_screen_size()
+                # background
+                renderer.draw_rounded_rect(
+                    (screen_size.x * 0.25, screen_size.y * 0.1),
+                    (screen_size.x * 0.5, screen_size.y * 0.8),
+                    Color().from_255(80, 80, 80),
+                    20,
+                    False,
+                )
+
+                # slots
+                self._inventory.draw_at(
+                    (0.5, 0.65),
+                    10,
+                    0.5,
+                )
+                self._hotbar.draw_at(
+                    (0.5, 0.85),
+                    10,
+                    0.5,
+                )
+
+                # character display
+                renderer.draw_rounded_rect(
+                    (screen_size.x * 0.28, screen_size.y * 0.17),
+                    (self.size.x * 3, self.size.y * 4),
+                    Color().from_255(50, 50, 50),
+                    20,
+                    False,
+                )
+            
+            else:
+                self._hotbar.draw_at(
+                    (0.5, 0.95),
+                    10,
+                    0.4,
+                )

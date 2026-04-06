@@ -20,8 +20,8 @@ class BaseGraphicsEntity:
     _cid: str = ...
 
     _visible: bool
-    _parent: tp.Self | None
-    _children: list[tp.Self]
+    _parent: BaseGraphicsEntity | None
+    _children: list[BaseGraphicsEntity]
 
     def __init__(self, parent: tp.Self | None = None) -> None:
         try:  # ui implements visible as property without setter
@@ -47,8 +47,14 @@ class BaseGraphicsEntity:
         return self._visible
 
     @property
-    def parent(self) -> BaseGraphicsEntity:
+    def parent(self) -> BaseGraphicsEntity | None:
+        """parent"""
         return self._parent
+
+    @parent.setter
+    def parent(self, parent: BaseGraphicsEntity) -> None:
+        """parent"""
+        self._parent = parent
 
     # endregion
 
@@ -155,4 +161,25 @@ class BaseGraphicsEntity:
                     child.gl_draw(delta_cal, force_draw=(force_draw or self._root_visibility), layer=layer)
 
         self._after_gl_draw(draw)
+    # endregion
+
+    # region Methods: children
+    def add_child(self, child: BaseGraphicsEntity) -> None:
+        """
+        Add a child UI-Entity to this Graphics-Entity
+        :param child: Child Graphics-Entity
+        """
+        if child not in self._children:
+            self._children.append(child)
+            child.parent = self
+
+    def remove_child(self, child: BaseGraphicsEntity) -> None:
+        """
+        Remove a child UI-Entity from this Graphics-Entity
+        :param child: Child Graphics-Entity
+        """
+        if child in self._children:
+            self._children.remove(child)
+            child.parent = None
+
     # endregion

@@ -46,6 +46,7 @@ class _SyncedEntities(BaseGroup):
 
 Drawn_0 = _Drawn(0)
 Drawn_1 = _Drawn(1)
+Drawn_2 = _Drawn(2)
 Cursor = _Cursor()
 UIEntities = _UIEntities()
 SyncedEntities = _SyncedEntities()
