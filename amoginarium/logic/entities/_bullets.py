@@ -431,3 +431,7 @@ class SniperBullet(Bullet):
 
 class FlakBullet(Bullet):
     _weight = 5
+
+
+class CRAMBullet(Bullet):
+    _cid = DummyCIDs.cram

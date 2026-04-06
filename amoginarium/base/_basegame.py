@@ -700,8 +700,8 @@ class BaseGame:
 
                 if active_scene in ["PauseMenu", "PauseSettings"]:
                     SyncedEntities.update_from_buffer()
-                    Drawn_0.gl_draw(delta)
-                    Drawn_0.gl_draw(delta)
+                    Drawn_0.gl_draw(0)
+                    Drawn_0.gl_draw(0)
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)

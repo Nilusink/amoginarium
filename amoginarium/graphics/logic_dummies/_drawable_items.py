@@ -16,4 +16,3 @@ __items = [Minigun, Ak47, Sniper, HandThrownGrenade]
 ITEM_IDS: dict[int, WeaponDummy] = {
     CID_REGISTER.get_id(i.cid()): i for i in __items
 }
-print(ITEM_IDS)

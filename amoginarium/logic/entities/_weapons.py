@@ -16,13 +16,13 @@ import typing as tp
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t
 from amoginarium.shared import base_entity_t, WeaponCIDs, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
-from amoginarium.shared.debugging import print_ic_style
+from amoginarium.shared.debugging import run_with_debug
 from amoginarium import pv
 
 from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, Shotgun
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound
-from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
+from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
 
@@ -557,7 +557,8 @@ class CRAM(BaseWeapon):
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
             sound_effect=CRAMSound(),
-            bullet_visibility_offset=.027  # TODO: smart target tap (max)
+            bullet_visibility_offset=.027,  # TODO: smart target tap (max)
+            bullet_type=CRAMBullet
         )
 
 

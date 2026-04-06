@@ -12,7 +12,6 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 import math as m
 
-from amoginarium.shared.debugging import print_ic_style
 from amoginarium.shared.utility import Vec2
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
@@ -200,7 +199,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
 
 class SyncedImageEntity(SyncedGraphicsEntity):
-    __slots__ = ["_texture_id"]
+    __slots__ = ["_texture_id", "_lifetime"]
 
     def __init__(
             self,
@@ -209,9 +208,12 @@ class SyncedImageEntity(SyncedGraphicsEntity):
             parent: int | None = None
     ) -> None:
         self._texture_id = texture_id
+        self._lifetime = 0
         super().__init__(sync_id, parent)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
+        self._lifetime += delta_cal
+
         world_position = pv.global_vars.get_world_position()
         renderer.draw_textured_quad(
             self._texture_id,

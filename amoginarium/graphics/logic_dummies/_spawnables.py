@@ -12,7 +12,7 @@ import typing as tp
 
 from ._synced_entities import SyncedGraphicsEntity
 from ._player import PlayerDummy
-from ._bullet import BulletDummy, MortarShell, Grenade
+from ._bullet import BulletDummy, MortarShell, Grenade, CRAMBullet
 from ._turrets import SniperTurretDummy, AkTurretDummy, MinigunTurretDummy
 from ._turrets import MortarTurretDummy, FlakTurretDummy, CRAMTurretDummy
 from ._weapons import Minigun, Ak47, Sniper, Mortar, Flak, CRAM, HandThrownGrenade
@@ -38,5 +38,6 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         Flak,
         CRAM,
         HandThrownGrenade,
+        CRAMBullet,
     ]
 }

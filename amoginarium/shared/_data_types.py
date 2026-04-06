@@ -38,6 +38,7 @@ class DummyCIDs(Enum):
     base_bullet = "dummy.bullet.base"  # {"spawn_time": float, "visibility_offset": float}
     mortar_bullet = "dummy.bullet.mortar"  # -- "" --
     grenade = "dummy.bullet.grenade"  # -- "" --
+    cram = "dummy.bullet.cram"
 
 
 class IslandCIDs(Enum):

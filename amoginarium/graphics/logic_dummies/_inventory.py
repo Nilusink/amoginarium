@@ -20,6 +20,7 @@ from ._drawable_items import ITEM_IDS
 
 
 class Inventory(BaseGraphicsEntity):
+    """inventory entity"""
     __slots__ = ["__id", "_slot_colors", "_ui"]
 
     def __init__(self, sync_id: int, parent: int | SyncedGraphicsEntity) -> None:
@@ -74,14 +75,14 @@ class Inventory(BaseGraphicsEntity):
 
     @property
     def size(self) -> int:
+        """inventory slot size"""
         return self._buff.size
-
     # endregion
 
     # region internal methods
     def __slot_hover(self, slot_id: int) -> None:
         """set hover to a slot"""
-        if not (0 < slot_id < 255):
+        if not (0 <= slot_id < 255):
             raise ValueError(f"slot id out of range: {slot_id}")
 
         self._buff.hover = slot_id
@@ -97,7 +98,11 @@ class Inventory(BaseGraphicsEntity):
 
     # region drawing
     def draw_at(
-        self, position: tuple[float, float], slots_per_row: int, width: float
+        self,
+        position: tuple[float, float],
+        slots_per_row: int,
+        width: float,
+        delta_cal: float,
     ) -> None:
         """draw inventory at center of screen"""
         self._ui["root"].position.relative_global = position
@@ -122,7 +127,7 @@ class Inventory(BaseGraphicsEntity):
         self._ui["root"].size.absolute = size
 
         # if draw_background:
-        self._ui["root"].gl_draw(force_draw=True, delta_cal=0)
+        self._ui["root"].gl_draw(force_draw=True, delta_cal=delta_cal)
 
         start = self._ui["root"].position.absolute_global.copy()
         start.x -= slot_size[0] * (slots_per_row / 2)
@@ -150,7 +155,7 @@ class Inventory(BaseGraphicsEntity):
                 else:
                     ui_slot.border_color = self._slot_colors["border_basic"]
 
-                ui_slot.gl_draw(force_draw=True, delta_cal=0)
+                ui_slot.gl_draw(force_draw=True, delta_cal=delta_cal)
 
                 slot = self._buff.slots[slot_id]
                 if slot.count > 0:

@@ -11,6 +11,7 @@ Nilusink
 import typing as tp
 import math as m
 
+from amoginarium.shared.debugging import run_with_debug
 from amoginarium.shared.utility import Vec2, Color
 from amoginarium.base._textures import textures
 from amoginarium.shared import WeaponCIDs

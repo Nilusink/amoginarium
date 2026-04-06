@@ -171,13 +171,13 @@ class BaseLogicEntity:
         """
         set visibility to 1
         """
-        self._set_bit("flags", 0, True)
+        self._set_bit("flags", 1, True)
 
     def hide(self) -> None:
         """
         set visibility to 0
         """
-        self._set_bit("flags", 0, False)
+        self._set_bit("flags", 1, False)
 
     # endregion
 
