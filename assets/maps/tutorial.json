@@ -245,12 +245,12 @@
         },
         {
             "type": "turret.static.cram",
-            "pos": [16260, 870],
+            "pos": [16260, 850],
             "group": 0
         },
         {
             "type": "turret.static.mortar",
-            "pos": [16440, 795],
+            "pos": [16390, 780],
             "group": 0
         },
         {

@@ -25,9 +25,9 @@ from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._base_entity import LogicGameEntity
-from ._visible_item import VisibleItem
 from ._inventory import Inventory
 from ._island import Island
+from ._item import Item
 
 
 PIXEL_MASK = pg.mask.Mask((1, 1), True)
@@ -86,16 +86,8 @@ class Player(LogicGameEntity):
         self._inventory_pressed = False
         self._hover_slot: ItemSlot | None = None
         self._holding_slot: ItemSlot | None = None
-        self._inventory = Inventory(
-            30,
-            self._set_slot,
-            self._remove_hover
-        )
-        self._hotbar = Inventory(
-            10,
-            self._set_slot,
-            self._remove_hover
-        )
+        self._inventory = Inventory(self, 30, self._set_slot, self._remove_hover)
+        self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
             Ak47(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
@@ -110,15 +102,15 @@ class Player(LogicGameEntity):
         ]
         for item in items:
             self._hotbar.add_item(
-                VisibleItem(self._runtime_buffer, item),
+                item,
                 1
             )
 
         for slot in self._hotbar:
             if slot.item:
-                slot.item.item.hide()
-                if hasattr(slot.item.item, "reload"):
-                    slot.item.item.reload(True)
+                slot.item.hide()
+                if hasattr(slot.item, "reload"):
+                    slot.item.reload(True)
 
         self.item.show()
 
@@ -173,17 +165,17 @@ class Player(LogicGameEntity):
         return self._alive
 
     @property
-    def item(self) -> WeaponLike | ItemLike | None:
+    def item(self) -> ItemLike | None:
         if not hasattr(self, "_hotbar"):
             return None
 
         if self._hotbar.get_count(self._current_weapon) > 0:
-            return self._hotbar.get_item(self._current_weapon).item
+            return self._hotbar.get_item(self._current_weapon)
 
         else:
             return None
 
-    def pickup_item(self, item: VisibleItem) -> None:
+    def pickup_item(self, item: Item) -> None:
         self._hotbar.try_add_item(item, 1)
 
     def next_weapon(self) -> None:
@@ -289,7 +281,7 @@ class Player(LogicGameEntity):
         # update reloads
         for hover_slot in self._hotbar:
             if hover_slot.count > 0:
-                hover_slot.item.item.update(delta)
+                hover_slot.item.update(delta)
 
         acc_fac = pv.global_vars.get_acceleration_factor()
         ppm = pv.global_vars.get_pixel_per_meter()
@@ -483,12 +475,12 @@ class Player(LogicGameEntity):
         #                 self._holding_slot = hover_slot
 
         # drop item
-        # if self._controller.drop:
-        #     self._hotbar.drop_item(
-        #         self._current_weapon,
-        #         self.position,
-        #         Vec2().from_cartesian(200, -200)
-        #     )
+        if self._controller.drop:
+            self._hotbar.drop_item(
+                self._current_weapon,
+                self.position,
+                Vec2().from_cartesian(200, -200)
+            )
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:

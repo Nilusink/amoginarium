@@ -81,6 +81,7 @@ class BaseTurret(LogicGameEntity):
         position.y -= size.y / 2
 
         self.weapon = weapon
+        self.weapon.set_parent(self)
         self.engagement_range = engagement_range
         self.min_range = min_range
         self.airburst_munition = airburst_munition
@@ -636,7 +637,7 @@ class CRAMTurret(BaseTurret):
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
-            target_taps=4,
+            target_taps=8,
             valid_angles=(
                 Vec2().from_cartesian(-.5, 1),
                 Vec2().from_cartesian(.5, 1)

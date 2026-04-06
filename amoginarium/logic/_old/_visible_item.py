@@ -35,6 +35,7 @@ class VisibleItem(LogicGameEntity):
         super().__init__(runtime_buffer, size=self.size, position=Vec2())
         self.remove(GravityAffected, CollisionDestroyed, Updated)
 
+    # region properties
     @property
     def parent(self) -> ItemSlot | None:
         if self._parent is ...:
@@ -54,15 +55,7 @@ class VisibleItem(LogicGameEntity):
     def item_id(self) -> int:
         return CID_REGISTER.get_id(self.item.cid())
 
-    def hide(self) -> None:
-        if self._visible:
-            self._visible = False
-            self._runtime_buffer[self.id].param0 = False
-
-    def show(self) -> None:
-        if not self._visible:
-            self._visible = True
-            self._runtime_buffer[self.id].param0 = True
+    # endregion
 
     def hit(self, damage: float, hit_by=...) -> None:
         if self._current_timeout > 0:
@@ -82,6 +75,7 @@ class VisibleItem(LogicGameEntity):
         self.acceleration *= 0
         self.velocity *= 0
         self.position = at_pos.copy()
+        self.item.facing.angle = 0
         self._current_timeout = self._drop_timeout
 
         ic(at_pos, velocity)
@@ -90,6 +84,9 @@ class VisibleItem(LogicGameEntity):
             self.velocity.x = velocity.x
             self.velocity.y = velocity.y
 
+        self.velocity *= 0
+
+        ic("rm")
         self.add(GravityAffected, CollisionDestroyed, Updated)
         self.show()
 
@@ -107,4 +104,7 @@ class VisibleItem(LogicGameEntity):
                 self.acceleration *= 0
                 self.velocity *= 0
 
-        super().update(delta)
+        self.item.position.xy = self.position.xy
+        super()._update(delta)
+
+        self.item.update(delta)

@@ -7,7 +7,7 @@ graphics dummy for player
 Author:
 Nilusink
 """
-from types import EllipsisType
+from icecream import ic
 import pygame as pg
 
 from amoginarium.base._textures import textures
@@ -17,7 +17,7 @@ from amoginarium import pv
 
 from ..entities import Drawn_1, Drawn_2
 from ..render_bindings import renderer
-from ._synced_entities import SyncedLRImageEntity
+from ._synced_entities import SyncedLRImageEntity, SE_MANAGER
 from ._inventory import Inventory
 
 
@@ -128,6 +128,15 @@ class PlayerDummy(SyncedLRImageEntity):
             super()._gl_draw(delta_cal, layer)
 
         elif layer == 1:
+            # check if item
+            if self._hotbar.buff.selected < self._hotbar.buff.size:
+                item = self._hotbar.buff.slots[self._hotbar.buff.selected]
+                if item.count > 0 and item.item_id > 0:
+                    self.add_child(SE_MANAGER.get_entity(item.item_id))
+
+                else:
+                    self.remove_child(SE_MANAGER.get_entity(item.item_id))
+
             # draw health bar
             owp = self.world_position
             renderer.draw_bar(

@@ -61,7 +61,7 @@ class Inventory(BaseGraphicsEntity):
                     border_color=self._slot_colors["border_basic"],
                     on_enter_callbacks=[lambda x=i: self.__slot_hover(x)],
                     on_leave_callbacks=[lambda x=i: self.__slot_unhover(x)]
-                ) for i in range(self._buff.size)
+                ) for i in range(self.buff.size)
                 ]
         }
 
@@ -70,13 +70,14 @@ class Inventory(BaseGraphicsEntity):
 
     # region properties
     @property
-    def _buff(self):
+    def buff(self):
+        """the inventories SHM buffer"""
         return pv.I_BUFF[self.__id]
 
     @property
     def size(self) -> int:
         """inventory slot size"""
-        return self._buff.size
+        return self.buff.size
     # endregion
 
     # region internal methods
@@ -85,14 +86,14 @@ class Inventory(BaseGraphicsEntity):
         if not (0 <= slot_id < 255):
             raise ValueError(f"slot id out of range: {slot_id}")
 
-        self._buff.hover = slot_id
+        self.buff.hover = slot_id
 
     def __slot_unhover(self, slot_id: int) -> None:
         """reset hover (only when slot_id matches hover)"""
-        if not slot_id == self._buff.hover:
+        if not slot_id == self.buff.hover:
             return
 
-        self._buff.hover = 255  # 255 = none
+        self.buff.hover = 255  # 255 = none
 
     # endregion
 
@@ -108,7 +109,7 @@ class Inventory(BaseGraphicsEntity):
         self._ui["root"].position.relative_global = position
 
         slot_size = width / (slots_per_row + 0.1)
-        rows = round(self._buff.size / slots_per_row)
+        rows = round(self.buff.size / slots_per_row)
 
         slots: list[Rectangle] = self._ui["slots"]  # ignore: type
 
@@ -136,7 +137,7 @@ class Inventory(BaseGraphicsEntity):
         for row in range(rows):
             for col in range(slots_per_row):
                 slot_id = row * slots_per_row + col
-                if slot_id == self._buff.selected:
+                if slot_id == self.buff.selected:
                     highlight = True
 
                 else:
@@ -157,12 +158,12 @@ class Inventory(BaseGraphicsEntity):
 
                 ui_slot.gl_draw(force_draw=True, delta_cal=delta_cal)
 
-                slot = self._buff.slots[slot_id]
+                slot = self.buff.slots[slot_id]
                 if slot.count > 0:
-                    if slot.item_id == 255:
+                    if slot.item_id == 0:
                         continue
 
-                    texture, size = ITEM_IDS[slot.item_id].get_icon()
+                    texture, size = SE_MANAGER.get_entity(slot.item_id).get_icon()
 
                     max_size = max(size)
                     factor = (slot_size[0] * 0.8) / max_size

@@ -32,7 +32,7 @@ class BulletDummy(SyncedImageEntity):
     __slots__ = [
         "_spawn_time", "_visibility_offset", "_last_pos", "_target_pos", "_trace",
         "_trace_color", "_show_trace", "_current_trace_length", "_max_trace_length",
-        "_fade_trace"
+        "_fade_trace", "_original_alpha"
     ]
 
     _cid = DummyCIDs.base_bullet
@@ -96,6 +96,7 @@ class BulletDummy(SyncedImageEntity):
             
             else:
                 self._trace_color: Color = convert_color(trace_color, Color)
+                self._original_alpha = self._trace_color.a1
 
         else:
             if isinstance(self._default_trace_color, tuple):
@@ -105,6 +106,7 @@ class BulletDummy(SyncedImageEntity):
 
             else:
                 self._trace_color: Color = self._default_trace_color.copy()
+                self._original_alpha = self._trace_color.a1
 
         super().__init__(sync_id, _bullet_image, parent)
 
@@ -187,16 +189,18 @@ class BulletDummy(SyncedImageEntity):
                 color: Color = fade(
                     *self._trace_color, min(self._lifetime / self._fade_color_time, 1)
                 )
-            
+                trace_mult = color.a1
+
             else:
                 color: Color = self._trace_color.copy()
+                trace_mult = self._original_alpha
 
             for i in range(len(self._trace)-1):
                 p1 = self._trace[i]
                 p2 = self._trace[i+1]
 
                 if self._fade_trace:
-                    color.a1 = 1 - (i / len(self._trace))
+                    color.a1 = trace_mult * (1 - (i / len(self._trace)))
 
                 renderer.draw_thick_line(
                     p1 - world_pos,
@@ -212,7 +216,7 @@ class BulletDummy(SyncedImageEntity):
 class MortarShell(BulletDummy):
     _bullet_image: str = ("mortar_shell", "")
     _cid = DummyCIDs.mortar_bullet
-    _default_trace_color = Color().from_1(1, 1, 1, .8)
+    _default_trace_color = Color().from_1(1, 1, 1, .6)
     _default_trace_length = 200
 
 
@@ -226,6 +230,7 @@ class Grenade(BulletDummy):
 class CRAMBullet(BulletDummy):
     _cid = DummyCIDs.cram
     _default_trace_length = 150
-    _default_trace_color = (Color().from_255(255, 80, 40), Color().from_255(255, 100, 60))
-    # _default_trace_color = (255, 100, 60)
-    # _default_trace_color = Color().from_255(200, 70, 50)
+    _default_trace_color = (
+        Color().from_255(255, 80, 40),
+        Color().from_255(255, 100, 60),
+    )

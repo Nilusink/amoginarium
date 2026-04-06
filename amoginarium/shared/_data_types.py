@@ -9,14 +9,13 @@ Nilusink
 """
 
 from dataclasses import dataclass, field
-from icecream import ic
 from enum import Enum
 import typing as tp
 
-from ._entity_hints import VisibleItemLike
+from ._entity_hints import ItemLike
 
 
-type item_t = VisibleItemLike | None  # ItemLike | WeaponLike | None
+type item_t = ItemLike | None  # ItemLike | WeaponLike | None
 
 
 @dataclass

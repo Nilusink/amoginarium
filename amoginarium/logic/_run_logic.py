@@ -359,7 +359,7 @@ class LogicProcess:
         # test stuff
         self._dummy_dad.update(delta)
         self._w.update(delta)
-        if start - self._last_spawn > .5:
+        if start - self._last_spawn > .5 and 0:
             self._last_spawn = start
             self._w.shoot(self._b_vel, 10)
             self._w._stop_recoil()

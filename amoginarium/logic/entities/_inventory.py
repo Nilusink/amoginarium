@@ -15,12 +15,15 @@ from amoginarium.shared.utility import Vec2
 from amoginarium.shared import ItemSlot, INVENTORY_COUNTER
 from amoginarium import pv
 
-from ._visible_item import VisibleItem
+from ._base_entity import LogicGameEntity
+from ._item import Item
 
-type item_t = VisibleItem | None
+type item_t = Item | None
 
 
 class Inventory:
+    """inventory"""
+
     __slots__ = (
         "_slots",
         "_num_slots",
@@ -28,16 +31,19 @@ class Inventory:
         "_ui",
         "_slot_colors",
         "_callbacks",
-        "__id"
+        "__id",
+        "_parent"
     )
 
     def __init__(
             self,
+            parent: LogicGameEntity,
             slots: int,
             select_slot_callback: tp.Callable[[ItemSlot], None] = ...,
             unselect_slot_callback: tp.Callable[[ItemSlot], None] = ...,
     ) -> None:
         self.__id = INVENTORY_COUNTER.get_id()
+        self._parent = parent
 
         self._num_slots = slots
         self._used_slots = 0
@@ -55,7 +61,7 @@ class Inventory:
 
         # set all slots to 255 (invalid item)
         for i in range(slots):
-            self._buff.slots[i].item_id = 255
+            self._buff.slots[i].item_id = 0
 
         self._callbacks = {
             "select": select_slot_callback,
@@ -171,7 +177,7 @@ class Inventory:
         self._used_slots += 1
         self._slots[slot_id].item = item
         self._slots[slot_id].count = count
-        self._buff.slots[slot_id].item_id = item.item_id
+        self._buff.slots[slot_id].item_id = item.id
         self._buff.slots[slot_id].count = count
 
         if hasattr(item, "add_used_callback"):
@@ -179,7 +185,7 @@ class Inventory:
                 lambda c: self.use_item(slot_id, c)
             )
 
-        item.set_parent(self._slots[slot_id])
+        item.set_parent(self._parent)
 
     def drop_item(self, item_id: int, pos: Vec2, vel: Vec2 = ...) -> None:
         if not self._slots[item_id].item:

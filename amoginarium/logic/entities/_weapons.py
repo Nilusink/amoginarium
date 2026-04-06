@@ -25,9 +25,10 @@ from ..audio import Mortar as MortarSound, CRAM as CRAMSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
+from ._item import Item
 
 
-class BaseWeapon(LogicGameEntity):
+class BaseWeapon(Item):
     """
     basic functionality of all weapons
     """
@@ -69,12 +70,7 @@ class BaseWeapon(LogicGameEntity):
         if size is ...:
             size: Vec2 = Vec2().from_cartesian(20, 20)
 
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            position=Vec2(),
-            size=size
-        )
+        super().__init__(runtime_buffer=runtime_buffer, size=size)
 
         # unless you want the sniper to kill its own bullet
         self.remove(CollisionDestroyed, Updated)
@@ -191,20 +187,6 @@ class BaseWeapon(LogicGameEntity):
         """
         update weapon state (like reloading, ...)
         """
-        # spawn graphics entity if not done yet
-        # (wait until update so parent has gotten its id)
-        if not self._spawned_graphics:
-            # spawn graphics entity
-            pv.COQ.put(
-                ProcessCommand(
-                    type=BaseCommandType.spawn_dummy,
-                    kwargs={"id": self.id, "cid": self.cid(), "parent": self.parent.id},
-                )
-            )
-            self._spawned_graphics = True
-
-        self.position = self.parent.position + self._parent_position_offset
-
         # reload time
         if self._current_reload_time > 0:
             self._current_reload_time -= delta
@@ -474,7 +456,7 @@ class Mortar(BaseWeapon):
             parent=parent,
             reload_time=8,
             recoil_time=0,
-            mag_size=8,
+            mag_size=1,
             inaccuracy=.00100002,
             bullet_size=Vec2().from_cartesian(40, 20),
             bullet_speed=bullet_speed,
