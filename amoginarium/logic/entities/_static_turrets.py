@@ -633,7 +633,7 @@ class CRAMTurret(BaseTurret):
             Vec2().from_cartesian(64, 128),
             position,
             weapon,
-            5000,
+            1900,
             150,
             intercept_bullets=True,
             intercept_players=False,
@@ -646,7 +646,7 @@ class CRAMTurret(BaseTurret):
             sensors=[
                 MagicSensor(
                     self,
-                    12000,
+                    2200,
                     # sphere_accuracy=256,
                     # min_rcs=.04
                 )

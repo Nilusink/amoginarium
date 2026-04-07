@@ -131,6 +131,7 @@ class LogicProcess:
         )
         self._w.set_parent(self._dummy_dad)
         self._w.show()
+        self._w._mag_size = 4
         self._w.reload(True)
         self._w.facing = self._b_vel
 
@@ -369,7 +370,7 @@ class LogicProcess:
         # test stuff
         self._dummy_dad.update(delta)
         self._w.update(delta)
-        if start - self._last_spawn > .5 and 0:
+        if start - self._last_spawn > .25 and 0:
             self._last_spawn = start
             self._w.shoot(self._b_vel, 10)
             self._w._stop_recoil()

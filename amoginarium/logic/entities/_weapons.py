@@ -455,7 +455,7 @@ class Mortar(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=8,
-            recoil_time=0,
+            recoil_time=.25,
             mag_size=1,
             inaccuracy=.00100002,
             bullet_size=Vec2().from_cartesian(40, 20),
