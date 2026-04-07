@@ -10,10 +10,9 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
-from icecream import ic
 import math as m
 
-from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType, ItemSlot
+from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
@@ -72,9 +71,7 @@ class Item(LogicGameEntity):
         self.facing.angle = 0
         self._current_timeout = self._drop_timeout
 
-        ic(at_pos, velocity)
-
-        if velocity is not ...:
+        if not isinstance(velocity, EllipsisType):
             self.velocity.x = velocity.x
             self.velocity.y = velocity.y
 

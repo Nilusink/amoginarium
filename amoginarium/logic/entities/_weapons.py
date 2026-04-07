@@ -25,7 +25,7 @@ from ..audio import Mortar as MortarSound, CRAM as CRAMSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
-from ._item import Item
+from ._base_item import Item
 
 
 class BaseWeapon(Item):

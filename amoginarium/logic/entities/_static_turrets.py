@@ -638,7 +638,7 @@ class CRAMTurret(BaseTurret):
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
-            target_taps=8,
+            target_taps=32,
             valid_angles=(
                 Vec2().from_cartesian(-.5, 1),
                 Vec2().from_cartesian(.5, 1)

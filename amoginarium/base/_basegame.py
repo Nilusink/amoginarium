@@ -594,6 +594,10 @@ class BaseGame:
                 msg = pv.BASE_COMM.recv()
                 colorizedStderrPrint(msg)
 
+            # wait if buffer is being updated
+            pv.WRITE_LOCK.acquire()
+            pv.WRITE_LOCK.release()
+
             # # check for new controllers
             # if len(self._new_controllers) > 0:
             #     tmp = self._new_controllers.copy()

@@ -27,7 +27,7 @@ from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._base_entity import LogicGameEntity
 from ._inventory import Inventory
 from ._island import Island
-from ._item import Item
+from ._base_item import Item
 
 
 PIXEL_MASK = pg.mask.Mask((1, 1), True)
@@ -52,7 +52,7 @@ class Player(LogicGameEntity):
             position: Vec2 | None = None,
             initial_velocity: Vec2 | None = None,
             size: Vec2 | None = None,
-            parent: tp.Self | None = None,
+            parent: LogicGameEntity | None = None,
             coalition: Coalitions = ...,
     ) -> None:
         self._hp = self._max_hp

@@ -16,7 +16,7 @@ from amoginarium.shared import ItemSlot, INVENTORY_COUNTER
 from amoginarium import pv
 
 from ._base_entity import LogicGameEntity
-from ._item import Item
+from ._base_item import Item
 
 type item_t = Item | None
 

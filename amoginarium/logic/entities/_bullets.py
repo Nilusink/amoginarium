@@ -19,7 +19,7 @@ from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
 from amoginarium import pv
 
-from ..audio import LargeExplosion
+from ..audio import LargeExplosion, DistantPop
 from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
 from ._logic_groups import WallCollider, WallBouncer
 from ._base_entity import LogicGameEntity
@@ -314,10 +314,10 @@ class Bullet(LogicGameEntity):
                 exp.play()
 
             # sounds like shit
-            # elif self._explosion_radius < 16:
-            #     exp = SmallExplosion()
-            #     exp.volume = .5
-            #     exp.play()
+            elif self._explosion_radius < 16:
+                exp = DistantPop()
+                exp.set_volume(.9, .git3)
+                exp.play()
 
         super().kill()
         return True

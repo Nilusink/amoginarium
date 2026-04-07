@@ -229,7 +229,7 @@ class Grenade(BulletDummy):
 
 class CRAMBullet(BulletDummy):
     _cid = DummyCIDs.cram
-    _default_trace_length = 150
+    _default_trace_length = 300
     _default_trace_color = (
         Color().from_255(255, 80, 40),
         Color().from_255(255, 100, 60),

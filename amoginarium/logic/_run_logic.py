@@ -162,6 +162,7 @@ class LogicProcess:
         sounds.load_sounds("assets/audio/effects/ui")
         sounds.load_sounds("assets/audio/effects/groaning")
         sounds.load_sounds("assets/audio/effects/death")
+        sounds.load_sounds("assets/audio/effects/distant_pop")
 
         self._background_player.assign_scope("background")
 

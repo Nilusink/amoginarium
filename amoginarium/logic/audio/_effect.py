@@ -9,9 +9,9 @@ Nilusink
 """
 from icecream import ic
 from ._sounds import sounds, sound_name_t
+from random import choice, uniform
 import typing as tp
 import pygame as pg
-from random import choice
 
 from amoginarium.shared.debugging import CC
 
@@ -111,11 +111,12 @@ class SoundEffect:
         if self._sound is None:
             raise RuntimeError(f"Sound {self._sound_name} not found!")
 
-        self._sound.set_volume(self.volume)
+        # self._sound.set_volume(self.volume)
         self._channel = pg.mixer.find_channel(force=False)
         if self._channel is None:
             return
 
+        self._channel.set_volume(self.volume)
         self._channel.play(self._sound, loops, maxtime, fade_ms)
         self._has_played = True
 
@@ -164,6 +165,10 @@ class LargeExplosion(PresetEffect):
 
 class SmallExplosion(PresetEffect):
     _sound_name = "explosion_small"
+
+
+class MutedBurst(PresetEffect):
+    _sound_name = "muted_burst"
 
 
 class Shotgun(PresetEffect):
@@ -328,14 +333,16 @@ class RandomizedEffect:
     ) -> None:
         self._effects = effects
         self._playing = None
+        self._max_volume = 1
+        self._min_volume = 1
 
     @property
     def playing(self) -> bool:
         return not not self._playing
 
-    def set_volume(self, volume: float) -> tp.Self:
-        for effect in self._effects:
-            effect.volume = volume
+    def set_volume(self, max_volume: float, min_volume: float) -> tp.Self:
+        self._max_volume = max_volume
+        self._min_volume = min_volume
 
         return self
 
@@ -352,6 +359,7 @@ class RandomizedEffect:
             self.stop()
 
         self._playing = choice(self._effects)
+        self._playing.volume = uniform(self._min_volume, self._max_volume)
         self._playing.play(
             loops,
             maxtime,
@@ -376,16 +384,23 @@ class RandomizedEffect:
 
 
 class ScopedRandomizedEffect(RandomizedEffect):
+    _scope: str | None = None
+
     def __init__(
             self,
-            sound_scope: str,
-            callback: tp.Callable[[], tp.Any]
+            sound_scope: str | None = None,
+            callback: tp.Callable[[], tp.Any] | None = None
     ) -> None:
+        if sound_scope is None:
+            sound_scope = self._scope
+            if sound_scope is None:
+                raise ValueError("No scope given for sounds")
+
         s = sounds.get_all_from_scope(sound_scope)
         super().__init__([
             SoundEffect(
                 sound,
-                callback
+                callback if callback else ...
             ) for sound in s
         ])
 
@@ -393,3 +408,8 @@ class ScopedRandomizedEffect(RandomizedEffect):
 class DeathSound(ScopedRandomizedEffect):
     def __init__(self, callback: tp.Callable[[], tp.Any] = ...) -> None:
         super().__init__("death", callback)
+
+
+class DistantPop(ScopedRandomizedEffect):
+    _scope = "distant_pop"
+
