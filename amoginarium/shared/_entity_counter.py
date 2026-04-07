@@ -48,6 +48,11 @@ class _EntityCounter:
         self._used_ids.remove(id)
         return True
 
+    def reset(self) -> None:
+        """reset the counter"""
+        self._used_ids.clear()
+        self._current_id = 0
+
 
 ENTITY_COUNTER = _EntityCounter(MAX_ENTITIES)
 INVENTORY_COUNTER = _EntityCounter(MAX_INVENTORIES)

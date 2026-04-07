@@ -30,7 +30,7 @@ from ..graphics.render_bindings import renderer
 from ..graphics.ui import UICursor
 from ..graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities, Drawn_2
 from ..graphics.controllers import Controller, Controllers, KeyboardController
-from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS
+from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
 from ..logic import run_continuous
 from ._scrolling_background import ParalaxBackground
 from ._settings_menu import SettingsMenu
@@ -525,12 +525,28 @@ class BaseGame:
             active_scene = "Game"
 
             self._background.reset_scroll()
-
-            if self._last_loaded is not ...:
-                self.load_map(self._last_loaded)
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.reset))
+            SE_MANAGER.reset()
 
             if primary_call:
                 load_ui_visibility()
+
+            # wait for confirm
+            while True:
+                pv.CIQ.get()  # wait for confirm reset
+                break
+
+            # re-load map
+            if self._last_loaded is not ...:
+                self.load_map(self._last_loaded)
+
+            # respawn player
+            Controllers.reset()
+            KeyboardController.get()
+            Controllers.update()
+
+            # unpause logic
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def back_to_menu():
             nonlocal active_scene

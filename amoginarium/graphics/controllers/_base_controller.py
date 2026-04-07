@@ -77,6 +77,7 @@ class _Controllers:
         ))
 
     def update(self) -> None:
+        """update all controllers"""
         for controller in self._controllers:
             controller.update(0)
 
@@ -114,6 +115,11 @@ class _Controllers:
 
         raise ValueError(f"Invalid cid: {cid}")
 
+    def reset(self) -> None:
+        """reset all controllers"""
+        self._controllers.clear()
+        self._used_ids.clear()
+
 
 Controllers = _Controllers()
 
@@ -130,6 +136,9 @@ class Controller:
         ic("called base cls.get with id ", cid)
         if Controllers.exists(cid):
             ic("re-linking already existing controller", cid)
+            pv.COQ.put(ProcessCommand(
+                type=ProcessCommandType.spawn_player, kwargs={"controller_id": cid}
+            ))
             return Controllers.get_by_id(cid)
 
         ic("create instance in cls.get()")

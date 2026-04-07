@@ -242,9 +242,9 @@ class GlobalVars:
         """
         reset all variables to their original state
         """
-        self._world_position *= 0
-        self.__values["world_position_x"].value = 0
-        self.__values["world_position_y"].value = 0
+        self.set_pixel_per_meter(1)
+        self.set_background_position(0)
+        self.set_world_position(Vec2())
 
     @cum_timer.time_this
     def update(self) -> None:

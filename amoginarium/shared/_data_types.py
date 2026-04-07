@@ -136,6 +136,7 @@ class BaseCommandType(Enum):
     """
     spawn_dummy = 0  # {"id": <sync id>, "cid": DummyCIDs, **kwargs}
     spawn_island = 1  # {"id": <sync id>, "cid": IslandCIDs, "size" OR "form"}
+    confirm_reset = 2
 
 
 @dataclass

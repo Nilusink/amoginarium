@@ -11,6 +11,7 @@ from multiprocessing.shared_memory import SharedMemory
 from multiprocessing.connection import Connection
 from multiprocessing import Queue, Lock, Pipe
 from ctypes import Array, memset, sizeof, addressof
+from queue import Empty
 from icecream import ic
 
 from .shared import inventory_t
@@ -98,6 +99,36 @@ class _ProcessValues:
         self.CIQ = command_in_queue
         self.BASE_COMM = base_comm
         self.PROCESS_COMM = process_comm
+
+    def reset(self) -> None:
+        """reset everything"""
+        # initialize shared memories to all 0s
+        memset(addressof(self.E_BUFF), 0, sizeof(self.E_BUFF))
+        memset(addressof(self.C_BUFF), 0, sizeof(self.C_BUFF))
+        memset(addressof(self.I_BUFF), 0, sizeof(self.I_BUFF))
+
+        # reset globalvars
+        self.global_vars.reset()
+        self.global_vars.update()
+
+        # reset comms
+        while self.BASE_COMM.poll(0): self.BASE_COMM.recv()
+        while self.PROCESS_COMM.poll(0): self.PROCESS_COMM.recv()
+
+        # reset command queues
+        while True:
+            try:
+                self.COQ.get_nowait()
+            
+            except Empty:
+                break
+
+        while True:
+            try:
+                self.CIQ.get_nowait()
+
+            except Empty:
+                break
 
 
 pv = _ProcessValues()

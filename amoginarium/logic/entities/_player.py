@@ -579,9 +579,12 @@ class Player(LogicGameEntity):
 
         # reset position / velocity
         self.position = self._initial_position.copy()
+        ic(self.position, self._initial_position, pos)
         self._acceleration_to_add *= 0
         self.acceleration *= 0
         self.velocity *= 0
 
         if pos is not ...:
             self.position = pos.copy()
+
+        super()._update(0)

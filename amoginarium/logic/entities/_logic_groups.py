@@ -14,6 +14,7 @@ import pygame as pg
 import typing as tp
 import numpy as np
 
+from shared.debugging import run_with_debug
 from ...shared.utility import Vec2, is_related, convert_coord, raycast_mask, \
     normalize_angle, coord_t
 from ...shared import GlobalVars, BaseLogicEntityLike
@@ -146,7 +147,7 @@ class _Players(BaseGroup):
         player spawn point
         """
         if self._spawn_point:
-            return Updated.world_position + self._spawn_point.copy()
+            return Updated.world_position.copy() + self._spawn_point.copy()
 
         return None
 

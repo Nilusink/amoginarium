@@ -132,7 +132,6 @@ class BaseLogicEntity:
         """
         # kill children first
         for child in self._children:
-            ic(child)
             child.kill()
 
         # commit suicide

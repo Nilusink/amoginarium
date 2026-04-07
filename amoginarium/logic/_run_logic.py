@@ -20,7 +20,8 @@ import json
 import os
 
 from amoginarium.shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
-from amoginarium.shared import ProcessCommandType, Coalitions
+from amoginarium.shared import ProcessCommandType, Coalitions, ENTITY_COUNTER
+from amoginarium.shared import BaseCommandType, INVENTORY_COUNTER
 from amoginarium.shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
 from amoginarium.shared.debugging import print_with_prefix, get_fg_color
 from amoginarium.shared.utility import Vec2, calculate_launch_angle
@@ -41,17 +42,17 @@ class LogicProcess:
     """
 
     def __init__(
-        self,
-        shm: SharedMemory,
-        c_shm: SharedMemory,
-        i_shm: SharedMemory,
-        command_in_queue: Queue,
-        command_out_queue: Queue,
-        write_lock: synchronize.Lock,
-        global_vars: GlobalVars,
-        base_comm: Connection,
-        process_comm: Connection,
-        start_time: float,
+            self,
+            shm: SharedMemory,
+            c_shm: SharedMemory,
+            i_shm: SharedMemory,
+            command_in_queue: Queue,
+            command_out_queue: Queue,
+            write_lock: synchronize.Lock,
+            global_vars: GlobalVars,
+            base_comm: Connection,
+            process_comm: Connection,
+            start_time: float,
     ) -> None:
         self._start = start_time
         ic.configureOutput(
@@ -191,6 +192,7 @@ class LogicProcess:
                 raise FileNotFoundError(f"Couldn't find map \"{map_path}\"")
 
         self._map_loading = True
+        self._last_map_path = map_path
 
         # load map data
         data = json.load(open(map_path, "r"))
@@ -311,6 +313,11 @@ class LogicProcess:
 
             elif item.type == ProcessCommandType.reset:
                 self.reset_game()
+                self._paused = True
+                ic("logic reset complete")
+                pv.COQ.put(
+                    ProcessCommand(type=BaseCommandType.confirm_reset, kwargs={})
+                )
                 return False
 
             elif item.type == ProcessCommandType.pause:
@@ -330,7 +337,7 @@ class LogicProcess:
 
             elif item.type == ProcessCommandType.spawn_player:
                 if Players.spawn_point:
-                    ic(item, Players.spawn_point)
+                    ic(item)
                     Player(
                         self._runtime_buffer,
                         Controller(item.kwargs.pop("controller_id")),
@@ -444,21 +451,25 @@ class LogicProcess:
         self._write_lock.release()
 
     def reset_game(self) -> None:
-        Updated.kill()
+        """reset game state"""
+        # kill all entities
+        for e in Updated.sprites():
+            e.kill()
 
-        # reset entity buffer
+        # reset shared values
         self._write_lock.acquire()
-        self.__entity_buffer[:] = 0
-        self._runtime_buffer[:] = self.__entity_buffer
+        pv.reset()
         self._write_lock.release()
 
-        # reset global vars
-        self._global_vars.reset()
+        # reset groups
+        Updated.world_position = pv.global_vars.get_world_position()
 
-        for player in Players.sprites():
-            player.respawn()
+        # reset entity counters
+        INVENTORY_COUNTER.reset()
+        ENTITY_COUNTER.reset()
 
     def end(self) -> None:
+        """close the logic thread"""
         # print entity stats
         entities = Updated.sprites() + Bullets.sprites()
         entities = [e.__class__.__name__ for e in entities]

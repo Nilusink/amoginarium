@@ -10,8 +10,6 @@ Nilusink
 from __future__ import annotations
 import typing as tp
 
-from ..render_bindings import renderer
-
 
 class BaseGraphicsEntity:
     __slots__ = [

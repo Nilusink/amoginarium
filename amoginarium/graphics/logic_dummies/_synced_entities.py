@@ -57,6 +57,12 @@ class _SyncedEntitiesManager:
 
         return self._entities[sync_id]
 
+    def reset(self) -> None:
+        """kill all entities and reset buffer"""
+        for eid, entity in self._entities.copy().items():
+            self.del_entity(eid)
+            entity.kill()
+
 
 SE_MANAGER = _SyncedEntitiesManager()
 
