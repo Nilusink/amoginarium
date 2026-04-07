@@ -14,7 +14,7 @@ extensions = []
 
 base_package = "amoginarium"
 
-for root, _, files in os.walk("amoginarium"):
+for root, _, files in os.walk(base_package):
     for file in files:
         if file.endswith(".pyx"):
             path = os.path.join(root, file)

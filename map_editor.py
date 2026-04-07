@@ -12,14 +12,13 @@ from contextlib import suppress
 from icecream import ic
 import pygame as pg
 
-from amoginarium.controllers import KeyboardController
 from amoginarium.base import BaseGame
-from amoginarium.entities import Updated, CollisionDestroyed
-from amoginarium.ui import EventHandler, UIElement
-from amoginarium.shared import global_vars, VisibleGameEntityLike, Coalitions, \
-    GameEntityLike, IslandLike
-from amoginarium.logic import convert_coord, Vec2
-from amoginarium.map import save_map
+from amoginarium.logic.entities import Updated, CollisionDestroyed
+from amoginarium.graphics.ui import EventHandler
+from amoginarium.shared import pv, VisibleGameEntityLike, \
+    GameEntityLike
+from amoginarium.shared.utility import convert_coord, Vec2
+from amoginarium.logic.map import save_map
 
 
 def main() -> None:

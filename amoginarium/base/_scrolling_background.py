@@ -12,9 +12,10 @@ from icecream import ic
 
 import pygame as pg
 
-from ..shared import global_vars
-from ..render_bindings import renderer
+from ..graphics.render_bindings import renderer
 from ..base._textures import textures
+from .. import pv
+from ..shared.debugging import run_with_debug
 
 
 class ScrollingBackground:
@@ -82,11 +83,12 @@ class ParalaxBackground:
         """
         load all textures
         """
+        screen_size = pv.global_vars.get_screen_size()
         for texture, _ in textures.get_all_from_scope(
-                self._scope, size=global_vars.screen_size
+                self._scope, size=screen_size
         ):
             self._textures.append(texture)
-            self._sizes.append(global_vars.screen_size.xy)
+            self._sizes.append(screen_size.xy)
 
     @property
     def loaded(self) -> bool:
@@ -107,7 +109,7 @@ class ParalaxBackground:
         set the position of the top layer
         """
         self._position = -position / (self._multiplier ** len(self._textures))
-        # global_vars.background_position = self.position
+        # pv.global_vars.background_position = self.position
 
     def scroll(self, value: float) -> None:
         """
@@ -116,19 +118,19 @@ class ParalaxBackground:
         if self._position - value <= 0:
             self._position -= value
 
-        # tmp = global_vars.world_position
+        # tmp = pv.global_vars.world_position
         # tmp.x = self.position
-        # global_vars.world_position = tmp
-        global_vars.background_position = self.position
+        # pv.global_vars.world_position = tmp
+        # pv.global_vars.background_position = self.position
 
     def reset_scroll(self) -> None:
         self._animation_counter = 0
         self._position = 0
 
-        # tmp = global_vars.world_position
+        # tmp = pv.global_vars.world_position
         # tmp.x = self.position
-        # global_vars.world_position = tmp
-        global_vars.background_position = self.position
+        # pv.global_vars.world_position = tmp
+        pv.global_vars.background_position = self.position
 
     def draw(self, delta: float) -> None:
         """
@@ -136,21 +138,23 @@ class ParalaxBackground:
         """
         self._animation_counter += delta
 
+        screen_size = pv.global_vars.get_screen_size()
+
         n_layers = len(self._textures) - 1
         if n_layers == -1:
             self.load_textures()
             return self.draw(delta)
 
         for layer in range(n_layers, -1, -1):
-            image_pos = self._position + 10 % global_vars.screen_size.x
+            image_pos = self._position + 10 % screen_size.x
             image_pos *= self._multiplier ** (n_layers - layer)
 
             # if layer in self._animated_layers:
             #     image_pos *= self._animation_counter * .1
             #     image_pos *= self._multiplier**(n_layers-layer)
 
-            image_pos = int(image_pos % global_vars.screen_size.x)
-            image_pos -= global_vars.screen_size.x
+            image_pos = int(image_pos % screen_size.x)
+            image_pos -= screen_size.x
 
             renderer.draw_textured_quad(
                 self._textures[layer],
@@ -160,7 +164,7 @@ class ParalaxBackground:
             )
             renderer.draw_textured_quad(
                 self._textures[layer],
-                (image_pos + global_vars.screen_size.x, 0),
+                (image_pos + screen_size.x, 0),
                 self._sizes[layer],
                 False
             )

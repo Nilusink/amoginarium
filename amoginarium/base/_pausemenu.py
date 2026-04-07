@@ -10,7 +10,7 @@ Project: amoginarium
 
 from typing import Callable
 
-from ..ui import Button, UIEntity, Rectangle
+from amoginarium.graphics.ui import Button, UIEntity, Rectangle
 
 
 ##################################################

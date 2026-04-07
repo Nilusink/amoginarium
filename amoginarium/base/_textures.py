@@ -7,9 +7,9 @@ globals
 Author:
 Nilusink
 """
-from ..debugging import print_ic_style, get_fg_color
-from ..logic import coord_t, convert_coord
-from ..render_bindings import renderer
+from amoginarium.shared.debugging import print_ic_style, get_fg_color
+from amoginarium.shared.utility import coord_t, convert_coord
+from amoginarium.graphics.render_bindings import renderer
 from PIL import Image
 import typing as tp
 import zipfile

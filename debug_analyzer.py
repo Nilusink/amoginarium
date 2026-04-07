@@ -12,6 +12,8 @@ import json
 
 red = 'tab:red'
 data = json.load(open("debug.json", "r"))
+logic_data = json.load(open("logic_debug.json", "r"))
+data.update(logic_data)
 
 pygame_xs = []
 pygame_ys = []
@@ -74,20 +76,20 @@ ax1 = plt.subplot(2, 1, 1)
 ax2 = plt.subplot(2, 1, 2)
 
 # per bullet
-ax2.scatter(n_bullets, bullets_ys, label="loop times")
+ax2.scatter(n_bullets, bullets_ys, label="loop times", color="blue")
 ax2.plot(
     av_bullet_xs,
     av_bullet_ys,
     label="average",
     color=red
 )
-ax2.set_xlabel("n (bullets)")
+ax2.set_xlabel("n (entities)")
 ax2.set_ylabel("t per iteration (ms)")
 ax2.legend()
 ax2.grid()
 
-ax1.plot(pygame_xs, pygame_ys, label="pygame")
-ax1.plot(logic_xs, logic_ys, label="logic")
+ax1.plot(pygame_xs, pygame_ys, label="pygame", color="orange")
+ax1.plot(logic_xs, logic_ys, label="logic", color="blue")
 # ax1.plot(comms_xs, comms_ys, label="total")
 
 ax1.set_xlabel("time since start in s")
@@ -97,8 +99,8 @@ ax1.grid()
 
 ax1_1 = ax1.twinx()
 
-ax1_1.set_ylabel('n (bullets)', color=red)
-ax1_1.plot(bullets_xs, n_bullets, color=red, label="n bullets")
+ax1_1.set_ylabel('n (entities)', color=red)
+ax1_1.plot(bullets_xs, n_bullets, color=red, label="n entities")
 ax1_1.tick_params(axis='y', labelcolor=red)
 
 

@@ -7,44 +7,36 @@ Defines the core game
 Author:
 Nilusink
 """
-from dataclasses import dataclass
-
-import numpy
 from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glLoadIdentity, glOrtho, GL_MODELVIEW, \
     glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
-from concurrent.futures import ThreadPoolExecutor
 from time import perf_counter, strftime, time, perf_counter_ns, sleep
-from icecream import ic
+from multiprocessing import Process
+from dataclasses import dataclass
+from icecream import ic, colorizedStderrPrint
+from queue import Empty
 import typing as tp
 import pygame as pg
+import numpy
 import json
-import math
-import os
 
-from ..entities import HasBars, WallBouncer, CollisionDestroyed, Bullets, Players, UIEntities
-from ..entities import Updated, GravityAffected, Drawn, FrictionXAffected
-from ._pausemenu import PauseMenu
-from ._settings_menu import SettingsMenu
-from ._startmenu import StartMenu
-from ..entities import SniperTurret, AkTurret, MinigunTurret, MortarTurret, \
-    create_moving_island
-from ..radar import DETECTION_GROUP_MANAGER, DetectionGroup, \
-    DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_RED, DETECTION_GLOBAL_NEUTRAL
-from ..entities import CRAMTurret, TextEntity, BaseTurret, FlakTurret
-from ..entities import Player, GrassIsland, ISLANDS, Radar, SPAWNABLES
-from ..controllers import Controllers, Controller, GameController
-from ..debugging import run_with_debug, print_ic_style, CC, timeit, cum_timer
+# from ..shared.controllers import Controllers, Controller, GameController
+from .. import pv
+from ..shared.debugging import run_with_debug, print_ic_style, cum_timer
+from ..shared.debugging import print_with_prefix, CC, get_fg_color
+from ..shared.utility import Vec2, convert_coord
+from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
+from ..shared.settings import Settings
+from ..graphics.render_bindings import renderer
+from ..graphics.ui import UICursor
+from ..graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities, Drawn_2
+from ..graphics.controllers import Controller, Controllers, KeyboardController
+from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
+from ..logic import run_continuous
 from ._scrolling_background import ParalaxBackground
-from ..shared import global_vars, Coalitions
-from ..logic import SimpleLock, Vec2, convert_coord
-from ..audio import sounds, sound_effects
-from ..render_bindings import renderer
-from ..audio import BackgroundPlayer
-from ..communications import TCPServer
-from ..entities import explosion
+from ._settings_menu import SettingsMenu
+from ._pausemenu import PauseMenu
+from ._startmenu import StartMenu
 from ._textures import textures
-from ..settings import Settings
-from ..ui import UICursor
 
 
 class BoundFunction(tp.TypedDict):
@@ -83,52 +75,63 @@ class BaseGame:
             show_targets: bool = False,
             time_multiplier: float = 1
     ) -> None:
-        global_vars.show_targets = show_targets
+        self._game_start = perf_counter()
+        ic.configureOutput(
+            prefix="",
+            outputFunction=lambda s, **kwargs: print_with_prefix(
+                s,
+                prefix=self.time_since_start(),
+                **kwargs
+            ),
+        )
+
+        # multiprocessing setup
+        pv.create_shared_process_values()
+
+        self._logic_process = Process(
+            target=run_continuous,
+            kwargs={
+                "command_in_queue": pv.COQ,
+                "command_out_queue": pv.CIQ,
+                "write_lock": pv.WRITE_LOCK,
+                "global_vars_values": pv.global_vars.get_values(),
+                "shm": pv.SHM,
+                "c_shm": pv.C_SHM,
+                "i_shm": pv.I_SHM,
+                "base_comm": pv.BASE_COMM,
+                "process_comm": pv.PROCESS_COMM,
+                "start_time": self._game_start,
+                "time_multiplier": time_multiplier
+            }
+        )
+        self._logic_process.start()
+
+        # pause logic process until game start
+        pv.COQ.put(ProcessCommand(type=ProcessCommandType.pause))
+
+        self.global_vars = pv.global_vars
+        self.global_vars.show_targets = show_targets
         self.time_multiplier = time_multiplier
         self._last_loaded: tp.LiteralString = ...
         self._shifting = False
 
-        global_vars.scaling = Settings.scaling
+        self.global_vars.scaling = Settings.scaling
 
         # configure icecream
         if not debug:
             ic.disable()
 
-        ic.configureOutput(prefix=self.time_since_start)
-
-        # multi-threading stuff
-        self._pool = ThreadPoolExecutor(max_workers=5)
-
         # debugging
-        self._logic_loop_times: list[tuple[float, float]] = []
         self._pygame_loop_times: list[tuple[float, float]] = []
-        self._comms_loop_times: list[tuple[float, float]] = []
         self._total_loop_times: list[tuple[float, float]] = []
-
-        # time since start, n_bullets, loop_time
-        self._n_bullets_times: list[tuple[float, float, float]] = []
 
         self._pygame_fps: int = 0
         self._logic_fps: int = 0
         self._comms_ping: int = 0
 
-        # logic setup
-        self._new_controllers: list[Controller] = []
-        self._new_controllers_lock = SimpleLock()
-
-        self._controllers_cid = Controllers.on_new_controller(
-            self._add_controller
-        )
-
-        # other things
-        # self._in_next_loop: list[BoundFunction] = []
-
-        # server setup
-        self._server = TCPServer(("0.0.0.0", game_port))
-
         # initialize pygame (logic) and renderer
         pg.init()
-        pg.mixer.init(channels=64, buffer=1024)
+        # pg.mixer.init(channels=64, buffer=1024)
         renderer.init("amoginarium")
 
         self._loading_screen_steps = 28
@@ -137,16 +140,24 @@ class BaseGame:
         # initialize background
         self._background: ParalaxBackground = ...
         self._bg_color = (0, 0, 0)
-        self._background_player = BackgroundPlayer()
-        self._background_player.volume = .6
         self._ended = False
 
         self._update_loading_screen(1)
 
         self.__windowed_fullscreen()
 
+        # controller setup
+        self._new_controllers: list[Controller] = []
+
+        # self._controllers_cid = Controllers.on_new_controller(
+        #     self._add_controller
+        # )
+
+        # create keyboard controller
+        KeyboardController.get()
+
         # add decorator with callback to self.end
-        for func in ("_run_pygame", "_run_logic", "_run_comms"):
+        for func in ("_run_pygame",):
             setattr(
                 self,
                 func,
@@ -159,22 +170,22 @@ class BaseGame:
         self._backgrounds = [
             ParalaxBackground(
                 "bg1",
-                *global_vars.screen_size.xy,
+                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             ),
             ParalaxBackground(
                 "bg2",
-                *global_vars.screen_size.xy,
+                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             ),
             ParalaxBackground(
                 "bg3",
-                *global_vars.screen_size.xy,
+                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             ),
             ParalaxBackground(
                 "bg4",
-                *global_vars.screen_size.xy,
+                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             )
         ]
@@ -183,7 +194,6 @@ class BaseGame:
 
         # load textures and sounds
         self.preload()
-        self._game_start = 0
 
     def _update_loading_screen(self, step: int, info: str = ...) -> None:
         if info is not ...:
@@ -234,31 +244,12 @@ class BaseGame:
         load all textures n stuff
         """
         start = perf_counter_ns()
-        # load sounds
-        sounds.load_sounds("assets/audio/background")
-        self._update_loading_screen(3)
-        sounds.load_sounds("assets/audio/effects/ak47")
-        self._update_loading_screen(4)
-        sounds.load_sounds("assets/audio/effects/minigun")
-        self._update_loading_screen(5)
-        sounds.load_sounds("assets/audio/effects/explosions")
-        self._update_loading_screen(6)
-        sounds.load_sounds("assets/audio/effects/shots")
-        self._update_loading_screen(7)
-        sounds.load_sounds("assets/audio/effects/reloads")
-        self._update_loading_screen(8)
-        sounds.load_sounds("assets/audio/effects/ui")
-        self._update_loading_screen(8)
-        sounds.load_sounds("assets/audio/effects/groaning")
-        self._update_loading_screen(9)
-        sounds.load_sounds("assets/audio/effects/death")
-        self._background_player.assign_scope("background")
         self._update_loading_screen(10, "loading textures")
 
         # load entity textures
         textures.load_images("assets/images/textures.zip")
         self._update_loading_screen(11)
-        textures.load_images("assets/images/dirt_islands.zip")
+        textures.load_images("assets/images/dirt_islands")
         self._update_loading_screen(12)
         textures.load_images("assets/images/bricks_gray")
         self._update_loading_screen(13)
@@ -290,25 +281,25 @@ class BaseGame:
 
         for island in ISLANDS.values():
             island.load_textures()
+        #
+        # for entity in Updated.sprites():
+        #     if hasattr(entity, "load_textures"):
+        #         entity.load_textures()
+        # self._update_loading_screen(22)
 
-        for entity in Updated.sprites():
-            if hasattr(entity, "load_textures"):
-                entity.load_textures()
-        self._update_loading_screen(22)
-
-        for spwanable in SPAWNABLES.values():
+        for spwanable in GRAPHICS_SPAWNABLES.values():
             if hasattr(spwanable, "load_textures"):
                 spwanable.load_textures()
 
         self._update_loading_screen(23)
 
-        Player.load_textures()
-        explosion.load_textures(size=(512, 512))
+        # Player.load_textures()
+        # explosion.load_textures(size=(512, 512))
 
         self._update_loading_screen(24, "loading map")
 
         end = perf_counter_ns()
-        load_time = (end - start) / 1e6
+        load_time = round((end - start) / 1e6, 2)
         ic(load_time)
 
         self._update_loading_screen(24, "loading map")
@@ -326,27 +317,15 @@ class BaseGame:
         """
         load a map from a json file
         """
-        self._update_loading_screen(24)
+        # issue load command
+        pv.COQ.put(ProcessCommand(
+            type=ProcessCommandType.load_map,
+            kwargs={"map_path": map_path}
+        ))
 
-        if not os.path.isfile(map_path):
-            # if the file wasn't found, try adding the root program path
-            map_path = os.path.dirname(__file__) + "/" + map_path
-            ic(map_path)
-            if not os.path.isfile(map_path):
-                raise FileNotFoundError(f"Couldn't find map \"{map_path}\"")
-
-        self._update_loading_screen(24)
-
-        # load map data
+        # stuff
         data = json.load(open(map_path, "r"))
-        self._last_loaded = map_path
-
-        self._update_loading_screen(25)
-
         pg.display.set_caption(f"amoginarium - {data["name"]}")
-        self._update_loading_screen(25)
-        Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
-        self._update_loading_screen(25)
 
         # set background
         if 0 <= data["background"] - 1 <= len(self._backgrounds):
@@ -355,90 +334,11 @@ class BaseGame:
         else:
             self._background = self._backgrounds[0]
 
-        self._update_loading_screen(25)
-
         # check if background has been assigned
         if not self._background.loaded:
             self._background.load_textures()
 
-        # load islands
-        for island in data["platforms"]:
-            self._update_loading_screen(26, "spawning islands")
-            island_type = GrassIsland
-            if "type" in island:
-                if island["type"] in ISLANDS:
-                    island_type = ISLANDS[island["type"]]
-
-            if "args" in island:
-                i = island_type(**island["args"])
-
-            elif "size" in island:
-                i = island_type(
-                    Vec2().from_cartesian(*island["pos"]),
-                    size=Vec2().from_cartesian(*island["size"]),
-                )
-
-            elif "form" in island:
-                i = island_type(
-                    Vec2().from_cartesian(*island["pos"]),
-                    form=island["form"],
-                )
-
-            else:
-                print_ic_style(
-                    f"{CC.fg.RED}invalid island: "
-                    f"{CC.fg.YELLOW}{island}"
-                )
-                continue
-
-            if "move" in island:
-                create_moving_island(
-                    i,
-                    **island["move"]
-                )
-
-        # load entities
-        detection_groups: dict[int, DetectionGroup] = {
-            -1: DETECTION_GLOBAL_BLUE,
-            -2: DETECTION_GLOBAL_RED,
-            -3: DETECTION_GLOBAL_NEUTRAL,
-        }
-        for entity in data["entities"]:
-            self._update_loading_screen(27, "spawning entities")
-            if entity["type"] not in SPAWNABLES:
-                print_ic_style(
-                    f"{CC.fg.RED}unknown entity: "
-                    f"{CC.fg.YELLOW}{entity["type"]}"
-                )
-                continue
-
-            # check if arguments were given
-            args = {}
-            if "args" in entity:
-                args = entity["args"]
-
-            if "group" in entity:
-                group = entity["group"]
-                if group not in detection_groups:
-                    detection_groups[group] = DetectionGroup(str(group))
-
-                args["detection_group"] = detection_groups[group]
-
-            try:
-                SPAWNABLES[entity["type"]](
-                    coalition=Coalitions.red,
-                    position=Vec2().from_cartesian(*entity["pos"]),
-                    **args
-                )
-
-            except TypeError:
-                print_ic_style(
-                    f"{CC.fg.RED}invalid arguments for "
-                    f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
-                    f"\"{CC.fg.YELLOW}{args}{CC.fg.RED}\""
-                )
-
-        self._update_loading_screen(28, "done")
+        self._last_loaded = map_path
 
     def time_since_start(self) -> str:
         """
@@ -453,34 +353,16 @@ class BaseGame:
             t_ms = -1.0
 
         t1, t2 = str(t_ms).split(".")
-        return f"{t1: >4}.{t2: <4} |> "
-
-    @staticmethod
-    def run_in_next_loop[**A, R](
-            func: tp.Callable[A, R],
-            *args: A.args,
-            **kwargs: A.kwargs
-    ) -> None:
-        global_vars.in_next_loop.append({
-            "func": func,
-            "args": args,
-            "kwargs": kwargs
-        })
+        return (
+            f"{get_fg_color(36)}{t1: >4}.{t2: <4}{get_fg_color(247)} | "
+            f"{get_fg_color(14)}base {get_fg_color(247)} |> "
+        )
 
     def _add_controller(self, controller: Controller) -> None:
         """
         appends a new controller to the queue
         """
-        self._new_controllers_lock.aquire()
         self._new_controllers.append(controller)
-        self._new_controllers_lock.release()
-
-    def __add_joystick(self, event: pg.Event) -> None:
-        joy = pg.joystick.Joystick(event.device_index)
-        c = GameController.get(joy.get_guid(), joy)
-
-        # re-assign pygame joystick instance
-        c.set_joystick(joy)
 
     def __clean_end(self, *_args: tp.Any, **_kwargs: tp.Any) -> None:
         ic("pygame end")
@@ -531,36 +413,45 @@ class BaseGame:
         if height is ...:
             height = pg.display.get_window_size()[1]
 
-        res_x, res_y = global_vars.resolution.xy
+        res_x, res_y = self.global_vars.get_resolution().xy
         res_ratio = res_x / res_y
 
         vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(width, height, res_ratio)
 
-        if global_vars.scaling == "bars":
+        scaling = self.global_vars.get_scaling()
+
+        if scaling == "bars":
             # Tell OpenGL to only draw inside the calculated aspect-correct rectangle
             glViewport(vp_x, vp_y, vp_w, vp_h)
             pg.display.set_mode(
                 (width, height),
                 pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
             )
-            global_vars.screen_size_real = convert_coord((width, height), Vec2)
+            self.global_vars.set_screen_size_real(
+                convert_coord((width, height), Vec2)
+            )
 
-            global_vars.screen_size_fac_x = global_vars.resolution.x / vp_w
-            global_vars.screen_size_fac_y = global_vars.resolution.y / vp_h
-            global_vars.screen_size_offset_x = vp_x
-            global_vars.screen_size_offset_y = vp_y
+            self.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / vp_w, res_y / vp_h
+            ))
+            self.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                vp_x, vp_y
+            ))
 
-        elif global_vars.scaling == "fixed_aspect_ratio":
+        elif scaling == "fixed_aspect_ratio":
             pg.display.set_mode(
                 (vp_w, vp_h),
                 pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
             )
-            global_vars.screen_size_real = convert_coord((vp_w, vp_h), Vec2)
+            s_size_real = convert_coord((vp_w, vp_h), Vec2)
+            self.global_vars.set_screen_size_real(s_size_real)
 
-            global_vars.screen_size_fac_x = global_vars.resolution.x / global_vars.screen_size_real.x
-            global_vars.screen_size_fac_y = global_vars.resolution.y / global_vars.screen_size_real.y
-            global_vars.screen_size_offset_x = 0
-            global_vars.screen_size_offset_y = 0
+            self.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / s_size_real.x, res_y / s_size_real.y
+            ))
+            self.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                0, 0
+            ))
 
         else:
             pg.display.set_mode(
@@ -569,12 +460,15 @@ class BaseGame:
             )
             glViewport(0, 0, width, height)
 
-            global_vars.screen_size_real = convert_coord((width, height), Vec2)
+            s_size_real =  convert_coord((width, height), Vec2)
+            self.global_vars.set_screen_size_real(s_size_real)
 
-            global_vars.screen_size_fac_x = global_vars.resolution.x / global_vars.screen_size_real.x
-            global_vars.screen_size_fac_y = global_vars.resolution.y / global_vars.screen_size_real.y
-            global_vars.screen_size_offset_x = 0
-            global_vars.screen_size_offset_y = 0
+            self.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / s_size_real.x, res_y / s_size_real.y
+            ))
+            self.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                0, 0
+            ))
 
         # 4. FIXED COORDINATE SPACE
         glMatrixMode(GL_PROJECTION)
@@ -623,26 +517,36 @@ class BaseGame:
             active_scene = "Game"
 
             load_ui_visibility()
+            # unpause game
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def reset_game(primary_call: bool = True):
             nonlocal active_scene
             active_scene = "Game"
 
-            for entity in Updated.sprites():
-                entity.kill()
-
             self._background.reset_scroll()
-            global_vars.reset()
-            Updated.world_position *= 0
-
-            self.load_map(self._last_loaded)
-
-            # respawn players
-            for player in Players.sprites():
-                player.respawn()
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.reset))
+            SE_MANAGER.reset()
 
             if primary_call:
                 load_ui_visibility()
+
+            # wait for confirm
+            while True:
+                pv.CIQ.get()  # wait for confirm reset
+                break
+
+            # re-load map
+            if self._last_loaded is not ...:
+                self.load_map(self._last_loaded)
+
+            # respawn player
+            Controllers.reset()
+            KeyboardController.get()
+            Controllers.update()
+
+            # unpause logic
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def back_to_menu():
             nonlocal active_scene
@@ -656,6 +560,7 @@ class BaseGame:
             active_scene = "PauseMenu"
 
             load_ui_visibility()
+            pv.COQ.put(ProcessCommand(type=ProcessCommandType.pause))
 
         def open_settings():
             nonlocal active_scene
@@ -677,7 +582,9 @@ class BaseGame:
             load_ui_visibility()
 
         def handle_zoom(event):
-            global_vars.pixel_per_meter *= 1 + event.y / 30
+            self.global_vars.set_pixel_per_meter(
+                self.global_vars.get_pixel_per_meter() * (1 + event.y / 30)
+            )
 
         start_menu = StartMenu(
             start_game, open_settings, self.__clean_end
@@ -698,6 +605,68 @@ class BaseGame:
 
         # draw background once
         while self.running:
+            # print process comms
+            while pv.BASE_COMM.poll(0):
+                msg = pv.BASE_COMM.recv()
+                colorizedStderrPrint(msg)
+
+            # wait if buffer is being updated
+            pv.WRITE_LOCK.acquire()
+            pv.WRITE_LOCK.release()
+
+            # # check for new controllers
+            # if len(self._new_controllers) > 0:
+            #     tmp = self._new_controllers.copy()
+            #     self._new_controllers.clear()
+            #
+            #     for new_controller in tmp:
+            #         # spawn new player
+            #         if Players.spawn_point:
+            #             Player(
+            #                 runtime_buffer=self._runtime_buffer,
+            #                 coalition=Coalitions.blue,
+            #                 controller=new_controller
+            #             )
+            #
+            #         else:
+            #             self._new_controllers.append(new_controller)
+
+            # update commands
+            while True:
+                try:
+                    item: ProcessCommand = pv.CIQ.get_nowait()
+
+                except Empty:
+                    break
+
+                if item.type == BaseCommandType.spawn_dummy:
+                    # try to spawn graphics dummy
+                    cid = item.kwargs.pop("cid")
+
+                    if cid in GRAPHICS_SPAWNABLES:
+                        sync_id = item.kwargs.pop("id")
+                        GRAPHICS_SPAWNABLES[cid](
+                            sync_id=sync_id,
+                            **item.kwargs
+                        )
+
+                    else:
+                        print_ic_style(
+                            f"{CC.bfg.YELLOW}Unknown spawned item{CC.ctrl.ENDC}"
+                            f": {cid} ({item})"
+                        )
+
+                elif item.type == BaseCommandType.spawn_island:
+                    # try to spawn graphics dummy
+                    cid = item.kwargs.pop("cid")
+
+                    if cid in ISLANDS:
+                        sync_id = item.kwargs.pop("id")
+                        ISLANDS[cid](
+                            sync_id=sync_id,
+                            **item.kwargs
+                        )
+
             glClearColor(0.0, 0.0, 0.1, 1)
 
             # 2. Clear the entire window buffer with that black color
@@ -706,13 +675,12 @@ class BaseGame:
 
             # total delta since last call
             now = perf_counter()
-            global_vars.time = time()
+            self.global_vars.set_time(time())
 
             delta = now - last
-
             delta *= self.time_multiplier  # slow-motion
 
-            global_vars.delta = delta
+            world_pos = self.global_vars.get_world_position()
 
             # TEMP SOLUTION - fix with controller rework
             for event in pg.event.get():
@@ -723,8 +691,10 @@ class BaseGame:
                         handle_zoom(event)
                 elif event.type == pg.QUIT:
                     self.__clean_end()
-                elif event.type == pg.JOYDEVICEADDED:
-                    self.__add_joystick(event)
+
+                # elif event.type == pg.JOYDEVICEADDED:
+                #     self.__add_joystick(event)
+
                 elif event.type == pg.KEYUP:
                     if event.key == pg.K_F11:
                         self.__windowed_fullscreen()
@@ -742,140 +712,54 @@ class BaseGame:
                         for sprite in UIEntities:
                             sprite.check_click()
 
-            mouse_cursor.gl_draw()
+            mouse_cursor.gl_draw(delta)
             if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
                 # update background music
-                try:  # throws error on game end
-                    self._background_player.update()
-
-                except pg.error:
-                    break
-
                 self._background.scroll(delta / 200)
                 self._background.draw(delta)
 
                 if active_scene in ["PauseMenu", "PauseSettings"]:
-                    Drawn.gl_draw()
-                    HasBars.gl_draw()
+                    SyncedEntities.update_from_buffer()
+                    Drawn_0.gl_draw(0)
+                    Drawn_0.gl_draw(0)
 
-                settings.gl_draw()
-                start_menu.gl_draw()
-                pause_menu.gl_draw()
-
-                pg.display.flip()
-                # debugging kopieren - @
-                clock.tick(global_vars.max_fps)
-
-                self._game_start = perf_counter()
-                last = now
+                settings.gl_draw(delta)
+                start_menu.gl_draw(delta)
+                pause_menu.gl_draw(delta)
 
             elif active_scene == "Game":
-                self._update_logic(delta, now)
-
-                # pygame loop time
-                start = perf_counter()
-
                 # only update fps every 200ms (for readability)
                 if now - last_fps_print > .2:
                     self._pygame_fps = int(1 / delta)
                     last_fps_print = now
 
-                # update background music
-                try:  # throws error on game end
-                    self._background_player.update()
-
-                except pg.error:
-                    break
-
-                _, max_player_pos = Players.get_position_extremes()
-
-                # background_pos_left = self._background.position + 60
-                Updated.world_position.y = -(
-                        (global_vars.screen_size.y / global_vars.pixel_per_meter) - global_vars.screen_size.y)
-                global_vars.world_position.y = Updated.world_position.y
-
-                if self._shifting:
-                    background_pos_right = self._background.position \
-                                           + global_vars.screen_size.x - 1400
-
-                    if max_player_pos.x > background_pos_right:
-                        # world speed coefficient:
-                        # V(x)=ℯ^( ( (1400-x) / 800 )^2 )
-
-                        speed_coeff = (abs((
-                                                   self._background.position
-                                                   + global_vars.screen_size.x
-                                                   - 1400
-                                           ) - max_player_pos.x) / 800) ** 2
-                        speed_coeff = math.exp(speed_coeff)
-
-                        self._background.scroll(delta * 3 * speed_coeff)
-                        Updated.world_position.x = self._background.position
-
-                    else:
-                        self._shifting = False
-
-                else:
-                    background_pos_right = self._background.position \
-                                           + global_vars.screen_size.x - 900
-
-                    if max_player_pos.x > background_pos_right:
-                        self._background.scroll(delta * 3)
-                        Updated.world_position.x = self._background.position
-                        self._shifting = True
-
-                # elif min_player_pos.x < background_pos_left:
-                #     self._background.scroll(-delta * 15)
-                #     Updated.world_position.x = self._background.position
+                # update controllers
+                Controllers.update()
 
                 # draw background
+                self._background.set_position(world_pos.x)
                 self._background.draw(delta)
 
-                # global_vars.pixel_per_meter *= .999
-
                 # handle groups
-                Drawn.gl_draw()
-                HasBars.gl_draw()
+                SyncedEntities.update_from_buffer()
+                Drawn_0.gl_draw(delta)
+                Drawn_1.gl_draw(delta)
+                Drawn_2.gl_draw(delta)
 
-                # draw in_loop
-                for f in [*global_vars.in_next_loop, *global_vars.get_in_loop()]:
-                    f["func"](*f["args"], **f["kwargs"])
+            pg.display.flip()
 
-                global_vars.in_next_loop.clear()
+            # update global vars
+            self.global_vars.update()
 
-                # # show fps
-                # fps_surf = self.font.render(
-                #     f"{self._pygame_fps} FPS (render)", False, (255, 255, 255,
-                # 255)
-                # )
+            self._total_loop_times.append(
+                (now - self._game_start, delta)
+            )
+            self._pygame_loop_times.append(
+                (now - self._game_start, perf_counter() - now)
+            )
+            last = now
 
-                # self.top_layer.blit(fps_surf, (0, 0))
-                # fps_surf = self.font.render(
-                #     f"{self._logic_fps} FPS (logic)", False, (255, 255, 255, 255)
-                # )
-                # self.top_layer.blit(fps_surf, (0, 15))
-                # ping_surf = self.font.render(
-                #     f"{self._comms_ping} ms ping", False, (255, 255, 255, 255)
-                # )
-                # self.top_layer.blit(ping_surf, (0, 30))
-
-                # render_text(
-                #     f"{self._pygame_fps} FPS (render)",
-                #     0, 0,
-                #     self.font
-                # )
-
-                pg.display.flip()
-
-                self._pygame_loop_times.append(
-                    (now - self._game_start, perf_counter() - start)
-                )
-                self._total_loop_times.append(
-                    (now - self._game_start, delta)
-                )
-                last = now
-
-                clock.tick(global_vars.max_fps)
+            clock.tick(self.global_vars.get_max_fps())
 
         ic("pygame end")
         times = cum_timer.get_times()
@@ -892,102 +776,16 @@ class BaseGame:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         self._background.draw(0)
-        Drawn.gl_draw()
-        HasBars.gl_draw()
+        Drawn_0.gl_draw()
+        Drawn_1.gl_draw()
 
         pg.display.flip()
-        # clock.tick(global_vars.max_fps)
-
-    @run_with_debug(show_finish=True)
-    def _run_logic(self) -> None:
-        """
-        start game logic
-        """
-        last = perf_counter()
-        last_fps_print = 0
-        sleep(.1)
-        while self.running:
-            now = perf_counter()
-
-            # minimum loop time of .5 ms (so the CPU isn't stressed too much)
-            while now - last < .0005:
-                now = perf_counter()
-                sleep(.001)
-
-            delta = now - last
-
-            # only update fps every 200ms (for readability)
-            if now - last_fps_print > .2:
-                self._logic_fps = int(1 / delta)
-                last_fps_print = now
-
-            self._update_logic(delta, now)
-
-            last = now
-
-        ic("logic end")
-
-    def _update_logic(self, delta, now) -> float:
-        start = perf_counter()
-
-        # check for new controllers
-        if len(self._new_controllers) > 0:
-            self._new_controllers_lock.aquire()
-            tmp = self._new_controllers.copy()
-            self._new_controllers.clear()
-            self._new_controllers_lock.release()
-
-            for new_controller in tmp:
-                # spawn new player
-                Player(coalition=Coalitions.blue, controller=new_controller)
-                ic(new_controller, Player)
-
-        # update sounds
-        sound_effects.update()
-
-        # reset and update detection Groups
-        DETECTION_GROUP_MANAGER.reset()
-
-        # update entities
-        GravityAffected.calculate_gravity(delta)
-        FrictionXAffected.calculate_friction(delta)
-        WallBouncer.update()
-
-        Bullets.update(delta)
-        DETECTION_GROUP_MANAGER.update_detection()
-        Updated.update(delta)
-
-        CollisionDestroyed.update()
-
-        # sleep(.3)
-
-        logic_time = perf_counter() - start
-        self._logic_loop_times.append(
-            (now - self._game_start, logic_time)
-        )
-        self._n_bullets_times.append(
-            (now - self._game_start, len(Bullets.sprites()), logic_time)
-        )
-
-        return logic_time
-
-    def _run_comms(self) -> None:
-        """
-        start communications
-        """
-        # asyncio.run(self._server.run())
-        ic("comms end")
-
-        # TODO: controller latency in graph
-
-        return
 
     def mainloop(self) -> None:
         """
         run the game
         """
         self.running = True
-        self._game_start = perf_counter()
 
         # self._pool.submit(self._run_logic)
         # self._pool.submit(self._run_comms)q
@@ -998,12 +796,17 @@ class BaseGame:
         """
         stop everything
         """
+        # send end to process
+        pv.COQ.put(ProcessCommand(
+            type=ProcessCommandType.quit
+        ))
+
         # check if end has already been called
         if self._ended:
             return
         self._ended = True
 
-        Settings.scaling = global_vars.scaling
+        Settings.scaling = self.global_vars.get_scaling()
         Settings.write()
 
         # tell threads to exit
@@ -1022,9 +825,6 @@ class BaseGame:
         ic("writing debug data")
         with open("debug.json", "w") as out:
             json.dump({
-                "logic": self._logic_loop_times,
-                "comms": self._comms_loop_times,
-                "bullets": self._n_bullets_times,
                 "pygame": self._pygame_loop_times,
                 "total": self._total_loop_times
             }, out)
@@ -1033,5 +833,4 @@ class BaseGame:
 
         # stop threads
         ic("waiting for threads to quit...")
-        self._pool.shutdown(wait=True)
         ic("all threads exited")

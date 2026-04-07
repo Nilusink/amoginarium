@@ -5,10 +5,9 @@ Project: amoginarium
 """
 
 from typing import Literal, Callable
-import pygame as pg
 
-from ..shared import global_vars
-from ..ui import Rectangle, Button, UIEntity
+from .. import pv
+from ..graphics.ui import Rectangle, Button, UIEntity
 
 
 ##################################################
@@ -68,5 +67,5 @@ class SettingsMenu(UIEntity):
         )
 
     def __set_scaling(self, value: Literal["bars", "fixed_aspect_ratio", "stretching"]) -> None:
-        global_vars.scaling = value
+        pv.global_vars.scaling = value
         self.__update_window_callback()

@@ -1,5 +1,5 @@
 #! venv/bin/python
-from amoginarium.controllers import KeyboardController
+# from amoginarium.shared.controllers import KeyboardController
 from amoginarium.base import BaseGame
 
 import sys
@@ -8,11 +8,12 @@ sys.setrecursionlimit(10000)
 
 
 def main():
-    game = BaseGame(debug=True, show_targets=True, time_multiplier=1)
+    game = BaseGame(debug=True, show_targets=False, time_multiplier=1)
 
     # create initial controller
-    KeyboardController.get()
+    # KeyboardController.get()
     game.load_map("assets/maps/tutorial.json")
+    # game.load_map("testing_map.json")
     game.mainloop()
 
 
