@@ -320,10 +320,10 @@ class CRAM(ContinuousSoundEffect):
     volume: float = .1
 
 
-class AK47(ContinuousSoundEffect):
-    _stage_two_name = ("ak47", "loop")
-    _stage_three_name = ("ak47", "echo")
-    volume: float = .1
+# class AK47(ContinuousSoundEffect):
+#     _stage_two_name = ("ak47", "loop")
+#     _stage_three_name = ("ak47", "echo")
+#     volume: float = .1
 
 
 class RandomizedEffect:
@@ -340,6 +340,15 @@ class RandomizedEffect:
     def playing(self) -> bool:
         return not not self._playing
 
+    @property
+    def volume(self) -> int:
+        return self._max_volume
+
+    @volume.setter
+    def volume(self, volume: float) -> None:
+        self._max_volume = volume * 1.1
+        self._min_volume = volume * .9
+
     def set_volume(self, max_volume: float, min_volume: float) -> tp.Self:
         self._max_volume = max_volume
         self._min_volume = min_volume
@@ -355,8 +364,8 @@ class RandomizedEffect:
         """
         play the sound effect
         """
-        if self._playing:
-            self.stop()
+        # if self._playing:
+        #     self.stop()
 
         self._playing = choice(self._effects)
         self._playing.volume = uniform(self._min_volume, self._max_volume)
@@ -404,7 +413,6 @@ class ScopedRandomizedEffect(RandomizedEffect):
             ) for sound in s
         ])
 
-
 class DeathSound(ScopedRandomizedEffect):
     def __init__(self, callback: tp.Callable[[], tp.Any] = ...) -> None:
         super().__init__("death", callback)
@@ -413,3 +421,6 @@ class DeathSound(ScopedRandomizedEffect):
 class DistantPop(ScopedRandomizedEffect):
     _scope = "distant_pop"
 
+
+class AK47(ScopedRandomizedEffect):
+    _scope = "ak472"

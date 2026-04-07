@@ -106,10 +106,10 @@ class OpenGLRenderer(BaseRenderer):
 
         # set max fps to monitor refresh rate
         pv.global_vars.set_max_fps(
-            max(pg.display.get_desktop_refresh_rates())
+            min(pg.display.get_desktop_refresh_rates())
         )
 
-        pg.display.gl_set_attribute(pg.GL_SWAP_CONTROL, 1)
+        # pg.display.gl_set_attribute(pg.GL_SWAP_CONTROL, 1)
         pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode(
             pv.global_vars.get_screen_size().xy,
