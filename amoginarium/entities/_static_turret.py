@@ -482,10 +482,10 @@ class BaseTurret(VisibleGameEntity):
             renderer.draw_dashed_circle(
                 engage_center,
                 self.engagement_range,
-                2560,
+                1024,
                 Color().from_1(1, 1, 1),
-                draw_len=4,
-                gap_len=4,
+                draw_len=16,
+                gap_len=16,
                 thickness=3
             )
 

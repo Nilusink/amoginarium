@@ -764,6 +764,8 @@ class BaseGame:
                 start_menu.gl_draw()
                 pause_menu.gl_draw()
 
+                renderer.test_shader()
+
                 pg.display.flip()
                 # debugging kopieren - @
                 clock.tick(global_vars.max_fps)
