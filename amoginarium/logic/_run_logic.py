@@ -111,29 +111,29 @@ class LogicProcess:
         self._running = True
         self._paused = False
 
-        self._v = 3000
-        self._b_vel, *_ = calculate_launch_angle(
-            Vec2().from_cartesian(6000, -65),
-            Vec2(),
-            Vec2(),
-            self._v,
-            aim_type="high",
-            g=GravityAffected.gravity * 2
-        )
-        self._b_vel.y *= -1
-        ic(self._b_vel)
-        self._b_start = Vec2().from_cartesian(700, 700)
-        self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
-        self._w = Mortar(
-            self._dummy_dad,
-            self._runtime_buffer,
-            bullet_speed=self._v
-        )
-        self._w.set_parent(self._dummy_dad)
-        self._w.show()
-        self._w._mag_size = 4
-        self._w.reload(True)
-        self._w.facing = self._b_vel
+        # self._v = 3000
+        # self._b_vel, *_ = calculate_launch_angle(
+        #     Vec2().from_cartesian(6000, -65),
+        #     Vec2(),
+        #     Vec2(),
+        #     self._v,
+        #     aim_type="high",
+        #     g=GravityAffected.gravity * 2
+        # )
+        # self._b_vel.y *= -1
+        # ic(self._b_vel)
+        # self._b_start = Vec2().from_cartesian(700, 700)
+        # self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
+        # self._w = Mortar(
+        #     self._dummy_dad,
+        #     self._runtime_buffer,
+        #     bullet_speed=self._v
+        # )
+        # self._w.set_parent(self._dummy_dad)
+        # self._w.show()
+        # self._w._mag_size = 4
+        # self._w.reload(True)
+        # self._w.facing = self._b_vel
 
     # region properties
     @property
@@ -367,34 +367,13 @@ class LogicProcess:
 
         sound_effects.update()
 
-        # test stuff
-        self._dummy_dad.update(delta)
-        self._w.update(delta)
-        if start - self._last_spawn > .25 and 0:
-            self._last_spawn = start
-            self._w.shoot(self._b_vel, 10)
-            self._w._stop_recoil()
-            # MortarShell(
-            #     self._runtime_buffer,
-            #     parent=self._dummy_dad,
-            #     coalition=Coalitions.blue,
-            #     initial_position=self._b_start,
-            #     initial_velocity=self._b_vel,
-            #     time_to_life=8
-            # )
-            # MortarShell(
-            #     self._runtime_buffer,
-            #     parent=self._dummy_dad,
-            #     coalition=Coalitions.red,
-            #     initial_position=Vec2().from_cartesian(
-            #         700, 750
-            #     ),
-            #     initial_velocity=Vec2().from_cartesian(
-            #         500, -1200
-            #     ),
-            #     time_to_life=5
-            # )
-            pass
+        # # test stuff
+        # self._dummy_dad.update(delta)
+        # self._w.update(delta)
+        # if start - self._last_spawn > .25 and 0:
+        #     self._last_spawn = start
+        #     self._w.shoot(self._b_vel, 10)
+        #     self._w._stop_recoil()
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()
