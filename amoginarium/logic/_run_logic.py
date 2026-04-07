@@ -433,7 +433,7 @@ class LogicProcess:
     def reset_game(self) -> None:
         """reset game state"""
         # kill all entities
-        for e in Updated.sprites():
+        for e in Updated.sprites() + Bullets.sprites():
             e.kill()
 
         # reset shared values
