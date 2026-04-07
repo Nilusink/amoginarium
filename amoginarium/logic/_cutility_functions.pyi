@@ -31,23 +31,48 @@ T = tp.TypeVar(
     tuple[float, int]
 )
 
+import typing as tp
+
+T = tp.TypeVar(
+    'T',
+    tuple[int, int],
+    tuple[float, float],
+    tuple[int, float],
+    tuple[float, int]
+)
+
+
 @tp.overload
 def convert_coord(coord: coord_t, convert_to: type[int]) -> tuple[int, int]: ...
+
 
 @tp.overload
 def convert_coord(coord: coord_t, convert_to: type[Vec2]) -> Vec2: ...
 
+
 @tp.overload
 def convert_coord(coord: T, convert_to: type[tuple]) -> T: ...
+
 
 @tp.overload
 def convert_coord(coord: Vec2, convert_to: type[tuple]) -> tuple[float, float]: ...
 
+
+@tp.overload
+def convert_coord(coord: coord_t, convert_to: type[tuple]) -> tuple[float, float] | tuple[int, int]: ...
+
+
 @tp.overload
 def convert_coord(coord: T) -> T: ...
 
+
 @tp.overload
 def convert_coord(coord: Vec2) -> tuple[float, float]: ...
+
+
+@tp.overload
+def convert_coord(coord: coord_t) -> tuple[float, float] | tuple[int, int]: ...
+
 
 def is_related(a: object, b: object, depth: int = 2) -> bool:
     """

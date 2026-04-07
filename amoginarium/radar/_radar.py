@@ -148,7 +148,7 @@ class RadarSensor(BaseSensor):
                 renderer.draw_polygon(
                     self._sphere,
                     (1, 0, 0, .5),
-                    self.parent.world_position,
+                    center=self.parent.world_position,
                     # convert_global=False
                 )
                 for delta in self._sphere:

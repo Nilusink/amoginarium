@@ -278,7 +278,7 @@ class Bullet(ImageEntity):
                 ]):
                     if hasattr(entity, "hit"):
                         entity.hit(
-                            (1 - .8 * d / (self._explosion_radius*2))
+                            (1 - .8 * d / (self._explosion_radius * 2))
                             * self._explosion_damage,
                             hit_by=self
                         )
@@ -288,10 +288,10 @@ class Bullet(ImageEntity):
                         d = max(d, 1)
                         delta = entity.position - self.position
                         delta = delta.normalize() \
-                            * entity._impulse_resistance_factor \
-                            * (
-                                1 - d / (self._explosion_radius * 1)
-                            ) * self._explosion_damage * 4
+                                * entity._impulse_resistance_factor \
+                                * (
+                                        1 - d / (self._explosion_radius * 1)
+                                ) * self._explosion_damage * 4
 
                         entity.add_velocity(delta)
 
@@ -361,7 +361,7 @@ class Bullet(ImageEntity):
                     self.world_position,
                     self._last_pos - Updated.world_position,
                     self._trace_color,
-                    self.size.length / 3,
+                    thickness=self.size.length / 3,
                 )
 
             # draw image if given
@@ -516,7 +516,7 @@ class BaseWeapon:
             bullet_lifetime=4,
             sound_effect: ContinuousSoundEffect | PresetEffect = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
-            bullet_visibility_offset: float = 0, # time offset
+            bullet_visibility_offset: float = 0,  # time offset
             weapon_recoil_factor: float = 1
     ) -> None:
         self.parent = parent
@@ -783,7 +783,7 @@ class BaseWeapon:
             angle: float,
             size_fac: float = 1,
             convert_global: bool = True
-        ) -> None:
+    ) -> None:
         """
         draw the weapon (centered) at a specified position
         """

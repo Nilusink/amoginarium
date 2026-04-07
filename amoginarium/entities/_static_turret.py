@@ -263,8 +263,8 @@ class BaseTurret(VisibleGameEntity):
                     continue
 
                 self.available_targets[target]["distance"] = (
-                    sol.target_predict
-                    - self.position + self.weapon.parent_position_offset
+                        sol.target_predict
+                        - self.position + self.weapon.parent_position_offset
                 ).length
 
         new_target = self.get_next_target()
@@ -482,9 +482,11 @@ class BaseTurret(VisibleGameEntity):
             renderer.draw_dashed_circle(
                 engage_center,
                 self.engagement_range,
-                64,
+                2560,
                 Color().from_1(1, 1, 1),
-                3
+                draw_len=4,
+                gap_len=4,
+                thickness=3
             )
 
             if self.min_range > 0:
@@ -493,7 +495,7 @@ class BaseTurret(VisibleGameEntity):
                     self.min_range,
                     64,
                     (1, .5, 0),
-                    3
+                    thickness=3
                 )
 
         # draw sensor ranges

@@ -142,7 +142,6 @@ class Player(LRImageEntity):
 
         self._groaning = SoundEffect(("groaning", "hugh_1"))
 
-
         self._current_weapon = 0
         self._weapon_change_pressed = False
         self._in_inventory = False
@@ -442,7 +441,7 @@ class Player(LRImageEntity):
                         self.item.charge()
 
                     elif self.item.shoot(
-                        vector
+                            vector
                     ):
                         self._controller.feedback_shoot()
 
@@ -457,7 +456,7 @@ class Player(LRImageEntity):
                         if item.charged > 0:
                             mouse_pos = pg.mouse.get_pos()
                             vector = convert_coord((
-                                (mouse_pos[ 0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
+                                (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
                                 (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
                             ), Vec2)
                             vector -= self.world_position
@@ -641,8 +640,8 @@ class Player(LRImageEntity):
                 # background
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_size.x * .25,
-                            global_vars.screen_size.y * .1
+                        global_vars.screen_size.x * .25,
+                        global_vars.screen_size.y * .1
                     ),
                     (
                         global_vars.screen_size.x * .5,
@@ -650,7 +649,7 @@ class Player(LRImageEntity):
                     ),
                     Color().from_255(80, 80, 80),
                     20,
-                    False
+                    convert_global=False
                 )
 
                 # slots
@@ -671,8 +670,8 @@ class Player(LRImageEntity):
                 # character display
                 renderer.draw_rounded_rect(
                     (
-                            global_vars.screen_size.x * .28,
-                            global_vars.screen_size.y * .17
+                        global_vars.screen_size.x * .28,
+                        global_vars.screen_size.y * .17
                     ),
                     (
                         self.size.x * 3,
@@ -680,7 +679,7 @@ class Player(LRImageEntity):
                     ),
                     Color().from_255(50, 50, 50),
                     20,
-                    False
+                    convert_global=False
                 )
                 self.draw_at(
                     Vec2().from_cartesian(

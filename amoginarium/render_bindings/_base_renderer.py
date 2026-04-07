@@ -30,11 +30,13 @@ class BaseRenderer(abc.ABC):
     Abstract Renderer Class
     """
 
+    # region Init and Loading
     @abc.abstractmethod
     def init(self, title: str) -> None:
         """
-        initialize the renderer and global_vars
+        Initialize the renderer and global_vars
         :param title: Window title
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
@@ -51,31 +53,11 @@ class BaseRenderer(abc.ABC):
         :param size: Size of image or None
         :param mirror: Axes to mirror the image on
         :returns: texture_id, (width, height)
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def draw_textured_quad(
-            self,
-            texture_id: TextureID,
-            pos: coord_t,
-            size: coord_t,
-            convert_global: bool = True,
-            rotate_angle: float = 0,
-            rotate_anchor: Vec2 | tuple[float, float] | EllipsisType = ...,
-            offscreen_check: bool = True
-    ) -> None:
-        """
-        Draw a rectangle with a texture
-        :param texture_id: ID of the texture to draw
-        :param pos: Absolute position on window
-        :param size: Absolute size on window
-        :param convert_global: Whether to apply the global game scaling to pos and size
-        :param rotate_angle: Angle in degrees to rotate the image at
-        :param rotate_anchor: At what pixel to rotate at
-        :param offscreen_check: Whether to check it the element is on the window before drawing
-        """
-        raise NotImplementedError
+    # endregion
 
     # region Stencil
     @abc.abstractmethod
@@ -98,28 +80,159 @@ class BaseRenderer(abc.ABC):
 
     # endregion
 
+    # region Textured
     @abc.abstractmethod
-    def check_out_of_screen(
+    def draw_textured_quad(
             self,
-            pos,
-            size,
-    ) -> bool:
+            texture_id: TextureID,
+            pos: coord_t,
+            size: coord_t,
+            convert_global: bool = True,
+            rotate_angle: float = 0,
+            rotate_anchor: coord_t | EllipsisType = ...,
+            offscreen_check: bool = True
+    ) -> None:
         """
-        check if a rect is out of screen
+        Draw a rectangle with a texture
+        :param texture_id: ID of the texture to draw
+        :param pos: Absolute position on window
+        :param size: Absolute size on window
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param rotate_angle: Angle in degrees to rotate the image at
+        :param rotate_anchor: At what pixel to rotate at. Defaults to center position
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
-    # region Drawing
+    # endregion
+
+    # region Basic shapes
     @abc.abstractmethod
     def draw_polygon(
             self,
             vertices: tp.Iterable[coord_t],
             color: Color | tColor,
             center: coord_t = None,
-            convert_global: bool = True
+            convert_global: bool = True,
+            offscreen_check: bool = True
     ) -> None:
+        """
+        Draw a polygon with fill
+        :param vertices: Coord of the corner points of the polygon
+        :param color: Drawing color
+        :param center: Optional center position
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def draw_rect(
+            self,
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rectangle with fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def draw_rounded_rect(
+            self,
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            radius: float,
+            top_left_radius: float | None = None,
+            top_right_radius: float | None = None,
+            bottom_left_radius: float | None = None,
+            bottom_right_radius: float | None = None,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rect with rounded corners with fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param radius: Radius of the corners
+        :param top_left_radius: Individual radius for the top left corner. Defaults to radius
+        :param top_right_radius: Individual radius for the top right corner. Defaults to radius
+        :param bottom_left_radius: Individual radius for the bottom left corner. Defaults to radius
+        :param bottom_right_radius: Individual radius for the bottom right corner. Defaults to radius
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    def draw_rect_line(
+            self,
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            thickness: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rectangle outline without fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    def draw_rounded_rect_line(
+            self,
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            radius: float,
+            top_left_radius: float | None = None,
+            top_right_radius: float | None = None,
+            bottom_left_radius: float | None = None,
+            bottom_right_radius: float | None = None,
+            thickness: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rounded rectangle outline without fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param radius: Radius of the corners
+        :param top_left_radius: Individual radius for the top left corner. Defaults to radius
+        :param top_right_radius: Individual radius for the top right corner. Defaults to radius
+        :param bottom_left_radius: Individual radius for the bottom left corner. Defaults to radius
+        :param bottom_right_radius: Individual radius for the bottom right corner. Defaults to radius
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    # endregion
+
+    # region Circles
     @abc.abstractmethod
     def draw_circle(
             self,
@@ -127,10 +240,18 @@ class BaseRenderer(abc.ABC):
             radius: float,
             num_segments: int,
             color: Color | tColor,
-            convert_global: bool = True
+            convert_global: bool = True,
+            offscreen_check: bool = True
     ) -> None:
         """
-        draw a circle
+        Draw a circle with fill
+        :param center: Absolute center position
+        :param radius: Radius of the circle
+        :param num_segments: Number of segments
+        :param color: Drawing color
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
@@ -141,9 +262,21 @@ class BaseRenderer(abc.ABC):
             radius: float,
             num_segments: int,
             color: Color | tColor,
-            thickness: float = 1,
-            convert_global: bool = True
-    ):
+            thickness: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a circle outline
+        :param center: Absolute center position
+        :param radius: Radius of the circle
+        :param num_segments: Number of segments
+        :param color: Drawing color
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -155,20 +288,20 @@ class BaseRenderer(abc.ABC):
             angle_end: coord_t,
             num_segments: int,
             color: Color | tColor,
-            convert_global=True
-    ):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def draw_rect(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            convert_global: bool = True
+            convert_global=True,
+            offscreen_check: bool = True
     ) -> None:
         """
-        draw a rectangle
+        Draw a partial circle with fill
+        :param center: Absolute center position
+        :param radius: Radius of the circle
+        :param angle_start: Angle to start at as vector
+        :param angle_end: Angle to end at as vector
+        :param num_segments: Number of segments
+        :param color: Drawing color
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
@@ -179,11 +312,24 @@ class BaseRenderer(abc.ABC):
             radius: float,
             num_segments: int,
             color: Color | tColor,
+            draw_len: int = 1,
+            gap_len: int = 1,
             thickness: int = 1,
-            convert_global: bool = True
+            convert_global: bool = True,
+            offscreen_check: bool = True
     ) -> None:
         """
-        draw a dashed circle with num_segments segments
+        Draw a dashed circle line with num_segments segments
+        :param center: Absolute center position
+        :param radius: Radius of the circle
+        :param num_segments: Number of segments. Every second segment is drawn
+        :param color: Drawing color
+        :param draw_len: Number of segments to draw before leaving a gap
+        :param gap_len: Number of segments left out by a gap
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
@@ -196,11 +342,32 @@ class BaseRenderer(abc.ABC):
             angle_end: coord_t,
             num_segments: int,
             color: Color | tColor,
+            draw_len: int = 1,
+            gap_len: int = 1,
             thickness=1,
-            convert_global=True
-    ):
+            convert_global=True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a partial dashed circle line with num_segments segments
+        :param center: Absolute center position
+        :param radius: Radius of the circle
+        :param angle_start: Angle to start at as vector
+        :param angle_end: Angle to end at as vector
+        :param num_segments: Number of segments. Every second segment is drawn
+        :param color: Drawing color
+        :param draw_len: Number of segments to draw before leaving a gap
+        :param gap_len: Number of segments left out by a gap
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
         raise NotImplementedError
 
+    # endregion
+
+    # region Lines
     @abc.abstractmethod
     def draw_line(
             self,
@@ -208,10 +375,18 @@ class BaseRenderer(abc.ABC):
             end: coord_t,
             color: Color | tColor,
             global_position: bool = True,
-            convert_global: bool = True
+            convert_global: bool = True,
+            offscreen_check: bool = True
     ) -> None:
         """
-        draw a simple line
+        Draw a simple line
+        :param start: Start position of the line
+        :param end: End position of the line
+        :param color: Drawing color
+        :param global_position: IDK
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
@@ -223,30 +398,24 @@ class BaseRenderer(abc.ABC):
             color: Color | tColor,
             thickness: float = 1.0,
             global_position: bool = True,
-            convert_global: bool = True
+            convert_global: bool = True,
+            offscreen_check: bool = True
     ) -> None:
         """
-        draw a line with thickness using a quad
+        Draw a line with thickness
+        :param start: Start position of the line
+        :param end: End position of the line
+        :param color: Drawing color
+        :param thickness: Thickness of the line
+        :param global_position: IDK
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
         """
 
-    @abc.abstractmethod
-    def draw_rounded_rect(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            radius: float,
-            convert_global: bool = True
-            # radius_top_left: float = ...,
-            # radius_top_right: float = ...,
-            # radius_bottom_left: float = ...,
-            # radius_bottom_right: float = ...
-    ) -> None:
-        """
-        draw a rect with rounded corners
-        """
-        raise NotImplementedError
+    # endregion
 
+    # region Text and surfaces
     @abc.abstractmethod
     def draw_text(
             self,
@@ -259,12 +428,24 @@ class BaseRenderer(abc.ABC):
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False,
-            convert_global: bool = True
-    ) -> tuple[int, int]:
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> tuple[float, float]:
         """
-        draw a text to the given position
-
-        :returns: the size of the drawn text
+        Draw a text to the given position
+        :param pos: Position of the text
+        :param text: Text to be drawn
+        :param color: Text color
+        :param bg_color: Background color
+        :param centered: Whether pos is center or top left
+        :param font_size: Size of the font
+        :param font_family: Family of the font
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :return: (width, height) of the text
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
@@ -274,10 +455,21 @@ class BaseRenderer(abc.ABC):
             pos: coord_t,
             surface: pg.Surface,
             centered: bool = False,
-            convert_global: bool = True
+            scale: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True,
+            is_dynamic: bool = False
     ) -> None:
         """
-        draw a pygame surface
+        Draw a surface
+        :param pos: Position of the surface
+        :param surface: Surface to draw
+        :param centered: Whether pos is center or top left
+        :param scale: Scale the surface size
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param is_dynamic: Whether the surface is changing or can be cached
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
@@ -290,12 +482,18 @@ class BaseRenderer(abc.ABC):
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
-            italic: bool = False,
-            convert_global: bool = True
+            italic: bool = False
     ) -> pg.Surface:
         """
-        generates a pygame surface from a text
+        Generate a pygame surface with text
+        :param text: Text to be drawn
+        :param color: Text color
+        :param bg_color: Background color
+        :param font_size: Font size
+        :param font_family: Font family
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :return: Surface with the text
         """
         raise NotImplementedError
-
     # endregion
