@@ -179,6 +179,14 @@ class BaseLogicEntity:
         """
         self._set_bit("flags", 1, False)
 
+    def highlight(self) -> None:
+        """highlight the graphics entity"""
+        self._set_bit("flags", 2, True)
+
+    def stop_highlight(self) -> None:
+        """stop highlighting the graphics entity"""
+        self._set_bit("flags", 2, False)
+
     # endregion
 
 

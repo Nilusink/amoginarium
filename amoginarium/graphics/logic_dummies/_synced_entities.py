@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 import math as m
 
-from amoginarium.shared.utility import Vec2
+from amoginarium.shared.utility import Vec2, Color
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
@@ -160,6 +160,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         self.alive = self._get_bit("flags", 0)
         self._logic_visibility = self._get_bit("flags", 1)
+        self._highlight = self._get_bit("flags", 2)
 
         if not self.__was_alive:
             if self.alive:
@@ -195,6 +196,24 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         elif self.alive and not self._visible:
             self._visible = True
+
+        if self._highlight:
+            renderer.start_stencil(True)
+
+    def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
+        """
+        Called after gl_draw
+        :param drawn: Whether the UI-entity was drawn
+        :param layer: what layer the draw function has been called by
+        """
+        if self._highlight:
+            renderer.enable_stencil(True)
+            renderer.draw_rect(
+                (0, 0),
+                (2000, 2000),
+                Color().from_1(0.6, 0.6, .7, 0.125 + m.sin(self._lifetime) / 8),
+            )
+            renderer.disable_stencil()
     # endregion
 
 

@@ -10,11 +10,13 @@ Nilusink
 from __future__ import annotations
 import typing as tp
 
+from ..render_bindings import renderer
+
 
 class BaseGraphicsEntity:
     __slots__ = [
         "__g", "_children", "_parent", "_root_visibility", "_highlight",
-        "_visible"
+        "_visible", "_lifetime"
     ]
 
     _cid: str = ...
@@ -37,6 +39,7 @@ class BaseGraphicsEntity:
         self._children = []
         self._root_visibility = False
         self._highlight = False
+        self._lifetime = 0
 
     # region properties
     @property
@@ -152,6 +155,7 @@ class BaseGraphicsEntity:
         Note: Ignores parent visibility
         """
         draw: bool = force_draw or self.visible
+        self._lifetime += delta_cal
         self._before_gl_draw(draw, layer=layer)
 
         if draw:

@@ -113,20 +113,21 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             )
 
         # draw ammo bar
-        if self.parent:
-            pos = self.parent.world_position
-            size = self.parent.size
+        if self._get_bit("flags", 15):
+            if self.parent:
+                pos = self.parent.world_position
+                size = self.parent.size
 
-        else:
-            pos = self.world_position
-            size = self.size
+            else:
+                pos = self.world_position
+                size = self.size
 
-        renderer.draw_bar(
-            (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5*7),
-            (size.x, 7),
-            self._bar_colors,
-            self.param1,
-        )
+            renderer.draw_bar(
+                (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5*7),
+                (size.x, 7),
+                self._bar_colors,
+                self.param1,
+            )
 
     @classmethod
     def get_icon(cls) -> tuple[int, tuple[int, int]]:

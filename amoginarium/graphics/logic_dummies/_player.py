@@ -148,7 +148,7 @@ class PlayerDummy(SyncedLRImageEntity):
 
         elif layer == 2:
             # draw inventory
-            if self._get_bit("flags", 2):  # in inventory
+            if self._get_bit("flags", 15):  # in inventory
                 screen_size = pv.global_vars.get_screen_size()
                 # background
                 renderer.draw_rounded_rect(

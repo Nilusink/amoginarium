@@ -178,6 +178,10 @@ class Player(LogicGameEntity):
     def pickup_item(self, item: Item) -> None:
         self._hotbar.try_add_item(item, 1)
 
+        # show item again to make sure it is visible
+        if self.item:
+            self.item.show()
+
     def next_weapon(self) -> None:
         """
         switches to the next weapon
@@ -476,10 +480,14 @@ class Player(LogicGameEntity):
 
         # drop item
         if self._controller.drop:
+            vel = self.velocity + Vec2().from_polar(
+                self.facing.angle,
+                300
+            )
             self._hotbar.drop_item(
                 self._current_weapon,
                 self.position,
-                Vec2().from_cartesian(200, -200)
+                vel
             )
 
         # heal
@@ -500,7 +508,7 @@ class Player(LogicGameEntity):
             if not self._inventory_pressed:
                 self._inventory_pressed = True
                 self._in_inventory = not self._in_inventory
-                self._set_bit("flags", 2, self._in_inventory)
+                self._set_bit("flags", 15, self._in_inventory)
 
         else:
             self._inventory_pressed = False

@@ -30,7 +30,10 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
         ("facing", ctypes.c_uint16),  # angle (r*10_000)
         ("size_x", ctypes.c_uint16),
         ("size_y", ctypes.c_uint16),
-        ("flags", ctypes.c_uint16),  # (0=alive, 1=visible, 2=in inventory (player))
+        ("flags", ctypes.c_uint16),  # (
+        # 0=alive, 1=visible, 2=highlight,
+        # 15=(in inventory (player), has parent (item))
+        # )
 
         # misc parameters for sharing data with base process
         ("param0", ctypes.c_float),

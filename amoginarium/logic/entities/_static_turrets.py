@@ -82,6 +82,7 @@ class BaseTurret(LogicGameEntity):
 
         self.weapon = weapon
         self.weapon.set_parent(self)
+        self.weapon.show()
         self.engagement_range = engagement_range
         self.min_range = min_range
         self.airburst_munition = airburst_munition

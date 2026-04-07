@@ -128,6 +128,8 @@ class LogicProcess:
             self._runtime_buffer,
             bullet_speed=self._v
         )
+        self._w.set_parent(self._dummy_dad)
+        self._w.show()
         self._w.reload(True)
         self._w.facing = self._b_vel
 
