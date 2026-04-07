@@ -240,7 +240,6 @@ class BaseRenderer(abc.ABC):
             size: coord_t,
             colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
             progress: float,
-            *,
             background_color: Color | EllipsisType = ...,
             convert_global: bool = True,
             offscreen_check: bool = True

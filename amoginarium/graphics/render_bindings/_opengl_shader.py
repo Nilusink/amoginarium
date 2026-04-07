@@ -1,11 +1,9 @@
 """
-_opengl.py
-21. March 2024
+amoginarium/render_bindings/_opengl_shader.py
 
-a few functions for rendering
-
-Author:
-Nilusink
+Project: amoginarium
+Created: 07.04.2026
+Authors: LukasKrah
 """
 from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
 from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
@@ -14,13 +12,13 @@ from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
 from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
 from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
-from OpenGL.GL import glDisable, glBegin, glClearColor
-from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST
-from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA
+from OpenGL.GL import glDisable, glBegin, glClearColor, GL_TRIANGLE_FAN
+from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST, glUseProgram
+from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, glUniform1f
 from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE
+from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glUniform4f
 from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef, glDeleteTextures
 from OpenGL.GL import GL_QUADS
 from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays
@@ -41,6 +39,7 @@ from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t
 
 from ._base_renderer import BaseRenderer, tColor
+from .opengl_shaders import Shaders
 from ._opengl_fonts import GLFont
 from ... import pv
 
@@ -49,7 +48,7 @@ type TextureID = int
 
 
 # noinspection DuplicatedCode
-class OpenGLRenderer(BaseRenderer):
+class OpenGLShaderRenderer(BaseRenderer):
     __fonts: dict[tuple[str, int, bool, bool], GLFont]
     __surf_cache: dict
     _fonts: dict
@@ -194,6 +193,8 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        Shaders.init_shaders()
 
     def load_texture(
             self,
@@ -748,14 +749,12 @@ class OpenGLRenderer(BaseRenderer):
     # todo mytodo work on this
     def draw_bar(
             self,
-            pos: coord_t,
-            size: coord_t,
-            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
-            progress: float,
-            *,
-            background_color: Color | EllipsisType = ...,
-            convert_global: bool = True,
-            offscreen_check: bool = True,
+            pos,
+            size,
+            colors,
+            progress,
+            convert_global=True,
+            background_color=...
     ) -> None:
         """
         draw a progress? bar at the specified location (using specified color gradient
@@ -1002,42 +1001,62 @@ class OpenGLRenderer(BaseRenderer):
         ):
             return
 
-        # If you want to know how tf this works. IDK myself. Ask AI
-        all_indices = np.arange(num_segments, dtype=np.int32)
+        # Ensure color is safely unpacked to 4 floats
+        if hasattr(color, 'rgba1'):
+            r, g, b, a = color.rgba1
+        else:
+            r, g, b = color[:3]
+            a = color[3] if len(color) == 4 else 1.0
 
-        mask = (all_indices % (draw_len + gap_len)) < draw_len
-        active_indices = all_indices[mask].astype(np.float32)
+        # --- FAST RENDER LOOP ---
+        glUseProgram(Shaders.dash.program)
 
-        num_to_draw = active_indices.shape[0]
-        if num_to_draw == 0:
-            return
-
-        step = 6.283185307179586 / num_segments
-
-        angles1 = active_indices * step
-        angles2 = angles1 + step
-
-        c1, s1 = np.cos(angles1), np.sin(angles1)
-        c2, s2 = np.cos(angles2), np.sin(angles2)
-
-        vertices = np.empty((num_to_draw, 4, 2), dtype=np.float32)
-
-        vertices[:, 0, 0], vertices[:, 0, 1] = radius * c1, radius * s1
-        vertices[:, 1, 0], vertices[:, 1, 1] = outer * c1, outer * s1
-
-        vertices[:, 2, 0], vertices[:, 2, 1] = outer * c2, outer * s2
-        vertices[:, 3, 0], vertices[:, 3, 1] = radius * c2, radius * s2
+        # Push the exact geometry boundaries to the shader
+        glUniform4f(Shaders.dash.u_color_loc, r, g, b, a)
+        glUniform1f(Shaders.dash.u_inner_loc, radius)
+        glUniform1f(Shaders.dash.u_outer_loc, outer)
+        glUniform1f(Shaders.dash.u_num_seg_loc, float(num_segments))
+        glUniform1f(Shaders.dash.u_draw_len_loc, float(draw_len))
+        glUniform1f(Shaders.dash.u_gap_len_loc, float(gap_len))
 
         glPushMatrix()
         glTranslate(center_vec2.x, center_vec2.y, 0.0)
-        self.__set_color(color)
 
-        glEnableClientState(GL_VERTEX_ARRAY)
-        glVertexPointer(2, GL_FLOAT, 0, vertices)
-        glDrawArrays(GL_QUADS, 0, num_to_draw * 4)
-        glDisableClientState(GL_VERTEX_ARRAY)
+        # For exactly 4 vertices, glBegin is faster in Python than NumPy/ctypes overhead
+        glBegin(GL_QUADS)
+        glVertex2f(-outer, -outer)
+        glVertex2f(outer, -outer)
+        glVertex2f(outer, outer)
+        glVertex2f(-outer, outer)
+        glEnd()
 
         glPopMatrix()
+        glUseProgram(0)
+
+    def test_shader(self) -> None:
+        # 1. Use the shader program
+        Shaders.test.use()
+
+        # 2. Define a simple quad (2 triangles) covering the screen or a specific area
+        # Format: x, y
+        vertices = [
+            -1.0, -1.0,  # Bottom Left
+            1.0, -1.0,  # Bottom Right
+            1.0, 1.0,  # Top Right
+            -1.0, 1.0  # Top Left
+        ]
+
+        # 3. Enable Vertex Arrays and send the data
+        # In a real engine, you'd use a VBO/VAO, but for a "simple" test:
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glVertexPointer(2, GL_FLOAT, 0, vertices)
+
+        # 4. Draw the 4 vertices as a fan (rectangle)
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
+
+        # 5. Cleanup
+        glDisableClientState(GL_VERTEX_ARRAY)
+        glUseProgram(0)
 
     def draw_partial_dashed_circle(
             self,

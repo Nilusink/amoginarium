@@ -11,7 +11,7 @@ from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
 from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
 from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
 from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
+from OpenGL.GL import GL_UNSIGNED_BYTE, GL_MODELVIEW, GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
 from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
 from OpenGL.GL import glDisable, glBegin, glClearColor
@@ -27,7 +27,6 @@ from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer
 from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
-
 from pygame.locals import DOUBLEBUF, OPENGL
 from types import EllipsisType
 from icecream import ic
@@ -36,6 +35,7 @@ import pygame as pg
 import typing as tp
 import numpy as np
 import math as m
+import random
 
 from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t
@@ -748,14 +748,12 @@ class OpenGLRenderer(BaseRenderer):
     # todo mytodo work on this
     def draw_bar(
             self,
-            pos: coord_t,
-            size: coord_t,
-            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
-            progress: float,
-            *,
-            background_color: Color | EllipsisType = ...,
-            convert_global: bool = True,
-            offscreen_check: bool = True,
+            pos,
+            size,
+            colors,
+            progress,
+            convert_global=True,
+            background_color=...
     ) -> None:
         """
         draw a progress? bar at the specified location (using specified color gradient

@@ -11,11 +11,11 @@ from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
 from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
 from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
 from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
+from OpenGL.GL import GL_UNSIGNED_BYTE, GL_MODELVIEW, GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
 from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
 from OpenGL.GL import glDisable, glBegin, glClearColor
-from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST
+from OpenGL.GL import glBlendFunc, glRotated
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA
 from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
@@ -27,7 +27,6 @@ from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer
 from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
-
 from pygame.locals import DOUBLEBUF, OPENGL
 from types import EllipsisType
 from icecream import ic
@@ -36,13 +35,14 @@ import pygame as pg
 import typing as tp
 import numpy as np
 import math as m
+import random
 
-from amoginarium.shared.debugging import cum_timer
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t
+from amoginarium.debugging import cum_timer
 
+from ..logic import Vec2, Color, convert_coord, normalize_angle, coord_t
 from ._base_renderer import BaseRenderer, tColor
+from ..shared import global_vars
 from ._opengl_fonts import GLFont
-from ... import pv
 
 # define types
 type TextureID = int
@@ -121,9 +121,9 @@ class OpenGLRenderer(BaseRenderer):
 
         return (
                 top_left_tuple[0] + size_tuple[0] < 0
-                or top_left_tuple[0] > pv.global_vars.resolution.x
+                or top_left_tuple[0] > global_vars.resolution.x
                 or top_left_tuple[1] + size_tuple[1] < 0
-                or top_left_tuple[1] > pv.global_vars.resolution.y
+                or top_left_tuple[1] > global_vars.resolution.y
         )
 
     # endregion
@@ -134,8 +134,6 @@ class OpenGLRenderer(BaseRenderer):
         Initialize the renderer and global_vars
         :param title: Window title
         """
-        pv.global_vars = pv.global_vars
-
         ic("using OpenGL backend")
 
         pg.font.init()
@@ -157,29 +155,25 @@ class OpenGLRenderer(BaseRenderer):
         window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
 
         # set global screen size and ppm
-        pv.global_vars.set_screen_size(Vec2().from_cartesian(*window_size))
-        pv.global_vars.set_screen_size_real(Vec2().from_cartesian(
+        global_vars.screen_size = Vec2().from_cartesian(*window_size)
+        global_vars.screen_size_real = Vec2().from_cartesian(
             screen_info.current_w,
             screen_info.current_h
-        ))
-        pv.global_vars.set_resolution(Vec2().from_cartesian(*window_size))
-
-        screen_fac = Vec2().from_cartesian(1, 1)
-        screen_offset = Vec2().from_cartesian(0, 0)
-
-        pv.global_vars.set_screen_size_fac(screen_fac)
-        pv.global_vars.set_screen_size_offset(screen_offset)
-        pv.global_vars.set_pixel_per_meter(1)
+        )
+        ic(global_vars.screen_size_real.xy)
+        global_vars.resolution = Vec2().from_cartesian(*window_size)
+        global_vars.screen_size_fac_x = 1
+        global_vars.screen_size_offset_x = 0
+        global_vars.screen_size_fac_y = 1
+        global_vars.screen_size_offset_y = 0
+        global_vars.pixel_per_meter = 1
 
         # set max fps to monitor refresh rate
-        pv.global_vars.set_max_fps(
-            min(pg.display.get_desktop_refresh_rates())
-        )
+        global_vars.max_fps = 500
 
-        # pg.display.gl_set_attribute(pg.GL_SWAP_CONTROL, 1)
         pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
         pg.display.set_mode(
-            pv.global_vars.get_screen_size().xy,
+            global_vars.screen_size.xy,
             DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
         )
         # self.font = pg.font.SysFont(None, 24)
@@ -190,7 +184,7 @@ class OpenGLRenderer(BaseRenderer):
         glClearColor(*(0, 0, 0, 255))
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluOrtho2D(0, *pv.global_vars.get_screen_size().xy, 0)
+        gluOrtho2D(0, *global_vars.screen_size.xy, 0)
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -300,7 +294,6 @@ class OpenGLRenderer(BaseRenderer):
             convert_global: bool = True,
             rotate_angle: float = 0,
             rotate_anchor: coord_t | EllipsisType = ...,
-            pixel_perfect: bool = False,
             offscreen_check: bool = True
     ) -> None:
         """
@@ -311,15 +304,14 @@ class OpenGLRenderer(BaseRenderer):
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param rotate_angle: Angle in degrees to rotate the image at
         :param rotate_anchor: At what pixel to rotate at. Defaults to center position
-        :param pixel_perfect: Whether to draw pixel perfect
         :param offscreen_check: Whether to check it the element is on the window before drawing
         """
         pos_vec2: Vec2 = convert_coord(pos, Vec2)
         size_vec2: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            pos_vec2 = pv.global_vars.translate_screen_coord(pos_vec2)
-            size_vec2 = pv.global_vars.translate_scale(size_vec2)
+            pos_vec2 = global_vars.translate_screen_coord(pos_vec2)
+            size_vec2 = global_vars.translate_scale(size_vec2)
 
         if offscreen_check and self.__check_out_of_screen(pos_vec2, size_vec2):
             return
@@ -333,13 +325,8 @@ class OpenGLRenderer(BaseRenderer):
         glEnable(GL_TEXTURE_2D)
         glBindTexture(GL_TEXTURE_2D, texture_id)
 
-        if pixel_perfect:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
-        else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 
         # rotate
         if rotate_angle != 0.0:
@@ -348,7 +335,7 @@ class OpenGLRenderer(BaseRenderer):
             else:
                 anchor: Vec2 = convert_coord(rotate_anchor, Vec2)
                 if convert_global:
-                    anchor = pv.global_vars.translate_scale(anchor)
+                    anchor = global_vars.translate_scale(anchor)
                 rx, ry = anchor.x, anchor.y
 
             glTranslated(rx, ry, 0.0)
@@ -396,19 +383,19 @@ class OpenGLRenderer(BaseRenderer):
         if convert_global:
             if center:
                 vertices_vec2 = [
-                    pv.global_vars.translate_scale(v) for v in vertices_vec2
+                    global_vars.translate_scale(v) for v in vertices_vec2
                 ]
 
             else:
                 vertices_vec2 = [
-                    pv.global_vars.translate_screen_coord(v) for v in vertices_vec2
+                    global_vars.translate_screen_coord(v) for v in vertices_vec2
                 ]
 
         glPushMatrix()
         if center is not None:
             center_vec2: Vec2 = convert_coord(center, Vec2)
             if convert_global:
-                center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
+                center_vec2 = global_vars.translate_screen_coord(center_vec2)
 
             glTranslate(center_vec2.x, center_vec2.y, 0)
 
@@ -443,8 +430,8 @@ class OpenGLRenderer(BaseRenderer):
         size_vec2: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            start_vec2 = pv.global_vars.translate_screen_coord(start_vec2)
-            size_vec2 = pv.global_vars.translate_scale(size_vec2)
+            start_vec2 = global_vars.translate_screen_coord(start_vec2)
+            size_vec2 = global_vars.translate_scale(size_vec2)
 
         if offscreen_check and self.__check_out_of_screen(start_vec2, size_vec2):
             return
@@ -494,17 +481,17 @@ class OpenGLRenderer(BaseRenderer):
         size_vec: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            start_vec = pv.global_vars.translate_screen_coord(start_vec)
-            size_vec = pv.global_vars.translate_scale(size_vec)
-            radius = pv.global_vars.translate_scale(radius)
+            start_vec = global_vars.translate_screen_coord(start_vec)
+            size_vec = global_vars.translate_scale(size_vec)
+            radius = global_vars.translate_scale(radius)
             if top_left_radius is not None:
-                top_left_radius = pv.global_vars.translate_scale(top_left_radius)
+                top_left_radius = global_vars.translate_scale(top_left_radius)
             if top_right_radius is not None:
-                top_right_radius = pv.global_vars.translate_scale(top_right_radius)
+                top_right_radius = global_vars.translate_scale(top_right_radius)
             if bottom_right_radius is not None:
-                bottom_right_radius = pv.global_vars.translate_scale(bottom_right_radius)
+                bottom_right_radius = global_vars.translate_scale(bottom_right_radius)
             if bottom_left_radius is not None:
-                bottom_left_radius = pv.global_vars.translate_scale(bottom_left_radius)
+                bottom_left_radius = global_vars.translate_scale(bottom_left_radius)
 
         sx, sy = size_vec.x, size_vec.y
 
@@ -587,9 +574,9 @@ class OpenGLRenderer(BaseRenderer):
         size_vec: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            start_vec = pv.global_vars.translate_screen_coord(start_vec)
-            size_vec = pv.global_vars.translate_scale(size_vec)
-            thickness = pv.global_vars.translate_scale(thickness)
+            start_vec = global_vars.translate_screen_coord(start_vec)
+            size_vec = global_vars.translate_scale(size_vec)
+            thickness = global_vars.translate_scale(thickness)
 
         if offscreen_check and self.__check_out_of_screen(start_vec, size_vec):
             return
@@ -657,18 +644,18 @@ class OpenGLRenderer(BaseRenderer):
         size_vec: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            start_vec = pv.global_vars.translate_screen_coord(start_vec)
-            size_vec = pv.global_vars.translate_scale(size_vec)
-            radius = pv.global_vars.translate_scale(radius)
-            thickness = pv.global_vars.translate_scale(thickness)
+            start_vec = global_vars.translate_screen_coord(start_vec)
+            size_vec = global_vars.translate_scale(size_vec)
+            radius = global_vars.translate_scale(radius)
+            thickness = global_vars.translate_scale(thickness)
             if top_left_radius is not None:
-                top_left_radius = pv.global_vars.translate_scale(top_left_radius)
+                top_left_radius = global_vars.translate_scale(top_left_radius)
             if top_right_radius is not None:
-                top_right_radius = pv.global_vars.translate_scale(top_right_radius)
+                top_right_radius = global_vars.translate_scale(top_right_radius)
             if bottom_left_radius is not None:
-                bottom_left_radius = pv.global_vars.translate_scale(bottom_left_radius)
+                bottom_left_radius = global_vars.translate_scale(bottom_left_radius)
             if bottom_right_radius is not None:
-                bottom_right_radius = pv.global_vars.translate_scale(bottom_right_radius)
+                bottom_right_radius = global_vars.translate_scale(bottom_right_radius)
 
         sx = size_vec.x
         sy = size_vec.y
@@ -745,72 +732,6 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
 
-    # todo mytodo work on this
-    def draw_bar(
-            self,
-            pos: coord_t,
-            size: coord_t,
-            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
-            progress: float,
-            *,
-            background_color: Color | EllipsisType = ...,
-            convert_global: bool = True,
-            offscreen_check: bool = True,
-    ) -> None:
-        """
-        draw a progress? bar at the specified location (using specified color gradient
-        """
-        pos: Vec2 = convert_coord(pos, Vec2)  # ignore: type
-        size: Vec2 = convert_coord(size, Vec2)  # ignore: type
-
-        if len(colors) == 1:
-            color: Color = colors[0]
-
-        elif len(colors) == 2:
-            color: Color = fade(colors[0], colors[1], progress)  # ignore: type
-
-        elif len(colors) == 3:
-            color: Color = (
-                fade(colors[0], colors[1], progress)
-                if progress < 0.5
-                else fade(colors[1], colors[2], progress)
-            )  # ignore: type
-
-        else:
-            raise RuntimeError(f"Invalid colors for \"draw_bar\": {colors}")
-
-        if isinstance(background_color, EllipsisType):
-            background_color: Color = Color().from_1(0, 0, 0, .5)
-
-        if convert_global:
-            pos = pv.global_vars.translate_screen_coord(pos)
-            size = pv.global_vars.translate_scale(size)
-
-        glPushMatrix()  # reset previous glTranslate statements
-        glTranslate(pos.x, pos.y, 0)
-
-        # draw progress
-        self.__set_color(color)
-
-        glBegin(GL_POLYGON)
-        glVertex2f(0, 0)
-        glVertex2f(size.x * progress, 0)
-        glVertex2f(size.x * progress, size.y)
-        glVertex2f(0, size.y)
-        glEnd()
-
-        # draw background bar
-        self.__set_color(background_color)
-
-        glBegin(GL_POLYGON)
-        glVertex2f(size.x * progress, 0)
-        glVertex2f(size.x, 0)
-        glVertex2f(size.x, size.y)
-        glVertex2f(size.x * progress, size.y)
-        glEnd()
-
-        glPopMatrix()
-
     # endregion
 
     # region Circles
@@ -836,8 +757,8 @@ class OpenGLRenderer(BaseRenderer):
         center_vec2: Vec2 = convert_coord(center, Vec2)
 
         if convert_global:
-            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
-            radius = pv.global_vars.translate_scale(radius)
+            center_vec2 = global_vars.translate_screen_coord(center_vec2)
+            radius = global_vars.translate_scale(radius)
 
         if offscreen_check and self.__check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
                                                           (radius * 2, radius * 2)):
@@ -880,9 +801,9 @@ class OpenGLRenderer(BaseRenderer):
         center_vec2: Vec2 = convert_coord(center, Vec2)
 
         if convert_global:
-            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
-            radius = pv.global_vars.translate_scale(radius)
-            thickness = pv.global_vars.translate_scale(thickness)
+            center_vec2 = global_vars.translate_screen_coord(center_vec2)
+            radius = global_vars.translate_scale(radius)
+            thickness = global_vars.translate_scale(thickness)
 
         outer: float = radius + thickness
         if offscreen_check and self.__check_out_of_screen((center_vec2.x - outer, center_vec2.y - outer),
@@ -935,8 +856,8 @@ class OpenGLRenderer(BaseRenderer):
         angle_end_vec2: Vec2 = convert_coord(angle_end, Vec2)
 
         if convert_global:
-            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
-            radius = pv.global_vars.translate_scale(radius)
+            center_vec2 = global_vars.translate_screen_coord(center_vec2)
+            radius = global_vars.translate_scale(radius)
 
         if offscreen_check and self.__check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
                                                           (radius * 2, radius * 2)):
@@ -990,9 +911,9 @@ class OpenGLRenderer(BaseRenderer):
         center_vec2: Vec2 = convert_coord(center, Vec2)
 
         if convert_global:
-            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
-            radius = pv.global_vars.translate_scale(radius)
-            thickness = pv.global_vars.translate_scale(thickness)
+            center_vec2 = global_vars.translate_screen_coord(center_vec2)
+            radius = global_vars.translate_scale(radius)
+            thickness = global_vars.translate_scale(thickness)
 
         outer: float = radius + thickness
 
@@ -1073,9 +994,9 @@ class OpenGLRenderer(BaseRenderer):
         end_vec: Vec2 = convert_coord(angle_end, Vec2)
 
         if convert_global:
-            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
-            radius = pv.global_vars.translate_scale(radius)
-            thickness = pv.global_vars.translate_scale(thickness)
+            center_vec2 = global_vars.translate_screen_coord(center_vec2)
+            radius = global_vars.translate_scale(radius)
+            thickness = global_vars.translate_scale(thickness)
 
         outer = radius + thickness
 
@@ -1161,8 +1082,8 @@ class OpenGLRenderer(BaseRenderer):
         end_vec2: Vec2 = convert_coord(end, Vec2)
 
         if convert_global:
-            start_vec2 = pv.global_vars.translate_screen_coord(start_vec2)
-            end_vec2 = pv.global_vars.translate_screen_coord(end_vec2)
+            start_vec2 = global_vars.translate_screen_coord(start_vec2)
+            end_vec2 = global_vars.translate_screen_coord(end_vec2)
 
         # only draw if on screen
         if offscreen_check and self.__check_out_of_screen(start_vec2, end_vec2 - start_vec2):
@@ -1206,9 +1127,9 @@ class OpenGLRenderer(BaseRenderer):
         end_vec2: Vec2 = convert_coord(end, Vec2)
 
         if convert_global:
-            start_vec2 = pv.global_vars.translate_screen_coord(start_vec2)
-            end_vec2 = pv.global_vars.translate_screen_coord(end_vec2)
-            thickness = pv.global_vars.translate_scale(thickness)
+            start_vec2 = global_vars.translate_screen_coord(start_vec2)
+            end_vec2 = global_vars.translate_screen_coord(end_vec2)
+            thickness = global_vars.translate_scale(thickness)
 
         sx = start_vec2.x
         sy = start_vec2.y
@@ -1286,8 +1207,8 @@ class OpenGLRenderer(BaseRenderer):
 
         scale = 1.0
         if convert_global:
-            pos = pv.global_vars.translate_screen_coord(pos)
-            scale = pv.global_vars.translate_scale(1.0)
+            pos = global_vars.translate_screen_coord(pos)
+            scale = global_vars.translate_scale(1.0)
 
         font_key = (font_family, font_size, bold, italic)
 
@@ -1373,8 +1294,8 @@ class OpenGLRenderer(BaseRenderer):
         w, h = surface.get_size()
 
         if convert_global:
-            pos = pv.global_vars.translate_screen_coord(pos)
-            scale = pv.global_vars.translate_scale(scale)
+            pos = global_vars.translate_screen_coord(pos)
+            scale = global_vars.translate_scale(scale)
 
         scaled_w = w * scale
         scaled_h = h * scale

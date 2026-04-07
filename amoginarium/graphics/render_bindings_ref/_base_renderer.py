@@ -5,16 +5,15 @@ _base_renderer.py
 prototype renderer
 
 Author:
-Nilusink, LukasKrah
+Nilusink
 """
-
-from types import EllipsisType
 from PIL import Image
 import pygame as pg
 import typing as tp
+from types import EllipsisType
 import abc
 
-from amoginarium.shared.utility import Color, coord_t
+from ..logic import Color, coord_t, Vec2
 
 # define types
 type Color3 = tuple[float, float, float]
@@ -35,7 +34,7 @@ class BaseRenderer(abc.ABC):
     @abc.abstractmethod
     def init(self, title: str) -> None:
         """
-        Initialize the renderer and pv.global_vars
+        Initialize the renderer and global_vars
         :param title: Window title
         :raises NotImplementedError: If the renderer does not implement this method
         """
@@ -61,7 +60,6 @@ class BaseRenderer(abc.ABC):
     # endregion
 
     # region Stencil
-    # todo mytodo - stencils work!
     @abc.abstractmethod
     def apply_stencil[**A](
             self,
@@ -92,7 +90,6 @@ class BaseRenderer(abc.ABC):
             convert_global: bool = True,
             rotate_angle: float = 0,
             rotate_anchor: coord_t | EllipsisType = ...,
-            pixel_perfect: bool = False,
             offscreen_check: bool = True
     ) -> None:
         """
@@ -104,7 +101,6 @@ class BaseRenderer(abc.ABC):
         :param rotate_angle: Angle in degrees to rotate the image at
         :param rotate_anchor: At what pixel to rotate at. Defaults to center position
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :param pixel_perfect: Whether to draw pixel perfect
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
@@ -231,29 +227,6 @@ class BaseRenderer(abc.ABC):
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :raises NotImplementedError: If the renderer does not implement this method
-        """
-        raise NotImplementedError
-
-    def draw_bar(
-            self,
-            pos: coord_t,
-            size: coord_t,
-            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
-            progress: float,
-            *,
-            background_color: Color | EllipsisType = ...,
-            convert_global: bool = True,
-            offscreen_check: bool = True
-    ) -> None:
-        """
-        # todo: MYTODO - comment
-        :param pos:
-        :param size:
-        :param colors:
-        :param progress:
-        :param background_color:
-        :param convert_global:
-        :param offscreen_check:
         """
         raise NotImplementedError
 
