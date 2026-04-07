@@ -48,6 +48,7 @@ sound_effects = _SoundEffects()
 
 
 class SoundEffect:
+    """sound effect"""
     volume: float = 1
 
     def __new__(cls, *args, **kwargs):
@@ -327,6 +328,7 @@ class CRAM(ContinuousSoundEffect):
 
 
 class RandomizedEffect:
+    """sound effect but random"""
     def __init__(
             self,
             effects: tp.Sequence[SoundEffect],
@@ -383,7 +385,6 @@ class RandomizedEffect:
             self._playing.stop()
             self._playing = None
 
-
     def update(self) -> None:
         """
         updates called by the game loop
@@ -413,6 +414,7 @@ class ScopedRandomizedEffect(RandomizedEffect):
             ) for sound in s
         ])
 
+
 class DeathSound(ScopedRandomizedEffect):
     def __init__(self, callback: tp.Callable[[], tp.Any] = ...) -> None:
         super().__init__("death", callback)
@@ -422,5 +424,33 @@ class DistantPop(ScopedRandomizedEffect):
     _scope = "distant_pop"
 
 
+# class PitchedRandomizedEffect(RandomizedEffect):
+#     _name: tuple[str, str] | None = None
+#     _pitch_set: tuple[int, ...] = (-2, 2)
+#
+#     _pitched_sounds: list[SoundEffect] = []
+#
+#     def __new__(cls, *args, **kwargs):
+#         if not cls._pitched_sounds:
+#             sound = sounds.get_sound(*cls._name[::-1])
+#
+#             cls._pitched_sounds.append(SoundEffect(sound))
+#             ic(1)
+#             for pitch in cls._pitch_set:
+#                 cls._pitched_sounds.append(
+#                     SoundEffect(pitch_shift_keep_length(sound, pitch))
+#                 )
+#             ic(2)
+#
+#         return super().__new__(cls)
+#
+#     def __init__(self) -> None:
+#         if not self._name:
+#             raise ValueError("No name given for pitched effect")
+#
+#         super().__init__(self._pitched_sounds)
+
+
 class AK47(ScopedRandomizedEffect):
+    # _name = ("ak472", "0")
     _scope = "ak472"
