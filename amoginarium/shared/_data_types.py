@@ -79,6 +79,7 @@ class WeaponCIDs(Enum):
 class ItemCIDs(Enum):
     """Component IDs for items"""
     shield = "item.shield"
+    healing_potion = "item.healing_potion"
 
 
 class _CIDRegister:

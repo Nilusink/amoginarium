@@ -79,7 +79,7 @@ class Item(LogicGameEntity):
         self.show()
         self.highlight()
 
-    def _update(self, delta: float, keep_position: bool = False) -> None:
+    def _update(self, delta: float, *, keep_position: bool = False) -> None:
         if self.parent:
             if not keep_position:
                 self.position = self.parent.position

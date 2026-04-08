@@ -94,6 +94,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._image_size,
                 rotate_angle=angle - 180,
                 rotate_anchor=anchor,
+                pixel_perfect=True
             )
 
         else:
@@ -110,6 +111,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._image_size,
                 rotate_angle=angle,
                 rotate_anchor=anchor,
+                pixel_perfect=True
             )
 
         # draw ammo bar

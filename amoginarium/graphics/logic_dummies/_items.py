@@ -11,7 +11,7 @@ Nilusink
 import typing as tp
 import math as m
 
-from amoginarium.shared.utility import Vec2, Color
+from amoginarium.shared.utility import Vec2, Color, normalize_angle
 from amoginarium.base._textures import textures
 from amoginarium.shared import ItemCIDs
 
@@ -21,7 +21,11 @@ from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
 
 class BaseItem(Iconifyable, SyncedLRImageEntity):
-    """base graphics item"""
+    """
+    base graphics item
+
+    ``param1``: usage
+    """
 
     __slots__ = ("_internal_offset",)
 
@@ -89,6 +93,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
                 self.world_position,
                 self.size,
                 rotate_angle=angle - 180,
+                pixel_perfect=True
             )
 
         else:
@@ -97,6 +102,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
                 self.world_position,
                 self.size,
                 rotate_angle=angle,
+                pixel_perfect=True
             )
 
 
@@ -104,6 +110,7 @@ class Shield(BaseItem):
     """
     protective shield
 
+    ``param1``: usage
     """
     __slots__ = ("_bar_colors",)
 
@@ -134,3 +141,80 @@ class Shield(BaseItem):
                 self._bar_colors,
                 self.param1,
             )
+
+
+class HealingPotion(BaseItem):
+    """
+    healing potion
+
+    ``param0``: fluid tilt
+    ``param1``: usage
+    """
+
+    __slots__ = ()
+
+    _cid = ItemCIDs.healing_potion
+    _image_name = ("potions", "empty")
+    _empty_mask = ("potions", "empty_mask")
+    _mask_texture = ...
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._texture_id_r is not ...:
+            return
+
+        cls._mask_texture, _ = textures.get_texture(
+            cls._empty_mask[1],
+            cls._image_size,
+            scope=cls._empty_mask[0]
+        )
+
+        super().load_textures()
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
+        angle = normalize_angle(self.facing.angle) * (180/m.pi)
+        own_pos = self.world_position
+
+        # noinspection PyTypeChecker
+        renderer.apply_stencil(
+            renderer.draw_textured_quad,
+            False,
+            self._mask_texture,
+            own_pos + self._internal_offset,
+            self._image_size,
+            rotate_angle=angle - (180 if 90 < angle < 270 else 0),
+        )
+
+        fill_line = 5 + (self.size.y - 10) * (1 - self.param1)
+        renderer.draw_polygon(
+            [
+                own_pos + Vec2().from_cartesian(
+                    -self.size.x,
+                    self.size.y
+                ),
+                own_pos + Vec2().from_cartesian(
+                    2 * self.size.x,
+                    self.size.y
+                ),
+                own_pos + Vec2().from_cartesian(
+                    self.size.x / 2, fill_line
+                ) + Vec2().from_polar(
+                    (angle + self.param0) * m.pi / 180,
+                    self.size.x) + Vec2().from_cartesian(
+                    0, 5
+                ),
+                own_pos + Vec2().from_cartesian(
+                    self.size.x / 2, fill_line
+                ) - Vec2().from_polar(
+                    (angle + self.param0) * m.pi / 180,
+                    self.size.x) + Vec2().from_cartesian(
+                    0, 5
+                ),
+            ],
+            (0, .8, 0),
+        )
+
+        if not self._highlight:
+            renderer.disable_stencil()
+
+        super()._gl_draw(delta_cal, layer=layer)
