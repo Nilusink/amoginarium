@@ -23,7 +23,7 @@ class BaseGraphicsEntity:
     _parent: BaseGraphicsEntity | None
     _children: list[BaseGraphicsEntity]
 
-    def __init__(self, parent: tp.Self | None = None) -> None:
+    def __init__(self, parent: BaseGraphicsEntity | None = None) -> None:
         try:  # ui implements visible as property without setter
             self._visible = True
 

@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 from amoginarium.shared.debugging import print_ic_style, get_fg_color
+from icecream import ic
 import pygame as pg
 import typing as tp
 import zipfile
@@ -47,7 +48,7 @@ class _Sounds:
             scope = path.split(".")[0].split("/")[-1]
 
         else:
-            files = sorted(os.listdir(path))
+            files = sorted(file for file in os.listdir(path) if os.path.isfile(os.path.join(path, file)))
             scope = path.split("/")[-1]
 
         if self.debug >= 2:

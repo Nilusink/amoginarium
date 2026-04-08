@@ -27,6 +27,7 @@ from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._base_entity import LogicGameEntity
 from ._inventory import Inventory
 from ._island import Island
+from ._items import Shield
 from ._base_item import Item
 
 
@@ -94,7 +95,7 @@ class Player(LogicGameEntity):
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
             Sniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
-            # Shield(self, Vec2().from_cartesian(50, 0)),
+            Shield(self._runtime_buffer, Vec2().from_cartesian(50, 0)),
             # HealingPotion(self, Vec2().from_cartesian(0, 5)),
             # JetBag(self, Vec2().from_cartesian(-24, 0)),
             # Bow(self, False, parent_position_offset=(0, 0)),
@@ -231,7 +232,7 @@ class Player(LogicGameEntity):
         """
         deal damage to the player
         """
-        damage = 0
+        # damage = 0
         self._hp -= damage
 
         if damage != 0:
@@ -550,7 +551,7 @@ class Player(LogicGameEntity):
 
         # remove from every group except players
         super().kill(killed_by)
-        self.add(Players)
+        # self.add(Players)
 
     def respawn(self, pos: Vec2 = ...) -> None:
         """

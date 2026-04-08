@@ -9,12 +9,13 @@ Nilusink
 """
 from types import EllipsisType
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import pygame as pg
 import math as m
 
 from amoginarium.shared.utility import normalize_angle, Vec2
-from amoginarium.shared import base_entity_t, PlayerLike
+from amoginarium.shared import base_entity_t, ItemCIDs
 
 from ._logic_groups import CollisionDestroyed, Updated, GravityAffected, WallCollider
 from ._base_entity import LogicGameEntity
@@ -22,7 +23,7 @@ from ._base_item import Item
 
 
 class BaseItem(Item):
-    __slots__ = ("_uses_left", "_parent_position_offset")
+    __slots__ = ("_uses_left", "_parent_position_offset", "_used_callback")
 
     _max_uses: int = 1
 
@@ -35,7 +36,9 @@ class BaseItem(Item):
         super().__init__(runtime_buffer, size)
         self._uses_left = self._max_uses
         self._parent_position_offset = parent_position_offset
+        self._used_callback = ...
 
+    # region properties
     # noinspection PyTypeChecker
     @property
     def max_uses(self) -> int:
@@ -45,9 +48,20 @@ class BaseItem(Item):
     def uses_left(self) -> int:
         return self._uses_left
 
+    # endregion
+
     def add_used_callback(self, callback: tp.Callable[[int], bool]) -> None:
         self._used_callback = callback
 
+    def update_rect(self) -> None:
+        self.rect = pg.Rect(
+            self.position.x,
+            self.position.y,
+            self.size.x,
+            self.size.y
+        )
+
+    # region interface
     def get_mag_state(
             self,
             max_out: float
@@ -62,14 +76,6 @@ class BaseItem(Item):
         return self._uses_left * (
                 max_out / self._max_uses
         ), self._uses_left
-
-    def update_rect(self) -> None:
-        self.rect = pg.Rect(
-            self.position.x,
-            self.position.y,
-            self.size.x,
-            self.size.y
-        )
 
     def use(self) -> None:
         raise NotImplementedError
@@ -87,18 +93,19 @@ class BaseItem(Item):
         else:
             super().kill()
 
-    def _update(self, delta: float) -> None:
-        super()._update(delta)
-        # self._update_mask()
-
     def reset(self) -> None:
         self._uses_left = self._max_uses
 
+    # endregion
+
 
 class Shield(BaseItem):
+    __slots__ = ("_in_use",)
+
     _image_name: tuple[str, str] | str = ("Shield_6", "4")
     _image_size: tuple[int, int] = (45, 80)
     _max_uses: int = 200  # acts as HP for shield
+    _cid = ItemCIDs.shield
 
     def __init__(
             self,
@@ -110,13 +117,7 @@ class Shield(BaseItem):
             Vec2().from_cartesian(*self._image_size),
             parent_position_offset,
         )
-
-        self._mask_left_surf = pg.transform.scale(pg.image.load(
-            f"./assets/images/{self._image_name[0]}/{self._image_name[1]}.png"
-        ).convert_alpha(), self._image_size)
-        self._mask_right_surf = pg.transform.scale(pg.image.load(
-            f"./assets/images/{self._image_name[0]}/{self._image_name[1]}.png"
-        ).convert_alpha(), self._image_size)
+        self._generate_collision_mask()
 
         self._in_use = False
         self._update_mask()
@@ -142,48 +143,56 @@ class Shield(BaseItem):
             self.remove(CollisionDestroyed)
 
     def _update_mask(self) -> None:
-        angle = self.facing.angle * 180 / m.pi
-        angle = angle % 360
+        # angle = self.facing.angle * 180 / m.pi
+        # angle = angle % 360
+        #
+        # if 90 < angle < 270:
+        #     surf = pg.transform.rotate(
+        #         self._mask_left_surf,
+        #         -(angle - 180)
+        #     )
+        #
+        # else:
+        #     surf = pg.transform.rotate(
+        #         self._mask_right_surf,
+        #         -angle
+        #     )
+        #
+        # offset = (surf.size[0] - self.size.x) / 2
+        #
+        # surf = surf.subsurface(
+        #     (offset, offset),
+        #     self.size.xy
+        # )
 
-        if 90 < angle < 270:
-            surf = pg.transform.rotate(
-                self._mask_left_surf,
-                -(angle - 180)
-            )
-
-        else:
-            surf = pg.transform.rotate(
-                self._mask_right_surf,
-                -angle
-            )
-
-        offset = (surf.size[0] - self.size.x) / 2
-
-        surf = surf.subsurface(
-            (offset, offset),
-            self.size.xy
-        )
-
-        self.mask = pg.mask.from_surface(surf)
+        super()._generate_collision_mask()
+        # self.mask = pg.mask.Mask(surf)
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
+        if not self.parent:
+            super().hit(damage, hit_by)
+
         self._uses_left -= damage
 
         if self._uses_left <= 0:
             self.kill(hit_by)
 
     def _update(self, delta: float) -> None:
-        angle = normalize_angle(self.facing.angle) * 180/m.pi
+        if self.parent:
+            d = Vec2().from_polar(self.facing.angle, self._parent_position_offset.length)
+            if self._in_use:
+                self.size.xy = self._image_size
+                self.position = self.parent.position + d - self.size / 2
 
-        delta = self._parent_position_offset.copy()
-        delta.angle += angle * (m.pi / 180)
+            else:
+                self.size.xy = self._image_size[0] * .1, self._image_size[1] * .3
+                self.position = self.parent.position
 
-        size = self.size  # * size_fac
+        else:
+            self.size.xy = self._image_size
 
-        self._current_angle = delta
-
-        if self._in_use:
-            self.position = self.parent.position + delta - size / 2
+        super()._update(delta, keep_position=True)
+        self._runtime_buffer[self.id].param1, _ = self.get_mag_state(1)
 
 
 # class HealingPotion(BaseItem):

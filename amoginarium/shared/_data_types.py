@@ -76,6 +76,11 @@ class WeaponCIDs(Enum):
     base = "weapon.base"
 
 
+class ItemCIDs(Enum):
+    """Component IDs for items"""
+    shield = "item.shield"
+
+
 class _CIDRegister:
     """represent all item CIDs as ints"""
 
