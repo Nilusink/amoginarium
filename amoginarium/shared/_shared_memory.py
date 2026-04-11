@@ -32,6 +32,7 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
         ("size_y", ctypes.c_uint16),
         ("flags", ctypes.c_uint16),  # (
         # 0=alive, 1=visible, 2=highlight,
+        # 14=(active (item))
         # 15=(in inventory (player), has parent (item))
         # )
 

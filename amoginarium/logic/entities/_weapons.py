@@ -144,6 +144,11 @@ class BaseWeapon(Item):
         return self._bullet_explosion_damage
 
     @property
+    def bullet_damage(self) -> float:
+        """damage dealt by bullet"""
+        return self._bullet_damage
+
+    @property
     def parent_position_offset(self) -> Vec2:
         """
         offset to parent center
@@ -211,7 +216,10 @@ class BaseWeapon(Item):
         # if self._current_sound_time < 0:
         #     self._current_sound_time = 0
 
-        super()._update(delta)
+        if self.parent:
+            self.position = self.parent.position + self._parent_position_offset
+
+        super()._update(delta, keep_position=True)
         self._runtime_buffer[self.id].param1, _ = self.get_mag_state(1)
 
     def stop_shooting(self):
@@ -298,7 +306,7 @@ class BaseWeapon(Item):
                 + direction.normalize() * self._barrel_length * .45
             ),
             initial_velocity=direction.normalize() * self.bullet_speed + self.parent.velocity,
-            base_damage=self._bullet_damage,
+            base_damage=self.bullet_damage,
             size=self._bullet_size,
             explosion_radius=self.bullet_explosion_radius,
             explosion_damage=self.bullet_explosion_damage,

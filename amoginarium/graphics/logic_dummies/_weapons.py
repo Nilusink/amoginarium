@@ -26,15 +26,15 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     """
     ``param0`` size fac
     ``param1`` mag state
-    ``param3`` charge state if applicable
     """
 
-    __slots__ = ["_bar_colors"]
+    __slots__ = ()
 
     _cid = WeaponCIDs.base
     _image_name: str = "minigun"
     _image_size: tuple[int, int] = (128, 64)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(35, 30)
+    _bar_colors = (Color().from_1(.55, .55, 1),)
     _image_mirror: bool = False
     _texture_id_l: int = ...
     _texture_id_r: int = ...
@@ -69,7 +69,6 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         )
         self.remove(Drawn_0)
         self.add(Drawn_1)
-        self._bar_colors = (Color().from_1(.55, .55, 1),)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         """
@@ -94,6 +93,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._image_size,
                 rotate_angle=angle - 180,
                 rotate_anchor=anchor,
+                pixel_perfect=True
             )
 
         else:
@@ -110,10 +110,11 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._image_size,
                 rotate_angle=angle,
                 rotate_anchor=anchor,
+                pixel_perfect=True
             )
 
         # draw ammo bar
-        if self._get_bit("flags", 15):
+        if self._get_bit("flags", 15):  # has parent
             if self.parent:
                 pos = self.parent.world_position
                 size = self.parent.size

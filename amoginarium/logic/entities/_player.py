@@ -19,12 +19,14 @@ from ...shared import ProcessCommand, BaseCommandType, DummyCIDs
 from ...shared.utility import Vec2, convert_coord
 from ... import pv
 
-from ..audio import DeathSound, SoundEffect
+from ..audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ..graphics_dummies import Controller
 from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
+from ._items import Shield, HealingPotion, JetBag
 from ._base_entity import LogicGameEntity
+from ._charged_weapons import RailGun
 from ._inventory import Inventory
 from ._island import Island
 from ._base_item import Item
@@ -79,6 +81,7 @@ class Player(LogicGameEntity):
         )
 
         self._groaning = SoundEffect(("groaning", "hugh_1"))
+        self._pickup_sound = OnHoverButtonSound()
 
         self._current_weapon = 0
         self._weapon_change_pressed = False
@@ -94,11 +97,11 @@ class Player(LogicGameEntity):
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
             Sniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
-            # Shield(self, Vec2().from_cartesian(50, 0)),
-            # HealingPotion(self, Vec2().from_cartesian(0, 5)),
-            # JetBag(self, Vec2().from_cartesian(-24, 0)),
+            Shield(self._runtime_buffer, Vec2().from_cartesian(64, 0)),
+            HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),
+            JetBag(self._runtime_buffer, Vec2().from_cartesian(-24, 0)),
             # Bow(self, False, parent_position_offset=(0, 0)),
-            # RailGun(self, False, parent_position_offset=(0, 0)),
+            RailGun(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
         ]
         for item in items:
             self._hotbar.add_item(
@@ -176,8 +179,9 @@ class Player(LogicGameEntity):
             return None
 
     def pickup_item(self, item: Item) -> None:
-        self._hotbar.try_add_item(item, 1)
-
+        if self._hotbar.try_add_item(item, 1) > 0:
+            self._pickup_sound.play()
+        
         # show item again to make sure it is visible
         if self.item:
             self.item.show()
@@ -231,7 +235,7 @@ class Player(LogicGameEntity):
         """
         deal damage to the player
         """
-        damage = 0
+        # damage = 0
         self._hp -= damage
 
         if damage != 0:
@@ -417,14 +421,7 @@ class Player(LogicGameEntity):
                         item: ... = self.item
 
                         if item.charged > 0:
-                            mouse_pos = pg.mouse.get_pos()
-                            vector = convert_coord((
-                                (mouse_pos[ 0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
-                                (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
-                            ), Vec2)
-                            vector -= self.world_position
-
-                            if self.item.shoot(vector):
+                            if self.item.shoot(self.facing):
                                 self._controller.feedback_shoot()
 
                         else:
@@ -550,7 +547,7 @@ class Player(LogicGameEntity):
 
         # remove from every group except players
         super().kill(killed_by)
-        self.add(Players)
+        # self.add(Players)
 
     def respawn(self, pos: Vec2 = ...) -> None:
         """
