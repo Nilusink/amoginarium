@@ -211,8 +211,8 @@ class BaseGame:
         renderer.draw_text(
             (960, 850),
             self._loading_screen_info,
-            (1, 1, 1),
-            (0, 0, 0, 0),
+            color=(1, 1, 1),
+            bg_color=(0, 0, 0, 0),
             font_size=32,
             centered=True,
         )

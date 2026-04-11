@@ -653,7 +653,7 @@ class Player(LRImageEntity):
                     ),
                     Color().from_255(80, 80, 80),
                     20,
-                    False
+                    convert_global=False
                 )
 
                 # slots
@@ -683,7 +683,7 @@ class Player(LRImageEntity):
                     ),
                     Color().from_255(50, 50, 50),
                     20,
-                    False
+                    convert_global=False
                 )
                 self.draw_at(
                     Vec2().from_cartesian(

@@ -163,18 +163,22 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                 renderer.draw_dashed_circle(
                     engage_center,
                     self._range[1],
-                    64,
+                    2048,
                     Color().from_1(1, 1, 1),
-                    3
+                    draw_len=32,
+                    gap_len=32,
+                    thickness=3
                 )
 
                 if self._range[0] > 0:
                     renderer.draw_dashed_circle(
                         engage_center,
                         self._range[0],
-                        64,
+                        2048,
                         (1, .5, 0),
-                        3
+                        draw_len=32,
+                        gap_len=32,
+                        thickness=3
                     )
 
             # draw sensor ranges

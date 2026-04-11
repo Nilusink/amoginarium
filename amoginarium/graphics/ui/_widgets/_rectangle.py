@@ -182,12 +182,12 @@ class Rectangle(UIEventElement):
         if radius > 0:
             if border_width > 0:
                 # 1. Swapped to the hollow rounded border
-                renderer.draw_rounded_border(
+                renderer.draw_rounded_rect_line(
                     self.top_left.absolute_global,
                     self.size.absolute,
                     border_color,
                     radius,
-                    border_width,
+                    thickness=border_width,
                     convert_global=False
                 )
 
@@ -203,11 +203,11 @@ class Rectangle(UIEventElement):
         else:
             if border_width > 0:
                 # 2. Swapped to the hollow sharp border
-                renderer.draw_border(
+                renderer.draw_rect_line(
                     self.top_left.absolute_global,
                     self.size.absolute,
                     border_color,
-                    border_width,
+                    thickness=border_width,
                     convert_global=False
                 )
 

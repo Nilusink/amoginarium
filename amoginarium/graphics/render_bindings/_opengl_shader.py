@@ -120,9 +120,9 @@ class OpenGLShaderRenderer(BaseRenderer):
 
         return (
                 top_left_tuple[0] + size_tuple[0] < 0
-                or top_left_tuple[0] > pv.global_vars.resolution.x
+                or top_left_tuple[0] > pv.global_vars.get_resolution().x
                 or top_left_tuple[1] + size_tuple[1] < 0
-                or top_left_tuple[1] > pv.global_vars.resolution.y
+                or top_left_tuple[1] > pv.global_vars.get_resolution().y
         )
 
     # endregion
@@ -749,12 +749,14 @@ class OpenGLShaderRenderer(BaseRenderer):
     # todo mytodo work on this
     def draw_bar(
             self,
-            pos,
-            size,
-            colors,
-            progress,
-            convert_global=True,
-            background_color=...
+            pos: coord_t,
+            size: coord_t,
+            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
+            progress: float,
+            *,
+            background_color: Color | EllipsisType = ...,
+            convert_global: bool = True,
+            offscreen_check: bool = True,
     ) -> None:
         """
         draw a progress? bar at the specified location (using specified color gradient

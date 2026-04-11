@@ -481,18 +481,22 @@ class BaseTurret(VisibleGameEntity):
             renderer.draw_dashed_circle(
                 engage_center,
                 self.engagement_range,
-                64,
+                2048,
                 Color().from_1(1, 1, 1),
-                3
+                draw_len=32,
+                gap_len=32,
+                thickness=3
             )
 
             if self.min_range > 0:
                 renderer.draw_dashed_circle(
                     engage_center,
                     self.min_range,
-                    64,
+                    2048,
                     (1, .5, 0),
-                    3
+                    draw_len=32,
+                    gap_len=32,
+                    thickness=3
                 )
 
         # draw sensor ranges

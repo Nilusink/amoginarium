@@ -179,7 +179,7 @@ class PlayerDummy(SyncedLRImageEntity):
                     (self.size.x * 3, self.size.y * 4),
                     Color().from_255(50, 50, 50),
                     20,
-                    False,
+                    convert_global=False
                 )
             
             else:

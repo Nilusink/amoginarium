@@ -206,7 +206,7 @@ class BulletDummy(SyncedImageEntity):
                     p1 - world_pos,
                     p2 - world_pos,
                     color,  # ignore: type
-                    self.size.length / 3,
+                    thickness=self.size.length / 3,
                 )
 
         super()._gl_draw(delta_cal)
@@ -225,6 +225,7 @@ class Grenade(BulletDummy):
     _cid = DummyCIDs.grenade
     _default_trace_color = Color().from_1(1, 1, 1, .3)
     _default_trace_length = 20
+    _default_show_trace = False
 
 
 class CRAMBullet(BulletDummy):

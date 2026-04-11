@@ -359,7 +359,7 @@ class Bullet(ImageEntity):
                     self.world_position,
                     self._last_pos - Updated.world_position,
                     self._trace_color,
-                    self.size.length / 3,
+                    thickness=self.size.length / 3,
                 )
 
             # draw image if given

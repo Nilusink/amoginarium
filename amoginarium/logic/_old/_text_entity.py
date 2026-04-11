@@ -71,10 +71,10 @@ class TextEntity(pg.sprite.Sprite):
             self._text,
             self._color,
             self._bg_color,
-            self._size,
-            self._font_family,
-            self._bold,
-            self._italic,
+            font_size=self._size,
+            font_family=self._font_family,
+            bold=self._bold,
+            italic=self._italic,
         )
 
     def gl_draw(self):
@@ -82,5 +82,4 @@ class TextEntity(pg.sprite.Sprite):
         renderer.draw_pg_surf(
             now,
             self._text_surf,
-            centered=False,
         )

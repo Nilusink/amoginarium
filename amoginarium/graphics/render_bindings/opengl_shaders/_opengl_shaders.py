@@ -62,7 +62,7 @@ class DashShader(BaseShader):
 
 class TestShader(BaseShader):
     def __init__(self):
-        super().__init__(name="test")
+        super().__init__(name="dash")
 
 
 class Shaders:

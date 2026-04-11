@@ -121,9 +121,9 @@ class OpenGLRenderer(BaseRenderer):
 
         return (
                 top_left_tuple[0] + size_tuple[0] < 0
-                or top_left_tuple[0] > pv.global_vars.resolution.x
+                or top_left_tuple[0] > pv.global_vars.get_resolution().x
                 or top_left_tuple[1] + size_tuple[1] < 0
-                or top_left_tuple[1] > pv.global_vars.resolution.y
+                or top_left_tuple[1] > pv.global_vars.get_resolution().y
         )
 
     # endregion
