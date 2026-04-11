@@ -216,7 +216,10 @@ class BaseWeapon(Item):
         # if self._current_sound_time < 0:
         #     self._current_sound_time = 0
 
-        super()._update(delta)
+        if self.parent:
+            self.position = self.parent.position + self._parent_position_offset
+
+        super()._update(delta, keep_position=True)
         self._runtime_buffer[self.id].param1, _ = self.get_mag_state(1)
 
     def stop_shooting(self):
