@@ -208,7 +208,7 @@ class BaseGame:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # draw info text
-        renderer.draw_text(
+        renderer.draw_dynamic_text(
             (960, 850),
             self._loading_screen_info,
             color=(1, 1, 1),

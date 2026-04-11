@@ -47,7 +47,7 @@ class TextEntity(SyncedGraphicsEntity):
         """
         super().__init__(sync_id)
 
-        self._text_surf = renderer.generate_pg_surf_text(
+        self._text_id = renderer.generate_static_text(
             text,
             Color().from_255(*color),
             Color().from_255(*bg_color),
@@ -60,7 +60,7 @@ class TextEntity(SyncedGraphicsEntity):
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
 
-        renderer.draw_pg_surf(
+        renderer.draw_static_text(
             self.world_position,
-            self._text_surf,
+            self._text_id,
         )

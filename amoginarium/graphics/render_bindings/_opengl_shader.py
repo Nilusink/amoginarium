@@ -19,7 +19,7 @@ from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
 from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glUniform4f
-from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef, glDeleteTextures
+from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
 from OpenGL.GL import GL_QUADS
 from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays
 from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT
@@ -36,7 +36,7 @@ import numpy as np
 import math as m
 
 from amoginarium.shared.debugging import cum_timer
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t
+from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t, convert_color
 
 from ._base_renderer import BaseRenderer, tColor
 from .opengl_shaders import Shaders
@@ -45,13 +45,15 @@ from ... import pv
 
 # define types
 type TextureID = int
-
+type TextID = int
 
 # noinspection DuplicatedCode
 class OpenGLShaderRenderer(BaseRenderer):
-    __fonts: dict[tuple[str, int, bool, bool], GLFont]
-    __surf_cache: dict
-    _fonts: dict
+    __dynamic_text_fonts: dict[tuple[str, int, bool, bool], GLFont]
+
+    __static_text_graphics: dict[TextID, tuple[np.uintc, tuple[int, int]]]
+    __static_text_id_counter: TextID
+    __static_text_fonts: dict
 
     # region Extra internal methods
     # todo: WHAT?
@@ -63,8 +65,8 @@ class OpenGLShaderRenderer(BaseRenderer):
             italic: bool = False
     ) -> pg.font.Font:
         # check if font exists
-        if size in self._fonts:
-            for font in self._fonts[size]:  # TODO: fix
+        if size in self.__static_text_fonts:
+            for font in self.__static_text_fonts[size]:
                 if all([
                     font.name == family,
                     font.bold == bold,
@@ -73,11 +75,11 @@ class OpenGLShaderRenderer(BaseRenderer):
                     return font
 
         else:
-            self._fonts[size] = []
+            self.__static_text_fonts[size] = []
 
         # no font found, create new
         new_font = pg.font.SysFont(family, int(size), bold, italic)
-        self._fonts[size].append(new_font)
+        self.__static_text_fonts[size].append(new_font)
 
         return new_font
 
@@ -139,10 +141,12 @@ class OpenGLShaderRenderer(BaseRenderer):
 
         pg.font.init()
 
-        self.__fonts = {}
-        self.__surf_cache = {}
+        # Text
+        self.__dynamic_text_fonts = {}
+        self.__static_text_graphics = {}
+        self.__static_text_id_counter = 0
 
-        self._fonts = {
+        self.__static_text_fonts = {
             32: [
                 pg.font.SysFont('arial', 32)
             ],
@@ -1267,8 +1271,8 @@ class OpenGLShaderRenderer(BaseRenderer):
 
     # endregion
 
-    # region Text and surfaces
-    def draw_text(
+    # region Texts and surfaces
+    def draw_dynamic_text(
             self,
             pos: coord_t,
             text: str,
@@ -1312,10 +1316,10 @@ class OpenGLShaderRenderer(BaseRenderer):
 
         font_key = (font_family, font_size, bold, italic)
 
-        if font_key not in self.__fonts:
-            self.__fonts[font_key] = GLFont(font_family, font_size, bold, italic)
+        if font_key not in self.__dynamic_text_fonts:
+            self.__dynamic_text_fonts[font_key] = GLFont(font_family, font_size, bold, italic)
 
-        font = self.__fonts[font_key]
+        font = self.__dynamic_text_fonts[font_key]
 
         text_width, text_height = font.get_dimensions(text, scale)
 
@@ -1335,29 +1339,31 @@ class OpenGLShaderRenderer(BaseRenderer):
 
         return text_width, text_height
 
-    def generate_pg_surf_text(
+    def generate_static_text(
             self,
             text: str,
             color: Color | tColor,
-            bg_color: Color | tColor,
+            bg_color: Color | tColor | None = None,
             *,
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False
-    ) -> pg.Surface:
+    ) -> int:  # TextID
         """
         Generate a pygame surface with text
-        :param text: Text to be drawn
-        :param color: Text color
-        :param bg_color: Background color
-        :param font_size: Font size
-        :param font_family: Font family
-        :param bold: Whether the text is bold
-        :param italic: Whether the text is italic
-        :return: Surface with the text
         """
-        return self.get_font(
+        # Resolve background color safely
+        bg_rgba = None
+        if bg_color is not None:
+            bg_converted = convert_color(bg_color)
+            # Assuming bg_converted is an RGBA tuple/list from your Color logic
+            if len(bg_converted) == 4 and bg_converted[3] > 0:
+                bg_rgba = bg_converted
+            elif len(bg_converted) == 3:
+                bg_rgba = bg_converted
+
+        surface = self.get_font(
             font_size,
             font_family,
             bold,
@@ -1365,33 +1371,47 @@ class OpenGLShaderRenderer(BaseRenderer):
         ).render(
             text,
             True,
-            color.rgba255,
-            bg_color.rgba255 if bg_color.a255 > 125 else None
+            convert_color(color),
+            bg_rgba
         )
+        w, h = surface.get_size()
 
-    def draw_pg_surf(
+        text_data = pg.image.tobytes(surface, "RGBA", False)
+
+        tex_id = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, tex_id)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+        current_id = self.__static_text_id_counter
+        self.__static_text_graphics[current_id] = (tex_id, (w, h))
+        self.__static_text_id_counter += 1
+
+        return current_id
+
+    def draw_static_text(
             self,
             pos: coord_t,
-            surface: pg.Surface,
+            text_id: TextID,
             *,
             centered: bool = False,
             scale: float = 1.0,
             convert_global: bool = True,
-            offscreen_check: bool = True,
-            is_dynamic: bool = False
+            offscreen_check: bool = True
     ) -> None:
         """
         Draw a surface
         :param pos: Position of the surface
-        :param surface: Surface to draw
+        :param text_id: Text to draw, generated by generate_static_text()
         :param centered: Whether pos is center or top left
         :param scale: Scale the surface size
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :param is_dynamic: Whether the surface is changing or can be cached
         """
+        tex_id = self.__static_text_graphics[text_id][0]
+        w, h = self.__static_text_graphics[text_id][1]
         pos: Vec2 = convert_coord(pos, Vec2)
-        w, h = surface.get_size()
 
         if convert_global:
             pos = pv.global_vars.translate_screen_coord(pos)
@@ -1409,22 +1429,6 @@ class OpenGLShaderRenderer(BaseRenderer):
 
         if self.__check_out_of_screen((px, py), (scaled_w, scaled_h)):
             return
-
-        surf_id = id(surface)
-
-        if not is_dynamic and surf_id in self.__surf_cache:
-            tex_id = self.__surf_cache[surf_id]
-        else:
-            text_data = pg.image.tobytes(surface, "RGBA", False)
-            # noinspection PyArgumentList
-            tex_id = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, tex_id)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
-
-            if not is_dynamic:
-                self.__surf_cache[surf_id] = tex_id
 
         glEnable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
@@ -1452,8 +1456,5 @@ class OpenGLShaderRenderer(BaseRenderer):
 
         glPopMatrix()
         glDisable(GL_TEXTURE_2D)
-
-        if is_dynamic:
-            glDeleteTextures(1, [tex_id])
 
     # endregion

@@ -132,9 +132,15 @@ class Button(Rectangle):
         self.__fg_color = Color().from_1(*fg_color)
         self.__hover_fg_color = Color().from_1(*fg_color)
 
-        self.__text_font: pg.font.Font = renderer.get_font(64, "Arial", False, False)
-        self.__text_surface = self.__text_font.render(self.__text, True,
-                                                      self.__fg_color.rgb255)
+        self.__text_id = renderer.generate_static_text(
+            self.__text,
+            self.__fg_color.rgb255,
+            Color().from_255(0, 0, 0, 0),
+            font_size=64,
+            font_family="Arial",
+            bold=False,
+            italic= False,
+        )
 
         # if self.__command is not None:
         if self.__command is not None:
@@ -143,9 +149,9 @@ class Button(Rectangle):
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
 
-        renderer.draw_pg_surf(
+        renderer.draw_static_text(
             self.center.absolute_global,
-            self.__text_surface,
+            self.__text_id,
             centered=True,
             convert_global=False
         )

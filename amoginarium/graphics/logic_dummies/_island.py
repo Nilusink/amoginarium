@@ -581,12 +581,13 @@ class Island(SyncedGraphicsEntity):
 
         if self.debug:
             debug_surface = self.mask.to_surface()
-            renderer.draw_pg_surf((
-                self.world_position.x,
-                self.world_position.y + self.size.y
-            ),
-                debug_surface
-            )
+            # todo: mytodo - reimplement other way of debug!
+            # renderer.draw_pg_surf((
+            #     self.world_position.x,
+            #     self.world_position.y + self.size.y
+            # ),
+            #     debug_surface
+            # )
 
         if self._highlight:
             renderer.enable_stencil(True)

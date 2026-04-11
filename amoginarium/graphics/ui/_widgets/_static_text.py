@@ -14,7 +14,7 @@ from .._types import Positions, Anchor
 from .._base import UIEntity, UIEventElement
 
 
-class Text(UIEventElement):
+class UIStaticText(UIEventElement):
     __text: str
 
     def __init__(
