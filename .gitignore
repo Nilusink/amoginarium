@@ -3,7 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 assets/images/textures/
-assets/images/dirt_islands/
 **/layers/
 **/_images/
 *.lprof
