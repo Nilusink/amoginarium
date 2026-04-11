@@ -45,7 +45,7 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         Shield,
         HealingPotion,
         JetBag,
-        RailGunDummy
+        RailGunDummy,
         TextEntity
     ]
 }
