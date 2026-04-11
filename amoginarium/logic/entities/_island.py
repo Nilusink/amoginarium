@@ -80,7 +80,6 @@ class Island(LogicGameEntity):
         args: tp.MutableMapping[str, tp.Any] = {
             "id": self.id,
             "cid": self.cid(),
-            "pos": self.position.xy
         }
 
         if form is not ...:
