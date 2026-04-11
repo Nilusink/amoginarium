@@ -17,7 +17,7 @@ import typing as tp
 from ._base_entity import LogicGameEntity
 from ._static_turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret
 from ._static_turrets import FlakTurret, CRAMTurret
-
+from ._text_entity import TextEntity
 
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
@@ -29,6 +29,6 @@ SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
         FlakTurret,
         CRAMTurret,
         # Radar,
-        # TextEntity,
+        TextEntity,
     ]
 }

@@ -182,6 +182,7 @@ class BaseRenderer(abc.ABC):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_rect_line(
             self,
             start: coord_t,
@@ -203,6 +204,7 @@ class BaseRenderer(abc.ABC):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_rounded_rect_line(
             self,
             start: coord_t,
@@ -234,6 +236,7 @@ class BaseRenderer(abc.ABC):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def draw_bar(
             self,
             pos: coord_t,

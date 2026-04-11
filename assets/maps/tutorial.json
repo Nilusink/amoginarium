@@ -1,6 +1,6 @@
 {
     "name": "Tutorial",
-    "background": 3,
+    "background": 2,
     "spawn_pos": [100, 600],
     "platforms": [
         {
@@ -117,7 +117,7 @@
             "pos": [6700, 765]
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [200, 200],
             "args": {
                 "text": "Welcome to amoginarium!",
@@ -125,7 +125,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [200, 300],
             "args": {
                 "text": "Your goal is to destroy all turrets",
@@ -134,7 +134,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [200, 350],
             "args": {
                 "text": "and to get to the end of the World.",
@@ -143,7 +143,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [2000, 300],
             "args": {
                 "text": "We're going to start with something easy ...",
@@ -152,7 +152,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [4300, 300],
             "args": {
                 "text": "Mortar Turret",
@@ -166,7 +166,7 @@
             "pos": [6000, 740]
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [8000, 300],
             "args": {
                 "text": "Well done! Now on",
@@ -175,7 +175,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [8000, 350],
             "args": {
                 "text": "to the next one!",
@@ -184,7 +184,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [9200, 300],
             "args": {
                 "text": "AK-47 Turret",
@@ -198,7 +198,7 @@
             "pos": [10500, 805]
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [12000, 300],
             "args": {
                 "text": "That was a little bit",
@@ -207,7 +207,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [12000, 350],
             "args": {
                 "text": "more difficult, but no",
@@ -216,7 +216,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [12000, 400],
             "args": {
                 "text": "match for your skill!",
@@ -225,7 +225,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [13000, 300],
             "args": {
                 "text": "Now lets try something ...",
@@ -234,7 +234,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [14600, 300],
             "args": {
                 "text": "Mortar + CRAM",
@@ -268,7 +268,7 @@
             "group": 0
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [18500, 300],
             "args": {
                 "text": "Damn, I didn't expect you",
@@ -277,7 +277,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [18500, 350],
             "args": {
                 "text": "to even get this far. ",
@@ -286,7 +286,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [18500, 400],
             "args": {
                 "text": "Now try and dodge this!",
@@ -295,7 +295,7 @@
             }
         },
         {
-            "type": "instructions.text",
+            "type": "static.text",
             "pos": [20000, 300],
             "args": {
                 "text": "Flak",
