@@ -13,6 +13,9 @@ import typing as tp
 class Anchor(StrEnum):
     """UI Placement anchor types"""
     NW = "nw"
+    NE = "NE"
+    SW = "sw"
+    SE = "se"
     CENTER = "center"
 
 
@@ -23,6 +26,3 @@ class Positions(StrEnum):
     BOTTOM_LEFT = "bottom_left"
     BOTTOM_RIGHT = "bottom_right"
     CENTER = "center"
-
-
-ui_color_t = tp.Union[tuple[int, int, int], tuple[int, int, int, int]]  # Temporary solution

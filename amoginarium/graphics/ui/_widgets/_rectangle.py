@@ -126,7 +126,6 @@ class Rectangle(UIEventElement):
     def border_color(self, value) -> None:
         self.__border_color_animation = ColorAnimation(value)
 
-
     def __on_cursor_enter(self) -> None:
         """Called when a cursor enters the rectangle"""
         if self.__on_hover_sound is not None:
@@ -177,7 +176,7 @@ class Rectangle(UIEventElement):
         bg_color = self.__bg_color_animation.current_value
         radius = self.__radius_animation.current_value
 
-        super()._gl_draw(delta_cal)
+        super()._gl_draw(delta_cal, layer)
 
         if radius > 0:
             if border_width > 0:
@@ -185,8 +184,8 @@ class Rectangle(UIEventElement):
                 renderer.draw_rounded_rect_line(
                     self.top_left.absolute_global,
                     self.size.absolute,
-                    border_color,
-                    radius,
+                    color=border_color,
+                    radius=radius,
                     thickness=border_width,
                     convert_global=False
                 )
@@ -195,8 +194,8 @@ class Rectangle(UIEventElement):
             renderer.draw_rounded_rect(
                 self.top_left.absolute_global + border_width,
                 self.size.absolute - 2 * border_width,
-                bg_color,
-                inner_radius if inner_radius > 0 else 0,
+                color=bg_color,
+                radius=inner_radius if inner_radius > 0 else 0,
                 convert_global=False
             )
 
@@ -206,7 +205,7 @@ class Rectangle(UIEventElement):
                 renderer.draw_rect_line(
                     self.top_left.absolute_global,
                     self.size.absolute,
-                    border_color,
+                    color=border_color,
                     thickness=border_width,
                     convert_global=False
                 )
@@ -214,7 +213,7 @@ class Rectangle(UIEventElement):
             renderer.draw_rect(
                 self.top_left.absolute_global + border_width,
                 self.size.absolute - 2 * border_width,
-                bg_color,
+                color=bg_color,
                 convert_global=False
             )
 

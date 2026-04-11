@@ -17,6 +17,7 @@ from ....shared.utility import coord_t, Color, color_t
 from ...render_bindings import renderer
 from ...logic_dummies import PresetGraphicsSoundEffect, GraphicsSoundEffect
 
+
 from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColorValues, AnimatedFloatValues, \
     peaked_s_curve, anim_vec2_values_t, AnimatedVec2Values
 from .._types import Anchor, Positions
@@ -97,9 +98,9 @@ class Button(Rectangle):
                                                                  extend_curve=peaked_s_curve,
                                                                  collapse_curve=lambda a: a),
 
-            on_enter_sound: GraphicsSoundEffect | None = OnHoverButtonSound,
-            on_leave_sound: GraphicsSoundEffect | None = OnButtonLeaveSound,
-            on_click_sound: GraphicsSoundEffect | None = ButtonClickSound
+            on_enter_sound: PresetGraphicsSoundEffect | None = OnHoverButtonSound,
+            on_leave_sound: PresetGraphicsSoundEffect | None = OnButtonLeaveSound,
+            on_click_sound: PresetGraphicsSoundEffect | None = ButtonClickSound
     ) -> None:
         super().__init__(
             position=position,
@@ -136,10 +137,11 @@ class Button(Rectangle):
                                                       self.__fg_color.rgb255)
 
         # if self.__command is not None:
-        self.add_click_callback(lambda: self.__command())
+        if self.__command is not None:
+            self.add_click_callback(lambda: self.__command())
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
-        super()._gl_draw(delta_cal)
+        super()._gl_draw(delta_cal, layer)
 
         renderer.draw_pg_surf(
             self.center.absolute_global,

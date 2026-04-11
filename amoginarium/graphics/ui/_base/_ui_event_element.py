@@ -39,9 +39,9 @@ class UIEventElement(UIElement):
     __is_hovered_outer: bool | None
     __is_hovered_outer_last: bool | None
 
-    __on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None
-    __on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None
-    __on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None
+    __on_enter_callbacks: list[tp.Callable[[], tp.Any]]
+    __on_leave_callbacks: list[tp.Callable[[], tp.Any]]
+    __on_buffer_callbacks: list[tp.Callable[[], tp.Any]]
     __on_click_callbacks: list[tp.Callable[[], tp.Any]]
 
     def __init__(
@@ -253,13 +253,13 @@ class UIEventElement(UIElement):
         self.__is_hovered_inner = None
         self.__is_hovered_outer = None
 
-        super()._gl_draw(delta_cal)
+        super()._gl_draw(delta_cal, layer)
 
         if self.__use_collision_mask and self._ui_changed:
             self.__collision_recreation = True
 
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
-        super()._after_gl_draw(drawn)
+        super()._after_gl_draw(drawn, layer)
         if drawn:
             if self.__on_enter_callbacks or self.__on_leave_callbacks or self.__on_buffer_callbacks:
                 hovered_inner = self.__hovered_inner()

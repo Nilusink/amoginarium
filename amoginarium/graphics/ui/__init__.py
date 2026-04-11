@@ -8,6 +8,6 @@ Authors: Nilusink, LukasKrah
 
 from ._animations import AnimationPhase, anim_input_t, anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t, \
     ComplexAnimation, create_animation, Animation, SimpleAnimation, MultiAnimation, Vec2Animation, AnimatedColorValues
-from ._widgets import Rectangle, Button, UICursor
+from ._widgets import Rectangle, Button, UICursor, UIEntry
 from ._base import UIElement, UIEntity
 from ._types import Positions, Anchor
