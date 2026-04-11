@@ -8,25 +8,24 @@ Project: amoginarium
 #                    Imports                     #
 ##################################################
 
-from typing import Callable
-from amoginarium.graphics.ui import Button, UIEntity, Rectangle
+import typing as tp
+from amoginarium.graphics.ui import Button, Rectangle
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class StartMenu(UIEntity):
+class StartMenu(Rectangle):
     call = 0
 
     def __init__(
             self,
-            start_game_callback: Callable[[], None],
-            open_settings_callback: Callable[[], None],
-            exit_callback: Callable[[], None],
+            start_game_callback: tp.Callable[[], None],
+            open_settings_callback: tp.Callable[[], None],
+            exit_callback: tp.Callable[[], None],
     ) -> None:
-        super().__init__()
-        current_parent = Rectangle((0.5, 0.5), (0.2, 0.4), parent=self, bg_color=(70, 70, 70, 150), border_width=0)
+        super().__init__((0.5, 0.5), (0.2, 0.4), bg_color=(70, 70, 70, 150), border_width=0)
 
         padding = 0.08
         but_width = 1 - padding * 2
@@ -36,15 +35,16 @@ class StartMenu(UIEntity):
             (0.5, padding + but_height / 2),
             (but_width, but_height),
             "New game",
-            parent=current_parent,
+            parent=self,
             command=start_game_callback
         )
 
-        Button(
+        self.count = 0
+        self.but = Button(
             (0.5, 0.5),
             (but_width, but_height),
             "Settings",
-            parent=current_parent,
+            parent=self,
             command=open_settings_callback
         )
 
@@ -52,6 +52,6 @@ class StartMenu(UIEntity):
             (0.5, 1 - (padding + but_height / 2)),
             (but_width, but_height),
             "Exit",
-            parent=current_parent,
+            parent=self,
             command=exit_callback,
         )
