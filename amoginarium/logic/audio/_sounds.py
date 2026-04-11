@@ -46,11 +46,9 @@ class _Sounds:
             soundzip = zipfile.ZipFile(path)
             files = sorted(soundzip.infolist(), key=lambda f: f.filename)
             scope = path.split(".")[0].split("/")[-1]
-            ic("z", files)
 
         else:
             files = sorted(file for file in os.listdir(path) if os.path.isfile(os.path.join(path, file)))
-            ic(files)
             scope = path.split("/")[-1]
 
         if self.debug >= 2:
