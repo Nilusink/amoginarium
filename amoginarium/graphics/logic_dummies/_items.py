@@ -278,6 +278,7 @@ class JetBag(BaseItem):
                     self.size.x,
                     self.size.y
                 ),
+                pixel_perfect=True
             )
             self._facing = False
 
@@ -289,6 +290,7 @@ class JetBag(BaseItem):
                     self.size.x,
                     self.size.y
                 ),
+                pixel_perfect=True
             )
             self._facing = True
 
