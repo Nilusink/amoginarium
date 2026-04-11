@@ -131,11 +131,14 @@ class PlayerDummy(SyncedLRImageEntity):
             # check if item
             if self._hotbar.buff.selected < self._hotbar.buff.size:
                 item = self._hotbar.buff.slots[self._hotbar.buff.selected]
-                if item.count > 0 and item.item_id > 0:
-                    self.add_child(SE_MANAGER.get_entity(item.item_id))
+                entity = SE_MANAGER.get_entity(item.item_id)
 
-                else:
-                    self.remove_child(SE_MANAGER.get_entity(item.item_id))
+                if entity:
+                    if item.count > 0 and item.item_id > 0:
+                        self.add_child(entity)
+
+                    else:
+                        self.remove_child(entity)
 
             # draw health bar
             owp = self.world_position

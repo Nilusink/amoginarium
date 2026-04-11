@@ -73,6 +73,14 @@ class WeaponCIDs(Enum):
     cram = "weapon.cram"
     h_grenade = "weapon.grenade.hand"
     base = "weapon.base"
+    railgun = "weapon.railgun"
+
+
+class ItemCIDs(Enum):
+    """Component IDs for items"""
+    shield = "item.shield"
+    healing_potion = "item.healing_potion"
+    jetbag = "item.jetbag"
 
 
 class GraphicsCIDs(Enum):

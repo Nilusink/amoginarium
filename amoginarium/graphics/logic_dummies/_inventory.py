@@ -163,7 +163,14 @@ class Inventory(BaseGraphicsEntity):
                     if slot.item_id == 0:
                         continue
 
-                    texture, size = SE_MANAGER.get_entity(slot.item_id).get_icon()
+                    item = SE_MANAGER.get_entity(slot.item_id)
+                    if not item:
+                        continue
+
+                    texture, size = item.get_icon()
+
+                    if texture is ...:
+                        continue
 
                     max_size = max(size)
                     factor = (slot_size[0] * 0.8) / max_size

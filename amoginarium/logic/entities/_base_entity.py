@@ -250,7 +250,7 @@ class LogicGameEntity(PositionedLogicEntity):
             size: Vec2,
             position: Vec2,
             initial_velocity: Vec2 | None = None,
-            parent: tp.Self | None = None,
+            parent: LogicGameEntity | None = None,
             coalition: Coalitions | EllipsisType = ...
     ) -> None:
         super().__init__(

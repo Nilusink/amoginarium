@@ -153,6 +153,7 @@ class SoundEffect:
 
 
 class PresetEffect(SoundEffect):
+    """preset sound effect"""
     _sound_name: str
 
     def __init__(self):
@@ -184,6 +185,11 @@ class Mortar(PresetEffect):
 class ReloadGeneric(PresetEffect):
     volume = .4
     _sound_name = "reload_generic"
+
+
+class OnHoverButtonSound(PresetEffect):
+    volume = 1
+    _sound_name = "button_hover"
 
 
 def sound_effect_wrapper(sound_name: str, volume: float = 1) -> SoundEffect:

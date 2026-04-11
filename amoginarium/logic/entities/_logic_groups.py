@@ -177,7 +177,7 @@ class _Players(BaseGroup):
         :returns: min, max
         """
         max_pos = Vec2()
-        min_pos = Vec2().from_cartesian(np.inf, 0)
+        min_pos = Vec2().from_cartesian(np.inf, np.inf)
 
         for sprite in self.sprites():
             if sprite.position.x > max_pos.x:

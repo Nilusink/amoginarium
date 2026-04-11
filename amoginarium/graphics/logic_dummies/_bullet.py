@@ -223,9 +223,8 @@ class MortarShell(BulletDummy):
 class Grenade(BulletDummy):
     _bullet_image: str = ("grenade", "")
     _cid = DummyCIDs.grenade
-    _default_trace_color = Color().from_1(1, 1, 1, .3)
-    _default_trace_length = 20
     _default_show_trace = False
+
 
 
 class CRAMBullet(BulletDummy):
