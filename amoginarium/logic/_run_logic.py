@@ -32,7 +32,7 @@ from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE
 from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
 from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
 from .entities import GravityAffected, FrictionXAffected, MortarShell, Mortar
-from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect
+from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeExplosion
 from .graphics_dummies import Controller
 
 
@@ -80,7 +80,7 @@ class LogicProcess:
         )
 
         # initialize pygame
-        pg.mixer.init(buffer=1024)
+        pg.mixer.init(channels=2, buffer=1024)
         pg.mixer.set_num_channels(64)
 
         self._write_lock = write_lock
@@ -371,8 +371,12 @@ class LogicProcess:
         # # test stuff
         # self._dummy_dad.update(delta)
         # self._w.update(delta)
-        # if start - self._last_spawn > .25 and 0:
+        # if start - self._last_spawn > 1:
+        #     exp = LargeExplosion()
+        #     exp.volume = 0.35
+        #     exp.play(pos=Vec2().from_cartesian(600, 700))
         #     self._last_spawn = start
+
         #     self._w.shoot(self._b_vel, 10)
         #     self._w._stop_recoil()
 
@@ -395,6 +399,7 @@ class LogicProcess:
         players = Players.sprites()
         if len(players) > 0:
             max_player_pos = players[0].position
+            pv.audio_observer_pos.xy = max_player_pos.xy
             world_position = pv.global_vars.get_world_position()
 
             screen_pixels = (

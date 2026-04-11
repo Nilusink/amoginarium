@@ -200,7 +200,7 @@ class BaseWeapon(Item):
             self._current_reload_time = 0
             self._mag_state = self._mag_size
             sound_effect = ReloadGeneric()
-            sound_effect.play()
+            sound_effect.play(pos=self.position)
 
         # recoil time
         if self._current_recoil_time > 0:
@@ -258,10 +258,10 @@ class BaseWeapon(Item):
 
         if self._sound_effect is not ...:
             if not self._sound_effect.playing:
-                self._sound_effect.play()
+                self._sound_effect.play(pos=self.position)
 
             elif not hasattr(self._sound_effect, "stage_one_done"):
-                self._sound_effect.play()
+                self._sound_effect.play(pos=self.position)
 
             if hasattr(self._sound_effect, "stage_one_done"):
                 if not self._sound_effect.stage_one_done:

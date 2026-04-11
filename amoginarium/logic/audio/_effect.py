@@ -7,13 +7,19 @@ a basic sound effect
 Author:
 Nilusink
 """
-from icecream import ic
-from ._sounds import sounds, sound_name_t
+
 from random import choice, uniform
+from types import EllipsisType
+from icecream import ic
 import typing as tp
 import pygame as pg
+import math as m
 
 from amoginarium.shared.debugging import CC
+from amoginarium.shared.utility import Vec2
+from amoginarium import pv
+
+from ._sounds import sounds, sound_name_t
 
 
 class _SoundEffects:
@@ -63,9 +69,10 @@ class SoundEffect:
     ) -> None:
         self._sound_name = sound
         self._on_finish = on_finish_playing
-        self._channel = ...
+        self._channel: pg.mixer.Channel = ...
         self._has_played = False
         self._loop = False
+        self._pos: Vec2 | EllipsisType = ...
 
     @property
     def playing(self) -> bool:
@@ -80,6 +87,7 @@ class SoundEffect:
             loops: int = 0,
             maxtime: int = 0,
             fade_ms: int = 0,
+            pos: Vec2 | EllipsisType = ...
     ) -> None:
         """
         play the sound effect
@@ -87,6 +95,10 @@ class SoundEffect:
         if loops < 0:
             self._loop = True
 
+        if pos is not ...:
+            self._pos = pos
+
+        self._update_volume()
         if self._has_played and not self._loop:
             SoundEffect(
                 self._sound_name,
@@ -117,7 +129,6 @@ class SoundEffect:
         if self._channel is None:
             return
 
-        self._channel.set_volume(self.volume)
         self._channel.play(self._sound, loops, maxtime, fade_ms)
         self._has_played = True
 
@@ -133,12 +144,41 @@ class SoundEffect:
         self._loop = False
         self._channel = ...
 
+    def _update_volume(self) -> None:
+        """adjust the volume depending on position"""
+
+        if self._channel is ... or self._channel is None:
+            return
+
+        # set volume
+        self._channel.set_volume(self.volume)
+
+        if self._pos is ...:
+            return
+
+        # set distance / angle
+        if self._channel.get_busy():
+            delta = self._pos - pv.audio_observer_pos
+
+            # play both sides for close sound
+            if delta.length < 32:
+                delta.angle = m.pi / 2
+
+            delta.length *= .05
+
+            self._channel.set_source_location(
+                (delta.angle + m.pi / 2) * (180/m.pi),
+                min(delta.length, 255),
+            )
+
     def update(self) -> None:
         """
         updates called by the game loop
         """
         if self._channel is ... or self._channel is None:
             return
+
+        self._update_volume()
 
         done_playing = all([
             self._has_played,
@@ -211,6 +251,7 @@ class ContinuousSoundEffect:
         self._stage_one = ...
         self._stage_two = ...
         self._stage_three = ...
+        self._pos = ...
 
         if self._stage_one_name is not ...:
             self._stage_one = SoundEffect(
@@ -257,7 +298,9 @@ class ContinuousSoundEffect:
     def stage_one_done(self) -> bool:
         return self.playing > 1
 
-    def play(self) -> None:
+    def play(self, pos: Vec2 = ...) -> None:
+        self._pos = pos
+
         if self._playing:
             info = CC.fg.RED+"tried to double-play CSE"+CC.ctrl.ENDC
             ic(info)
@@ -267,21 +310,21 @@ class ContinuousSoundEffect:
             return self._play_2()
 
         self._playing = 1
-        self._stage_one.play()
+        self._stage_one.play(pos=pos)
 
     def _play_2(self) -> None:
         if self._stage_two is ...:
             return self._play_3()
 
         self._playing = 2
-        self._stage_two.play(loops=-1)
+        self._stage_two.play(loops=-1, pos=self._pos)
 
     def _play_3(self) -> None:
         if self._stage_three is ...:
             return self._stop()
 
         self._playing = 3
-        self._stage_three.play()
+        self._stage_three.play(pos=self._pos)
 
     def stop(self) -> None:
         match self.playing:
@@ -368,6 +411,7 @@ class RandomizedEffect:
             loops: int = 0,
             maxtime: int = 0,
             fade_ms: int = 0,
+            pos: Vec2 = ...,
     ) -> None:
         """
         play the sound effect
@@ -380,7 +424,8 @@ class RandomizedEffect:
         self._playing.play(
             loops,
             maxtime,
-            fade_ms
+            fade_ms,
+            pos
         )
 
     def stop(self) -> None:

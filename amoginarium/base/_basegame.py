@@ -745,6 +745,10 @@ class BaseGame:
                 Drawn_0.gl_draw(delta)
                 Drawn_1.gl_draw(delta)
                 Drawn_2.gl_draw(delta)
+                # renderer.draw_circle(
+                #     Vec2().from_cartesian(600, 700) - pv.global_vars.get_world_position(),
+                #     8,16, (255, 255, 0)
+                # )
 
             pg.display.flip()
 
