@@ -26,6 +26,7 @@ from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._items import Shield, HealingPotion, JetBag
 from ._base_entity import LogicGameEntity
+from ._charged_weapons import RailGun
 from ._inventory import Inventory
 from ._island import Island
 from ._base_item import Item
@@ -100,7 +101,7 @@ class Player(LogicGameEntity):
             HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),
             JetBag(self._runtime_buffer, Vec2().from_cartesian(-24, 0)),
             # Bow(self, False, parent_position_offset=(0, 0)),
-            # RailGun(self, False, parent_position_offset=(0, 0)),
+            RailGun(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
         ]
         for item in items:
             self._hotbar.add_item(
@@ -420,14 +421,7 @@ class Player(LogicGameEntity):
                         item: ... = self.item
 
                         if item.charged > 0:
-                            mouse_pos = pg.mouse.get_pos()
-                            vector = convert_coord((
-                                (mouse_pos[ 0] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_x,
-                                (mouse_pos[1] / pv.global_vars.pixel_per_meter) * pv.global_vars.screen_size_fac_y,
-                            ), Vec2)
-                            vector -= self.world_position
-
-                            if self.item.shoot(vector):
+                            if self.item.shoot(self.facing):
                                 self._controller.feedback_shoot()
 
                         else:

@@ -74,6 +74,7 @@ class WeaponCIDs(Enum):
     cram = "weapon.cram"
     h_grenade = "weapon.grenade.hand"
     base = "weapon.base"
+    railgun = "weapon.railgun"
 
 
 class ItemCIDs(Enum):

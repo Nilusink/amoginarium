@@ -144,6 +144,11 @@ class BaseWeapon(Item):
         return self._bullet_explosion_damage
 
     @property
+    def bullet_damage(self) -> float:
+        """damage dealt by bullet"""
+        return self._bullet_damage
+
+    @property
     def parent_position_offset(self) -> Vec2:
         """
         offset to parent center
@@ -298,7 +303,7 @@ class BaseWeapon(Item):
                 + direction.normalize() * self._barrel_length * .45
             ),
             initial_velocity=direction.normalize() * self.bullet_speed + self.parent.velocity,
-            base_damage=self._bullet_damage,
+            base_damage=self.bullet_damage,
             size=self._bullet_size,
             explosion_radius=self.bullet_explosion_radius,
             explosion_damage=self.bullet_explosion_damage,

@@ -169,6 +169,9 @@ class Inventory(BaseGraphicsEntity):
 
                     texture, size = item.get_icon()
 
+                    if texture is ...:
+                        continue
+
                     max_size = max(size)
                     factor = (slot_size[0] * 0.8) / max_size
 
