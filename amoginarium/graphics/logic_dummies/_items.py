@@ -15,7 +15,7 @@ from amoginarium.shared.utility import Vec2, Color, normalize_angle
 from amoginarium.base._textures import textures
 from amoginarium.shared import ItemCIDs
 
-from ..entities import Drawn_1, Drawn_0
+from ..entities import Drawn_1, Drawn_0, Animation
 from ..render_bindings import renderer
 from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
@@ -27,7 +27,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
     ``param1``: usage
     """
 
-    __slots__ = ("_internal_offset",)
+    __slots__ = ("_internal_offset", "_bar_colors")
 
     _image_name: tuple[str, str] | str = "bullet"
     _image_size: tuple[int, int] = (32, 32)
@@ -78,54 +78,36 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
         self._internal_offset.x = (square_size - self._image_size[0]) / 2
         self._internal_offset.y = (square_size - self._image_size[1]) / 2
 
+        self._bar_colors = (Color().from_1(0.55, 0.55, 1),)
+
         self.remove(Drawn_0)
         self.add(Drawn_1)
 
     def get_icon(self) -> tuple[int, tuple[int, int]]:
         return self._texture_id_r, self._image_size
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
-        angle = self.facing.angle * (180/m.pi)
+    def _gl_draw(self, delta_cal: float, layer: int = 0, draw_item: bool = True):
+        if draw_item:
+            angle = self.facing.angle * (180/m.pi)
+            if self.facing.x < 0:
+                renderer.draw_textured_quad(
+                    self._texture_id_l,
+                    self.world_position,
+                    self.size,
+                    rotate_angle=angle - 180,
+                    pixel_perfect=True
+                )
 
-        if self.facing.x < 0:
-            renderer.draw_textured_quad(
-                self._texture_id_l,
-                self.world_position,
-                self.size,
-                rotate_angle=angle - 180,
-                pixel_perfect=True
-            )
+            else:
+                renderer.draw_textured_quad(
+                    self._texture_id_r,
+                    self.world_position,
+                    self.size,
+                    rotate_angle=angle,
+                    pixel_perfect=True
+                )
 
-        else:
-            renderer.draw_textured_quad(
-                self._texture_id_r,
-                self.world_position,
-                self.size,
-                rotate_angle=angle,
-                pixel_perfect=True
-            )
-
-
-class Shield(BaseItem):
-    """
-    protective shield
-
-    ``param1``: usage
-    """
-    __slots__ = ("_bar_colors",)
-
-    _cid = ItemCIDs.shield
-    _image_name: tuple[str, str] | str = ("Shield_6", "4")
-    _image_size: tuple[int, int] = (45, 80)
-    
-    def __init__(self, sync_id: int) -> None:
-        super().__init__(sync_id)
-        self._bar_colors = (Color().from_1(0.55, 0.55, 1),)
-
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
-        super()._gl_draw(delta_cal, layer)
-        
-        # draw health bar
+        # draw usage bar
         if self._get_bit("flags", 15):
             if self.parent:
                 pos = self.parent.world_position
@@ -136,11 +118,24 @@ class Shield(BaseItem):
                 size = self.size
 
             renderer.draw_bar(
-                (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5*7),
+                (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5 * 7),
                 (size.x, 7),
                 self._bar_colors,
                 self.param1,
             )
+
+
+class Shield(BaseItem):
+    """
+    protective shield
+
+    ``param1``: usage
+    """
+    __slots__ = ()
+
+    _cid = ItemCIDs.shield
+    _image_name: tuple[str, str] | str = ("Shield_6", "4")
+    _image_size: tuple[int, int] = (45, 80)
 
 
 class HealingPotion(BaseItem):
@@ -155,6 +150,7 @@ class HealingPotion(BaseItem):
 
     _cid = ItemCIDs.healing_potion
     _image_name = ("potions", "empty")
+    _image_size = (32, 32)
     _empty_mask = ("potions", "empty_mask")
     _mask_texture = ...
 
@@ -218,3 +214,83 @@ class HealingPotion(BaseItem):
             renderer.disable_stencil()
 
         super()._gl_draw(delta_cal, layer=layer)
+
+
+class JetBag(BaseItem):
+    """makes you flyyy (not actually, but it makes it look like you do)"""
+    
+    __slots__ = ()
+
+    _cid = ItemCIDs.jetbag
+    _image_name: tuple[str, str] | str = ("missiles", "Missile02F")
+    _image_size: tuple[int, int] = (32, 64)
+    _animation_scope: str = "flame"
+    _animation_size: tuple[int, int] = (32, 32)
+    _animation_textures: list[int] = ...
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._texture_id_r is not ...:
+            return
+
+        cls._animation_textures = [
+            t[0]
+            for t in textures.get_all_from_scope(
+                cls._animation_scope, cls._animation_size
+            )
+        ]
+
+        super().load_textures()
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self._animation = Animation(
+            self._animation_textures,
+            self._animation_size,
+            0.05,
+            position_reference=self._flame_position,
+            loop=True,
+        )
+
+    def _flame_position(self) -> Vec2:
+        return self.pos + Vec2().from_cartesian(
+            self.size.x / 2
+            * (1 if self.facing else -1),
+            self.size.y / 2 + 36
+        )
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
+        angle = normalize_angle(self.facing.angle) * (180 / m.pi)
+        own_pos = self.world_position
+
+        if self._get_bit("flags", 14):  # active
+            self._animation.play()
+
+        else:
+            self._animation.stop()
+
+        if 90 < angle < 270:
+            renderer.draw_textured_quad(
+                self._texture_id_l,
+                own_pos,
+                (
+                    self.size.x,
+                    self.size.y
+                ),
+            )
+            self._facing = False
+
+        else:
+            renderer.draw_textured_quad(
+                self._texture_id_r,
+                own_pos,
+                (
+                    self.size.x,
+                    self.size.y
+                ),
+            )
+            self._facing = True
+
+        # draw usage bar
+        super()._gl_draw(delta_cal, layer=layer, draw_item=False)

@@ -300,7 +300,9 @@ class JetBag(BaseItem):
         parent_position_offset: Vec2,
     ) -> None:
         super().__init__(
-            runtime_buffer, Vec2(), parent_position_offset=parent_position_offset
+            runtime_buffer,
+            Vec2().from_cartesian(32, 64),
+            parent_position_offset=parent_position_offset,
         )
 
         self._in_use = False
@@ -314,6 +316,25 @@ class JetBag(BaseItem):
         self._in_use = False
 
     def _update(self, delta: float, **_) -> None:
+        if not self.parent:
+            self._set_bit("flags", 14, False)  # set use to false
+            super()._update(delta)
+            return
+
+        # set in use
+        self._set_bit("flags", 14, self._in_use)
+
+        # adjust position
+        self.facing.angle = self.parent.facing.angle
+
+        if self.facing.x > 0:
+            self.position = self.parent.position + self._parent_position_offset
+            self.position -= self.size / 2
+
+        else:
+            self.position = self.parent.position - self._parent_position_offset
+            self.position -= self.size / 2
+
         if self._in_use:
             if self._uses_left > 0:
                 self._uses_left -= delta
@@ -340,3 +361,4 @@ class JetBag(BaseItem):
                     self._max_uses
                 )
 
+        super()._update(delta, keep_position=True)
