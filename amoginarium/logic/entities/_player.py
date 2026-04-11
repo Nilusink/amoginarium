@@ -24,10 +24,10 @@ from ..graphics_dummies import Controller
 from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
+from ._items import Shield, HealingPotion, JetBag
 from ._base_entity import LogicGameEntity
 from ._inventory import Inventory
 from ._island import Island
-from ._items import Shield, HealingPotion
 from ._base_item import Item
 
 
@@ -96,9 +96,9 @@ class Player(LogicGameEntity):
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
             Sniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
-            Shield(self._runtime_buffer, Vec2().from_cartesian(50, 0)),
+            Shield(self._runtime_buffer, Vec2().from_cartesian(64, 0)),
             HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),
-            # JetBag(self, Vec2().from_cartesian(-24, 0)),
+            JetBag(self._runtime_buffer, Vec2().from_cartesian(-24, 0)),
             # Bow(self, False, parent_position_offset=(0, 0)),
             # RailGun(self, False, parent_position_offset=(0, 0)),
         ]
