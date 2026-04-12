@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base/_focus.py
+amoginarium/graphics/ui/_base/_focus.py
 
 Project: amoginarium
 Created: 03.04.2026

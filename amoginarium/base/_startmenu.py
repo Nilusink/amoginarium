@@ -9,16 +9,14 @@ Project: amoginarium
 ##################################################
 
 import typing as tp
-from amoginarium.graphics.ui import Button, Rectangle, UIStaticText
+from amoginarium.graphics.ui import UIButton, UIRectangle, UIStaticText, UIDynamicText
 
 
 ##################################################
 #                     Code                       #
 ##################################################
 
-class StartMenu(Rectangle):
-    call = 0
-
+class StartMenu(UIRectangle):
     def __init__(
             self,
             start_game_callback: tp.Callable[[], None],
@@ -31,18 +29,16 @@ class StartMenu(Rectangle):
         but_width = 1 - padding * 2
         but_height = (1 - padding * 5) / 4
 
-        # Slot 1: Top
         UIStaticText(
             (0.5, padding + but_height / 2),
             (but_width, but_height),
             "Welcome",
             parent=self,
             font_size=80,
-            fg_color=(255, 255, 255),
+            text_color=(255, 255, 255),
         )
 
-        # Slot 2: Middle-Top
-        Button(
+        UIButton(
             (0.5, padding * 2 + but_height * 1.5),
             (but_width, but_height),
             "New game",
@@ -50,9 +46,7 @@ class StartMenu(Rectangle):
             command=start_game_callback
         )
 
-        # Slot 3: Middle-Bottom
-        self.count = 0
-        self.but = Button(
+        self.but = UIButton(
             (0.5, padding * 3 + but_height * 2.5),
             (but_width, but_height),
             "Settings",
@@ -60,8 +54,7 @@ class StartMenu(Rectangle):
             command=open_settings_callback
         )
 
-        # Slot 4: Bottom (Uses original bottom math)
-        Button(
+        UIButton(
             (0.5, 1 - (padding + but_height / 2)),
             (but_width, but_height),
             "Exit",

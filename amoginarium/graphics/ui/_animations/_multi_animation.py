@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_animations/_multi_animation.py
+amoginarium/graphics/ui/_animations/_multi_animation.py
 
 Project: amoginarium
 Created: 16.03.2026
@@ -9,8 +9,7 @@ Authors: LukasKrah
 import typing as tp
 
 from ._animation_types import anim_input_t, AnimationPhase, anim_curve_input_t, anim_curve_t
-from ._complex_animation import ComplexAnimation, create_animation, Animation
-from ._simple_animation import SimpleAnimation
+from ._complex_animation import create_animation, Animation
 
 
 class MultiAnimation[A]:

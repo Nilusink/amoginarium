@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base/_ui_entity.py
+amoginarium/graphics/ui/_base/_ui_entity.py
 
 Project: amoginarium
 Created: 10.03.2026
@@ -8,7 +8,6 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from icecream import ic
 from types import EllipsisType
 import typing as tp
 

@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_pointer.py
+amoginarium/graphics/ui/_widgets/_ui_cursor.py
 
 Project: amoginarium
 Created: 11.03.2026

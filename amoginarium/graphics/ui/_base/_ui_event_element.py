@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base/_ui_event_element.py
+amoginarium/graphics/ui/_base/_ui_event_element.py
 
 Project: amoginarium
 Created: 18.03.2026
@@ -12,11 +12,10 @@ from __future__ import annotations
 import pygame as pg
 import typing as tp
 
-from ....shared.utility import Vec2, coord_t, convert_coord
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord
+
 from ...entities import UIEntities, Cursor
-
 from .._types import Anchor, Positions
-
 from ._ui_element import UIElement
 
 if tp.TYPE_CHECKING:

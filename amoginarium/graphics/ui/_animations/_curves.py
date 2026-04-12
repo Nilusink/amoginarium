@@ -1,11 +1,10 @@
 """
-amoginarium/ui/_animations/_curves.py
+amoginarium/graphics/ui/_animations/_curves.py
 
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah
 """
-
 
 class PeakedSCurve:
     """Peaked S-Curve"""

@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_button.py
+amoginarium/graphics/ui/_widgets/_ui_button.py
 
 Project: amoginarium
 Created: 26.03.2024
@@ -23,7 +23,7 @@ from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColo
 from .._types import Anchor, Positions
 from .._base import UIEntity
 
-from ._rectangle import Rectangle
+from ._ui_rectangle import UIRectangle
 
 
 class _OnHoverButtonSound(PresetGraphicsSoundEffect):
@@ -48,7 +48,7 @@ ButtonClickSound = _ButtonClickSound()
 ANIM_TIME: float = .2
 
 
-class Button(Rectangle):
+class UIButton(UIRectangle):
     """
     a button, what did you expect?
     """

@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base/_ui_element/_ui_element.py
+amoginarium/graphics/ui/_base/_ui_element/_ui_element.py
 
 Project: amoginarium
 Created: 10.03.2026
@@ -8,16 +8,13 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
 import typing as tp
 
-from .....shared.utility import Vec2, coord_t, convert_coord, TupleMath
-from ..... import pv
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord, TupleMath
+from amoginarium import pv
 
 from ..._types import Anchor, Positions
-
 from .._ui_entity import UIEntity
-
 from ._ui_element_values import UIElementValueVec2, UIElementValueFloatOneAbsolute, UIElementValueVec2OneAbsolute
 from ._ui_element_values import UIElementData, UIElementValueNamesEnum, UIElementValueTypesEnum
 

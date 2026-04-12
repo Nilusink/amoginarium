@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_rectangle.py
+amoginarium/graphics/ui/_widgets/_ui_rectangle.py
 
 Project: amoginarium
 Created: 01.03.2026
@@ -19,7 +19,7 @@ from .._base import UIEventElement, UIEntity
 from .._types import Anchor, Positions
 
 
-class Rectangle(UIEventElement):
+class UIRectangle(UIEventElement):
     """UI rectangle with basic sounds and animations"""
     __bg_color_animation: ColorAnimation
     __border_color_animation: ColorAnimation

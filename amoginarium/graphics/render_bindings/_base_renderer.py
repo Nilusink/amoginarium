@@ -29,7 +29,8 @@ class BaseRenderer(abc.ABC):
     Abstract Renderer Class
     """
     type TextureID = tp.Any
-    type TextID = tp.Any
+    type StaticTextID = tp.Any
+    type DynamicTextID = tp.Any
 
     # region Init and Loading
     @abc.abstractmethod
@@ -466,9 +467,10 @@ class BaseRenderer(abc.ABC):
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False,
+            text_id: DynamicTextID | None = None,
             convert_global: bool = True,
             offscreen_check: bool = True
-    ) -> tuple[float, float]:
+    ) -> DynamicTextID:
         """
         Draw a dynamic text to the given position
         :param pos: Position of the text
@@ -480,9 +482,10 @@ class BaseRenderer(abc.ABC):
         :param font_family: Family of the font
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
+        :param text_id: Optional ID of the old dynamic text. A renderer can use this to optimize the dynamic text drawing
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :return: (width, height) of the text
+        :return: DynamicTextID
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
@@ -491,7 +494,7 @@ class BaseRenderer(abc.ABC):
     def draw_static_text(
             self,
             pos: coord_t,
-            text_id: TextID,
+            text_id: StaticTextID,
             *,
             centered: bool = False,
             scale: float = 1.0,
@@ -521,7 +524,7 @@ class BaseRenderer(abc.ABC):
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False
-    ) -> TextID:
+    ) -> StaticTextID:
         """
         Generate a static text
         :param text: Text to be drawn
@@ -531,7 +534,8 @@ class BaseRenderer(abc.ABC):
         :param font_family: Font family
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
-        :return: Surface with the text
+        :return: StaticTextID
+        :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
     # endregion

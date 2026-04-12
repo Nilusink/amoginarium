@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_widgets/_entry.py
+amoginarium/graphics/ui/_widgets/_entry.py
 
 Project: amoginarium
 Created: 03.04.2026
@@ -13,11 +13,11 @@ from ....shared.utility import coord_t
 
 from .._animations import anim_color_values_t, anim_float_values_t, anim_vec2_values_t
 from .._types import Positions, Anchor
-from ._rectangle import Rectangle
+from ._ui_rectangle import UIRectangle
 from .._base import UIEntity
 
 
-class UIEntry(Rectangle):
+class UIEntry(UIRectangle):
     def __init__(
             self,
             position: coord_t,

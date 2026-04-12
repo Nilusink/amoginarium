@@ -7,7 +7,7 @@ Project: amoginarium
 from typing import Literal, Callable
 
 from .. import pv
-from ..graphics.ui import Rectangle, Button, UIEntity
+from ..graphics.ui import UIRectangle, UIButton, UIEntity
 
 
 ##################################################
@@ -27,14 +27,14 @@ class SettingsMenu(UIEntity):
         self.__update_window_callback = update_window_callback
         self.__close_settings_callback = close_settings_callback
 
-        current_parent = Rectangle((0.5, 0.5), (0.2, 0.5), parent=self, bg_color=(70, 70, 70, 150), border_width=0)
+        current_parent = UIRectangle((0.5, 0.5), (0.2, 0.5), parent=self, bg_color=(70, 70, 70, 150), border_width=0)
 
         padding = 0.06
         but_width = 1 - padding * 2
         but_height = (1 - padding * 5) / 4
         step = padding + but_height
 
-        Button(
+        UIButton(
             (0.5, padding + but_height / 2),
             (but_width, but_height),
             "Bars",
@@ -42,7 +42,7 @@ class SettingsMenu(UIEntity):
             command=lambda: self.__set_scaling("bars"),
         )
 
-        Button(
+        UIButton(
             (0.5, padding + but_height / 2 + step),
             (but_width, but_height),
             "Fixed ratio",
@@ -50,7 +50,7 @@ class SettingsMenu(UIEntity):
             command=lambda: self.__set_scaling("fixed_aspect_ratio"),
         )
 
-        Button(
+        UIButton(
             (0.5, padding + but_height / 2 + step * 2),
             (but_width, but_height),
             "Stretching",
@@ -58,7 +58,7 @@ class SettingsMenu(UIEntity):
             command=lambda: self.__set_scaling("stretching"),
         )
 
-        Button(
+        UIButton(
             (0.5, 1 - (padding + but_height / 2)),
             (but_width, but_height),
             "Back",

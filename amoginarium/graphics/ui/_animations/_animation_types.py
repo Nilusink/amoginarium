@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_animations/_animation_types.py
+amoginarium/graphics/ui/_animations/_animation_types.py
 
 Project: amoginarium
 Created: 16.03.2026

@@ -40,20 +40,21 @@ from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_ang
 
 from ._base_renderer import BaseRenderer, tColor
 from .opengl_shaders import Shaders
-from ._opengl_fonts import GLFont
+from .opengl_fonts import GLFont
 from ... import pv
 
 # define types
 
 # noinspection DuplicatedCode
 class OpenGLShaderRenderer(BaseRenderer):
-    type TextureID = int
-    type TextID = int
+    type TextureID = tp.Any
+    type StaticTextID = tp.Any
+    type DynamicTextID = tp.Any
 
     __dynamic_text_fonts: dict[tuple[str, int, bool, bool], GLFont]
 
-    __static_text_graphics: dict[TextID, tuple[np.uintc, tuple[int, int]]]
-    __static_text_id_counter: TextID
+    __static_text_graphics: dict[StaticTextID, tuple[np.uintc, tuple[int, int]]]
+    __static_text_id_counter: StaticTextID
     __static_text_fonts: dict
 
     # region Extra internal methods
@@ -1285,9 +1286,10 @@ class OpenGLShaderRenderer(BaseRenderer):
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False,
+            text_id: DynamicTextID | None = None,
             convert_global: bool = True,
             offscreen_check: bool = True
-    ) -> tuple[float, float]:
+    ) -> DynamicTextID:
         """
         Draw a text to the given position
         :param pos: Position of the text
@@ -1299,9 +1301,10 @@ class OpenGLShaderRenderer(BaseRenderer):
         :param font_family: Family of the font
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
+        :param text_id: NOT SUPPORTED
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing.
-        :return: (width, height) of the text
+        :return: DynamicTextID (None) - not implemented
         """
         if not isinstance(bg_color, Color):
             bg_color = self.__set_color(bg_color)
@@ -1329,7 +1332,7 @@ class OpenGLShaderRenderer(BaseRenderer):
             pos.y -= text_height / 2
 
         if offscreen_check and self.__check_out_of_screen((pos.x, pos.y), (text_width, text_height)):
-            return text_width, text_height
+            return None
 
         if bg_color.a255 > 0:
             self.draw_rect(pos.xy, (text_width, text_height), bg_color, convert_global=convert_global)
@@ -1338,21 +1341,29 @@ class OpenGLShaderRenderer(BaseRenderer):
         font.draw(text, pos.x, pos.y, scale, color.rgba255)
         glPopMatrix()
 
-        return text_width, text_height
+        return None
 
     def generate_static_text(
             self,
             text: str,
             color: Color | tColor,
-            bg_color: Color | tColor,  # Kept in signature but ignored below
+            bg_color: Color | tColor | None = None,
             *,
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False
-    ) -> int:
+    ) -> StaticTextID:
         """
-        Generate a pygame surface with text
+        Generate a static text
+        :param text: Text to be drawn
+        :param color: Text color
+        :param bg_color: Background color
+        :param font_size: Font size
+        :param font_family: Font family
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :return: StaticTextID integer
         """
         surface = self.get_font(
             font_size,
@@ -1372,7 +1383,6 @@ class OpenGLShaderRenderer(BaseRenderer):
 
         current_id = self.__static_text_id_counter
 
-        # Saved exactly like your old code so draw_static_text doesn't break
         self.__static_text_graphics[current_id] = (tex_id, (w, h))
 
         glBindTexture(GL_TEXTURE_2D, tex_id)
@@ -1387,7 +1397,7 @@ class OpenGLShaderRenderer(BaseRenderer):
     def draw_static_text(
             self,
             pos: coord_t,
-            text_id: TextID,
+            text_id: StaticTextID,
             *,
             centered: bool = False,
             scale: float = 1.0,

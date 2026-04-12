@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_surface_renderer.py
+amoginarium/graphics/ui/_surface_renderer.py
 
 Project: amoginarium
 Created: 15.03.2026

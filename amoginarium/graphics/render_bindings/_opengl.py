@@ -41,7 +41,7 @@ from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t, convert_color
 
 from ._base_renderer import BaseRenderer, tColor
-from ._opengl_fonts import GLFont
+from .opengl_fonts import GLFont
 from ... import pv
 
 # define types
@@ -51,12 +51,13 @@ from ... import pv
 # noinspection DuplicatedCode
 class OpenGLRenderer(BaseRenderer):
     type TextureID = int
-    type TextID = int
+    type StaticTextID = int
+    type DynamicTextID = None
 
     __dynamic_text_fonts: dict[tuple[str, int, bool, bool], GLFont]
 
-    __static_text_graphics: dict[TextID, tuple[np.uintc, tuple[int, int]]]
-    __static_text_id_counter: TextID
+    __static_text_graphics: dict[StaticTextID, tuple[np.uintc, tuple[int, int]]]
+    __static_text_id_counter: StaticTextID
     __static_text_fonts: dict
 
     # region Extra internal methods
@@ -70,7 +71,7 @@ class OpenGLRenderer(BaseRenderer):
     ) -> pg.font.Font:
         # check if font exists
         if size in self.__static_text_fonts:
-            for font in self.__static_text_fonts[size]
+            for font in self.__static_text_fonts[size]:
                 if all([
                     font.name == family,
                     font.bold == bold,
@@ -1266,9 +1267,10 @@ class OpenGLRenderer(BaseRenderer):
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False,
+            text_id: DynamicTextID | None = None,
             convert_global: bool = True,
             offscreen_check: bool = True
-    ) -> tuple[float, float]:
+    ) -> DynamicTextID:
         """
         Draw a text to the given position
         :param pos: Position of the text
@@ -1280,9 +1282,10 @@ class OpenGLRenderer(BaseRenderer):
         :param font_family: Family of the font
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
+        :param text_id: NOT SUPPORTED
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing.
-        :return: (width, height) of the text
+        :return: DynamicTextID (None) - not implemented
         """
         if not isinstance(bg_color, Color):
             bg_color = self.__set_color(bg_color)
@@ -1310,7 +1313,7 @@ class OpenGLRenderer(BaseRenderer):
             pos.y -= text_height / 2
 
         if offscreen_check and self.__check_out_of_screen((pos.x, pos.y), (text_width, text_height)):
-            return text_width, text_height
+            return None
 
         if bg_color.a255 > 0:
             self.draw_rect(pos.xy, (text_width, text_height), bg_color, convert_global=convert_global)
@@ -1319,7 +1322,7 @@ class OpenGLRenderer(BaseRenderer):
         font.draw(text, pos.x, pos.y, scale, color.rgba255)
         glPopMatrix()
 
-        return text_width, text_height
+        return None
 
     def generate_static_text(
             self,
@@ -1331,20 +1334,18 @@ class OpenGLRenderer(BaseRenderer):
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False
-    ) -> int:  # TextID
+    ) -> StaticTextID:
         """
-        Generate a pygame surface with text
+        Generate a static text
+        :param text: Text to be drawn
+        :param color: Text color
+        :param bg_color: Background color
+        :param font_size: Font size
+        :param font_family: Font family
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :return: StaticTextID integer
         """
-        # Resolve background color safely
-        bg_rgba = None
-        if bg_color is not None:
-            bg_converted = convert_color(bg_color)
-            # Assuming bg_converted is an RGBA tuple/list from your Color logic
-            if len(bg_converted) == 4 and bg_converted[3] > 0:
-                bg_rgba = bg_converted
-            elif len(bg_converted) == 3:
-                bg_rgba = bg_converted
-
         surface = self.get_font(
             font_size,
             font_family,
@@ -1353,21 +1354,23 @@ class OpenGLRenderer(BaseRenderer):
         ).render(
             text,
             True,
-            convert_color(color),
-            bg_rgba
+            convert_color(color, Color).rgba255
         )
         w, h = surface.get_size()
 
         text_data = pg.image.tobytes(surface, "RGBA", False)
 
         tex_id = glGenTextures(1)
+
+        current_id = self.__static_text_id_counter
+
+        self.__static_text_graphics[current_id] = (tex_id, (w, h))
+
         glBindTexture(GL_TEXTURE_2D, tex_id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
 
-        current_id = self.__static_text_id_counter
-        self.__static_text_graphics[current_id] = (tex_id, (w, h))
         self.__static_text_id_counter += 1
 
         return current_id
@@ -1375,7 +1378,7 @@ class OpenGLRenderer(BaseRenderer):
     def draw_static_text(
             self,
             pos: coord_t,
-            text_id: TextID,
+            text_id: StaticTextID,
             *,
             centered: bool = False,
             scale: float = 1.0,
