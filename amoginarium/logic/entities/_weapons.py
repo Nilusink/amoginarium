@@ -567,7 +567,7 @@ class HandThrownGrenade(BaseWeapon):
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
-            reload_time=.5,
+            reload_time=5,
             recoil_time=2,
             weapon_recoil_factor=.5,
             mag_size=1,
@@ -578,7 +578,7 @@ class HandThrownGrenade(BaseWeapon):
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_size=32,
-            bullet_lifetime=.8,
+            bullet_lifetime=5,
             bullet_explosion_damage=50,
             bullet_explosion_radius=150,
             bullet_visibility_offset=.0,

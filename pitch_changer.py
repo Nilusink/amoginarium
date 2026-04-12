@@ -62,7 +62,7 @@ def generate_pitch_variants(
 
 
 if __name__ == "__main__":
-    input_file = "C:/Users/Nilusink/PycharmProjects/amoginarium/assets/audio/effects/shots/canon/source.mp3"
+    input_file = "./assets/audio/effects/explosions/explosion_large/explosion_large.mp3"
     files = generate_pitch_variants(
         input_path=input_file,
         output_dir=os.path.join("/".join(input_file.split("/")[:-1]), ""),

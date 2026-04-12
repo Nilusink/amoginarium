@@ -180,6 +180,10 @@ class SoundEffect:
         self._channel.play(self._sound, loops, maxtime, fade_ms)
         self._has_played = True
 
+    def update_position(self, pos: Vec2) -> None:
+        """update the sounds current position"""
+        self._pos.xy = pos.xy
+
     def stop(self) -> None:
         """
         stop the sound effect if it is currently playing
@@ -239,10 +243,6 @@ class PresetEffect(SoundEffect):
         super().__init__(self._sound_name)
 
 
-class LargeExplosion(PresetEffect):
-    _sound_name = "explosion_large"
-
-
 class SmallExplosion(PresetEffect):
     _sound_name = "explosion_small"
 
@@ -274,6 +274,11 @@ class ReloadGeneric(PresetEffect):
 class OnHoverButtonSound(PresetEffect):
     volume = 1
     _sound_name = "button_hover"
+
+
+class RocketSound(PresetEffect):
+    volume = 1
+    _sound_name = ("rocket", "jetbag")
 
 
 def sound_effect_wrapper(sound_name: str, volume: float = 1) -> SoundEffect:
@@ -558,3 +563,7 @@ class Cannon(ScopedRandomizedEffect):
 
 class MetalPings(ScopedRandomizedEffect):
     _scope = "metal_pings"
+
+
+class LargeExplosion(ScopedRandomizedEffect):
+    _scope = "explosion_large"

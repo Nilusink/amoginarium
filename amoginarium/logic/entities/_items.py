@@ -18,6 +18,7 @@ from amoginarium.shared.utility import normalize_angle, Vec2
 from amoginarium.shared import base_entity_t, ItemCIDs
 from amoginarium import pv
 
+from ..audio import RocketSound
 from ._logic_groups import CollisionDestroyed, Updated, GravityAffected, WallCollider
 from ._base_entity import LogicGameEntity
 from ._base_item import Item
@@ -288,7 +289,7 @@ class HealingPotion(BaseItem):
 class JetBag(BaseItem):
     """makes you flyyyyyy"""
 
-    __slots__ = ("_in_use", "_facing", "_size_fac")
+    __slots__ = ("_in_use", "_facing", "_size_fac", "_sound")
 
     _cid = ItemCIDs.jetbag
     _reload_per_second: float = .2
@@ -306,15 +307,20 @@ class JetBag(BaseItem):
             parent_position_offset=parent_position_offset,
         )
 
+        self._sound = RocketSound()
         self._in_use = False
         self._facing = True
         self._size_fac = 1
 
     def use(self) -> None:
         self._in_use = True
+        if not self._sound.playing:
+            self._sound.play(pos=self.position)
 
     def stop_use(self) -> None:
         self._in_use = False
+        if self._sound.playing:
+            self._sound.stop()
 
     def _update(self, delta: float, **_) -> None:
         if not self.parent:
@@ -340,6 +346,9 @@ class JetBag(BaseItem):
             if self._uses_left > 0:
                 self._uses_left -= delta
 
+                if self._sound.playing:
+                    self._sound.update_position(self.position)
+
                 if hasattr(self.parent, "_impulse_resistance_factor"):
                     # noinspection PyProtectedMember
                     recoil = Vec2().from_cartesian(
@@ -352,8 +361,10 @@ class JetBag(BaseItem):
                     self.parent.add_acceleration(recoil)
 
             else:
-                if self._animation.playing:
-                    self._animation.stop()
+                if self._sound.playing:
+                    self._sound.stop()
+
+                self._set_bit("flags", 14, False)  # set use to false
 
         elif self.parent.on_ground:
             if self._uses_left < self._max_uses:
