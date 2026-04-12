@@ -22,6 +22,53 @@ from amoginarium import pv
 from ._sounds import sounds, sound_name_t
 
 
+# --- CONFIG ---
+MAX_DIST = 4000.0
+MIN_DIST = 1.0
+
+
+def spatialize(channel: pg.mixer.Channel, delta, base_volume: float = 1.0) -> None:
+    """Set a channel's volume based on direction + distance + base volume"""
+
+    # --- clamp base volume ---
+    base_volume = max(0.0, min(base_volume, 1.0))
+
+    # --- get params ---
+    distance = max(delta.length, MIN_DIST)
+    a = delta.angle  # radians
+
+    # --- normalize distance (0..1) ---
+    d_norm = min(max(distance / MAX_DIST, 0.0), 1.0)
+
+    # --- FIX 1: correct angle reference (forward = 0) ---
+    # adjust depending on your coordinate system
+    a = a - m.pi / 2
+
+    # --- FIX 2: proper pan calculation (-1 .. 1) ---
+    pan = -m.sin(a)
+
+    # --- equal-power panning ---
+    left = m.sqrt((1 - pan) / 2)
+    right = m.sqrt((1 + pan) / 2)
+
+    # --- stereo width (distance-dependent) ---
+    width = m.sqrt(d_norm)
+
+    center = 0.707  # equal-power center
+
+    left = (1 - width) * center + width * left
+    right = (1 - width) * center + width * right
+
+    # --- distance attenuation ---
+    falloff = 1 / (1 + 4 * d_norm**1.5)
+
+    # --- combine everything ---
+    gain = base_volume * falloff
+
+    # --- final apply ---
+    channel.set_volume(left * gain, right * gain)
+
+
 class _SoundEffects:
     """
     a collection of all sound effects
@@ -108,7 +155,8 @@ class SoundEffect:
             ).play(
                 loops,
                 maxtime,
-                fade_ms
+                fade_ms,
+                pos
             )
             return
 
@@ -159,17 +207,7 @@ class SoundEffect:
         # set distance / angle
         if self._channel.get_busy():
             delta = self._pos - pv.audio_observer_pos
-
-            # play both sides for close sound
-            if delta.length < 32:
-                delta.angle = m.pi / 2
-
-            delta.length *= .05
-
-            self._channel.set_source_location(
-                (delta.angle + m.pi / 2) * (180/m.pi),
-                min(delta.length, 255),
-            )
+            spatialize(self._channel, delta, self.volume)
 
     def update(self) -> None:
         """
@@ -370,12 +408,6 @@ class CRAM(ContinuousSoundEffect):
     volume: float = .1
 
 
-# class AK47(ContinuousSoundEffect):
-#     _stage_two_name = ("ak47", "loop")
-#     _stage_three_name = ("ak47", "echo")
-#     volume: float = .1
-
-
 class RandomizedEffect:
     """sound effect but random"""
     def __init__(
@@ -473,33 +505,6 @@ class DeathSound(ScopedRandomizedEffect):
 
 class DistantPop(ScopedRandomizedEffect):
     _scope = "distant_pop"
-
-
-# class PitchedRandomizedEffect(RandomizedEffect):
-#     _name: tuple[str, str] | None = None
-#     _pitch_set: tuple[int, ...] = (-2, 2)
-#
-#     _pitched_sounds: list[SoundEffect] = []
-#
-#     def __new__(cls, *args, **kwargs):
-#         if not cls._pitched_sounds:
-#             sound = sounds.get_sound(*cls._name[::-1])
-#
-#             cls._pitched_sounds.append(SoundEffect(sound))
-#             ic(1)
-#             for pitch in cls._pitch_set:
-#                 cls._pitched_sounds.append(
-#                     SoundEffect(pitch_shift_keep_length(sound, pitch))
-#                 )
-#             ic(2)
-#
-#         return super().__new__(cls)
-#
-#     def __init__(self) -> None:
-#         if not self._name:
-#             raise ValueError("No name given for pitched effect")
-#
-#         super().__init__(self._pitched_sounds)
 
 
 class AK47(ScopedRandomizedEffect):
