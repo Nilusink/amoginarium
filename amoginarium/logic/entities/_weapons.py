@@ -14,14 +14,11 @@ from ctypes import Array
 import typing as tp
 
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t
-from amoginarium.shared import base_entity_t, WeaponCIDs, ProcessCommand
-from amoginarium.shared import BaseCommandType, DummyCIDs
-from amoginarium.shared.debugging import run_with_debug
-from amoginarium import pv
+from amoginarium.shared import base_entity_t, WeaponCIDs
 
-from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric
-from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, Shotgun
-from ..audio import Mortar as MortarSound, CRAM as CRAMSound
+from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric, RandomizedEffect
+from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect
+from ..audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
@@ -61,7 +58,7 @@ class BaseWeapon(Item):
             bullet_explosion_damage: float = 0,
             drop_casings: bool = False,
             bullet_lifetime=4,
-            sound_effect: ContinuousSoundEffect | PresetEffect | EllipsisType = ...,
+            sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
             bullet_visibility_offset: float = 0,  # time offset
             weapon_recoil_factor: float = 1,
@@ -200,7 +197,7 @@ class BaseWeapon(Item):
             self._current_reload_time = 0
             self._mag_state = self._mag_size
             sound_effect = ReloadGeneric()
-            sound_effect.play()
+            sound_effect.play(pos=self.position)
 
         # recoil time
         if self._current_recoil_time > 0:
@@ -258,10 +255,10 @@ class BaseWeapon(Item):
 
         if self._sound_effect is not ...:
             if not self._sound_effect.playing:
-                self._sound_effect.play()
+                self._sound_effect.play(pos=self.position)
 
             elif not hasattr(self._sound_effect, "stage_one_done"):
-                self._sound_effect.play()
+                self._sound_effect.play(pos=self.position)
 
             if hasattr(self._sound_effect, "stage_one_done"):
                 if not self._sound_effect.stage_one_done:
@@ -346,7 +343,8 @@ class BaseWeapon(Item):
         stop all running effects
         """
         if self._sound_effect is not ...:
-            self._sound_effect.stop()
+            if hasattr(self._sound_effect, "stage_one_done"):
+                self._sound_effect.stop()
 
 
 class Minigun(BaseWeapon):
@@ -423,8 +421,6 @@ class Sniper(BaseWeapon):
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2()
     ) -> None:
-        s = Shotgun()
-        s.volume = .7
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
@@ -439,9 +435,9 @@ class Sniper(BaseWeapon):
             bullet_lifetime=10,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=s,
+            sound_effect=SniperSound(),
             bullet_visibility_offset=.04,
-            bullet_type=SniperBullet
+            bullet_type=SniperBullet,
         )
 
 
@@ -511,7 +507,7 @@ class Flak(BaseWeapon):
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
             bullet_lifetime=5,
-            sound_effect=Shotgun().set_volume(.8),
+            sound_effect=Cannon(),
             bullet_visibility_offset=.13,
             bullet_type=FlakBullet
         )
@@ -584,5 +580,6 @@ class HandThrownGrenade(BaseWeapon):
             bullet_explosion_damage=50,
             bullet_explosion_radius=150,
             bullet_visibility_offset=.0,
-            bullet_type=Grenade
+            bullet_type=Grenade,
+            sound_effect=SoundEffect(("groaning", "hugh_1")).set_volume(.6)
         )

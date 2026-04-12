@@ -311,13 +311,13 @@ class Bullet(LogicGameEntity):
             if self._explosion_radius > 64:
                 exp = LargeExplosion()
                 exp.volume = .35
-                exp.play()
+                exp.play(pos=self.position)
 
             # sounds like shit
             elif self._explosion_radius < 16:
                 exp = DistantPop()
                 exp.set_volume(.8, .3)
-                exp.play()
+                exp.play(pos=self.position)
 
         super().kill()
         return True
