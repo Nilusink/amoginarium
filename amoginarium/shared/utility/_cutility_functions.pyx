@@ -60,6 +60,12 @@ cpdef bint is_related(object a, object b, int depth=2):
     b_coal = getattr(b, "coalition", None)
 
     if depth <= 4:
+        if a_coal is not None and a_coal.value == 0:
+            return True
+
+        if b_coal is not None and b_coal.value == 0:
+            return True
+
         if a_coal is not None and a_coal == b_coal:
             return True
 

@@ -68,6 +68,9 @@ class Player(LogicGameEntity):
         if not position:
             position: Vec2 = Players.spawn_point
 
+        if coalition is ...:
+            coalition = Coalitions.blue
+
         self._initial_position = position.copy()
         self._death_sound = DeathSound()
 

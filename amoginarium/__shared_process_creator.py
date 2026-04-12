@@ -14,11 +14,12 @@ from ctypes import Array, memset, sizeof, addressof
 from queue import Empty
 from icecream import ic
 
-from .shared import inventory_t
-from .shared import generate_global_vars, get_write_lock, get_entity_memory
-from .shared import GlobalVars, base_entity_t, MAX_ENTITIES, base_controller_t
 from .shared import MAX_CONTROLLERS, get_controller_memory, get_inventory_memory
+from .shared import GlobalVars, base_entity_t, MAX_ENTITIES, base_controller_t
+from .shared import generate_global_vars, get_write_lock, get_entity_memory
 from .shared import MAX_INVENTORIES
+from .shared import inventory_t
+from .shared.utility import Vec2
 
 
 class _ProcessValues:
@@ -35,6 +36,8 @@ class _ProcessValues:
     E_BUFF: Array[base_entity_t] = ...
     C_BUFF: Array[base_controller_t] = ...
     I_BUFF: Array[inventory_t] = ...
+
+    audio_observer_pos: Vec2 = Vec2()
 
     def create_shared_process_values(self) -> None:
         if self.global_vars is not ...:

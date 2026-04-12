@@ -14,11 +14,12 @@ import typing as tp
 import pygame as pg
 import math as m
 
-from amoginarium.shared.utility import normalize_angle, Vec2
+from amoginarium.shared.utility import Vec2
 from amoginarium.shared import base_entity_t, ItemCIDs
 from amoginarium import pv
 
-from ._logic_groups import CollisionDestroyed, Updated, GravityAffected, WallCollider
+from ..audio import RocketSound, MetalPings, PotionDrink
+from ._logic_groups import CollisionDestroyed
 from ._base_entity import LogicGameEntity
 from ._base_item import Item
 
@@ -43,15 +44,18 @@ class BaseItem(Item):
     # noinspection PyTypeChecker
     @property
     def max_uses(self) -> int:
+        """max amount of uses"""
         return self._max_uses
 
     @property
     def uses_left(self) -> int:
+        """uses left"""
         return self._uses_left
 
     # endregion
 
     def add_used_callback(self, callback: tp.Callable[[int], bool]) -> None:
+        """gets called when item is used up"""
         self._used_callback = callback
 
     def update_rect(self) -> None:
@@ -92,9 +96,10 @@ class BaseItem(Item):
 
     def stop(self) -> None:
         """stop ... again?"""
-        ...
+        self.stop_use()
+        self._set_bit("flags", 14, False)  # set use to false
 
-    def kill(self, killed_by=...) -> None:
+    def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
         if self._used_callback and self._used_callback(1):
             self._uses_left = self._max_uses
 
@@ -109,7 +114,7 @@ class BaseItem(Item):
 
 
 class Shield(BaseItem):
-    __slots__ = ("_in_use",)
+    __slots__ = ("_in_use", "_sound")
 
     _image_name: tuple[str, str] | str = ("Shield_6", "4")
     _image_size: tuple[int, int] = (45, 80)
@@ -128,11 +133,13 @@ class Shield(BaseItem):
         )
         self._generate_collision_mask()
 
+        self._sound = MetalPings().set_volume(.4, .5)
         self._in_use = False
         self._update_mask()
 
     @property
     def hp(self) -> float:
+        """hit points"""
         return self._uses_left
 
     def use(self) -> None:
@@ -178,7 +185,9 @@ class Shield(BaseItem):
         # self.mask = pg.mask.Mask(surf)
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
-        return
+        if hit_by is not ...:
+            if hit_by.is_bullet:
+                self._sound.play(pos=self.position)
 
         if not self.parent:
             super().hit(damage, hit_by)
@@ -190,7 +199,9 @@ class Shield(BaseItem):
 
     def _update(self, delta: float, **_) -> None:
         if self.parent:
-            d = Vec2().from_polar(self.facing.angle, self._parent_position_offset.length)
+            d = Vec2().from_polar(
+                self.facing.angle, self._parent_position_offset.length
+            )
             if self._in_use:
                 self.size.xy = self._image_size
                 self.position = self.parent.position + d - self.size / 2
@@ -199,13 +210,16 @@ class Shield(BaseItem):
                 self.size.xy = self._image_size[0] * .1, self._image_size[1] * .3
                 self.position = self.parent.position
 
+            super()._update(delta, keep_position=True)
+            return
+
         else:
             self.size.xy = self._image_size
 
             # move shield out of way
             self.position.xy = (-1, -1)
 
-        super()._update(delta, keep_position=True)
+        super()._update(delta)
 
 
 class HealingPotion(BaseItem):
@@ -215,7 +229,7 @@ class HealingPotion(BaseItem):
     ``param0``: f_tilt
     """
 
-    __slots__ = ("_drinking", "_f_velocity", "_f_tilt", "_target_rotation")
+    __slots__ = ("_drinking", "_f_velocity", "_f_tilt", "_target_rotation", "_sound")
 
     _cid = ItemCIDs.healing_potion
     _heal_per_sec = 20
@@ -231,6 +245,8 @@ class HealingPotion(BaseItem):
         )
         self._drinking = False
 
+        self._sound = PotionDrink()
+        self._sound.volume = 1
         self._target_rotation = 0
         self._f_velocity: float = 0
         self._f_tilt: float = 0
@@ -240,6 +256,8 @@ class HealingPotion(BaseItem):
 
     def stop_use(self) -> None:
         self._drinking = False
+        if self._sound.playing:
+            self._sound.done()
 
     def _update(self, delta: float, **_) -> None:
         if not self.parent:
@@ -254,8 +272,14 @@ class HealingPotion(BaseItem):
             )
             if self.parent.heal(heal):
                 self._uses_left -= heal
+                if not self._sound.playing:
+                    self._sound.play()
+
+            else:
+                self.stop_use()
 
             if self._uses_left <= 0:
+                self.stop_use()
                 self.kill()
 
         stiffness = .2
@@ -287,7 +311,7 @@ class HealingPotion(BaseItem):
 class JetBag(BaseItem):
     """makes you flyyyyyy"""
 
-    __slots__ = ("_in_use", "_facing", "_size_fac")
+    __slots__ = ("_in_use", "_facing", "_size_fac", "_sound")
 
     _cid = ItemCIDs.jetbag
     _reload_per_second: float = .2
@@ -305,6 +329,7 @@ class JetBag(BaseItem):
             parent_position_offset=parent_position_offset,
         )
 
+        self._sound = RocketSound()
         self._in_use = False
         self._facing = True
         self._size_fac = 1
@@ -314,6 +339,8 @@ class JetBag(BaseItem):
 
     def stop_use(self) -> None:
         self._in_use = False
+        if self._sound.playing:
+            self._sound.stop()
 
     def _update(self, delta: float, **_) -> None:
         if not self.parent:
@@ -339,6 +366,13 @@ class JetBag(BaseItem):
             if self._uses_left > 0:
                 self._uses_left -= delta
 
+                if self._uses_left > 2 * delta:
+                    if not self._sound.playing:
+                        self._sound.play(pos=self.position)
+
+                if self._sound.playing:
+                    self._sound.update_position(self.position)
+
                 if hasattr(self.parent, "_impulse_resistance_factor"):
                     # noinspection PyProtectedMember
                     recoil = Vec2().from_cartesian(
@@ -351,8 +385,10 @@ class JetBag(BaseItem):
                     self.parent.add_acceleration(recoil)
 
             else:
-                if self._animation.playing:
-                    self._animation.stop()
+                if self._sound.playing:
+                    self._sound.stop()
+
+                self._set_bit("flags", 14, False)  # set use to false
 
         elif self.parent.on_ground:
             if self._uses_left < self._max_uses:

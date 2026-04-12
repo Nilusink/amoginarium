@@ -258,7 +258,6 @@ class Island(SyncedGraphicsEntity):
     def __init__(
             self,
             sync_id: int,
-            pos: coord_t,
             size: coord_t = ...,
             form: list[list[int]] = ...,
     ) -> None:
@@ -278,8 +277,6 @@ class Island(SyncedGraphicsEntity):
         super().__init__(
             sync_id=sync_id
         )
-
-        self.pos = convert_coord(pos, Vec2)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         start_pos = self.world_position

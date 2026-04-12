@@ -7,11 +7,12 @@ global sounds
 Author:
 Nilusink
 """
-from amoginarium.shared.debugging import print_ic_style, get_fg_color
-from icecream import ic
+
+from amoginarium.shared.debugging import print_ic_style, get_fg_color, CC
 import pygame as pg
 import typing as tp
 import zipfile
+import json
 import os
 
 
@@ -25,11 +26,14 @@ class NamedSound(tp.TypedDict):
 
 class _Sounds:
     _sounds: dict[str, dict[str, NamedSound]]
+    _data: dict[str, dict[str, dict]]
     filetypes = ("mp3", "ogg", "wav")
+    info_files = ("weights",)  # keep for processing
     debug: int = 1
 
     def __init__(self) -> None:
         self._sounds = {}
+        self._data = {}
 
     def load_sounds(self, path: str) -> None:
         """
@@ -48,7 +52,11 @@ class _Sounds:
             scope = path.split(".")[0].split("/")[-1]
 
         else:
-            files = sorted(file for file in os.listdir(path) if os.path.isfile(os.path.join(path, file)))
+            files = sorted(
+                file
+                for file in os.listdir(path)
+                if os.path.isfile(os.path.join(path, file))
+            )
             scope = path.split("/")[-1]
 
         if self.debug >= 2:
@@ -58,6 +66,29 @@ class _Sounds:
             parts = (f.filename if is_zip else f).split(".")
             ending = parts[-1]
             filename = parts[-2]
+
+            # check if file type in info files
+            if ending.lower() in self.info_files:
+                if scope not in self._data:
+                    self._data[scope] = {}
+
+                if is_zip:
+                    fp = soundzip.open(f)
+
+                else:
+                    fp = open(path + "/" + f)
+
+                # append to data scope
+                try:
+                    self._data[scope][ending.lower()] = json.load(fp)
+                
+                except json.JSONDecodeError:
+                    print_ic_style(
+                        f"{CC.fg.RED}- invalid info json: "
+                        f"{CC.fg.YELLOW}{scope}::{ending}"
+                    )
+
+                continue
 
             # only load images
             if ending.lower() not in self.filetypes:
@@ -86,7 +117,7 @@ class _Sounds:
 
         if self.debug:
             print_ic_style(
-                f"loadinged sound scope {get_fg_color(36)}\"{scope}\""
+                f"loaded sound scope {get_fg_color(36)}\"{scope}\""
                 f"{get_fg_color(247)}"
                 f", sounds: {get_fg_color(37)}{len(self._sounds[scope])}"
             )
@@ -155,6 +186,17 @@ class _Sounds:
             out.append(sound["sound"])
 
         return out
+
+    def get_scope_info(self, scope: str) -> dict[str, dict]:
+        """
+        get info dicts from loaded scope
+
+        :returns: info dict (empty if not loaded)
+        """
+        if scope not in self._data:
+            return {}
+
+        return self._data[scope]
 
 
 sounds = _Sounds()
