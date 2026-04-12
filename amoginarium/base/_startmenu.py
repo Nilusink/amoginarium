@@ -9,12 +9,23 @@ Project: amoginarium
 ##################################################
 
 import typing as tp
-from amoginarium.graphics.ui import UIButton, UIRectangle, UIStaticText, UIDynamicText
+from turtledemo.planet_and_moon import Star
+
+from amoginarium.graphics.ui import UIButton, UIRectangle, UIStaticText
+from amoginarium.graphics.logic_dummies import PresetGraphicsSoundEffect
 
 
 ##################################################
 #                     Code                       #
 ##################################################
+
+
+class _StartGameButtonClick(PresetGraphicsSoundEffect):
+    volume = 1
+    _sound_name = "button_start_game"
+
+StartGameButtonClick = _StartGameButtonClick()
+
 
 class StartMenu(UIRectangle):
     def __init__(
@@ -43,7 +54,8 @@ class StartMenu(UIRectangle):
             (but_width, but_height),
             "New game",
             parent=self,
-            command=start_game_callback
+            command=start_game_callback,
+            on_click_sound=StartGameButtonClick
         )
 
         self.but = UIButton(

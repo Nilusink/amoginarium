@@ -32,7 +32,7 @@ class UIDynamicText(UIEventElement):
             position: coord_t,
             size: coord_t,
             text: str,
-            *_args: tp.Any,
+            *,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
             absolute_values: bool = False,
@@ -57,7 +57,6 @@ class UIDynamicText(UIEventElement):
         Create a new UIStaticText
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
-        :param _args: Not used
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
         :param absolute_values: Whether the position and size are absolute or relative
@@ -103,7 +102,7 @@ class UIDynamicText(UIEventElement):
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
 
-        renderer.draw_dynamic_text(
+        self.__text_id = renderer.draw_dynamic_text(
             self.center.absolute_global,
             self.__text,
             color=self.__text_color,

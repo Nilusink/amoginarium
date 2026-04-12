@@ -65,19 +65,23 @@ class UIRectangle(UIEventElement):
         :param size: Relative size of the component
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
+        :param absolute_values: Whether the position and size are absolute or relative
+        :param positon_is_relative_to_parent: Whether the position is relative to the parent or the screen
+        :param size_is_relative_to_parent: Whether the size is relative to the parent or the screen
+        :param parent_reference_position: What reference position of the parent component to use
         :param collision_buffer: Mouse hovering buffer for edge cases
+        :param use_collision_mask: Whether a collision mask should be used or just a collision box
+        :param on_enter_callbacks: Callbacks to be called when a cursor enters the component
+        :param on_leave_callbacks: Callbacks to be called when a cursor leaves the component
+        :param on_buffer_callbacks: Callbacks to be called when a cursor is right on the edge of the component
         :param bg_color: Background color of the rectangle (hover animated)
         :param border_color: Border color of the rectangle (hover animated)
         :param border_width: Width of the border (hover animated)
         :param radius: Radius of the rectangle (hover animated)
         :param size_extend: Hover animated size expansion
-        :param on_enter_callbacks: Callbacks to be called when a cursor enters the component
-        :param on_leave_callbacks: Callbacks to be called when a cursor leaves the component
-        :param on_buffer_callbacks: Callbacks to be called when a cursor is right on the edge of the component
         :param on_enter_sound: Sound to play when the cursor enters the rectangle
         :param on_leave_sound: Sound to play when the cursor leaves the rectangle
         :param on_click_sound: Sound to play when the cursor clicks the rectangle
-        :param use_collision_mask: Whether a collision mask should be used or just a collision box
         """
         super().__init__(
             position=position,
