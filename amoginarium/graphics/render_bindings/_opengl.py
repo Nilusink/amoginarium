@@ -45,12 +45,14 @@ from ._opengl_fonts import GLFont
 from ... import pv
 
 # define types
-type TextureID = int
-type TextID = int
+
 
 
 # noinspection DuplicatedCode
 class OpenGLRenderer(BaseRenderer):
+    type TextureID = int
+    type TextID = int
+
     __dynamic_text_fonts: dict[tuple[str, int, bool, bool], GLFont]
 
     __static_text_graphics: dict[TextID, tuple[np.uintc, tuple[int, int]]]

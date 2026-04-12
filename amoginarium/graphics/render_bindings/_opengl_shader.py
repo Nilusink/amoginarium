@@ -44,11 +44,12 @@ from ._opengl_fonts import GLFont
 from ... import pv
 
 # define types
-type TextureID = int
-type TextID = int
 
 # noinspection DuplicatedCode
 class OpenGLShaderRenderer(BaseRenderer):
+    type TextureID = int
+    type TextID = int
+
     __dynamic_text_fonts: dict[tuple[str, int, bool, bool], GLFont]
 
     __static_text_graphics: dict[TextID, tuple[np.uintc, tuple[int, int]]]
@@ -1343,26 +1344,16 @@ class OpenGLShaderRenderer(BaseRenderer):
             self,
             text: str,
             color: Color | tColor,
-            bg_color: Color | tColor | None = None,
+            bg_color: Color | tColor,  # Kept in signature but ignored below
             *,
             font_size: int = 64,
             font_family: str = "arial",
             bold: bool = False,
             italic: bool = False
-    ) -> int:  # TextID
+    ) -> int:
         """
         Generate a pygame surface with text
         """
-        # Resolve background color safely
-        bg_rgba = None
-        if bg_color is not None:
-            bg_converted = convert_color(bg_color)
-            # Assuming bg_converted is an RGBA tuple/list from your Color logic
-            if len(bg_converted) == 4 and bg_converted[3] > 0:
-                bg_rgba = bg_converted
-            elif len(bg_converted) == 3:
-                bg_rgba = bg_converted
-
         surface = self.get_font(
             font_size,
             font_family,
@@ -1371,21 +1362,24 @@ class OpenGLShaderRenderer(BaseRenderer):
         ).render(
             text,
             True,
-            convert_color(color),
-            bg_rgba
+            convert_color(color, Color).rgba255
         )
         w, h = surface.get_size()
 
         text_data = pg.image.tobytes(surface, "RGBA", False)
 
         tex_id = glGenTextures(1)
+
+        current_id = self.__static_text_id_counter
+
+        # Saved exactly like your old code so draw_static_text doesn't break
+        self.__static_text_graphics[current_id] = (tex_id, (w, h))
+
         glBindTexture(GL_TEXTURE_2D, tex_id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
 
-        current_id = self.__static_text_id_counter
-        self.__static_text_graphics[current_id] = (tex_id, (w, h))
         self.__static_text_id_counter += 1
 
         return current_id

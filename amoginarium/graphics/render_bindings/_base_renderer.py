@@ -21,14 +21,15 @@ type Color4 = tuple[float, float, float, float]
 type tColor = Color3 | Color4
 
 # depending on the renderer, TextureID will be a different type
-type TextureID = tp.Any
-type TextID = tp.Any
+
 
 
 class BaseRenderer(abc.ABC):
     """
     Abstract Renderer Class
     """
+    type TextureID = tp.Any
+    type TextID = tp.Any
 
     # region Init and Loading
     @abc.abstractmethod

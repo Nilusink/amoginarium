@@ -6,6 +6,7 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
+from ._static_text import UIStaticText
 from ._rectangle import Rectangle
 from ._cursor import UICursor
 from ._button import Button
