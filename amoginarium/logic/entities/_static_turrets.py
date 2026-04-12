@@ -24,6 +24,7 @@ from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
 from amoginarium.shared.utility import MASK64
 from amoginarium import pv
 
+from ..audio import MetalPings
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
 from ._weapons import BaseWeapon, Minigun, Sniper, Ak47, Mortar, Flak, CRAM
@@ -80,6 +81,10 @@ class BaseTurret(LogicGameEntity):
         self._set_pos = position.copy()
         position.y -= size.y / 2
 
+        # audio
+        self._ping = MetalPings().set_volume(.4, .5)
+
+        # params
         self.weapon = weapon
         self.weapon.set_parent(self)
         self.weapon.show()
@@ -149,6 +154,11 @@ class BaseTurret(LogicGameEntity):
         deal damage to the turret
         """
         self._hp -= damage
+
+        # ping on bullet hit
+        if hit_by is not ...:
+            if hit_by.is_bullet:
+                self._ping.play(pos=self.position)
 
         # check for turret death
         if self._hp <= 0:

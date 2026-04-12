@@ -8,7 +8,7 @@ Author:
 Nilusink
 """
 
-from random import choice, uniform
+from random import choices, uniform
 from types import EllipsisType
 from icecream import ic
 import typing as tp
@@ -23,7 +23,7 @@ from ._sounds import sounds, sound_name_t
 
 
 # --- CONFIG ---
-MAX_DIST = 4000.0
+MAX_DIST = 6000.0
 MIN_DIST = 1.0
 
 
@@ -112,7 +112,7 @@ class SoundEffect:
     def __init__(
             self,
             sound: sound_name_t | pg.mixer.Sound,
-            on_finish_playing: tp.Callable[[], tp.Any] = ...
+            on_finish_playing: tp.Callable[[], tp.Any] | EllipsisType = ...
     ) -> None:
         self._sound_name = sound
         self._on_finish = on_finish_playing
@@ -233,7 +233,7 @@ class SoundEffect:
 
 class PresetEffect(SoundEffect):
     """preset sound effect"""
-    _sound_name: str
+    _sound_name: str | tuple[str, str]
 
     def __init__(self):
         super().__init__(self._sound_name)
@@ -259,6 +259,11 @@ class Shotgun(PresetEffect):
 class Mortar(PresetEffect):
     volume = 1
     _sound_name = "mortar"
+
+
+class Sniper(PresetEffect):
+    volume = 1
+    _sound_name = ("shots", "sniper")
 
 
 class ReloadGeneric(PresetEffect):
@@ -370,8 +375,6 @@ class ContinuousSoundEffect:
                 self._stage_one.stop()
             case 2:
                 self._stage_two.stop()
-            case 3:
-                self._stage_three.stop()
 
         return self._stop()
 
@@ -410,14 +413,41 @@ class CRAM(ContinuousSoundEffect):
 
 class RandomizedEffect:
     """sound effect but random"""
+    _default_weights: tuple[float, ...] | EllipsisType = ...
+    _default_volumes: tuple[float, ...] | EllipsisType = ...
+
     def __init__(
             self,
             effects: tp.Sequence[SoundEffect],
+            weights: tuple[float, ...] | None = None,
+            volumes: tuple[float, ...] | None = None
     ) -> None:
         self._effects = effects
         self._playing = None
         self._max_volume = 1
         self._min_volume = 1
+
+        self._weights: tuple[float, ...] = ()
+        if weights:
+            self._weights = weights
+
+        else:
+            if isinstance(self._default_weights, EllipsisType):
+                self._weights = (1,) * len(effects)
+            
+            else:
+                self._weights = self._default_weights
+
+        self._volumes: tuple[float, ...] = ()
+        if volumes:
+            self._volumes = volumes
+
+        else:
+            if isinstance(self._default_volumes, EllipsisType):
+                self._volumes = (1,) * len(effects)
+
+            else:
+                self._volumes = self._default_volumes
 
     @property
     def playing(self) -> bool:
@@ -433,6 +463,7 @@ class RandomizedEffect:
         self._min_volume = volume * .9
 
     def set_volume(self, max_volume: float, min_volume: float) -> tp.Self:
+        """set volume range"""
         self._max_volume = max_volume
         self._min_volume = min_volume
 
@@ -451,8 +482,13 @@ class RandomizedEffect:
         # if self._playing:
         #     self.stop()
 
-        self._playing = choice(self._effects)
-        self._playing.volume = uniform(self._min_volume, self._max_volume)
+        # get sound from list (with weights)
+        self._playing = choices(self._effects, weights=self._weights, k=1)[0]
+
+        # add volume factor
+        volume_fac = self._volumes[self._effects.index(self._playing)]
+        self._playing.volume = uniform(self._min_volume, self._max_volume) * volume_fac
+
         self._playing.play(
             loops,
             maxtime,
@@ -490,12 +526,17 @@ class ScopedRandomizedEffect(RandomizedEffect):
                 raise ValueError("No scope given for sounds")
 
         s = sounds.get_all_from_scope(sound_scope)
-        super().__init__([
-            SoundEffect(
-                sound,
-                callback if callback else ...
-            ) for sound in s
-        ])
+        info = sounds.get_scope_info(sound_scope)
+
+        weights = None
+        # load weights if given
+        if "weights" in info:
+            weights = info["weights"]
+
+        super().__init__(
+            [SoundEffect(sound, callback if callback else ...) for sound in s],
+            weights=weights,
+        )
 
 
 class DeathSound(ScopedRandomizedEffect):
@@ -508,5 +549,12 @@ class DistantPop(ScopedRandomizedEffect):
 
 
 class AK47(ScopedRandomizedEffect):
-    # _name = ("ak472", "0")
-    _scope = "ak472"
+    _scope = "ak47"
+
+
+class Cannon(ScopedRandomizedEffect):
+    _scope = "cannon"
+
+
+class MetalPings(ScopedRandomizedEffect):
+    _scope = "metal_pings"

@@ -81,7 +81,7 @@ class LogicProcess:
 
         # initialize pygame
         pg.mixer.init(channels=2, buffer=1024)
-        pg.mixer.set_num_channels(64)
+        pg.mixer.set_num_channels(128)
 
         self._write_lock = write_lock
         self._ciq = command_in_queue
@@ -156,16 +156,17 @@ class LogicProcess:
         start = perf_counter_ns()
         # load sounds
         sounds.load_sounds("assets/audio/background")
-        sounds.load_sounds("assets/audio/effects/ak47")
-        sounds.load_sounds("assets/audio/effects/ak472")
         sounds.load_sounds("assets/audio/effects/minigun")
         sounds.load_sounds("assets/audio/effects/explosions")
         sounds.load_sounds("assets/audio/effects/shots")
+        sounds.load_sounds("assets/audio/effects/shots/cannon")
+        sounds.load_sounds("assets/audio/effects/shots/ak47")
         sounds.load_sounds("assets/audio/effects/reloads")
         sounds.load_sounds("assets/audio/effects/ui")
         sounds.load_sounds("assets/audio/effects/groaning")
         sounds.load_sounds("assets/audio/effects/death")
         sounds.load_sounds("assets/audio/effects/distant_pop")
+        sounds.load_sounds("assets/audio/effects/metal_pings")
 
         self._background_player.assign_scope("background")
 

@@ -178,8 +178,6 @@ class Shield(BaseItem):
         # self.mask = pg.mask.Mask(surf)
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
-        return
-
         if not self.parent:
             super().hit(damage, hit_by)
 
@@ -199,13 +197,16 @@ class Shield(BaseItem):
                 self.size.xy = self._image_size[0] * .1, self._image_size[1] * .3
                 self.position = self.parent.position
 
+            super()._update(delta, keep_position=True)
+            return
+
         else:
             self.size.xy = self._image_size
 
             # move shield out of way
             self.position.xy = (-1, -1)
 
-        super()._update(delta, keep_position=True)
+        super()._update(delta)
 
 
 class HealingPotion(BaseItem):

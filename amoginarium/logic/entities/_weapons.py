@@ -19,9 +19,9 @@ from amoginarium.shared import BaseCommandType, DummyCIDs
 from amoginarium.shared.debugging import run_with_debug
 from amoginarium import pv
 
-from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric
+from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric, RandomizedEffect
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, Shotgun
-from ..audio import Mortar as MortarSound, CRAM as CRAMSound
+from ..audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
@@ -61,7 +61,7 @@ class BaseWeapon(Item):
             bullet_explosion_damage: float = 0,
             drop_casings: bool = False,
             bullet_lifetime=4,
-            sound_effect: ContinuousSoundEffect | PresetEffect | EllipsisType = ...,
+            sound_effect: ContinuousSoundEffect | PresetEffect | RandomizedEffect | EllipsisType = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
             bullet_visibility_offset: float = 0,  # time offset
             weapon_recoil_factor: float = 1,
@@ -423,8 +423,6 @@ class Sniper(BaseWeapon):
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2()
     ) -> None:
-        s = Shotgun()
-        s.volume = .7
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
@@ -439,9 +437,9 @@ class Sniper(BaseWeapon):
             bullet_lifetime=10,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            sound_effect=s,
+            sound_effect=SniperSound(),
             bullet_visibility_offset=.04,
-            bullet_type=SniperBullet
+            bullet_type=SniperBullet,
         )
 
 
@@ -511,7 +509,7 @@ class Flak(BaseWeapon):
             bullet_explosion_radius=100,
             bullet_explosion_damage=40,
             bullet_lifetime=5,
-            sound_effect=Shotgun().set_volume(1),
+            sound_effect=Cannon(),
             bullet_visibility_offset=.13,
             bullet_type=FlakBullet
         )
