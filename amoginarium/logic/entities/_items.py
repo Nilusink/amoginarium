@@ -314,8 +314,6 @@ class JetBag(BaseItem):
 
     def use(self) -> None:
         self._in_use = True
-        if not self._sound.playing:
-            self._sound.play(pos=self.position)
 
     def stop_use(self) -> None:
         self._in_use = False
@@ -345,6 +343,10 @@ class JetBag(BaseItem):
         if self._in_use:
             if self._uses_left > 0:
                 self._uses_left -= delta
+
+                if self._uses_left > 2 * delta:
+                    if not self._sound.playing:
+                        self._sound.play(pos=self.position)
 
                 if self._sound.playing:
                     self._sound.update_position(self.position)
