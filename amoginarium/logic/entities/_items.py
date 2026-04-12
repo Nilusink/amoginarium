@@ -9,6 +9,7 @@ Nilusink
 """
 from types import EllipsisType
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import pygame as pg
 import math as m
@@ -43,15 +44,18 @@ class BaseItem(Item):
     # noinspection PyTypeChecker
     @property
     def max_uses(self) -> int:
+        """max amount of uses"""
         return self._max_uses
 
     @property
     def uses_left(self) -> int:
+        """uses left"""
         return self._uses_left
 
     # endregion
 
     def add_used_callback(self, callback: tp.Callable[[int], bool]) -> None:
+        """gets called when item is used up"""
         self._used_callback = callback
 
     def update_rect(self) -> None:
@@ -92,9 +96,10 @@ class BaseItem(Item):
 
     def stop(self) -> None:
         """stop ... again?"""
-        ...
+        self.stop_use()
+        self._set_bit("flags", 14, False)  # set use to false
 
-    def kill(self, killed_by=...) -> None:
+    def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
         if self._used_callback and self._used_callback(1):
             self._uses_left = self._max_uses
 
@@ -134,6 +139,7 @@ class Shield(BaseItem):
 
     @property
     def hp(self) -> float:
+        """hit points"""
         return self._uses_left
 
     def use(self) -> None:
@@ -193,7 +199,9 @@ class Shield(BaseItem):
 
     def _update(self, delta: float, **_) -> None:
         if self.parent:
-            d = Vec2().from_polar(self.facing.angle, self._parent_position_offset.length)
+            d = Vec2().from_polar(
+                self.facing.angle, self._parent_position_offset.length
+            )
             if self._in_use:
                 self.size.xy = self._image_size
                 self.position = self.parent.position + d - self.size / 2

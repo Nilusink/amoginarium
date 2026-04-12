@@ -198,7 +198,7 @@ class RailGun(ChargedWeapon):
             parent=parent,
             reload_time=30,
             recoil_time=1,
-            weapon_recoil_factor=(.5, 50),
+            weapon_recoil_factor=(.5, 3),
             charge_time=10,
             mag_size=1,
             inaccuracy=.01093606,
@@ -211,7 +211,8 @@ class RailGun(ChargedWeapon):
             bullet_explosion_damage=(10, 200),
             bullet_explosion_radius=(5, 512),
             bullet_type=SniperBullet,
-            sound_effect=SmallExplosion()
+            sound_effect=SmallExplosion(),
+            bullet_lifetime=10
         )
 
     @staticmethod
