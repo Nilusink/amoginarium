@@ -54,6 +54,8 @@ class OpenGLRenderer(BaseRenderer):
     type StaticTextID = int
     type DynamicTextID = None
 
+    DRAW_DEBUG_BOUNDS = False
+
     __dynamic_text_fonts: dict[tuple[str, int, bool, bool], GLFont]
 
     __static_text_graphics: dict[StaticTextID, tuple[np.uintc, tuple[int, int]]]
@@ -112,7 +114,7 @@ class OpenGLRenderer(BaseRenderer):
         raise TypeError(f"Expected a Color object or a tuple, but got {type(color).__name__}: {color!r}")
 
     @staticmethod
-    def __check_out_of_screen(
+    def _check_out_of_screen(
             top_left: coord_t,
             size: coord_t,
     ) -> bool:
@@ -131,6 +133,61 @@ class OpenGLRenderer(BaseRenderer):
                 or top_left_tuple[1] + size_tuple[1] < 0
                 or top_left_tuple[1] > pv.global_vars.get_resolution().y
         )
+
+    def _draw_debug_bounds(
+            self,
+            pos: coord_t,
+            size: coord_t,
+            color: Color | tColor = (255, 0, 0, 127),
+            centered: bool = False
+    ) -> None:
+        pos_vec: Vec2 = convert_coord(pos, Vec2)
+        size_vec: Vec2 = convert_coord(size, Vec2)
+
+        # Handle centering offset
+        if centered:
+            pos_vec.x -= size_vec.x / 2.0
+            pos_vec.y -= size_vec.y / 2.0
+
+        # Hardcode a visible debug thickness and scale it
+        thickness = 1
+
+        # Bail out if it's not even on the screen
+        if self._check_out_of_screen(pos_vec, size_vec):
+            return
+
+        glPushMatrix()
+        glTranslate(pos_vec.x, pos_vec.y, 0.0)
+
+        # Set the color natively
+        self.__set_color(color)
+
+        # Pre-calculate the inner boundaries for the outline
+        ix = size_vec.x - thickness
+        iy = size_vec.y - thickness
+
+        # Draw the outline directly via OpenGL
+        glBegin(GL_TRIANGLE_STRIP)
+
+        # Trace the hollow frame (Outer vertex, Inner vertex)
+        glVertex2f(0.0, 0.0)
+        glVertex2f(thickness, thickness)
+
+        glVertex2f(size_vec.x, 0.0)
+        glVertex2f(ix, thickness)
+
+        glVertex2f(size_vec.x, size_vec.y)
+        glVertex2f(ix, iy)
+
+        glVertex2f(0.0, size_vec.y)
+        glVertex2f(thickness, iy)
+
+        # Close the loop
+        glVertex2f(0.0, 0.0)
+        glVertex2f(thickness, thickness)
+
+        glEnd()
+        glPopMatrix()
 
     # endregion
 
@@ -329,7 +386,7 @@ class OpenGLRenderer(BaseRenderer):
             pos_vec2 = pv.global_vars.translate_screen_coord(pos_vec2)
             size_vec2 = pv.global_vars.translate_scale(size_vec2)
 
-        if offscreen_check and self.__check_out_of_screen(pos_vec2, size_vec2):
+        if offscreen_check and self._check_out_of_screen(pos_vec2, size_vec2):
             return
 
         # reset color
@@ -378,6 +435,9 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
         glDisable(GL_TEXTURE_2D)
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(pos_vec2, size_vec2)
 
     # endregion
 
@@ -454,7 +514,7 @@ class OpenGLRenderer(BaseRenderer):
             start_vec2 = pv.global_vars.translate_screen_coord(start_vec2)
             size_vec2 = pv.global_vars.translate_scale(size_vec2)
 
-        if offscreen_check and self.__check_out_of_screen(start_vec2, size_vec2):
+        if offscreen_check and self._check_out_of_screen(start_vec2, size_vec2):
             return
 
         glPushMatrix()
@@ -469,6 +529,9 @@ class OpenGLRenderer(BaseRenderer):
         glVertex2f(0.0, size_vec2.y)
         glEnd()
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec2, size_vec2)
 
     @cum_timer.time_this
     def draw_rounded_rect(
@@ -516,7 +579,7 @@ class OpenGLRenderer(BaseRenderer):
 
         sx, sy = size_vec.x, size_vec.y
 
-        if offscreen_check and self.__check_out_of_screen(start_vec, size_vec):
+        if offscreen_check and self._check_out_of_screen(start_vec, size_vec):
             return
 
         r_tl = radius if top_left_radius is None else top_left_radius
@@ -572,6 +635,9 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
         glPopMatrix()
 
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec, size_vec)
+
     def draw_rect_line(
             self,
             start: coord_t,
@@ -599,7 +665,7 @@ class OpenGLRenderer(BaseRenderer):
             size_vec = pv.global_vars.translate_scale(size_vec)
             thickness = pv.global_vars.translate_scale(thickness)
 
-        if offscreen_check and self.__check_out_of_screen(start_vec, size_vec):
+        if offscreen_check and self._check_out_of_screen(start_vec, size_vec):
             return
 
         glPushMatrix()
@@ -631,6 +697,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnd()
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec, size_vec)
 
     def draw_rounded_rect_line(
             self,
@@ -681,7 +750,7 @@ class OpenGLRenderer(BaseRenderer):
         sx = size_vec.x
         sy = size_vec.y
 
-        if offscreen_check and self.__check_out_of_screen(start_vec, size_vec):
+        if offscreen_check and self._check_out_of_screen(start_vec, size_vec):
             return
 
         r_tl = min(radius if top_left_radius is None else top_left_radius, sx / 2.0, sy / 2.0)
@@ -753,6 +822,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
 
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec, size_vec)
+
     # todo mytodo work on this
     def draw_bar(
             self,
@@ -819,6 +891,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
 
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(pos, size)
+
     # endregion
 
     # region Circles
@@ -847,8 +922,8 @@ class OpenGLRenderer(BaseRenderer):
             center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
             radius = pv.global_vars.translate_scale(radius)
 
-        if offscreen_check and self.__check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
-                                                          (radius * 2, radius * 2)):
+        if offscreen_check and self._check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
+                                                         (radius * 2, radius * 2)):
             return
 
         glPushMatrix()
@@ -863,6 +938,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnd()
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
 
     def draw_line_circle(
             self,
@@ -893,8 +971,8 @@ class OpenGLRenderer(BaseRenderer):
             thickness = pv.global_vars.translate_scale(thickness)
 
         outer: float = radius + thickness
-        if offscreen_check and self.__check_out_of_screen((center_vec2.x - outer, center_vec2.y - outer),
-                                                          (outer * 2, outer * 2)):
+        if offscreen_check and self._check_out_of_screen((center_vec2.x - outer, center_vec2.y - outer),
+                                                         (outer * 2, outer * 2)):
             return
 
         glPushMatrix()
@@ -914,6 +992,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnd()
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
 
     def draw_partial_circle(
             self,
@@ -946,8 +1027,8 @@ class OpenGLRenderer(BaseRenderer):
             center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
             radius = pv.global_vars.translate_scale(radius)
 
-        if offscreen_check and self.__check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
-                                                          (radius * 2, radius * 2)):
+        if offscreen_check and self._check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
+                                                         (radius * 2, radius * 2)):
             return
 
         angle_delta: float = normalize_angle(angle_end_vec2.angle) - normalize_angle(angle_start_vec2.angle)
@@ -968,6 +1049,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnd()
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
 
     @cum_timer.time_this
     def draw_dashed_circle(
@@ -1004,7 +1088,7 @@ class OpenGLRenderer(BaseRenderer):
 
         outer: float = radius + thickness
 
-        if offscreen_check and self.__check_out_of_screen(
+        if offscreen_check and self._check_out_of_screen(
                 (center_vec2.x - outer, center_vec2.y - outer),
                 (outer * 2, outer * 2)
         ):
@@ -1047,6 +1131,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
 
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+
     def draw_partial_dashed_circle(
             self,
             center: coord_t,
@@ -1087,7 +1174,7 @@ class OpenGLRenderer(BaseRenderer):
 
         outer = radius + thickness
 
-        if offscreen_check and self.__check_out_of_screen(
+        if offscreen_check and self._check_out_of_screen(
                 (center_vec2.x - outer, center_vec2.y - outer),
                 (outer * 2, outer * 2)
         ):
@@ -1143,6 +1230,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
 
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+
     # endregion
 
     # region Lines
@@ -1173,7 +1263,7 @@ class OpenGLRenderer(BaseRenderer):
             end_vec2 = pv.global_vars.translate_screen_coord(end_vec2)
 
         # only draw if on screen
-        if offscreen_check and self.__check_out_of_screen(start_vec2, end_vec2 - start_vec2):
+        if offscreen_check and self._check_out_of_screen(start_vec2, end_vec2 - start_vec2):
             return
 
         if global_position:
@@ -1188,6 +1278,9 @@ class OpenGLRenderer(BaseRenderer):
 
         if global_position:
             glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
 
     def draw_thick_line(
             self,
@@ -1226,7 +1319,7 @@ class OpenGLRenderer(BaseRenderer):
         dx = ex - sx
         dy = ey - sy
 
-        if offscreen_check and self.__check_out_of_screen((sx, sy), (dx, dy)):
+        if offscreen_check and self._check_out_of_screen((sx, sy), (dx, dy)):
             return
 
         length = m.hypot(dx, dy)
@@ -1251,6 +1344,9 @@ class OpenGLRenderer(BaseRenderer):
 
         if global_position:
             glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
 
     # endregion
 
@@ -1312,7 +1408,7 @@ class OpenGLRenderer(BaseRenderer):
             pos.x -= text_width / 2
             pos.y -= text_height / 2
 
-        if offscreen_check and self.__check_out_of_screen((pos.x, pos.y), (text_width, text_height)):
+        if offscreen_check and self._check_out_of_screen((pos.x, pos.y), (text_width, text_height)):
             return None
 
         if bg_color.a255 > 0:
@@ -1321,6 +1417,9 @@ class OpenGLRenderer(BaseRenderer):
         glPushMatrix()
         font.draw(text, pos.x, pos.y, scale, color.rgba255)
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(pos, (text_width, text_height))
 
         return None
 
@@ -1412,7 +1511,7 @@ class OpenGLRenderer(BaseRenderer):
             px -= scaled_w * 0.5
             py -= scaled_h * 0.5
 
-        if self.__check_out_of_screen((px, py), (scaled_w, scaled_h)):
+        if self._check_out_of_screen((px, py), (scaled_w, scaled_h)):
             return
 
         glEnable(GL_TEXTURE_2D)
@@ -1441,5 +1540,9 @@ class OpenGLRenderer(BaseRenderer):
 
         glPopMatrix()
         glDisable(GL_TEXTURE_2D)
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds((px, py), (scaled_w, scaled_h))
+
 
     # endregion

@@ -96,7 +96,7 @@ class OpenGLShaderRenderer(OpenGLRenderer):
 
         outer: float = radius + thickness
 
-        if offscreen_check and self.__check_out_of_screen(
+        if offscreen_check and self._check_out_of_screen(
                 (center_vec2.x - outer, center_vec2.y - outer),
                 (outer * 2, outer * 2)
         ):
@@ -133,6 +133,9 @@ class OpenGLShaderRenderer(OpenGLRenderer):
 
         glPopMatrix()
         glUseProgram(0)
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
 
     def test_shader(self) -> None:
         # 1. Use the shader program

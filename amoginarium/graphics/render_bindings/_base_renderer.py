@@ -31,6 +31,7 @@ class BaseRenderer(abc.ABC):
     type TextureID = tp.Any
     type StaticTextID = tp.Any
     type DynamicTextID = tp.Any
+    DRAW_DEBUG_BOUNDS: tp.ClassVar[bool] = False
 
     # region Init and Loading
     @abc.abstractmethod

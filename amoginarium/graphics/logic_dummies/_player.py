@@ -159,7 +159,7 @@ class PlayerDummy(SyncedLRImageEntity):
                     (screen_size.x * 0.5, screen_size.y * 0.8),
                     Color().from_255(80, 80, 80),
                     20,
-                    False,
+                    convert_global=False,
                 )
 
                 # slots
