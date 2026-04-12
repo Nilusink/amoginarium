@@ -169,6 +169,7 @@ class LogicProcess:
         sounds.load_sounds("./assets/audio/effects/distant_pop")
         sounds.load_sounds("./assets/audio/effects/metal_pings")
         sounds.load_sounds("./assets/audio/effects/rocket")
+        sounds.load_sounds("./assets/audio/effects/potion_drink")
 
         self._background_player.assign_scope("background")
 

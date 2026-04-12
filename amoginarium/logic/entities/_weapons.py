@@ -14,13 +14,10 @@ from ctypes import Array
 import typing as tp
 
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t
-from amoginarium.shared import base_entity_t, WeaponCIDs, ProcessCommand
-from amoginarium.shared import BaseCommandType, DummyCIDs
-from amoginarium.shared.debugging import run_with_debug
-from amoginarium import pv
+from amoginarium.shared import base_entity_t, WeaponCIDs
 
 from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric, RandomizedEffect
-from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, Shotgun
+from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
 from ._logic_groups import CollisionDestroyed, Updated
@@ -61,7 +58,7 @@ class BaseWeapon(Item):
             bullet_explosion_damage: float = 0,
             drop_casings: bool = False,
             bullet_lifetime=4,
-            sound_effect: ContinuousSoundEffect | PresetEffect | RandomizedEffect | EllipsisType = ...,
+            sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
             bullet_visibility_offset: float = 0,  # time offset
             weapon_recoil_factor: float = 1,
@@ -346,7 +343,8 @@ class BaseWeapon(Item):
         stop all running effects
         """
         if self._sound_effect is not ...:
-            self._sound_effect.stop()
+            if hasattr(self._sound_effect, "stage_one_done"):
+                self._sound_effect.stop()
 
 
 class Minigun(BaseWeapon):
@@ -582,5 +580,6 @@ class HandThrownGrenade(BaseWeapon):
             bullet_explosion_damage=50,
             bullet_explosion_radius=150,
             bullet_visibility_offset=.0,
-            bullet_type=Grenade
+            bullet_type=Grenade,
+            sound_effect=SoundEffect(("groaning", "hugh_1")).set_volume(.6)
         )

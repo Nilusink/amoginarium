@@ -16,6 +16,7 @@ from amoginarium.logic.audio import ContinuousSoundEffect, PresetEffect
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from amoginarium.shared.utility import Vec2
 
+from ..audio import SmallExplosion
 from ._weapons import BaseWeapon, Bullet, SniperBullet
 
 
@@ -209,7 +210,8 @@ class RailGun(ChargedWeapon):
             bullet_visibility_offset=.058,
             bullet_explosion_damage=(10, 200),
             bullet_explosion_radius=(5, 512),
-            bullet_type=SniperBullet
+            bullet_type=SniperBullet,
+            sound_effect=SmallExplosion()
         )
 
     @staticmethod

@@ -291,6 +291,8 @@ def sound_effect_wrapper(sound_name: str, volume: float = 1) -> SoundEffect:
 
 
 class ContinuousSoundEffect:
+    """sound effect with three stages"""
+
     _stage_one_name: str = ...
     _stage_two_name: str = ...
     _stage_three_name: str = ...
@@ -414,6 +416,11 @@ class CRAM(ContinuousSoundEffect):
     _stage_two_name = ("minigun", "burst")
     _stage_three_name = ("minigun", "spool_down")
     volume: float = .1
+
+
+class PotionDrink(ContinuousSoundEffect):
+    _stage_two_name = ("potion_drink", "loop")
+    _stage_three_name = ("potion_drink", "finish")
 
 
 class RandomizedEffect:

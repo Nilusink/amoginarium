@@ -9,17 +9,16 @@ Nilusink
 """
 from types import EllipsisType
 from ctypes import Array
-from icecream import ic
 import typing as tp
 import pygame as pg
 import math as m
 
-from amoginarium.shared.utility import normalize_angle, Vec2
+from amoginarium.shared.utility import Vec2
 from amoginarium.shared import base_entity_t, ItemCIDs
 from amoginarium import pv
 
-from ..audio import RocketSound
-from ._logic_groups import CollisionDestroyed, Updated, GravityAffected, WallCollider
+from ..audio import RocketSound, MetalPings, PotionDrink
+from ._logic_groups import CollisionDestroyed
 from ._base_entity import LogicGameEntity
 from ._base_item import Item
 
@@ -110,7 +109,7 @@ class BaseItem(Item):
 
 
 class Shield(BaseItem):
-    __slots__ = ("_in_use",)
+    __slots__ = ("_in_use", "_sound")
 
     _image_name: tuple[str, str] | str = ("Shield_6", "4")
     _image_size: tuple[int, int] = (45, 80)
@@ -129,6 +128,7 @@ class Shield(BaseItem):
         )
         self._generate_collision_mask()
 
+        self._sound = MetalPings().set_volume(.4, .5)
         self._in_use = False
         self._update_mask()
 
@@ -179,6 +179,10 @@ class Shield(BaseItem):
         # self.mask = pg.mask.Mask(surf)
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
+        if hit_by is not ...:
+            if hit_by.is_bullet:
+                self._sound.play(pos=self.position)
+
         if not self.parent:
             super().hit(damage, hit_by)
 
@@ -217,7 +221,7 @@ class HealingPotion(BaseItem):
     ``param0``: f_tilt
     """
 
-    __slots__ = ("_drinking", "_f_velocity", "_f_tilt", "_target_rotation")
+    __slots__ = ("_drinking", "_f_velocity", "_f_tilt", "_target_rotation", "_sound")
 
     _cid = ItemCIDs.healing_potion
     _heal_per_sec = 20
@@ -233,6 +237,8 @@ class HealingPotion(BaseItem):
         )
         self._drinking = False
 
+        self._sound = PotionDrink()
+        self._sound.volume = 1
         self._target_rotation = 0
         self._f_velocity: float = 0
         self._f_tilt: float = 0
@@ -242,6 +248,8 @@ class HealingPotion(BaseItem):
 
     def stop_use(self) -> None:
         self._drinking = False
+        if self._sound.playing:
+            self._sound.done()
 
     def _update(self, delta: float, **_) -> None:
         if not self.parent:
@@ -256,8 +264,14 @@ class HealingPotion(BaseItem):
             )
             if self.parent.heal(heal):
                 self._uses_left -= heal
+                if not self._sound.playing:
+                    self._sound.play()
+
+            else:
+                self.stop_use()
 
             if self._uses_left <= 0:
+                self.stop_use()
                 self.kill()
 
         stiffness = .2
