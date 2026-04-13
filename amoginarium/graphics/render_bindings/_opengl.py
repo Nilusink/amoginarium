@@ -298,6 +298,7 @@ class OpenGLRenderer(BaseRenderer):
         pg.display.gl_set_attribute(pg.GL_GREEN_SIZE, 8)
         pg.display.gl_set_attribute(pg.GL_BLUE_SIZE, 8)
         pg.display.gl_set_attribute(pg.GL_ALPHA_SIZE, 8)
+        pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
 
         # pg window
         screen_size = pv.global_vars.get_screen_size()
