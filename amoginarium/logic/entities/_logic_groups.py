@@ -14,75 +14,15 @@ import pygame as pg
 import typing as tp
 import numpy as np
 
+from amoginarium.shared.debugging import cum_timer
+
 from ...shared.utility import Vec2, is_related, convert_coord, raycast_mask, \
     normalize_angle, coord_t
 from ...shared import GlobalVars, BaseLogicEntityLike
 from ... import pv
 
-
-class BaseGroup(pg.sprite.Group):
-    @staticmethod
-    def entities_in_circle(
-            entities: list[pg.sprite.Sprite],
-            center: Vec2,
-            radius: float,
-            min_radius: float = 0
-    ) -> list[tuple[float, tp.Any]]:
-        """
-        check which of the given entities are in the circle
-        """
-        out = []
-
-        for sprite in entities:
-            delta = sprite.position - center
-
-            if min_radius <= delta.length <= radius:
-                out.append((delta.length, sprite))
-
-        return sorted(out, key=lambda r: r[0])
-
-    @staticmethod
-    def entities_in_partial_circle(
-            entities: list[pg.sprite.Sprite],
-            center: Vec2,
-            radius: float,
-            angle_start: Vec2,
-            angle_end: Vec2,
-            min_radius: float = 0
-    ):
-        out = []
-        angle_delta = normalize_angle(
-            angle_end.angle
-            - angle_start.angle
-        )
-        start2 = angle_start.angle + angle_delta
-        end2 = angle_end.angle - angle_delta
-
-        for sprite in entities:
-            delta = sprite.position - center
-
-            if min_radius <= delta.length <= radius:
-                delta.angle = normalize_angle(delta.angle)
-                if any([
-                    angle_start.angle < delta.angle < start2,
-                    angle_end.angle > delta.angle > end2,
-                ]):
-                    out.append((delta.length, sprite))
-
-        return sorted(out, key=lambda r: r[0])
-
-    def get_entities_in_circle(
-            self,
-            center: Vec2,
-            radius: float
-    ) -> list[tuple[float, tp.Any]]:
-        """
-        get all entities inside a circle, sorted by distance (closest first)
-        """
-        return self.entities_in_circle(self.sprites(), center, radius)
-
-    def sprites(self) -> list[BaseLogicEntityLike]:
-        return super().sprites()
+from ._base_group import BaseGroup
+from ._collision_groups import GridSystem, GridCell
 
 
 class _Bullets(BaseGroup):
@@ -200,16 +140,26 @@ class _WallCollider(BaseGroup):
     def collides_with(
             sprite
     ) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
-        for wall in Walls.sprites():
-            sprite: tp.Any
-            wall: tp.Any
+        for group in GridSystem.get_cells_by_pos(sprite.rect.topleft[0], sprite.rect.bottomright[0]):
+            for wall in group.walls.sprites():
+                if pg.sprite.collide_rect(wall, sprite):
+                    pos = wall.collide(sprite)
+                    if pos is not None:
+                        return wall, pos
+        return False
 
-            # use collide_rect first, because performance and stuff
-            if pg.sprite.collide_rect(wall, sprite):
-                pos = wall.collide(sprite)
-                if pos is not None:
-                    return wall, pos
-
+    @staticmethod
+    @cum_timer.time_this
+    def collides_with_groups(
+            sprite,
+            groups: list[GridCell]
+    ) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
+        for group in groups:
+            for wall in group.walls.sprites():
+                if pg.sprite.collide_rect(wall, sprite):
+                    pos = wall.single_rect_collide(sprite)
+                    if pos is not None:
+                        return wall, pos
         return False
 
     @staticmethod
@@ -291,7 +241,7 @@ class _WallBouncer(BaseGroup):
         for sprite in self.sprites():
             with suppress(AttributeError):
                 sprite: tp.Any
-                in_wall = WallCollider.collides_with(sprite)
+                in_wall = sprite.collision
 
                 if not in_wall:
                     sprite.in_wall = None
@@ -351,6 +301,8 @@ class _CollisionDestroyed(BaseGroup):
     # @profile
     # @timeit(10)
     def update(self) -> None:
+        # todo: WHAT THE HELL IS THIS
+        return
         for sprite in CollisionDestroyed.sprites():
 
             with suppress(AttributeError):

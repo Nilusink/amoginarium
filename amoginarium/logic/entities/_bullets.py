@@ -12,18 +12,24 @@ from types import EllipsisType
 from time import perf_counter
 from ctypes import Array
 from icecream import ic
+import typing as tp
+import pygame as pg
 import numpy as np
 
+from amoginarium.shared.collision_detection import collision_detection_aabb_aabb_minkowski_raycast
 from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related, convert_coord
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
 from amoginarium import pv
 
+
 from ..audio import LargeExplosion, DistantPop
 from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
-from ._logic_groups import WallCollider, WallBouncer
+from ._logic_groups import WallCollider, WallBouncer, Walls
 from ._base_entity import LogicGameEntity
+from ._collision_groups import GridCell, GridSystem
 
+from ._island import Island
 
 SQR2 = np.sqrt(2)
 
@@ -35,13 +41,17 @@ class Bullet(LogicGameEntity):
     __slots__ = [
         "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
-        "_base_damage", "_last_pos"
+        "_base_damage", "_last_pos", "_old_grid_num", "_cells", "_collision"
     ]
 
     _base_damage: float
     _hp: int = -1
     _weight: float | None = None
     _cid = DummyCIDs.base_bullet
+
+    _old_grid_num: tuple[int, int] | None
+    _cells: list[GridCell]
+    _collision: bool | tuple[pg.sprite.Sprite, tuple[int, int]]
 
     def __init__(
             self,
@@ -62,6 +72,10 @@ class Bullet(LogicGameEntity):
     ) -> None:
         if not isinstance(size, Vec2):
             size: Vec2 = Vec2().from_cartesian(size, size)  # type: ignore
+
+        self._old_grid_num = None
+        self._cells = []
+        self._collision = False
 
         self._casing = casing
         self._base_damage = base_damage
@@ -108,10 +122,31 @@ class Bullet(LogicGameEntity):
             kwargs=kwargs
         ))
 
+    def __update_collision(self) -> None:
+        new_num = GridSystem.get_num(self.rect.topleft[0], self.rect.topright[0])
+        if new_num != self._old_grid_num:
+            self._old_grid_num = new_num
+            self._cells = GridSystem.get_cells_by_num(*new_num)
+
+        for group in [Walls]:
+            wall: Island
+            for wall in group.sprites():
+                if pg.sprite.collide_rect(wall, self):
+                    pos = self._collide_with_island(wall)
+                    if pos is not None:
+                        self._collision = wall, pos
+                        return
+
+        self._collision = False
+
+    @property
+    def collision(self) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
+        return self._collision
+
     # region properties
     @property
     def on_ground(self) -> bool:
-        return WallCollider.collides_with(self)
+        return self._collision is not False
 
     @property
     def damage(self) -> float:
@@ -194,9 +229,29 @@ class Bullet(LogicGameEntity):
         """bullet has hit someone else"""
         self.kill()
 
-    def _update(self, delta):
+    def _collide_with_island(self, island: Island) -> tuple[float, float] | None:
+        for island_rect in island.collision_rects:
+            result = collision_detection_aabb_aabb_minkowski_raycast(
+                self_size=(0, 0),
+                self_position_old=self.position.xy,
+                self_position_new=self._last_pos.xy,
+                other_size=island_rect.size,
+                other_position_old=(island_rect.x, island_rect.y),
+                other_position_new=(island_rect.x, island_rect.y),
+            )
+            if result is not None:
+                return result[0]
+
+    def update(self, delta):
         self._ttl -= delta
         self._visibility_offset -= delta
+
+        self._last_pos = self.position.copy()
+
+        super().update(delta)
+        self.__update_collision()
+        if self._collision is not False:
+            self.position.xy = self._collision[1]
 
         if any([
             self._ttl <= 0,
@@ -205,52 +260,46 @@ class Bullet(LogicGameEntity):
             if self.kill():
                 return
 
-        # double gravity (because why not)
-        self.acceleration.y *= 2
 
-        self._last_pos = self.position.copy()
         super()._update(delta)
         self.facing.angle = self.velocity.angle
 
         # check if bullet has hit someone
-        if self.velocity.length > 2000:
-            entities_hit = multi_raycast_mask(
-                self,
-                CollisionDestroyed.sprites(),
-                self._last_pos,
-                self.position,
-                10
-            )
-
-            for other, pos in entities_hit:
-                if not is_related(self, other):
-                    self.position = pos
-
-                    try:
-                        dmg = other.damage
-
-                    except AttributeError:
-                        dmg = 0
-
-                    self.hit(dmg, other)
-
-                    with suppress(AttributeError):
-                        hp = other.hp
-                        if dmg != 0:
-                            self.hit_someone(target_hp=hp)
-
-                    # bullet is sprite
-                    try:
-                        dmg = self.damage
-
-                    except AttributeError:
-                        dmg = 0
-
-                    with suppress(AttributeError):
-                        other.hit(dmg, self)
-
-        # update velocity
-        self._runtime_buffer[self.id].param1 = self.velocity.length
+        # if self.velocity.length > 2000:
+        #     entities_hit = multi_raycast_mask(
+        #         self,
+        #         CollisionDestroyed.sprites(),
+        #         self._last_pos,
+        #         self.position,
+        #         10
+        #     )
+        #
+        #     for other, pos in entities_hit:
+        #         if not is_related(self, other):
+        #             self.position = pos
+        #
+        #             try:
+        #                 dmg = other.damage
+        #
+        #             except AttributeError:
+        #                 dmg = 0
+        #
+        #             self.hit(dmg, other)
+        #
+        #             with suppress(AttributeError):
+        #                 hp = other.hp
+        #                 if dmg != 0:
+        #                     self.hit_someone(target_hp=hp)
+        #
+        #             # bullet is sprite
+        #             try:
+        #                 dmg = self.damage
+        #
+        #             except AttributeError:
+        #                 dmg = 0
+        #
+        #             with suppress(AttributeError):
+        #                 other.hit(dmg, self)
 
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
         if all([

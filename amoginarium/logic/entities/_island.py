@@ -15,14 +15,15 @@ import typing as tp
 import random
 
 from amoginarium.shared.utility import Vec2, coord_t, convert_coord
-from amoginarium.shared.debugging import print_ic_style, CC
+from amoginarium.shared.collision_detection import find_minimum_rectangles_dirty
+from amoginarium.shared.debugging import print_ic_style, CC, cum_timer
 from amoginarium.shared import base_entity_t, IslandCIDs, ProcessCommand
 from amoginarium.shared import BaseCommandType
 from amoginarium import pv
 
 from ._base_entity import LogicGameEntity
 from ..entities import Walls, Updated
-
+from ._collision_groups import GridSystem, GridCell
 
 class _PolyMatcher:
     def __init__(self, top, bottom, left, right) -> None:
@@ -41,6 +42,8 @@ class _PolyMatcher:
 class Island(LogicGameEntity):
     _block_size: tuple[int, int] = (64, 64)
     debug = False
+
+    __grid_groups: list[GridCell] = []
 
     def __init__(
             self,
@@ -75,6 +78,9 @@ class Island(LogicGameEntity):
 
         self.add(Walls)
         self.update_rect()
+
+        for group in GridSystem.get_cells_by_pos(self.rect.topleft[0], self.rect.topright[0]):
+            self.add(group.walls)
 
         # spawn graphics entity
         args: tp.MutableMapping[str, tp.Any] = {
@@ -141,8 +147,46 @@ class Island(LogicGameEntity):
         generate the mask used for collision
         """
         # start = time.perf_counter_ns()
+        self.collision_rects: list[pg.Rect] = []
+
         if self._form is ...:
+            # The entire island is a single rectangle
+            self.collision_rects.append(
+                pg.Rect(self.position.x, self.position.y, self.size.x, self.size.y)
+            )
             return super()._generate_collision_mask()
+
+        # Collision rects
+        n_rows = len(self._form)
+        n_columns = max(len(row) for row in self._form)
+
+        bitmap = [[0] * n_columns for _ in range(n_rows)]
+        for r in range(n_rows):
+            for c in range(n_columns):
+                try:
+                    # island_type > 0 means it's a solid block
+                    if self._form[r][c] > 0:
+                        bitmap[r][c] = 1
+                except IndexError:
+                    # Jagged edge, leave as 0
+                    pass
+
+        raw_rects = find_minimum_rectangles_dirty(bitmap)
+        print(len(raw_rects))
+
+        for r1, c1, r2, c2 in raw_rects:
+            # Calculate cell dimensions
+            width_cells = c2 - c1 + 1
+            height_cells = r2 - r1 + 1
+
+            # Translate to Pygame world coordinates
+            print("CALCING", c1, r1, self._block_size)
+            rect_x = self.position.x + c1 * self._block_size[0]
+            rect_y = self.position.y + r1 * self._block_size[1]
+            rect_w = width_cells * self._block_size[0]
+            rect_h = height_cells * self._block_size[1]
+
+            self.collision_rects.append(pg.Rect(rect_x, rect_y, rect_w, rect_h))
 
         # collide sprite and rect
         entity_mask = pg.Mask(self.size.xy)
@@ -152,8 +196,6 @@ class Island(LogicGameEntity):
         if isinstance(block_mask, tuple):
             block_mask, special_mask = block_mask
 
-        n_rows = len(self._form)
-        n_columns = max(len(row) for row in self._form)
         for row in range(n_rows):
             row_offset = self._block_size[1] * row
 
@@ -178,6 +220,40 @@ class Island(LogicGameEntity):
 
         self.mask = entity_mask
 
+    @cum_timer.time_this
+    def single_rect_collide(self, other: "Island") -> tuple[int, int] | None:
+        """
+        Collision check using optimized rectangles. Returns the top-left-most
+        relative intersection point (x, y) like pg.sprite.collide_mask.
+        """
+        if not hasattr(self, 'collision_rects'):
+            return None
+
+        # Check if the other entity has optimized collision rects. If not, fallback to its main rect.
+        other_rects = getattr(other, 'collision_rects', [other.rect])
+
+        best_point = None
+
+        for my_rect in self.collision_rects:
+            for their_rect in other_rects:
+                if my_rect.colliderect(their_rect):
+                    # Get the overlapping rectangle area
+                    clip = my_rect.clip(their_rect)
+
+                    # Calculate relative offset to self.rect's top-left, matching collide_mask format
+                    rel_x = int(clip.x - self.rect.x)
+                    rel_y = int(clip.y - self.rect.y)
+
+                    if best_point is None:
+                        best_point = (rel_x, rel_y)
+                    else:
+                        # Find the highest intersection point, resolving ties with the left-most coordinate
+                        if rel_y < best_point[1] or (rel_y == best_point[1] and rel_x < best_point[0]):
+                            best_point = (rel_x, rel_y)
+
+        return best_point
+
+    @cum_timer.time_this
     def collide(self, other) -> tuple[int, int] | None:
         """
         more precise collision for islands
