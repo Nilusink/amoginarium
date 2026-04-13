@@ -7,30 +7,35 @@ Defines the core game
 Author:
 Nilusink
 """
-from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glLoadIdentity, glOrtho, GL_MODELVIEW, \
-    glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
-from time import perf_counter, strftime, time, perf_counter_ns, sleep
+
+from OpenGL.GL import glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT
+from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION
+from OpenGL.GL import glLoadIdentity, glOrtho, GL_MODELVIEW, glGetIntegerv
+from time import perf_counter, strftime, time, perf_counter_ns
 from multiprocessing import Process
 from dataclasses import dataclass
+
 from icecream import ic, colorizedStderrPrint
+from types import EllipsisType
 from queue import Empty
 import typing as tp
 import pygame as pg
 import numpy
 import json
 
-# from ..shared.controllers import Controllers, Controller, GameController
-from .. import pv
-from ..shared.debugging import run_with_debug, print_ic_style, cum_timer
-from ..shared.debugging import print_with_prefix, CC, get_fg_color
-from ..shared.utility import Vec2, convert_coord
-from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
-from ..shared.settings import Settings
-from ..graphics.render_bindings import renderer
-from ..graphics.ui import UICursor
-from ..graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities, Drawn_2
-from ..graphics.controllers import Controller, Controllers, KeyboardController
-from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
+from amoginarium.shared.debugging import run_with_debug, print_ic_style, cum_timer
+from amoginarium.shared.debugging import print_with_prefix, CC, get_fg_color
+from amoginarium.shared.utility import Vec2, convert_coord
+from amoginarium.shared import ProcessCommand, ProcessCommandType, BaseCommandType
+from amoginarium.shared.settings import Settings
+from amoginarium.graphics.render_bindings import renderer
+from amoginarium.graphics.ui import UICursor
+from amoginarium.graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities
+from amoginarium.graphics.entities import Drawn_2
+from amoginarium.graphics.controllers import Controller, Controllers, KeyboardController
+from amoginarium.graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
+from amoginarium import pv
+
 from ..logic import run_continuous
 from ._scrolling_background import ParalaxBackground
 from ._settings_menu import SettingsMenu
@@ -39,10 +44,21 @@ from ._startmenu import StartMenu
 from ._textures import textures
 
 
-class BoundFunction(tp.TypedDict):
-    func: tp.Callable
-    args: tuple
-    kwargs: dict
+class BoundFunction[**A, R]:
+    """a function with pre-determined arguments"""
+    func: tp.Callable[A, R]
+    args: A.args
+    kwargs: A.kwargs
+
+    def __init__(
+        self, func: tp.Callable[A, R], *args: A.args, **kwargs: A.kwargs
+    ) -> None:
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self) -> R:
+        return self.func(*self.args, **self.kwargs)
 
 
 def current_time() -> str:
@@ -54,6 +70,8 @@ def current_time() -> str:
 
 
 class BaseGame:
+    """base game class"""
+
     running: bool = False
     _last_logic: float
     _bg_color: tuple[float, float, float]
@@ -71,7 +89,6 @@ class BaseGame:
     def __init__(
             self,
             debug: bool = False,
-            game_port: int = 12345,
             show_targets: bool = False,
             time_multiplier: float = 1
     ) -> None:
@@ -112,7 +129,7 @@ class BaseGame:
         self.global_vars = pv.global_vars
         self.global_vars.show_targets = show_targets
         self.time_multiplier = time_multiplier
-        self._last_loaded: tp.LiteralString = ...
+        self._last_loaded: tp.LiteralString | EllipsisType = ...
         self._shifting = False
 
         self.global_vars.scaling = Settings.scaling
@@ -138,7 +155,7 @@ class BaseGame:
         self._loading_screen_info = "Window init"
 
         # initialize background
-        self._background: ParalaxBackground = ...
+        self._background: ParalaxBackground | EllipsisType = ...
         self._bg_color = (0, 0, 0)
         self._ended = False
 
@@ -195,7 +212,7 @@ class BaseGame:
         # load textures and sounds
         self.preload()
 
-    def _update_loading_screen(self, step: int, info: str = ...) -> None:
+    def _update_loading_screen(self, step: int, info: str | EllipsisType = ...) -> None:
         if info is not ...:
             self._loading_screen_info = info
 
@@ -306,16 +323,18 @@ class BaseGame:
 
     @property
     def id(self) -> int:
+        """why is this even here"""
         return -1
 
     @property
     def root(self) -> tp.Self:
+        """same question"""
         return self
 
     @run_with_debug()
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
-        load a map from a json file
+        load a map from a JSON file
         """
         # issue load command
         pv.COQ.put(ProcessCommand(
@@ -407,16 +426,21 @@ class BaseGame:
 
         pg.display.set_window_position(pos)
 
-    def __window_update(self, width: float = ..., height: float = ...) -> None:
-        if width is ...:
-            width = pg.display.get_window_size()[0]
-        if height is ...:
-            height = pg.display.get_window_size()[1]
+    def __window_update(
+        self, width: float | EllipsisType = ..., height: float | EllipsisType = ...
+    ) -> None:
+        if isinstance(width, EllipsisType):
+            width: float = pg.display.get_window_size()[0]
+
+        if isinstance(height, EllipsisType):
+            height: float = pg.display.get_window_size()[1]
 
         res_x, res_y = self.global_vars.get_resolution().xy
         res_ratio = res_x / res_y
 
-        vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(width, height, res_ratio)
+        vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(
+            width, height, res_ratio
+        )
 
         scaling = self.global_vars.get_scaling()
 
@@ -460,7 +484,7 @@ class BaseGame:
             )
             glViewport(0, 0, width, height)
 
-            s_size_real =  convert_coord((width, height), Vec2)
+            s_size_real = convert_coord((width, height), Vec2)
             self.global_vars.set_screen_size_real(s_size_real)
 
             self.global_vars.set_screen_size_fac(Vec2().from_cartesian(
@@ -488,10 +512,13 @@ class BaseGame:
         last_fps_print = 0
         clock = pg.time.Clock()
 
-        active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
+        active_scene: tp.Literal[
+            "StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"
+        ] = "StartMenu"
 
         @dataclass(frozen=True)
         class UIVisiblity:
+            """this is a docstring"""
             start_menu: bool
             pause_menu: bool
             settings: bool
@@ -507,12 +534,14 @@ class BaseGame:
         # self.load_map("assets/maps/test.json")
 
         def load_ui_visibility():
+            """whatever this does (I didn't code it)"""
             visibility = ui_visibility[active_scene]
             start_menu.set_visibility(visibility.start_menu)
             pause_menu.set_visibility(visibility.pause_menu)
             settings.set_visibility(visibility.settings)
 
         def start_game():
+            """start game callback"""
             nonlocal active_scene
             active_scene = "Game"
 
@@ -521,6 +550,7 @@ class BaseGame:
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def reset_game(primary_call: bool = True):
+            """reset game callback"""
             nonlocal active_scene
             active_scene = "Game"
 
@@ -537,7 +567,7 @@ class BaseGame:
                 break
 
             # re-load map
-            if self._last_loaded is not ...:
+            if not isinstance(self._last_loaded, EllipsisType):
                 self.load_map(self._last_loaded)
 
             # respawn player
@@ -549,6 +579,7 @@ class BaseGame:
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def back_to_menu():
+            """menu callback"""
             nonlocal active_scene
             reset_game(False)
             active_scene = "StartMenu"
@@ -556,6 +587,7 @@ class BaseGame:
             load_ui_visibility()
 
         def pause_game():
+            """pause callback"""
             nonlocal active_scene
             active_scene = "PauseMenu"
 
@@ -563,6 +595,7 @@ class BaseGame:
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.pause))
 
         def open_settings():
+            """settings callback"""
             nonlocal active_scene
             if active_scene == "PauseMenu":
                 active_scene = "PauseSettings"
@@ -572,6 +605,7 @@ class BaseGame:
             load_ui_visibility()
 
         def close_settings():
+            """anti-settings callback"""
             nonlocal active_scene
 
             if active_scene == "PauseSettings":
@@ -581,9 +615,10 @@ class BaseGame:
 
             load_ui_visibility()
 
-        def handle_zoom(event):
+        def handle_zoom(e):
+            """zoom callback"""
             self.global_vars.set_pixel_per_meter(
-                self.global_vars.get_pixel_per_meter() * (1 + event.y / 30)
+                self.global_vars.get_pixel_per_meter() * (1 + e.y / 30)
             )
 
         start_menu = StartMenu(
@@ -713,7 +748,12 @@ class BaseGame:
                             sprite.check_click()
 
             mouse_cursor.gl_draw(delta)
-            if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
+            if active_scene in [
+                "StartMenu",
+                "PauseMenu",
+                "StartSettings",
+                "PauseSettings",
+            ]:
                 # update background music
                 self._background.scroll(delta / 200)
                 self._background.draw(delta)
@@ -745,10 +785,6 @@ class BaseGame:
                 Drawn_0.gl_draw(delta)
                 Drawn_1.gl_draw(delta)
                 Drawn_2.gl_draw(delta)
-                # renderer.draw_circle(
-                #     Vec2().from_cartesian(600, 700) - pv.global_vars.get_world_position(),
-                #     8,16, (255, 255, 0)
-                # )
 
             pg.display.flip()
 
@@ -768,7 +804,10 @@ class BaseGame:
         ic("pygame end")
         times = cum_timer.get_times()
         for func, values in sorted(times.items(), key=lambda e: e[1][0]):
-            print_ic_style(f"{func}, called {values[1]} times {round(values[2], 3)}µs each, totaling {round(values[0] / 1000, 2)}ms")
+            print_ic_style(
+                f"{func}, called {values[1]} times {round(values[2], 3)}µs each, "
+                f"totaling {round(values[0] / 1000, 2)}ms"
+            )
 
         self.end()
 
@@ -815,10 +854,6 @@ class BaseGame:
 
         # tell threads to exit
         self.running = False
-
-        # tell server to shutdown
-        # with suppress(RuntimeError):
-        # self._server.close()
 
         ic("stopping game...")
 

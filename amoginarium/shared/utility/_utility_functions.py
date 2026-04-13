@@ -29,10 +29,15 @@ type color_t = tuple[float, float, float] | tuple[float, float, float, float] | 
 
 
 class EntityLike(tp.Protocol):
+    """really basic entity abstraction"""
     position: Vec2
     size: Vec2
     mask: pg.Mask
     rect: pg.Rect
+    damage: float
+    hp: float
+
+    def hit(self, damage: float, hit_by: tp.Any) -> None: ...
 
 
 def classname(c: object) -> str:

@@ -537,7 +537,7 @@ class CRAM(BaseWeapon):
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_size=9,
-            bullet_lifetime=1,
+            bullet_lifetime=10,
             bullet_explosion_damage=.1,
             bullet_explosion_radius=15,
             sound_effect=CRAMSound(),

@@ -27,7 +27,9 @@ MAX_DIST = 6000.0
 MIN_DIST = 1.0
 
 
-def spatialize(channel: pg.mixer.Channel, delta, base_volume: float = 1.0) -> None:
+def spatialize(
+    channel: pg.mixer.Channel, delta: Vec2, base_volume: float = 1.0
+) -> None:
     """Set a channel's volume based on direction + distance + base volume"""
 
     # --- clamp base volume ---
@@ -41,7 +43,6 @@ def spatialize(channel: pg.mixer.Channel, delta, base_volume: float = 1.0) -> No
     d_norm = min(max(distance / MAX_DIST, 0.0), 1.0)
 
     # --- FIX 1: correct angle reference (forward = 0) ---
-    # adjust depending on your coordinate system
     a = a - m.pi / 2
 
     # --- FIX 2: proper pan calculation (-1 .. 1) ---
@@ -116,16 +117,19 @@ class SoundEffect:
     ) -> None:
         self._sound_name = sound
         self._on_finish = on_finish_playing
-        self._channel: pg.mixer.Channel = ...
+        self._channel: pg.mixer.Channel | EllipsisType = ...
         self._has_played = False
         self._loop = False
         self._pos: Vec2 | EllipsisType = ...
+        self._sound = ...
 
     @property
     def playing(self) -> bool:
+        """check if the sound effect is currently playing"""
         return self._has_played or self._loop
 
     def set_volume(self, volume: float) -> tp.Self:
+        """set the sound-effects volume"""
         self.volume = volume
         return self
 
@@ -172,7 +176,6 @@ class SoundEffect:
         if self._sound is None:
             raise RuntimeError(f"Sound {self._sound_name} not found!")
 
-        # self._sound.set_volume(self.volume)
         self._channel = pg.mixer.find_channel(force=False)
         if self._channel is None:
             return
@@ -326,6 +329,7 @@ class ContinuousSoundEffect:
 
     @property
     def volume(self) -> float:
+        """the sounds volume"""
         return self._volume
 
     @volume.setter
@@ -342,13 +346,16 @@ class ContinuousSoundEffect:
 
     @property
     def playing(self) -> int:
+        """check which stage the sound is currently playing (0 if None)"""
         return self._playing
 
     @property
     def stage_one_done(self) -> bool:
+        """check if the first stage of the sound effect is done"""
         return self.playing > 1
 
-    def play(self, pos: Vec2 = ...) -> None:
+    def play(self, pos: Vec2 | EllipsisType = ...) -> None:
+        """play the sound"""
         self._pos = pos
 
         if self._playing:
@@ -357,33 +364,38 @@ class ContinuousSoundEffect:
             return
 
         if self._stage_one is ...:
-            return self._play_2()
+            self._play_2()
+            return
 
         self._playing = 1
         self._stage_one.play(pos=pos)
 
     def _play_2(self) -> None:
         if self._stage_two is ...:
-            return self._play_3()
+            self._play_3()
+            return
 
         self._playing = 2
         self._stage_two.play(loops=-1, pos=self._pos)
 
     def _play_3(self) -> None:
         if self._stage_three is ...:
-            return self._stop()
+            self._stop()
+            return
 
         self._playing = 3
         self._stage_three.play(pos=self._pos)
 
     def stop(self) -> None:
+        """stop playing the sound (except last stage)"""
         match self.playing:
             case 1:
                 self._stage_one.stop()
             case 2:
                 self._stage_two.stop()
 
-        return self._stop()
+        self._stop()
+        return
 
     def _stop(self) -> None:
         self._playing = 0
@@ -463,10 +475,12 @@ class RandomizedEffect:
 
     @property
     def playing(self) -> bool:
+        """check if the sound is playing"""
         return not not self._playing
 
     @property
     def volume(self) -> int:
+        """set the sounds max volume"""
         return self._max_volume
 
     @volume.setter
@@ -486,7 +500,7 @@ class RandomizedEffect:
             loops: int = 0,
             maxtime: int = 0,
             fade_ms: int = 0,
-            pos: Vec2 = ...,
+            pos: Vec2 | EllipsisType = ...,
     ) -> None:
         """
         play the sound effect
@@ -552,7 +566,7 @@ class ScopedRandomizedEffect(RandomizedEffect):
 
 
 class DeathSound(ScopedRandomizedEffect):
-    def __init__(self, callback: tp.Callable[[], tp.Any] = ...) -> None:
+    def __init__(self, callback: tp.Callable[[], tp.Any] | None = None) -> None:
         super().__init__("death", callback)
 
 

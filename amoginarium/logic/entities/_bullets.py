@@ -34,12 +34,10 @@ class Bullet(LogicGameEntity):
     """
     basic logic bullet
     """
-
     __slots__ = [
         "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
-        "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
-        "_cluster_spread", "_o_dist", "_invincibility_offset", "_cfm"
+        "_base_damage", "_last_pos"
     ]
 
     _base_damage: float
@@ -391,7 +389,7 @@ class Bullet(LogicGameEntity):
 
 
 class MortarShell(Bullet):
-    _hp = 0.5
+    _hp = .5
     _weight = 8
     _cid = DummyCIDs.mortar_bullet
 
@@ -424,8 +422,8 @@ class MortarShell(Bullet):
 
 
 class Grenade(Bullet):
-    _hp = 0.05
-    _bounce_friction = 0.7
+    _hp = .05
+    _bounce_friction = .7
     _cid = DummyCIDs.grenade
 
     _default_base_damage = 0
