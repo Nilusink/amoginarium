@@ -503,7 +503,6 @@ class OpenGLRenderer(BaseRenderer):
     def __display_save_geometry(self) -> None:
         self.__previous_window_size.xy = self.__window.size
         self.__previous_window_position.xy = self.__window.position
-        print("SAVED", self.__previous_window_size, self.__previous_window_position)
 
     def display_fullscreen(self) -> None:
         """
@@ -519,11 +518,11 @@ class OpenGLRenderer(BaseRenderer):
         Activate windowed fullscreen mode
         """
         self.__display_save_geometry()
-        pos, size = WindowsMonitorService.get_current_monitor()
+        pos, size, combined = WindowsMonitorService.get_current_monitor_combined()
         self.__window.borderless = True
         self.__window.position = pos.xy
         # +1 is needed is here, because otherwise Windows will convert it to a normal fullscreen xD
-        self.__window.size = size.x, size.y + 1
+        self.__window.size = size.x, size.y + (0 if combined else 1)
 
         self.display_update()
         self.__display_state = "windowed_fullscreen"
