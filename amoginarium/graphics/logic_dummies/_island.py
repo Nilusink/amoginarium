@@ -281,14 +281,14 @@ class Island(SyncedGraphicsEntity):
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         start_pos = self.world_position
         world_position = pv.global_vars.get_world_position()
-        screen_pixels = pv.global_vars.screen_pixels
+        resolution = pv.global_vars.resolution_screen
 
         # check if island is on screen
         if (
                 self.pos.x + self.size.x < world_position.x or
-                self.pos.x > world_position.x + screen_pixels.x or
+                self.pos.x > world_position.x + resolution.x or
                 self.pos.y + self.size.y < world_position.y or
-                self.pos.y > world_position.y + screen_pixels.y
+                self.pos.y > world_position.y + resolution.y
         ):
             return
 
@@ -572,8 +572,7 @@ class Island(SyncedGraphicsEntity):
                 renderer.draw_textured_quad(
                     texture,
                     pos,
-                    size,
-                    pixel_perfect=True
+                    size
                 )
 
         if self.debug:
