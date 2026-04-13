@@ -210,7 +210,7 @@ class UIEntity(BaseGraphicsEntity):
         :param delta: Time since the last update in seconds
         :param recursive: Update the children tree recursively
         """
-        self.update(delta)
+        self._update(delta)
         if recursive:
             for child in self._children:
                 child.update(delta)
