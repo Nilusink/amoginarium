@@ -341,6 +341,7 @@ class Minigun(BaseWeapon):
 
             # bullet args
             base_damage=2,
+            time_to_life=10,
             visibility_offset=.058
         )
 
@@ -373,6 +374,7 @@ class Ak47(BaseWeapon):
 
             # bullet args
             base_damage=2.5,
+            time_to_life=10,
             visibility_offset=0.043,
         )
 

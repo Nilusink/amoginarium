@@ -695,7 +695,7 @@ class SkyShield(BaseTurret):
             1900,
             150,
             intercept_bullets=True,
-            intercept_players=False,
+            intercept_players=True,
             airburst_munition=True,
             target_taps=1,  # TODO: smart target tap (max)
             valid_angles=(
