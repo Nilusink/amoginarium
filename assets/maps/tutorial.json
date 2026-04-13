@@ -9,7 +9,7 @@
         },
         {
             "pos": [0, 800],
-            "size": [2048, 64]
+            "size": [2048, 640]
         },
         {
             "pos": [2300, 700],
@@ -113,7 +113,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.flak",
+            "type": "turret.static.mortar",
             "pos": [2500, 665]
         },
         {
