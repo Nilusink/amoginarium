@@ -13,13 +13,14 @@ from random import random
 from ctypes import Array
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, convert_coord, coord_t
+from amoginarium.shared.utility import Vec2, convert_coord, coord_t, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
 
-from ..audio import ContinuousSoundEffect, PresetEffect, ReloadGeneric, RandomizedEffect
-from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect
+from ..audio import ContinuousSoundEffect, ReloadGeneric, RandomizedEffect
+from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect, Shotgun
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
+from ._bullets import SkyShieldBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
 from ._base_item import Item
@@ -36,7 +37,7 @@ class BaseWeapon(Item):
     _current_reload_time: float = 0
     _mag_state: int = 0
     _recoil_factor: float
-    _bullet_speed: float
+    _muzzle_velocity: float
     _recoil_time: float
     _reload_time: float
     _mag_size: int
@@ -49,25 +50,21 @@ class BaseWeapon(Item):
             recoil_time: float,
             mag_size: int,
             inaccuracy: float,
-            bullet_speed: float,
-            barrel_length: float,  # where bullets spawn
             parent_position_offset: Vec2 | tuple[float, float],
-            bullet_size: Vec2 | int = 10,
-            bullet_damage: float = 1,
-            bullet_explosion_radius: float = ...,
-            bullet_explosion_damage: float = ...,
+            muzzle_velocity: float,
+            *,
+            barrel_length: float = 0,  # where bullets spawn
             drop_casings: bool = False,
-            bullet_lifetime=4,
             sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
-            bullet_visibility_offset: float = 0,  # time offset
             weapon_recoil_factor: float = 1,
-            size: Vec2 | EllipsisType = ...
+            weapon_size: Vec2 | EllipsisType = ...,
+            **bullet_kwargs
     ) -> None:
-        if size is ...:
-            size: Vec2 = Vec2().from_cartesian(20, 20)
+        if weapon_size is ...:
+            weapon_size: Vec2 = Vec2().from_cartesian(20, 20)
 
-        super().__init__(runtime_buffer=runtime_buffer, size=size)
+        super().__init__(runtime_buffer=runtime_buffer, size=weapon_size)
 
         # unless you want the sniper to kill its own bullet
         self.remove(CollisionDestroyed, Updated)
@@ -78,22 +75,17 @@ class BaseWeapon(Item):
         self._reload_time = reload_time
         self._recoil_time = recoil_time
         self._reload_time = reload_time
-        self._bullet_speed = bullet_speed
         self._drop_casings = drop_casings
         self._recoil_factor = weapon_recoil_factor
-        self._bullet_damage = bullet_damage
-        self._bullet_size = bullet_size
         self._barrel_length = barrel_length
         self._parent_position_offset: Vec2 = convert_coord(
             parent_position_offset, Vec2
         )
-        self._bullet_explosion_radius = bullet_explosion_radius
-        self._bullet_explosion_damage = bullet_explosion_damage
-        self._bullet_lifetime = bullet_lifetime
         self._sound_effect = sound_effect
         self._bullet_type = bullet_type
-        self._bullet_visibility_offset = bullet_visibility_offset
+        self._muzzle_velocity = muzzle_velocity
         self._spawned_graphics = False
+        self._bullet_kwargs = bullet_kwargs
 
         self._runtime_buffer[self.id].param0 = 1
 
@@ -120,37 +112,16 @@ class BaseWeapon(Item):
         return self._recoil_factor
 
     @property
-    def bullet_speed(self) -> float:
-        """
-        muzzle velocity of bullet
-        """
-        return self._bullet_speed
-
-    @property
-    def bullet_explosion_radius(self) -> float:
-        """
-        explosion radius of bullet on destroy
-        """
-        return self._bullet_explosion_radius
-
-    @property
-    def bullet_explosion_damage(self) -> float:
-        """
-        explosion damage from bullet
-        """
-        return self._bullet_explosion_damage
-
-    @property
-    def bullet_damage(self) -> float:
-        """damage dealt by bullet"""
-        return self._bullet_damage
-
-    @property
     def parent_position_offset(self) -> Vec2:
         """
         offset to parent center
         """
         return self._parent_position_offset.copy()
+
+    @property
+    def muzzle_velocity(self) -> float:
+        """the weapons muzzle velocity"""
+        return self._muzzle_velocity
 
     @property
     @deprecated("replaced by bullet_visibility_offset")
@@ -274,8 +245,8 @@ class BaseWeapon(Item):
             recoil = Vec2().from_polar(
                 direction.angle,
                 self._bullet_type.get_recoil_fac(
-                    self._bullet_type.get_weight(self._bullet_size),
-                    self.bullet_speed + self.parent.velocity.length
+                    self._bullet_type.get_weight(self._bullet_type._default_size),
+                    self.muzzle_velocity + self.parent.velocity.length
                 )
             ) * -self.parent._impulse_resistance_factor
 
@@ -287,30 +258,25 @@ class BaseWeapon(Item):
         self._mag_state -= 1
 
         # actual bullet
-        if bullet_tof is ...:
-            bullet_lifetime = self._bullet_lifetime
+        kwargs = self._bullet_kwargs.copy()
 
-        else:
-            bullet_lifetime = bullet_tof
+        if not isinstance(bullet_tof, EllipsisType):
+            kwargs["time_to_life"] = bullet_tof
 
-        bullet_lifetime: float
         self._bullet_type(
             runtime_buffer=self._runtime_buffer,
             parent=self.parent,
             coalition=self._coalition,
             initial_position=(
-                self.parent.position + self._parent_position_offset
-                + direction.normalize() * self._barrel_length * .45
+                self.parent.position
+                + self._parent_position_offset
+                + direction.normalize() * self._barrel_length * 0.45
             ),
-            initial_velocity=direction.normalize() * self.bullet_speed + self.parent.velocity,
-            base_damage=self.bullet_damage,
-            size=self._bullet_size,
-            explosion_radius=self.bullet_explosion_radius,
-            explosion_damage=self.bullet_explosion_damage,
-            time_to_life=bullet_lifetime,
+            initial_velocity=Vec2().from_polar(self.facing.angle, self._muzzle_velocity)
+            + self.parent.velocity,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,
-            visibility_offset=self._bullet_visibility_offset
+            **kwargs
         )
 
         # TODO: casings
@@ -367,13 +333,15 @@ class Minigun(BaseWeapon):
             recoil_time=.02,
             mag_size=80,
             inaccuracy=.01093606,
-            bullet_speed=1600,
-            bullet_damage=2,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=1600,
             drop_casings=drop_casings,
             sound_effect=MinigunSound(),
-            bullet_visibility_offset=.058
+
+            # bullet args
+            base_damage=2,
+            visibility_offset=.058
         )
 
 
@@ -397,14 +365,15 @@ class Ak47(BaseWeapon):
             recoil_time=.1,
             mag_size=30,
             inaccuracy=0.03,
-            bullet_size=11,
-            bullet_speed=1250,
-            bullet_damage=2.5,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=1250,
             drop_casings=drop_casings,
             sound_effect=AK47Sound(),
-            bullet_visibility_offset=.043
+
+            # bullet args
+            base_damage=2.5,
+            visibility_offset=0.043,
         )
 
 
@@ -428,16 +397,16 @@ class Sniper(BaseWeapon):
             recoil_time=2,
             mag_size=6,
             inaccuracy=.00500002,
-            bullet_size=15,
-            bullet_speed=2500,
-            bullet_damage=15,
             barrel_length=0,
-            bullet_lifetime=10,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=2500,
             drop_casings=drop_casings,
             sound_effect=SniperSound(),
-            bullet_visibility_offset=.04,
             bullet_type=SniperBullet,
+
+            # bullet args
+            time_to_life=10,
+            visibility_offset=0.04,
         )
 
 
@@ -453,7 +422,7 @@ class Mortar(BaseWeapon):
             runtime_buffer: Array[base_entity_t],
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
-            bullet_speed=1800
+            muzzle_velocity=1800
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -462,16 +431,16 @@ class Mortar(BaseWeapon):
             recoil_time=.25,
             mag_size=1,
             inaccuracy=.00100002,
-            bullet_size=Vec2().from_cartesian(40, 20),
-            bullet_speed=bullet_speed,
-            bullet_damage=40,
             barrel_length=10,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=muzzle_velocity,
             drop_casings=drop_casings,
-            bullet_lifetime=7,
             sound_effect=MortarSound(),
             bullet_type=MortarShell,
-            bullet_visibility_offset=.025
+            
+            # bullet args
+            time_to_life=7,
+            visibility_offset=.025,
         )
 
 
@@ -492,22 +461,19 @@ class Flak(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=3,
-            recoil_time=.15,
+            recoil_time=0.15,
             mag_size=4,
-            inaccuracy=.0100002,
-            bullet_size=18,
-            # bullet_speed=1400*2,  # can shoot down bullets, but is too op
-            bullet_speed=1700,
-            bullet_damage=30,
+            inaccuracy=0.0100002,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=1700,
             drop_casings=drop_casings,
-            bullet_explosion_radius=100,
-            bullet_explosion_damage=40,
-            bullet_lifetime=5,
             sound_effect=Cannon(),
-            bullet_visibility_offset=.13,
-            bullet_type=FlakBullet
+            bullet_type=FlakBullet,
+
+            # bullet args
+            time_to_life=5,
+            visibility_offset=0.13,
         )
 
 
@@ -531,18 +497,16 @@ class CRAM(BaseWeapon):
             recoil_time=.005,
             mag_size=800,
             inaccuracy=.001093606,
-            bullet_speed=3000,
-            bullet_damage=.1,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=3000,
             drop_casings=drop_casings,
-            bullet_size=9,
-            bullet_lifetime=10,
-            bullet_explosion_damage=.1,
-            bullet_explosion_radius=15,
             sound_effect=CRAMSound(),
-            bullet_visibility_offset=.027,  # TODO: smart target tap (max)
-            bullet_type=CRAMBullet
+            bullet_type=CRAMBullet,
+
+            # bullet args
+            time_to_life=10,
+            visibility_offset=.027,
         )
 
 
@@ -568,16 +532,41 @@ class HandThrownGrenade(BaseWeapon):
             weapon_recoil_factor=.5,
             mag_size=1,
             inaccuracy=.01,
-            bullet_speed=800,
-            bullet_damage=0,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=800,
             drop_casings=drop_casings,
-            bullet_size=32,
-            bullet_lifetime=5,
-            bullet_explosion_damage=50,
-            bullet_explosion_radius=150,
-            bullet_visibility_offset=.0,
             bullet_type=Grenade,
-            sound_effect=SoundEffect(("groaning", "hugh_1")).set_volume(.6)
+            sound_effect=SoundEffect(("groaning", "hugh_1")).set_volume(.6),
+
+            # bullet args
+            time_to_life=5,
+            visibility_offset=.0,
+        )
+
+
+class SkyShieldWeapon(BaseWeapon):
+    """smart munitions weapon"""
+    _cid = WeaponCIDs.cram
+
+    def __init__(
+        self,
+        parent,
+        runtime_buffer: Array[base_entity_t],
+        parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
+    ) -> None:
+        super().__init__(
+            runtime_buffer=runtime_buffer,
+            parent=parent,
+            reload_time=8,
+            recoil_time=0.1,
+            mag_size=100,
+            inaccuracy=0.005,
+            parent_position_offset=parent_position_offset,
+            muzzle_velocity=3000,
+            sound_effect=CRAMSound(),
+            bullet_type=SkyShieldBullet,
+
+            # bullet args
+            visibility_offset=0.027,
         )

@@ -27,7 +27,7 @@ from amoginarium import pv
 from ..audio import MetalPings
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon, Minigun, Sniper, Ak47, Mortar, Flak, CRAM
+from ._weapons import BaseWeapon, Minigun, Sniper, Ak47, Mortar, Flak, CRAM, SkyShieldWeapon
 from ._base_entity import LogicGameEntity
 from ._sensors import MagicSensor, BaseSensor
 from ._detection_group import DetectionGroup
@@ -377,7 +377,7 @@ class BaseTurret(LogicGameEntity):
                 position_delta,
                 player_velocity,
                 player_acceleration,
-                self.weapon.bullet_speed,
+                self.weapon.muzzle_velocity,
                 recalc,
                 # 2 * position_delta.length / self.weapon.bullet_speed,
                 self._aim_type,
@@ -401,10 +401,10 @@ class BaseTurret(LogicGameEntity):
             if predict.length < self.min_range:
                 return
 
-            tof = min(
-                tof,
-                1.3 * self.engagement_range / self.weapon.bullet_speed
-            )
+            # tof = min(
+            #     tof,
+            #     1.3 * self.engagement_range / self.weapon.muzzle_velocity
+            # )
 
             return TargetSolution(
                 target_predict=target_predict,
@@ -560,7 +560,7 @@ class MortarTurret(BaseTurret):
             position: Vec2,
             **kwargs
     ) -> None:
-        self._coalition = coalition  # needed becauuse the weapon wants it
+        self._coalition = coalition  # needed because the weapon wants it
         weapon = Mortar(self, runtime_buffer, False, parent_position_offset=(0, -13))
         weapon.reload(True)
 
@@ -574,6 +574,7 @@ class MortarTurret(BaseTurret):
             sensors=[
                 RadarSensor(self, 3000, min_rcs=0.01)
             ],
+            airburst_munition=True,
             **kwargs
         )
 
@@ -648,7 +649,55 @@ class CRAMTurret(BaseTurret):
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
-            target_taps=1,
+            target_taps=32,  # TODO: smart target tap (max)
+            valid_angles=(
+                Vec2().from_cartesian(-.5, 1),
+                Vec2().from_cartesian(.5, 1)
+            ),
+            sensors=[
+                MagicSensor(
+                    self,
+                    2200,
+                    # sphere_accuracy=256,
+                    # min_rcs=.04
+                )
+            ],
+            **kwargs
+        )
+
+
+class SkyShield(BaseTurret):
+    _cid = TurretCIDs.sky_shield
+    _max_hp: int = 60
+    _aim_type = "low"
+
+    def __init__(
+            self,
+            runtime_buffer: Array[base_entity_t],
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
+        self._coalition = coalition  # needed because the weapon wants it
+        weapon = SkyShieldWeapon(
+            self,
+            runtime_buffer,
+            parent_position_offset=(0, 15)
+        )  # don't eject casings because I like my pc
+        weapon.reload(True)
+
+        super().__init__(
+            runtime_buffer,
+            coalition,
+            Vec2().from_cartesian(64, 128),
+            position,
+            weapon,
+            1900,
+            150,
+            intercept_bullets=True,
+            intercept_players=False,
+            airburst_munition=True,
+            target_taps=1,  # TODO: smart target tap (max)
             valid_angles=(
                 Vec2().from_cartesian(-.5, 1),
                 Vec2().from_cartesian(.5, 1)

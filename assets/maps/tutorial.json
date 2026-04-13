@@ -113,7 +113,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.mortar",
+            "type": "turret.static.sky_shield",
             "pos": [2800, 665]
         },
         {

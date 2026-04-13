@@ -199,6 +199,10 @@ class BulletDummy(SyncedImageEntity):
                 p1 = self._trace[i]
                 p2 = self._trace[i+1]
 
+                # check if any of the positions is at 0/0
+                if p1.length * p2.length < 1:
+                    continue
+
                 if self._fade_trace:
                     color.a1 = trace_mult * (1 - (i / len(self._trace)))
 

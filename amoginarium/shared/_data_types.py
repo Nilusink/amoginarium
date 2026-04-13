@@ -60,6 +60,7 @@ class TurretCIDs(Enum):
     flak = "turret.static.flak"
     cram = "turret.static.cram"
     base = "turret.static.base"
+    sky_shield = "turret.static.sky_shield"
 
 
 class WeaponCIDs(Enum):
