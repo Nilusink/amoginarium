@@ -7,6 +7,12 @@ a few functions for rendering
 Author:
 Nilusink
 """
+import os
+# Stop Windows from minimizing/re-initializing the window if it thinks it lost focus
+os.environ['SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS'] = '0'
+# Stop Windows DPI scaling from slightly altering the window size and triggering a loop
+os.environ['SDL_VIDEO_HIGHDPI_DISABLED'] = '1'
+
 from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
 from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
 from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
@@ -14,21 +20,22 @@ from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
 from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
 from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
-from OpenGL.GL import glDisable, glBegin, glClearColor
-from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST
+from OpenGL.GL import glDisable, glBegin, glClearColor, glGetIntegerv
+from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST, GL_VIEWPORT
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA
 from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE
+from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glViewport, glOrtho
 from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
-from OpenGL.GL import GL_QUADS
+from OpenGL.GL import GL_QUADS, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
 from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays
-from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT
+from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
 
 from pygame.locals import DOUBLEBUF, OPENGL
+from pygame._sdl2.video import Window
 from types import EllipsisType
 from icecream import ic
 from PIL import Image
@@ -41,8 +48,10 @@ from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t, convert_color
 
 from ._base_renderer import BaseRenderer, tColor
+from .windows import WindowsMonitorService
 from .opengl_fonts import GLFont
-from ... import pv
+
+from amoginarium import pv
 
 # define types
 
@@ -50,6 +59,11 @@ from ... import pv
 
 # noinspection DuplicatedCode
 class OpenGLRenderer(BaseRenderer):
+    __slots__ = (
+        "__dynamic_text_fonts", "__static_text_graphics", "__static_text_id_counter", "__static_text_fonts",
+        "__clock", "__window", "__previous_window_position", "__previous_window_size"
+    )
+
     type TextureID = int
     type StaticTextID = int
     type DynamicTextID = None
@@ -61,6 +75,12 @@ class OpenGLRenderer(BaseRenderer):
     __static_text_graphics: dict[StaticTextID, tuple[np.uintc, tuple[int, int]]]
     __static_text_id_counter: StaticTextID
     __static_text_fonts: dict
+    __clock: pg.time.Clock
+    __window: pg.Window
+
+    __previous_window_position: tp.Final[Vec2]
+    __previous_window_size: tp.Final[Vec2]
+    __display_state: tp.Literal["windowed", "windowed_fullscreen", "fullscreen"]
 
     # region Extra internal methods
     # todo: WHAT?
@@ -114,6 +134,7 @@ class OpenGLRenderer(BaseRenderer):
         raise TypeError(f"Expected a Color object or a tuple, but got {type(color).__name__}: {color!r}")
 
     @staticmethod
+    @cum_timer.time_this
     def _check_out_of_screen(
             top_left: coord_t,
             size: coord_t,
@@ -124,14 +145,24 @@ class OpenGLRenderer(BaseRenderer):
         :param size: Absolute size
         :return: True if rect is out of screen
         """
-        top_left_tuple = convert_coord(top_left)
-        size_tuple = convert_coord(size)
+        x1, y1 = convert_coord(top_left)
+        w, h = convert_coord(size)
 
+        x2 = x1 + w
+        y2 = y1 + h
+
+        if x1 > x2:
+            x1, x2 = x2, x1
+
+        if y1 > y2:
+            y1, y2 = y2, y1
+
+        res = pv.global_vars.get_resolution()
         return (
-                top_left_tuple[0] + size_tuple[0] < 0
-                or top_left_tuple[0] > pv.global_vars.get_resolution().x
-                or top_left_tuple[1] + size_tuple[1] < 0
-                or top_left_tuple[1] > pv.global_vars.get_resolution().y
+                x2 < 0
+                or x1 > res.x
+                or y2 < 0
+                or y1 > res.y
         )
 
     def _draw_debug_bounds(
@@ -189,6 +220,23 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
         glPopMatrix()
 
+    @staticmethod
+    def __scaling_restricted_ratio(size: Vec2, ratio: float) -> tuple[int, int, int, int]:
+        window_ratio = size.x / size.y
+
+        if window_ratio > ratio:
+            view_h = size.y
+            view_w = int(size.y * ratio)
+            offset_x = (size.x - view_w) // 2
+            offset_y = 0
+        else:
+            view_w = size.x
+            view_h = int(size.x / ratio)
+            offset_x = 0
+            offset_y = (size.y - view_h) // 2
+
+        return int(offset_x), int(offset_y), int(view_w), int(view_h)
+
     # endregion
 
     # region Init & Loading
@@ -197,6 +245,7 @@ class OpenGLRenderer(BaseRenderer):
         Initialize the renderer and global_vars
         :param title: Window title
         """
+        pg.init()
         pv.global_vars = pv.global_vars
 
         ic("using OpenGL backend")
@@ -207,6 +256,9 @@ class OpenGLRenderer(BaseRenderer):
         self.__dynamic_text_fonts = {}
         self.__static_text_graphics = {}
         self.__static_text_id_counter = 0
+
+        self.__previous_window_size = Vec2().from_cartesian(1920, 1080)
+        self.__previous_window_position = Vec2()
 
         self.__static_text_fonts = {
             32: [
@@ -242,14 +294,22 @@ class OpenGLRenderer(BaseRenderer):
         )
 
         # pg.display.gl_set_attribute(pg.GL_SWAP_CONTROL, 1)
-        pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
-        pg.display.set_mode(
-            pv.global_vars.get_screen_size().xy,
-            DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
+        pg.display.gl_set_attribute(pg.GL_RED_SIZE, 8)
+        pg.display.gl_set_attribute(pg.GL_GREEN_SIZE, 8)
+        pg.display.gl_set_attribute(pg.GL_BLUE_SIZE, 8)
+        pg.display.gl_set_attribute(pg.GL_ALPHA_SIZE, 8)
+
+        # pg window
+        screen_size = pv.global_vars.get_screen_size()
+        self.__window = pg.Window(
+            title=title,
+            size=(screen_size.x / 2, screen_size.y / 2),
+            opengl=True,
+            resizable=True,
+            hidden=True
         )
-        # self.font = pg.font.SysFont(None, 24)
-        # request stencil buffer
-        pg.display.set_caption(title)
+        self.__window.minimum_size = (screen_size.x / 8, screen_size.y / 8),
+        WindowsMonitorService.set_window(title)
 
         # initialize OpenGL stuff
         glClearColor(*(0, 0, 0, 255))
@@ -259,6 +319,17 @@ class OpenGLRenderer(BaseRenderer):
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        self.__clock = pg.time.Clock()
+
+        self.__window.show()
+        self.__display_state = "windowed"
+
+    def quit(self) -> None:
+        """
+        Quit the display
+        """
+        pg.quit()
 
     def load_texture(
             self,
@@ -304,6 +375,180 @@ class OpenGLRenderer(BaseRenderer):
         )
 
         return texture_id, (width, height)
+
+    # endregion
+
+    # region Display
+    @property
+    def display_state(self) -> tp.Literal["windowed", "fullscreen", "windowed_fullscreen"]:
+        return self.__display_state
+
+    def clear_display(self, color: Color | tColor = (0, 0, 0, 0)) -> None:
+        """
+        Clear the whole window
+        :param color: Color to clear the window with
+        """
+        conv_color: Color = convert_color(color, Color)
+        glClearColor(*conv_color.rgba1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) ->None:
+        """
+        Should be called when the display gets updated
+        :param position: Position of the display
+        :param size: Size of the display
+        """
+        if self.__display_state in ["fullscreen", "windowed_fullscreen"]:
+            self.__window.restore()
+            self.__window.borderless = False
+            self.__window.set_windowed()
+            self.__window.size = self.__previous_window_size.xy
+            self.__window.maximize()
+            self.__display_state = "windowed"
+
+        if position is None:
+            position = self.__window.position
+        if size is None:
+            size = self.__window.size
+
+        _position_vec: Vec2 = convert_coord(position, Vec2)
+        size_vec: Vec2 = convert_coord(size, Vec2)
+
+        res_x, res_y = pv.global_vars.get_resolution().xy
+        res_ratio = res_x / res_y
+
+        vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(size_vec, res_ratio)
+
+        scaling = pv.global_vars.get_scaling()
+
+        if scaling == 0:
+            # 1. Resize the window native way
+            self.__window.size = (int(size_vec.x), int(size_vec.y))
+            # 2. Update viewport
+            glViewport(vp_x, vp_y, vp_w, vp_h)
+
+            pv.global_vars.set_screen_size_real(
+                convert_coord(size_vec, Vec2)
+            )
+
+            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / vp_w, res_y / vp_h
+            ))
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                vp_x, vp_y
+            ))
+
+        elif scaling == 1:
+            self.__window.size = (vp_w, vp_h)
+            glViewport(0, 0, vp_w, vp_h)
+
+            s_size_real = convert_coord((vp_w, vp_h), Vec2)
+            pv.global_vars.set_screen_size_real(s_size_real)
+
+            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / s_size_real.x, res_y / s_size_real.y
+            ))
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                0, 0
+            ))
+
+        else:
+            self.__window.size = (int(size_vec.x), int(size_vec.y))
+            glViewport(0, 0, int(size_vec.x), int(size_vec.y))
+
+            pv.global_vars.set_screen_size_real(size_vec)
+
+            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / size_vec.x, res_y / size_vec.y
+            ))
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                0, 0
+            ))
+
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+
+        glOrtho(0, res_x, res_y, 0, -1, 1)
+
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+    def display_get_geometry(self) -> tuple[Vec2, Vec2]:
+        """
+        Change the position and size of the display
+        :return: (position, size) of the window
+        """
+        pos_x, pos_y = self.__window.position
+        size_w, size_h = self.__window.size
+
+        return (
+            Vec2().from_cartesian(pos_x, pos_y),
+            Vec2().from_cartesian(size_w, size_h)
+        )
+
+    def display_set_geometry(self, position: coord_t, size: coord_t) -> None:
+        """
+        Change the position and size of the display
+        :param position: New position
+        :param size: New size
+        """
+        self.__window.set_windowed()
+
+        pos_tuple = convert_coord(position, tuple)
+        size_tuple = convert_coord(size, tuple)
+
+        self.__window.position = (int(pos_tuple[0]), int(pos_tuple[1]))
+        self.__window.size = (int(size_tuple[0]), int(size_tuple[1]))
+
+    def __display_save_geometry(self) -> None:
+        self.__previous_window_size.xy = self.__window.size
+        self.__previous_window_position.xy = self.__window.position
+        print("SAVED", self.__previous_window_size, self.__previous_window_position)
+
+    def display_fullscreen(self) -> None:
+        """
+        Activate fullscreen mode
+        """
+        self.__display_save_geometry()
+        self.__window.set_fullscreen(True)
+        self.display_update()
+        self.__display_state = "fullscreen"
+
+    def display_windowed_fullscreen(self) -> None:
+        """
+        Activate windowed fullscreen mode
+        """
+        self.__display_save_geometry()
+        pos, size = WindowsMonitorService.get_current_monitor()
+        self.__window.borderless = True
+        self.__window.position = pos.xy
+        # +1 is needed is here, because otherwise Windows will convert it to a normal fullscreen xD
+        self.__window.size = size.x, size.y + 1
+
+        self.display_update()
+        self.__display_state = "windowed_fullscreen"
+
+    def display_set_windowed(self) -> None:
+        self.__display_state = "windowed"
+        self.__window.set_windowed()
+        self.__window.borderless = False
+        self.display_set_geometry(self.__previous_window_position, self.__previous_window_size)
+        self.display_update(self.__previous_window_position.xy, self.__previous_window_size.xy)
+
+    def display_set_title(self, title: str, icon: str | None = None) -> None:
+        """
+        Set the caption/titlebar of the display
+        :param title: String title
+        :param icon: Icon
+        """
+        self.__window.title = title
+
+    def display_draw_frame(self) -> None:
+        """
+        Called each frame after the drawing
+        """
+        self.__window.flip()
+        self.__clock.tick(pv.global_vars.get_max_fps())
 
     # endregion
 

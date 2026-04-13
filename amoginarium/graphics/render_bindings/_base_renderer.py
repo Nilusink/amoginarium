@@ -13,7 +13,7 @@ from PIL import Image
 import typing as tp
 import abc
 
-from amoginarium.shared.utility import Color, coord_t
+from amoginarium.shared.utility import Color, coord_t, Vec2
 
 # define types
 type Color3 = tuple[float, float, float]
@@ -28,6 +28,7 @@ class BaseRenderer(abc.ABC):
     """
     Abstract Renderer Class
     """
+
     type TextureID = tp.Any
     type StaticTextID = tp.Any
     type DynamicTextID = tp.Any
@@ -39,6 +40,14 @@ class BaseRenderer(abc.ABC):
         """
         Initialize the renderer and pv.global_vars
         :param title: Window title
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def quit(self) -> None:
+        """
+        Quit the display
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
@@ -56,6 +65,81 @@ class BaseRenderer(abc.ABC):
         :param size: Size of image or None
         :param mirror: Axes to mirror the image on
         :returns: texture_id, (width, height)
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    # endregion
+
+    # region Display
+    @abc.abstractmethod
+    def clear_display(self, color: Color | tColor = (0, 0, 0, 0)) -> None:
+        """
+        Clear the whole window
+        :param color: Color to clear the window with
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) -> None:
+        """
+        Should be called when the display gets updated
+        :param position: Position of the display
+        :param size: Size of the display
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def display_get_geometry(self) -> tuple[Vec2, Vec2]:
+        """
+        Change the position and size of the display
+        :return: (position, size) of the window
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def display_set_geometry(self, position: coord_t, size: coord_t) -> None:
+        """
+        Change the position and size of the display
+        :param position: New position
+        :param size: New size
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def display_fullscreen(self) -> None:
+        """
+        Activate fullscreen mode
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def display_windowed_fullscreen(self) -> None:
+        """
+        Activate windowed fullscreen mode
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def display_set_title(self, title: str, icon: str | None = None) -> None:
+        """
+        Set the caption/titlebar of the display
+        :param title: String title
+        :param icon: Icon
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def display_draw_frame(self) -> None:
+        """
+        Called each frame after the drawing
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
