@@ -9,8 +9,6 @@ Nilusink, melektron
 """
 from time import perf_counter
 import typing as tp
-import math as m
-import operator
 import asyncio
 import inspect
 
@@ -162,53 +160,3 @@ class WDTimer(_BaseTimer):
             return self
         self._timer_task.cancel()
         self._timer_task = None
-
-
-T = tp.TypeVar('T', bound=tuple)
-
-
-class TupleMath:
-    """
-    A utility class providing efficient element-wise mathematical operations
-    for tuples of the same length using pure Python.
-    """
-
-    @staticmethod
-    def add(t1: T, t2: T) -> T:
-        """
-        Performs element-wise addition on two tuples.
-        :param t1: The first tuple of numbers.
-        :param t2: The second tuple of numbers.
-        :return: A new tuple containing the element-wise sums.
-        """
-        return tuple(map(operator.add, t1, t2))
-
-    @staticmethod
-    def sub(t1: T, t2: T) -> T:
-        """
-        Performs element-wise subtraction on two tuples.
-        :param t1: The first tuple of numbers.
-        :param t2: The second tuple of numbers (subtrahend).
-        :return: A new tuple containing the element-wise differences.
-        """
-        return tuple(map(operator.sub, t1, t2))
-
-    @staticmethod
-    def mul(t1: T, t2: T) -> T:
-        """
-        Performs element-wise multiplication on two tuples.
-        :param t1: The first tuple of numbers.
-        :param t2: The second tuple of numbers.
-        :return: A new tuple containing the element-wise products.
-        """
-        return tuple(map(operator.mul, t1, t2))
-
-    @staticmethod
-    def div(t1: T, t2: T) -> T:
-        """
-        Performs element-wise standard division on two tuples.
-        :param t1: The first tuple of numbers (dividends).
-        :param t2: The second tuple of numbers (divisors). Must not contain zeros.
-        :return: A new tuple containing the element-wise quotients as floats.
-        """
-        return tuple(map(operator.truediv, t1, t2))

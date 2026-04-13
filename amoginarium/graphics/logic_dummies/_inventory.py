@@ -13,7 +13,7 @@ from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
 from ..entities import BaseGraphicsEntity, Drawn_0
-from ..ui import Rectangle, AnimatedColorValues
+from ..ui import UIRectangle, AnimatedColorValues
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity, SE_MANAGER
 from ._drawable_items import ITEM_IDS
@@ -48,13 +48,13 @@ class Inventory(BaseGraphicsEntity):
         }
 
         self._ui = {
-            "root": Rectangle(
+            "root": UIRectangle(
                 (.5, .5),
                 (.8, .8),
                 bg_color=self._slot_colors["border_basic"],
                 border_color=self._slot_colors["border_basic"]
             ), "slots": [
-                Rectangle(
+                UIRectangle(
                     (.5, .5),
                     (.1, .1),
                     bg_color=self._slot_colors["basic"],
@@ -111,7 +111,7 @@ class Inventory(BaseGraphicsEntity):
         slot_size = width / (slots_per_row + 0.1)
         rows = round(self.buff.size / slots_per_row)
 
-        slots: list[Rectangle] = self._ui["slots"]  # ignore: type
+        slots: list[UIRectangle] = self._ui["slots"]  # ignore: type
 
         slots[0].size.relative_global = slot_size, slot_size
         slots[0].size.relative_global.y = slots[

@@ -11,6 +11,8 @@ from dataclasses import dataclass
 import typing as tp
 import pygame as pg
 
+from amoginarium import pv
+
 from ._base_controller import Controller
 
 
@@ -37,6 +39,9 @@ class KeyboardController(Controller):
         pressed_keys = pg.key.get_pressed()
         mouse_buttons = pg.mouse.get_pressed(5)
         pos = pg.mouse.get_pos()
+        screen_size_offset = pv.global_vars.get_screen_size_offset()
+        pos = ((pos[0] - screen_size_offset.x),
+               (pos[1] - screen_size_offset.y))
 
         # read controls
         up = pressed_keys[self._controls.up]

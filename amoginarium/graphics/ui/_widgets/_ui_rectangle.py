@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_rectangle.py
+amoginarium/graphics/ui/_widgets/_ui_rectangle.py
 
 Project: amoginarium
 Created: 01.03.2026
@@ -19,7 +19,7 @@ from .._base import UIEventElement, UIEntity
 from .._types import Anchor, Positions
 
 
-class Rectangle(UIEventElement):
+class UIRectangle(UIEventElement):
     """UI rectangle with basic sounds and animations"""
     __bg_color_animation: ColorAnimation
     __border_color_animation: ColorAnimation
@@ -35,7 +35,7 @@ class Rectangle(UIEventElement):
             self,
             position: coord_t,
             size: coord_t,
-            *_args: tp.Any,
+            *,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
             absolute_values: bool = False,
@@ -54,7 +54,6 @@ class Rectangle(UIEventElement):
             border_width: anim_float_values_t = 5,
             radius: anim_float_values_t = 20,
             size_extend: anim_vec2_values_t = 0,
-
             on_enter_sound: GraphicsSoundEffect | None = None,
             on_leave_sound: GraphicsSoundEffect | None = None,
             on_click_sound: GraphicsSoundEffect | None = None,
@@ -65,19 +64,23 @@ class Rectangle(UIEventElement):
         :param size: Relative size of the component
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
+        :param absolute_values: Whether the position and size are absolute or relative
+        :param positon_is_relative_to_parent: Whether the position is relative to the parent or the screen
+        :param size_is_relative_to_parent: Whether the size is relative to the parent or the screen
+        :param parent_reference_position: What reference position of the parent component to use
         :param collision_buffer: Mouse hovering buffer for edge cases
+        :param use_collision_mask: Whether a collision mask should be used or just a collision box
+        :param on_enter_callbacks: Callbacks to be called when a cursor enters the component
+        :param on_leave_callbacks: Callbacks to be called when a cursor leaves the component
+        :param on_buffer_callbacks: Callbacks to be called when a cursor is right on the edge of the component
         :param bg_color: Background color of the rectangle (hover animated)
         :param border_color: Border color of the rectangle (hover animated)
         :param border_width: Width of the border (hover animated)
         :param radius: Radius of the rectangle (hover animated)
         :param size_extend: Hover animated size expansion
-        :param on_enter_callbacks: Callbacks to be called when a cursor enters the component
-        :param on_leave_callbacks: Callbacks to be called when a cursor leaves the component
-        :param on_buffer_callbacks: Callbacks to be called when a cursor is right on the edge of the component
         :param on_enter_sound: Sound to play when the cursor enters the rectangle
         :param on_leave_sound: Sound to play when the cursor leaves the rectangle
         :param on_click_sound: Sound to play when the cursor clicks the rectangle
-        :param use_collision_mask: Whether a collision mask should be used or just a collision box
         """
         super().__init__(
             position=position,
@@ -125,7 +128,6 @@ class Rectangle(UIEventElement):
     @border_color.setter
     def border_color(self, value) -> None:
         self.__border_color_animation = ColorAnimation(value)
-
 
     def __on_cursor_enter(self) -> None:
         """Called when a cursor enters the rectangle"""
@@ -177,17 +179,17 @@ class Rectangle(UIEventElement):
         bg_color = self.__bg_color_animation.current_value
         radius = self.__radius_animation.current_value
 
-        super()._gl_draw(delta_cal)
+        super()._gl_draw(delta_cal, layer)
 
         if radius > 0:
             if border_width > 0:
                 # 1. Swapped to the hollow rounded border
-                renderer.draw_rounded_border(
+                renderer.draw_rounded_rect_line(
                     self.top_left.absolute_global,
                     self.size.absolute,
-                    border_color,
-                    radius,
-                    border_width,
+                    color=border_color,
+                    radius=radius,
+                    thickness=border_width,
                     convert_global=False
                 )
 
@@ -195,26 +197,26 @@ class Rectangle(UIEventElement):
             renderer.draw_rounded_rect(
                 self.top_left.absolute_global + border_width,
                 self.size.absolute - 2 * border_width,
-                bg_color,
-                inner_radius if inner_radius > 0 else 0,
+                color=bg_color,
+                radius=inner_radius if inner_radius > 0 else 0,
                 convert_global=False
             )
 
         else:
             if border_width > 0:
                 # 2. Swapped to the hollow sharp border
-                renderer.draw_border(
+                renderer.draw_rect_line(
                     self.top_left.absolute_global,
                     self.size.absolute,
-                    border_color,
-                    border_width,
+                    color=border_color,
+                    thickness=border_width,
                     convert_global=False
                 )
 
             renderer.draw_rect(
                 self.top_left.absolute_global + border_width,
                 self.size.absolute - 2 * border_width,
-                bg_color,
+                color=bg_color,
                 convert_global=False
             )
 

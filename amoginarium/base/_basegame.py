@@ -7,16 +7,13 @@ Defines the core game
 Author:
 Nilusink
 """
-from OpenGL.GL import glClearColor, glViewport, glMatrixMode, GL_PROJECTION, glLoadIdentity, glOrtho, GL_MODELVIEW, \
-    glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_VIEWPORT, glGetIntegerv
-from time import perf_counter, strftime, time, perf_counter_ns, sleep
+from time import perf_counter, strftime, time, perf_counter_ns
 from multiprocessing import Process
 from dataclasses import dataclass
 from icecream import ic, colorizedStderrPrint
 from queue import Empty
 import typing as tp
-import pygame as pg
-import numpy
+import pygame as pg  # Will be removed after controller/keybind refactoring
 import json
 
 # from ..shared.controllers import Controllers, Controller, GameController
@@ -130,9 +127,8 @@ class BaseGame:
         self._comms_ping: int = 0
 
         # initialize pygame (logic) and renderer
-        pg.init()
-        # pg.mixer.init(channels=64, buffer=1024)
         renderer.init("amoginarium")
+        renderer.display_windowed_fullscreen()
 
         self._loading_screen_steps = 28
         self._loading_screen_info = "Window init"
@@ -143,8 +139,6 @@ class BaseGame:
         self._ended = False
 
         self._update_loading_screen(1)
-
-        self.__windowed_fullscreen()
 
         # controller setup
         self._new_controllers: list[Controller] = []
@@ -203,16 +197,14 @@ class BaseGame:
         # (Note: glClear ignores glViewport, so it will clean the whole window)
 
         # EventHandler.check_events()
-
-        glClearColor(0.0, 0.0, 0.0, 1)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        renderer.clear_display()
 
         # draw info text
-        renderer.draw_text(
+        renderer.draw_dynamic_text(
             (960, 850),
             self._loading_screen_info,
-            (1, 1, 1),
-            (0, 0, 0, 0),
+            color=(1, 1, 1),
+            bg_color=(0, 0, 0, 0),
             font_size=32,
             centered=True,
         )
@@ -236,7 +228,7 @@ class BaseGame:
             convert_global=False
         )
 
-        pg.display.flip()
+        renderer.display_draw_frame()
 
     @run_with_debug(reraise_errors=True, show_finish=True)
     def preload(self) -> None:
@@ -325,7 +317,7 @@ class BaseGame:
 
         # stuff
         data = json.load(open(map_path, "r"))
-        pg.display.set_caption(f"amoginarium - {data["name"]}")
+        renderer.display_set_title(f"amoginarium - {data["name"]}")
 
         # set background
         if 0 <= data["background"] - 1 <= len(self._backgrounds):
@@ -368,125 +360,12 @@ class BaseGame:
         ic("pygame end")
         self.running = False
 
-    def __scaling_restricted_ratio(self, width: float, height: float, ratio: float):
-        # Calculate the aspect ratio of the current window
-        window_ratio = width / height
-
-        if window_ratio > ratio:
-            # Window is too wide: height is the constraint
-            view_h = height
-            view_w = int(height * ratio)
-            offset_x = (width - view_w) // 2
-            offset_y = 0
-        else:
-            # Window is too tall: width is the constraint
-            view_w = width
-            view_h = int(width / ratio)
-            offset_x = 0
-            offset_y = (height - view_h) // 2
-
-        return offset_x, offset_y, view_w, view_h
-
-    def __windowed_fullscreen(self) -> None:
-        pg.display.set_mode(
-            (0, 0),
-            pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE | pg.FULLSCREEN
-        )
-
-        size = numpy.ndarray.tolist(glGetIntegerv(GL_VIEWPORT))
-        size = size[2], size[3]
-
-        pos = pg.display.get_window_position()
-
-        pg.display.set_mode(
-            (0, 0),
-            pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
-        )
-
-        self.__window_update(*size)
-
-        pg.display.set_window_position(pos)
-
-    def __window_update(self, width: float = ..., height: float = ...) -> None:
-        if width is ...:
-            width = pg.display.get_window_size()[0]
-        if height is ...:
-            height = pg.display.get_window_size()[1]
-
-        res_x, res_y = self.global_vars.get_resolution().xy
-        res_ratio = res_x / res_y
-
-        vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(width, height, res_ratio)
-
-        scaling = self.global_vars.get_scaling()
-
-        if scaling == "bars":
-            # Tell OpenGL to only draw inside the calculated aspect-correct rectangle
-            glViewport(vp_x, vp_y, vp_w, vp_h)
-            pg.display.set_mode(
-                (width, height),
-                pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
-            )
-            self.global_vars.set_screen_size_real(
-                convert_coord((width, height), Vec2)
-            )
-
-            self.global_vars.set_screen_size_fac(Vec2().from_cartesian(
-                res_x / vp_w, res_y / vp_h
-            ))
-            self.global_vars.set_screen_size_offset(Vec2().from_cartesian(
-                vp_x, vp_y
-            ))
-
-        elif scaling == "fixed_aspect_ratio":
-            pg.display.set_mode(
-                (vp_w, vp_h),
-                pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
-            )
-            s_size_real = convert_coord((vp_w, vp_h), Vec2)
-            self.global_vars.set_screen_size_real(s_size_real)
-
-            self.global_vars.set_screen_size_fac(Vec2().from_cartesian(
-                res_x / s_size_real.x, res_y / s_size_real.y
-            ))
-            self.global_vars.set_screen_size_offset(Vec2().from_cartesian(
-                0, 0
-            ))
-
-        else:
-            pg.display.set_mode(
-                (width, height),
-                pg.DOUBLEBUF | pg.OPENGL | pg.RESIZABLE
-            )
-            glViewport(0, 0, width, height)
-
-            s_size_real =  convert_coord((width, height), Vec2)
-            self.global_vars.set_screen_size_real(s_size_real)
-
-            self.global_vars.set_screen_size_fac(Vec2().from_cartesian(
-                res_x / s_size_real.x, res_y / s_size_real.y
-            ))
-            self.global_vars.set_screen_size_offset(Vec2().from_cartesian(
-                0, 0
-            ))
-
-        # 4. FIXED COORDINATE SPACE
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-
-        glOrtho(0, res_x, res_y, 0, -1, 1)
-
-        # Switch back to Modelview for drawing
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-
     def _run_pygame(self) -> None:
         """
         start pygame
         """
         last = perf_counter()
         last_fps_print = 0
-        clock = pg.time.Clock()
 
         active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
 
@@ -595,8 +474,7 @@ class BaseGame:
         )
 
         settings = SettingsMenu(
-            close_settings,
-            self.__window_update
+            close_settings
         )
 
         start_menu.show()
@@ -667,11 +545,7 @@ class BaseGame:
                             **item.kwargs
                         )
 
-            glClearColor(0.0, 0.0, 0.1, 1)
-
-            # 2. Clear the entire window buffer with that black color
-            # (Note: glClear ignores glViewport, so it will clean the whole window)
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            renderer.clear_display()
 
             # total delta since last call
             now = perf_counter()
@@ -683,9 +557,11 @@ class BaseGame:
             world_pos = self.global_vars.get_world_position()
 
             # TEMP SOLUTION - fix with controller rework
+            display_updated = False
             for event in pg.event.get():
-                if event.type == pg.VIDEORESIZE:
-                    self.__window_update(*event.size)
+                if event.type in [pg.WINDOWRESIZED, pg.WINDOWMOVED, pg.VIDEORESIZE] and not display_updated:
+                    renderer.display_update()
+                    display_updated = True
                 elif event.type == pg.MOUSEWHEEL:
                     if active_scene in ["Game", "PauseSettings", "PauseMenu"]:
                         handle_zoom(event)
@@ -697,7 +573,10 @@ class BaseGame:
 
                 elif event.type == pg.KEYUP:
                     if event.key == pg.K_F11:
-                        self.__windowed_fullscreen()
+                        if renderer.display_state == "windowed_fullscreen":
+                            renderer.display_set_windowed()
+                        else:
+                            renderer.display_windowed_fullscreen()
                     if event.key == pg.K_ESCAPE:
                         if active_scene == "Game":
                             pause_game()
@@ -750,8 +629,6 @@ class BaseGame:
                 #     8,16, (255, 255, 0)
                 # )
 
-            pg.display.flip()
-
             # update global vars
             self.global_vars.update()
 
@@ -763,7 +640,7 @@ class BaseGame:
             )
             last = now
 
-            clock.tick(self.global_vars.get_max_fps())
+            renderer.display_draw_frame()
 
         ic("pygame end")
         times = cum_timer.get_times()
@@ -776,14 +653,13 @@ class BaseGame:
         """
         only draw entities, no game updates or menus
         """
-        glClearColor(0.0, 0.0, 0.1, 1)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        renderer.clear_display()
 
         self._background.draw(0)
         Drawn_0.gl_draw()
         Drawn_1.gl_draw()
 
-        pg.display.flip()
+        renderer.display_draw_frame()
 
     def mainloop(self) -> None:
         """
@@ -811,6 +687,7 @@ class BaseGame:
         self._ended = True
 
         Settings.scaling = self.global_vars.get_scaling()
+        print(Settings.scaling)
         Settings.write()
 
         # tell threads to exit
@@ -823,7 +700,7 @@ class BaseGame:
         ic("stopping game...")
 
         # quit pygame
-        pg.quit()
+        renderer.quit()
 
         # write debug data
         ic("writing debug data")

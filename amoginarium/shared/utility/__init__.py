@@ -1,4 +1,4 @@
-from ._utility_classes import BetterDict, SimpleLock, WDTimer, TupleMath
+from ._utility_classes import BetterDict, SimpleLock, WDTimer
 from ._utility_functions import is_parent, classname, \
     coord_t, lidar_sphere, convert_color, color_t
 from ._calculations import calculate_launch_angle_iterative, rk4_update
@@ -7,7 +7,7 @@ from ._cutility_functions import raycast_size
 from ._ccolor import Color, fade, c_255_to_1
 from ._cutility_functions import add_tuple
 from ._constants import SQ2, MASK16, MASK32, MASK64
-
+from ._tuplemath import TupleMath
 
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord, is_related
 from ._ccalculations import calculate_launch_angle

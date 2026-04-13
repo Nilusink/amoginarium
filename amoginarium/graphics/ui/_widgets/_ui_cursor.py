@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_pointer.py
+amoginarium/graphics/ui/_widgets/_ui_cursor.py
 
 Project: amoginarium
 Created: 11.03.2026
@@ -42,7 +42,7 @@ class UICursor(UIEventElement):
 
         self.absolute_position_global = new_pos
 
-        super()._gl_draw(delta_cal)
+        super()._gl_draw(delta_cal, layer)
 
     @property
     def velocity(self) -> Vec2:

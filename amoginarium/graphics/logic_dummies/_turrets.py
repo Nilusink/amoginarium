@@ -97,12 +97,12 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         # only draw engagement range if on screen
         world_position = pv.global_vars.get_world_position()
-        screen_pixels = pv.global_vars.screen_pixels
+        resolution = pv.global_vars.resolution_screen
         if (
                 self.pos.x + self._range[1] < world_position.x or
-                self.pos.x - self._range[1] > world_position.x + screen_pixels.x or
+                self.pos.x - self._range[1] > world_position.x + resolution.x or
                 self.pos.y + self._range[1] < world_position.y or
-                self.pos.y - self._range[1] > world_position.y + screen_pixels.y
+                self.pos.y - self._range[1] > world_position.y + resolution.y
         ):
             return
 
@@ -163,18 +163,22 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                 renderer.draw_dashed_circle(
                     engage_center,
                     self._range[1],
-                    64,
+                    2048,
                     Color().from_1(1, 1, 1),
-                    3
+                    draw_len=32,
+                    gap_len=32,
+                    thickness=3
                 )
 
                 if self._range[0] > 0:
                     renderer.draw_dashed_circle(
                         engage_center,
                         self._range[0],
-                        64,
+                        2048,
                         (1, .5, 0),
-                        3
+                        draw_len=32,
+                        gap_len=32,
+                        thickness=3
                     )
 
             # draw sensor ranges
@@ -198,9 +202,9 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         # only draw turret if on screen
         if (
                 self.pos.x + self.size.x / 2 < world_position.x or
-                self.pos.x - self.size.x / 2 > world_position.x + screen_pixels.x or
+                self.pos.x - self.size.x / 2 > world_position.x + resolution.x or
                 self.pos.y + self.size.y / 2 < world_position.y or
-                self.pos.y - self.size.y / 2 > world_position.y + screen_pixels.y
+                self.pos.y - self.size.y / 2 > world_position.y + resolution.y
         ):
             return
 

@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base/_ui_element/_ui_element_values.py
+amoginarium/graphics/ui/_base/_ui_element/_ui_element_values.py
 
 Project: amoginarium
 Created: 25.03.2026

@@ -1,5 +1,5 @@
 """
-amoginarium/ui/components/__init__.py
+amoginarium/graphics/ui/_components/__init__.py
 
 Project: amoginarium
 Created: 25.03.2026

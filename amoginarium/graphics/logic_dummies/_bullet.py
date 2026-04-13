@@ -156,14 +156,14 @@ class BulletDummy(SyncedImageEntity):
                 self._trace.insert(0, trace_pos)
 
         world_pos = pv.global_vars.get_world_position()
-        screen_pixels = pv.global_vars.screen_pixels
+        resolution = pv.global_vars.resolution_screen
         if (
-            self.pos.x + (self._max_trace_length + self.size.x / 2) < world_pos.x
-            or self.pos.x - (self._max_trace_length + self.size.x / 2)
-            > world_pos.x + screen_pixels.x
-            or self.pos.y + (self._max_trace_length + self.size.y / 2) < world_pos.y
-            or self.pos.y - (self._max_trace_length + self.size.y / 2)
-            > world_pos.y + screen_pixels.y
+                self.pos.x + (self._max_trace_length + self.size.x / 2) < world_pos.x
+                or self.pos.x - (self._max_trace_length + self.size.x / 2)
+                > world_pos.x + resolution.x
+                or self.pos.y + (self._max_trace_length + self.size.y / 2) < world_pos.y
+                or self.pos.y - (self._max_trace_length + self.size.y / 2)
+                > world_pos.y + resolution.y
         ):
             self._last_pos.length = 0
             return
@@ -206,7 +206,7 @@ class BulletDummy(SyncedImageEntity):
                     p1 - world_pos,
                     p2 - world_pos,
                     color,  # ignore: type
-                    self.size.length / 3,
+                    thickness=self.size.length / 3,
                 )
 
         super()._gl_draw(delta_cal)
@@ -224,6 +224,7 @@ class Grenade(BulletDummy):
     _bullet_image: str = ("grenade", "")
     _cid = DummyCIDs.grenade
     _default_show_trace = False
+
 
 
 class CRAMBullet(BulletDummy):

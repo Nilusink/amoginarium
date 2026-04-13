@@ -1,13 +1,13 @@
 """
-amoginarium/ui/_animations/_complex_animation.py
+amoginarium/graphics/ui/_animations/_complex_animation.py
 
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah
 """
 
-import typing as tp
 from types import EllipsisType
+import typing as tp
 
 from ._animation_types import AnimationPhase, anim_curve_t
 from ._simple_animation import SimpleAnimation

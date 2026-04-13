@@ -18,6 +18,7 @@ from ._turrets import MortarTurretDummy, FlakTurretDummy, CRAMTurretDummy
 from ._weapons import Minigun, Ak47, Sniper, Mortar, Flak, CRAM, HandThrownGrenade
 from ._items import Shield, HealingPotion, JetBag
 from ._charged_weapons import RailGunDummy
+from ._text_entity import TextEntity
 
 
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
@@ -44,6 +45,7 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         Shield,
         HealingPotion,
         JetBag,
-        RailGunDummy
+        RailGunDummy,
+        TextEntity
     ]
 }
