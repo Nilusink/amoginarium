@@ -567,7 +567,7 @@ class HandThrownGrenade(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=5,
-            recoil_time=0.0001,
+            recoil_time=0.000001,
             weapon_recoil_factor=.5,
             mag_size=10000,
             inaccuracy=.01,

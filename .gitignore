@@ -145,7 +145,6 @@ assets/images/tiles/
 ideas.md
 *.c
 *.cpp
-*.pyd
 
 unused/
 test*
