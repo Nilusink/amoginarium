@@ -54,8 +54,8 @@ class BaseWeapon(Item):
             parent_position_offset: Vec2 | tuple[float, float],
             bullet_size: Vec2 | int = 10,
             bullet_damage: float = 1,
-            bullet_explosion_radius: float = -1,
-            bullet_explosion_damage: float = 0,
+            bullet_explosion_radius: float = ...,
+            bullet_explosion_damage: float = ...,
             drop_casings: bool = False,
             bullet_lifetime=4,
             sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
@@ -453,7 +453,7 @@ class Mortar(BaseWeapon):
             runtime_buffer: Array[base_entity_t],
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
-            bullet_speed=1400
+            bullet_speed=1800
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -468,8 +468,6 @@ class Mortar(BaseWeapon):
             barrel_length=10,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            bullet_explosion_radius=200,
-            bullet_explosion_damage=50,
             bullet_lifetime=7,
             sound_effect=MortarSound(),
             bullet_type=MortarShell,

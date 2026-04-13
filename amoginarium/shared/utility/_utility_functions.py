@@ -7,7 +7,8 @@ a few useful functions
 Author:
 Nilusink
 """
-from icecream import ic
+
+from types import EllipsisType
 import typing as tp
 import pygame as pg
 import numpy as np
@@ -171,3 +172,9 @@ def lidar_sphere(
         out.append(delta)
 
     return out
+
+
+def get_default[T](param: T | EllipsisType, default: T) -> T:
+    """return param if not Ellipsis else default"""
+    return default if isinstance(param, EllipsisType) else param
+

@@ -113,8 +113,8 @@
     ],
     "entities": [
         {
-            "type": "turret.static.flak",
-            "pos": [2500, 665]
+            "type": "turret.static.mortar",
+            "pos": [2800, 665]
         },
         {
             "type": "instructions.text",

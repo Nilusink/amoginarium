@@ -570,9 +570,9 @@ class MortarTurret(BaseTurret):
             Vec2().from_cartesian(23 * 1.5, 24 * 1.5),
             position,
             weapon,
-            1800,
+            2500,
             sensors=[
-                RadarSensor(self, 1500)
+                RadarSensor(self, 3000, min_rcs=0.01)
             ],
             **kwargs
         )
@@ -648,7 +648,7 @@ class CRAMTurret(BaseTurret):
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
-            target_taps=32,
+            target_taps=1,
             valid_angles=(
                 Vec2().from_cartesian(-.5, 1),
                 Vec2().from_cartesian(.5, 1)

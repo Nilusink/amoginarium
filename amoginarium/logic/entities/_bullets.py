@@ -7,14 +7,16 @@ implements logic bullets
 Author:
 Nilusink
 """
+
 from contextlib import suppress
 from types import EllipsisType
 from time import perf_counter
-from ctypes import Array
 from icecream import ic
+from ctypes import Array
 import numpy as np
 
-from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related, convert_coord
+from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related
+from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
 from amoginarium import pv
@@ -32,10 +34,12 @@ class Bullet(LogicGameEntity):
     """
     basic logic bullet
     """
+
     __slots__ = [
         "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
-        "_base_damage", "_last_pos"
+        "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
+        "_cluster_spread", "_o_dist", "_invincibility_offset", "_cfm"
     ]
 
     _base_damage: float
@@ -43,36 +47,82 @@ class Bullet(LogicGameEntity):
     _weight: float | None = None
     _cid = DummyCIDs.base_bullet
 
+    _default_base_damage: float = 1
+    _default_ttl: float = 2
+    _default_explosion_radius: float = -1
+    _default_explosion_damage: float = 0
+    _default_cluster_depth: int = 0
+    _default_cluster_amount: int = 0
+    _default_cluster_spread: float = np.pi / 4
+    _default_cluster_fuze_mult: float = .5
+    _default_size: Vec2 | int = 10
+    _default_visibility_offset: float = 0
+    _default_invincibility_offset: float = 0
+
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            base_damage: float = 1,
-            casing: bool = False,
-            time_to_life: float = 2,
-            explosion_radius: float = -1,
-            explosion_damage: float = 0,
-            target_pos: Vec2 | EllipsisType = ...,
-            size: Vec2 | int = 10,
-            no_gravity=False,
-            visibility_offset: float = 0,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        *,
+        casing: bool = False,
+        no_gravity: bool = False,
+        base_damage: float | EllipsisType = ...,
+        time_to_life: float | EllipsisType = ...,
+        explosion_radius: float | EllipsisType = ...,
+        explosion_damage: float | EllipsisType = ...,
+        cluster_depth: int | EllipsisType = ...,
+        cluster_amount: int | EllipsisType = ...,
+        cluster_spread_angle: float | EllipsisType = ...,
+        cluster_fuze_mult: float | EllipsisType = ...,
+        target_pos: Vec2 | EllipsisType = ...,
+        size: Vec2 | int | EllipsisType = ...,
+        visibility_offset: float | EllipsisType = ...,
+        invincibility_offset: float | EllipsisType = ...
     ) -> None:
+        self._start_time = perf_counter()
+
         if not isinstance(size, Vec2):
             size: Vec2 = Vec2().from_cartesian(size, size)  # type: ignore
 
-        self._casing = casing
-        self._base_damage = base_damage
-        self._ttl = time_to_life
-        self._o_ttl = time_to_life
+        # required params
         self._initial_velocity = initial_velocity
-        self._explosion_radius = explosion_radius
-        self._explosion_damage = explosion_damage
-        self._target_pos = target_pos
-        self._visibility_offset = visibility_offset
-        self._start_time = perf_counter()
+
+        self._casing = casing
+
+        # default params
+        self._base_damage = get_default(base_damage, self._default_base_damage)
+        self._ttl = get_default(time_to_life, self._default_ttl)
+        self._o_ttl = self._ttl
+        self._explosion_radius = get_default(
+            explosion_radius, self._default_explosion_radius
+        )
+        self._explosion_damage = get_default(
+            explosion_damage, self._default_explosion_damage
+        )
+        self._cluster_depth = get_default(cluster_depth, self._default_cluster_depth)
+        self._cluster_amount = get_default(cluster_amount, self._default_cluster_amount)
+        self._cluster_spread = get_default(
+            cluster_spread_angle, self._default_cluster_spread
+        )
+        self._cfm = get_default(cluster_fuze_mult, self._default_cluster_fuze_mult)
+        self._visibility_offset = get_default(
+            visibility_offset, self._default_visibility_offset
+        )
+        self._invincibility_offset = get_default(
+            invincibility_offset, self._default_invincibility_offset
+        )
+
+        # optional params
+        if isinstance(target_pos, EllipsisType):
+            self._target_pos = ...
+            self._o_dist = 0
+
+        else:
+            self._target_pos = target_pos.copy()
+            self._o_dist = (initial_position - self._target_pos).length
 
         # load textures
         super().__init__(
@@ -81,9 +131,9 @@ class Bullet(LogicGameEntity):
             position=initial_position.copy(),
             initial_velocity=initial_velocity.copy(),
             coalition=coalition,
-            parent=parent
+            parent=parent,
         )
-        runtime_buffer[self.id].param0 = explosion_radius
+        runtime_buffer[self.id].param0 = self._explosion_radius
         self._last_pos = self.position.copy()
 
         self.remove(Updated)
@@ -103,10 +153,7 @@ class Bullet(LogicGameEntity):
         if not isinstance(self._target_pos, EllipsisType):
             kwargs["target_pos"] = self._target_pos.xy  # ignore: type
 
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs=kwargs
-        ))
+        pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs))
 
     # region properties
     @property
@@ -124,9 +171,7 @@ class Bullet(LogicGameEntity):
         # calculate damage based on base_damage and velocity
         x = max(self._initial_velocity.length, 800)
 
-        speed_mult = 1 + (
-                (self.velocity.length - 1300) / x
-        ) * .5
+        speed_mult = 1 + ((self.velocity.length - 1300) / x) * 0.5
         damage = self._base_damage * speed_mult
 
         return damage
@@ -197,11 +242,9 @@ class Bullet(LogicGameEntity):
     def _update(self, delta):
         self._ttl -= delta
         self._visibility_offset -= delta
+        self._invincibility_offset -= delta
 
-        if any([
-            self._ttl <= 0,
-            self.on_ground
-        ]):
+        if any([self._ttl <= 0, self.on_ground]):
             if self.kill():
                 return
 
@@ -215,11 +258,7 @@ class Bullet(LogicGameEntity):
         # check if bullet has hit someone
         if self.velocity.length > 2000:
             entities_hit = multi_raycast_mask(
-                self,
-                CollisionDestroyed.sprites(),
-                self._last_pos,
-                self.position,
-                10
+                self, CollisionDestroyed.sprites(), self._last_pos, self.position, 10
             )
 
             for other, pos in entities_hit:
@@ -249,101 +288,130 @@ class Bullet(LogicGameEntity):
                     with suppress(AttributeError):
                         other.hit(dmg, self)
 
+        # check if cluster detonate
+        if self._cluster_depth > 0:
+            if (self.position - self._target_pos).length < self._o_dist * self._cfm:
+                self.kill(self)
+
         # update velocity
         self._runtime_buffer[self.id].param1 = self.velocity.length
 
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
-        if all([
-            self._casing,
-            not Updated.out_of_bounds_x(self)
-        ]):
+        if not isinstance(killed_by, EllipsisType):
+            if self._invincibility_offset > 0 and killed_by.parent == self.parent:
+                return True
+
+        # check if casing
+        if all([self._casing, not Updated.out_of_bounds_x(self)]):
             self.position.y -= self.size.y / 2
-            self.remove(
-                Updated,
-                CollisionDestroyed,
-                GravityAffected
-            )
+            self.remove(Updated, CollisionDestroyed, GravityAffected)
             return True
 
         # bullet hit knockback
-        if all([
-            killed_by != self,
-            not issubclass(killed_by.__class__, Bullet)
-        ]):
+        if all([killed_by != self, not issubclass(killed_by.__class__, Bullet)]):
             if hasattr(killed_by, "_impulse_resistance_factor"):
-                recoil = Vec2().from_polar(
-                    self.velocity.angle,
-                    self.recoil_fac
-                ) * killed_by._impulse_resistance_factor
+                recoil = (
+                    Vec2().from_polar(self.velocity.angle, self.recoil_fac)
+                    * killed_by._impulse_resistance_factor
+                )
 
                 killed_by.add_velocity(recoil)
 
-        # explode
-        if self._explosion_radius > 0:
+        # cluster
+        if self._cluster_depth > 0 and self._cluster_amount > 0 and killed_by == self:
+            if self._cluster_amount > 1:
+                angle_spread = self._cluster_spread / (self._cluster_amount - 1)
+
+                current_angle = self.velocity.angle - self._cluster_spread / 2
+                for bi in range(self._cluster_amount):
+                    self.__class__(
+                        self._runtime_buffer,
+                        self.parent,
+                        self.coalition,
+                        self.position.copy(),
+                        Vec2().from_polar(current_angle, self.velocity.length),
+                        base_damage=self._base_damage,
+                        time_to_life=self._ttl,
+                        explosion_radius=self._explosion_radius,
+                        explosion_damage=self._explosion_damage,
+                        cluster_depth=self._cluster_depth-1,
+                        cluster_amount=self._cluster_amount,
+                        cluster_spread_angle=self._cluster_spread,
+                        target_pos=self._target_pos,
+                        size=self.size.copy(),
+                        invincibility_offset=(self.size.x / self.velocity.length) * 3,
+                    )
+                    current_angle += angle_spread
+
+        # explode (only if not cluster)
+        elif self._explosion_radius > 0:
             for d, entity in CollisionDestroyed.get_entities_in_circle(
-                    self.position,
-                    self._explosion_radius * 2
+                self.position, self._explosion_radius * 2
             ):
-                if all([
-                    entity != self,
-                    not issubclass(entity.__class__, Bullet)
-                ]):
+                if all([entity != self, not issubclass(entity.__class__, Bullet)]):
                     if hasattr(entity, "hit"):
                         entity.hit(
-                            (1 - .8 * d / (self._explosion_radius*2))
+                            (1 - 0.8 * d / (self._explosion_radius * 2))
                             * self._explosion_damage,
-                            hit_by=self
+                            hit_by=self,
                         )
 
                     if hasattr(entity, "_impulse_resistance_factor"):
                         d -= entity.size.length
                         d = max(d, 1)
                         delta = entity.position - self.position
-                        delta = delta.normalize() \
-                            * entity._impulse_resistance_factor \
-                            * (
-                                1 - d / (self._explosion_radius * 1)
-                            ) * self._explosion_damage * 4
+                        delta = (
+                            delta.normalize()
+                            * entity._impulse_resistance_factor
+                            * (1 - d / (self._explosion_radius * 1))
+                            * self._explosion_damage
+                            * 4
+                        )
 
                         entity.add_velocity(delta)
             #
 
             if self._explosion_radius > 64:
                 exp = LargeExplosion()
-                exp.volume = .35
+                exp.volume = 0.35
                 exp.play(pos=self.position)
 
             # sounds like shit
             elif self._explosion_radius < 16:
                 exp = DistantPop()
-                exp.set_volume(.8, .3)
+                exp.set_volume(0.8, 0.3)
                 exp.play(pos=self.position)
+
+        else:
+            ic(self._explosion_radius)
+
 
         super().kill()
         return True
 
 
 class MortarShell(Bullet):
-    _hp = .5
+    _hp = 0.5
     _weight = 8
     _cid = DummyCIDs.mortar_bullet
 
+    _default_base_damage = 40
+    _default_ttl = 10
+    _default_explosion_radius = 150
+    _default_explosion_damage = 50
+    _default_size = Vec2().from_cartesian(40, 20)
+
+    _default_cluster_depth = 2
+    _default_cluster_amount = 3
+
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            base_damage: float = 40,
-            casing: bool = False,
-            time_to_life: float = 10,
-            explosion_radius: float = 200,
-            explosion_damage: float = 50,
-            target_pos: Vec2 | EllipsisType = ...,
-            size=Vec2().from_cartesian(40, 20),
-            no_gravity=False,
-            **kwargs
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -351,39 +419,29 @@ class MortarShell(Bullet):
             coalition,
             initial_position,
             initial_velocity,
-            base_damage,
-            casing,
-            time_to_life,
-            explosion_radius,
-            explosion_damage,
-            target_pos,
-            size,
-            no_gravity,
             **kwargs,
         )
 
 
 class Grenade(Bullet):
-    _hp = .05
-    _bounce_friction = .7
+    _hp = 0.05
+    _bounce_friction = 0.7
     _cid = DummyCIDs.grenade
 
+    _default_base_damage = 0
+    _default_ttl = 5
+    _default_explosion_radius = 150
+    _default_explosion_damage = 50
+    _default_size = 20
+
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            base_damage: float = 0,
-            casing: bool = False,
-            time_to_life: float = 5,
-            explosion_radius: float = 150,
-            explosion_damage: float = 50,
-            target_pos: Vec2 | EllipsisType = ...,
-            size=20,
-            no_gravity=False,
-            **kwargs
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -391,15 +449,7 @@ class Grenade(Bullet):
             coalition,
             initial_position,
             initial_velocity,
-            base_damage,
-            casing,
-            time_to_life,
-            explosion_radius,
-            explosion_damage,
-            target_pos,
-            size,
-            no_gravity,
-            **kwargs
+            **kwargs,
         )
 
         self.in_wall = None
@@ -435,3 +485,8 @@ class FlakBullet(Bullet):
 
 class CRAMBullet(Bullet):
     _cid = DummyCIDs.cram
+
+    # _default_cluster_depth = 1
+    # _default_cluster_amount = 3
+    # _default_cluster_fuze_mult = .06
+    # _default_cluster_spread = .6
