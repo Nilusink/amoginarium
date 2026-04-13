@@ -16,7 +16,7 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
-from amoginarium.shared.collision_detection import collision_detection_aabb_aabb_minkowski_raycast
+from amoginarium.shared.cd_old import collision_detection_aabb_aabb_minkowski_raycast
 from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related, convert_coord
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs

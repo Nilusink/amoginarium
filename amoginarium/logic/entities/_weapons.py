@@ -425,7 +425,7 @@ class Sniper(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=5,
-            recoil_time=0.5,
+            recoil_time=0.01,
             mag_size=600,
             inaccuracy=.00500002,
             bullet_size=15,

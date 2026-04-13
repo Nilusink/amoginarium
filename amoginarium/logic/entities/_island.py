@@ -15,7 +15,7 @@ import typing as tp
 import random
 
 from amoginarium.shared.utility import Vec2, coord_t, convert_coord
-from amoginarium.shared.collision_detection import find_minimum_rectangles_dirty
+from amoginarium.shared.cd_old import find_minimum_rectangles_dirty
 from amoginarium.shared.debugging import print_ic_style, CC, cum_timer
 from amoginarium.shared import base_entity_t, IslandCIDs, ProcessCommand
 from amoginarium.shared import BaseCommandType
