@@ -30,8 +30,8 @@ class UIEntity(BaseGraphicsEntity):
 
     def __init__(
             self,
-            parent: UIEntity | None = None,
-            *args: tp.Any,
+            *,
+            parent: UIEntity | None = None
     ) -> None:
         """
         Create base UI-Entity

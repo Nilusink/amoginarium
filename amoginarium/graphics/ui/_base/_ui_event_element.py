@@ -47,7 +47,7 @@ class UIEventElement(UIElement):
             self,
             position: coord_t,
             size: coord_t,
-            *_args: tp.Any,
+            *,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
             absolute_values: bool = False,
@@ -65,7 +65,6 @@ class UIEventElement(UIElement):
         Create a new UI component
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
-        :param _args: Not used
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
         :param absolute_values: Whether the position and size are absolute or relative
@@ -81,7 +80,6 @@ class UIEventElement(UIElement):
         super().__init__(
             position=position,
             size=size,
-            *_args,
             parent=parent,
             placement_anchor=placement_anchor,
             absolute_values=absolute_values,

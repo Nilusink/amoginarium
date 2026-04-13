@@ -20,6 +20,7 @@ from .._types import Anchor, Positions
 from .._base import UIEntity
 from ._ui_rectangle import UIRectangle
 
+
 # region SoundsEffects
 class _OnHoverButtonSound(PresetGraphicsSoundEffect):
     volume = .5
@@ -51,7 +52,7 @@ class UIButton(UIRectangle):
     """
     __command: tp.Callable[[], None] | None
 
-    __text_id: renderer.DynamicTextID | renderer.StaticTextID
+    __text_id: renderer.DynamicTextID | renderer.StaticTextID | None
     __dynamic_text: bool
 
     __text: str
@@ -68,8 +69,6 @@ class UIButton(UIRectangle):
             text: str,
             *,
             parent: UIEntity | None = None,
-            placement_anchor: Anchor = Anchor.CENTER,
-            absolute_values: bool = False,
 
             command: tp.Callable[[], None] | None = None,
             text_color: color_t = (0, 0, 0),
@@ -92,6 +91,8 @@ class UIButton(UIRectangle):
                                                                  extend_curve=peaked_s_curve,
                                                                  collapse_curve=lambda a: a),
 
+            placement_anchor: Anchor = Anchor.CENTER,
+            absolute_values: bool = False,
             positon_is_relative_to_parent: bool = True,
             size_is_relative_to_parent: bool = True,
             parent_reference_position: Positions = Positions.TOP_LEFT,
@@ -109,8 +110,6 @@ class UIButton(UIRectangle):
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
         :param parent: Optional parent UI-Entity
-        :param placement_anchor: Placement anchor of the component
-        :param absolute_values: Whether the position and size are absolute or relative
         :param command: Callback called when button is pressed
         :param text_color: Text color
         :param font_size: Font size
@@ -123,6 +122,8 @@ class UIButton(UIRectangle):
         :param border_width: Width of the border (hover animated)
         :param radius: Radius of the rectangle (hover animated)
         :param size_extend: Hover animated size expansion
+        :param placement_anchor: Placement anchor of the component
+        :param absolute_values: Whether the position and size are absolute or relative
         :param positon_is_relative_to_parent: Whether the position is relative to the parent or the screen
         :param size_is_relative_to_parent: Whether the size is relative to the parent or the screen
         :param parent_reference_position: What reference position of the parent component to use
@@ -253,7 +254,7 @@ class UIButton(UIRectangle):
         """:return: Current text color"""
         return self.__text_color
 
-    @text.setter
+    @text_color.setter
     def text_color(self, value: color_t) -> None:
         """
         :param value: New text color

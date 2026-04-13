@@ -24,10 +24,8 @@ class UIStaticText(UIEventElement):
             position: coord_t,
             size: coord_t,
             text: str,
-            *_args: tp.Any,
+            *,
             parent: UIEntity | None = None,
-            placement_anchor: Anchor = Anchor.CENTER,
-            absolute_values: bool = False,
 
             text_color: color_t = (0, 0, 0),
             bg_color: color_t = (0, 0, 0, 0),
@@ -36,6 +34,8 @@ class UIStaticText(UIEventElement):
             bold: bool = False,
             italic: bool = False,
 
+            placement_anchor: Anchor = Anchor.CENTER,
+            absolute_values: bool = False,
             positon_is_relative_to_parent: bool = True,
             size_is_relative_to_parent: bool = True,
             parent_reference_position: Positions = Positions.TOP_LEFT,
@@ -49,16 +49,15 @@ class UIStaticText(UIEventElement):
         Create a new UIDynamicText
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
-        :param _args: Not used
         :param parent: Optional parent UI-Entity
-        :param placement_anchor: Placement anchor of the component
-        :param absolute_values: Whether the position and size are absolute or relative
         :param text_color: Text color
         :param bg_color: Background color. Alpha doesn't work!
         :param font_size: Font size
         :param font_family: Font family
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
+        :param placement_anchor: Placement anchor of the component
+        :param absolute_values: Whether the position and size are absolute or relative
         :param positon_is_relative_to_parent: Whether the position is relative to the parent or the screen
         :param size_is_relative_to_parent: Whether the size is relative to the parent or the screen
         :param parent_reference_position: What reference position of the parent component to use

@@ -11,5 +11,3 @@ from ._ui_static_text import UIStaticText
 from ._ui_rectangle import UIRectangle
 from ._ui_cursor import UICursor
 from ._ui_button import UIButton
-from ._entry import UIEntry
-from ._entry import UIEntry

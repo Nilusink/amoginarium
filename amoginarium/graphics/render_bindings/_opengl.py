@@ -66,7 +66,7 @@ class OpenGLRenderer(BaseRenderer):
 
     type TextureID = int
     type StaticTextID = int
-    type DynamicTextID = None
+    type DynamicTextID = int
 
     DRAW_DEBUG_BOUNDS = False
 
@@ -1653,7 +1653,7 @@ class OpenGLRenderer(BaseRenderer):
             pos.y -= text_height / 2
 
         if offscreen_check and self._check_out_of_screen((pos.x, pos.y), (text_width, text_height)):
-            return None
+            return -1
 
         if bg_color.a255 > 0:
             self.draw_rect(pos.xy, (text_width, text_height), bg_color, convert_global=convert_global)
@@ -1665,7 +1665,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(pos, (text_width, text_height))
 
-        return None
+        return -1
 
     def generate_static_text(
             self,

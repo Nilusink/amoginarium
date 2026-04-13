@@ -35,7 +35,7 @@ class UIRectangle(UIEventElement):
             self,
             position: coord_t,
             size: coord_t,
-            *_args: tp.Any,
+            *,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
             absolute_values: bool = False,
@@ -54,7 +54,6 @@ class UIRectangle(UIEventElement):
             border_width: anim_float_values_t = 5,
             radius: anim_float_values_t = 20,
             size_extend: anim_vec2_values_t = 0,
-
             on_enter_sound: GraphicsSoundEffect | None = None,
             on_leave_sound: GraphicsSoundEffect | None = None,
             on_click_sound: GraphicsSoundEffect | None = None,
