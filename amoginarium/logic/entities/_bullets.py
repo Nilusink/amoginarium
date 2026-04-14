@@ -39,8 +39,8 @@ class Bullet(LogicGameEntity):
         "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
-        "_cluster_spread", "_o_dist", "_invincibility_offset", "_cfm", "_coll_sibling",
-        "_cse", "_csm", "_lst"
+        "_cluster_spread", "_o_dist", "_invincibility_offset", "_cf_ttl_m",
+        "_coll_sibling", "_cse", "_csm", "_lst", "_cf_dist"
     )
 
     _base_damage: float
@@ -55,7 +55,8 @@ class Bullet(LogicGameEntity):
     _default_cluster_depth: int = 0
     _default_cluster_amount: int = 0
     _default_cluster_spread: float = np.pi / 4
-    _default_cluster_fuze_mult: float = .5
+    _default_cluster_fuze_ttl_mult: float = .5
+    _default_cluster_fuze_dist: float = -1
     _default_cluster_step_explosion: float = 10
     _default_cluster_size_mult: float = 1
     _default_cluster_last_step_ttl: float = -1
@@ -81,7 +82,8 @@ class Bullet(LogicGameEntity):
         cluster_depth: int | EllipsisType = ...,
         cluster_amount: int | EllipsisType = ...,
         cluster_spread_angle: float | EllipsisType = ...,
-        cluster_fuze_mult: float | EllipsisType = ...,
+        cluster_fuze_ttl_mult: float | EllipsisType = ...,
+        cluster_fuze_dist: float | EllipsisType = ...,
         cluster_step_explosion: float | EllipsisType = ...,
         cluster_size_mult: float | EllipsisType = ...,
         cluster_last_step_ttl: float | EllipsisType = ...,
@@ -108,7 +110,8 @@ class Bullet(LogicGameEntity):
         :param cluster_depth: n of cluster steps
         :param cluster_amount: n of bullets per cluster step
         :param cluster_spread_angle: spread of bullets
-        :param cluster_fuze_mult: % of ttl where cluster step occurs
+        :param cluster_fuze_ttl_mult: % of ttl where cluster step occurs
+        :param cluster_fuze_dist: distance to predicted target where cluster step occurs
         :param cluster_step_explosion: explosion size per cluster step (0 if None)
         :param cluster_size_mult: size multiplier per cluster step
         :param cluster_last_step_ttl: last cluster step bullet ttl (-1 if dynamic)
@@ -145,7 +148,10 @@ class Bullet(LogicGameEntity):
         self._cluster_spread = get_default(
             cluster_spread_angle, self._default_cluster_spread
         )
-        self._cfm = get_default(cluster_fuze_mult, self._default_cluster_fuze_mult)
+        self._cf_ttl_m = get_default(
+            cluster_fuze_ttl_mult, self._default_cluster_fuze_ttl_mult
+        )
+        self._cf_dist = get_default(cluster_fuze_dist, self._default_cluster_fuze_dist)
         self._cse = get_default(
             cluster_step_explosion, self._default_cluster_step_explosion
         )
@@ -343,9 +349,18 @@ class Bullet(LogicGameEntity):
 
         # check if cluster detonate
         if self._cluster_depth > 0:
-            # if (self.position - self._target_pos).length < self._o_dist * self._cfm:
-            if self._ttl < self._o_ttl * self._cfm:
-                self.kill(self)
+            # ttl fuze
+            if self._cf_ttl_m > 0:
+                if self._ttl < self._o_ttl * self._cf_ttl_m:
+                    ic("ttl")
+                    self.kill(self)
+
+            # distance fuze
+            elif self._cf_dist > 0:
+                if not isinstance(self._target_pos, EllipsisType):
+                    if (self.position - self._target_pos).length < self._cf_dist:
+                        ic("dist")
+                        self.kill(self)
 
         # update velocity
         self._runtime_buffer[self.id].param1 = self.velocity.length
@@ -581,9 +596,9 @@ class SkyShieldBullet(Bullet):
 
     _default_cluster_depth = 1
     _default_cluster_amount = 11
-    _default_cluster_fuze_mult = .02
-    _default_cluster_spread = 2
+    _default_cluster_fuze_ttl_mult = .02
+    _default_cluster_spread = 1.5
     _default_cluster_size_mult = .3
     _default_cluster_step_explosion = 10
-    _default_cluster_last_step_ttl = .06
+    _default_cluster_last_step_ttl = .07
 

@@ -32,7 +32,7 @@ class BulletDummy(SyncedImageEntity):
     __slots__ = [
         "_spawn_time", "_visibility_offset", "_last_pos", "_target_pos", "_trace",
         "_trace_color", "_show_trace", "_current_trace_length", "_max_trace_length",
-        "_fade_trace", "_original_alpha", "_trace_len"
+        "_fade_trace", "_original_alpha", "_trace_len", "_trace_only"
     ]
 
     _cid = DummyCIDs.base_bullet
@@ -66,6 +66,7 @@ class BulletDummy(SyncedImageEntity):
             self._bullet_image[1]
         )
 
+        self._trace_only = False
         self._trace_len = 1
         self._spawn_time = spawn_time
         self._visibility_offset = visibility_offset
@@ -112,18 +113,32 @@ class BulletDummy(SyncedImageEntity):
 
     def kill(self) -> None:
         if len(self._trace) > 0:
-            self.alive = False
+            if not self._trace_only:
+                self._trace_only = False
+                self.alive = False
+
+                if self.param0 > 0:
+                    explosion.draw(
+                        delay=min(.01, .05 * (self.param0 / 96)),
+                        size=Vec2().from_cartesian(
+                            self.param0 * 2,
+                            self.param0 * 2
+                        ),
+                        position=self.pos.copy()
+                    )
+
             return
 
-        if self.param0 > 0:
-            explosion.draw(
-                delay=.05,
-                size=Vec2().from_cartesian(
-                    self.param0 * 2,
-                    self.param0 * 2
-                ),
-                position=self.pos.copy()
-            )
+        if not self._trace_only:
+            if self.param0 > 0:
+                explosion.draw(
+                    delay=min(.01, .05 * (self.param0 / 96)),
+                    size=Vec2().from_cartesian(
+                        self.param0 * 2,
+                        self.param0 * 2
+                    ),
+                    position=self.pos.copy()
+                )
 
         super().kill()
 
