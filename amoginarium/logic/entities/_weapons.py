@@ -20,7 +20,7 @@ from ..audio import ContinuousSoundEffect, ReloadGeneric, RandomizedEffect
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect, Shotgun
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
-from ._bullets import SkyShieldBullet
+from ._bullets import SkyShieldBullet, ClusterMortarShell
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
 from ._base_item import Item
@@ -42,6 +42,8 @@ class BaseWeapon(Item):
     _reload_time: float
     _mag_size: int
 
+    _default_bullet_type: tp.Type[Bullet] = Bullet
+
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -56,7 +58,7 @@ class BaseWeapon(Item):
             barrel_length: float = 0,  # where bullets spawn
             drop_casings: bool = False,
             sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
-            bullet_type: tp.Type[Bullet] = Bullet,
+            bullet_type: tp.Type[Bullet] | EllipsisType = ...,
             weapon_recoil_factor: float = 1,
             weapon_size: Vec2 | EllipsisType = ...,
             **bullet_kwargs
@@ -82,7 +84,7 @@ class BaseWeapon(Item):
             parent_position_offset, Vec2
         )
         self._sound_effect = sound_effect
-        self._bullet_type = bullet_type
+        self._bullet_type = get_default(bullet_type, self._default_bullet_type)
         self._muzzle_velocity = muzzle_velocity
         self._spawned_graphics = False
         self._bullet_kwargs = bullet_kwargs
@@ -420,13 +422,16 @@ class Mortar(BaseWeapon):
     """
     _cid = WeaponCIDs.mortar
 
+    _default_bullet_type = MortarShell
+
     def __init__(
             self,
             parent,
             runtime_buffer: Array[base_entity_t],
             drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
-            muzzle_velocity=1800
+            muzzle_velocity=1800,
+            cluster: bool = False
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -440,7 +445,7 @@ class Mortar(BaseWeapon):
             muzzle_velocity=muzzle_velocity,
             drop_casings=drop_casings,
             sound_effect=MortarSound(),
-            bullet_type=MortarShell,
+            bullet_type=ClusterMortarShell if cluster else MortarShell,
             
             # bullet args
             time_to_life=7,

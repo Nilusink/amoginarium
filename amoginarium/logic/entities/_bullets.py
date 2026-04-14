@@ -495,30 +495,14 @@ class MortarShell(Bullet):
     _default_explosion_damage = 50
     _default_size = Vec2().from_cartesian(40, 20)
 
+
+class ClusterMortarShell(MortarShell):
     _default_cluster_depth = 2
     _default_cluster_amount = 3
     _default_cluster_spread = np.pi/5
     _default_cluster_fuze_ttl_mult = .3
     _default_cluster_step_explosion = 0
     _default_cluster_last_step_ttl = 3
-
-    def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        coalition: Coalitions,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        **kwargs,
-    ) -> None:
-        super().__init__(
-            runtime_buffer,
-            parent,
-            coalition,
-            initial_position,
-            initial_velocity,
-            **kwargs,
-        )
 
 
 class _GrenadeShrapnel(Bullet):
@@ -627,4 +611,3 @@ class SkyShieldBullet(Bullet):
     _default_cluster_size_mult = .3
     _default_cluster_step_explosion = 10
     _default_cluster_last_step_ttl = .07
-

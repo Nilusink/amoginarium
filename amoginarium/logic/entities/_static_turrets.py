@@ -663,10 +663,17 @@ class MortarTurret(BaseTurret):
             runtime_buffer: Array[base_entity_t],
             coalition: Coalitions,
             position: Vec2,
+            cluster: bool = False,
             **kwargs
     ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
-        weapon = Mortar(self, runtime_buffer, False, parent_position_offset=(0, -13))
+        weapon = Mortar(
+            self,
+            runtime_buffer,
+            False,
+            parent_position_offset=(0, -13),
+            cluster=cluster
+        )
         weapon.reload(True)
 
         super().__init__(
@@ -680,7 +687,7 @@ class MortarTurret(BaseTurret):
             sensors=[
                 RadarSensor(self, 3000, min_rcs=0.01)
             ],
-            airburst_munition=True,
+            airburst_munition=cluster,
             **kwargs
         )
 

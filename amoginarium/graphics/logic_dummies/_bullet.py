@@ -119,12 +119,9 @@ class BulletDummy(SyncedImageEntity):
 
                 if self.param0 > 0:
                     explosion.draw(
-                        delay=min(.01, .05 * (self.param0 / 96)),
-                        size=Vec2().from_cartesian(
-                            self.param0 * 2,
-                            self.param0 * 2
-                        ),
-                        position=self.pos.copy()
+                        delay=.05,  # min(.01, .05 * (self.param0 / 96)),
+                        size=Vec2().from_cartesian(self.param0 * 2, self.param0 * 2),
+                        position=self.pos.copy(),
                     )
 
             return
@@ -132,7 +129,7 @@ class BulletDummy(SyncedImageEntity):
         if not self._trace_only:
             if self.param0 > 0:
                 explosion.draw(
-                    delay=min(.01, .05 * (self.param0 / 96)),
+                    delay=.05,  # min(.01, .05 * (self.param0 / 96)),
                     size=Vec2().from_cartesian(
                         self.param0 * 2,
                         self.param0 * 2
