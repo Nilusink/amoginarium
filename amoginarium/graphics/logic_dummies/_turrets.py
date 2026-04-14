@@ -195,6 +195,12 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                         Color().from_255(255, 0, 0, 100)
                     )
 
+                renderer.draw_line(
+                    self.world_position,
+                    self.world_position + Vec2().from_polar(self.facing.angle, self._range[1]),
+                    Color().from_255(150, 200, 0)
+                )
+
         # only draw turret if on screen
         if (
                 self.pos.x + self.size.x / 2 < world_position.x or
@@ -268,5 +274,12 @@ class FlakTurretDummy(BaseTurretDummy):
 class CRAMTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.cram
+    _body_texture_path = "CRAM_base"
+    _body_texture_size = (64, 128)
+
+
+class SkyShieldDummy(BaseTurretDummy):
+    __slots__ = []
+    _cid = TurretCIDs.sky_shield
     _body_texture_path = "CRAM_base"
     _body_texture_size = (64, 128)

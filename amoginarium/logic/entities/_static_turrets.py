@@ -66,6 +66,8 @@ class BaseTurret(LogicGameEntity):
     _default_turn_speed: float = np.inf  # max rad/s
     _default_valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...
     _default_facing_angle: float = np.pi
+    _default_max_error: float | EllipsisType = ...
+    _default_allow_static_target: bool = False
 
     def __init__(
         self,
@@ -84,7 +86,8 @@ class BaseTurret(LogicGameEntity):
         sensors: tp.Iterable[BaseSensor] = None,
         detection_group: DetectionGroup = None,
         valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
-        turn_speed: float | EllipsisType = ...
+        turn_speed: float | EllipsisType = ...,
+        allow_static_target: bool | EllipsisType = ...
     ) -> None:
         self._set_pos = position.copy()
         position.y -= size.y / 2
@@ -101,6 +104,10 @@ class BaseTurret(LogicGameEntity):
         self.airburst_munition = airburst_munition
         self.intercept_bullets = intercept_bullets
         self.intercept_players = intercept_players
+        self._allow_static_target = get_default(
+            allow_static_target, self._default_allow_static_target
+        )
+        self._max_error = self._default_max_error
         self.available_targets = {}
         self._target_predict = []
         self._last_shot = perf_counter()
@@ -189,15 +196,14 @@ class BaseTurret(LogicGameEntity):
                 targets, key=lambda t: self.available_targets[t]["distance"]
         ):
             t = self.available_targets[target]
-            # don't even aim if predicted impact is oor
-            if t["distance"] > self.engagement_range:
-                continue
-
             if not t["solution"]:
                 continue
 
             if include_all:
                 return t["solution"]
+
+            if t["distance"] > self.engagement_range:
+                continue
 
             if t["shot_at"] < -.5:
                 # check if firing solution inside engagement envelope
@@ -210,11 +216,16 @@ class BaseTurret(LogicGameEntity):
                     end2 = self._valid_angles[1].angle - angle_delta
 
                     # check if firing-solution is inside engagement envelope
-                    if not any([
-                        self._valid_angles[0].angle < t["solution"].angle.angle < start2,
-                        self._valid_angles[
-                            1].angle > t["solution"].angle.angle > end2,
-                    ]):
+                    if not any(
+                        [
+                            self._valid_angles[0].angle
+                            < t["solution"].angle.angle
+                            < start2,
+                            self._valid_angles[1].angle
+                            > t["solution"].angle.angle
+                            > end2,
+                        ]
+                    ):
                         continue
 
                 return t["solution"]
@@ -273,8 +284,20 @@ class BaseTurret(LogicGameEntity):
                 sol = self._get_firing_solution(target)
                 self.available_targets[target]["solution"] = sol
                 if not sol:
-                    self.available_targets[target]["distance"] = np.inf
-                    continue
+                    sol = self._get_firing_solution(
+                        target,
+                        ignore_acceleration=True,
+                        ignore_velocity=True,
+                    )
+                    self.available_targets[target]["solution"] = sol
+
+                    # if aim type is high, allow no-movement targets
+                    if self._allow_static_target:
+                        self.available_targets[target]["distance"] = np.inf
+                        continue
+
+                    elif not sol:
+                        continue
 
                 self.available_targets[target]["distance"] = (
                     sol.target_predict
@@ -286,13 +309,31 @@ class BaseTurret(LogicGameEntity):
         if new_target is not None:
             self._target = new_target
             self._last_shot = perf_counter()
-            solution = self._get_firing_solution(new_target.target, 25)
+            solution = self._get_firing_solution(new_target.target, recalc=25)
+
             if solution is None:
-                new_target = None
+                # allos mortar to treat target as static position
+                if self._allow_static_target:
+                    solution = self._get_firing_solution(
+                        new_target.target,
+                        recalc=25,
+                        ignore_velocity=True,
+                        ignore_acceleration=True,
+                    )
+
+                    if solution:
+                        self.__turn_at(solution, delta)
+                        self.__shoot_at(solution, max_error=self._max_error)
+
+                    else:
+                        new_target = None
+
+                else:
+                    new_target = None
 
             else:
                 self.__turn_at(solution, delta)
-                self.__shoot_at(solution)
+                self.__shoot_at(solution, max_error=self._max_error)
 
         # aim but don't shoot
         if new_target is None and simulate_target is not None:
@@ -340,7 +381,10 @@ class BaseTurret(LogicGameEntity):
     def _get_firing_solution(
             self,
             target: VisibleGameEntityLike,
-            recalc: int = 5
+            *,
+            recalc: int = 5,
+            ignore_velocity: bool = False,
+            ignore_acceleration: bool = False,
     ) -> TargetSolution | None:
         """
         aim at specified target
@@ -380,8 +424,8 @@ class BaseTurret(LogicGameEntity):
         with suppress(ValueError):
             aiming_angle, tof, predict = calculate_launch_angle(
                 position_delta,
-                player_velocity,
-                player_acceleration,
+                player_velocity * (1-ignore_velocity),
+                player_acceleration * (1-ignore_acceleration),
                 self.weapon.muzzle_velocity,
                 recalc,
                 # 2 * position_delta.length / self.weapon.bullet_speed,
@@ -423,6 +467,7 @@ class BaseTurret(LogicGameEntity):
     def __shoot_at(
             self,
             solution: TargetSolution,
+            *,
             max_error: float | EllipsisType = ...
     ) -> None:
         """
@@ -487,6 +532,8 @@ class MinigunTurret(BaseTurret):
     _cid = TurretCIDs.minigun
     _max_hp: int = 60
 
+    _default_turn_speed = 2
+
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -521,6 +568,8 @@ class SniperTurret(BaseTurret):
     _cid = TurretCIDs.sniper
     _max_hp: int = 40
 
+    _default_turn_speed = 2
+
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -549,6 +598,8 @@ class SniperTurret(BaseTurret):
 class AkTurret(BaseTurret):
     _cid = TurretCIDs.ak47
     _max_hp: int = 60
+
+    _default_turn_speed = 2
 
     def __init__(
             self,
@@ -582,6 +633,8 @@ class MortarTurret(BaseTurret):
 
     _default_facing_angle = -np.pi / 2
     _default_turn_speed = .3
+    _default_max_error = .05
+    _default_allow_static_target = True
 
     def __init__(
             self,
@@ -615,10 +668,12 @@ class FlakTurret(BaseTurret):
     _max_hp: int = 170
     _aim_type = "low"
 
+    _default_turn_speed = .8
     _default_valid_angles = (
         Vec2().from_cartesian(-1, .3),
         Vec2().from_cartesian(-.1, -1)
     )
+    _default_allow_static_target = True
 
     def __init__(
             self,
