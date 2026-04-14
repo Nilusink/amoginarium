@@ -562,7 +562,7 @@ class SkyShieldWeapon(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=8,
-            recoil_time=0.1,
+            recoil_time=.1,
             mag_size=100,
             inaccuracy=0.005,
             parent_position_offset=parent_position_offset,

@@ -361,14 +361,12 @@ class Bullet(LogicGameEntity):
             # ttl fuze
             if self._cf_ttl_m > 0:
                 if self._ttl < self._o_ttl * self._cf_ttl_m:
-                    ic("ttl")
                     self.kill(self)
 
             # distance fuze
             elif self._cf_dist > 0:
                 if not isinstance(self._target_pos, EllipsisType):
                     if (self.position - self._target_pos).length < self._cf_dist:
-                        ic("dist")
                         self.kill(self)
 
         # update velocity
@@ -441,7 +439,6 @@ class Bullet(LogicGameEntity):
                         size=self.size * self._csm,
                         collide_siblings=False,
                     )
-                    ic(self.position, Vec2().from_polar(current_angle, self.velocity.length + self._csi))
                     current_angle += angle_spread
 
         # explode (only if not cluster)
