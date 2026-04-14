@@ -544,7 +544,6 @@ class HandThrownGrenade(BaseWeapon):
             sound_effect=SoundEffect(("groaning", "hugh_1")).set_volume(.6),
 
             # bullet args
-            time_to_life=5,
             visibility_offset=.0,
         )
 

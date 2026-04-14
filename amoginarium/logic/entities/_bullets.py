@@ -8,11 +8,13 @@ Author:
 Nilusink
 """
 
+from __future__ import annotations
 from contextlib import suppress
 from types import EllipsisType
 from time import perf_counter
-from icecream import ic
 from ctypes import Array
+from icecream import ic
+import typing as tp
 import numpy as np
 
 from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related
@@ -40,7 +42,7 @@ class Bullet(LogicGameEntity):
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cf_ttl_m",
-        "_coll_sibling", "_cse", "_csm", "_lst", "_cf_dist"
+        "_coll_sibling", "_cse", "_csm", "_lst", "_cf_dist", "_cbt", "_csi"
     )
 
     _base_damage: float
@@ -60,6 +62,8 @@ class Bullet(LogicGameEntity):
     _default_cluster_step_explosion: float = 10
     _default_cluster_size_mult: float = 1
     _default_cluster_last_step_ttl: float = -1
+    _default_cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...
+    _default_cluster_step_inertia: float = 0
     _default_size: Vec2 | int = 10
     _default_visibility_offset: float = 0
     _default_invincibility_offset: float = 0
@@ -87,6 +91,8 @@ class Bullet(LogicGameEntity):
         cluster_step_explosion: float | EllipsisType = ...,
         cluster_size_mult: float | EllipsisType = ...,
         cluster_last_step_ttl: float | EllipsisType = ...,
+        cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...,
+        cluster_step_inertia: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
         size: Vec2 | int | EllipsisType = ...,
         visibility_offset: float | EllipsisType = ...,
@@ -159,6 +165,9 @@ class Bullet(LogicGameEntity):
         self._lst = get_default(
             cluster_last_step_ttl, self._default_cluster_last_step_ttl
         )
+        bullet_default = get_default(self._default_cluster_bullet_type, self.__class__)
+        self._cbt: tp.Type[Bullet] = get_default(cluster_bullet_type, bullet_default)
+        self._csi = get_default(cluster_step_inertia, self._default_cluster_step_inertia)
         self._visibility_offset = get_default(
             visibility_offset, self._default_visibility_offset
         )
@@ -391,13 +400,15 @@ class Bullet(LogicGameEntity):
                 killed_by.add_velocity(recoil)
 
         # cluster
-        if self._cluster_depth > 0 and self._cluster_amount > 0 and killed_by == self:
+        if self._cluster_depth > 0 and self._cluster_amount > 0:  # and killed_by == self:
             if self._cluster_amount > 1:
                 # cluster step explosion:
                 if self._cse:
-                    exp = DistantPop()
-                    exp.set_volume(1, 0.6)
-                    exp.play(pos=self.position)
+                    self._explosion_radius = self._cse
+
+                    # exp = DistantPop()
+                    # exp.set_volume(1, 0.6)
+                    # exp.play(pos=self.position)
 
                 angle_spread = self._cluster_spread / (self._cluster_amount - 1)
                 current_angle = self.velocity.angle - self._cluster_spread / 2
@@ -413,27 +424,28 @@ class Bullet(LogicGameEntity):
                         ttl = self._ttl
 
                 for bi in range(self._cluster_amount):
-                    self.__class__(
+                    self._cbt(
                         self._runtime_buffer,
                         self.parent,
                         self.coalition,
                         self.position.copy(),
-                        Vec2().from_polar(current_angle, self.velocity.length),
-                        base_damage=self._base_damage,
+                        Vec2().from_polar(current_angle, self.velocity.length + self._csi),
+                        # base_damage=self._base_damage,
                         time_to_life=ttl,
-                        explosion_radius=self._explosion_radius,
-                        explosion_damage=self._explosion_damage,
+                        # explosion_radius=self._explosion_radius,
+                        # explosion_damage=self._explosion_damage,
                         cluster_depth=self._cluster_depth-1,
-                        cluster_amount=self._cluster_amount,
-                        cluster_spread_angle=self._cluster_spread,
+                        # cluster_amount=self._cluster_amount,
+                        # cluster_spread_angle=self._cluster_spread,
                         target_pos=self._target_pos,
                         size=self.size * self._csm,
                         collide_siblings=False,
                     )
+                    ic(self.position, Vec2().from_polar(current_angle, self.velocity.length + self._csi))
                     current_angle += angle_spread
 
         # explode (only if not cluster)
-        elif self._explosion_radius > 0:
+        if self._explosion_radius > 0:
             for d, entity in CollisionDestroyed.get_entities_in_circle(
                 self.position, self._explosion_radius * 2
             ):
@@ -512,6 +524,13 @@ class MortarShell(Bullet):
         )
 
 
+class _GrenadeShrapnel(Bullet):
+    _cid = DummyCIDs.base_bullet
+
+    _default_size = 4
+    _default_base_damage = 1
+
+
 class Grenade(Bullet):
     _hp = 0.05
     _bounce_friction = 0.7
@@ -522,6 +541,16 @@ class Grenade(Bullet):
     _default_ttl = 5
     _default_explosion_radius = 150
     _default_explosion_damage = 50
+
+    _default_cluster_depth = 1
+    _default_cluster_amount = 32
+    _default_cluster_spread = np.pi * 2
+    _default_cluster_bullet_type = _GrenadeShrapnel
+    _default_cluster_step_inertia = 1000
+    _default_cluster_step_explosion = 150
+    _default_cluster_fuze_ttl_mult = .001
+    _default_cluster_last_step_ttl = .2
+    _default_cluster_size_mult = .1
 
     def __init__(
         self,
