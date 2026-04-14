@@ -17,7 +17,7 @@ from amoginarium.shared import TurretCIDs
 from amoginarium import pv
 
 from ..render_bindings import renderer
-from ..entities import Drawn_1
+from ..entities import Drawn_1, Drawn_2
 from ._synced_entities import SyncedGraphicsEntity
 
 
@@ -59,7 +59,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         self._range = (0, 0)
         self._angles = (-1, -1)
         super().__init__(sync_id=sync_id)
-        self.add(Drawn_1)
+        self.add(Drawn_1, Drawn_2)
         
         # defaults
         self._hp_colors = (
@@ -243,7 +243,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
 
                 renderer.disable_stencil()
 
-        elif layer == 1:
+        elif layer == 2:
             # draw health bar
             owp = self.world_position
             renderer.draw_bar(
