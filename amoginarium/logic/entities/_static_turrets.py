@@ -7,11 +7,13 @@ base turret types
 Author:
 Nilusink
 """
+
 from dataclasses import dataclass
 from contextlib import suppress
+from types import EllipsisType
 from time import perf_counter
-from icecream import ic
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import numpy as np
 import ctypes
@@ -21,7 +23,7 @@ from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared import TurretCIDs
 from amoginarium.shared.utility import is_related, normalize_angle, MASK32
 from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
-from amoginarium.shared.utility import MASK64
+from amoginarium.shared.utility import MASK64, get_default
 from amoginarium import pv
 
 from ..audio import MetalPings
@@ -61,22 +63,28 @@ class BaseTurret(LogicGameEntity):
     _high_tof_multiplier: float = 1.1
     _number_target_taps: int
 
+    _default_turn_speed: float = np.inf  # max rad/s
+    _default_valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...
+    _default_facing_angle: float = np.pi
+
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            size: Vec2,
-            position: Vec2,
-            weapon: BaseWeapon,
-            engagement_range: float,
-            min_range: float = 0,
-            airburst_munition: bool = False,
-            intercept_bullets: bool = False,
-            intercept_players: bool = True,
-            target_taps: int = -1,
-            valid_angles: tuple[Vec2, Vec2] = ...,
-            sensors: tp.Iterable[BaseSensor] = None,
-            detection_group: DetectionGroup = None,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        coalition: Coalitions,
+        size: Vec2,
+        position: Vec2,
+        weapon: BaseWeapon,
+        engagement_range: float,
+        *,
+        min_range: float = 0,
+        airburst_munition: bool = False,
+        intercept_bullets: bool = False,
+        intercept_players: bool = True,
+        target_taps: int = -1,
+        sensors: tp.Iterable[BaseSensor] = None,
+        detection_group: DetectionGroup = None,
+        valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
+        turn_speed: float | EllipsisType = ...
     ) -> None:
         self._set_pos = position.copy()
         position.y -= size.y / 2
@@ -96,8 +104,7 @@ class BaseTurret(LogicGameEntity):
         self.available_targets = {}
         self._target_predict = []
         self._last_shot = perf_counter()
-        self._aiming_at = Vec2().from_cartesian(-1, 0)
-        self._valid_angles = valid_angles
+        self._valid_angles = get_default(valid_angles, self._default_valid_angles)
         if self._valid_angles is not ...:
             self._valid_angles[0].length = self.engagement_range
             self._valid_angles[1].length = self.engagement_range
@@ -110,6 +117,8 @@ class BaseTurret(LogicGameEntity):
             self._target_tapping = False
             self._number_target_taps = 1
 
+        self._turn_speed = get_default(turn_speed, self._default_turn_speed)
+
         self._hp = self._max_hp
 
         super().__init__(
@@ -118,6 +127,8 @@ class BaseTurret(LogicGameEntity):
             position=position,
             coalition=coalition
         )
+        self.facing.angle = self._default_facing_angle
+        self.weapon.facing.angle = self.facing.angle
 
         self.add(CollisionDestroyed)
 
@@ -280,18 +291,16 @@ class BaseTurret(LogicGameEntity):
                 new_target = None
 
             else:
+                self.__turn_at(solution, delta)
                 self.__shoot_at(solution)
 
         # aim but don't shoot
         if new_target is None and simulate_target is not None:
-            self._aiming_at = simulate_target.angle.copy()
-            self._aiming_at.normalize()
+            self.__turn_at(simulate_target, delta)
 
         else:
             self._target = None
             # self._target_predict = []
-
-        self.facing.angle = self._aiming_at.angle
 
         if perf_counter() - self._last_shot >= .1:
             self.weapon.stop_shooting()
@@ -301,9 +310,6 @@ class BaseTurret(LogicGameEntity):
             self.weapon.reload()
 
         super()._update(delta)
-
-        # set facing of weapon
-        self.weapon.facing.angle = self._aiming_at.angle
 
         # update parameters
         ## bars
@@ -317,7 +323,6 @@ class BaseTurret(LogicGameEntity):
             self._runtime_buffer[self.id].param3 = ctypes.c_uint64(
                 x32 & MASK32
             ).value | (ctypes.c_uint64(y32 & MASK32).value << 32)
-
 
         ## range
         param4 = int(self.min_range) & MASK16
@@ -418,13 +423,18 @@ class BaseTurret(LogicGameEntity):
     def __shoot_at(
             self,
             solution: TargetSolution,
+            max_error: float | EllipsisType = ...
     ) -> None:
         """
         shoot at specified target
         :param solution: where to shoot to
+        :param max_error: max facing offset to target solution
         """
-        self._aiming_at = solution.angle.copy()
-        self._aiming_at.normalize()
+        if isinstance(max_error, EllipsisType):
+            max_error = self.weapon._inaccuracy
+
+        if normalize_angle(self.facing.angle - solution.angle.angle) > max_error:
+            return
 
         if self._valid_angles is not ...:
             angle_delta = normalize_angle(
@@ -441,9 +451,8 @@ class BaseTurret(LogicGameEntity):
             ]):
                 return
 
-        ic((self.position - solution.target_predict).angle, solution.angle)
         shot = self.weapon.shoot(
-            solution.angle,
+            self.facing,
             solution.tof if self.airburst_munition else ...,
             target_pos=solution.target_predict
         )
@@ -455,6 +464,23 @@ class BaseTurret(LogicGameEntity):
 
             else:
                 self.available_targets[solution.target]["shot_at"] = solution.tof
+
+    def __turn_at(self, solution: TargetSolution, delta: float) -> None:
+        """turn towards a target"""
+        diff = solution.angle.angle - self.facing.angle
+
+        if diff > np.pi:
+            diff -= 2 * np.pi
+
+        if diff < -np.pi:
+            diff += 2 * np.pi
+
+        # limit turn speed
+        increment = np.sign(diff) * min(abs(diff), self._turn_speed * delta)
+
+        # apply rotation
+        self.facing.angle += increment
+        self.weapon.facing.angle = self.facing.angle
 
 
 class MinigunTurret(BaseTurret):
@@ -554,6 +580,9 @@ class MortarTurret(BaseTurret):
     _max_hp: int = 90
     _aim_type = "high"
 
+    _default_facing_angle = -np.pi / 2
+    _default_turn_speed = .3
+
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -571,7 +600,8 @@ class MortarTurret(BaseTurret):
             Vec2().from_cartesian(23 * 1.5, 24 * 1.5),
             position,
             weapon,
-            2500,
+            3000,
+            min_range=550,
             sensors=[
                 RadarSensor(self, 3000, min_rcs=0.01)
             ],
@@ -584,6 +614,11 @@ class FlakTurret(BaseTurret):
     _cid = TurretCIDs.flak
     _max_hp: int = 170
     _aim_type = "low"
+
+    _default_valid_angles = (
+        Vec2().from_cartesian(-1, .3),
+        Vec2().from_cartesian(-.1, -1)
+    )
 
     def __init__(
             self,
@@ -603,14 +638,10 @@ class FlakTurret(BaseTurret):
             position,
             weapon,
             2300,
-            300,
+            min_range=300,
             airburst_munition=True,
             intercept_bullets=False,
             target_taps=2,
-            valid_angles=(
-                Vec2().from_cartesian(-1, .3),
-                Vec2().from_cartesian(-.1, -1)
-            ),
             sensors=[
                 RadarSensor(self, 1700)
             ],
@@ -622,6 +653,12 @@ class CRAMTurret(BaseTurret):
     _cid = TurretCIDs.cram
     _max_hp: int = 60
     _aim_type = "low"
+
+    _default_turn_speed = 1.745
+    _default_valid_angles = (
+        Vec2().from_cartesian(-.5, 1),
+        Vec2().from_cartesian(.5, 1)
+    )
 
     def __init__(
             self,
@@ -646,15 +683,11 @@ class CRAMTurret(BaseTurret):
             position,
             weapon,
             1900,
-            150,
+            min_range=150,
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
-            target_taps=32,  # TODO: smart target tap (max)
-            valid_angles=(
-                Vec2().from_cartesian(-.5, 1),
-                Vec2().from_cartesian(.5, 1)
-            ),
+            target_taps=8,  # TODO: smart target tap (max)
             sensors=[
                 MagicSensor(
                     self,
@@ -671,6 +704,12 @@ class SkyShield(BaseTurret):
     _cid = TurretCIDs.sky_shield
     _max_hp: int = 60
     _aim_type = "low"
+
+    _default_turn_speed = 1.57
+    _default_valid_angles = (
+        Vec2().from_cartesian(-.5, 1),
+        Vec2().from_cartesian(.5, 1)
+    )
 
     def __init__(
             self,
@@ -694,15 +733,11 @@ class SkyShield(BaseTurret):
             position,
             weapon,
             1900,
-            150,
+            min_range=150,
             intercept_bullets=True,
             intercept_players=False,
             airburst_munition=True,
             target_taps=1,  # TODO: smart target tap (max)
-            valid_angles=(
-                Vec2().from_cartesian(-.5, 1),
-                Vec2().from_cartesian(.5, 1)
-            ),
             sensors=[
                 MagicSensor(
                     self,

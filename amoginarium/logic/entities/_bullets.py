@@ -488,8 +488,8 @@ class MortarShell(Bullet):
 
     _default_cluster_depth = 2
     _default_cluster_amount = 3
-    _default_cluster_spread_angle = np.pi/8
-    _default_cluster_fuze_mult = .3
+    _default_cluster_spread = np.pi/5
+    _default_cluster_fuze_ttl_mult = .3
     _default_cluster_step_explosion = 0
     _default_cluster_last_step_ttl = 3
 

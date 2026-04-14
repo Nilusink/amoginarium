@@ -424,7 +424,7 @@ class Minigun(ContinuousSoundEffect):
 
 
 class CRAM(ContinuousSoundEffect):
-    _stage_one_name = ("minigun", "spool_up_short")
+    # _stage_one_name = ("minigun", "spool_up_short")
     _stage_two_name = ("minigun", "burst")
     _stage_three_name = ("minigun", "spool_down")
     volume: float = .1
