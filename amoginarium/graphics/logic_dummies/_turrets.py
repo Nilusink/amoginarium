@@ -34,6 +34,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     _body_texture: int = ...
     _body_texture_path = "mortar_turret_base"
     _body_texture_size = (23, 24)
+    _layer: int = 0
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
@@ -210,15 +211,26 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         ):
             return
 
-        if layer == 0:
+        if layer == self._layer:
             if self._highlight:
                 renderer.start_stencil(True)
 
-            renderer.draw_textured_quad(
-                self._body_texture,
-                self.world_position - self.size / 2,
-                self.size
-            )
+            if self.facing.x < 0:
+                renderer.draw_textured_quad(
+                    self._body_texture,
+                    self.world_position - self.size / 2,
+                    self.size,
+                    pixel_perfect=True
+                )
+
+            else:
+                # mirror turret
+                renderer.draw_textured_quad(
+                    self._body_texture,
+                    self.world_position - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
+                    (-self.size.x, self.size.y),
+                    pixel_perfect=True
+                )
 
             if self._highlight:
                 renderer.enable_stencil(True)
@@ -281,5 +293,6 @@ class CRAMTurretDummy(BaseTurretDummy):
 class SkyShieldDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.sky_shield
-    _body_texture_path = "CRAM_base"
-    _body_texture_size = (64, 128)
+    _body_texture_path = "skyshield_base"
+    _body_texture_size = (64, 64)
+    _layer = 1

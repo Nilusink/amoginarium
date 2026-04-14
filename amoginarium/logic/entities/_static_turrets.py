@@ -13,7 +13,6 @@ from contextlib import suppress
 from types import EllipsisType
 from time import perf_counter
 from ctypes import Array
-from icecream import ic
 import typing as tp
 import numpy as np
 import ctypes
@@ -262,7 +261,7 @@ class BaseTurret(LogicGameEntity):
             if target not in self.available_targets:
                 self.available_targets[target] = {
                     "shot_at": -self._number_target_taps,
-                    "distance": None,
+                    "distance": np.inf,
                     "solution": None
                 }
 
@@ -297,6 +296,7 @@ class BaseTurret(LogicGameEntity):
                         continue
 
                     elif not sol:
+                        self.available_targets[target]["distance"] = np.inf
                         continue
 
                 self.available_targets[target]["distance"] = (
@@ -522,9 +522,31 @@ class BaseTurret(LogicGameEntity):
 
         # limit turn speed
         increment = np.sign(diff) * min(abs(diff), self._turn_speed * delta)
+        new_angle = normalize_angle(self.facing.angle + increment)
+
+        # check for gimbal limit
+        if not isinstance(self._valid_angles, EllipsisType):
+
+            min_a = normalize_angle(self._valid_angles[0].angle)
+            max_a = normalize_angle(self._valid_angles[1].angle)
+
+            # end angle < start angle (0 crossing)
+            if max_a <= min_a:
+                if max_a < new_angle < min_a:
+                    d = min_a - max_a
+
+                    # clamp to corresponding angle
+                    if new_angle + d/2 > min_a:
+                        new_angle = min_a
+
+                    else:
+                        new_angle = max_a
+    
+            else:
+                new_angle = min(max(new_angle, min_a), max_a)
 
         # apply rotation
-        self.facing.angle += increment
+        self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
 
 
@@ -762,8 +784,8 @@ class SkyShield(BaseTurret):
 
     _default_turn_speed = 1.57
     _default_valid_angles = (
-        Vec2().from_cartesian(-.5, 1),
-        Vec2().from_cartesian(.5, 1)
+        Vec2().from_cartesian(-1, .2),
+        Vec2().from_cartesian(1, .2)
     )
 
     def __init__(
@@ -777,17 +799,17 @@ class SkyShield(BaseTurret):
         weapon = SkyShieldWeapon(
             self,
             runtime_buffer,
-            parent_position_offset=(0, 15)
+            parent_position_offset=(0, -8)
         )  # don't eject casings because I like my pc
         weapon.reload(True)
 
         super().__init__(
             runtime_buffer,
             coalition,
-            Vec2().from_cartesian(64, 128),
+            Vec2().from_cartesian(128, 128),
             position,
             weapon,
-            1900,
+            2300,
             min_range=150,
             intercept_bullets=True,
             intercept_players=False,
@@ -796,10 +818,15 @@ class SkyShield(BaseTurret):
             sensors=[
                 MagicSensor(
                     self,
-                    2200,
+                    3000,
                     # sphere_accuracy=256,
                     # min_rcs=.04
                 )
             ],
             **kwargs
         )
+
+    def _update(self, delta: float) -> None:
+        super()._update(delta)
+        self.facing.x = self.weapon.facing.x
+        self.facing.normalize()

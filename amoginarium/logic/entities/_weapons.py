@@ -551,7 +551,7 @@ class HandThrownGrenade(BaseWeapon):
 
 class SkyShieldWeapon(BaseWeapon):
     """smart munitions weapon"""
-    _cid = WeaponCIDs.cram
+    _cid = WeaponCIDs.sky_shield
 
     def __init__(
         self,
@@ -572,5 +572,5 @@ class SkyShieldWeapon(BaseWeapon):
             bullet_type=SkyShieldBullet,
 
             # bullet args
-            visibility_offset=0.027,
+            visibility_offset=.08,
         )

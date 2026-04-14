@@ -145,7 +145,7 @@ class BulletDummy(SyncedImageEntity):
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         if self._visibility_offset > self._lifetime:
             self._last_pos.length = 0
-            super()._gl_draw(delta_cal)
+            self._lifetime += delta_cal
             return
 
         world_pos = pv.global_vars.get_world_position()
