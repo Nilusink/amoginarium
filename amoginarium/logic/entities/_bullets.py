@@ -381,7 +381,7 @@ class Bullet(LogicGameEntity):
                 # cluster step explosion:
                 if self._cse:
                     exp = DistantPop()
-                    exp.set_volume(0.8, 0.3)
+                    exp.set_volume(1, 0.6)
                     exp.play(pos=self.position)
 
                 angle_spread = self._cluster_spread / (self._cluster_amount - 1)
@@ -566,6 +566,9 @@ class FlakBullet(Bullet):
     _default_size = 18
     _default_base_damage = 30
 
+    _default_explosion_radius = 128
+    _default_explosion_damage = 40
+
 
 class CRAMBullet(Bullet):
     _cid = DummyCIDs.cram
@@ -581,10 +584,10 @@ class SkyShieldBullet(Bullet):
     _cid = DummyCIDs.cram
 
     _default_cluster_depth = 1
-    _default_cluster_amount = 11
-    _default_cluster_fuze_mult = .08
-    _default_cluster_spread = .7
+    _default_cluster_amount = 21
+    _default_cluster_fuze_mult = .06
+    _default_cluster_spread = 2
     _default_cluster_size_mult = .3
-    _default_cluster_step_explosion = 5
-    _default_cluster_last_step_ttl = .08
+    _default_cluster_step_explosion = 10
+    _default_cluster_last_step_ttl = .06
 

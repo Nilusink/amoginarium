@@ -272,7 +272,9 @@ class BaseWeapon(Item):
                 + self._parent_position_offset
                 + direction.normalize() * self._barrel_length * 0.45
             ),
-            initial_velocity=Vec2().from_polar(self.facing.angle, self._muzzle_velocity)
+            initial_velocity=Vec2().from_polar(
+                direction.angle, self._muzzle_velocity
+            )
             + self.parent.velocity,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,
@@ -566,7 +568,7 @@ class SkyShieldWeapon(BaseWeapon):
             inaccuracy=0.005,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=3000,
-            sound_effect=CRAMSound(),
+            sound_effect=Shotgun(),
             bullet_type=SkyShieldBullet,
 
             # bullet args

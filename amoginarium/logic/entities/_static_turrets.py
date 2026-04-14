@@ -441,6 +441,7 @@ class BaseTurret(LogicGameEntity):
             ]):
                 return
 
+        ic((self.position - solution.target_predict).angle, solution.angle)
         shot = self.weapon.shoot(
             solution.angle,
             solution.tof if self.airburst_munition else ...,
@@ -695,7 +696,7 @@ class SkyShield(BaseTurret):
             1900,
             150,
             intercept_bullets=True,
-            intercept_players=True,
+            intercept_players=False,
             airburst_munition=True,
             target_taps=1,  # TODO: smart target tap (max)
             valid_angles=(
