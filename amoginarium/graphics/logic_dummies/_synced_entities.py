@@ -10,13 +10,14 @@ Nilusink
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from contextlib import suppress
+from icecream import ic
 import math as m
 
 from amoginarium.shared.utility import Vec2, Color
+from amoginarium import pv
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
-from ... import pv
 
 
 class _SyncedEntitiesManager:
@@ -174,6 +175,8 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         else:
             if not self.alive:
+                self._logic_visibility = True
+                self._visible = True
                 self.kill()
 
         self.param0 = pv.E_BUFF[self.__id].param0

@@ -649,6 +649,15 @@ class BaseGame:
             pv.WRITE_LOCK.acquire()
             pv.WRITE_LOCK.release()
 
+            if pg.key.get_pressed()[pg.K_DOWN]:
+                ic("s")
+                pv.global_vars.set_time_mult(.01)
+                t_mult = .01
+
+            else:
+                pv.global_vars.set_time_mult(self.time_multiplier)
+                t_mult = self.time_multiplier
+
             # # check for new controllers
             # if len(self._new_controllers) > 0:
             #     tmp = self._new_controllers.copy()
@@ -713,7 +722,7 @@ class BaseGame:
             self.global_vars.set_time(time())
 
             delta = now - last
-            delta *= self.time_multiplier  # slow-motion
+            delta *= t_mult  # slow-motion
 
             world_pos = self.global_vars.get_world_position()
 

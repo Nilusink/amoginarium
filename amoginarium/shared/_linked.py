@@ -34,6 +34,7 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
     "world_position_x": c_double,
     "world_position_y": c_double,
     "time": c_double,
+    "t_mult": c_double,
     "max_fps": c_double,
     "background_position": c_double
 }
@@ -82,6 +83,7 @@ class GlobalVars:
         self._pixel_per_meter = 1
         self._scaling = 0
         self._time = 0
+        self._t_mult = 1
 
         if set:
             self._set_from_current()
@@ -103,6 +105,7 @@ class GlobalVars:
         self.__values["world_position_x"].value = self._world_position.x
         self.__values["world_position_y"].value = self._world_position.y
         self.__values["time"].value = self._time
+        self.__values["t_mult"].value = self._t_mult
         self.__values["max_fps"].value = self._max_fps
         self.__values["background_position"].value = self._background_position
 
@@ -193,6 +196,14 @@ class GlobalVars:
 
         self.__values["time"].value = time
 
+    def get_time_mult(self) -> float:
+        return self._t_mult
+
+    def set_time_mult(self, time_mult: float) -> None:
+        self._t_mult = time_mult
+
+        self.__values["t_mult"].value = time_mult
+
     def get_max_fps(self) -> float:
         return self._max_fps
 
@@ -271,3 +282,4 @@ class GlobalVars:
         self._pixel_per_meter = self.__values["pixel_per_meter"].value
         self._scaling = self.__values["scaling"].value
         self._time = self.__values["time"].value
+        self._t_mult = self.__values["t_mult"].value

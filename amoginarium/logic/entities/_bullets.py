@@ -456,10 +456,6 @@ class Bullet(LogicGameEntity):
                 exp.set_volume(0.8, 0.3)
                 exp.play(pos=self.position)
 
-        else:
-            ic(self._explosion_radius)
-
-
         super().kill()
         return True
 
@@ -584,8 +580,8 @@ class SkyShieldBullet(Bullet):
     _cid = DummyCIDs.cram
 
     _default_cluster_depth = 1
-    _default_cluster_amount = 21
-    _default_cluster_fuze_mult = .06
+    _default_cluster_amount = 11
+    _default_cluster_fuze_mult = .02
     _default_cluster_spread = 2
     _default_cluster_size_mult = .3
     _default_cluster_step_explosion = 10
