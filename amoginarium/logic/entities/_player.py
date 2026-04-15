@@ -21,7 +21,7 @@ from ... import pv
 
 from ..audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ..graphics_dummies import Controller
-from ._weapons import BaseWeapon, SkyShieldWeapon as Minigun, Sniper, HandThrownGrenade, Ak47
+from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._items import Shield, HealingPotion, JetBag
