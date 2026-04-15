@@ -275,7 +275,7 @@ class BaseWeapon(Item):
                 + direction.normalize() * self._barrel_length * 0.45
             ),
             initial_velocity=Vec2().from_polar(
-                direction.angle, self._muzzle_velocity
+                direction.angle, self.muzzle_velocity
             )
             + self.parent.velocity,
             target_pos=target_pos,
