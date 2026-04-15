@@ -162,6 +162,10 @@ class GlobalVars:
         self.__values["world_position_x"].value = position.x
         self.__values["world_position_y"].value = position.y
 
+    @property
+    def resolution_screen(self) -> Vec2:
+        return self._resolution / self._pixel_per_meter
+
     def get_resolution(self) -> Vec2:
         return self._resolution.copy()
 

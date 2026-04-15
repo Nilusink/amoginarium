@@ -265,7 +265,6 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
     __slots__ = ["_texture_id_l", "_texture_id_r"]
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
-
         renderer.draw_textured_quad(
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
             self.world_position - self.size / 2,

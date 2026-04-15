@@ -21,6 +21,7 @@ from ._weapons import SkyShieldGun
 from ._sensors import SensorHUD
 from ._items import Shield, HealingPotion, JetBag
 from ._charged_weapons import RailGunDummy
+from ._text_entity import TextEntity
 
 
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
@@ -50,6 +51,7 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         RailGunDummy,
         SkyShieldDummy,
         SkyShieldGun,
-        SensorHUD
+        SensorHUD,
+        TextEntity
     ]
 }

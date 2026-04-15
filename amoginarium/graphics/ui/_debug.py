@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_debug.py
+amoginarium/graphics/ui/_debug.py
 
 Project: amoginarium
 Created: 25.03.2026

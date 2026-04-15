@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base/_ui_element/__init__.py
+amoginarium/graphics/ui/_base/_ui_element/__init__.py
 
 Project: amoginarium
 Created: 25.03.2026

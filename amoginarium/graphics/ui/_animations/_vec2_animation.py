@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_animations/_vec2_animation.py
+amoginarium/graphics/ui/_animations/_vec2_animation.py
 
 Project: amoginarium
 Created: 16.03.2026

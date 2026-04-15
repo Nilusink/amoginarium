@@ -10,7 +10,7 @@ Project: amoginarium
 
 from typing import Callable
 
-from amoginarium.graphics.ui import Button, UIEntity, Rectangle
+from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
 
 
 ##################################################
@@ -26,14 +26,14 @@ class PauseMenu(UIEntity):
             end_game_callback: Callable[[], None],
     ) -> None:
         super().__init__()
-        current_parent = Rectangle((0.5, 0.5), (0.2, 0.5), parent=self, bg_color=(70, 70, 70, 150), border_width=0)
+        current_parent = UIRectangle((0.5, 0.5), (0.2, 0.5), parent=self, bg_color=(70, 70, 70, 150), border_width=0)
 
         padding = 0.06
         but_width = 1 - padding * 2
         but_height = (1 - padding * 5) / 4
         step = padding + but_height
 
-        Button(
+        UIButton(
             (0.5, padding + but_height / 2),
             (but_width, but_height),
             "Continue",
@@ -41,7 +41,7 @@ class PauseMenu(UIEntity):
             command=continue_callback
         )
 
-        Button(
+        UIButton(
             (0.5, padding + but_height / 2 + step),
             (but_width, but_height),
             "Restart",
@@ -49,7 +49,7 @@ class PauseMenu(UIEntity):
             command=restart_callback
         )
 
-        Button(
+        UIButton(
             (0.5, padding + but_height / 2 + step * 2),
             (but_width, but_height),
             "Settings",
@@ -57,7 +57,7 @@ class PauseMenu(UIEntity):
             command=open_settings_callback
         )
 
-        Button(
+        UIButton(
             (0.5, 1 - (padding + but_height / 2)),
             (but_width, but_height),
             "End game",

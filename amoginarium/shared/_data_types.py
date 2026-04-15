@@ -39,7 +39,6 @@ class DummyCIDs(Enum):
     grenade = "dummy.bullet.grenade"  # -- "" --
     cram = "dummy.bullet.cram"
 
-
 class IslandCIDs(Enum):
     """
     Component IDs for Graphics islands
@@ -94,6 +93,13 @@ class ItemCIDs(Enum):
     jetbag = "item.jetbag"
 
 
+class GraphicsCIDs(Enum):
+    """
+    Component IDs for other Graphics
+    """
+    static_text = "static.text"
+
+
 class _CIDRegister:
     """represent all item CIDs as ints"""
 
@@ -125,7 +131,7 @@ class _CIDRegister:
 
 
 CID_REGISTER = _CIDRegister(WeaponCIDs)  #, TurretCIDs, IslandCIDs, DummyCIDs)
-type CIDType = DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs
+type CIDType = DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs | GraphicsCIDs
 
 
 class ProcessCommandType(Enum):

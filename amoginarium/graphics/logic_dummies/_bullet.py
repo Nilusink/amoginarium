@@ -146,7 +146,7 @@ class BulletDummy(SyncedImageEntity):
             return
 
         world_pos = pv.global_vars.get_world_position()
-        screen_pixels = pv.global_vars.screen_pixels
+        resolution = pv.global_vars.resolution_screen
         if self.alive:
             # calculate trace
             if self._show_trace and self._max_trace_length > 0: # and delta_cal > 0:
@@ -181,10 +181,10 @@ class BulletDummy(SyncedImageEntity):
             if (
                 self.pos.x + (self._max_trace_length + self.size.x / 2) < world_pos.x
                 or self.pos.x - (self._max_trace_length + self.size.x / 2)
-                > world_pos.x + screen_pixels.x
+                > world_pos.x + resolution.x
                 or self.pos.y + (self._max_trace_length + self.size.y / 2) < world_pos.y
                 or self.pos.y - (self._max_trace_length + self.size.y / 2)
-                > world_pos.y + screen_pixels.y
+                > world_pos.y + resolution.y
             ):
                 self._last_pos.length = 0
                 return
@@ -244,7 +244,7 @@ class BulletDummy(SyncedImageEntity):
                     p1 - world_pos,
                     p2 - world_pos,
                     color,  # ignore: type
-                    self.size.length / 3,
+                    thickness=self.size.length / 3,
                 )
 
         if self.alive:

@@ -7,25 +7,35 @@ a few functions for rendering
 Author:
 Nilusink
 """
+import os
+# Stop Windows from minimizing/re-initializing the window if it thinks it lost focus
+os.environ['SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS'] = '0'
+# Stop Windows DPI scaling from slightly altering the window size and triggering a loop
+os.environ['SDL_VIDEO_HIGHDPI_DISABLED'] = '1'
+
 from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
 from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
 from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
 from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_MODELVIEW, GL_ONE_MINUS_SRC_ALPHA
+from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
 from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
-from OpenGL.GL import glDisable, glBegin, glVertex, glFlush, glClearColor
-from OpenGL.GL import glBlendFunc, glWindowPos2d, glDrawPixels, glRotated
-from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, GL_QUADS
+from OpenGL.GL import glDisable, glBegin, glClearColor, glGetIntegerv
+from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST, GL_VIEWPORT
+from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA
 from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
 from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
 from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, GL_NEAREST
+from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glViewport, glOrtho
+from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
+from OpenGL.GL import GL_QUADS, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
+from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays
+from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
-from OpenGL.GL import glPushMatrix, glPopMatrix
 from OpenGL.GLU import gluOrtho2D
 
 from pygame.locals import DOUBLEBUF, OPENGL
+from pygame._sdl2.video import Window
 from types import EllipsisType
 from icecream import ic
 from PIL import Image
@@ -34,25 +44,56 @@ import typing as tp
 import numpy as np
 import math as m
 
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade
+from amoginarium.shared.debugging import cum_timer
+from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t, convert_color
+
 from ._base_renderer import BaseRenderer, tColor
-from ... import pv
+from .windows import WindowsMonitorService
+from .opengl_fonts import GLFont
+
+from amoginarium import pv
 
 # define types
-type TextureID = int
 
 
+
+# noinspection DuplicatedCode
 class OpenGLRenderer(BaseRenderer):
+    __slots__ = (
+        "__dynamic_text_fonts", "__static_text_graphics", "__static_text_id_counter", "__static_text_fonts",
+        "__clock", "__window", "__previous_window_position", "__previous_window_size"
+    )
+
+    type TextureID = int
+    type StaticTextID = int
+    type DynamicTextID = int
+
+    DRAW_DEBUG_BOUNDS = False
+
+    __dynamic_text_fonts: dict[tuple[str, int, bool, bool], GLFont]
+
+    __static_text_graphics: dict[StaticTextID, tuple[np.uintc, tuple[int, int]]]
+    __static_text_id_counter: StaticTextID
+    __static_text_fonts: dict
+    __clock: pg.time.Clock
+    __window: pg.Window
+
+    __previous_window_position: tp.Final[Vec2]
+    __previous_window_size: tp.Final[Vec2]
+    __display_state: tp.Literal["windowed", "windowed_fullscreen", "fullscreen"]
+
+    # region Extra internal methods
+    # todo: WHAT?
     def get_font(
             self,
             size: int,
             family: str,
             bold: bool = False,
-            italic: bool = False,
+            italic: bool = False
     ) -> pg.font.Font:
         # check if font exists
-        if size in self._fonts:
-            for font in self._fonts[size]:  # TODO: fix
+        if size in self.__static_text_fonts:
+            for font in self.__static_text_fonts[size]:
                 if all([
                     font.name == family,
                     font.bold == bold,
@@ -61,22 +102,165 @@ class OpenGLRenderer(BaseRenderer):
                     return font
 
         else:
-            self._fonts[size] = []
+            self.__static_text_fonts[size] = []
 
         # no font found, create new
         new_font = pg.font.SysFont(family, int(size), bold, italic)
-        self._fonts[size].append(new_font)
+        self.__static_text_fonts[size].append(new_font)
 
         return new_font
 
-    def init(self, title):
+    @staticmethod
+    def __set_color(color: Color | tColor) -> Color:
+        """
+        Set OpenGLColor
+        :param color: Color to set
+        :return: The color as a Color object
+        :raises ValueError: If a tuple of invalid length is provided
+        :raises TypeError: If color is not a Color object or a tuple
+        """
+        if isinstance(color, Color):
+            glColor4f(*color.rgba1)
+
+            return color
+        elif isinstance(color, tuple):
+            if len(color) == 3:
+                glColor3f(*color)
+            elif len(color) == 4:
+                glColor4f(*color)
+            else:
+                raise ValueError(f"Invalid color tuple length (expected 3 or 4, got {len(color)}): {color}")
+            return Color().from_1(*color)
+        raise TypeError(f"Expected a Color object or a tuple, but got {type(color).__name__}: {color!r}")
+
+    @staticmethod
+    @cum_timer.time_this
+    def _check_out_of_screen(
+            top_left: coord_t,
+            size: coord_t,
+    ) -> bool:
+        """
+        Check if a rect is out of the screen
+        :param top_left: Absolute top left position
+        :param size: Absolute size
+        :return: True if rect is out of screen
+        """
+        x1, y1 = convert_coord(top_left)
+        w, h = convert_coord(size)
+
+        x2 = x1 + w
+        y2 = y1 + h
+
+        if x1 > x2:
+            x1, x2 = x2, x1
+
+        if y1 > y2:
+            y1, y2 = y2, y1
+
+        res = pv.global_vars.get_resolution()
+        return (
+                x2 < 0
+                or x1 > res.x
+                or y2 < 0
+                or y1 > res.y
+        )
+
+    def _draw_debug_bounds(
+            self,
+            pos: coord_t,
+            size: coord_t,
+            color: Color | tColor = (255, 0, 0, 127),
+            centered: bool = False
+    ) -> None:
+        pos_vec: Vec2 = convert_coord(pos, Vec2)
+        size_vec: Vec2 = convert_coord(size, Vec2)
+
+        # Handle centering offset
+        if centered:
+            pos_vec.x -= size_vec.x / 2.0
+            pos_vec.y -= size_vec.y / 2.0
+
+        # Hardcode a visible debug thickness and scale it
+        thickness = 1
+
+        # Bail out if it's not even on the screen
+        if self._check_out_of_screen(pos_vec, size_vec):
+            return
+
+        glPushMatrix()
+        glTranslate(pos_vec.x, pos_vec.y, 0.0)
+
+        # Set the color natively
+        self.__set_color(color)
+
+        # Pre-calculate the inner boundaries for the outline
+        ix = size_vec.x - thickness
+        iy = size_vec.y - thickness
+
+        # Draw the outline directly via OpenGL
+        glBegin(GL_TRIANGLE_STRIP)
+
+        # Trace the hollow frame (Outer vertex, Inner vertex)
+        glVertex2f(0.0, 0.0)
+        glVertex2f(thickness, thickness)
+
+        glVertex2f(size_vec.x, 0.0)
+        glVertex2f(ix, thickness)
+
+        glVertex2f(size_vec.x, size_vec.y)
+        glVertex2f(ix, iy)
+
+        glVertex2f(0.0, size_vec.y)
+        glVertex2f(thickness, iy)
+
+        # Close the loop
+        glVertex2f(0.0, 0.0)
+        glVertex2f(thickness, thickness)
+
+        glEnd()
+        glPopMatrix()
+
+    @staticmethod
+    def __scaling_restricted_ratio(size: Vec2, ratio: float) -> tuple[int, int, int, int]:
+        window_ratio = size.x / size.y
+
+        if window_ratio > ratio:
+            view_h = size.y
+            view_w = int(size.y * ratio)
+            offset_x = (size.x - view_w) // 2
+            offset_y = 0
+        else:
+            view_w = size.x
+            view_h = int(size.x / ratio)
+            offset_x = 0
+            offset_y = (size.y - view_h) // 2
+
+        return int(offset_x), int(offset_y), int(view_w), int(view_h)
+
+    # endregion
+
+    # region Init & Loading
+    def init(self, title: str) -> None:
+        """
+        Initialize the renderer and global_vars
+        :param title: Window title
+        """
+        pg.init()
         pv.global_vars = pv.global_vars
 
         ic("using OpenGL backend")
 
         pg.font.init()
 
-        self._fonts = {
+        # Text
+        self.__dynamic_text_fonts = {}
+        self.__static_text_graphics = {}
+        self.__static_text_id_counter = 0
+
+        self.__previous_window_size = Vec2().from_cartesian(1920, 1080)
+        self.__previous_window_position = Vec2()
+
+        self.__static_text_fonts = {
             32: [
                 pg.font.SysFont('arial', 32)
             ],
@@ -110,14 +294,23 @@ class OpenGLRenderer(BaseRenderer):
         )
 
         # pg.display.gl_set_attribute(pg.GL_SWAP_CONTROL, 1)
+        pg.display.gl_set_attribute(pg.GL_RED_SIZE, 8)
+        pg.display.gl_set_attribute(pg.GL_GREEN_SIZE, 8)
+        pg.display.gl_set_attribute(pg.GL_BLUE_SIZE, 8)
+        pg.display.gl_set_attribute(pg.GL_ALPHA_SIZE, 8)
         pg.display.gl_set_attribute(pg.GL_STENCIL_SIZE, 8)
-        pg.display.set_mode(
-            pv.global_vars.get_screen_size().xy,
-            DOUBLEBUF | OPENGL | pg.RESIZABLE | pg.HIDDEN
+
+        # pg window
+        screen_size = pv.global_vars.get_screen_size()
+        self.__window = pg.Window(
+            title=title,
+            size=(screen_size.x / 2, screen_size.y / 2),
+            opengl=True,
+            resizable=True,
+            hidden=True
         )
-        # self.font = pg.font.SysFont(None, 24)
-        # request stencil buffer
-        pg.display.set_caption(title)
+        self.__window.minimum_size = (screen_size.x / 8, screen_size.y / 8),
+        WindowsMonitorService.set_window(title)
 
         # initialize OpenGL stuff
         glClearColor(*(0, 0, 0, 255))
@@ -128,73 +321,49 @@ class OpenGLRenderer(BaseRenderer):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-    @staticmethod
-    def set_color(color: Color | tColor) -> Color:
+        self.__clock = pg.time.Clock()
+
+        self.__window.show()
+        self.__display_state = "windowed"
+
+    def quit(self) -> None:
         """
-        set gColor
+        Quit the display
         """
-        # color as Color class
-        if isinstance(color, Color):
+        pg.quit()
 
-            glColor4f(*color.rgba1)
-
-            return color
-
-        # color as tuple
-        else:
-            if len(color) == 3:
-                glColor3f(*color)
-
-            elif len(color) == 4:
-                glColor4f(*color)
-
-            else:
-                raise ValueError("Invalid color: ", color)
-
-            return Color().from_1(*color)
-
-    @staticmethod
-    def check_out_of_screen(
-            pos,
-            size,
-    ) -> bool:
-        """
-        check if a rect is on the screen
-        """
-        # pos = convert_coord(pos, Vec2)
-        # size = convert_coord(size, Vec2)
-
-        return False
-
-        # 200 for buffering
-        # return any([
-        #     pos.x > pv.global_vars.screen_size.x + 200,
-        #     pos.x + size.x < -200
-        # ])
-
-    @staticmethod
     def load_texture(
-            image,
-            size=None,
-            mirror=""
+            self,
+            image: Image.Image,
+            size: coord_t | None = None,
+            mirror: tp.Literal["x", "y", "xy", "yx", ""] = ""
     ) -> tuple[TextureID, tuple[int, int]]:
-        # for debugging
+        """
+        Load an image texture (saves it internally)
+        :param image: Image to load
+        :param size: Size of image or None
+        :param mirror: Axes to mirror the image on
+        :returns: integer texture id, (width, height)
+        """
         if size is not None:
-            image = image.resize(
-                convert_coord(size, int),
-                resample=Image.NEAREST
-            )
+            if image.size != (target_size := convert_coord(size, int)):
+                image = image.resize(target_size, resample=Image.Resampling.NEAREST)
 
-        if "x" in mirror:
-            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        if mirror == "":
+            image = image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+        elif mirror == "x":
+            image = image.transpose(Image.Transpose.ROTATE_180)
+        elif mirror in ("xy", "yx"):
+            image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
-        # Flip the image vertically (since OpenGL's origin is at bottom-left)
-        if "y" not in mirror:
-            image = image.transpose(Image.FLIP_TOP_BOTTOM)
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
 
         width, height = image.size[0], image.size[1]
-        img_data = image.convert("RGBA").tobytes("raw", "RGBA", 0, -1)
+        # noinspection PyArgumentEqualDefault
+        img_data = image.tobytes("raw", "RGBA", 0, -1)
 
+        # noinspection PyArgumentList
         texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
@@ -202,101 +371,188 @@ class OpenGLRenderer(BaseRenderer):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGBA,
-            width,
-            height,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            img_data
+            GL_TEXTURE_2D, 0, GL_RGBA, width, height,
+            0, GL_RGBA, GL_UNSIGNED_BYTE, img_data
         )
-        glEnable(GL_TEXTURE_2D)
 
         return texture_id, (width, height)
 
-    # @staticmethod
-    def draw_textured_quad(
-            self,
-            texture_id: TextureID,
-            pos,
-            size,
-            convert_global=True,
-            rotate_angle=0,
-            rotate_anchor: Vec2 | tuple[float, float] = ...,
-            pixel_perfect: bool = False
-    ):
+    # endregion
+
+    # region Display
+    @property
+    def display_state(self) -> tp.Literal["windowed", "fullscreen", "windowed_fullscreen"]:
+        return self.__display_state
+
+    def clear_display(self, color: Color | tColor = (0, 0, 0, 0)) -> None:
         """
-        :param texture_id: texture id
-        :param pos: position (top left)
-        :param size: size (width, height)
-        :param convert_global: whether to convert the texture to global coords
-        :param rotate_angle: angle to rotate the image at
-        :param rotate_anchor: at what pixel to rotate at
-        :param pixel_perfect: scaling without alpha
+        Clear the whole window
+        :param color: Color to clear the window with
         """
-        pos = convert_coord(pos, Vec2)
-        size = convert_coord(size, Vec2)
-        if rotate_anchor is ...:
-            rotate_anchor = size / 2
+        conv_color: Color = convert_color(color, Color)
+        glClearColor(*conv_color.rgba1)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) ->None:
+        """
+        Should be called when the display gets updated
+        :param position: Position of the display
+        :param size: Size of the display
+        """
+        if self.__display_state in ["fullscreen", "windowed_fullscreen"]:
+            self.__window.restore()
+            self.__window.borderless = False
+            self.__window.set_windowed()
+            self.__window.size = self.__previous_window_size.xy
+            self.__window.maximize()
+            self.__display_state = "windowed"
+
+        if position is None:
+            position = self.__window.position
+        if size is None:
+            size = self.__window.size
+
+        _position_vec: Vec2 = convert_coord(position, Vec2)
+        size_vec: Vec2 = convert_coord(size, Vec2)
+
+        res_x, res_y = pv.global_vars.get_resolution().xy
+        res_ratio = res_x / res_y
+
+        vp_x, vp_y, vp_w, vp_h = self.__scaling_restricted_ratio(size_vec, res_ratio)
+
+        scaling = pv.global_vars.get_scaling()
+
+        if scaling == 0:
+            # 1. Resize the window native way
+            self.__window.size = (int(size_vec.x), int(size_vec.y))
+            # 2. Update viewport
+            glViewport(vp_x, vp_y, vp_w, vp_h)
+
+            pv.global_vars.set_screen_size_real(
+                convert_coord(size_vec, Vec2)
+            )
+
+            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / vp_w, res_y / vp_h
+            ))
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                vp_x, vp_y
+            ))
+
+        elif scaling == 1:
+            self.__window.size = (vp_w, vp_h)
+            glViewport(0, 0, vp_w, vp_h)
+
+            s_size_real = convert_coord((vp_w, vp_h), Vec2)
+            pv.global_vars.set_screen_size_real(s_size_real)
+
+            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / s_size_real.x, res_y / s_size_real.y
+            ))
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                0, 0
+            ))
 
         else:
-            rotate_anchor = convert_coord(rotate_anchor, Vec2)
+            self.__window.size = (int(size_vec.x), int(size_vec.y))
+            glViewport(0, 0, int(size_vec.x), int(size_vec.y))
 
-        # convert to screen relative coords and size
-        if convert_global:
-            pos = pv.global_vars.translate_screen_coord(pos)
-            size = pv.global_vars.translate_scale(size)
-            rotate_anchor = pv.global_vars.translate_scale(rotate_anchor)
+            pv.global_vars.set_screen_size_real(size_vec)
 
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(pos, size):
-            return
+            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
+                res_x / size_vec.x, res_y / size_vec.y
+            ))
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
+                0, 0
+            ))
 
-        # reset color
-        glColor3f(1, 1, 1)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+
+        glOrtho(0, res_x, res_y, 0, -1, 1)
 
         glMatrixMode(GL_MODELVIEW)
-        glPushMatrix()
-        glTranslate(*pos.xy, 0)
+        glLoadIdentity()
 
-        glEnable(GL_TEXTURE_2D)
-        glBindTexture(GL_TEXTURE_2D, texture_id)
+    def display_get_geometry(self) -> tuple[Vec2, Vec2]:
+        """
+        Change the position and size of the display
+        :return: (position, size) of the window
+        """
+        pos_x, pos_y = self.__window.position
+        size_w, size_h = self.__window.size
 
-        if pixel_perfect:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        return (
+            Vec2().from_cartesian(pos_x, pos_y),
+            Vec2().from_cartesian(size_w, size_h)
+        )
 
-        else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+    def display_set_geometry(self, position: coord_t, size: coord_t) -> None:
+        """
+        Change the position and size of the display
+        :param position: New position
+        :param size: New size
+        """
+        self.__window.set_windowed()
 
-        # rotate
-        if rotate_angle != 0:
-            glTranslated(rotate_anchor.x, rotate_anchor.y, 0)
-            glRotated(rotate_angle, 0, 0, 1)  # rotate around Z
-            glTranslated(-rotate_anchor.x, -rotate_anchor.y, 0)
+        pos_tuple = convert_coord(position, tuple)
+        size_tuple = convert_coord(size, tuple)
 
-        glBegin(GL_QUADS)
+        self.__window.position = (int(pos_tuple[0]), int(pos_tuple[1]))
+        self.__window.size = (int(size_tuple[0]), int(size_tuple[1]))
 
-        # draw rectangle and texture
-        glVertex(0, 0, 0)
-        glTexCoord2f(0, 0)
-        glVertex(size.x, 0, 0)
-        glTexCoord2f(0, 1)
-        glVertex(size.x, size.y, 0)
-        glTexCoord2f(1, 1)
-        glVertex(0, size.y, 0)
-        glTexCoord2f(1, 0)
+    def __display_save_geometry(self) -> None:
+        self.__previous_window_size.xy = self.__window.size
+        self.__previous_window_position.xy = self.__window.position
 
-        glEnd()
-        glDisable(GL_TEXTURE_2D)
-        glFlush()
-        glPopMatrix()
+    def display_fullscreen(self) -> None:
+        """
+        Activate fullscreen mode
+        """
+        self.__display_save_geometry()
+        self.__window.set_fullscreen(True)
+        self.display_update()
+        self.__display_state = "fullscreen"
 
-        # self.draw_circle(pos + rotate_anchor, 4, 4, (1, .5, 0))
+    def display_windowed_fullscreen(self) -> None:
+        """
+        Activate windowed fullscreen mode
+        """
+        self.__display_save_geometry()
+        pos, size, combined = WindowsMonitorService.get_current_monitor_combined()
+        self.__window.borderless = True
+        self.__window.position = pos.xy
+        # +1 is needed is here, because otherwise Windows will convert it to a normal fullscreen xD
+        self.__window.size = size.x, size.y + (0 if combined else 1)
 
+        self.display_update()
+        self.__display_state = "windowed_fullscreen"
+
+    def display_set_windowed(self) -> None:
+        self.__display_state = "windowed"
+        self.__window.set_windowed()
+        self.__window.borderless = False
+        self.display_set_geometry(self.__previous_window_position, self.__previous_window_size)
+        self.display_update(self.__previous_window_position.xy, self.__previous_window_size.xy)
+
+    def display_set_title(self, title: str, icon: str | None = None) -> None:
+        """
+        Set the caption/titlebar of the display
+        :param title: String title
+        :param icon: Icon
+        """
+        self.__window.title = title
+
+    def display_draw_frame(self) -> None:
+        """
+        Called each frame after the drawing
+        """
+        self.__window.flip()
+        self.__clock.tick(pv.global_vars.get_max_fps())
+
+    # endregion
+
+    # region Stencil
     def apply_stencil[**A](
             self,
             stencil_func: tp.Callable[A, tp.Any],
@@ -310,8 +566,7 @@ class OpenGLRenderer(BaseRenderer):
 
         self.enable_stencil(show_stencil)
 
-    @staticmethod
-    def start_stencil(show_stencil=False):
+    def start_stencil(self, show_stencil=False):
         """
         call this, then draw stencil, then draw enable_stencil
         """
@@ -328,8 +583,7 @@ class OpenGLRenderer(BaseRenderer):
         if not show_stencil:
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)  # if mask invis
 
-    @staticmethod
-    def enable_stencil(show_stencil=False):
+    def enable_stencil(self, show_stencil=False):
         """
         start_stencil must be called first
         """
@@ -344,652 +598,489 @@ class OpenGLRenderer(BaseRenderer):
         glStencilMask(0xFF)
         glStencilFunc(GL_ALWAYS, 0, 0xFF)
 
+    # endregion
+
+    # region Textured
+    def draw_textured_quad(
+            self,
+            texture_id: TextureID,
+            pos: coord_t,
+            size: coord_t,
+            *,
+            convert_global: bool = True,
+            rotate_angle: float = 0,
+            rotate_anchor: coord_t | EllipsisType = ...,
+            pixel_perfect: bool = False,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rectangle with a texture
+        :param texture_id: ID of the texture to draw
+        :param pos: Absolute position on window
+        :param size: Absolute size on window
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param rotate_angle: Angle in degrees to rotate the image at
+        :param rotate_anchor: At what pixel to rotate at. Defaults to center position
+        :param pixel_perfect: Whether to draw pixel perfect
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        pos_vec2: Vec2 = convert_coord(pos, Vec2)
+        size_vec2: Vec2 = convert_coord(size, Vec2)
+
+        if convert_global:
+            pos_vec2 = pv.global_vars.translate_screen_coord(pos_vec2)
+            size_vec2 = pv.global_vars.translate_scale(size_vec2)
+
+        if offscreen_check and self._check_out_of_screen(pos_vec2, size_vec2):
+            return
+
+        # reset color
+        glColor3f(1.0, 1.0, 1.0)
+
+        glPushMatrix()
+        glTranslate(pos_vec2.x, pos_vec2.y, 0.0)
+
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, texture_id)
+
+        if pixel_perfect:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        else:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
+        # rotate
+        if rotate_angle != 0.0:
+            if isinstance(rotate_anchor, EllipsisType):
+                rx, ry = size_vec2.x / 2.0, size_vec2.y / 2.0
+            else:
+                anchor: Vec2 = convert_coord(rotate_anchor, Vec2)
+                if convert_global:
+                    anchor = pv.global_vars.translate_scale(anchor)
+                rx, ry = anchor.x, anchor.y
+
+            glTranslated(rx, ry, 0.0)
+            glRotated(rotate_angle, 0.0, 0.0, 1.0)
+            glTranslated(-rx, -ry, 0.0)
+
+        glBegin(GL_QUADS)
+
+        # draw rectangle and texture
+        glTexCoord2f(1.0, 0.0)
+        glVertex2f(0.0, 0.0)
+        glTexCoord2f(0.0, 0.0)
+        glVertex2f(size_vec2.x, 0.0)
+        glTexCoord2f(0.0, 1.0)
+        glVertex2f(size_vec2.x, size_vec2.y)
+        glTexCoord2f(1.0, 1.0)
+        glVertex2f(0.0, size_vec2.y)
+
+        glEnd()
+        glDisable(GL_TEXTURE_2D)
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(pos_vec2, size_vec2)
+
+    # endregion
+
+    # region Basic shapes
     def draw_polygon(
             self,
-            vertices,
-            color,
-            center=None,
-            convert_global=True
-    ):
-        vertices = [convert_coord(v, Vec2) for v in vertices]
+            vertices: tp.Iterable[coord_t],
+            color: Color | tColor,
+            *,
+            center: coord_t = None,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a polygon with fill
+        :param vertices: Coord of the corner points of the polygon
+        :param color: Drawing color
+        :param center: Optional center position
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: NOT SUPPORTED
+        """
+        vertices_vec2: list[Vec2] = [convert_coord(v, Vec2) for v in vertices]
 
         if convert_global:
             if center:
-                vertices = [
-                    pv.global_vars.translate_scale(v) for v in vertices
+                vertices_vec2 = [
+                    pv.global_vars.translate_scale(v) for v in vertices_vec2
                 ]
 
             else:
-                vertices = [
-                    pv.global_vars.translate_screen_coord(v) for v in vertices
+                vertices_vec2 = [
+                    pv.global_vars.translate_screen_coord(v) for v in vertices_vec2
                 ]
 
-        glPushMatrix()  # reset previous glTranslate statements
+        glPushMatrix()
         if center is not None:
-            center = convert_coord(center, Vec2)
+            center_vec2: Vec2 = convert_coord(center, Vec2)
             if convert_global:
-                center = pv.global_vars.translate_screen_coord(center)
+                center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
 
-            glTranslate(center.x, center.y, 0)
+            glTranslate(center_vec2.x, center_vec2.y, 0)
 
-        self.set_color(color)
-
-        glBegin(GL_POLYGON)
-
-        for vertice in vertices:
-            glVertex2f(*vertice.xy)
-
-        glEnd()
-        glPopMatrix()
-
-    def draw_circle(
-            self,
-            center,
-            radius,
-            num_segments,
-            color,
-            convert_global=True,
-    ):
-        center = convert_coord(center, Vec2)
-
-        # convert to screen realtive coords and size
-        if convert_global:
-            center = pv.global_vars.translate_screen_coord(center)
-            radius = pv.global_vars.translate_scale(radius)
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
-            return
-
-        glPushMatrix()  # reset previous glTranslate statements
-        glTranslate(center.x, center.y, 0)
-
-        self.set_color(color)
+        self.__set_color(color)
 
         glBegin(GL_POLYGON)
 
-        for i in range(num_segments):
-            cosine = radius * np.cos(i * 2 * np.pi / num_segments)
-            sine = radius * np.sin(i * 2 * np.pi / num_segments)
-            glVertex2f(cosine, sine)
-
-        glEnd()
-        glPopMatrix()
-
-    def draw_line_circle(
-            self,
-            center,
-            radius,
-            num_segments,
-            color,
-            thickness=1,
-            convert_global=True,
-    ):
-        center = convert_coord(center, Vec2)
-
-        # convert to screen realtive coords and size
-        if convert_global:
-            center = pv.global_vars.translate_screen_coord(center)
-            radius = pv.global_vars.translate_scale(radius)
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
-            return
-
-        glPushMatrix()  # reset previous glTranslate statements
-        glTranslate(center.x, center.y, 0)
-
-        self.set_color(color)
-
-        glBegin(GL_TRIANGLE_STRIP)
-
-        inner = radius
-        outer = radius + thickness
-
-        angle_step = 2 * np.pi / num_segments
-        for i in range(num_segments + 1):
-            angle = i * angle_step
-            c = np.cos(angle)
-            s = np.sin(angle)
-
-            glVertex2f(outer * c, outer * s)
-            glVertex2f(inner * c, inner * s)
-
-        glEnd()
-        glPopMatrix()
-
-    def draw_partial_circle(
-            self,
-            center,
-            radius,
-            angle_start,
-            angle_end,
-            num_segments,
-            color,
-            convert_global=True
-    ):
-        center = convert_coord(center, Vec2)
-        angle_start = convert_coord(angle_start, Vec2)
-        angle_end = convert_coord(angle_end, Vec2)
-
-        # convert to screen relative coords and size
-        if convert_global:
-            center = pv.global_vars.translate_screen_coord(center)
-            radius = pv.global_vars.translate_scale(radius)
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius, 0)):
-            return
-
-        angle_delta = (
-                normalize_angle(angle_end.angle)
-                - normalize_angle(angle_start.angle)
-        )
-
-        glPushMatrix()  # reset previous glTranslate statements
-        glTranslate(center.x, center.y, 0)
-
-        self.set_color(color)
-
-        glBegin(GL_POLYGON)
-        glVertex2f(0, 0)
-
-        for i in range(num_segments + 1):
-            angle = angle_start.angle + (i / num_segments) * angle_delta
-            pos = Vec2().from_polar(
-                angle,
-                radius
-            )
-            glVertex2f(*pos.xy)
+        for vertice in vertices_vec2:
+            glVertex2f(vertice.x, vertice.y)
 
         glEnd()
         glPopMatrix()
 
     def draw_rect(
             self,
-            start,
-            size,
-            color,
-            convert_global=True
-    ):
-        start = convert_coord(start, Vec2)
-        size = convert_coord(size, Vec2)
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(start, size):
-            return
-
-        if convert_global:
-            start = pv.global_vars.translate_screen_coord(start)
-            size = pv.global_vars.translate_scale(size)
-
-        glPushMatrix()  # reset previous glTranslate statements
-        glTranslate(start.x, start.y, 0)
-
-        self.set_color(color)
-
-        glBegin(GL_POLYGON)
-        glVertex2f(0, 0)
-        glVertex2f(size.x, 0)
-        glVertex2f(size.x, size.y)
-        glVertex2f(0, size.y)
-        glEnd()
-        glPopMatrix()
-
-    def draw_dashed_circle(
-            self,
-            center,
-            radius,
-            num_segments,
-            color,
-            thickness=1,
-            convert_global=True
-    ):
-        center = convert_coord(center, Vec2)
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            *,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rectangle with fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        start_vec2: Vec2 = convert_coord(start, Vec2)
+        size_vec2: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            center = pv.global_vars.translate_screen_coord(center)
-            radius = pv.global_vars.translate_scale(radius)
+            start_vec2 = pv.global_vars.translate_screen_coord(start_vec2)
+            size_vec2 = pv.global_vars.translate_scale(size_vec2)
 
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
+        if offscreen_check and self._check_out_of_screen(start_vec2, size_vec2):
             return
 
         glPushMatrix()
-        glTranslate(center.x, center.y, 0)
+        glTranslate(start_vec2.x, start_vec2.y, 0.0)
 
-        self.set_color(color)
-
-        for i in range(num_segments):
-            i1 = i * 2
-            i2 = i1 + 1
-
-            cosine1 = np.cos(i1 * 2 * np.pi / num_segments)
-            sine1 = np.sin(i1 * 2 * np.pi / num_segments)
-
-            cosine2 = np.cos(i2 * 2 * np.pi / num_segments)
-            sine2 = np.sin(i2 * 2 * np.pi / num_segments)
-
-            glBegin(GL_POLYGON)
-            glVertex2f(cosine1 * radius, sine1 * radius)
-            glVertex2f(
-                cosine1 * (radius + thickness),
-                sine1 * (radius + thickness)
-            )
-            glVertex2f(
-                cosine2 * (radius + thickness),
-                sine2 * (radius + thickness)
-            )
-            glVertex2f(cosine2 * radius, sine2 * radius)
-            glEnd()
-
-        glPopMatrix()
-
-    def draw_partial_dashed_circle(
-            self,
-            center,
-            radius,
-            angle_start,
-            angle_end,
-            num_segments,
-            color,
-            thickness=1,
-            convert_global=True
-    ):
-        center = convert_coord(center, Vec2)
-        angle_start = convert_coord(angle_start, Vec2)
-        angle_end = convert_coord(angle_end, Vec2)
-        if convert_global:
-            center = pv.global_vars.translate_screen_coord(center)
-            radius = pv.global_vars.translate_scale(radius)
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(center, (radius + thickness, 0)):
-            return
-
-        angle_delta = normalize_angle(
-            angle_end.angle - angle_start.angle
-        ) / 2
-
-        glPushMatrix()
-        glTranslate(center.x, center.y, 0)
-
-        self.set_color(color)
-
-        for i in range(num_segments):
-            i1 = i * 2
-            i2 = i1 + 1
-
-            angle1 = angle_start.angle + (i1 / num_segments) * angle_delta
-            angle2 = angle_start.angle + (i2 / num_segments) * angle_delta
-
-            pos1 = Vec2().from_polar(
-                angle1,
-                1
-            )
-            pos2 = Vec2().from_polar(
-                angle2,
-                1
-            )
-
-            glBegin(GL_POLYGON)
-            glVertex2f(*(pos1 * radius).xy)
-            glVertex2f(*(pos1 * (radius + thickness)).xy)
-            glVertex2f(*(pos2 * (radius + thickness)).xy)
-            glVertex2f(*(pos2 * radius).xy)
-            glEnd()
-
-        glPopMatrix()
-
-    def draw_line(
-            self,
-            start,
-            end,
-            color,
-            global_position=True,
-            convert_global=True
-    ):
-        """
-        draw a simple line
-        """
-        start = convert_coord(start, Vec2)
-        end = convert_coord(end, Vec2)
-
-        if convert_global:
-            start = pv.global_vars.translate_screen_coord(start)
-            end = pv.global_vars.translate_screen_coord(end)
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(start, end - start):
-            return
-
-        if global_position:
-            glPushMatrix()  # reset previous glTranslate statements
-
-        self.set_color(color)
-
-        glBegin(GL_LINES)
-        glVertex2f(*start.xy)
-        glVertex2f(*end.xy)
-        glEnd()
-
-        if global_position:
-            glPopMatrix()
-
-    def draw_thick_line(
-            self,
-            start,
-            end,
-            color,
-            thickness=1.0,
-            global_position=True,
-            convert_global=True
-    ):
-        """
-        draw a line with thickness using a quad
-        """
-        start = convert_coord(start, Vec2)
-        end = convert_coord(end, Vec2)
-
-        if convert_global:
-            start = pv.global_vars.translate_screen_coord(start)
-            end = pv.global_vars.translate_screen_coord(end)
-            thickness = pv.global_vars.translate_scale(thickness)
-
-        direction = end - start
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(start, direction):
-            return
-
-        self.set_color(color)
-
-        # normalize perpendicular
-        length = direction.length
-        if length == 0:
-            return
-
-        if global_position:
-            glPushMatrix()
-
-        dir_norm = direction / length
-
-        # perpendicular vector (rotate 90°)
-        perp = Vec2().from_cartesian(-dir_norm.y, dir_norm.x)
-
-        # half thickness offset
-        offset = perp * (thickness * 0.5)
-
-        # quad corners
-        v1 = start + offset
-        v2 = start - offset
-        v3 = end - offset
-        v4 = end + offset
+        self.__set_color(color)
 
         glBegin(GL_QUADS)
-        glVertex2f(*v1.xy)
-        glVertex2f(*v2.xy)
-        glVertex2f(*v3.xy)
-        glVertex2f(*v4.xy)
+        glVertex2f(0.0, 0.0)
+        glVertex2f(size_vec2.x, 0.0)
+        glVertex2f(size_vec2.x, size_vec2.y)
+        glVertex2f(0.0, size_vec2.y)
         glEnd()
+        glPopMatrix()
 
-        if global_position:
-            glPopMatrix()
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec2, size_vec2)
 
+    @cum_timer.time_this
     def draw_rounded_rect(
             self,
-            start,
-            size,
-            color,
-            radius,
-            convert_global=True
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            radius: float,
+            *,
+            top_left_radius: float | None = None,
+            top_right_radius: float | None = None,
+            bottom_left_radius: float | None = None,
+            bottom_right_radius: float | None = None,
+            convert_global: bool = True,
+            offscreen_check: bool = True
     ) -> None:
-        start = convert_coord(start, Vec2)
-        size = convert_coord(size, Vec2)
-
-        if OpenGLRenderer.check_out_of_screen(start, size):
-            return
+        """
+        Draw a rect with rounded corners with fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param radius: Radius of the corners
+        :param top_left_radius: Individual radius for the top left corner. Defaults to radius
+        :param top_right_radius: Individual radius for the top right corner. Defaults to radius
+        :param bottom_left_radius: Individual radius for the bottom left corner. Defaults to radius
+        :param bottom_right_radius: Individual radius for the bottom right corner. Defaults to radius
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        start_vec: Vec2 = convert_coord(start, Vec2)
+        size_vec: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            start = pv.global_vars.translate_screen_coord(start)
-            size = pv.global_vars.translate_scale(size)
+            start_vec = pv.global_vars.translate_screen_coord(start_vec)
+            size_vec = pv.global_vars.translate_scale(size_vec)
+            radius = pv.global_vars.translate_scale(radius)
+            if top_left_radius is not None:
+                top_left_radius = pv.global_vars.translate_scale(top_left_radius)
+            if top_right_radius is not None:
+                top_right_radius = pv.global_vars.translate_scale(top_right_radius)
+            if bottom_right_radius is not None:
+                bottom_right_radius = pv.global_vars.translate_scale(bottom_right_radius)
+            if bottom_left_radius is not None:
+                bottom_left_radius = pv.global_vars.translate_scale(bottom_left_radius)
+
+        sx, sy = size_vec.x, size_vec.y
+
+        if offscreen_check and self._check_out_of_screen(start_vec, size_vec):
+            return
+
+        r_tl = radius if top_left_radius is None else top_left_radius
+        r_tr = radius if top_right_radius is None else top_right_radius
+        r_br = radius if bottom_right_radius is None else bottom_right_radius
+        r_bl = radius if bottom_left_radius is None else bottom_left_radius
+
+        max_rad = min(sx / 2.0, sy / 2.0)
+        r_tl = min(r_tl, max_rad)
+        r_tr = min(r_tr, max_rad)
+        r_br = min(r_br, max_rad)
+        r_bl = min(r_bl, max_rad)
 
         glPushMatrix()
-        glTranslate(start.x, start.y, 0)
-        self.set_color(color)
-
-        # Prevent radius from breaking if it is larger than the rect
-        radius = min(radius, size.x / 2, size.y / 2)
-
-        # Adjust smoothness based on the radius
-        segments = max(4, int(radius / 2))
+        glTranslate(start_vec.x, start_vec.y, 0.0)
+        self.__set_color(color)
 
         glBegin(GL_POLYGON)
+        v2f = glVertex2f
 
-        # Top-Left Arc
-        for i in range(segments + 1):
-            angle = m.pi + (i / segments) * (m.pi / 2)
-            glVertex2f(radius + m.cos(angle) * radius, radius + m.sin(angle) * radius)
+        if r_tl == r_tr == r_br == r_bl:
+            rad = r_tl
+            segments = max(4, int(rad / 2.0))
+            step = 1.5707963267948966 / segments
+            base_arc = [(m.cos(i * step) * rad, m.sin(i * step) * rad) for i in range(segments + 1)]
 
-        # Top-Right Arc
-        for i in range(segments + 1):
-            angle = 1.5 * m.pi + (i / segments) * (m.pi / 2)
-            glVertex2f(size.x - radius + m.cos(angle) * radius, radius + m.sin(angle) * radius)
+            [v2f(rad - x, rad - y) for x, y in base_arc]
+            [v2f(sx - rad + y, rad - x) for x, y in base_arc]
+            [v2f(sx - rad + x, sy - rad + y) for x, y in base_arc]
+            [v2f(rad - y, sy - rad + x) for x, y in base_arc]
 
-        # Bottom-Right Arc
-        for i in range(segments + 1):
-            angle = 0.0 + (i / segments) * (m.pi / 2)
-            glVertex2f(size.x - radius + m.cos(angle) * radius, size.y - radius + m.sin(angle) * radius)
+        else:
+            s_tl = max(4, int(r_tl / 2.0))
+            st_tl = 1.5707963267948966 / s_tl
+            arc_tl = [(m.cos(i * st_tl) * r_tl, m.sin(i * st_tl) * r_tl) for i in range(s_tl + 1)]
+            [v2f(r_tl - x, r_tl - y) for x, y in arc_tl]
 
-        # Bottom-Left Arc
-        for i in range(segments + 1):
-            angle = 0.5 * m.pi + (i / segments) * (m.pi / 2)
-            glVertex2f(radius + m.cos(angle) * radius, size.y - radius + m.sin(angle) * radius)
+            s_tr = max(4, int(r_tr / 2.0))
+            st_tr = 1.5707963267948966 / s_tr
+            arc_tr = [(m.cos(i * st_tr) * r_tr, m.sin(i * st_tr) * r_tr) for i in range(s_tr + 1)]
+            [v2f(sx - r_tr + y, r_tr - x) for x, y in arc_tr]
 
-        glEnd()
+            s_br = max(4, int(r_br / 2.0))
+            st_br = 1.5707963267948966 / s_br
+            arc_br = [(m.cos(i * st_br) * r_br, m.sin(i * st_br) * r_br) for i in range(s_br + 1)]
+            [v2f(sx - r_br + x, sy - r_br + y) for x, y in arc_br]
 
-        glPopMatrix()
-
-    def draw_rounded_border(
-            self,
-            start,
-            size,
-            color,
-            radius,
-            border_width,
-            convert_global=True
-    ) -> None:
-        start = convert_coord(start, Vec2)
-        size = convert_coord(size, Vec2)
-
-        if OpenGLRenderer.check_out_of_screen(start, size):
-            return
-
-        if convert_global:
-            start = pv.global_vars.translate_screen_coord(start)
-            size = pv.global_vars.translate_scale(size)
-
-        glPushMatrix()
-        glTranslate(start.x, start.y, 0)
-        self.set_color(color)
-
-        radius = min(radius, size.x / 2, size.y / 2)
-        inner_radius = max(0, radius - border_width)
-        segments = max(4, int(radius / 2))
-
-        glBegin(GL_TRIANGLE_STRIP)
-
-        # Helper to generate the outer and inner vertices for the ring
-        def add_arc(cx, cy, start_angle, end_angle):
-            for i in range(segments + 1):
-                angle = start_angle + (i / segments) * (end_angle - start_angle)
-                glVertex2f(cx + m.cos(angle) * radius, cy + m.sin(angle) * radius)             # Outer
-                glVertex2f(cx + m.cos(angle) * inner_radius, cy + m.sin(angle) * inner_radius) # Inner
-
-        # Trace the perimeter
-        add_arc(radius, radius, m.pi, 1.5 * m.pi)                   # Top-Left
-        add_arc(size.x - radius, radius, 1.5 * m.pi, 2.0 * m.pi)    # Top-Right
-        add_arc(size.x - radius, size.y - radius, 0.0, 0.5 * m.pi)  # Bottom-Right
-        add_arc(radius, size.y - radius, 0.5 * m.pi, m.pi)          # Bottom-Left
-
-        # Connect back to the very first vertices to seal the loop seamlessly
-        glVertex2f(radius + m.cos(m.pi) * radius, radius + m.sin(m.pi) * radius)
-        glVertex2f(radius + m.cos(m.pi) * inner_radius, radius + m.sin(m.pi) * inner_radius)
+            s_bl = max(4, int(r_bl / 2.0))
+            st_bl = 1.5707963267948966 / s_bl
+            arc_bl = [(m.cos(i * st_bl) * r_bl, m.sin(i * st_bl) * r_bl) for i in range(s_bl + 1)]
+            [v2f(r_bl - y, sy - r_bl + x) for x, y in arc_bl]
 
         glEnd()
-
         glPopMatrix()
 
-    def draw_border(
-            self,
-            start,
-            size,
-            color,
-            border_width,
-            convert_global=True
-    ) -> None:
-        start = convert_coord(start, Vec2)
-        size = convert_coord(size, Vec2)
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec, size_vec)
 
-        if OpenGLRenderer.check_out_of_screen(start, size):
-            return
+    def draw_rect_line(
+            self,
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            *,
+            thickness: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rectangle outline without fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        start_vec: Vec2 = convert_coord(start, Vec2)
+        size_vec: Vec2 = convert_coord(size, Vec2)
 
         if convert_global:
-            start = pv.global_vars.translate_screen_coord(start)
-            size = pv.global_vars.translate_scale(size)
+            start_vec = pv.global_vars.translate_screen_coord(start_vec)
+            size_vec = pv.global_vars.translate_scale(size_vec)
+            thickness = pv.global_vars.translate_scale(thickness)
+
+        if offscreen_check and self._check_out_of_screen(start_vec, size_vec):
+            return
 
         glPushMatrix()
-        glTranslate(start.x, start.y, 0)
-        self.set_color(color)
+        glTranslate(start_vec.x, start_vec.y, 0.0)
+        self.__set_color(color)
 
-        bw = border_width
+        # Pre-calculate the inner boundaries
+        ix = size_vec.x - thickness
+        iy = size_vec.y - thickness
 
         glBegin(GL_TRIANGLE_STRIP)
 
         # Trace the hollow frame (Outer vertex, Inner vertex)
-        glVertex2f(0, 0)
-        glVertex2f(bw, bw)
+        glVertex2f(0.0, 0.0)
+        glVertex2f(thickness, thickness)
 
-        glVertex2f(size.x, 0)
-        glVertex2f(size.x - bw, bw)
+        glVertex2f(size_vec.x, 0.0)
+        glVertex2f(ix, thickness)
 
-        glVertex2f(size.x, size.y)
-        glVertex2f(size.x - bw, size.y - bw)
+        glVertex2f(size_vec.x, size_vec.y)
+        glVertex2f(ix, iy)
 
-        glVertex2f(0, size.y)
-        glVertex2f(bw, size.y - bw)
+        glVertex2f(0.0, size_vec.y)
+        glVertex2f(thickness, iy)
 
         # Close the loop
-        glVertex2f(0, 0)
-        glVertex2f(bw, bw)
+        glVertex2f(0.0, 0.0)
+        glVertex2f(thickness, thickness)
 
         glEnd()
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec, size_vec)
+
+    def draw_rounded_rect_line(
+            self,
+            start: coord_t,
+            size: coord_t,
+            color: Color | tColor,
+            radius: float,
+            *,
+            top_left_radius: float | None = None,
+            top_right_radius: float | None = None,
+            bottom_left_radius: float | None = None,
+            bottom_right_radius: float | None = None,
+            thickness: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a rounded rectangle outline without fill
+        :param start: Absolute top left corner position
+        :param size: Width and height of the rectangle
+        :param color: Drawing color
+        :param radius: Radius of the corners
+        :param top_left_radius: Individual radius for the top left corner. Defaults to radius
+        :param top_right_radius: Individual radius for the top right corner. Defaults to radius
+        :param bottom_left_radius: Individual radius for the bottom left corner. Defaults to radius
+        :param bottom_right_radius: Individual radius for the bottom right corner. Defaults to radius
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        start_vec: Vec2 = convert_coord(start, Vec2)
+        size_vec: Vec2 = convert_coord(size, Vec2)
+
+        if convert_global:
+            start_vec = pv.global_vars.translate_screen_coord(start_vec)
+            size_vec = pv.global_vars.translate_scale(size_vec)
+            radius = pv.global_vars.translate_scale(radius)
+            thickness = pv.global_vars.translate_scale(thickness)
+            if top_left_radius is not None:
+                top_left_radius = pv.global_vars.translate_scale(top_left_radius)
+            if top_right_radius is not None:
+                top_right_radius = pv.global_vars.translate_scale(top_right_radius)
+            if bottom_left_radius is not None:
+                bottom_left_radius = pv.global_vars.translate_scale(bottom_left_radius)
+            if bottom_right_radius is not None:
+                bottom_right_radius = pv.global_vars.translate_scale(bottom_right_radius)
+
+        sx = size_vec.x
+        sy = size_vec.y
+
+        if offscreen_check and self._check_out_of_screen(start_vec, size_vec):
+            return
+
+        r_tl = min(radius if top_left_radius is None else top_left_radius, sx / 2.0, sy / 2.0)
+        r_tr = min(radius if top_right_radius is None else top_right_radius, sx / 2.0, sy / 2.0)
+        r_bl = min(radius if bottom_left_radius is None else bottom_left_radius, sx / 2.0, sy / 2.0)
+        r_br = min(radius if bottom_right_radius is None else bottom_right_radius, sx / 2.0, sy / 2.0)
+
+        glPushMatrix()
+        glTranslate(start_vec.x, start_vec.y, 0.0)
+        self.__set_color(color)
+
+        s_tl = max(4, int(r_tl / 2.0))
+        s_tr = max(4, int(r_tr / 2.0))
+        s_br = max(4, int(r_br / 2.0))
+        s_bl = max(4, int(r_bl / 2.0))
+
+        verts = np.empty(((s_tl + s_tr + s_br + s_bl + 4) * 2 + 2, 2), dtype=np.float32)
+        idx = 0
+
+        a_tl = np.linspace(np.pi, 1.5 * np.pi, s_tl + 1)
+        c_tl = np.cos(a_tl)
+        s_tl_a = np.sin(a_tl)
+        in_tl = max(0.0, r_tl - thickness)
+        verts[idx:idx + len(a_tl) * 2:2, 0] = r_tl + c_tl * r_tl
+        verts[idx:idx + len(a_tl) * 2:2, 1] = r_tl + s_tl_a * r_tl
+        verts[idx + 1:idx + len(a_tl) * 2:2, 0] = r_tl + c_tl * in_tl
+        verts[idx + 1:idx + len(a_tl) * 2:2, 1] = r_tl + s_tl_a * in_tl
+        idx += len(a_tl) * 2
+
+        a_tr = np.linspace(1.5 * np.pi, 2.0 * np.pi, s_tr + 1)
+        c_tr = np.cos(a_tr)
+        s_tr_a = np.sin(a_tr)
+        in_tr = max(0.0, r_tr - thickness)
+        verts[idx:idx + len(a_tr) * 2:2, 0] = sx - r_tr + c_tr * r_tr
+        verts[idx:idx + len(a_tr) * 2:2, 1] = r_tr + s_tr_a * r_tr
+        verts[idx + 1:idx + len(a_tr) * 2:2, 0] = sx - r_tr + c_tr * in_tr
+        verts[idx + 1:idx + len(a_tr) * 2:2, 1] = r_tr + s_tr_a * in_tr
+        idx += len(a_tr) * 2
+
+        a_br = np.linspace(0.0, 0.5 * np.pi, s_br + 1)
+        c_br = np.cos(a_br)
+        s_br_a = np.sin(a_br)
+        in_br = max(0.0, r_br - thickness)
+        verts[idx:idx + len(a_br) * 2:2, 0] = sx - r_br + c_br * r_br
+        verts[idx:idx + len(a_br) * 2:2, 1] = sy - r_br + s_br_a * r_br
+        verts[idx + 1:idx + len(a_br) * 2:2, 0] = sx - r_br + c_br * in_br
+        verts[idx + 1:idx + len(a_br) * 2:2, 1] = sy - r_br + s_br_a * in_br
+        idx += len(a_br) * 2
+
+        a_bl = np.linspace(0.5 * np.pi, np.pi, s_bl + 1)
+        c_bl = np.cos(a_bl)
+        s_bl_a = np.sin(a_bl)
+        in_bl = max(0.0, r_bl - thickness)
+        verts[idx:idx + len(a_bl) * 2:2, 0] = r_bl + c_bl * r_bl
+        verts[idx:idx + len(a_bl) * 2:2, 1] = sy - r_bl + s_bl_a * r_bl
+        verts[idx + 1:idx + len(a_bl) * 2:2, 0] = r_bl + c_bl * in_bl
+        verts[idx + 1:idx + len(a_bl) * 2:2, 1] = sy - r_bl + s_bl_a * in_bl
+        idx += len(a_bl) * 2
+
+        verts[idx, 0] = 0.0
+        verts[idx, 1] = r_tl
+        verts[idx + 1, 0] = r_tl - max(0.0, r_tl - thickness)
+        verts[idx + 1, 1] = r_tl
+
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glVertexPointer(2, GL_FLOAT, 0, verts)
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, len(verts))
+        glDisableClientState(GL_VERTEX_ARRAY)
 
         glPopMatrix()
 
-    def draw_text(
-            self,
-            pos,
-            text,
-            color,
-            bg_color,
-            centered=False,
-            font_size=64,
-            font_family="arial",
-            bold=False,
-            italic=False,
-            convert_global=True
-    ):
-        if not isinstance(bg_color, Color):
-            bg_color = self.set_color(bg_color)
-        if not isinstance(color, Color):
-            color = self.set_color(color)
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec, size_vec)
 
-        pos = convert_coord(pos, Vec2)
-
-        if convert_global:
-            pos = pv.global_vars.translate_screen_coord(pos)
-            font_size = pv.global_vars.translate_scale(font_size)
-
-        # weird conversion because pygame is ass
-        text_surface: pg.Surface = self.generate_pg_surf_text(
-            text, color, bg_color, font_size, font_family, bold, italic
-        )
-        # text_surface.set_alpha(color.a)
-
-        # draw text
-        self.draw_pg_surf(pos, text_surface, centered)
-
-        return text_surface.get_size()
-
-    def generate_pg_surf_text(
-            self,
-            text,
-            color,
-            bg_color,
-            font_size=64,
-            font_family="arial",
-            bold=False,
-            italic=False,
-            convert_global=True
-    ):
-        return self.get_font(
-            font_size,
-            font_family,
-            bold,
-            italic
-        ).render(
-            text,
-            True,
-            color.rgba255,
-            bg_color.rgba255 if bg_color.a255 > 125 else None
-        )
-
-    def draw_pg_surf(self, pos, surface, centered=False, convert_global=True):
-        pos = convert_coord(pos, Vec2)
-
-        pos = convert_coord(pos, Vec2)
-
-        if convert_global:
-            pos = pv.global_vars.translate_screen_coord(pos)
-            # font_size = pv.global_vars.translate_scale(font_size)
-
-        text_data = pg.image.tostring(surface, "RGBA", True)
-        text_size: tuple[int, int] = surface.get_size()
-
-        screen_size = pv.global_vars.get_screen_size()
-        screen_size_fac = pv.global_vars.get_screen_size_fac()
-        screen_size_offset = pv.global_vars.get_screen_size_offset()
-        pos.y = screen_size.y - pos.y
-
-        pos.x = (pos.x / screen_size_fac.x) + screen_size_offset.x
-        pos.y = (pos.y / screen_size_fac.y) + screen_size_offset.y
-
-        if centered:
-            pos.x -= text_size[0] / 2
-            pos.y -= text_size[1] / 2
-
-        # only draw if on screen
-        if OpenGLRenderer.check_out_of_screen(pos, text_size):
-            return
-
-        glWindowPos2d(*pos.xy)
-        glDrawPixels(
-            surface.get_width(),
-            surface.get_height(),
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            text_data
-        )
-
+    # todo mytodo work on this
     def draw_bar(
-        self,
-        pos,
-        size,
-        colors,
-        progress,
-        convert_global=True,
-        background_color=...
+            self,
+            pos: coord_t,
+            size: coord_t,
+            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
+            progress: float,
+            *,
+            background_color: Color | EllipsisType = ...,
+            convert_global: bool = True,
+            offscreen_check: bool = True,
     ) -> None:
         """
         draw a progress? bar at the specified location (using specified color gradient
@@ -1002,14 +1093,14 @@ class OpenGLRenderer(BaseRenderer):
 
         elif len(colors) == 2:
             color: Color = fade(colors[0], colors[1], progress)  # ignore: type
-        
+
         elif len(colors) == 3:
             color: Color = (
                 fade(colors[0], colors[1], progress)
                 if progress < 0.5
                 else fade(colors[1], colors[2], progress)
             )  # ignore: type
-        
+
         else:
             raise RuntimeError(f"Invalid colors for \"draw_bar\": {colors}")
 
@@ -1024,7 +1115,7 @@ class OpenGLRenderer(BaseRenderer):
         glTranslate(pos.x, pos.y, 0)
 
         # draw progress
-        self.set_color(color)
+        self.__set_color(color)
 
         glBegin(GL_POLYGON)
         glVertex2f(0, 0)
@@ -1034,7 +1125,7 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
 
         # draw background bar
-        self.set_color(background_color)
+        self.__set_color(background_color)
 
         glBegin(GL_POLYGON)
         glVertex2f(size.x * progress, 0)
@@ -1044,3 +1135,659 @@ class OpenGLRenderer(BaseRenderer):
         glEnd()
 
         glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(pos, size)
+
+    # endregion
+
+    # region Circles
+    def draw_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            num_segments: int,
+            color: Color | tColor,
+            *,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a circle with fil
+        :param center: Absolute center position
+        :param radius: Radius of the circle in pixels
+        :param num_segments: Number of segments
+        :param color: Drawing color
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing (rect check)
+        """
+        center_vec2: Vec2 = convert_coord(center, Vec2)
+
+        if convert_global:
+            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
+            radius = pv.global_vars.translate_scale(radius)
+
+        if offscreen_check and self._check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
+                                                         (radius * 2, radius * 2)):
+            return
+
+        glPushMatrix()
+        glTranslate(center_vec2.x, center_vec2.y, 0.0)
+
+        self.__set_color(color)
+
+        glBegin(GL_POLYGON)
+
+        step = 6.283185307179586 / num_segments
+        [glVertex2f(radius * m.cos(i * step), radius * m.sin(i * step)) for i in range(num_segments)]
+
+        glEnd()
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+
+    def draw_line_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            num_segments: int,
+            color: Color | tColor,
+            *,
+            thickness: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a circle outline
+        :param center: Absolute center position
+        :param radius: Radius of the circle in pixels
+        :param num_segments: Number of segments
+        :param color: Drawing color
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        center_vec2: Vec2 = convert_coord(center, Vec2)
+
+        if convert_global:
+            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
+            radius = pv.global_vars.translate_scale(radius)
+            thickness = pv.global_vars.translate_scale(thickness)
+
+        outer: float = radius + thickness
+        if offscreen_check and self._check_out_of_screen((center_vec2.x - outer, center_vec2.y - outer),
+                                                         (outer * 2, outer * 2)):
+            return
+
+        glPushMatrix()
+        glTranslate(center_vec2.x, center_vec2.y, 0.0)
+
+        self.__set_color(color)
+
+        glBegin(GL_TRIANGLE_STRIP)
+
+        step: float = 6.283185307179586 / num_segments
+        [
+            (glVertex2f(outer * c, outer * s), glVertex2f(radius * c, radius * s))
+            for i in range(num_segments + 1)
+            for c in (m.cos(i * step),)
+            for s in (m.sin(i * step),)
+        ]
+
+        glEnd()
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+
+    def draw_partial_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            angle_start: coord_t,
+            angle_end: coord_t,
+            num_segments: int,
+            color: Color | tColor,
+            *,
+            convert_global=True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a partial circle with fill
+        :param center: Absolute center position
+        :param radius: Radius of the circle in pixels
+        :param angle_start: Angle to start at as vector
+        :param angle_end: Angle to end at as vector
+        :param num_segments: Number of segments
+        :param color: Drawing color
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        center_vec2: Vec2 = convert_coord(center, Vec2)
+        angle_start_vec2: Vec2 = convert_coord(angle_start, Vec2)
+        angle_end_vec2: Vec2 = convert_coord(angle_end, Vec2)
+
+        if convert_global:
+            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
+            radius = pv.global_vars.translate_scale(radius)
+
+        if offscreen_check and self._check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
+                                                         (radius * 2, radius * 2)):
+            return
+
+        angle_delta: float = normalize_angle(angle_end_vec2.angle) - normalize_angle(angle_start_vec2.angle)
+
+        glPushMatrix()
+        glTranslate(center_vec2.x, center_vec2.y, 0.0)
+
+        self.__set_color(color)
+
+        glBegin(GL_POLYGON)
+        glVertex2f(0.0, 0.0)
+
+        start_ang = angle_start_vec2.angle
+        step = angle_delta / num_segments
+
+        [glVertex2f(radius * m.cos(start_ang + i * step), radius * m.sin(start_ang + i * step)) for i in
+         range(num_segments + 1)]
+
+        glEnd()
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+
+    @cum_timer.time_this
+    def draw_dashed_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            num_segments: int,
+            color: Color | tColor,
+            *,
+            draw_len: int = 1,
+            gap_len: int = 1,
+            thickness: int = 1,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a dashed circle line with num_segments segments
+        :param center: Absolute center position
+        :param radius: Radius of the circle
+        :param num_segments: Number of segments. Every second segment is drawn
+        :param color: Drawing color
+        :param draw_len: Number of segments to draw before leaving a gap
+        :param gap_len: Number of segments left out by a gap
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        center_vec2: Vec2 = convert_coord(center, Vec2)
+
+        if convert_global:
+            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
+            radius = pv.global_vars.translate_scale(radius)
+            thickness = pv.global_vars.translate_scale(thickness)
+
+        outer: float = radius + thickness
+
+        if offscreen_check and self._check_out_of_screen(
+                (center_vec2.x - outer, center_vec2.y - outer),
+                (outer * 2, outer * 2)
+        ):
+            return
+
+        # If you want to know how tf this works. IDK myself. Ask AI
+        all_indices = np.arange(num_segments, dtype=np.int32)
+
+        mask = (all_indices % (draw_len + gap_len)) < draw_len
+        active_indices = all_indices[mask].astype(np.float32)
+
+        num_to_draw = active_indices.shape[0]
+        if num_to_draw == 0:
+            return
+
+        step = 6.283185307179586 / num_segments
+
+        angles1 = active_indices * step
+        angles2 = angles1 + step
+
+        c1, s1 = np.cos(angles1), np.sin(angles1)
+        c2, s2 = np.cos(angles2), np.sin(angles2)
+
+        vertices = np.empty((num_to_draw, 4, 2), dtype=np.float32)
+
+        vertices[:, 0, 0], vertices[:, 0, 1] = radius * c1, radius * s1
+        vertices[:, 1, 0], vertices[:, 1, 1] = outer * c1, outer * s1
+
+        vertices[:, 2, 0], vertices[:, 2, 1] = outer * c2, outer * s2
+        vertices[:, 3, 0], vertices[:, 3, 1] = radius * c2, radius * s2
+
+        glPushMatrix()
+        glTranslate(center_vec2.x, center_vec2.y, 0.0)
+        self.__set_color(color)
+
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glVertexPointer(2, GL_FLOAT, 0, vertices)
+        glDrawArrays(GL_QUADS, 0, num_to_draw * 4)
+        glDisableClientState(GL_VERTEX_ARRAY)
+
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+
+    def draw_partial_dashed_circle(
+            self,
+            center: coord_t,
+            radius: float,
+            angle_start: coord_t,
+            angle_end: coord_t,
+            num_segments: int,
+            color: Color | tColor,
+            *,
+            draw_len: int = 1,
+            gap_len: int = 1,
+            thickness: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a partial dashed circle line with num_segments segments
+        :param center: Absolute center position
+        :param radius: Radius of the circle
+        :param angle_start: Angle to start at as vector
+        :param angle_end: Angle to end at as vector
+        :param num_segments: Number of segments. Every second segment is drawn
+        :param color: Drawing color
+        :param draw_len: Number of segments to draw before leaving a gap
+        :param gap_len: Number of segments left out by a gap
+        :param thickness: Thickness of the outline
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        center_vec2: Vec2 = convert_coord(center, Vec2)
+        start_vec: Vec2 = convert_coord(angle_start, Vec2)
+        end_vec: Vec2 = convert_coord(angle_end, Vec2)
+
+        if convert_global:
+            center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
+            radius = pv.global_vars.translate_scale(radius)
+            thickness = pv.global_vars.translate_scale(thickness)
+
+        outer = radius + thickness
+
+        if offscreen_check and self._check_out_of_screen(
+                (center_vec2.x - outer, center_vec2.y - outer),
+                (outer * 2, outer * 2)
+        ):
+            return
+
+        glPushMatrix()
+        glTranslate(center_vec2.x, center_vec2.y, 0.0)
+
+        self.__set_color(color)
+
+        start_ang = start_vec.angle
+        total_angle = normalize_angle(end_vec.angle - start_ang)
+
+        step = total_angle / num_segments
+
+        all_indices = np.arange(num_segments, dtype=np.int32)
+
+        mask = (all_indices % (draw_len + gap_len)) < draw_len
+        active_indices = all_indices[mask].astype(np.float32)
+
+        num_to_draw = active_indices.shape[0]
+
+        if num_to_draw == 0:
+            glPopMatrix()
+            return
+
+        angles1 = start_ang + (active_indices * step)
+        angles2 = angles1 + step
+
+        c1 = np.cos(angles1)
+        s1 = np.sin(angles1)
+        c2 = np.cos(angles2)
+        s2 = np.sin(angles2)
+
+        vertices = np.empty((num_to_draw, 4, 2), dtype=np.float32)
+
+        vertices[:, 0, 0] = radius * c1
+        vertices[:, 0, 1] = radius * s1
+
+        vertices[:, 1, 0] = outer * c1
+        vertices[:, 1, 1] = outer * s1
+
+        vertices[:, 2, 0] = outer * c2
+        vertices[:, 2, 1] = outer * s2
+
+        vertices[:, 3, 0] = radius * c2
+        vertices[:, 3, 1] = radius * s2
+
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glVertexPointer(2, GL_FLOAT, 0, vertices)
+        glDrawArrays(GL_QUADS, 0, num_to_draw * 4)
+        glDisableClientState(GL_VERTEX_ARRAY)
+
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+
+    # endregion
+
+    # region Lines
+    def draw_line(
+            self,
+            start: coord_t,
+            end: coord_t,
+            color: Color | tColor,
+            *,
+            global_position: bool = True,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a simple line
+        :param start: Start position of the line
+        :param end: End position of the line
+        :param color: Drawing color
+        :param global_position: IDK
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        start_vec2: Vec2 = convert_coord(start, Vec2)
+        end_vec2: Vec2 = convert_coord(end, Vec2)
+
+        if convert_global:
+            start_vec2 = pv.global_vars.translate_screen_coord(start_vec2)
+            end_vec2 = pv.global_vars.translate_screen_coord(end_vec2)
+
+        # only draw if on screen
+        if offscreen_check and self._check_out_of_screen(start_vec2, end_vec2 - start_vec2):
+            return
+
+        if global_position:
+            glPushMatrix()  # reset previous glTranslate statements
+
+        self.__set_color(color)
+
+        glBegin(GL_LINES)
+        glVertex2f(start_vec2.x, start_vec2.y)
+        glVertex2f(end_vec2.x, end_vec2.y)
+        glEnd()
+
+        if global_position:
+            glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
+
+    def draw_thick_line(
+            self,
+            start: coord_t,
+            end: coord_t,
+            color: Color | tColor,
+            *,
+            thickness: float = 1.0,
+            global_position: bool = True,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a line with thickness
+        :param start: Start position of the line
+        :param end: End position of the line
+        :param color: Drawing color
+        :param thickness: Thickness of the line
+        :param global_position: IDK
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        start_vec2: Vec2 = convert_coord(start, Vec2)
+        end_vec2: Vec2 = convert_coord(end, Vec2)
+
+        if convert_global:
+            start_vec2 = pv.global_vars.translate_screen_coord(start_vec2)
+            end_vec2 = pv.global_vars.translate_screen_coord(end_vec2)
+            thickness = pv.global_vars.translate_scale(thickness)
+
+        sx = start_vec2.x
+        sy = start_vec2.y
+        ex = end_vec2.x
+        ey = end_vec2.y
+
+        dx = ex - sx
+        dy = ey - sy
+
+        if offscreen_check and self._check_out_of_screen((sx, sy), (dx, dy)):
+            return
+
+        length = m.hypot(dx, dy)
+        if length == 0.0:
+            return
+
+        self.__set_color(color)
+
+        if global_position:
+            glPushMatrix()
+
+        half_thick = thickness * 0.5
+        off_x = (-dy / length) * half_thick
+        off_y = (dx / length) * half_thick
+
+        glBegin(GL_QUADS)
+        glVertex2f(sx + off_x, sy + off_y)
+        glVertex2f(sx - off_x, sy - off_y)
+        glVertex2f(ex - off_x, ey - off_y)
+        glVertex2f(ex + off_x, ey + off_y)
+        glEnd()
+
+        if global_position:
+            glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
+
+    # endregion
+
+    # region Texts and surfaces
+    def draw_dynamic_text(
+            self,
+            pos: coord_t,
+            text: str,
+            *,
+            color: Color | tColor = (255, 255, 255, 255),
+            bg_color: Color | tColor = (0, 0, 0, 0),
+            centered: bool = False,
+            font_size: int = 64,
+            font_family: str = "arial",
+            bold: bool = False,
+            italic: bool = False,
+            text_id: DynamicTextID | None = None,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> DynamicTextID:
+        """
+        Draw a text to the given position
+        :param pos: Position of the text
+        :param text: Text to be drawn
+        :param color: Text color
+        :param bg_color: Background color
+        :param centered: Whether pos is center or top left
+        :param font_size: Size of the font
+        :param font_family: Family of the font
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :param text_id: NOT SUPPORTED
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
+        :return: DynamicTextID (None) - not implemented
+        """
+        if not isinstance(bg_color, Color):
+            bg_color = self.__set_color(bg_color)
+        if not isinstance(color, Color):
+            color = self.__set_color(color)
+
+        pos: Vec2 = convert_coord(pos, Vec2)
+
+        scale = 1.0
+        if convert_global:
+            pos = pv.global_vars.translate_screen_coord(pos)
+            scale = pv.global_vars.translate_scale(1.0)
+
+        font_key = (font_family, font_size, bold, italic)
+
+        if font_key not in self.__dynamic_text_fonts:
+            self.__dynamic_text_fonts[font_key] = GLFont(font_family, font_size, bold, italic)
+
+        font = self.__dynamic_text_fonts[font_key]
+
+        text_width, text_height = font.get_dimensions(text, scale)
+
+        if centered:
+            pos.x -= text_width / 2
+            pos.y -= text_height / 2
+
+        if offscreen_check and self._check_out_of_screen((pos.x, pos.y), (text_width, text_height)):
+            return -1
+
+        if bg_color.a255 > 0:
+            self.draw_rect(pos.xy, (text_width, text_height), bg_color, convert_global=convert_global)
+
+        glPushMatrix()
+        font.draw(text, pos.x, pos.y, scale, color.rgba255)
+        glPopMatrix()
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds(pos, (text_width, text_height))
+
+        return -1
+
+    def generate_static_text(
+            self,
+            text: str,
+            color: Color | tColor,
+            bg_color: Color | tColor | None = None,
+            *,
+            font_size: int = 64,
+            font_family: str = "arial",
+            bold: bool = False,
+            italic: bool = False
+    ) -> StaticTextID:
+        """
+        Generate a static text
+        :param text: Text to be drawn
+        :param color: Text color
+        :param bg_color: Background color
+        :param font_size: Font size
+        :param font_family: Font family
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :return: StaticTextID integer
+        """
+        surface = self.get_font(
+            font_size,
+            font_family,
+            bold,
+            italic
+        ).render(
+            text,
+            True,
+            convert_color(color, Color).rgba255
+        )
+        w, h = surface.get_size()
+
+        text_data = pg.image.tobytes(surface, "RGBA", False)
+
+        tex_id = glGenTextures(1)
+
+        current_id = self.__static_text_id_counter
+
+        self.__static_text_graphics[current_id] = (tex_id, (w, h))
+
+        glBindTexture(GL_TEXTURE_2D, tex_id)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+        self.__static_text_id_counter += 1
+
+        return current_id
+
+    def draw_static_text(
+            self,
+            pos: coord_t,
+            text_id: StaticTextID,
+            *,
+            centered: bool = False,
+            scale: float = 1.0,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a surface
+        :param pos: Position of the surface
+        :param text_id: Text to draw, generated by generate_static_text()
+        :param centered: Whether pos is center or top left
+        :param scale: Scale the surface size
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        tex_id = self.__static_text_graphics[text_id][0]
+        w, h = self.__static_text_graphics[text_id][1]
+        pos: Vec2 = convert_coord(pos, Vec2)
+
+        if convert_global:
+            pos = pv.global_vars.translate_screen_coord(pos)
+            scale = pv.global_vars.translate_scale(scale)
+
+        scaled_w = w * scale
+        scaled_h = h * scale
+
+        px = pos.x
+        py = pos.y
+
+        if centered:
+            px -= scaled_w * 0.5
+            py -= scaled_h * 0.5
+
+        if self._check_out_of_screen((px, py), (scaled_w, scaled_h)):
+            return
+
+        glEnable(GL_TEXTURE_2D)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        glBindTexture(GL_TEXTURE_2D, tex_id)
+
+        glPushMatrix()
+        glTranslatef(px, py, 0.0)
+        glColor4f(1.0, 1.0, 1.0, 1.0)
+
+        glBegin(GL_QUADS)
+        glTexCoord2f(0.0, 0.0)
+        glVertex2f(0.0, 0.0)
+
+        glTexCoord2f(0.0, 1.0)
+        glVertex2f(0.0, scaled_h)
+
+        glTexCoord2f(1.0, 1.0)
+        glVertex2f(scaled_w, scaled_h)
+
+        glTexCoord2f(1.0, 0.0)
+        glVertex2f(scaled_w, 0.0)
+        glEnd()
+
+        glPopMatrix()
+        glDisable(GL_TEXTURE_2D)
+
+        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+            self._draw_debug_bounds((px, py), (scaled_w, scaled_h))
+
+
+    # endregion

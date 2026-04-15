@@ -1,5 +1,5 @@
 """
-amoginarium/ui/_base/_ui_event_element.py
+amoginarium/graphics/ui/_base/_ui_event_element.py
 
 Project: amoginarium
 Created: 18.03.2026
@@ -12,11 +12,10 @@ from __future__ import annotations
 import pygame as pg
 import typing as tp
 
-from ....shared.utility import Vec2, coord_t, convert_coord
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord
+
 from ...entities import UIEntities, Cursor
-
 from .._types import Anchor, Positions
-
 from ._ui_element import UIElement
 
 if tp.TYPE_CHECKING:
@@ -39,16 +38,16 @@ class UIEventElement(UIElement):
     __is_hovered_outer: bool | None
     __is_hovered_outer_last: bool | None
 
-    __on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None
-    __on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None
-    __on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None
+    __on_enter_callbacks: list[tp.Callable[[], tp.Any]]
+    __on_leave_callbacks: list[tp.Callable[[], tp.Any]]
+    __on_buffer_callbacks: list[tp.Callable[[], tp.Any]]
     __on_click_callbacks: list[tp.Callable[[], tp.Any]]
 
     def __init__(
             self,
             position: coord_t,
             size: coord_t,
-            *_args: tp.Any,
+            *,
             parent: UIEntity | None = None,
             placement_anchor: Anchor = Anchor.CENTER,
             absolute_values: bool = False,
@@ -66,7 +65,6 @@ class UIEventElement(UIElement):
         Create a new UI component
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
-        :param _args: Not used
         :param parent: Optional parent UI-Entity
         :param placement_anchor: Placement anchor of the component
         :param absolute_values: Whether the position and size are absolute or relative
@@ -82,7 +80,6 @@ class UIEventElement(UIElement):
         super().__init__(
             position=position,
             size=size,
-            *_args,
             parent=parent,
             placement_anchor=placement_anchor,
             absolute_values=absolute_values,
@@ -253,13 +250,13 @@ class UIEventElement(UIElement):
         self.__is_hovered_inner = None
         self.__is_hovered_outer = None
 
-        super()._gl_draw(delta_cal)
+        super()._gl_draw(delta_cal, layer)
 
         if self.__use_collision_mask and self._ui_changed:
             self.__collision_recreation = True
 
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
-        super()._after_gl_draw(drawn)
+        super()._after_gl_draw(drawn, layer)
         if drawn:
             if self.__on_enter_callbacks or self.__on_leave_callbacks or self.__on_buffer_callbacks:
                 hovered_inner = self.__hovered_inner()
