@@ -279,7 +279,7 @@ class LogicProcess:
                     **args
                 )
 
-            except TypeError:
+            except KeyError:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "

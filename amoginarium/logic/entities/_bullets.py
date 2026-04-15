@@ -604,6 +604,10 @@ class CRAMBullet(Bullet):
 class SkyShieldBullet(Bullet):
     _cid = DummyCIDs.cram
 
+    _weight = 1.5
+    _default_size = 18
+    _default_base_damage = 30
+
     _default_cluster_depth = 1
     _default_cluster_amount = 11
     _default_cluster_fuze_ttl_mult = .02

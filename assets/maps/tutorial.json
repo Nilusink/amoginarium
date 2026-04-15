@@ -120,7 +120,7 @@
     "entities": [
         {
             "type": "turret.static.ak47",
-            "pos": [28000, 700]
+            "pos": [2000, 700]
         },
         {
             "type": "instructions.text",
@@ -271,7 +271,7 @@
             "type": "sensor.static.radar",
             "pos": [16540, 390],
             "args": {
-                "detection_range": 3000,
+                "detection_range": 4000,
                 "min_rcs": 0.0001
             },
             "group": 0

@@ -580,7 +580,7 @@ class MinigunTurret(BaseTurret):
             weapon,
             2000,
             sensors=[
-                MagicSensor(self, 1500)
+                MagicSensor(runtime_buffer, self, 1500)
             ],
             **kwargs
         )
@@ -611,7 +611,7 @@ class SniperTurret(BaseTurret):
             weapon,
             2400,
             sensors=[
-                RadarSensor(self, 2500, sphere_accuracy=256)
+                RadarSensor(runtime_buffer, self, 2500, sphere_accuracy=256)
             ],
             **kwargs
         )
@@ -642,7 +642,7 @@ class AkTurret(BaseTurret):
             weapon,
             1500,
             sensors=[
-                RadarSensor(self, 1500)
+                RadarSensor(runtime_buffer, self, 1600)
             ],
             **kwargs
         )
@@ -685,7 +685,7 @@ class MortarTurret(BaseTurret):
             3000,
             min_range=550,
             sensors=[
-                RadarSensor(self, 3000, min_rcs=0.01)
+                RadarSensor(runtime_buffer, self, 2500, min_rcs=0.01)
             ],
             airburst_munition=cluster,
             **kwargs
@@ -727,7 +727,7 @@ class FlakTurret(BaseTurret):
             intercept_bullets=False,
             target_taps=2,
             sensors=[
-                RadarSensor(self, 1700)
+                RadarSensor(runtime_buffer, self, 1700)
             ],
             **kwargs
         )
@@ -773,11 +773,12 @@ class CRAMTurret(BaseTurret):
             airburst_munition=True,
             target_taps=8,  # TODO: smart target tap (max)
             sensors=[
-                MagicSensor(
+                RadarSensor(
+                    runtime_buffer,
                     self,
                     2200,
-                    # sphere_accuracy=256,
-                    # min_rcs=.04
+                    sphere_accuracy=256,
+                    min_rcs=.04
                 )
             ],
             **kwargs
@@ -823,11 +824,12 @@ class SkyShield(BaseTurret):
             airburst_munition=True,
             target_taps=1,  # TODO: smart target tap (max)
             sensors=[
-                MagicSensor(
+                RadarSensor(
+                    runtime_buffer,
                     self,
-                    3000,
-                    # sphere_accuracy=256,
-                    # min_rcs=.04
+                    2200,
+                    sphere_accuracy=256,
+                    min_rcs=.04
                 )
             ],
             **kwargs

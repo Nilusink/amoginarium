@@ -561,6 +561,7 @@ class SkyShieldWeapon(BaseWeapon):
         self,
         parent,
         runtime_buffer: Array[base_entity_t],
+        drop_casings: bool = False,
         parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
     ) -> None:
         super().__init__(

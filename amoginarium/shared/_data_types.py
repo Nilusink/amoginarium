@@ -79,6 +79,14 @@ class WeaponCIDs(Enum):
     sky_shield = "weapon.sky_shield"
 
 
+class SensorCIDs(Enum):
+    """Component IDs for graphics sensors"""
+    radar = "sensor.static.radar"
+    visual = "sensor.static.visual"
+    magic = "sensor.static.magic"
+    hud = "sensor.static.hud"
+
+
 class ItemCIDs(Enum):
     """Component IDs for items"""
     shield = "item.shield"

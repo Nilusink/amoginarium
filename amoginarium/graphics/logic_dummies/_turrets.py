@@ -23,9 +23,9 @@ from ._synced_entities import SyncedGraphicsEntity
 
 class BaseTurretDummy(SyncedGraphicsEntity):
     """
-    `param0` health
-    `param3` target pos (x=0-31, y=32-63)
-    `param4` engagement range & valid_angles (min=0-15, max=16-31), (start=32-47, end=48-63)
+    ``param0`` health
+    ``param3`` target pos (x=0-31, y=32-63)
+    ``param4`` engagement range & valid_angles (min=0-15, max=16-31), (start=32-47, end=48-63)
     """
     __slots__ = [
         "_target_pos", "_range", "_angles", "_hp_colors"
