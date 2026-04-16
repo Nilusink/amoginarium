@@ -1,0 +1,61 @@
+"""
+amoginarium/shared/collision_detection/_collision_group/_point_group.py
+
+Project: amoginarium
+Created: 14.04.2026
+Authors: LukasKrah
+"""
+
+from __future__ import annotations
+
+import typing as tp
+
+from amoginarium.shared.utility import Vec2, convert_coord, coord_t
+
+from ._base_group import CollisionGroup, CollisionGroupEntityData, CollisionHitBox
+
+
+class CollisionGroupPointEntityData[T](CollisionGroupEntityData):
+    __slots__ = ("instance", "position_old", "position_new",)
+    position_old: tp.Final[Vec2]
+    position_new: tp.Final[Vec2]
+
+    def __init__(
+            self,
+            instance: T,
+            *,
+            position: coord_t | None = None,
+    ) -> None:
+        super().__init__(instance=instance)
+        self.position_old = Vec2()
+        self.position_new = Vec2()
+
+        if position is not None:
+            self.position_old.xy = convert_coord(position)
+            self.position_new.xy = self.position_old.xy
+
+
+class CollisionGroupPoint[T](CollisionGroup):
+    _hitbox_type = CollisionHitBox.point
+    _entities: dict[int, CollisionGroupPointEntityData[T]]
+
+    def register(
+            self,
+            instance: T,
+            *,
+            position: coord_t | None = None,
+    ) -> int:
+        self._entities[self._next_id] = CollisionGroupPointEntityData[T](instance=instance, position=position)
+        return super().register()
+
+    def update(
+            self,
+            entity_id: int,
+            *,
+            position: coord_t | None = None
+    ) -> None:
+        entity = self._entities[entity_id]
+
+        if position is not None:
+            entity.position_old.xy = entity.position_new.xy
+            entity.position_new.xy = convert_coord(position)

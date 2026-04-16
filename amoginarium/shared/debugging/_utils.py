@@ -52,4 +52,4 @@ def print_ic_style(*values, sep=" ") -> None:
 
     value = sep.join(vals)
 
-    ic.outputFunction(f"{value}" + f"{CC.ctrl.ENDC}", color=False)
+    ic.outputFunction(f"{value}" + f"{CC.ctrl.ENDC}")

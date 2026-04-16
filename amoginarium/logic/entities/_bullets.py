@@ -246,9 +246,11 @@ class Bullet(LogicGameEntity):
         self._ttl -= delta
         self._visibility_offset -= delta
 
+        # double gravity (because why not)
+        self.acceleration.y *= 2
+
         self._last_pos = self.position.copy()
 
-        super().update(delta)
         self.__update_collision()
         if self._collision is not False:
             self.position.xy = self._collision[1]
@@ -259,7 +261,6 @@ class Bullet(LogicGameEntity):
         ]):
             if self.kill():
                 return
-
 
         super()._update(delta)
         self.facing.angle = self.velocity.angle

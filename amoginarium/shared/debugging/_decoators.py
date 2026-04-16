@@ -134,7 +134,8 @@ class _CumTimer:
         def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
             start = perf_counter_ns()
             res = func(*args, **kwargs)
-            time_taken = (perf_counter_ns() - start) / 1000
+            end = perf_counter_ns()
+            time_taken = (end - start) / 1000
 
             fname = func.__name__
             if not fname in self._func_times:
