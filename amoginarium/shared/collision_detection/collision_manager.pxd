@@ -1,0 +1,42 @@
+# cython: language_level=3
+from libcpp.vector cimport vector
+from libcpp.unordered_map cimport unordered_map
+from libc.stdint cimport uint64_t
+
+cdef struct EntityData:
+    int id
+    bint active  # Marks if the entity is currently alive or in the free pool
+    double px_o, py_o, px_n, py_n
+    double sx, sy
+
+    vector[int] bound_min_x
+    vector[int] bound_min_y
+    vector[int] bound_max_x
+    vector[int] bound_max_y
+
+    vector[vector[uint64_t]] grid_keys
+
+cdef struct CollisionGroupStruct:
+    int id
+    int max_level
+    vector[EntityData] entities
+    vector[int] free_ids  # Pool of recycled IDs
+
+cdef struct CollisionRelationStruct:
+    int group_a_id
+    int group_b_id
+
+cdef class CollisionManager:
+    cdef double base_cell_size
+    cdef vector[double] cell_sizes
+
+    cdef vector[CollisionGroupStruct] groups
+    cdef list group_instances
+    cdef vector[CollisionRelationStruct] relations
+    cdef list relation_callbacks
+
+    cdef vector[unordered_map[int, unordered_map[uint64_t, vector[int]]]] grids
+
+    cdef void _update_entity_grid(self, int group_id, int entity_id)
+    cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id)
+    cdef void _calc_relation(self, CollisionRelationStruct rel, tuple callbacks)

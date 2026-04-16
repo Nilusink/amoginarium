@@ -28,6 +28,8 @@ from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
 from ._logic_groups import WallCollider, WallBouncer, Walls
 from ._base_entity import LogicGameEntity
 from ._collision_groups import GridCell, GridSystem
+from ._collisions import collision_manager, collision_group_bullets, collision_group_islands
+
 
 from ._island import Island
 
@@ -41,7 +43,8 @@ class Bullet(LogicGameEntity):
     __slots__ = [
         "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
-        "_base_damage", "_last_pos", "_old_grid_num", "_cells", "_collision"
+        "_base_damage", "_last_pos", "_old_grid_num", "_cells", "_collision",
+        "_collision_id"
     ]
 
     _base_damage: float
@@ -52,6 +55,8 @@ class Bullet(LogicGameEntity):
     _old_grid_num: tuple[int, int] | None
     _cells: list[GridCell]
     _collision: bool | tuple[pg.sprite.Sprite, tuple[int, int]]
+
+    _collision_id: int
 
     def __init__(
             self,
@@ -100,6 +105,8 @@ class Bullet(LogicGameEntity):
         runtime_buffer[self.id].param0 = explosion_radius
         self._last_pos = self.position.copy()
 
+        self._collision_id = collision_manager.register_entity(collision_group_bullets, self, self.position, self.size)
+
         self.remove(Updated)
         if not no_gravity:
             self.add(GravityAffected)
@@ -127,6 +134,8 @@ class Bullet(LogicGameEntity):
         if new_num != self._old_grid_num:
             self._old_grid_num = new_num
             self._cells = GridSystem.get_cells_by_num(*new_num)
+
+        collision_manager.update_entity(collision_group_bullets, self._collision_id, self.position, self.size)
 
         for group in [Walls]:
             wall: Island
@@ -370,6 +379,8 @@ class Bullet(LogicGameEntity):
                 exp.play(pos=self.position)
 
         super().kill()
+
+        collision_manager.delete_entity(collision_group_bullets, self._collision_id)
         return True
 
 

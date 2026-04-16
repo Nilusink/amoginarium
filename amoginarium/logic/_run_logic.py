@@ -28,7 +28,7 @@ from amoginarium.shared.utility import Vec2, calculate_launch_angle
 from amoginarium import pv
 
 from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE
+from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, collision_manager
 from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
 from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
 from .entities import GravityAffected, FrictionXAffected, MortarShell, Mortar
@@ -537,6 +537,8 @@ def run_continuous(
 
         # update entities
         last_update_success = lp.update_entities(delta)
+
+        collision_manager.calculate_all_collisions()
 
         # don't update if paused
         if lp.paused:
