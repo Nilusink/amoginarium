@@ -14,7 +14,7 @@ from icecream import ic
 import pygame as pg
 import typing as tp
 
-from ...shared import Coalitions, WeaponLike, ItemLike, ItemSlot, base_entity_t
+from ...shared import Coalitions, ItemLike, ItemSlot, base_entity_t
 from ...shared import ProcessCommand, BaseCommandType, DummyCIDs
 from ...shared.utility import Vec2, convert_coord
 from ... import pv
@@ -238,7 +238,7 @@ class Player(LogicGameEntity):
         """
         deal damage to the player
         """
-        # damage = 0
+        # damage *= 0
         self._hp -= damage
 
         if damage != 0:

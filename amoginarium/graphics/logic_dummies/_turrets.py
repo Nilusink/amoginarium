@@ -17,15 +17,15 @@ from amoginarium.shared import TurretCIDs
 from amoginarium import pv
 
 from ..render_bindings import renderer
-from ..entities import Drawn_1
+from ..entities import Drawn_1, Drawn_2
 from ._synced_entities import SyncedGraphicsEntity
 
 
 class BaseTurretDummy(SyncedGraphicsEntity):
     """
-    `param0` health
-    `param3` target pos (x=0-31, y=32-63)
-    `param4` engagement range & valid_angles (min=0-15, max=16-31), (start=32-47, end=48-63)
+    ``param0`` health
+    ``param3`` target pos (x=0-31, y=32-63)
+    ``param4`` engagement range & valid_angles (min=0-15, max=16-31), (start=32-47, end=48-63)
     """
     __slots__ = [
         "_target_pos", "_range", "_angles", "_hp_colors"
@@ -34,6 +34,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     _body_texture: int = ...
     _body_texture_path = "mortar_turret_base"
     _body_texture_size = (23, 24)
+    _layer: int = 0
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
@@ -58,7 +59,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         self._range = (0, 0)
         self._angles = (-1, -1)
         super().__init__(sync_id=sync_id)
-        self.add(Drawn_1)
+        self.add(Drawn_1, Drawn_2)
         
         # defaults
         self._hp_colors = (
@@ -199,6 +200,12 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                         Color().from_255(255, 0, 0, 100)
                     )
 
+                renderer.draw_line(
+                    self.world_position,
+                    self.world_position + Vec2().from_polar(self.facing.angle, self._range[1]),
+                    Color().from_255(150, 200, 0)
+                )
+
         # only draw turret if on screen
         if (
                 self.pos.x + self.size.x / 2 < world_position.x or
@@ -208,15 +215,26 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         ):
             return
 
-        if layer == 0:
+        if layer == self._layer:
             if self._highlight:
                 renderer.start_stencil(True)
 
-            renderer.draw_textured_quad(
-                self._body_texture,
-                self.world_position - self.size / 2,
-                self.size
-            )
+            if self.facing.x < 0:
+                renderer.draw_textured_quad(
+                    self._body_texture,
+                    self.world_position - self.size / 2,
+                    self.size,
+                    pixel_perfect=True
+                )
+
+            else:
+                # mirror turret
+                renderer.draw_textured_quad(
+                    self._body_texture,
+                    self.world_position - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
+                    (-self.size.x, self.size.y),
+                    pixel_perfect=True
+                )
 
             if self._highlight:
                 renderer.enable_stencil(True)
@@ -229,7 +247,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
 
                 renderer.disable_stencil()
 
-        elif layer == 1:
+        elif layer == 2:
             # draw health bar
             owp = self.world_position
             renderer.draw_bar(
@@ -274,3 +292,11 @@ class CRAMTurretDummy(BaseTurretDummy):
     _cid = TurretCIDs.cram
     _body_texture_path = "CRAM_base"
     _body_texture_size = (64, 128)
+
+
+class SkyShieldDummy(BaseTurretDummy):
+    __slots__ = []
+    _cid = TurretCIDs.sky_shield
+    _body_texture_path = "skyshield_base"
+    _body_texture_size = (64, 64)
+    _layer = 1

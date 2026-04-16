@@ -40,15 +40,13 @@ class ChargedWeapon(BaseWeapon):
             bullet_speed: tuple[float, float],  # range
             barrel_length: float,  # where bullets spawn
             parent_position_offset: Vec2 | tuple[float, float],
-            bullet_size: Vec2 | int = 10,
             bullet_damage: tuple[float, float] = (1, 1),
             bullet_explosion_radius: tuple[float, float] = (-1, -1),
             bullet_explosion_damage: tuple[float, float] = (0, 0),
             drop_casings: bool = False,
-            bullet_lifetime=4,
             sound_effect: ContinuousSoundEffect | PresetEffect | EllipsisType = ...,
             bullet_type: tp.Type[Bullet] = Bullet,
-            bullet_visibility_offset: float = 0  # time offset
+            **bullet_kwargs
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -57,18 +55,13 @@ class ChargedWeapon(BaseWeapon):
             recoil_time=recoil_time,
             mag_size=mag_size,
             inaccuracy=inaccuracy,
-            bullet_size=bullet_size,
-            bullet_speed=0,
-            bullet_damage=0,
             barrel_length=barrel_length,
             parent_position_offset=parent_position_offset,
+            muzzle_velocity=0,
             drop_casings=drop_casings,
-            bullet_explosion_radius=0,
-            bullet_explosion_damage=0,
-            bullet_lifetime=bullet_lifetime,
             sound_effect=sound_effect,
-            bullet_visibility_offset=bullet_visibility_offset,
-            bullet_type=bullet_type
+            bullet_type=bullet_type,
+            **bullet_kwargs
         )
         self._bullet_speed_range = bullet_speed
         self._bullet_damage_range = bullet_damage
@@ -119,7 +112,7 @@ class ChargedWeapon(BaseWeapon):
         return self._charged
 
     @property
-    def bullet_speed(self) -> float:
+    def muzzle_velocity(self) -> float:
         return self._bullet_speed_range[0] + (
             self._bullet_speed_range[1] - self._bullet_speed_range[0]
         ) * self._speed_curve(self._charged)
@@ -147,6 +140,11 @@ class ChargedWeapon(BaseWeapon):
         return self._bullet_damage_range[0] + (
                 self._bullet_damage_range[1] - self._bullet_damage_range[0]
         ) * self._recoil_curve(self._charged)
+
+    def _update_kwargs(self) -> None:
+        """update weapon params"""
+        self._bullet_kwargs["explosion_radius"] = self.bullet_explosion_radius
+        self._bullet_kwargs["explosion_damage"] = self.bullet_explosion_damage
 
     def charge(self) -> None:
         """
@@ -178,6 +176,7 @@ class ChargedWeapon(BaseWeapon):
             bullet_tof: float | EllipsisType = ...,
             target_pos: Vec2 | EllipsisType = ...
     ) -> bool:
+        self._update_kwargs()
         res = super().shoot(direction, bullet_tof, target_pos)
         self.stop()
         return res
@@ -207,12 +206,13 @@ class RailGun(ChargedWeapon):
             barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
-            bullet_visibility_offset=.058,
             bullet_explosion_damage=(10, 200),
             bullet_explosion_radius=(5, 512),
             bullet_type=SniperBullet,
             sound_effect=SmallExplosion(),
-            bullet_lifetime=10
+
+            time_to_life=10,
+            visibility_offset=.058,
         )
 
     @staticmethod

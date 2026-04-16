@@ -6,7 +6,6 @@ defines the most basic form of logic entity
 """
 from __future__ import annotations
 from types import EllipsisType
-from icecream import ic
 from ctypes import Array
 import pygame as pg
 import typing as tp
@@ -19,6 +18,16 @@ from ._logic_groups import Updated
 from ... import pv
 
 
+class EntityChildViable(tp.Protocol):
+    """min requirements to be assigned as a child"""
+
+    def update(self, delta: float) -> None:
+        """update function"""
+
+    def kill(self) -> None:
+        """clean up child"""
+
+
 class BaseLogicEntity:
     """most basic type of logics entity"""
 
@@ -26,7 +35,7 @@ class BaseLogicEntity:
         "_parent", "_children", "_lifetime", "__id", "_runtime_buffer", "__g",
     ]
 
-    _children: list[BaseLogicEntity]
+    _children: list[EntityChildViable]
     _lifetime: float
     _parent: BaseLogicEntity | None
 
@@ -72,9 +81,13 @@ class BaseLogicEntity:
         return self
 
     @property
-    def children(self) -> list[BaseLogicEntity]:
+    def children(self) -> list[EntityChildViable]:
         """all children of entity"""
         return self._children
+
+    @property
+    def _buff(self):
+        return self._runtime_buffer[self.__id]
     # endregion
 
     # region bitwise fun
@@ -161,8 +174,9 @@ class BaseLogicEntity:
 
         if recursive:
             for child in self._children:
-                update = getattr(child, "update", lambda _: ...)
-                update(delta)
+                child.update(delta)
+                # update = getattr(child, "update", lambda _: ...)
+                # update(delta)
     # endregion
 
     # region visibility

@@ -13,10 +13,11 @@ from time import perf_counter
 import typing as tp
 
 from amoginarium.logic.entities import Bullets, Players
+
 from ._sensors import BaseSensor
 
 if tp.TYPE_CHECKING:
-    from amoginarium.logic.entities import GameEntity
+    from ._base_entity import GameEntity
 
 
 @dataclass(frozen=False)

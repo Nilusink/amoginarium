@@ -20,6 +20,7 @@ type sound_name_t = str | tuple[str, str]
 
 
 class NamedSound(tp.TypedDict):
+    """a sound-effect with a name"""
     sound: pg.mixer.Sound
     name: str
 
@@ -46,9 +47,10 @@ class _Sounds:
 
         path = path.rstrip("/")
 
+        sound_zip: zipfile.ZipFile | None = None
         if is_zip:
-            soundzip = zipfile.ZipFile(path)
-            files = sorted(soundzip.infolist(), key=lambda f: f.filename)
+            sound_zip: zipfile.ZipFile = zipfile.ZipFile(path)
+            files = sorted(sound_zip.infolist(), key=lambda file: file.filename)
             scope = path.split(".")[0].split("/")[-1]
 
         else:
@@ -72,8 +74,8 @@ class _Sounds:
                 if scope not in self._data:
                     self._data[scope] = {}
 
-                if is_zip:
-                    fp = soundzip.open(f)
+                if sound_zip:
+                    fp = sound_zip.open(f)
 
                 else:
                     fp = open(path + "/" + f)
@@ -99,8 +101,8 @@ class _Sounds:
                     f"- texture: {get_fg_color(36)}\"{filename}\""
                 )
 
-            if is_zip:
-                file = soundzip.open(f)
+            if sound_zip:
+                file = sound_zip.open(f)
 
             else:
                 file = path + "/" + f
