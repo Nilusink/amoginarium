@@ -78,7 +78,7 @@ class AerodynamicEntity(Bullet):
 
         # game drag
         self._wh = self.size.x / self.size.y
-        self._cd = 0.15 + (self.size.y / self.size.x) * 0.8
+        self._cd = 0.15 + (self.size.y / self.size.x) * 2
 
     # region properties
     @property
@@ -114,7 +114,9 @@ class AerodynamicEntity(Bullet):
         q *= q
 
         # drag force
-        drag_force = airflow_d * (-self._cd * q)
+        alpha_drag = 500 * (m.sin(self.alpha) ** 2)
+        cd_total = self._cd + alpha_drag
+        drag_force = airflow_d * (-cd_total * q)
         forward_force += drag_force
 
         # update rudder position
@@ -144,9 +146,14 @@ class AerodynamicEntity(Bullet):
         self.ang_vel += ang_acc * delta
         self.facing.angle += self.ang_vel * delta
 
-        # linear motion
-        lift_force = right * (q * self._rudder_size * self._rudder_angle * 50)
+        # lift from rudder + body
+        lift_force = right * (q * self._rudder_size * self._rudder_angle * 50)  # rudder lift
         forward_force += lift_force
+
+        body_force = right * (-self.alpha * q * 20)  # body lift gain
+        forward_force += body_force
+
+        # linear motion
         self.acceleration += forward_force / self.mass
         super()._update(delta, update_facing=False)
 

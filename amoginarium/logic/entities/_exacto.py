@@ -78,7 +78,7 @@ class ExactoBullet(AerodynamicEntity):
         abs_ang = abs(delta_angle)
         if abs(self.alpha) < self._max_alpha:
             self._rudder_angle = (delta_angle // abs_ang) * min(
-                (self._rudder_max_angle, abs_ang*abs_ang)
+                (self._rudder_max_angle, abs_ang * .5)
             )
 
         else:

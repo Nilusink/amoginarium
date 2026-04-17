@@ -396,17 +396,17 @@ class LogicProcess:
                 mass=1,
                 collide_siblings=False
             ).rudder_angle = -.5
-            AerodynamicEntity(
-                self._runtime_buffer,
-                self._dummy_dad,
-                Coalitions.neutral,
-                Vec2().from_cartesian(1600, 700),
-                initial_velocity=Vec2().from_cartesian(500, -500),
-                size=Vec2().from_cartesian(100, 10),
-                rudder_size=10,
-                mass=1,
-                collide_siblings=False
-            )
+        #     AerodynamicEntity(
+        #         self._runtime_buffer,
+        #         self._dummy_dad,
+        #         Coalitions.neutral,
+        #         Vec2().from_cartesian(1600, 700),
+        #         initial_velocity=Vec2().from_cartesian(500, -500),
+        #         size=Vec2().from_cartesian(100, 10),
+        #         rudder_size=10,
+        #         mass=1,
+        #         collide_siblings=False
+        #     )
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()
