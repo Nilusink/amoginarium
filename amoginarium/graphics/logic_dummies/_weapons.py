@@ -10,6 +10,7 @@ Nilusink
 
 import typing as tp
 import math as m
+import ctypes
 
 from amoginarium.shared.debugging import run_with_debug
 from amoginarium.shared.utility import Vec2, Color
@@ -191,3 +192,34 @@ class HandThrownGrenade(WeaponDummy):
     _image_mirror = True
     _image_size: tuple[int, int] = (32, 32)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(16, 16)
+
+
+class ExactoSniper(WeaponDummy):
+    _cid = WeaponCIDs.exacto_sniper
+    _image_name: str = "sniper"
+    _image_size: tuple[int, int] = (120, 60)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
+
+    def __init__(self, max_range: float, **kwargs):
+        super().__init__(**kwargs)
+        self._max_range = max_range
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
+        super()._gl_draw(delta_cal, layer)
+
+        # draw laser to target
+        laser_end = (
+            Vec2().from_polar(self.param3 / 10_000, self.param4)
+            - pv.global_vars.get_world_position()
+        )
+        renderer.draw_thick_line(
+            self.world_position + Vec2().from_polar(self.facing.angle, 100),
+            laser_end,
+            Color().from_1(1, 0, 0, .1),
+            thickness=2,
+        )
+        renderer.draw_circle(
+            laser_end,
+            8, 16,
+            Color().from_1(1, 0, 0, .3),
+        )

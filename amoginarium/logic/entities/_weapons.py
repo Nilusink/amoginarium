@@ -45,28 +45,29 @@ class BaseWeapon(Item):
     _default_bullet_type: tp.Type[Bullet] = Bullet
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            reload_time: float,
-            recoil_time: float,
-            mag_size: int,
-            inaccuracy: float,
-            parent_position_offset: Vec2 | tuple[float, float],
-            muzzle_velocity: float,
-            *,
-            barrel_length: float = 0,  # where bullets spawn
-            drop_casings: bool = False,
-            sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
-            bullet_type: tp.Type[Bullet] | EllipsisType = ...,
-            weapon_recoil_factor: float = 1,
-            weapon_size: Vec2 | EllipsisType = ...,
-            **bullet_kwargs
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        reload_time: float,
+        recoil_time: float,
+        mag_size: int,
+        inaccuracy: float,
+        parent_position_offset: Vec2 | tuple[float, float],
+        muzzle_velocity: float,
+        *,
+        barrel_length: float = 0,  # where bullets spawn
+        drop_casings: bool = False,
+        sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
+        bullet_type: tp.Type[Bullet] | EllipsisType = ...,
+        weapon_recoil_factor: float = 1,
+        weapon_size: Vec2 | EllipsisType = ...,
+        spawn_args: dict[str, tp.Any] | EllipsisType = ...,
+        **bullet_kwargs,
     ) -> None:
         if weapon_size is ...:
             weapon_size: Vec2 = Vec2().from_cartesian(20, 20)
 
-        super().__init__(runtime_buffer=runtime_buffer, size=weapon_size)
+        super().__init__(runtime_buffer=runtime_buffer, size=weapon_size, spawn_args=spawn_args)
 
         # unless you want the sniper to kill its own bullet
         self.remove(CollisionDestroyed, Updated)

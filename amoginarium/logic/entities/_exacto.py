@@ -9,25 +9,30 @@ Nilusink
 """
 
 from ctypes import Array
-from icecream import ic
 import typing as tp
 import math as m
 
-from amoginarium.shared.utility import Vec2, normalize_angle, multi_raycast_mask
-from amoginarium.shared import base_entity_t, Coalitions
-from amoginarium import pv
+from amoginarium.shared.utility import Vec2, coord_t, multi_raycast_mask, normalize_angle
+from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
 
+from ..audio import Sniper as SniperSound
+from ._aerodynamic_entity import AerodynamicEntity
 from ._logic_groups import Updated, Walls
 from ._base_entity import LogicGameEntity
-from ._aerodynamic_entity import AerodynamicEntity
+from ._weapons import BaseWeapon
 
 
 class ExactoBullet(AerodynamicEntity):
 
     __slots__ = ("_target_callback", "_guidance_delay")
-    
-    _default_mass = .1
-    _default_rudder_size = 1
+
+    _cid = DummyCIDs.base_bullet
+
+    _weight = 5  # knockback
+    _default_base_damage = 15
+
+    _default_mass = .1  # aerodynamics
+    _default_rudder_size = 2
     _default_rudder_max_angle = m.pi
 
     _default_guidance_delay: float = .01
@@ -79,12 +84,63 @@ class ExactoBullet(AerodynamicEntity):
         else:
             self._rudder_angle = 0
         
-        # ic(self._rudder_angle, delta_angle)
 
-    # def _update(self, delta: float) -> None:
-    #     multi_raycast_mask(
-    #         self,
-    #         Walls.spriteS(),
-    #         self.position,
-    #         Vec2().from_polar(self.facing.angle, self._max_range),
-    #     )
+class ExactoSniper(BaseWeapon):
+    """exacto sniper"""
+
+    _cid = WeaponCIDs.exacto_sniper
+    _max_range = 3500
+
+    def __init__(
+        self,
+        parent: LogicGameEntity,
+        runtime_buffer: Array[base_entity_t],
+        drop_casings: bool = False,
+        parent_position_offset: coord_t = Vec2(),
+    ) -> None:
+        super().__init__(
+            runtime_buffer=runtime_buffer,
+            parent=parent,
+            reload_time=5,
+            recoil_time=2,
+            mag_size=6,
+            inaccuracy=0.005,
+            parent_position_offset=parent_position_offset,
+            muzzle_velocity=2500,
+            drop_casings=drop_casings,
+            sound_effect=SniperSound(),
+            bullet_type=ExactoBullet,
+            spawn_args={"max_range": self._max_range},
+
+            # bullet args
+            time_to_life=15,
+            visibility_offset=.04,
+            target_callback=self._get_current_target
+        )
+        self._current_target = Vec2()
+
+    def _get_current_target(self) -> Vec2:
+        return self._current_target
+
+    def _update(self, delta: float) -> None:
+        super()._update(delta)
+
+        hits = multi_raycast_mask(
+            self,
+            Walls.sprites() + Updated.sprites(),
+            self.position + Vec2().from_polar(self.facing.angle, 100),
+            self.position + Vec2().from_polar(self.facing.angle, self._max_range),
+        )
+        if hits:
+            hits = [hit[1] for hit in hits]
+            hits = sorted(hits, key=lambda e: e.length)
+
+            self._current_target.xy = hits[0].xy
+
+        else:
+            self._current_target.xy = (self.position + Vec2().from_polar(
+                self.facing.angle, self._max_range
+            )).xy
+
+        self._buff.param3 = int(normalize_angle(self._current_target.angle) * 10_000)
+        self._buff.param4 = int(self._current_target.length)

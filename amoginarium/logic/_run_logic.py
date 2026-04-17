@@ -374,17 +374,17 @@ class LogicProcess:
         sound_effects.update()
 
         # test stuff
-        self._last_spawn -= delta
-        if self._last_spawn < 0:
-            self._last_spawn = 1
-            ExactoBullet(
-                self._runtime_buffer,
-                self._dummy_dad,
-                Coalitions.neutral,
-                Vec2().from_cartesian(500, 700),
-                Vec2().from_cartesian(2000, 0),
-                lambda: Vec2().from_cartesian(4000, 200)
-            )
+        # self._last_spawn -= delta
+        # if self._last_spawn < 0:
+        #     self._last_spawn = 1
+        #     ExactoBullet(
+        #         self._runtime_buffer,
+        #         self._dummy_dad,
+        #         Coalitions.neutral,
+        #         Vec2().from_cartesian(500, 700),
+        #         Vec2().from_cartesian(2000, 0),
+        #         lambda: Vec2().from_cartesian(4000, 200)
+        #     )
             # AerodynamicEntity(
             #     self._runtime_buffer,
             #     self._dummy_dad,

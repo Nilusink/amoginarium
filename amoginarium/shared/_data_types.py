@@ -78,6 +78,7 @@ class WeaponCIDs(Enum):
     base = "weapon.base"
     railgun = "weapon.railgun"
     sky_shield = "weapon.sky_shield"
+    exacto_sniper = "weapon.exacto_sniper"
 
 
 class SensorCIDs(Enum):

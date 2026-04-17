@@ -21,7 +21,8 @@ from ... import pv
 
 from ..audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ..graphics_dummies import Controller
-from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
+from ._weapons import BaseWeapon, Minigun, HandThrownGrenade, Ak47
+from ._exacto import ExactoSniper as Sniper
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._items import Shield, HealingPotion, JetBag
@@ -238,7 +239,7 @@ class Player(LogicGameEntity):
         """
         deal damage to the player
         """
-        # damage *= 0
+        damage *= 0
         self._hp -= damage
 
         if damage != 0:

@@ -10,6 +10,7 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
+import typing as tp
 import math as m
 
 from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType
@@ -30,6 +31,7 @@ class Item(LogicGameEntity):
         self,
         runtime_buffer: Array[base_entity_t],
         size: Vec2,
+        spawn_args: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         
         # init logic entity
@@ -39,9 +41,16 @@ class Item(LogicGameEntity):
         self._current_timeout = 0
 
         # spawn graphics counterpart
+        if isinstance(spawn_args, EllipsisType):
+            kwargs = {}
+
+        else:
+            kwargs = spawn_args
+
+        kwargs.update({"id": self.id, "cid": self.cid()})
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": self.cid()},
+            kwargs=kwargs,
         ))
 
     def hit(self, _damage: float, hit_by=...) -> None:
