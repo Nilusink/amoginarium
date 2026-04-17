@@ -11,7 +11,7 @@ from ._tuplemath import TupleMath
 
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord, is_related
 from ._ccalculations import calculate_launch_angle
-from ._utility_functions import multi_raycast_mask
+from ._utility_functions import multi_raycast_mask, get_default
 
 
 # from ._cutility_functions import point_in_triangle as _pit, raycast_mask as _rm, convert_coord as _cc, is_related as _ir

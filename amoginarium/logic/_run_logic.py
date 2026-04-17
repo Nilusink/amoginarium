@@ -279,7 +279,7 @@ class LogicProcess:
                     **args
                 )
 
-            except TypeError:
+            except KeyError:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
@@ -532,7 +532,7 @@ def run_continuous(
         # calculate time since last loop
         now = perf_counter()
         if last_update_success:
-            delta = (now - last_run) * time_multiplier
+            delta = (now - last_run) * pv.global_vars.get_time_mult()
 
         else:
             delta = 0

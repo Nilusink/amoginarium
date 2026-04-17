@@ -59,6 +59,7 @@ class TurretCIDs(Enum):
     flak = "turret.static.flak"
     cram = "turret.static.cram"
     base = "turret.static.base"
+    sky_shield = "turret.static.sky_shield"
 
 
 class WeaponCIDs(Enum):
@@ -74,6 +75,15 @@ class WeaponCIDs(Enum):
     h_grenade = "weapon.grenade.hand"
     base = "weapon.base"
     railgun = "weapon.railgun"
+    sky_shield = "weapon.sky_shield"
+
+
+class SensorCIDs(Enum):
+    """Component IDs for graphics sensors"""
+    radar = "sensor.static.radar"
+    visual = "sensor.static.visual"
+    magic = "sensor.static.magic"
+    hud = "sensor.static.hud"
 
 
 class ItemCIDs(Enum):

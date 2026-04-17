@@ -62,12 +62,14 @@ class base_controller_t(ctypes.Structure):
         ("mouse_y", ctypes.c_float),
     ]
 
+
 class item_slot_t(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
         ("item_id", ctypes.c_uint16),
         ("count", ctypes.c_uint8)
     ]
+
 
 class inventory_t(ctypes.Structure):
     _pack_ = 1

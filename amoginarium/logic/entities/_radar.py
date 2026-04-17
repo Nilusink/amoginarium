@@ -7,20 +7,36 @@ _radar.py
 Author:
 Nilusink
 """
+
+from ctypes import Array
 import typing as tp
 import numpy as np
 
 from amoginarium.shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
-from amoginarium.logic.entities._base_entity import PositionedLogicEntity, LogicGameEntity
-from amoginarium.logic.entities._logic_groups import Players, Bullets
+from amoginarium.shared.utility import MASK16
+from amoginarium.shared import base_entity_t
+
+from ._base_entity import PositionedLogicEntity, LogicGameEntity
+from ._logic_groups import Players, Bullets
 from ._sensors import BaseSensor
 
 
 class RadarSensor(BaseSensor):
+    """
+    sensor split into sectors, detection using angle width
+
+    ``param0`` detection range
+    ``param3`` detect sectors (x4, 16 bit each)
+    ``param4`` detect sectors (x4, 16 bit each)
+    """
+    __slots__ = []
+
     _debug: bool = False
+    _has_sectors = True
 
     def __init__(
             self,
+            runtime_buffer: Array[base_entity_t],
             parent: PositionedLogicEntity,
             detection_range: float,
             position_offset: coord_t = ...,
@@ -28,11 +44,14 @@ class RadarSensor(BaseSensor):
             min_rcs: float = .04,
             visible: bool = True
     ) -> None:
-        super().__init__(parent, detection_range, position_offset, visible)
         self._sphere = None
         self._highlighted_sectors = []
         self._sphere_accuracy = sphere_accuracy
         self._min_rcs = min_rcs
+
+        super().__init__(
+            runtime_buffer, parent, detection_range, position_offset, visible
+        )
 
     def _calculate_sphere(self) -> list[Vec2]:
         """
@@ -57,7 +76,6 @@ class RadarSensor(BaseSensor):
         out = []
         center: Vec2 = self.parent.position + self._position_offset
         angle_step = (np.pi * 2) / self._sphere_accuracy
-        position_offset = self.parent.world_position + self._position_offset
         for target in targets:
             delta = target.position - center
 
@@ -122,10 +140,30 @@ class RadarSensor(BaseSensor):
 
         return valid_targets
 
-    def update(self, delta: float) -> None:
+    def _update(self, delta: float) -> None:
         if self._sphere is None:
             # funny stuff
             self._sphere = self._calculate_sphere()
+
+        # reset sectors
+        self._buff.param3 = 0
+        self._buff.param4 = 0
+        for i in range(8):
+            if i > len(self._highlighted_sectors)-1:
+                break
+
+            if i < 4:
+                index = i
+                param = self._buff.param3
+
+            else:
+                index = i - 4
+                param = self._buff.param4
+
+            # write data
+            param |= (self._highlighted_sectors[i] & MASK16) << (16*index)
+
+        super()._update(delta)
 
     # def gl_draw(self, draw: bool = True) -> None:
     #     # detection sphere

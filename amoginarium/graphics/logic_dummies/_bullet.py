@@ -16,9 +16,9 @@ from amoginarium.shared import DummyCIDs
 from amoginarium.base._textures import textures
 from amoginarium import pv
 
+from ..entities._animation import explosion
 from ..render_bindings import renderer
 from ._synced_entities import SyncedImageEntity, BaseGraphicsEntity
-from ..entities._animation import explosion
 
 
 BULLET_PATH = "bullet"
@@ -32,7 +32,7 @@ class BulletDummy(SyncedImageEntity):
     __slots__ = [
         "_spawn_time", "_visibility_offset", "_last_pos", "_target_pos", "_trace",
         "_trace_color", "_show_trace", "_current_trace_length", "_max_trace_length",
-        "_fade_trace", "_original_alpha"
+        "_fade_trace", "_original_alpha", "_trace_len", "_trace_only"
     ]
 
     _cid = DummyCIDs.base_bullet
@@ -49,7 +49,6 @@ class BulletDummy(SyncedImageEntity):
         spawn_time: float,
         size: int | Vec2 = 64,
         parent: BaseGraphicsEntity | None = None,
-        no_gravity=False,
         visibility_offset: float = 0,
         target_pos: Vec2 | EllipsisType = ...,
         show_trace: bool | EllipsisType = ...,
@@ -67,6 +66,8 @@ class BulletDummy(SyncedImageEntity):
             self._bullet_image[1]
         )
 
+        self._trace_only = False
+        self._trace_len = 1
         self._spawn_time = spawn_time
         self._visibility_offset = visibility_offset
         self._last_pos: Vec2 = Vec2()
@@ -111,77 +112,110 @@ class BulletDummy(SyncedImageEntity):
         super().__init__(sync_id, _bullet_image, parent)
 
     def kill(self) -> None:
-        if self.param0 > 0:
-            explosion.draw(
-                delay=.05,
-                size=Vec2().from_cartesian(
-                    self.param0 * 2,
-                    self.param0 * 2
-                ),
-                position=self.pos.copy()
-            )
+        if len(self._trace) > 0:
+            if not self._trace_only:
+                self._trace_only = False
+                self.alive = False
+
+                if self.param0 > 0:
+                    explosion.draw(
+                        delay=.05,  # min(.01, .05 * (self.param0 / 96)),
+                        size=Vec2().from_cartesian(self.param0 * 2, self.param0 * 2),
+                        position=self.pos.copy(),
+                    )
+
+            return
+
+        if not self._trace_only:
+            if self.param0 > 0:
+                explosion.draw(
+                    delay=.05,  # min(.01, .05 * (self.param0 / 96)),
+                    size=Vec2().from_cartesian(
+                        self.param0 * 2,
+                        self.param0 * 2
+                    ),
+                    position=self.pos.copy()
+                )
 
         super().kill()
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         if self._visibility_offset > self._lifetime:
             self._last_pos.length = 0
-            super()._gl_draw(delta_cal)
+            self._lifetime += delta_cal
             return
-
-        # calculate trace
-        if self._show_trace and self._max_trace_length > 0 and delta_cal > 0:
-            if len(self._trace) == 0:
-                img_offset = Vec2().from_polar(self.facing.angle, self.size.x / 2)
-                self._trace.append(self.pos.copy() - img_offset)
-
-            else:
-                now_pos = self.pos.copy()
-                img_offset = Vec2().from_polar(self.facing.angle, self.size.x / 2)
-                trace_pos = now_pos - img_offset
-                new_delta = (trace_pos - self._trace[0]).length
-
-                # keep trace at max length
-                while self._current_trace_length + new_delta > self._max_trace_length:
-                    if len(self._trace) < 2:
-                        break
-
-                    diff = (self._trace.pop(-1) - self._trace[-1]).length
-                    self._current_trace_length -= diff
-
-                # insert current trace pos at start
-                self._current_trace_length += new_delta
-
-                # remove image size from trace position (mortar trace starts at end)
-                self._trace.insert(0, trace_pos)
 
         world_pos = pv.global_vars.get_world_position()
         resolution = pv.global_vars.resolution_screen
-        if (
+        if self.alive:
+            # calculate trace
+            if self._show_trace and self._max_trace_length > 0: # and delta_cal > 0:
+                if len(self._trace) == 0:
+                    img_offset = Vec2().from_polar(self.facing.angle, self.size.x / 2)
+                    self._trace.append(self.pos.copy() - img_offset)
+                    self._trace_len = 1
+
+                else:
+                    now_pos = self.pos.copy()
+                    img_offset = Vec2().from_polar(self.facing.angle, self.size.x / 2)
+                    trace_pos = now_pos - img_offset
+                    new_delta = (trace_pos - self._trace[0]).length
+
+                    if new_delta > 0:
+                        # keep trace at max length
+                        while self._current_trace_length + new_delta > self._max_trace_length:
+                            if len(self._trace) < 2:
+                                break
+
+                            diff = (self._trace.pop(-1) - self._trace[-1]).length
+                            self._current_trace_length -= diff
+
+                        # insert current trace pos at start
+                        self._current_trace_length += new_delta
+
+                        # remove image size from trace position (mortar trace starts at end)
+                        self._trace.insert(0, trace_pos)
+
+                        self._trace_len = len(self._trace)
+
+            if (
                 self.pos.x + (self._max_trace_length + self.size.x / 2) < world_pos.x
                 or self.pos.x - (self._max_trace_length + self.size.x / 2)
                 > world_pos.x + resolution.x
                 or self.pos.y + (self._max_trace_length + self.size.y / 2) < world_pos.y
                 or self.pos.y - (self._max_trace_length + self.size.y / 2)
                 > world_pos.y + resolution.y
-        ):
-            self._last_pos.length = 0
-            return
+            ):
+                self._last_pos.length = 0
+                return
 
-        if pv.global_vars.show_targets and not isinstance(
-            self._target_pos, EllipsisType
-        ):
-            renderer.draw_line(
-                self.pos - world_pos,
-                self._target_pos - world_pos,
-                Color().from_255(255, 100, 0, 220)
-            )
-            renderer.draw_circle(
-                self._target_pos - world_pos,
-                self.size.x * .5,
-                32,
-                Color().from_255(255, 100, 0, 220)
-            )
+            if pv.global_vars.show_targets and not isinstance(
+                self._target_pos, EllipsisType
+            ):
+                renderer.draw_line(
+                    self.pos - world_pos,
+                    self._target_pos - world_pos,
+                    Color().from_255(255, 100, 0, 220)
+                )
+                renderer.draw_circle(
+                    self._target_pos - world_pos,
+                    self.size.x * .5,
+                    32,
+                    Color().from_255(255, 100, 0, 220)
+                )
+
+        else:
+            new_len = self._current_trace_length - self.param1 * .5 * delta_cal
+            if delta_cal == 0 or new_len <= 0:
+                self._trace.clear()
+
+            else:
+                while self._current_trace_length > new_len:
+                    if len(self._trace) < 2:
+                        break
+
+                    diff = (self._trace.pop(-1) - self._trace[-1]).length
+                    self._current_trace_length -= diff
 
         # draw trace
         if self._show_trace and len(self._trace) > 1:
@@ -199,8 +233,12 @@ class BulletDummy(SyncedImageEntity):
                 p1 = self._trace[i]
                 p2 = self._trace[i+1]
 
+                # check if any of the positions is at 0/0
+                if p1.length * p2.length < 1:
+                    continue
+
                 if self._fade_trace:
-                    color.a1 = trace_mult * (1 - (i / len(self._trace)))
+                    color.a1 = trace_mult * (1 - (i / self._trace_len))
 
                 renderer.draw_thick_line(
                     p1 - world_pos,
@@ -209,8 +247,9 @@ class BulletDummy(SyncedImageEntity):
                     thickness=self.size.length / 3,
                 )
 
-        super()._gl_draw(delta_cal)
-        self._last_pos.xy = self.pos.xy
+        if self.alive:
+            super()._gl_draw(delta_cal)
+            self._last_pos.xy = self.pos.xy
 
 
 class MortarShell(BulletDummy):
@@ -224,7 +263,6 @@ class Grenade(BulletDummy):
     _bullet_image: str = ("grenade", "")
     _cid = DummyCIDs.grenade
     _default_show_trace = False
-
 
 
 class CRAMBullet(BulletDummy):

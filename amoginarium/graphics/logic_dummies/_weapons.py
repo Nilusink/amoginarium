@@ -178,6 +178,13 @@ class CRAM(WeaponDummy):
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(32, 79)
 
 
+class SkyShieldGun(WeaponDummy):
+    _cid = WeaponCIDs.sky_shield
+    _image_name: str = "skyshield_gun"
+    _image_size: tuple[int, int] = (256, 128)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(64, 28*2)
+
+
 class HandThrownGrenade(WeaponDummy):
     _cid = WeaponCIDs.h_grenade
     _image_name: str = "grenade"

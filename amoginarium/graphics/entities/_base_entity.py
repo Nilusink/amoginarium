@@ -10,6 +10,8 @@ Nilusink
 from __future__ import annotations
 import typing as tp
 
+from shared.debugging import run_with_debug
+
 
 class BaseGraphicsEntity:
     __slots__ = [
@@ -141,7 +143,13 @@ class BaseGraphicsEntity:
         return
 
     @tp.final
-    def gl_draw(self, delta_cal: float, recursive: bool = True, force_draw: bool = False, layer: int = 0) -> None:
+    def gl_draw(
+        self,
+        delta_cal: float,
+        recursive: bool = True,
+        force_draw: bool = False,
+        layer: int = 0,
+    ) -> None:
         """
         Draw this UI-entity.
         :param delta_cal: delta used for animation calculations
@@ -160,7 +168,11 @@ class BaseGraphicsEntity:
             self._gl_draw(delta_cal, layer=layer)
             if recursive:
                 for child in self._children:
-                    child.gl_draw(delta_cal, force_draw=(force_draw or self._root_visibility), layer=layer)
+                    child.gl_draw(
+                        delta_cal,
+                        force_draw=(force_draw or self._root_visibility),
+                        layer=layer,
+                    )
 
         self._after_gl_draw(draw)
     # endregion

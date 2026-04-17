@@ -7,37 +7,62 @@ basic sensor prototypes
 Author:
 Nilusink
 """
+
+from ctypes import Array
+from icecream import ic
 import typing as tp
 
+from amoginarium.shared import base_entity_t, SensorCIDs, ProcessCommand
 from amoginarium.shared.utility import coord_t, convert_coord, Vec2
-from amoginarium.logic.entities._base_entity import PositionedLogicEntity, LogicGameEntity
-from amoginarium.logic.entities._logic_groups import Players, Bullets
+from amoginarium.shared import BaseCommandType
+from amoginarium import pv
 
-# if tp.TYPE_CHECKING:
-# from ..entities import GameEntity, VisibleBaseEntity, Players, Bullets
+from ._base_entity import PositionedLogicEntity, LogicGameEntity
+from ._logic_groups import Players, Bullets, Updated
 
 
-class BaseSensor:
+class BaseSensor(PositionedLogicEntity):
+    """
+    sensor entity
+
+    ``param0`` detection range
+    """
+
+    _cid = SensorCIDs.hud
     _parent: PositionedLogicEntity
     _visible: bool
+    _has_sectors: bool = False
 
     def __init__(
             self,
+            runtime_buffer: Array[base_entity_t],
             parent: PositionedLogicEntity,
             detection_range: float,
             position_offset: coord_t = ...,
-            visible: bool = True
+            visible: bool = True,
     ) -> None:
+        super().__init__(
+            runtime_buffer=runtime_buffer, position=Vec2(), size=Vec2(), parent=parent
+        )
+        self.remove(Updated)
+        self._buff.param0 = detection_range
+
         self._detection_range = detection_range
         self._visible = visible
         self._parent = parent
         if position_offset is ...:
-            self._position_offset = Vec2()
+            self._position_offset: Vec2 = Vec2()
 
         else:
-            self._position_offset = convert_coord(position_offset, Vec2)
+            self._position_offset: Vec2 = convert_coord(position_offset, Vec2)
 
         self._detection_group = None
+
+        pv.COQ.put(ProcessCommand(
+            type=BaseCommandType.spawn_dummy,
+            kwargs={"id": self.id, "cid": self.cid(), "sectors": self._has_sectors}
+        ))
+        self._update(0)
 
     @property
     def detection_range(self) -> float:
@@ -56,19 +81,26 @@ class BaseSensor:
     ) -> list[LogicGameEntity]:
         raise NotImplementedError
 
+    def _update(self, delta: float) -> None:
+        if hasattr(self.parent, "position"):
+            self.position = self.parent.position + self._position_offset
+            # ic(self.position, self._buff.param0)
+
+        super()._update(delta)
+
     def kill(self, *_args, **_kwargs) -> None:
         if self._detection_group:
             self._detection_group.remove_sensor(self)
 
-    @tp.final
-    def gl_draw(self) -> None:
-        raise RuntimeError("trying to gl_draw in logic")
+        super().kill(*_args, **_kwargs)
 
 
 class MagicSensor(BaseSensor):
     """
     magically gets all targets inside a certain range
     of parent
+
+    ``param0`` detection range
     """
 
     def get_targets(

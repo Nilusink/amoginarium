@@ -10,7 +10,9 @@ Nilusink
 from time import perf_counter, strftime, time, perf_counter_ns
 from multiprocessing import Process
 from dataclasses import dataclass
+
 from icecream import ic, colorizedStderrPrint
+from types import EllipsisType
 from queue import Empty
 import typing as tp
 import pygame as pg  # Will be removed after controller/keybind refactoring
@@ -36,10 +38,21 @@ from ._startmenu import StartMenu
 from ._textures import textures
 
 
-class BoundFunction(tp.TypedDict):
-    func: tp.Callable
-    args: tuple
-    kwargs: dict
+class BoundFunction[**A, R]:
+    """a function with pre-determined arguments"""
+    func: tp.Callable[A, R]
+    args: A.args
+    kwargs: A.kwargs
+
+    def __init__(
+        self, func: tp.Callable[A, R], *args: A.args, **kwargs: A.kwargs
+    ) -> None:
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self) -> R:
+        return self.func(*self.args, **self.kwargs)
 
 
 def current_time() -> str:
@@ -51,6 +64,8 @@ def current_time() -> str:
 
 
 class BaseGame:
+    """base game class"""
+
     running: bool = False
     _last_logic: float
     _bg_color: tuple[float, float, float]
@@ -68,7 +83,6 @@ class BaseGame:
     def __init__(
             self,
             debug: bool = False,
-            game_port: int = 12345,
             show_targets: bool = False,
             time_multiplier: float = 1
     ) -> None:
@@ -109,7 +123,7 @@ class BaseGame:
         self.global_vars = pv.global_vars
         self.global_vars.show_targets = show_targets
         self.time_multiplier = time_multiplier
-        self._last_loaded: tp.LiteralString = ...
+        self._last_loaded: tp.LiteralString | EllipsisType = ...
         self._shifting = False
 
         self.global_vars.scaling = Settings.scaling
@@ -134,7 +148,7 @@ class BaseGame:
         self._loading_screen_info = "Window init"
 
         # initialize background
-        self._background: ParalaxBackground = ...
+        self._background: ParalaxBackground | EllipsisType = ...
         self._bg_color = (0, 0, 0)
         self._ended = False
 
@@ -189,7 +203,7 @@ class BaseGame:
         # load textures and sounds
         self.preload()
 
-    def _update_loading_screen(self, step: int, info: str = ...) -> None:
+    def _update_loading_screen(self, step: int, info: str | EllipsisType = ...) -> None:
         if info is not ...:
             self._loading_screen_info = info
 
@@ -298,16 +312,18 @@ class BaseGame:
 
     @property
     def id(self) -> int:
+        """why is this even here"""
         return -1
 
     @property
     def root(self) -> tp.Self:
+        """same question"""
         return self
 
     @run_with_debug()
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
-        load a map from a json file
+        load a map from a JSON file
         """
         # issue load command
         pv.COQ.put(ProcessCommand(
@@ -367,10 +383,13 @@ class BaseGame:
         last = perf_counter()
         last_fps_print = 0
 
-        active_scene: tp.Literal["StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"] = "StartMenu"
+        active_scene: tp.Literal[
+            "StartMenu", "PauseMenu", "StartSettings", "PauseSettings", "Game"
+        ] = "StartMenu"
 
         @dataclass(frozen=True)
         class UIVisiblity:
+            """this is a docstring"""
             start_menu: bool
             pause_menu: bool
             settings: bool
@@ -386,12 +405,14 @@ class BaseGame:
         # self.load_map("assets/maps/test.json")
 
         def load_ui_visibility():
+            """whatever this does (I didn't code it)"""
             visibility = ui_visibility[active_scene]
             start_menu.set_visibility(visibility.start_menu)
             pause_menu.set_visibility(visibility.pause_menu)
             settings.set_visibility(visibility.settings)
 
         def start_game():
+            """start game callback"""
             nonlocal active_scene
             active_scene = "Game"
 
@@ -400,6 +421,7 @@ class BaseGame:
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def reset_game(primary_call: bool = True):
+            """reset game callback"""
             nonlocal active_scene
             active_scene = "Game"
 
@@ -416,7 +438,7 @@ class BaseGame:
                 break
 
             # re-load map
-            if self._last_loaded is not ...:
+            if not isinstance(self._last_loaded, EllipsisType):
                 self.load_map(self._last_loaded)
 
             # respawn player
@@ -428,6 +450,7 @@ class BaseGame:
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
         def back_to_menu():
+            """menu callback"""
             nonlocal active_scene
             reset_game(False)
             active_scene = "StartMenu"
@@ -435,6 +458,7 @@ class BaseGame:
             load_ui_visibility()
 
         def pause_game():
+            """pause callback"""
             nonlocal active_scene
             active_scene = "PauseMenu"
 
@@ -442,6 +466,7 @@ class BaseGame:
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.pause))
 
         def open_settings():
+            """settings callback"""
             nonlocal active_scene
             if active_scene == "PauseMenu":
                 active_scene = "PauseSettings"
@@ -451,6 +476,7 @@ class BaseGame:
             load_ui_visibility()
 
         def close_settings():
+            """anti-settings callback"""
             nonlocal active_scene
 
             if active_scene == "PauseSettings":
@@ -460,9 +486,10 @@ class BaseGame:
 
             load_ui_visibility()
 
-        def handle_zoom(event):
+        def handle_zoom(e):
+            """zoom callback"""
             self.global_vars.set_pixel_per_meter(
-                self.global_vars.get_pixel_per_meter() * (1 + event.y / 30)
+                self.global_vars.get_pixel_per_meter() * (1 + e.y / 30)
             )
 
         start_menu = StartMenu(
@@ -491,6 +518,15 @@ class BaseGame:
             # wait if buffer is being updated
             pv.WRITE_LOCK.acquire()
             pv.WRITE_LOCK.release()
+
+            if pg.key.get_pressed()[pg.K_DOWN]:
+                ic("s")
+                pv.global_vars.set_time_mult(.01)
+                t_mult = .01
+
+            else:
+                pv.global_vars.set_time_mult(self.time_multiplier)
+                t_mult = self.time_multiplier
 
             # # check for new controllers
             # if len(self._new_controllers) > 0:
@@ -552,7 +588,7 @@ class BaseGame:
             self.global_vars.set_time(time())
 
             delta = now - last
-            delta *= self.time_multiplier  # slow-motion
+            delta *= t_mult  # slow-motion
 
             world_pos = self.global_vars.get_world_position()
 
@@ -592,7 +628,12 @@ class BaseGame:
                             sprite.check_click()
 
             mouse_cursor.gl_draw(delta)
-            if active_scene in ["StartMenu", "PauseMenu", "StartSettings", "PauseSettings"]:
+            if active_scene in [
+                "StartMenu",
+                "PauseMenu",
+                "StartSettings",
+                "PauseSettings",
+            ]:
                 # update background music
                 self._background.scroll(delta / 200)
                 self._background.draw(delta)
@@ -625,10 +666,6 @@ class BaseGame:
                 Drawn_0.gl_draw(delta)
                 Drawn_1.gl_draw(delta)
                 Drawn_2.gl_draw(delta)
-                # renderer.draw_circle(
-                #     Vec2().from_cartesian(600, 700) - pv.global_vars.get_world_position(),
-                #     8,16, (255, 255, 0)
-                # )
 
             # update global vars
             self.global_vars.update()
@@ -646,7 +683,10 @@ class BaseGame:
         ic("pygame end")
         times = cum_timer.get_times()
         for func, values in sorted(times.items(), key=lambda e: e[1][0]):
-            print_ic_style(f"{func}, called {values[1]} times {round(values[2], 3)}µs each, totaling {round(values[0] / 1000, 2)}ms")
+            print_ic_style(
+                f"{func}, called {values[1]} times {round(values[2], 3)}µs each, "
+                f"totaling {round(values[0] / 1000, 2)}ms"
+            )
 
         self.end()
 
@@ -688,15 +728,10 @@ class BaseGame:
         self._ended = True
 
         Settings.scaling = self.global_vars.get_scaling()
-        print(Settings.scaling)
         Settings.write()
 
         # tell threads to exit
         self.running = False
-
-        # tell server to shutdown
-        # with suppress(RuntimeError):
-        # self._server.close()
 
         ic("stopping game...")
 

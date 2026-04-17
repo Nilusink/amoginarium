@@ -49,8 +49,14 @@
             "size": [2048, 64]
         },
         {
-            "pos": [12288, 750],
-            "size": [2048, 64]
+            "pos": [12340, 600],
+            "form": [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+                [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+            ]
         },
         {
             "pos": [14336, 800],
@@ -113,8 +119,8 @@
     ],
     "entities": [
         {
-            "type": "turret.static.mortar",
-            "pos": [2500, 665]
+            "type": "turret.static.ak47",
+            "pos": [2000, 700]
         },
         {
             "type": "static.text",
@@ -237,7 +243,7 @@
             "type": "static.text",
             "pos": [14600, 300],
             "args": {
-                "text": "Mortar + CRAM",
+                "text": "Mortar + CRAM + Flak",
                 "size": 64,
                 "color": [255, 102, 0],
                 "bold": true
@@ -251,7 +257,10 @@
         {
             "type": "turret.static.mortar",
             "pos": [16390, 780],
-            "group": 0
+            "group": 0,
+            "args": {
+                "cluster": true
+            }
         },
         {
             "type": "turret.static.flak",
@@ -262,7 +271,7 @@
             "type": "sensor.static.radar",
             "pos": [16540, 390],
             "args": {
-                "detection_range": 3000,
+                "detection_range": 4000,
                 "min_rcs": 0.0001
             },
             "group": 0
