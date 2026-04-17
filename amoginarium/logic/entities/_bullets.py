@@ -373,7 +373,7 @@ class Bullet(LogicGameEntity):
     def on_collision(self, event: CollisionEvent) -> None:
         self._on_collision(event)
 
-    def update(self, delta):
+    def _update(self, delta):
         self._ttl -= delta
         self._visibility_offset -= delta
         self._invincibility_offset -= delta
@@ -390,7 +390,7 @@ class Bullet(LogicGameEntity):
             if self.kill():
                 return
 
-        super().update(delta)
+        super()._update(delta)
         self.facing.angle = self.velocity.angle
 
         self._collision = False
