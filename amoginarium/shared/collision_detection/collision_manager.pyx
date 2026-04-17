@@ -46,21 +46,49 @@ cdef class CollisionManager:
 
         return g_id
 
-    def register_entity(self, int group_id, object instance, object pos, object size) -> int:
+    def clear_all_entities(self):
+        """
+        Wipes all entities and empties the spatial grids.
+        Groups and Relations remain perfectly intact.
+        """
+        cdef size_t i
+        cdef int lvl
+        cdef CollisionGroupStruct * group
+
+        self.pending_deletions.clear()
+
+        for i in range(self.groups.size()):
+            group = &self.groups[i]
+            group.entities.clear()
+            group.free_ids.clear()
+
+            self.group_instances[i].clear()
+
+            for lvl in range(group.max_level + 1):
+                self.grids[lvl][i].clear()
+
+    def register_entity(self, int group_id, object instance, object pos, object size, bint centered=False) -> int:
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef int e_id
         cdef int lvl
         cdef EntityData ed
+
+        cdef double px = pos.x
+        cdef double py = pos.y
+        if centered:
+            px -= size.x / 2.0
+            py -= size.y / 2.0
 
         if not group.free_ids.empty():
             e_id = group.free_ids.back()
             group.free_ids.pop_back()
 
             group.entities[e_id].active = True
-            group.entities[e_id].px_o = pos.x;
-            group.entities[e_id].py_o = pos.y
-            group.entities[e_id].px_n = pos.x;
-            group.entities[e_id].py_n = pos.y
+            group.entities[e_id].is_centered = centered
+            group.entities[e_id].px_o = px;
+            group.entities[e_id].py_o = py
+            group.entities[e_id].px_n = px;
+            group.entities[e_id].py_n = py
             group.entities[e_id].sx = size.x;
             group.entities[e_id].sy = size.y
 
@@ -77,10 +105,11 @@ cdef class CollisionManager:
             e_id = group.entities.size()
             ed.id = e_id
             ed.active = True
-            ed.px_o = pos.x;
-            ed.py_o = pos.y
-            ed.px_n = pos.x;
-            ed.py_n = pos.y
+            ed.is_centered = centered
+            ed.px_o = px;
+            ed.py_o = py
+            ed.px_n = px;
+            ed.py_n = py
             ed.sx = size.x;
             ed.sy = size.y
 
@@ -125,7 +154,9 @@ cdef class CollisionManager:
             group = &self.groups[g_id]
             ed = &group.entities[e_id]
 
-            self.group_instances[g_id][e_id] = None
+            # Avoid out of bounds if group_instances hasn't expanded (safety check)
+            if e_id < len(self.group_instances[g_id]):
+                self.group_instances[g_id][e_id] = None
 
             for lvl in range(group.max_level + 1):
                 keys = &ed.grid_keys[lvl]
@@ -137,21 +168,29 @@ cdef class CollisionManager:
 
         self.pending_deletions.clear()
 
-    def update_entity(self, int group_id, int entity_id, object pos=None, object size=None):
+    def update_entity(self, int group_id, int entity_id, object pos=None, object size=None, object centered=None):
         cdef EntityData * ed = &self.groups[group_id].entities[entity_id]
 
         if not ed.active:
             return
 
-        if pos is not None:
-            ed.px_o = ed.px_n
-            ed.py_o = ed.py_n
-            ed.px_n = pos.x
-            ed.py_n = pos.y
+        if centered is not None:
+            ed.is_centered = centered
 
         if size is not None:
             ed.sx = size.x
             ed.sy = size.y
+
+        if pos is not None:
+            ed.px_o = ed.px_n
+            ed.py_o = ed.py_n
+
+            if ed.is_centered:
+                ed.px_n = pos.x - (ed.sx / 2.0)
+                ed.py_n = pos.y - (ed.sy / 2.0)
+            else:
+                ed.px_n = pos.x
+                ed.py_n = pos.y
 
         if not self.groups[group_id].is_static:
             self._update_entity_grid(group_id, entity_id)
@@ -262,7 +301,7 @@ cdef class CollisionManager:
 
         cdef size_t a_idx, k_idx, b_idx
         cdef int b_id
-        cdef bint a_resolved  # <-- NEW: Tracks if 'ea' has completed its bounce this frame
+        cdef bint a_resolved
 
         for a_idx in range(ga.entities.size()):
             ea = &ga.entities[a_idx]
@@ -289,7 +328,6 @@ cdef class CollisionManager:
                     if not eb.active:
                         continue
 
-                    # --- BUG 2 FIX: Correctly hash pair_key based on whether groups match ---
                     if is_same:
                         min_id = ea.id if ea.id < b_id else b_id
                         max_id = b_id if ea.id < b_id else ea.id
@@ -301,7 +339,6 @@ cdef class CollisionManager:
                         continue
                     checked_pairs.insert(pair_key)
 
-                    # Exact Continuous Swept AABB
                     if aabb_aabb_swept(
                             ea.px_o, ea.py_o, ea.px_n, ea.py_n, ea.sx, ea.sy,
                             eb.px_o, eb.py_o, eb.px_n, eb.py_n, eb.sx, eb.sy,
@@ -315,6 +352,15 @@ cdef class CollisionManager:
                         imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
                         imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
 
+                        # If entities are centered, the callback should return the center coordinates,
+                        # not the top left, to stay consistent with the Python logic.
+                        if ea.is_centered:
+                            imp_ax += (ea.sx / 2.0)
+                            imp_ay += (ea.sy / 2.0)
+                        if eb.is_centered:
+                            imp_bx += (eb.sx / 2.0)
+                            imp_by += (eb.sy / 2.0)
+
                         if callbacks[0] is not None:
                             callbacks[0](inst_a,
                                          CollisionEvent(rel.group_b_id, inst_b, Vec2().from_cartesian(imp_ax, imp_ay),
@@ -324,7 +370,6 @@ cdef class CollisionManager:
                                          CollisionEvent(rel.group_a_id, inst_a, Vec2().from_cartesian(imp_bx, imp_by),
                                                         Vec2().from_cartesian(-norm_x, -norm_y)))
 
-                        # --- BUG 1 FIX: Entity 'ea' has bounced/stopped. End its sweep for this frame. ---
                         a_resolved = True
                         break
 

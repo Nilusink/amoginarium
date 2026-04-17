@@ -102,7 +102,7 @@ class Bullet(LogicGameEntity):
         self._last_pos = self.position.copy()
 
         self._collision_id = collision_manager.register_entity(collision_group_bullets, self,
-                                                               self.position - (self.size / 2), self.size)
+                                                               self.position, self.size, centered=True)
         # self._debug_rendering = DebugRenderingEntity(
         #     runtime_buffer=runtime_buffer,
         #     position=self.position - (self.size / 2),
@@ -281,7 +281,7 @@ class Bullet(LogicGameEntity):
 
         self._collision = False
         collision_manager.update_entity(collision_group_bullets, self._collision_id,
-                                        self.position - (self.size / 2), self.size)
+                                        self.position, self.size, centered=True)
         # self._debug_rendering.position = self.position - (self.size / 2)
 
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
@@ -350,6 +350,8 @@ class Bullet(LogicGameEntity):
                 exp = DistantPop()
                 exp.set_volume(.8, .3)
                 exp.play(pos=self.position)
+
+        collision_manager.delete_entity(collision_group_bullets, self._collision_id)
 
         super().kill()
 
@@ -437,8 +439,8 @@ class Grenade(Bullet):
         self.in_wall = None
 
     def _on_collision(self, event: CollisionEvent) -> None:
-        self.position.x = event.position.x + self.size.x / 2
-        self.position.y = event.position.y + self.size.y / 2
+        self.position.x = event.position.x
+        self.position.y = event.position.y
 
         self.in_wall = event.normal
         self._collision = (event.other_entity, self.position.xy)
@@ -463,8 +465,9 @@ class Grenade(Bullet):
         collision_manager.update_entity(
             collision_group_bullets,
             self._collision_id,
-            (self.position + event.normal) - self.size / 2,
-            self.size
+            (self.position + event.normal),
+            self.size,
+            centered=True
         )
 
     def _update(self, delta):

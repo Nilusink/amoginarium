@@ -6,6 +6,7 @@ from libc.stdint cimport uint64_t
 cdef struct EntityData:
     int id
     bint active
+    bint is_centered  # <-- NEW: Remembers if this entity uses center coordinates
     double px_o, py_o, px_n, py_n
     double sx, sy
 
@@ -19,7 +20,7 @@ cdef struct EntityData:
 cdef struct CollisionGroupStruct:
     int id
     int max_level
-    bint is_static  # <-- RESTORED: Used to instantly skip grid updates for terrain
+    bint is_static
     vector[EntityData] entities
     vector[int] free_ids
 
