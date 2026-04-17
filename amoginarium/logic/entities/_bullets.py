@@ -307,7 +307,7 @@ class Bullet(LogicGameEntity):
         """bullet has hit someone else"""
         self.kill()
 
-    def _update(self, delta):
+    def _update(self, delta, update_facing: bool = True):
         self._ttl -= delta
         self._visibility_offset -= delta
         self._invincibility_offset -= delta
@@ -321,7 +321,8 @@ class Bullet(LogicGameEntity):
 
         self._last_pos = self.position.copy()
         super()._update(delta)
-        self.facing.angle = self.velocity.angle
+        if update_facing:
+            self.facing.angle = self.velocity.angle
 
         # check if bullet has hit someone
         if self.velocity.length > 2000:

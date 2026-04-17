@@ -10,10 +10,12 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
+from icecream import ic
 import math as m
 
 from amoginarium.shared.utility import Vec2, get_default, normalize_angle
 from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
+from . import CollisionDestroyed
 
 from ._logic_groups import GravityAffected
 from ._base_entity import LogicGameEntity
@@ -71,6 +73,7 @@ class AerodynamicEntity(Bullet):
             coalition=coalition,
             **kwargs
         )
+        self.remove(CollisionDestroyed)
         self.facing.angle = self.velocity.angle
         self.add(GravityAffected)
 
@@ -142,15 +145,11 @@ class AerodynamicEntity(Bullet):
         self.ang_vel += ang_acc * delta
         self.facing.angle += self.ang_vel * delta
 
-        # ic(self.ang_vel, self.facing.angle, airflow_d.angle, stability_torque, damping, inertia)
-
-        # ic(forward_force)
-
         # linear motion
         lift_force = right * (q * self._rudder_size * self._rudder_angle * 50)
         forward_force += lift_force
         self.acceleration += forward_force / self.mass
-        super()._update(delta)
+        super()._update(delta, update_facing=False)
 
         # update alpha
         self._alpha = normalize_angle(self.facing.angle - airflow_d.angle)

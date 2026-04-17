@@ -37,7 +37,7 @@ class ExactoBullet(AerodynamicEntity):
 
     _default_guidance_delay: float = .01
     
-    _max_alpha: float = .002
+    _max_alpha: float = .1
 
     def __init__(
         self,
@@ -78,7 +78,7 @@ class ExactoBullet(AerodynamicEntity):
         abs_ang = abs(delta_angle)
         if abs(self.alpha) < self._max_alpha:
             self._rudder_angle = (delta_angle // abs_ang) * min(
-                (self._rudder_max_angle, abs_ang * abs_ang)
+                (self._rudder_max_angle, abs_ang*abs_ang)
             )
 
         else:
