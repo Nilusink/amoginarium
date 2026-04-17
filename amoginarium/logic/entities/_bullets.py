@@ -24,15 +24,15 @@ from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
 from amoginarium.shared import BaseCommandType, DummyCIDs
 from amoginarium import pv
-
+from amoginarium.shared.debugging import run_with_debug
 
 from ..audio import LargeExplosion, DistantPop
 from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
 from ._logic_groups import WallCollider, WallBouncer, Walls
 from ._base_entity import LogicGameEntity
 from ._collision_groups import GridCell, GridSystem
-from ._collisions import collision_manager, collision_group_bullets, collision_group_islands, CollisionEvent
-from ._debug_rendering import DebugRenderingEntity
+from ._collision_manager import CollisionEvent
+from ._collision_relations import collision_group_bullets, collision_group_islands
 
 from ._island import Island
 
@@ -50,7 +50,7 @@ class Bullet(LogicGameEntity):
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cf_ttl_m",
         "_coll_sibling", "_cse", "_csm", "_lst", "_cf_dist", "_cbt", "_csi",
-        "_collision_id", "_collision", "_debug_rendering"
+        "_collision", "_debug_rendering"
     )
 
     _base_damage: float
@@ -78,10 +78,8 @@ class Bullet(LogicGameEntity):
 
     _cells: list[GridCell]
 
-    _collision_id: int
     _collision: bool
-
-    _debug_rendering: DebugRenderingEntity | None
+    _collision_group = collision_group_bullets
 
     def __init__(
         self,
@@ -207,6 +205,8 @@ class Bullet(LogicGameEntity):
             initial_velocity=initial_velocity.copy(),
             coalition=coalition,
             parent=parent,
+            has_collision=True,
+            centered=True
         )
         runtime_buffer[self.id].param0 = self._explosion_radius
 
@@ -219,13 +219,6 @@ class Bullet(LogicGameEntity):
 
         self._last_pos = self.position.copy()
 
-        self._collision_id = collision_manager.register_entity(collision_group_bullets, self,
-                                                               self.position, self.size, centered=True)
-        # self._debug_rendering = DebugRenderingEntity(
-        #     runtime_buffer=runtime_buffer,
-        #     position=self.position - (self.size / 2),
-        #     size=self.size
-        # )
         self._collision = False
 
         self.remove(Updated)
@@ -241,6 +234,7 @@ class Bullet(LogicGameEntity):
             "cid": self.cid(),
             "spawn_time": self._start_time,
             "visibility_offset": self._visibility_offset,
+            "position": self.position.xy,
         }
         if not isinstance(self._target_pos, EllipsisType):
             kwargs["target_pos"] = self._target_pos.xy  # ignore: type
@@ -348,16 +342,11 @@ class Bullet(LogicGameEntity):
         """
         Callback fired by the Cython CollisionManager when this bullet hits something.
         """
-        collision_manager.delete_entity(collision_group_bullets, self._collision_id)
-
-        # 1. Snap the bullet exactly to the point of impact to prevent tunneling visually
         self.position.x = event.position.x
         self.position.y = event.position.y
 
-        # 2. Store the collision state so properties like `on_ground` still work
         self._collision = (event.other_entity, self.position.xy)
 
-        # 3. Deal direct damage to the entity we hit (if it can take damage)
         other = event.other_entity
         try:
             dmg = self.damage
@@ -367,11 +356,7 @@ class Bullet(LogicGameEntity):
         if dmg > 0 and hasattr(other, "hit"):
             other.hit(dmg, hit_by=self)
 
-        # 4. Destroy the bullet (this triggers your explosion/recoil logic in `kill()`)
         self.kill(killed_by=other)
-
-    def on_collision(self, event: CollisionEvent) -> None:
-        self._on_collision(event)
 
     def _update(self, delta):
         self._ttl -= delta
@@ -394,9 +379,22 @@ class Bullet(LogicGameEntity):
         self.facing.angle = self.velocity.angle
 
         self._collision = False
-        collision_manager.update_entity(collision_group_bullets, self._collision_id,
-                                        self.position, self.size, centered=True)
-        # self._debug_rendering.position = self.position - (self.size / 2)
+
+        # check if cluster detonate
+        if self._cluster_depth > 0:
+            # ttl fuze
+            if self._cf_ttl_m > 0:
+                if self._ttl < self._o_ttl * self._cf_ttl_m:
+                    self.kill(self)
+
+            # distance fuze
+            elif self._cf_dist > 0:
+                if not isinstance(self._target_pos, EllipsisType):
+                    if (self.position - self._target_pos).length < self._cf_dist:
+                        self.kill(self)
+
+        # update velocity
+        self._runtime_buffer[self.id].param1 = self.velocity.length
 
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
         if not isinstance(killed_by, EllipsisType) and killed_by != self:
@@ -506,8 +504,6 @@ class Bullet(LogicGameEntity):
                 exp.set_volume(0.8, 0.3)
                 exp.play(pos=self.position)
 
-        collision_manager.delete_entity(collision_group_bullets, self._collision_id)
-
         super().kill()
 
         return True
@@ -604,14 +600,6 @@ class Grenade(Bullet):
 
             if ny < -0.5 and abs(self.velocity.y) < 30:
                 self.velocity.y = 0
-
-        collision_manager.update_entity(
-            collision_group_bullets,
-            self._collision_id,
-            (self.position + event.normal),
-            self.size,
-            centered=True
-        )
 
     def _update(self, delta):
         self.in_wall = None

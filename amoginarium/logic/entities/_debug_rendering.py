@@ -29,6 +29,7 @@ class DebugRenderingEntity(LogicGameEntity):
             rendering: DebugRendering = DebugRendering.RECTANGLE,
             color: color_t = (255, 0, 0),
             convert_global: bool = True,
+            centered: bool = False,
             **kwargs: tp.Any
     ) -> None:
         super().__init__(runtime_buffer, size=size, position=position, coalition=Coalitions.neutral)
@@ -38,6 +39,7 @@ class DebugRenderingEntity(LogicGameEntity):
         kwargs["color"] = convert_color(color)
         kwargs["convert_global"] = convert_global
         kwargs["rendering"] = rendering
+        kwargs["centered"] = centered
 
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,

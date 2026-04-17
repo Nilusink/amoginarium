@@ -112,12 +112,11 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.param4 = 0
 
         self.__was_alive = False
+        self.add(Drawn_0, SyncedEntities)
         self._update_from_buffer()
 
         # add to manager
         SE_MANAGER.add_entity(self.__id, self)
-
-        self.add(Drawn_0, SyncedEntities)
 
     # region entity management
     def kill(self) -> None:

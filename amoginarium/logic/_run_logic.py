@@ -449,7 +449,7 @@ class LogicProcess:
         for e in Updated.sprites() + Bullets.sprites():
             e.kill()
 
-        collision_manager.clear_all_entities()
+        # collision_manager.clear_all_entities()
 
         # reset shared values
         self._write_lock.acquire()
@@ -537,9 +537,9 @@ def run_continuous(
         else:
             delta = 0
 
-        collision_manager.calculate_all_collisions()
         # update entities
         last_update_success = lp.update_entities(delta)
+        collision_manager.calculate_all_collisions()
 
         # don't update if paused
         if lp.paused:

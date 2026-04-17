@@ -14,6 +14,7 @@ from amoginarium.shared import Coalitions, base_entity_t, ENTITY_COUNTER, CIDTyp
 from amoginarium.shared.debugging import print_ic_style, CC
 from amoginarium.shared.utility import Vec2, normalize_angle
 
+from ._collision_manager import collision_manager, CollisionEvent
 from ._logic_groups import Updated
 from ... import pv
 
@@ -207,11 +208,17 @@ class PositionedLogicEntity(BaseLogicEntity):
     """a logic entity with position and size"""
 
     # don't use properties for position and size for faster access
-    __slots__ = ["position", "size"]
+    __slots__ = ["position", "size", "_has_collision", "_collision_id", "_centered"]
 
     _cid: CIDType | EllipsisType = ...  # for serialization
     position: Vec2
     size: Vec2
+
+    # Collision
+    _collision_group: tp.ClassVar[int | None] = None
+    _has_collision: bool
+    _collision_id: int | None
+    _centered: bool
 
     def __init__(
             self,
@@ -219,10 +226,25 @@ class PositionedLogicEntity(BaseLogicEntity):
             size: Vec2,
             position: Vec2,
             parent: BaseLogicEntity | None = None,
+            centered: bool = False,
+            has_collision: bool = False,
     ) -> None:
         super().__init__(runtime_buffer=runtime_buffer, parent=parent)
         self.position = position
         self.size = size
+
+        self._centered = centered
+        self._has_collision = has_collision
+
+        if self._collision_group is not None and self._has_collision:
+            self._collision_id = collision_manager.register_entity(
+                group_id=self._collision_group,
+                instance=self,
+                pos=self.position,
+                size=self.size,
+                centered=self._centered)
+        else:
+            self._collision_id = None
 
     # region class methods
     @classmethod
@@ -234,7 +256,24 @@ class PositionedLogicEntity(BaseLogicEntity):
             raise ValueError("__cid is not defined for " + cls.__name__)
 
         return cls._cid
+
     # endregion
+
+    def _on_collision(self, event: CollisionEvent) -> None:
+        ...
+
+    @tp.final
+    def on_collision(self, event: CollisionEvent) -> None:
+        self._on_collision(event)
+
+        if self._collision_id is not None:
+            collision_manager.update_entity(
+                group_id=self._collision_group,
+                entity_id=self._collision_id,
+                pos=self.position + event.normal,
+                size=self.size,
+                centered=self._centered
+            )
 
     def _update(self, delta: float) -> None:
         # update shared memory
@@ -243,7 +282,22 @@ class PositionedLogicEntity(BaseLogicEntity):
         self._runtime_buffer[self.id].size_x = int(self.size.x)
         self._runtime_buffer[self.id].size_y = int(self.size.y)
 
+        if self._collision_id is not None:
+            collision_manager.update_entity(
+                group_id=self._collision_group,
+                entity_id=self._collision_id,
+                pos=self.position,
+                size=self.size,
+                centered=self._centered
+            )
+
         super()._update(delta)
+
+    def kill(self, killed_by=...) -> None:
+        if self._collision_id is not None:
+            collision_manager.delete_entity(self._collision_group, self._collision_id)
+            self._collision_id = None
+        super().kill(killed_by)
 
 
 class LogicGameEntity(PositionedLogicEntity):
@@ -265,13 +319,17 @@ class LogicGameEntity(PositionedLogicEntity):
             position: Vec2,
             initial_velocity: Vec2 | None = None,
             parent: LogicGameEntity | None = None,
-            coalition: Coalitions | EllipsisType = ...
+            coalition: Coalitions | EllipsisType = ...,
+            centered: bool = False,
+            has_collision: bool = False,
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
             size=size,
             position=position,
-            parent=parent
+            parent=parent,
+            centered=centered,
+            has_collision=has_collision
         )
         # region default parameters
         self._velocity_to_add = Vec2()

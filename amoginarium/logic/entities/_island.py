@@ -23,7 +23,8 @@ from amoginarium import pv
 
 from ._base_entity import LogicGameEntity
 from ..entities import Walls, Updated
-from ._collisions import collision_manager, collision_group_islands
+from ._collision_manager import collision_manager
+from ._collision_relations import collision_group_islands
 from ._collision_groups import GridSystem, GridCell
 from ._debug_rendering import DebugRenderingEntity
 
@@ -45,7 +46,7 @@ class Island(LogicGameEntity):
     _block_size: tuple[int, int] = (64, 64)
     debug = False
 
-    __collision_id: int
+    _collision_group = collision_group_islands
 
     def __init__(
             self,

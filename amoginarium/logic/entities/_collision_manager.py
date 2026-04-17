@@ -14,7 +14,3 @@ collision_manager = CollisionManager(
 )
 
 
-collision_group_players = collision_manager.add_group(max_level=0)
-collision_group_bullets = collision_manager.add_group(max_level=1)
-collision_group_islands = collision_manager.add_group(max_level=0)
-collision_group_turrets = collision_manager.add_group(max_level=0)

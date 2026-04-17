@@ -47,10 +47,6 @@ cdef class CollisionManager:
         return g_id
 
     def clear_all_entities(self):
-        """
-        Wipes all entities and empties the spatial grids.
-        Groups and Relations remain perfectly intact.
-        """
         cdef size_t i
         cdef int lvl
         cdef CollisionGroupStruct * group
@@ -154,7 +150,6 @@ cdef class CollisionManager:
             group = &self.groups[g_id]
             ed = &group.entities[e_id]
 
-            # Avoid out of bounds if group_instances hasn't expanded (safety check)
             if e_id < len(self.group_instances[g_id]):
                 self.group_instances[g_id][e_id] = None
 
@@ -201,6 +196,7 @@ cdef class CollisionManager:
 
         cdef int lvl
         cdef double c_size
+        cdef double min_px, min_py, max_px_o, max_px_n, max_px, max_py_o, max_py_n, max_py
         cdef int min_cx, min_cy, max_cx, max_cy, cx, cy
         cdef uint64_t key
         cdef vector[uint64_t] new_keys
@@ -212,10 +208,23 @@ cdef class CollisionManager:
         for lvl in range(group.max_level + 1):
             c_size = self.cell_sizes[lvl]
 
-            min_cx = <int> floor(ed.px_n / c_size)
-            min_cy = <int> floor(ed.py_n / c_size)
-            max_cx = <int> floor((ed.px_n + ed.sx) / c_size)
-            max_cy = <int> floor((ed.py_n + ed.sy) / c_size)
+            # THE FIX: Swept Bounding Box calculation.
+            # Stretches the broad-phase box from the old position completely to the new one.
+            min_px = ed.px_o if ed.px_o < ed.px_n else ed.px_n
+            min_py = ed.py_o if ed.py_o < ed.py_n else ed.py_n
+
+            max_px_o = ed.px_o + ed.sx
+            max_px_n = ed.px_n + ed.sx
+            max_px = max_px_o if max_px_o > max_px_n else max_px_n
+
+            max_py_o = ed.py_o + ed.sy
+            max_py_n = ed.py_n + ed.sy
+            max_py = max_py_o if max_py_o > max_py_n else max_py_n
+
+            min_cx = <int> floor(min_px / c_size)
+            min_cy = <int> floor(min_py / c_size)
+            max_cx = <int> floor(max_px / c_size)
+            max_cy = <int> floor(max_py / c_size)
 
             if (min_cx == ed.bound_min_x[lvl] and min_cy == ed.bound_min_y[lvl] and
                     max_cx == ed.bound_max_x[lvl] and max_cy == ed.bound_max_y[lvl]):
@@ -352,8 +361,6 @@ cdef class CollisionManager:
                         imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
                         imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
 
-                        # If entities are centered, the callback should return the center coordinates,
-                        # not the top left, to stay consistent with the Python logic.
                         if ea.is_centered:
                             imp_ax += (ea.sx / 2.0)
                             imp_ay += (ea.sy / 2.0)
