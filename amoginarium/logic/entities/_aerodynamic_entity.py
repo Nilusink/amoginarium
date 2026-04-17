@@ -73,7 +73,6 @@ class AerodynamicEntity(Bullet):
             coalition=coalition,
             **kwargs
         )
-        self.remove(CollisionDestroyed)
         self.facing.angle = self.velocity.angle
         self.add(GravityAffected)
 
