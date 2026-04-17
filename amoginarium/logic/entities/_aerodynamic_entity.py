@@ -10,7 +10,6 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
-from icecream import ic
 import math as m
 
 from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs, ProcessCommand, BaseCommandType

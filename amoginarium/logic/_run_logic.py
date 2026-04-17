@@ -389,7 +389,7 @@ class LogicProcess:
                 self._runtime_buffer,
                 Vec2().from_cartesian(100, 10),
                 Vec2().from_cartesian(500, 700),
-                initial_velocity=Vec2().from_cartesian(500, -500),
+                initial_velocity=Vec2().from_cartesian(1500, -1000),
                 rudder_size=10,
                 mass=1
             )
