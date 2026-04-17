@@ -216,7 +216,7 @@ class ExactoSniper(WeaponDummy):
             self.world_position + Vec2().from_polar(self.facing.angle, 100),
             laser_end,
             Color().from_1(1, 0, 0, .1),
-            thickness=2,
+            thickness=3,
         )
         renderer.draw_circle(
             laser_end,
