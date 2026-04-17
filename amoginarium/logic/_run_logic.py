@@ -27,11 +27,12 @@ from amoginarium.shared.debugging import print_with_prefix, get_fg_color
 from amoginarium.shared.utility import Vec2, calculate_launch_angle
 from amoginarium import pv
 
-from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL
+from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL, \
+    AerodynamicEntity
 from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE
 from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
 from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
-from .entities import GravityAffected, FrictionXAffected, MortarShell, Mortar
+from .entities import GravityAffected, FrictionXAffected, Bullet
 from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeExplosion
 from .graphics_dummies import Controller
 
@@ -106,7 +107,7 @@ class LogicProcess:
 
         # preload sounds
         self.preload()
-        self._last_spawn = perf_counter()
+        self._last_spawn = 0
 
         self._running = True
         self._paused = False
@@ -122,8 +123,8 @@ class LogicProcess:
         # )
         # self._b_vel.y *= -1
         # ic(self._b_vel)
-        # self._b_start = Vec2().from_cartesian(700, 700)
-        # self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
+        self._b_start = Vec2().from_cartesian(700, 700)
+        self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
         # self._w = Mortar(
         #     self._dummy_dad,
         #     self._runtime_buffer,
@@ -372,17 +373,26 @@ class LogicProcess:
 
         sound_effects.update()
 
-        # # test stuff
-        # self._dummy_dad.update(delta)
-        # self._w.update(delta)
-        # if start - self._last_spawn > 1:
-        #     exp = LargeExplosion()
-        #     exp.volume = 0.35
-        #     exp.play(pos=Vec2().from_cartesian(600, 700))
-        #     self._last_spawn = start
-
-        #     self._w.shoot(self._b_vel, 10)
-        #     self._w._stop_recoil()
+        # test stuff
+        self._last_spawn -= delta
+        if self._last_spawn < 0:
+            self._last_spawn = 1
+            AerodynamicEntity(
+                self._runtime_buffer,
+                Vec2().from_cartesian(100, 10),
+                Vec2().from_cartesian(500, 700),
+                initial_velocity=Vec2().from_cartesian(1500, -1000),
+                rudder_size=10,
+                mass=1
+            ).rudder_angle = -.5
+            AerodynamicEntity(
+                self._runtime_buffer,
+                Vec2().from_cartesian(100, 10),
+                Vec2().from_cartesian(500, 700),
+                initial_velocity=Vec2().from_cartesian(500, -500),
+                rudder_size=10,
+                mass=1
+            )
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()

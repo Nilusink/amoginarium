@@ -38,6 +38,8 @@ class DummyCIDs(Enum):
     mortar_bullet = "dummy.bullet.mortar"  # -- "" --
     grenade = "dummy.bullet.grenade"  # -- "" --
     cram = "dummy.bullet.cram"
+    aero = "dummy.bullet.aero"
+
 
 class IslandCIDs(Enum):
     """

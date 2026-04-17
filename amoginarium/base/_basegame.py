@@ -520,7 +520,6 @@ class BaseGame:
             pv.WRITE_LOCK.release()
 
             if pg.key.get_pressed()[pg.K_DOWN]:
-                ic("s")
                 pv.global_vars.set_time_mult(.01)
                 t_mult = .01
 
