@@ -11,3 +11,4 @@ from ._detection_group import DETECTION_GROUP_MANAGER, DetectionGroup, \
 from ._sensors import BaseSensor, MagicSensor
 from ._weapons import Mortar
 from ._aerodynamic_entity import AerodynamicEntity
+from ._exacto import ExactoBullet

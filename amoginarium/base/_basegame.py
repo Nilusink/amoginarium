@@ -22,7 +22,7 @@ import json
 from .. import pv
 from ..shared.debugging import run_with_debug, print_ic_style, cum_timer
 from ..shared.debugging import print_with_prefix, CC, get_fg_color
-from ..shared.utility import Vec2, convert_coord
+from ..shared.utility import Vec2, convert_coord, Color
 from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
 from ..shared.settings import Settings
 from ..graphics.render_bindings import renderer
@@ -664,6 +664,12 @@ class BaseGame:
                 Drawn_0.gl_draw(delta)
                 Drawn_1.gl_draw(delta)
                 Drawn_2.gl_draw(delta)
+
+                renderer.draw_circle(
+                    Vec2().from_cartesian(4000, 200) - self.global_vars.get_world_position(),
+                    8, 8,
+                    Color().from_1(1, 0, 0)
+                )
 
             # update global vars
             self.global_vars.update()

@@ -12,8 +12,8 @@ from types import EllipsisType
 from ctypes import Array
 import math as m
 
+from amoginarium.shared.utility import Vec2, get_default, normalize_angle
 from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
-from amoginarium.shared.utility import Vec2, get_default
 
 from ._logic_groups import GravityAffected
 from ._base_entity import LogicGameEntity
@@ -29,6 +29,7 @@ class AerodynamicEntity(Bullet):
         "_wh",
         "_mass",
         "ang_vel",
+        "_alpha"  # slip angle
     )
 
     _cid = DummyCIDs.aero
@@ -58,6 +59,7 @@ class AerodynamicEntity(Bullet):
         self._mass = get_default(mass, self._default_mass)
 
         self._rudder_angle = 0
+        self._alpha = 0
         self.ang_vel = 0
 
         super().__init__(
@@ -88,6 +90,11 @@ class AerodynamicEntity(Bullet):
     @rudder_angle.setter
     def rudder_angle(self, angle: float) -> None:
         self._rudder_angle = angle
+
+    @property
+    def alpha(self) -> float:
+        """slip angle (facing vs. velocity)"""
+        return self._alpha
 
     # endregion
 
@@ -122,7 +129,7 @@ class AerodynamicEntity(Bullet):
         stability_torque = side_slip * q * self._wh * 30
 
         # rudder drag
-        turn_drag = airflow_d * (-q * self._rudder_size * abs(self._rudder_angle) * 0.3)
+        turn_drag = airflow_d * (-q * self._rudder_size * abs(self._rudder_angle) * 8)
         forward_force += turn_drag
 
         # angular motion
@@ -144,6 +151,9 @@ class AerodynamicEntity(Bullet):
         forward_force += lift_force
         self.acceleration += forward_force / self.mass
         super()._update(delta)
+
+        # update alpha
+        self._alpha = normalize_angle(self.facing.angle - airflow_d.angle)
 
         # debugging
         self._buff.param0 = self.velocity.angle
