@@ -5,7 +5,7 @@ from libc.stdint cimport uint64_t
 
 cdef struct EntityData:
     int id
-    bint active  # Marks if the entity is currently alive or in the free pool
+    bint active
     double px_o, py_o, px_n, py_n
     double sx, sy
 
@@ -19,12 +19,17 @@ cdef struct EntityData:
 cdef struct CollisionGroupStruct:
     int id
     int max_level
+    bint is_static  # <-- RESTORED: Used to instantly skip grid updates for terrain
     vector[EntityData] entities
-    vector[int] free_ids  # Pool of recycled IDs
+    vector[int] free_ids
 
 cdef struct CollisionRelationStruct:
     int group_a_id
     int group_b_id
+
+cdef struct DeferredDeletion:
+    int group_id
+    int entity_id
 
 cdef class CollisionManager:
     cdef double base_cell_size
@@ -36,7 +41,9 @@ cdef class CollisionManager:
     cdef list relation_callbacks
 
     cdef vector[unordered_map[int, unordered_map[uint64_t, vector[int]]]] grids
+    cdef vector[DeferredDeletion] pending_deletions
 
     cdef void _update_entity_grid(self, int group_id, int entity_id)
     cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id)
     cdef void _calc_relation(self, CollisionRelationStruct rel, tuple callbacks)
+    cdef void _flush_deletions(self)

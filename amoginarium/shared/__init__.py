@@ -15,4 +15,5 @@ from ._entity_counter import ENTITY_COUNTER, INVENTORY_COUNTER
 from ._shared_memory import MAX_ENTITIES, base_entity_t, get_entity_memory, \
     get_write_lock, base_controller_t, MAX_CONTROLLERS, get_controller_memory, \
     item_slot_t, inventory_t, MAX_INVENTORY_SLOTS, MAX_INVENTORIES, get_inventory_memory
+from ._debug_rendering import DebugRendering
 from ._controlls import Controls

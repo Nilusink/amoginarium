@@ -4,7 +4,7 @@
 # cython: cdivision=True
 # cython: nonecheck=False
 
-from .collision_manager cimport CollisionManager, CollisionGroupStruct, EntityData, CollisionRelationStruct
+from .collision_manager cimport CollisionManager, CollisionGroupStruct, EntityData, CollisionRelationStruct, DeferredDeletion
 from .collision_methods cimport aabb_aabb_swept
 from .collision_event import CollisionEvent
 from amoginarium.shared.utility import Vec2
@@ -28,7 +28,7 @@ cdef class CollisionManager:
         self.group_instances = []
         self.relation_callbacks = []
 
-    def add_group(self, int max_level) -> int:
+    def add_group(self, int max_level, bint is_static=False) -> int:
         if max_level >= self.cell_sizes.size():
             max_level = self.cell_sizes.size() - 1
 
@@ -36,6 +36,7 @@ cdef class CollisionManager:
         cdef CollisionGroupStruct group
         group.id = g_id
         group.max_level = max_level
+        group.is_static = is_static
         self.groups.push_back(group)
         self.group_instances.append([])
 
@@ -46,13 +47,11 @@ cdef class CollisionManager:
         return g_id
 
     def register_entity(self, int group_id, object instance, object pos, object size) -> int:
-        # ALL CDEFS MUST BE AT THE ABSOLUTE TOP
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef int e_id
         cdef int lvl
         cdef EntityData ed
 
-        # 1. Try to recycle a deleted ID first
         if not group.free_ids.empty():
             e_id = group.free_ids.back()
             group.free_ids.pop_back()
@@ -74,7 +73,6 @@ cdef class CollisionManager:
 
             self.group_instances[group_id][e_id] = instance
 
-        # 2. If no free IDs, allocate new memory
         else:
             e_id = group.entities.size()
             ed.id = e_id
@@ -99,33 +97,45 @@ cdef class CollisionManager:
         return e_id
 
     def delete_entity(self, int group_id, int entity_id):
-        # ALL CDEFS MUST BE AT THE ABSOLUTE TOP
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef EntityData * ed
-        cdef int lvl
-        cdef size_t i
-        cdef vector[uint64_t] * keys
+        cdef DeferredDeletion dd
 
-        # Safety check: Prevent out-of-bounds or double deletions
-        if entity_id < 0 or entity_id >= group.entities.size():
-            return
+        if entity_id < 0 or entity_id >= group.entities.size(): return
 
         ed = &group.entities[entity_id]
-        if not ed.active:
-            return
+        if not ed.active: return
 
         ed.active = False
-        self.group_instances[group_id][entity_id] = None  # Release Python object to GC
 
-        # Purge the entity from all spatial grids immediately
-        for lvl in range(group.max_level + 1):
-            keys = &ed.grid_keys[lvl]
-            for i in range(keys.size()):
-                self._remove_from_cell(lvl, group_id, keys.at(i), entity_id)
-            keys.clear()
+        dd.group_id = group_id
+        dd.entity_id = entity_id
+        self.pending_deletions.push_back(dd)
 
-        # Add to the recycle pool
-        group.free_ids.push_back(entity_id)
+    cdef void _flush_deletions(self):
+        cdef size_t i, j
+        cdef int g_id, e_id, lvl
+        cdef CollisionGroupStruct * group
+        cdef EntityData * ed
+        cdef vector[uint64_t] * keys
+
+        for i in range(self.pending_deletions.size()):
+            g_id = self.pending_deletions[i].group_id
+            e_id = self.pending_deletions[i].entity_id
+            group = &self.groups[g_id]
+            ed = &group.entities[e_id]
+
+            self.group_instances[g_id][e_id] = None
+
+            for lvl in range(group.max_level + 1):
+                keys = &ed.grid_keys[lvl]
+                for j in range(keys.size()):
+                    self._remove_from_cell(lvl, g_id, keys.at(j), e_id)
+                keys.clear()
+
+            group.free_ids.push_back(e_id)
+
+        self.pending_deletions.clear()
 
     def update_entity(self, int group_id, int entity_id, object pos=None, object size=None):
         cdef EntityData * ed = &self.groups[group_id].entities[entity_id]
@@ -143,7 +153,8 @@ cdef class CollisionManager:
             ed.sx = size.x
             ed.sy = size.y
 
-        self._update_entity_grid(group_id, entity_id)
+        if not self.groups[group_id].is_static:
+            self._update_entity_grid(group_id, entity_id)
 
     cdef void _update_entity_grid(self, int group_id, int entity_id):
         cdef CollisionGroupStruct * group = &self.groups[group_id]
@@ -184,7 +195,6 @@ cdef class CollisionManager:
 
             old_keys = &ed.grid_keys[lvl]
 
-            # Remove from old
             for i in range(old_keys.size()):
                 found = False
                 for j in range(new_keys.size()):
@@ -194,7 +204,6 @@ cdef class CollisionManager:
                 if not found:
                     self._remove_from_cell(lvl, group_id, old_keys.at(i), entity_id)
 
-            # Add to new
             for i in range(new_keys.size()):
                 found = False
                 for j in range(old_keys.size()):
@@ -225,9 +234,13 @@ cdef class CollisionManager:
         self.relation_callbacks.append((cb_a, cb_b))
 
     def calculate_all_collisions(self):
+        self._flush_deletions()
+
         cdef size_t i
         for i in range(self.relations.size()):
             self._calc_relation(self.relations[i], self.relation_callbacks[i])
+
+        self._flush_deletions()
 
     cdef void _calc_relation(self, CollisionRelationStruct rel, tuple callbacks):
         cdef CollisionGroupStruct * ga = &self.groups[rel.group_a_id]
@@ -241,7 +254,7 @@ cdef class CollisionManager:
 
         cdef EntityData * ea
         cdef EntityData * eb
-        cdef double norm_x, norm_y, t, push
+        cdef double norm_x, norm_y, t
         cdef double imp_ax, imp_ay, imp_bx, imp_by
 
         cdef vector[uint64_t] * a_keys
@@ -249,19 +262,23 @@ cdef class CollisionManager:
 
         cdef size_t a_idx, k_idx, b_idx
         cdef int b_id
+        cdef bint a_resolved  # <-- NEW: Tracks if 'ea' has completed its bounce this frame
 
         for a_idx in range(ga.entities.size()):
             ea = &ga.entities[a_idx]
-            if not ea.active:
-                continue
+            if not ea.active: continue
 
+            a_resolved = False
             a_keys = &ea.grid_keys[check_lvl]
 
             for k_idx in range(a_keys.size()):
+                if not ea.active or a_resolved: break
+
                 if self.grids[check_lvl][rel.group_b_id].count(a_keys.at(k_idx)) == 0:
                     continue
 
                 cell_b = &self.grids[check_lvl][rel.group_b_id][a_keys.at(k_idx)]
+
                 for b_idx in range(cell_b.size()):
                     b_id = cell_b.at(b_idx)
 
@@ -272,14 +289,19 @@ cdef class CollisionManager:
                     if not eb.active:
                         continue
 
-                    min_id = ea.id if ea.id < b_id else b_id
-                    max_id = b_id if ea.id < b_id else ea.id
-                    pair_key = (min_id << 32) | max_id
+                    # --- BUG 2 FIX: Correctly hash pair_key based on whether groups match ---
+                    if is_same:
+                        min_id = ea.id if ea.id < b_id else b_id
+                        max_id = b_id if ea.id < b_id else ea.id
+                        pair_key = (<uint64_t> min_id << 32) | <uint64_t> max_id
+                    else:
+                        pair_key = (<uint64_t> ea.id << 32) | <uint64_t> b_id
 
                     if checked_pairs.count(pair_key):
                         continue
                     checked_pairs.insert(pair_key)
 
+                    # Exact Continuous Swept AABB
                     if aabb_aabb_swept(
                             ea.px_o, ea.py_o, ea.px_n, ea.py_n, ea.sx, ea.sy,
                             eb.px_o, eb.py_o, eb.px_n, eb.py_n, eb.sx, eb.sy,
@@ -288,17 +310,10 @@ cdef class CollisionManager:
                         inst_a = self.group_instances[rel.group_a_id][ea.id]
                         inst_b = self.group_instances[rel.group_b_id][eb.id]
 
-                        if t < 0.0:
-                            push = (-t / 2.0) + 0.01
-                            imp_ax = ea.px_o - (norm_x * push)
-                            imp_ay = ea.py_o - (norm_y * push)
-                            imp_bx = eb.px_o + (norm_x * push)
-                            imp_by = eb.py_o + (norm_y * push)
-                        else:
-                            imp_ax = ea.px_o + ((ea.px_n - ea.px_o) * t)
-                            imp_ay = ea.py_o + ((ea.py_n - ea.py_o) * t)
-                            imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
-                            imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
+                        imp_ax = ea.px_o + ((ea.px_n - ea.px_o) * t)
+                        imp_ay = ea.py_o + ((ea.py_n - ea.py_o) * t)
+                        imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
+                        imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
 
                         if callbacks[0] is not None:
                             callbacks[0](inst_a,
@@ -308,3 +323,10 @@ cdef class CollisionManager:
                             callbacks[1](inst_b,
                                          CollisionEvent(rel.group_a_id, inst_a, Vec2().from_cartesian(imp_bx, imp_by),
                                                         Vec2().from_cartesian(-norm_x, -norm_y)))
+
+                        # --- BUG 1 FIX: Entity 'ea' has bounced/stopped. End its sweep for this frame. ---
+                        a_resolved = True
+                        break
+
+                if a_resolved:
+                    break

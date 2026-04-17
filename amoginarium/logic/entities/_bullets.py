@@ -28,8 +28,8 @@ from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
 from ._logic_groups import WallCollider, WallBouncer, Walls
 from ._base_entity import LogicGameEntity
 from ._collision_groups import GridCell, GridSystem
-from ._collisions import collision_manager, collision_group_bullets, collision_group_islands
-
+from ._collisions import collision_manager, collision_group_bullets, collision_group_islands, CollisionEvent
+from ._debug_rendering import DebugRenderingEntity
 
 from ._island import Island
 
@@ -43,8 +43,7 @@ class Bullet(LogicGameEntity):
     __slots__ = [
         "_casing", "_ttl", "_o_ttl", "_initial_velocity", "_explosion_radius",
         "_explosion_damage", "_target_pos", "_visibility_offset", "_start_time",
-        "_base_damage", "_last_pos", "_old_grid_num", "_cells", "_collision",
-        "_collision_id"
+        "_base_damage", "_last_pos", "_collision_id", "_collision", "_debug_rendering"
     ]
 
     _base_damage: float
@@ -52,11 +51,12 @@ class Bullet(LogicGameEntity):
     _weight: float | None = None
     _cid = DummyCIDs.base_bullet
 
-    _old_grid_num: tuple[int, int] | None
     _cells: list[GridCell]
-    _collision: bool | tuple[pg.sprite.Sprite, tuple[int, int]]
 
     _collision_id: int
+    _collision: bool
+
+    _debug_rendering: DebugRenderingEntity | None
 
     def __init__(
             self,
@@ -77,10 +77,6 @@ class Bullet(LogicGameEntity):
     ) -> None:
         if not isinstance(size, Vec2):
             size: Vec2 = Vec2().from_cartesian(size, size)  # type: ignore
-
-        self._old_grid_num = None
-        self._cells = []
-        self._collision = False
 
         self._casing = casing
         self._base_damage = base_damage
@@ -105,7 +101,14 @@ class Bullet(LogicGameEntity):
         runtime_buffer[self.id].param0 = explosion_radius
         self._last_pos = self.position.copy()
 
-        self._collision_id = collision_manager.register_entity(collision_group_bullets, self, self.position, self.size)
+        self._collision_id = collision_manager.register_entity(collision_group_bullets, self,
+                                                               self.position - (self.size / 2), self.size)
+        # self._debug_rendering = DebugRenderingEntity(
+        #     runtime_buffer=runtime_buffer,
+        #     position=self.position - (self.size / 2),
+        #     size=self.size
+        # )
+        self._collision = False
 
         self.remove(Updated)
         if not no_gravity:
@@ -128,29 +131,6 @@ class Bullet(LogicGameEntity):
             type=BaseCommandType.spawn_dummy,
             kwargs=kwargs
         ))
-
-    def __update_collision(self) -> None:
-        new_num = GridSystem.get_num(self.rect.topleft[0], self.rect.topright[0])
-        if new_num != self._old_grid_num:
-            self._old_grid_num = new_num
-            self._cells = GridSystem.get_cells_by_num(*new_num)
-
-        collision_manager.update_entity(collision_group_bullets, self._collision_id, self.position, self.size)
-
-        for group in [Walls]:
-            wall: Island
-            for wall in group.sprites():
-                if pg.sprite.collide_rect(wall, self):
-                    pos = self._collide_with_island(wall)
-                    if pos is not None:
-                        self._collision = wall, pos
-                        return
-
-        self._collision = False
-
-    @property
-    def collision(self) -> bool | tuple[pg.sprite.Sprite, tuple[int, int]]:
-        return self._collision
 
     # region properties
     @property
@@ -251,6 +231,35 @@ class Bullet(LogicGameEntity):
             if result is not None:
                 return result[0]
 
+    def _on_collision(self, event: CollisionEvent) -> None:
+        """
+        Callback fired by the Cython CollisionManager when this bullet hits something.
+        """
+        collision_manager.delete_entity(collision_group_bullets, self._collision_id)
+
+        # 1. Snap the bullet exactly to the point of impact to prevent tunneling visually
+        self.position.x = event.position.x
+        self.position.y = event.position.y
+
+        # 2. Store the collision state so properties like `on_ground` still work
+        self._collision = (event.other_entity, self.position.xy)
+
+        # 3. Deal direct damage to the entity we hit (if it can take damage)
+        other = event.other_entity
+        try:
+            dmg = self.damage
+        except AttributeError:
+            dmg = 0
+
+        if dmg > 0 and hasattr(other, "hit"):
+            other.hit(dmg, hit_by=self)
+
+        # 4. Destroy the bullet (this triggers your explosion/recoil logic in `kill()`)
+        self.kill(killed_by=other)
+
+    def on_collision(self, event: CollisionEvent) -> None:
+        self._on_collision(event)
+
     def update(self, delta):
         self._ttl -= delta
         self._visibility_offset -= delta
@@ -260,56 +269,20 @@ class Bullet(LogicGameEntity):
 
         self._last_pos = self.position.copy()
 
-        self.__update_collision()
-        if self._collision is not False:
-            self.position.xy = self._collision[1]
-
         if any([
             self._ttl <= 0,
-            self.on_ground
+            self.on_ground  # This will be True if on_collision was triggered
         ]):
             if self.kill():
                 return
 
-        super()._update(delta)
+        super().update(delta)
         self.facing.angle = self.velocity.angle
 
-        # check if bullet has hit someone
-        # if self.velocity.length > 2000:
-        #     entities_hit = multi_raycast_mask(
-        #         self,
-        #         CollisionDestroyed.sprites(),
-        #         self._last_pos,
-        #         self.position,
-        #         10
-        #     )
-        #
-        #     for other, pos in entities_hit:
-        #         if not is_related(self, other):
-        #             self.position = pos
-        #
-        #             try:
-        #                 dmg = other.damage
-        #
-        #             except AttributeError:
-        #                 dmg = 0
-        #
-        #             self.hit(dmg, other)
-        #
-        #             with suppress(AttributeError):
-        #                 hp = other.hp
-        #                 if dmg != 0:
-        #                     self.hit_someone(target_hp=hp)
-        #
-        #             # bullet is sprite
-        #             try:
-        #                 dmg = self.damage
-        #
-        #             except AttributeError:
-        #                 dmg = 0
-        #
-        #             with suppress(AttributeError):
-        #                 other.hit(dmg, self)
+        self._collision = False
+        collision_manager.update_entity(collision_group_bullets, self._collision_id,
+                                        self.position - (self.size / 2), self.size)
+        # self._debug_rendering.position = self.position - (self.size / 2)
 
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
         if all([
@@ -380,7 +353,6 @@ class Bullet(LogicGameEntity):
 
         super().kill()
 
-        collision_manager.delete_entity(collision_group_bullets, self._collision_id)
         return True
 
 
@@ -462,20 +434,44 @@ class Grenade(Bullet):
             no_gravity,
             **kwargs
         )
-
         self.in_wall = None
-        self.add(WallBouncer)
+
+    def _on_collision(self, event: CollisionEvent) -> None:
+        self.position.x = event.position.x + self.size.x / 2
+        self.position.y = event.position.y + self.size.y / 2
+
+        self.in_wall = event.normal
+        self._collision = (event.other_entity, self.position.xy)
+
+        vx = self.velocity.x
+        vy = self.velocity.y
+        nx = event.normal.x
+        ny = event.normal.y
+
+        dot_product = (vx * nx) + (vy * ny)
+
+        if dot_product < 0:
+            rx = vx - 2 * dot_product * nx
+            ry = vy - 2 * dot_product * ny
+
+            self.velocity.x = rx * self._bounce_friction
+            self.velocity.y = ry * self._bounce_friction
+
+            if ny < -0.5 and abs(self.velocity.y) < 30:
+                self.velocity.y = 0
+
+        collision_manager.update_entity(
+            collision_group_bullets,
+            self._collision_id,
+            (self.position + event.normal) - self.size / 2,
+            self.size
+        )
 
     def _update(self, delta):
-        if self.in_wall is not None:
-            pi4 = np.pi / 4
-            if 7 * pi4 <= self.in_wall.angle or self.in_wall.angle < pi4:
-                self.acceleration.y = 0
-
+        self.in_wall = None
         super()._update(delta)
 
     def kill(self, killed_by=...):
-        # can only be killed by bullets and ttl
         if killed_by is not ...:
             if issubclass(killed_by.__class__, Bullet):
                 self._ttl = 0

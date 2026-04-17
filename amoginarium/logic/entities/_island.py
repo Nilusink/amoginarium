@@ -25,6 +25,7 @@ from ._base_entity import LogicGameEntity
 from ..entities import Walls, Updated
 from ._collisions import collision_manager, collision_group_islands
 from ._collision_groups import GridSystem, GridCell
+from ._debug_rendering import DebugRenderingEntity
 
 class _PolyMatcher:
     def __init__(self, top, bottom, left, right) -> None:
@@ -156,7 +157,7 @@ class Island(LogicGameEntity):
             )
             collision_manager.register_entity(collision_group_islands, self,
                                               self.position, self.size)
-
+            DebugRenderingEntity(self._runtime_buffer, self.position, self.size)
             return super()._generate_collision_mask()
 
         # Collision rects
@@ -189,11 +190,13 @@ class Island(LogicGameEntity):
             rect_w = width_cells * self._block_size[0]
             rect_h = height_cells * self._block_size[1]
 
+            position = convert_coord((rect_x, rect_y), Vec2)
+            size = convert_coord((rect_w, rect_h), Vec2)
+
             self.collision_rects.append(pg.Rect(rect_x, rect_y, rect_w, rect_h))
             collision_manager.register_entity(collision_group_islands, self,
-                                              convert_coord((rect_x, rect_y), Vec2),
-                                              convert_coord((rect_w, rect_h), Vec2))
-
+                                              position, size)
+            DebugRenderingEntity(self._runtime_buffer, position, size)
         # collide sprite and rect
         entity_mask = pg.Mask(self.size.xy)
         block_mask = self._get_block_mask()

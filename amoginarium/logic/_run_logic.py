@@ -535,10 +535,9 @@ def run_continuous(
         else:
             delta = 0
 
+        collision_manager.calculate_all_collisions()
         # update entities
         last_update_success = lp.update_entities(delta)
-
-        collision_manager.calculate_all_collisions()
 
         # don't update if paused
         if lp.paused:

@@ -364,16 +364,18 @@ class Minigun(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=3,
-            recoil_time=.02,
-            mag_size=80,
-            inaccuracy=.01093606,
+            recoil_time=.00000002,
+            mag_size=80000,
+            inaccuracy=1,
             bullet_speed=1600,
             bullet_damage=2,
             barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             sound_effect=MinigunSound(),
-            bullet_visibility_offset=.058
+            bullet_visibility_offset=.058,
+
+            weapon_recoil_factor=0.01
         )
 
 
@@ -395,7 +397,7 @@ class Ak47(BaseWeapon):
             parent=parent,
             reload_time=2.5,
             recoil_time=.1,
-            mag_size=30,
+            mag_size=300,
             inaccuracy=0.03,
             bullet_size=11,
             bullet_speed=1250,
@@ -404,7 +406,8 @@ class Ak47(BaseWeapon):
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             sound_effect=AK47Sound(),
-            bullet_visibility_offset=.043
+            bullet_visibility_offset=.043,
+            weapon_recoil_factor=0
         )
 
 
@@ -429,7 +432,7 @@ class Sniper(BaseWeapon):
             mag_size=600,
             inaccuracy=.00500002,
             bullet_size=15,
-            bullet_speed=2500,
+            bullet_speed=25000,
             bullet_damage=15,
             barrel_length=0,
             bullet_lifetime=10,
@@ -438,7 +441,7 @@ class Sniper(BaseWeapon):
             sound_effect=SniperSound(),
             bullet_visibility_offset=.04,
             bullet_type=SniperBullet,
-            weapon_recoil_factor=1000,
+            weapon_recoil_factor=0,
         )
 
 
@@ -567,10 +570,10 @@ class HandThrownGrenade(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=5,
-            recoil_time=0.000001,
-            weapon_recoil_factor=.5,
+            recoil_time=0.00001,
+            weapon_recoil_factor=.1,
             mag_size=10000,
-            inaccuracy=.01,
+            inaccuracy=.5,
             bullet_speed=800,
             bullet_damage=0,
             barrel_length=0,
@@ -582,5 +585,5 @@ class HandThrownGrenade(BaseWeapon):
             bullet_explosion_radius=150,
             bullet_visibility_offset=.0,
             bullet_type=Grenade,
-            sound_effect=SoundEffect(("groaning", "hugh_1")).set_volume(.6)
+            sound_effect=SoundEffect(("groaning", "hugh_1")).set_volume(.6),
         )

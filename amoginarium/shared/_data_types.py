@@ -88,6 +88,7 @@ class GraphicsCIDs(Enum):
     Component IDs for other Graphics
     """
     static_text = "static.text"
+    debug_rendering = "debug.rendering"
 
 
 class _CIDRegister:
