@@ -118,7 +118,7 @@ class PlayerDummy(SyncedLRImageEntity):
             Color().from_255(180, 90, 20),
             Color().from_255(0, 255, 0)
         )
-        
+
         # inventories
         self._hotbar: Inventory = Inventory(h_id, self)
         self._inventory: Inventory = Inventory(i_id, self)

@@ -12,15 +12,15 @@ from types import EllipsisType
 from ctypes import Array
 import math as m
 
-from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs, ProcessCommand, BaseCommandType
+from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
 from amoginarium.shared.utility import Vec2, get_default
-from amoginarium import pv
 
 from ._logic_groups import GravityAffected
 from ._base_entity import LogicGameEntity
+from ._bullets import Bullet
 
 
-class AerodynamicEntity(LogicGameEntity):
+class AerodynamicEntity(Bullet):
     __slots__ = (
         "_rudder_angle",
         "_rudder_max_angle",
@@ -32,6 +32,9 @@ class AerodynamicEntity(LogicGameEntity):
     )
 
     _cid = DummyCIDs.aero
+
+    _default_ttl: float = 20
+
     _default_mass: float = 1
     _default_rudder_size: float = 1
     _default_rudder_max_angle: float = 1
@@ -39,15 +42,16 @@ class AerodynamicEntity(LogicGameEntity):
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
         size: Vec2,
-        position: Vec2,
         *,
-        initial_velocity: Vec2 | None = None,
-        parent: LogicGameEntity | None = None,
-        coalition: Coalitions | EllipsisType = ...,
         rudder_size: float | EllipsisType = ...,
         rudder_max_angle: float | EllipsisType = ...,
         mass: float | EllipsisType = ...,
+        **kwargs
     ) -> None:
         self._rudder_size = get_default(rudder_size, self._default_rudder_size)
         self._rudder_max_angle = get_default(rudder_max_angle, self._default_rudder_max_angle)
@@ -59,10 +63,11 @@ class AerodynamicEntity(LogicGameEntity):
         super().__init__(
             runtime_buffer=runtime_buffer,
             size=size,
-            position=position,
+            initial_position=initial_position,
             initial_velocity=initial_velocity,
             parent=parent,
-            coalition=coalition
+            coalition=coalition,
+            **kwargs
         )
         self.facing.angle = self.velocity.angle
         self.add(GravityAffected)
@@ -70,14 +75,6 @@ class AerodynamicEntity(LogicGameEntity):
         # game drag
         self._wh = self.size.x / self.size.y
         self._cd = 0.15 + (self.size.y / self.size.x) * 0.8
-        
-        # spawn graphics entity
-        pv.COQ.put(
-            ProcessCommand(
-                type=BaseCommandType.spawn_dummy,
-                kwargs={"id": self.id, "cid": self.cid()},
-            )
-        )
 
     # region properties
     @property

@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 
+from types import EllipsisType
 import math as m
 
 from amoginarium.shared.utility import Color, Vec2
@@ -20,8 +21,15 @@ from ._synced_entities import SyncedGraphicsEntity
 class AeroDummy(SyncedGraphicsEntity):
     _cid = DummyCIDs.aero
 
-    # def __init__(self, sync_id: int):
-    #     super().__init__(sync_id)
+    def __init__(
+        self,
+        sync_id: int,
+        *,
+        spawn_time: float = 0,
+        visibility_offset: float = 0,
+        target_pos: Vec2 | EllipsisType = ...,
+    ):
+        super().__init__(sync_id)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         # length
