@@ -14,20 +14,19 @@ collision_group_bullets = collision_manager.add_group(max_level=1)
 collision_group_islands = collision_manager.add_group(max_level=0)
 collision_group_turrets = collision_manager.add_group(max_level=0)
 
-collision_manager.create_relation(
-    group_a_id=collision_group_bullets,
-    group_b_id=collision_group_islands,
-    cb_a_on_col=PositionedLogicEntity.on_collision,
-    cb_b_on_col=PositionedLogicEntity.on_collision,
-    cb_a_set_norm=PositionedLogicEntity.set_normals,
-    cb_b_set_norm=PositionedLogicEntity.set_normals
-)
+on_collision = PositionedLogicEntity.on_collision
+set_normals = PositionedLogicEntity.set_normals
 
-collision_manager.create_relation(
-    group_a_id=collision_group_players,
-    group_b_id=collision_group_islands,
-    cb_a_on_col=PositionedLogicEntity.on_collision,
-    cb_b_on_col=PositionedLogicEntity.on_collision,
-    cb_a_set_norm=PositionedLogicEntity.set_normals,
-    cb_b_set_norm=PositionedLogicEntity.set_normals
-)
+def create_default_relation(group_a, group_b):
+    collision_manager.create_relation(
+        group_a_id=group_a,
+        group_b_id=group_b,
+        cb_a_on_col=on_collision,
+        cb_b_on_col=on_collision,
+        cb_a_set_norm=set_normals,
+        cb_b_set_norm=set_normals
+    )
+
+create_default_relation(collision_group_bullets, collision_group_islands)  # Bullets - Islands
+create_default_relation(collision_group_players, collision_group_islands)  # Players - Islands
+create_default_relation(collision_group_players, collision_group_bullets)  # Players - Bullets

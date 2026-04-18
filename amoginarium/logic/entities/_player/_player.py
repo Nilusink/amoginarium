@@ -27,7 +27,11 @@ from .._groups import GravityAffected, FrictionXAffected, Updated, Walls
 from .._groups import Players
 from .._items import Shield, HealingPotion, JetBag, Inventory, Item
 from .._base_entities import LogicGameEntity
-from .._collision.collision_relations import collision_group_players
+from .._collision.collision_relations import collision_group_players, collision_group_islands, collision_group_bullets
+
+if tp.TYPE_CHECKING:
+    from .._bullets import Bullet
+    from .._world import Island
 
 
 class Player(LogicGameEntity):
@@ -56,7 +60,6 @@ class Player(LogicGameEntity):
         self._hp = self._max_hp
         self._controller = controller
         self._on_ground = False
-        self._collision = False
         self._alive = True
 
         if not size:
@@ -213,7 +216,7 @@ class Player(LogicGameEntity):
             return self._hotbar.get_count(self._current_weapon) > 0
         return False
 
-    def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
+    def hit(self, damage: float, hit_by: LogicGameEntity = ...) -> None:
         self._hp -= damage
 
         if damage != 0:
@@ -235,9 +238,7 @@ class Player(LogicGameEntity):
             self._hp = new
             return True
 
-    def _on_collision(self, event: CollisionEvent) -> None:
-        self._collision = (event.other_entity, self.position.xy)
-
+    def __on_collision_island(self, event: CollisionEvent["Island"]) -> None:
         if abs(event.normal.x) > 0.5:
             self.position.x = event.position.x
 
@@ -255,8 +256,20 @@ class Player(LogicGameEntity):
         if abs(event.normal.x) > 0.5 and abs(self.velocity.x) > 12:
             self._controller.feedback_collide()
 
+    def __on_collision_bullet(self, event: CollisionEvent["Bullet"]) -> None:
+        dmg = event.other_entity.damage
+        if dmg > 0 and event.other_entity.parent != self:
+            self.hit(dmg, hit_by=event.other_entity)
+
+    def _on_collision(self, event: CollisionEvent[tp.Union["Bullet", "Island"]]) -> None:
+        if event.group_id == collision_group_islands:
+            self.__on_collision_island(event)
+        elif event.group_id == collision_group_bullets:
+            self.__on_collision_bullet(event)
+
     def _update(self, delta):
         self._on_ground = False
+
         for normals in self.active_normals.values():
             for n in normals:
                 if n.y < -0.5:
@@ -416,3 +429,39 @@ class Player(LogicGameEntity):
             self.position = pos.copy()
 
         super()._update(0)
+
+    def add_velocity(self, value: Vec2) -> None:
+        """
+        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        :param value: 2D velocity to add
+        """
+        x = value.x
+        y = value.y
+
+        if collision_group_islands in self.active_normals.keys():
+            for n in self.active_normals[collision_group_islands]:
+                dot = (x * n.x) + (y * n.y)
+                if dot < 0:
+                    x -= dot * n.x
+                    y -= dot * n.y
+
+        self._velocity_to_add.x += x
+        self._velocity_to_add.y += y
+
+    def add_acceleration(self, value: Vec2) -> None:
+        """
+        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        :param value: 2D acceleration to add
+        """
+        x = value.x
+        y = value.y
+
+        if collision_group_islands in self.active_normals.keys():
+            for n in self.active_normals[collision_group_islands]:
+                dot = (x * n.x) + (y * n.y)
+                if dot < 0:
+                    x -= dot * n.x
+                    y -= dot * n.y
+
+        self._acceleration_to_add.x += x
+        self._acceleration_to_add.y += y

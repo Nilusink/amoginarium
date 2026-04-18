@@ -375,21 +375,24 @@ class Bullet(LogicGameEntity):
         """
         Callback fired by the Cython CollisionManager when this bullet hits something.
         """
+        if event.other_entity == self.parent:
+            return
+
         self.position.x = event.position.x
         self.position.y = event.position.y
 
         self._collision = (event.other_entity, self.position.xy)  # type: ignore
 
-        other = event.other_entity
-        try:
-            dmg = self.damage
-        except AttributeError:
-            dmg = 0
+        # other = event.other_entity
+        # try:
+        #     dmg = self.damage
+        # except AttributeError:
+        #     dmg = 0
+        #
+        # if dmg > 0 and hasattr(other, "hit"):
+        #     other.hit(dmg, hit_by=self)
 
-        if dmg > 0 and hasattr(other, "hit"):
-            other.hit(dmg, hit_by=self)
-
-        self.kill(killed_by=other)
+        self.kill(killed_by=event.other_entity)
 
     def _update(self, delta):
         self._time_to_life -= delta

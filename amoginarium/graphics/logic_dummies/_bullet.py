@@ -154,7 +154,7 @@ class BulletDummy(SyncedImageEntity):
             else:
                 self._kill_next -= 1
         else:
-            self._kill_next = 5
+            self._kill_next = 1
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         if self._visibility_offset > self._lifetime:
