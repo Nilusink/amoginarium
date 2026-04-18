@@ -15,9 +15,10 @@ from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared.utility import Vec2
 from amoginarium.shared import DummyCIDs
+from .. import GravityAffected
 
+from .._collision.collision_manager import collision_manager
 from .._base_entities import LogicGameEntity
-
 from ._base_bullet import Bullet
 
 
@@ -98,6 +99,19 @@ class Grenade(Bullet):
                 self.velocity.y = 0
 
     def _update(self, delta: float):
+        for normals in self.active_normals.values():
+            for n in normals:
+                if n.y < -0.5:
+                    self.acceleration.y = 0
+                    if self.velocity.y > 0:
+                        self.velocity.y = 0
+                    self.velocity.x *= 0.98  # slide friction
+                elif n.y > 0.5:
+                    if self.velocity.y < 0:
+                        self.velocity.y = 0
+                if abs(n.x) > 0.5 and self.velocity.x * n.x < 0:
+                    self.velocity.x = 0
+
         super()._update(delta)
 
     def kill(self, killed_by: tp.Any = ...):

@@ -6,7 +6,7 @@ from libc.stdint cimport uint64_t
 cdef struct EntityData:
     int id
     bint active
-    bint is_centered  # <-- NEW: Remembers if this entity uses center coordinates
+    bint is_centered
     double px_o, py_o, px_n, py_n
     double sx, sy
 
@@ -16,6 +16,14 @@ cdef struct EntityData:
     vector[int] bound_max_y
 
     vector[vector[uint64_t]] grid_keys
+
+    vector[int] col_groups
+    vector[double] col_nx
+    vector[double] col_ny
+
+    vector[int] prev_col_groups
+    vector[double] prev_col_nx
+    vector[double] prev_col_ny
 
 cdef struct CollisionGroupStruct:
     int id
@@ -47,4 +55,5 @@ cdef class CollisionManager:
     cdef void _update_entity_grid(self, int group_id, int entity_id)
     cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id)
     cdef void _calc_relation(self, CollisionRelationStruct rel, tuple callbacks)
+    cdef void _dispatch_set_normals(self)
     cdef void _flush_deletions(self)

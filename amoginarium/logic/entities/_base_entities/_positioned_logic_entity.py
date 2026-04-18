@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from types import EllipsisType
 from ctypes import Array
+from icecream import ic
 import typing as tp
 
 from amoginarium.shared.collision_detection import CollisionEvent
@@ -27,7 +28,7 @@ class PositionedLogicEntity(BaseLogicEntity):
     """
     _cid: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
 
-    __slots__ = ("position", "size", "_has_collision", "_collision_id", "_centered")
+    __slots__ = ("position", "size", "_has_collision", "_collision_id", "_centered", "active_normals")
 
     position: Vec2  # public / no property for faster access
     size: Vec2  # public / no property for faster access
@@ -36,6 +37,8 @@ class PositionedLogicEntity(BaseLogicEntity):
     _collision_group: tp.ClassVar[int | None] = None
     _has_collision: bool
     _collision_id: int | None
+
+    active_normals: dict[int, list[Vec2]]
 
     def __init__(
             self,
@@ -62,6 +65,7 @@ class PositionedLogicEntity(BaseLogicEntity):
 
         self._centered = centered
         self._has_collision = has_collision
+        self.active_normals = {}
 
         if self._collision_group is not None and self._has_collision:
             self._collision_id = collision_manager.register_entity(
@@ -101,6 +105,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         Calls _on_collision and updates collision entity
         :param event: Event details
         """
+        # ic("COLLISION:", self, event)
         self._on_collision(event)
 
         if self._collision_id is not None:
@@ -112,6 +117,16 @@ class PositionedLogicEntity(BaseLogicEntity):
                 centered=self._centered,
                 shift_history=False
             )
+
+    @tp.final
+    def set_normals(self, group_id: int, normals: list[Vec2]) -> None:
+        """
+        Called when normal configuration updates
+        :param group_id: Event group id
+        :param normals: list of updated normals
+        """
+        # ic("SET NORMALS:", self, group_id, normals)
+        self.active_normals[group_id] = normals
 
     # endregion
 

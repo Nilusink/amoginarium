@@ -238,34 +238,38 @@ class Player(LogicGameEntity):
     def _on_collision(self, event: CollisionEvent) -> None:
         self._collision = (event.other_entity, self.position.xy)
 
-        # --- HORIZONTAL (Walls) ---
         if abs(event.normal.x) > 0.5:
             self.position.x = event.position.x
 
-            if abs(self.velocity.x) > 12:
-                self._controller.feedback_collide()
-            self.velocity.x = 0
-
-        # --- VERTICAL (Floors/Ceilings) ---
         if abs(event.normal.y) > 0.5:
             self.position.y = event.position.y
-
-            # Hit Floor
             if event.normal.y < -0.5:
-                self._on_ground = True
                 if self.velocity.y > 3:
                     self._controller.feedback_collide()
                 if self.velocity.y > 450:
                     self._groaning.play()
-
-            # Hit Ceiling
             elif event.normal.y > 0.5:
                 if self.velocity.y < -3:
                     self._controller.feedback_collide()
 
-            self.velocity.y = 0
+        if abs(event.normal.x) > 0.5 and abs(self.velocity.x) > 12:
+            self._controller.feedback_collide()
 
     def _update(self, delta):
+        self._on_ground = False
+        for normals in self.active_normals.values():
+            for n in normals:
+                if n.y < -0.5:
+                    self._on_ground = True
+                    self.acceleration.y = 0
+                    if self.velocity.y > 0:
+                        self.velocity.y = 0
+                elif n.y > 0.5:
+                    if self.velocity.y < 0:
+                        self.velocity.y = 0
+                if abs(n.x) > 0.5 and self.velocity.x * n.x < 0:
+                    self.velocity.x = 0
+
         # update reloads
         for hover_slot in self._hotbar:
             if hover_slot.count > 0:
@@ -369,10 +373,6 @@ class Player(LogicGameEntity):
                 self._set_bit("flags", 15, self._in_inventory)
         else:
             self._inventory_pressed = False
-
-        # Reset state before physics update
-        self._on_ground = False
-        self._collision = False
 
         super()._update(delta)
 
