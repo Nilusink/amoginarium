@@ -42,6 +42,13 @@ class ExactoBullet(AerodynamicEntity):
     _default_rudder_size = 2
     _default_rudder_max_angle = m.pi
 
+    # _default_cluster_depth = 1
+    # _default_cluster_amount = 5
+    # _default_cluster_spread = 2.5
+    # _default_cluster_fuze_ttl_mult = 0
+    # _default_cluster_fuze_dist = 1000
+    # _default_cluster_step_inertia = 500
+
     _default_guidance_delay: float = .01
     
     _max_alpha: float = .1
@@ -57,6 +64,7 @@ class ExactoBullet(AerodynamicEntity):
         guidance_delay: float | EllipsisType = ...,
         **kwargs,
     ) -> None:
+        kwargs.pop("size", ...)
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
@@ -67,6 +75,7 @@ class ExactoBullet(AerodynamicEntity):
             **kwargs
         )
         self._target_callback = target_callback
+        self._cluster_args = {"target_callback": target_callback}
         self._guidance_delay = get_default(guidance_delay, self._default_guidance_delay)
 
     def _update_rudder(self, delta: float) -> None:
@@ -74,9 +83,9 @@ class ExactoBullet(AerodynamicEntity):
             self._guidance_delay -= delta
             return
 
-        target = self._target_callback()
+        self._target_pos = self._target_callback()
 
-        delta_pos = self.position - target
+        delta_pos = self.position - self._target_pos
         delta_angle = self.velocity.angle - delta_pos.angle
 
         # normalize to +/- m.pi

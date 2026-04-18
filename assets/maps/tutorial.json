@@ -120,7 +120,7 @@
     "entities": [
         {
             "type": "turret.static.exacto_sniper",
-            "pos": [2000, 700]
+            "pos": [2500, 700]
         },
         {
             "type": "static.text",

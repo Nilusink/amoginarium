@@ -316,7 +316,7 @@ class JetBag(BaseItem):
     _cid = ItemCIDs.jetbag
     _reload_per_second: float = .2
     _acceleration = 19
-    _max_uses: int = 5
+    _max_uses: int = 500
 
     def __init__(
         self,
