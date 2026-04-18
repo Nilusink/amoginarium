@@ -10,3 +10,5 @@ from ._functionality_groups import GravityAffected, FrictionXAffected
 from ._entity_type_groups import Bullets, Walls, Players
 from ._base_group import BaseGroup
 from ._updated import Updated
+
+from ._base_group import WallCollider, WallBouncer, CollisionDestroyed

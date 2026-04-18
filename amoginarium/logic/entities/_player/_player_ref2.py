@@ -14,19 +14,22 @@ from icecream import ic
 import pygame as pg
 import typing as tp
 
-from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
-from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
-from amoginarium.shared.utility import Vec2, convert_coord
-from amoginarium import pv
+from ...shared import Coalitions, ItemLike, ItemSlot, base_entity_t
+from ...shared import ProcessCommand, BaseCommandType, DummyCIDs
+from ...shared.utility import Vec2, convert_coord
+from ... import pv
 
-from ...audio import DeathSound, SoundEffect, OnHoverButtonSound
-from ...graphics_dummies import Controller
-from .._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47, RailGun
-from .._groups import GravityAffected, FrictionXAffected, Updated, Walls
-from .._groups import Players  # CollisionDestroyed, WallCollider
-from .._items import Shield, HealingPotion, JetBag, Inventory, Item
-from .._base_entities import LogicGameEntity
-from .._world import Island
+from ..audio import DeathSound, SoundEffect, OnHoverButtonSound
+from ..graphics_dummies import Controller
+from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
+from ._logic_groups import GravityAffected, FrictionXAffected, Updated, Walls
+from ._logic_groups import CollisionDestroyed, WallCollider, Players
+from ._items import Shield, HealingPotion, JetBag
+from ._base_entity import LogicGameEntity
+from ._charged_weapons import RailGun
+from ._inventory import Inventory
+from ._island import Island
+from ._base_item import Item
 
 
 PIXEL_MASK = pg.mask.Mask((1, 1), True)
@@ -119,10 +122,11 @@ class Player(LogicGameEntity):
 
         self._last_hit = perf_counter()
 
-        # wallcollider, collisiondesytryed
         self.add(
+            CollisionDestroyed,
             FrictionXAffected,
             GravityAffected,
+            WallCollider,
             Players
         )
 
@@ -298,7 +302,7 @@ class Player(LogicGameEntity):
 
         for _ in range(steps):
             self.position.x += step_x
-            # self.update_rect()
+            self.update_rect()
             on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
 
             if on_right and step_x > 0:
@@ -316,7 +320,7 @@ class Player(LogicGameEntity):
                     self._controller.feedback_collide()
 
             self.position.y += step_y
-            # self.update_rect()
+            self.update_rect()
             on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
 
             if on_top and step_y > 0:
@@ -364,119 +368,119 @@ class Player(LogicGameEntity):
         # jump
         if self._controller.jump and self.on_ground:
             self.velocity.y = -400
-        #
-        # # wall collision
-        # total_dx = self.velocity.x * delta
-        # total_dy = self.velocity.y * delta
-        #
-        # aabb_box = pg.Rect(
-        #     self.rect.left + min(0, total_dx),
-        #     self.rect.top + min(0, total_dy),
-        #     self.rect.width + abs(total_dx),
-        #     self.rect.height + abs(total_dy)
-        # )
-        #
-        # target_islands = []
-        # for wall in Walls.sprites():
-        #     wall: Island
-        #     if aabb_box.colliderect(wall.rect):
-        #         target_islands.append(wall)
-        #
-        # self._on_ground = False
-        # wall_rider: Island = ...
-        #
-        # if not target_islands:
-        #     self.position.x += total_dx
-        #     self.position.y += total_dy
-        #     self.update_rect()
-        #
-        # else:
-        #     distance = (total_dx**2 + total_dy**2) ** 0.5
-        #     safe_step_size = self.size.y / 4.0
-        #     steps = int(distance // safe_step_size) + 1
-        #
-        #     step_x = total_dx / steps
-        #     step_y = total_dy / steps
-        #
-        #     for _ in range(steps):
-        #         # Move X
-        #         if step_x != 0:
-        #             self.position.x += step_x
-        #             self.update_rect()
-        #
-        #             for wall in target_islands:
-        #                 if pg.sprite.collide_rect(self, wall):
-        #                     on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
-        #
-        #                     if on_right or on_left:
-        #                         if step_x > 0 and on_right:
-        #                             self.position.x -= step_x
-        #                             while True:
-        #                                 self.position.x += 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[1]:
-        #                                     self.position.x -= 1
-        #                                     self.update_rect()
-        #                                     break
-        #                             self.velocity.x = 0
-        #                             step_x = 0
-        #
-        #                         elif step_x < 0 and on_left:
-        #                             self.position.x -= step_x
-        #                             while True:
-        #                                 self.position.x -= 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[3]:
-        #                                     self.position.x += 1
-        #                                     self.update_rect()
-        #                                     break
-        #                             self.velocity.x = 0
-        #                             step_x = 0
-        #                         break
-        #         if step_y != 0:
-        #             self.position.y += step_y
-        #             self.update_rect()
-        #
-        #             for wall in target_islands:
-        #                 if pg.sprite.collide_rect(self, wall):
-        #                     on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
-        #
-        #                     if on_top or on_bottom:
-        #                         wall_rider = wall
-        #                         if step_y > 0 and on_top:
-        #                             self.position.y -= step_y
-        #                             while True:
-        #                                 self.position.y += 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[0]:
-        #                                     self.position.y -= 1
-        #                                     self.update_rect()
-        #                                     break
-        #
-        #                             if self.velocity.y > 3:
-        #                                 self._controller.feedback_collide()
-        #                             if self.velocity.y > 450:
-        #                                 self._groaning.play()
-        #
-        #                             self.velocity.y = 0
-        #                             step_y = 0
-        #                             self._on_ground = True
-        #
-        #                         elif step_y < 0 and on_bottom:
-        #                             self.position.y -= step_y
-        #                             while True:
-        #                                 self.position.y -= 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[2]:
-        #                                     self.position.y += 1
-        #                                     self.update_rect()
-        #                                     break
-        #
-        #                             if self.velocity.y < -3:
-        #                                 self._controller.feedback_collide()
-        #                             self.velocity.y = 0
-        #                             step_y = 0
-        #                         break
+
+        # wall collision
+        total_dx = self.velocity.x * delta
+        total_dy = self.velocity.y * delta
+
+        aabb_box = pg.Rect(
+            self.rect.left + min(0, total_dx),
+            self.rect.top + min(0, total_dy),
+            self.rect.width + abs(total_dx),
+            self.rect.height + abs(total_dy)
+        )
+
+        target_islands = []
+        for wall in Walls.sprites():
+            wall: Island
+            if aabb_box.colliderect(wall.rect):
+                target_islands.append(wall)
+
+        self._on_ground = False
+        wall_rider: Island = ...
+
+        if not target_islands:
+            self.position.x += total_dx
+            self.position.y += total_dy
+            self.update_rect()
+
+        else:
+            distance = (total_dx**2 + total_dy**2) ** 0.5
+            safe_step_size = self.size.y / 4.0
+            steps = int(distance // safe_step_size) + 1
+
+            step_x = total_dx / steps
+            step_y = total_dy / steps
+
+            for _ in range(steps):
+                # Move X
+                if step_x != 0:
+                    self.position.x += step_x
+                    self.update_rect()
+
+                    for wall in target_islands:
+                        if pg.sprite.collide_rect(self, wall):
+                            on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
+
+                            if on_right or on_left:
+                                if step_x > 0 and on_right:
+                                    self.position.x -= step_x
+                                    while True:
+                                        self.position.x += 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[1]:
+                                            self.position.x -= 1
+                                            self.update_rect()
+                                            break
+                                    self.velocity.x = 0
+                                    step_x = 0
+
+                                elif step_x < 0 and on_left:
+                                    self.position.x -= step_x
+                                    while True:
+                                        self.position.x -= 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[3]:
+                                            self.position.x += 1
+                                            self.update_rect()
+                                            break
+                                    self.velocity.x = 0
+                                    step_x = 0
+                                break
+                if step_y != 0:
+                    self.position.y += step_y
+                    self.update_rect()
+
+                    for wall in target_islands:
+                        if pg.sprite.collide_rect(self, wall):
+                            on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
+
+                            if on_top or on_bottom:
+                                wall_rider = wall
+                                if step_y > 0 and on_top:
+                                    self.position.y -= step_y
+                                    while True:
+                                        self.position.y += 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[0]:
+                                            self.position.y -= 1
+                                            self.update_rect()
+                                            break
+
+                                    if self.velocity.y > 3:
+                                        self._controller.feedback_collide()
+                                    if self.velocity.y > 450:
+                                        self._groaning.play()
+
+                                    self.velocity.y = 0
+                                    step_y = 0
+                                    self._on_ground = True
+
+                                elif step_y < 0 and on_bottom:
+                                    self.position.y -= step_y
+                                    while True:
+                                        self.position.y -= 1
+                                        self.update_rect()
+                                        if self.collide_wall(wall)[2]:
+                                            self.position.y += 1
+                                            self.update_rect()
+                                            break
+
+                                    if self.velocity.y < -3:
+                                        self._controller.feedback_collide()
+                                    self.velocity.y = 0
+                                    step_y = 0
+                                break
 
 
         # reload
@@ -615,9 +619,9 @@ class Player(LogicGameEntity):
             self._inventory_pressed = False
 
         # handle moving platforms/walls
-        # if wall_rider is not ...:
-        #     wall_rider.player_contact(self, delta)
-        #     self.velocity += wall_rider.velocity
+        if wall_rider is not ...:
+            wall_rider.player_contact(self, delta)
+            self.velocity += wall_rider.velocity
 
         # PREVENT PARENT DOUBLE MOVEMENT
         perfect_position = self.position.copy()
@@ -625,10 +629,10 @@ class Player(LogicGameEntity):
         super()._update(delta)
 
         self.position = perfect_position
-        # self.update_rect()
+        self.update_rect()
 
-        # if wall_rider is not ...:
-        #     self.velocity -= wall_rider.velocity
+        if wall_rider is not ...:
+            self.velocity -= wall_rider.velocity
 
         if self.item:
             self.item.facing.angle = self.facing.angle
@@ -638,13 +642,13 @@ class Player(LogicGameEntity):
         if self.position.y > 2000:
             self.kill()
 
-    # def update_rect(self) -> None:
-    #     self.rect = pg.Rect(
-    #         self.position.x - self.size.x / 4,
-    #         self.position.y - self.size.y / 2,
-    #         self.size.x / 2,
-    #         self.size.y
-    #     )
+    def update_rect(self) -> None:
+        self.rect = pg.Rect(
+            self.position.x - self.size.x / 4,
+            self.position.y - self.size.y / 2,
+            self.size.x / 2,
+            self.size.y
+        )
 
     def kill(self, killed_by=...) -> None:
         """
@@ -673,10 +677,10 @@ class Player(LogicGameEntity):
 
         # re-add player to all groups
         self.add(
-            # CollisionDestroyed,
+            CollisionDestroyed,
             FrictionXAffected,
             GravityAffected,
-            # WallCollider,
+            WallCollider,
             Players,
             Updated,
         )

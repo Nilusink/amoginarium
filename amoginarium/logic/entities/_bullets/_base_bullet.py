@@ -244,8 +244,8 @@ class Bullet(LogicGameEntity):
         self._collision = False
 
         self.remove(Updated)
-        # if not no_gravity:
-        #     self.add(GravityAffected)
+        if not no_gravity:
+            self.add(GravityAffected)
 
         if not casing:
             self.add(Bullets)  # Todo - mytodo: CollisionDestroyedTodo
