@@ -24,9 +24,11 @@ from ...audio import LargeExplosion, DistantPop
 from .._groups import Bullets, Updated, GravityAffected
 from .._base_entities import LogicGameEntity
 from amoginarium.shared.collision_detection import CollisionEvent
-from .._collision.collision_relations import collision_group_bullets
+from .._collision.collision_relations import collision_group_bullets, collision_group_islands
 
-from .._world import Island
+if tp.TYPE_CHECKING:
+    from .._world import Island
+
 
 SQR2: np.float64 = np.sqrt(2)
 
@@ -39,7 +41,7 @@ class Bullet(LogicGameEntity):
     # region ClassVars
     _cid: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
 
-    _hp: tp.ClassVar[int] = -1
+    _default_hp: tp.ClassVar[int] = -1
     _weight: tp.ClassVar[float | None] = None
 
     _default_base_damage: tp.ClassVar[float] = 1
@@ -67,8 +69,7 @@ class Bullet(LogicGameEntity):
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cluster_fuze_ttl_mult",
         "_coll_sibling", "_cluster_step_explosion", "_cluster_size_mult", "_cluster_last_step_ttl",
-        "_cluster_fuze_dist", "_cluster_bullet_type", "_cluster_step_inertia",
-        "_collision"
+        "_cluster_fuze_dist", "_cluster_bullet_type", "_cluster_step_inertia", "_hp"
     )
 
     # region InstanceVars
@@ -100,8 +101,9 @@ class Bullet(LogicGameEntity):
     _target_pos: Vec2 | EllipsisType
     _o_dist: float
 
-    _collision: bool
     _collision_group = collision_group_bullets
+
+    _hp: int
 
     # endregion
 
@@ -163,6 +165,8 @@ class Bullet(LogicGameEntity):
         :param invincibility_offset: invincibility offset
         """
         self._start_time = perf_counter()
+
+        self._hp = self._default_hp
 
         size = get_default(size, self._default_size)
         if not isinstance(size, Vec2):
@@ -241,8 +245,6 @@ class Bullet(LogicGameEntity):
 
         self._last_pos = self.position.copy()
 
-        self._collision = False
-
         self.remove(Updated)
         if not no_gravity:
             self.add(GravityAffected)
@@ -264,10 +266,6 @@ class Bullet(LogicGameEntity):
         pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs))
 
     # region Properties
-    @property
-    def on_ground(self) -> bool:  # todo - remove
-        return self._collision is not False
-
     @property
     def damage(self) -> float:
         """:return: bullet damage"""
@@ -358,41 +356,26 @@ class Bullet(LogicGameEntity):
         """bullet has hit someone else"""
         self.kill()
 
-    def _collide_with_island(self, island: Island) -> tuple[float, float] | None:
-        for island_rect in island.collision_rects:
-            result = collision_detection_aabb_aabb_minkowski_raycast(
-                self_size=(0, 0),
-                self_position_old=self.position.xy,
-                self_position_new=self._last_pos.xy,
-                other_size=island_rect.size,
-                other_position_old=(island_rect.x, island_rect.y),
-                other_position_new=(island_rect.x, island_rect.y),
-            )
-            if result is not None:
-                return result[0]
-
-    def _on_collision(self, event: CollisionEvent) -> None:
-        """
-        Callback fired by the Cython CollisionManager when this bullet hits something.
-        """
+    def __on_collision_island(self, event: CollisionEvent["Island"]) -> None:
         if event.other_entity == self.parent:
             return
 
         self.position.x = event.position.x
         self.position.y = event.position.y
 
-        self._collision = (event.other_entity, self.position.xy)  # type: ignore
-
-        # other = event.other_entity
-        # try:
-        #     dmg = self.damage
-        # except AttributeError:
-        #     dmg = 0
-        #
-        # if dmg > 0 and hasattr(other, "hit"):
-        #     other.hit(dmg, hit_by=self)
-
         self.kill(killed_by=event.other_entity)
+
+    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
+        if event.other_entity.parent == self.parent:
+            return
+
+        self.hit(event.other_entity.damage, event.other_entity)
+
+    def _on_collision(self, event: CollisionEvent) -> None:
+        if event.group_id == collision_group_islands:
+            self.__on_collision_island(event)
+        elif event.group_id == collision_group_bullets:
+            self.__on_collision_bullet(event)
 
     def _update(self, delta):
         self._time_to_life -= delta
@@ -400,8 +383,7 @@ class Bullet(LogicGameEntity):
         self._invincibility_offset -= delta
 
         if any([
-            self._time_to_life <= 0,
-            self.on_ground  # This will be True if on_collision was triggered
+            self._time_to_life <= 0
         ]):
             if self.kill():
                 return
@@ -413,8 +395,6 @@ class Bullet(LogicGameEntity):
 
         super()._update(delta)
         self.facing.angle = self.velocity.angle
-
-        self._collision = False
 
         # check if cluster detonate
         if self._cluster_depth > 0:

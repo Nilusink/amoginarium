@@ -18,7 +18,7 @@ from ._base_bullet import Bullet
 class MortarShell(Bullet):
     _cid = DummyCIDs.mortar_bullet
 
-    _hp = 0.5
+    _default_hp = 0.5
     _weight = 8
 
     _default_base_damage = 40

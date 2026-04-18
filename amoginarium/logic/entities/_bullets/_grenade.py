@@ -18,8 +18,13 @@ from amoginarium.shared import DummyCIDs
 from .. import GravityAffected
 
 from .._collision.collision_manager import collision_manager
+from .._collision.collision_relations import collision_group_grenades, collision_group_islands, collision_group_bullets, collision_group_players
 from .._base_entities import LogicGameEntity
 from ._base_bullet import Bullet
+
+if tp.TYPE_CHECKING:
+    from .._world import Island
+    from .._player import Player
 
 
 class _GrenadeShrapnel(Bullet):
@@ -34,7 +39,7 @@ class _GrenadeShrapnel(Bullet):
 class Grenade(Bullet):
     # region ClassVars
     _cid = DummyCIDs.grenade
-    _hp = 0.05
+    _default_hp = 0.05
 
     _default_size = 32
     _default_base_damage = 0
@@ -53,6 +58,8 @@ class Grenade(Bullet):
     _default_cluster_size_mult = .1
 
     _bounce_friction: tp.ClassVar[float] = 0.7
+
+    _collision_group = collision_group_grenades
     # endregion
 
     __slots__ = ()
@@ -75,11 +82,9 @@ class Grenade(Bullet):
             **kwargs,
         )
 
-    def _on_collision(self, event: CollisionEvent) -> None:
+    def __on_collision_island(self, event: CollisionEvent["island"]) -> None:
         self.position.x = event.position.x
         self.position.y = event.position.y
-
-        self._collision = (event.other_entity, self.position.xy)
 
         vx = self.velocity.x
         vy = self.velocity.y
@@ -98,9 +103,25 @@ class Grenade(Bullet):
             if ny < -0.5 and abs(self.velocity.y) < 30:
                 self.velocity.y = 0
 
+    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
+        self.hit(event.other_entity.damage, event.other_entity)
+
+    def __on_collision_player(self, event: CollisionEvent["Player"]) -> None:
+        self.add_velocity(event.other_entity.velocity)
+        if self._lifetime > 0.5:
+            self.add_velocity(Vec2().from_cartesian(0, -200))
+
+    def _on_collision(self, event: CollisionEvent) -> None:
+        if event.group_id == collision_group_islands:
+            self.__on_collision_island(event)
+        elif event.group_id == collision_group_bullets:
+            self.__on_collision_bullet(event)
+        elif event.group_id == collision_group_players:
+            self.__on_collision_player(event)
+
     def _update(self, delta: float):
-        for normals in self.active_normals.values():
-            for n in normals:
+        if collision_group_islands in self.active_normals.keys():
+            for n in self.active_normals[collision_group_islands]:
                 if n.y < -0.5:
                     self.acceleration.y = 0
                     if self.velocity.y > 0:
@@ -123,3 +144,39 @@ class Grenade(Bullet):
             return False
 
         return super().kill(killed_by)
+
+    def add_velocity(self, value: Vec2) -> None:
+        """
+        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        :param value: 2D velocity to add
+        """
+        x = value.x
+        y = value.y
+
+        if collision_group_islands in self.active_normals.keys():
+            for n in self.active_normals[collision_group_islands]:
+                dot = (x * n.x) + (y * n.y)
+                if dot < 0:
+                    x -= dot * n.x
+                    y -= dot * n.y
+
+        self._velocity_to_add.x += x
+        self._velocity_to_add.y += y
+
+    def add_acceleration(self, value: Vec2) -> None:
+        """
+        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        :param value: 2D acceleration to add
+        """
+        x = value.x
+        y = value.y
+
+        if collision_group_islands in self.active_normals.keys():
+            for n in self.active_normals[collision_group_islands]:
+                dot = (x * n.x) + (y * n.y)
+                if dot < 0:
+                    x -= dot * n.x
+                    y -= dot * n.y
+
+        self._acceleration_to_add.x += x
+        self._acceleration_to_add.y += y

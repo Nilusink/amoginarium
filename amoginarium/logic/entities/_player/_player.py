@@ -270,8 +270,8 @@ class Player(LogicGameEntity):
     def _update(self, delta):
         self._on_ground = False
 
-        for normals in self.active_normals.values():
-            for n in normals:
+        if collision_group_islands in self.active_normals.keys():
+            for n in self.active_normals[collision_group_islands]:
                 if n.y < -0.5:
                     self._on_ground = True
                     self.acceleration.y = 0
