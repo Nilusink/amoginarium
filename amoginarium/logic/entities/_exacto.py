@@ -18,6 +18,7 @@ from amoginarium.shared.utility import Vec2, coord_t, multi_raycast_mask, normal
 from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
 from amoginarium.shared import TurretCIDs
+from shared import VisibleGameEntityLike
 
 from ..audio import Sniper as SniperSound
 from ._aerodynamic_entity import AerodynamicEntity
@@ -209,6 +210,24 @@ class ExactoTurret(BaseTurret):
 
         return Vec2()
 
+    def _get_firing_solution(
+            self,
+            target: VisibleGameEntityLike,
+            *,
+            recalc: int = 5,
+            ignore_velocity: bool = False,
+            ignore_acceleration: bool = False,
+    ) -> TargetSolution | None:
+        # shoot directly at target
+        t_pos = target.position
+        diff = t_pos - (self.position + self.weapon.parent_position_offset)
+        return TargetSolution(
+            target_predict=t_pos,
+            angle=diff,
+            target=target,
+            tof=(diff.length / self.weapon.muzzle_velocity) * 1.5
+        )
+
     def _shoot_weapon(self, solution: TargetSolution) -> bool:
         shot = self.weapon.shoot(
             self.facing,
@@ -221,9 +240,3 @@ class ExactoTurret(BaseTurret):
             self._current_target = solution.target
 
         return shot
-
-    def _turn_at(self, solution: TargetSolution, delta: float) -> None:
-        # modify solution to target player directly
-        solution.angle =  solution.target.position - self.position
-
-        super()._turn_at(solution, delta)
