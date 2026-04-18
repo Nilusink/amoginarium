@@ -11,9 +11,14 @@ from __future__ import annotations
 from multiprocessing.shared_memory import SharedMemory
 from typing import Protocol, Self
 
+from .utility import Vec2
+
 
 class BaseLogicEntityLike(Protocol):
     __slots__ = ["_parent", "_children", "_lifetime", "__id", "__shm"]
+
+    position: Vec2
+    Size: Vec2
 
     _children: list[Self]
     _lifetime: float

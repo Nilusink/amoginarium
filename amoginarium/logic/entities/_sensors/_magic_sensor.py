@@ -1,0 +1,38 @@
+"""
+amoginarium/logic/entities/_sensors/_magic_sensor.py
+
+Project: amoginarium
+Created: 18.04.2026
+Authors: Nilusink, LukasKrah
+"""
+
+import typing as tp
+
+from .._base_entities import LogicGameEntity
+from .._groups import Players, Bullets
+from ._base_sensor import BaseSensor
+
+class MagicSensor(BaseSensor):
+    """
+    magically gets all targets inside a certain range
+    of parent
+
+    ``param0`` detection range
+    """
+
+    def get_targets(
+            self,
+            from_entities: tp.Iterable[LogicGameEntity] = None
+    ) -> list[LogicGameEntity]:
+        if from_entities is None:
+            targets = [p for p in Players.sprites() if p.alive]
+            targets.extend(Bullets.sprites())
+
+        else:
+            targets = from_entities
+
+        return [e[1] for e in Players.entities_in_circle(
+            targets,
+            self.parent.position + self._position_offset,
+            self.detection_range,
+        )]
