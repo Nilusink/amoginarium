@@ -212,8 +212,13 @@ class ExactoSniper(WeaponDummy):
             Vec2().from_polar(self.param3 / 10_000, self.param4)
             - pv.global_vars.get_world_position()
         )
+        laser_start = (
+            self.world_position
+            + Vec2().from_polar(self.facing.angle, 100)
+            + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
+        )
         renderer.draw_thick_line(
-            self.world_position + Vec2().from_polar(self.facing.angle, 100),
+            laser_start,
             laser_end,
             Color().from_1(1, 0, 0, .1),
             thickness=3,
