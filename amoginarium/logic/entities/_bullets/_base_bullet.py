@@ -24,10 +24,12 @@ from ...audio import LargeExplosion, DistantPop
 from .._groups import Bullets, Updated, GravityAffected
 from .._base_entities import LogicGameEntity
 from amoginarium.shared.collision_detection import CollisionEvent
-from .._collision.collision_relations import collision_group_bullets, collision_group_islands
+from .._collision.collision_relations import collision_group_bullets, collision_group_islands, collision_group_turrets, collision_group_players, collision_group_grenades
 
 if tp.TYPE_CHECKING:
     from .._world import Island
+    from .._player import Player
+    from .._turrets import BaseTurret
 
 
 SQR2: np.float64 = np.sqrt(2)
@@ -356,7 +358,7 @@ class Bullet(LogicGameEntity):
         """bullet has hit someone else"""
         self.kill()
 
-    def __on_collision_island(self, event: CollisionEvent["Island"]) -> None:
+    def __on_collision_general(self, event: CollisionEvent["Island"]) -> None:
         if event.other_entity == self.parent:
             return
 
@@ -373,9 +375,15 @@ class Bullet(LogicGameEntity):
 
     def _on_collision(self, event: CollisionEvent) -> None:
         if event.group_id == collision_group_islands:
-            self.__on_collision_island(event)
+            self.__on_collision_general(event)
         elif event.group_id == collision_group_bullets:
             self.__on_collision_bullet(event)
+        elif event.group_id == collision_group_players:
+            self.__on_collision_general(event)
+        elif event.group_id == collision_group_turrets:
+            self.__on_collision_general(event)
+        elif event.group_id == collision_group_grenades:
+            self.__on_collision_general(event)
 
     def _update(self, delta):
         self._time_to_life -= delta

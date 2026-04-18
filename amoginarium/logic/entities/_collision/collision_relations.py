@@ -28,15 +28,16 @@ def create_default_relation(group_a, group_b):
         cb_b_set_norm=set_normals
     )
 
-# region Grenades collide with Islands, Bullets, Players
+# Grenades collide with Islands, Bullets, Players
 create_default_relation(collision_group_grenades, collision_group_islands)
 create_default_relation(collision_group_grenades, collision_group_bullets)
 create_default_relation(collision_group_grenades, collision_group_players)
-# endregion
 
-# region Players collide with Islands, Bullets
+# Players collide with Islands, Bullets, (Grenades)
+create_default_relation(collision_group_players, collision_group_islands)
+create_default_relation(collision_group_players, collision_group_bullets)
 
-create_default_relation(collision_group_bullets, collision_group_islands)  # Bullets - Islands
-create_default_relation(collision_group_players, collision_group_islands)  # Players - Islands
-create_default_relation(collision_group_players, collision_group_bullets)  # Players - Bullets
-create_default_relation(collision_group_bullets, collision_group_bullets)  # Bullets - Bullets
+# Bullets collide with Islands, Bullets, Turrets, (Players, Grenades)
+create_default_relation(collision_group_bullets, collision_group_islands)
+create_default_relation(collision_group_bullets, collision_group_bullets)
+create_default_relation(collision_group_bullets, collision_group_turrets)

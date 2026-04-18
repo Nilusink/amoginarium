@@ -21,12 +21,17 @@ from amoginarium.shared.utility import is_related, normalize_angle, MASK32
 from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
 from amoginarium.shared.utility import MASK64, get_default
 from amoginarium import pv
+from shared.collision_detection import CollisionEvent
 
 from ...audio import MetalPings
 from .._groups import Players, Bullets, GravityAffected
 from .._weapons import BaseWeapon
 from .._base_entities import LogicGameEntity
 from .._sensors import BaseSensor, DetectionGroup
+from .._collision.collision_relations import collision_group_turrets, collision_group_bullets
+
+if tp.TYPE_CHECKING:
+    from .._bullets import Bullet
 
 
 @dataclass
@@ -61,6 +66,8 @@ class BaseTurret(LogicGameEntity):
     _default_facing_angle: float = np.pi
     _default_max_error: float | EllipsisType = ...
     _default_allow_static_target: bool = False
+
+    _collision_group = collision_group_turrets
 
     def __init__(
             self,
@@ -125,7 +132,9 @@ class BaseTurret(LogicGameEntity):
             runtime_buffer=runtime_buffer,
             size=size,
             position=position,
-            coalition=coalition
+            coalition=coalition,
+            has_collision=True,
+            centered=True
         )
         self.facing.angle = self._default_facing_angle
         self.weapon.facing.angle = self.facing.angle
@@ -542,3 +551,12 @@ class BaseTurret(LogicGameEntity):
         # apply rotation
         self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
+
+    def __on_collision_bullet(self, event: CollisionEvent["Bullet"]) -> None:
+        dmg = event.other_entity.damage
+        if dmg > 0 and event.other_entity.parent != self:
+            self.hit(dmg, hit_by=event.other_entity)
+
+    def _on_collision(self, event: CollisionEvent["Bullet"]) -> None:
+        if event.group_id == collision_group_bullets:
+            self.__on_collision_bullet(event)
