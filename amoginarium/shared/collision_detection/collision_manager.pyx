@@ -163,7 +163,8 @@ cdef class CollisionManager:
 
         self.pending_deletions.clear()
 
-    def update_entity(self, int group_id, int entity_id, object pos=None, object size=None, object centered=None):
+    def update_entity(self, int group_id, int entity_id, object pos=None, object size=None, object centered=None,
+                      bint shift_history=True):
         cdef EntityData * ed = &self.groups[group_id].entities[entity_id]
 
         if not ed.active:
@@ -177,8 +178,10 @@ cdef class CollisionManager:
             ed.sy = size.y
 
         if pos is not None:
-            ed.px_o = ed.px_n
-            ed.py_o = ed.py_n
+            # ONLY shift the history if this is the start of a new frame
+            if shift_history:
+                ed.px_o = ed.px_n
+                ed.py_o = ed.py_n
 
             if ed.is_centered:
                 ed.px_n = pos.x - (ed.sx / 2.0)
@@ -189,7 +192,6 @@ cdef class CollisionManager:
 
         if not self.groups[group_id].is_static:
             self._update_entity_grid(group_id, entity_id)
-
     cdef void _update_entity_grid(self, int group_id, int entity_id):
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef EntityData * ed = &group.entities[entity_id]
@@ -296,7 +298,6 @@ cdef class CollisionManager:
         cdef bint is_same = (rel.group_a_id == rel.group_b_id)
 
         cdef int check_lvl = ga.max_level if ga.max_level < gb.max_level else gb.max_level
-
         cdef unordered_set[uint64_t] checked_pairs
         cdef uint64_t pair_key, min_id, max_id
 
@@ -310,75 +311,90 @@ cdef class CollisionManager:
 
         cdef size_t a_idx, k_idx, b_idx
         cdef int b_id
-        cdef bint a_resolved
+        cdef int iterations
+        cdef bint hit_this_iteration
 
         for a_idx in range(ga.entities.size()):
             ea = &ga.entities[a_idx]
             if not ea.active: continue
 
-            a_resolved = False
-            a_keys = &ea.grid_keys[check_lvl]
+            iterations = 0
+            hit_this_iteration = True
 
-            for k_idx in range(a_keys.size()):
-                if not ea.active or a_resolved: break
+            # --- THE SOLVER LOOP ---
+            # Allows an entity to hit a wall, update its position safely, and
+            # instantly check the floor from its new position in the same frame.
+            while hit_this_iteration and iterations < 3:
+                hit_this_iteration = False
+                iterations += 1
 
-                if self.grids[check_lvl][rel.group_b_id].count(a_keys.at(k_idx)) == 0:
-                    continue
+                # Re-acquire pointer. Callbacks might have spawned cluster bullets,
+                # causing C++ vector reallocation!
+                ea = &ga.entities[a_idx]
+                if not ea.active: break
 
-                cell_b = &self.grids[check_lvl][rel.group_b_id][a_keys.at(k_idx)]
+                a_keys = &ea.grid_keys[check_lvl]
 
-                for b_idx in range(cell_b.size()):
-                    b_id = cell_b.at(b_idx)
+                for k_idx in range(a_keys.size()):
+                    if not ea.active: break
 
-                    if is_same and ea.id == b_id:
+                    if self.grids[check_lvl][rel.group_b_id].count(a_keys.at(k_idx)) == 0:
                         continue
 
-                    eb = &gb.entities[b_id]
-                    if not eb.active:
-                        continue
+                    cell_b = &self.grids[check_lvl][rel.group_b_id][a_keys.at(k_idx)]
 
-                    if is_same:
-                        min_id = ea.id if ea.id < b_id else b_id
-                        max_id = b_id if ea.id < b_id else ea.id
-                        pair_key = (<uint64_t> min_id << 32) | <uint64_t> max_id
-                    else:
-                        pair_key = (<uint64_t> ea.id << 32) | <uint64_t> b_id
+                    for b_idx in range(cell_b.size()):
+                        b_id = cell_b.at(b_idx)
 
-                    if checked_pairs.count(pair_key):
-                        continue
-                    checked_pairs.insert(pair_key)
+                        if is_same and ea.id == b_id:
+                            continue
 
-                    if aabb_aabb_swept(
-                            ea.px_o, ea.py_o, ea.px_n, ea.py_n, ea.sx, ea.sy,
-                            eb.px_o, eb.py_o, eb.px_n, eb.py_n, eb.sx, eb.sy,
-                            &norm_x, &norm_y, &t
-                    ):
-                        inst_a = self.group_instances[rel.group_a_id][ea.id]
-                        inst_b = self.group_instances[rel.group_b_id][eb.id]
+                        eb = &gb.entities[b_id]
+                        if not eb.active: continue
 
-                        imp_ax = ea.px_o + ((ea.px_n - ea.px_o) * t)
-                        imp_ay = ea.py_o + ((ea.py_n - ea.py_o) * t)
-                        imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
-                        imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
+                        if is_same:
+                            min_id = ea.id if ea.id < b_id else b_id
+                            max_id = b_id if ea.id < b_id else ea.id
+                            pair_key = (<uint64_t> min_id << 32) | <uint64_t> max_id
+                        else:
+                            pair_key = (<uint64_t> ea.id << 32) | <uint64_t> b_id
 
-                        if ea.is_centered:
-                            imp_ax += (ea.sx / 2.0)
-                            imp_ay += (ea.sy / 2.0)
-                        if eb.is_centered:
-                            imp_bx += (eb.sx / 2.0)
-                            imp_by += (eb.sy / 2.0)
+                        # Keep checking pairs across iterations so we don't double-hit the exact same wall
+                        if checked_pairs.count(pair_key): continue
+                        checked_pairs.insert(pair_key)
 
-                        if callbacks[0] is not None:
-                            callbacks[0](inst_a,
-                                         CollisionEvent(rel.group_b_id, inst_b, Vec2().from_cartesian(imp_ax, imp_ay),
-                                                        Vec2().from_cartesian(norm_x, norm_y)))
-                        if callbacks[1] is not None:
-                            callbacks[1](inst_b,
-                                         CollisionEvent(rel.group_a_id, inst_a, Vec2().from_cartesian(imp_bx, imp_by),
-                                                        Vec2().from_cartesian(-norm_x, -norm_y)))
+                        if aabb_aabb_swept(
+                                ea.px_o, ea.py_o, ea.px_n, ea.py_n, ea.sx, ea.sy,
+                                eb.px_o, eb.py_o, eb.px_n, eb.py_n, eb.sx, eb.sy,
+                                &norm_x, &norm_y, &t
+                        ):
+                            inst_a = self.group_instances[rel.group_a_id][ea.id]
+                            inst_b = self.group_instances[rel.group_b_id][eb.id]
 
-                        a_resolved = True
+                            imp_ax = ea.px_o + ((ea.px_n - ea.px_o) * t)
+                            imp_ay = ea.py_o + ((ea.py_n - ea.py_o) * t)
+                            imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
+                            imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
+
+                            if ea.is_centered:
+                                imp_ax += (ea.sx / 2.0)
+                                imp_ay += (ea.sy / 2.0)
+                            if eb.is_centered:
+                                imp_bx += (eb.sx / 2.0)
+                                imp_by += (eb.sy / 2.0)
+
+                            if callbacks[0] is not None:
+                                callbacks[0](inst_a, CollisionEvent(rel.group_b_id, inst_b,
+                                                                    Vec2().from_cartesian(imp_ax, imp_ay),
+                                                                    Vec2().from_cartesian(norm_x, norm_y)))
+                            if callbacks[1] is not None:
+                                callbacks[1](inst_b, CollisionEvent(rel.group_a_id, inst_a,
+                                                                    Vec2().from_cartesian(imp_bx, imp_by),
+                                                                    Vec2().from_cartesian(-norm_x, -norm_y)))
+
+                            # Safe abort! Vector changed, so we break out safely and let the 'while' loop restart it.
+                            hit_this_iteration = True
+                            break
+
+                    if hit_this_iteration:
                         break
-
-                if a_resolved:
-                    break

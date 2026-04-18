@@ -22,3 +22,10 @@ collision_manager.create_relation(
     cb_a=callback,
     cb_b=callback
 )
+
+collision_manager.create_relation(
+    group_a_id=collision_group_players,
+    group_b_id=collision_group_islands,
+    cb_a=callback,
+    cb_b=callback
+)

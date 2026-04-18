@@ -14,11 +14,9 @@ cdef inline bint aabb_aabb_swept(
     cdef double v_rel_x = (a_px_n - a_px_o) - (b_px_n - b_px_o)
     cdef double v_rel_y = (a_py_n - a_py_o) - (b_py_n - b_py_o)
 
-    # THE FIX: "Skin Radius" Epsilon
-    # We shrink the target area by 0.001 pixels.
-    # If objects are perfectly flush (0 distance), they will mathematically MISS.
-    # They MUST actively overlap to trigger a hit.
-    cdef double epsilon = 0.001
+    # NATIVE MARGIN: The engine shrinks the target by 0.1 pixels.
+    # The returned impact position will naturally stop 0.1 pixels away.
+    cdef double epsilon = 0.1
     cdef double min_x = (b_px_o - a_sx) + epsilon
     cdef double max_x = (b_px_o + b_sx) - epsilon
     cdef double min_y = (b_py_o - a_sy) + epsilon
@@ -29,7 +27,8 @@ cdef inline bint aabb_aabb_swept(
         t_near_x = (min_x - a_px_o) / v_rel_x
         t_far_x = (max_x - a_px_o) / v_rel_x
         if t_near_x > t_far_x: t_near_x, t_far_x = t_far_x, t_near_x
-    elif not (min_x <= a_px_o <= max_x):
+    # THE BUG WAS HERE: strictly `<` prevents getting stuck when resting flush
+    elif not (min_x < a_px_o < max_x):
         return False
 
     cdef double t_near_y = -1e300, t_far_y = 1e300
@@ -37,13 +36,14 @@ cdef inline bint aabb_aabb_swept(
         t_near_y = (min_y - a_py_o) / v_rel_y
         t_far_y = (max_y - a_py_o) / v_rel_y
         if t_near_y > t_far_y: t_near_y, t_far_y = t_far_y, t_near_y
-    elif not (min_y <= a_py_o <= max_y):
+    # strictly `<` prevents getting stuck when resting flush
+    elif not (min_y < a_py_o < max_y):
         return False
 
     cdef double t_hit_near = c_max(t_near_x, t_near_y)
     cdef double t_hit_far = c_min(t_far_x, t_far_y)
 
-    if t_hit_near > t_hit_far or t_hit_far < 0.0 or t_hit_near >= 1.0:
+    if t_hit_near > t_hit_far or t_hit_far <= 0.0 or t_hit_near >= 1.0:
         return False
 
     # Calculate Normal vector

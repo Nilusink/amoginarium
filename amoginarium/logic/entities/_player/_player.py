@@ -16,6 +16,7 @@ import typing as tp
 
 from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
+from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
 
@@ -23,14 +24,10 @@ from ...audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ...graphics_dummies import Controller
 from .._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47, RailGun
 from .._groups import GravityAffected, FrictionXAffected, Updated, Walls
-from .._groups import Players  # CollisionDestroyed, WallCollider
+from .._groups import Players
 from .._items import Shield, HealingPotion, JetBag, Inventory, Item
 from .._base_entities import LogicGameEntity
-from .._world import Island
-
-
-PIXEL_MASK = pg.mask.Mask((1, 1), True)
-PIXEL_LINE_VERTICAL = pg.mask.Mask((1, 32), True)
+from .._collision.collision_relations import collision_group_players
 
 
 class Player(LogicGameEntity):
@@ -43,6 +40,8 @@ class Player(LogicGameEntity):
     _hp: float = 0
 
     on_wall: bool = False
+
+    _collision_group = collision_group_players
 
     def __init__(
             self,
@@ -57,6 +56,7 @@ class Player(LogicGameEntity):
         self._hp = self._max_hp
         self._controller = controller
         self._on_ground = False
+        self._collision = False
         self._alive = True
 
         if not size:
@@ -77,7 +77,9 @@ class Player(LogicGameEntity):
             position=position,
             initial_velocity=initial_velocity,
             parent=parent,
-            coalition=coalition
+            coalition=coalition,
+            has_collision=True,
+            centered=True
         )
 
         self._groaning = SoundEffect(("groaning", "hugh_1"))
@@ -100,7 +102,6 @@ class Player(LogicGameEntity):
             Shield(self._runtime_buffer, Vec2().from_cartesian(64, 0)),
             HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),
             JetBag(self._runtime_buffer, Vec2().from_cartesian(-24, 0)),
-            # Bow(self, False, parent_position_offset=(0, 0)),
             RailGun(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
         ]
         for item in items:
@@ -119,14 +120,12 @@ class Player(LogicGameEntity):
 
         self._last_hit = perf_counter()
 
-        # wallcollider, collisiondesytryed
         self.add(
             FrictionXAffected,
             GravityAffected,
             Players
         )
 
-        # spawn graphics dummy
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
             kwargs={
@@ -156,14 +155,10 @@ class Player(LogicGameEntity):
     def on_ground(self) -> bool:
         if self._controller.joy_y < 0:
             return False
-
         return self._on_ground
 
     @property
     def alive(self) -> bool:
-        """
-        checks if the player is alive
-        """
         return self._alive
 
     @property
@@ -173,22 +168,17 @@ class Player(LogicGameEntity):
 
         if self._hotbar.get_count(self._current_weapon) > 0:
             return self._hotbar.get_item(self._current_weapon)
-
         else:
             return None
 
     def pickup_item(self, item: Item) -> None:
         if self._hotbar.try_add_item(item, 1) > 0:
             self._pickup_sound.play()
-        
-        # show item again to make sure it is visible
+
         if self.item:
             self.item.show()
 
     def next_weapon(self) -> None:
-        """
-        switches to the next weapon
-        """
         if self.item:
             self.item.stop()
             self.item.hide()
@@ -203,9 +193,6 @@ class Player(LogicGameEntity):
         self._hotbar.set_highlight(self._current_weapon)
 
     def previous_weapon(self) -> None:
-        """
-        switches to the previous weapon
-        """
         if self.item:
             self.item.stop()
             self.item.hide()
@@ -220,34 +207,23 @@ class Player(LogicGameEntity):
         self._hotbar.set_highlight(self._current_weapon)
 
     def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
-        """
-        remove used_amount from set item
-        """
         ic(item_id, used_amount)
         with suppress(KeyError, IndexError):
             self._hotbar.use_item(self._current_weapon, used_amount)
             return self._hotbar.get_count(self._current_weapon) > 0
-
         return False
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
-        """
-        deal damage to the player
-        """
-        # damage *= 0
         self._hp -= damage
 
         if damage != 0:
             self._controller.feedback_hit()
 
-        # check for player death
         if self._hp <= 0:
             if self.item:
                 self.item.stop()
-
             self.kill(hit_by)
 
-        # update last hit
         self._last_hit = perf_counter()
         self._controller.feedback_heal_stop()
 
@@ -255,87 +231,39 @@ class Player(LogicGameEntity):
         new = self._hp + heal
         if new > self._max_hp:
             return False
-
         else:
             self._hp = new
             return True
 
-    def collide_wall(self, wall: Island):
-        return wall.get_collided_sides(
-            (
-                self.position + Vec2().from_cartesian(0, self.size.y / 2),
-                PIXEL_MASK
-            ),
-            (
-                self.position + Vec2().from_cartesian(
-                    self.size.y / 2, -PIXEL_LINE_VERTICAL.get_size()[1] / 2
-                ),
-                PIXEL_LINE_VERTICAL
-            ),
-            (
-                self.position - Vec2().from_cartesian(0, self.size.y / 2),
-                PIXEL_MASK
-            ),
-            (
-                self.position - Vec2().from_cartesian(
-                    self.size.y / 2, PIXEL_LINE_VERTICAL.get_size()[1] / 2
-                ),
-                PIXEL_LINE_VERTICAL
-            ),
-        )
+    def _on_collision(self, event: CollisionEvent) -> None:
+        self._collision = (event.other_entity, self.position.xy)
 
-    def _move_and_slide(self, delta: float, wall: Island) -> None:
-        total_displacement = self.velocity * delta
+        # --- HORIZONTAL (Walls) ---
+        if abs(event.normal.x) > 0.5:
+            self.position.x = event.position.x
 
-        safe_step_size = self.size.y / 3.0
+            if abs(self.velocity.x) > 12:
+                self._controller.feedback_collide()
+            self.velocity.x = 0
 
-        distance = (total_displacement.x ** 2 + total_displacement.y ** 2) ** 0.5
+        # --- VERTICAL (Floors/Ceilings) ---
+        if abs(event.normal.y) > 0.5:
+            self.position.y = event.position.y
 
-        steps = int(distance // safe_step_size) + 1
-
-        step_x = total_displacement.x / steps
-        step_y = total_displacement.y / steps
-
-        for _ in range(steps):
-            self.position.x += step_x
-            # self.update_rect()
-            on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
-
-            if on_right and step_x > 0:
-                self.position.x -= step_x
-                self.velocity.x = 0
-                step_x = 0
-                if self.velocity.x > 12:
-                    self._controller.feedback_collide()
-
-            elif on_left and step_x < 0:
-                self.position.x -= step_x
-                self.velocity.x = 0
-                step_x = 0
-                if self.velocity.x < -12:
-                    self._controller.feedback_collide()
-
-            self.position.y += step_y
-            # self.update_rect()
-            on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
-
-            if on_top and step_y > 0:
-                self.position.y -= step_y
-                self.velocity.y = 0
-                step_y = 0
+            # Hit Floor
+            if event.normal.y < -0.5:
                 self._on_ground = True
-
                 if self.velocity.y > 3:
                     self._controller.feedback_collide()
                 if self.velocity.y > 450:
                     self._groaning.play()
 
-            elif on_bottom and step_y < 0:
-                self.position.y -= step_y
-                self.velocity.y = 0
-                step_y = 0
+            # Hit Ceiling
+            elif event.normal.y > 0.5:
                 if self.velocity.y < -3:
                     self._controller.feedback_collide()
+
+            self.velocity.y = 0
 
     def _update(self, delta):
         # update reloads
@@ -352,132 +280,14 @@ class Player(LogicGameEntity):
             if self.velocity.x < self._max_speed:
                 self.velocity.x += self._impulse_resistance_factor * delta * acc_fac * 12
 
-            # self.facing.x = 1
-
         # accelerate left
         elif self._controller.joy_x < 0:
             if self.velocity.x > -self._max_speed:
                 self.velocity.x -= self._impulse_resistance_factor * delta * acc_fac * 12
 
-            # self.facing.x = -1
-
         # jump
         if self._controller.jump and self.on_ground:
             self.velocity.y = -400
-        #
-        # # wall collision
-        # total_dx = self.velocity.x * delta
-        # total_dy = self.velocity.y * delta
-        #
-        # aabb_box = pg.Rect(
-        #     self.rect.left + min(0, total_dx),
-        #     self.rect.top + min(0, total_dy),
-        #     self.rect.width + abs(total_dx),
-        #     self.rect.height + abs(total_dy)
-        # )
-        #
-        # target_islands = []
-        # for wall in Walls.sprites():
-        #     wall: Island
-        #     if aabb_box.colliderect(wall.rect):
-        #         target_islands.append(wall)
-        #
-        # self._on_ground = False
-        # wall_rider: Island = ...
-        #
-        # if not target_islands:
-        #     self.position.x += total_dx
-        #     self.position.y += total_dy
-        #     self.update_rect()
-        #
-        # else:
-        #     distance = (total_dx**2 + total_dy**2) ** 0.5
-        #     safe_step_size = self.size.y / 4.0
-        #     steps = int(distance // safe_step_size) + 1
-        #
-        #     step_x = total_dx / steps
-        #     step_y = total_dy / steps
-        #
-        #     for _ in range(steps):
-        #         # Move X
-        #         if step_x != 0:
-        #             self.position.x += step_x
-        #             self.update_rect()
-        #
-        #             for wall in target_islands:
-        #                 if pg.sprite.collide_rect(self, wall):
-        #                     on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
-        #
-        #                     if on_right or on_left:
-        #                         if step_x > 0 and on_right:
-        #                             self.position.x -= step_x
-        #                             while True:
-        #                                 self.position.x += 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[1]:
-        #                                     self.position.x -= 1
-        #                                     self.update_rect()
-        #                                     break
-        #                             self.velocity.x = 0
-        #                             step_x = 0
-        #
-        #                         elif step_x < 0 and on_left:
-        #                             self.position.x -= step_x
-        #                             while True:
-        #                                 self.position.x -= 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[3]:
-        #                                     self.position.x += 1
-        #                                     self.update_rect()
-        #                                     break
-        #                             self.velocity.x = 0
-        #                             step_x = 0
-        #                         break
-        #         if step_y != 0:
-        #             self.position.y += step_y
-        #             self.update_rect()
-        #
-        #             for wall in target_islands:
-        #                 if pg.sprite.collide_rect(self, wall):
-        #                     on_top, on_right, on_bottom, on_left = self.collide_wall(wall)
-        #
-        #                     if on_top or on_bottom:
-        #                         wall_rider = wall
-        #                         if step_y > 0 and on_top:
-        #                             self.position.y -= step_y
-        #                             while True:
-        #                                 self.position.y += 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[0]:
-        #                                     self.position.y -= 1
-        #                                     self.update_rect()
-        #                                     break
-        #
-        #                             if self.velocity.y > 3:
-        #                                 self._controller.feedback_collide()
-        #                             if self.velocity.y > 450:
-        #                                 self._groaning.play()
-        #
-        #                             self.velocity.y = 0
-        #                             step_y = 0
-        #                             self._on_ground = True
-        #
-        #                         elif step_y < 0 and on_bottom:
-        #                             self.position.y -= step_y
-        #                             while True:
-        #                                 self.position.y -= 1
-        #                                 self.update_rect()
-        #                                 if self.collide_wall(wall)[2]:
-        #                                     self.position.y += 1
-        #                                     self.update_rect()
-        #                                     break
-        #
-        #                             if self.velocity.y < -3:
-        #                                 self._controller.feedback_collide()
-        #                             self.velocity.y = 0
-        #                             step_y = 0
-        #                         break
-
 
         # reload
         if self._controller.reload:
@@ -489,12 +299,10 @@ class Player(LogicGameEntity):
             if not self._weapon_change_pressed:
                 self._weapon_change_pressed = True
                 self.next_weapon()
-
         elif self._controller.wpn_b:
             if not self._weapon_change_pressed:
                 self._weapon_change_pressed = True
                 self.previous_weapon()
-
         else:
             self._weapon_change_pressed = False
 
@@ -512,77 +320,26 @@ class Player(LogicGameEntity):
         # directional stuff
         if not self._in_inventory:
             if self._controller.shoot:
-                # shot_direction = self.facing.copy()
-                # shot_direction.y = -.4
                 if isinstance(self.item, BaseWeapon):
                     if hasattr(self.item, "charge"):
                         self.item.charge()
-
                     elif self.item.shoot(self.facing):
                         self._controller.feedback_shoot()
-
                 elif self.item:
                     self.item.use()
-
             else:
                 if isinstance(self.item, BaseWeapon):
                     if hasattr(self.item, "charge"):
                         item: ... = self.item
-
                         if item.charged > 0:
                             if self.item.shoot(self.facing):
                                 self._controller.feedback_shoot()
-
                         else:
                             self.item.stop_shooting()
-
                     else:
                         self.item.stop_shooting()
-
                 elif self.item:
                     self.item.stop_use()
-        #
-        # else:
-        #     hover_slot = self._hover_slot
-        #     holding_slot = self._holding_slot
-        #     if holding_slot:
-        #         if self._controller.shoot:
-        #             self._holding_slot.item.position.x = self._controller.mouse_x * pv.global_vars.screen_size_fac_x
-        #             self._holding_slot.item.position.y = self._controller.mouse_y * pv.global_vars.screen_size_fac_y
-        #
-        #         else:
-        #             if hover_slot:
-        #                 # switch slot items
-        #                 item1: VisibleItem = holding_slot.item
-        #                 count1 = holding_slot.count
-        #                 sid1 = holding_slot.id
-        #                 parent1 = holding_slot.parent
-        #
-        #                 item2: VisibleItem = hover_slot.item
-        #                 count2 = hover_slot.count
-        #                 sid2 = hover_slot.id
-        #                 parent2 = hover_slot.parent
-        #
-        #                 # set slots
-        #                 parent1.set_slot(sid1, item2, count2)
-        #                 parent2.set_slot(sid2, item1, count1)
-        #
-        #                 if item1:
-        #                     item1.hide()
-        #
-        #                 self._set_slot(parent2.get_slot(sid2))
-        #
-        #             else:
-        #                 if holding_slot.item:
-        #                     holding_slot.item.hide()
-        #
-        #             self._holding_slot = None
-        #
-        #     elif hover_slot:
-        #         if self._controller.shoot:
-        #             if hover_slot.item:
-        #                 hover_slot.item.show()
-        #                 self._holding_slot = hover_slot
 
         # drop item
         if self._controller.drop:
@@ -610,25 +367,14 @@ class Player(LogicGameEntity):
                 self._inventory_pressed = True
                 self._in_inventory = not self._in_inventory
                 self._set_bit("flags", 15, self._in_inventory)
-
         else:
             self._inventory_pressed = False
 
-        # handle moving platforms/walls
-        # if wall_rider is not ...:
-        #     wall_rider.player_contact(self, delta)
-        #     self.velocity += wall_rider.velocity
-
-        # PREVENT PARENT DOUBLE MOVEMENT
-        perfect_position = self.position.copy()
+        # Reset state before physics update
+        self._on_ground = False
+        self._collision = False
 
         super()._update(delta)
-
-        self.position = perfect_position
-        # self.update_rect()
-
-        # if wall_rider is not ...:
-        #     self.velocity -= wall_rider.velocity
 
         if self.item:
             self.item.facing.angle = self.facing.angle
@@ -638,60 +384,30 @@ class Player(LogicGameEntity):
         if self.position.y > 2000:
             self.kill()
 
-    # def update_rect(self) -> None:
-    #     self.rect = pg.Rect(
-    #         self.position.x - self.size.x / 4,
-    #         self.position.y - self.size.y / 2,
-    #         self.size.x / 2,
-    #         self.size.y
-    #     )
-
     def kill(self, killed_by=...) -> None:
-        """
-        remove player from almost all groups
-        """
-        # set state to dead
         self._alive = False
-
         self._death_sound.play()
+
         if hasattr(self.item, "stop_use"):
             self.item.stop_use()
-
         elif hasattr(self.item, "stop_shooting"):
             self.item.stop_shooting()
 
-        # remove from every group except players
         super().kill(killed_by)
-        # self.add(Players)
 
     def respawn(self, pos: Vec2 = ...) -> None:
-        """
-        respawn the player
-        """
-        # update status to alive
         self._alive = True
 
-        # re-add player to all groups
         self.add(
-            # CollisionDestroyed,
             FrictionXAffected,
             GravityAffected,
-            # WallCollider,
             Players,
             Updated,
         )
 
-        # reset health
         self._hp = self._max_hp
-        # if isinstance(self.item, BaseWeapon):
-        #     self.item.reload(True)
-        #
-        # elif self.item:
-        #     self.item.reset()
-
-        # reset position / velocity
         self.position = self._initial_position.copy()
-        ic(self.position, self._initial_position, pos)
+
         self._acceleration_to_add *= 0
         self.acceleration *= 0
         self.velocity *= 0

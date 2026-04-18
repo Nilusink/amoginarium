@@ -61,7 +61,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         self.size = size
 
         self._centered = centered
-        self._has_collision = False
+        self._has_collision = has_collision
 
         if self._collision_group is not None and self._has_collision:
             self._collision_id = collision_manager.register_entity(
@@ -103,13 +103,14 @@ class PositionedLogicEntity(BaseLogicEntity):
         """
         self._on_collision(event)
 
-        if self._collision_id is not None:  # just to be safe xD
+        if self._collision_id is not None:
             collision_manager.update_entity(
                 group_id=self._collision_group,
                 entity_id=self._collision_id,
-                pos=self.position + event.normal,
+                pos=self.position,
                 size=self.size,
-                centered=self._centered
+                centered=self._centered,
+                shift_history=False
             )
 
     # endregion
@@ -131,7 +132,8 @@ class PositionedLogicEntity(BaseLogicEntity):
                 entity_id=self._collision_id,
                 pos=self.position,
                 size=self.size,
-                centered=self._centered
+                centered=self._centered,
+                shift_history=True
             )
 
         super()._update(delta)

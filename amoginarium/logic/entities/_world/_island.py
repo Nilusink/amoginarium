@@ -81,6 +81,8 @@ class Island(LogicGameEntity):
         self.add(Walls)
         self.update_rect()
 
+        self._generate_collision_mask()
+
         # for group in GridSystem.get_cells_by_pos(self.rect.topleft[0], self.rect.topright[0]):
         #     self.add(group.walls)
 
@@ -158,7 +160,7 @@ class Island(LogicGameEntity):
             collision_manager.register_entity(collision_group_islands, self,
                                               self.position, self.size)
             DebugRenderingEntity(self._runtime_buffer, self.position, self.size)
-            return super()._generate_collision_mask()
+            return
 
         # Collision rects
         n_rows = len(self._form)

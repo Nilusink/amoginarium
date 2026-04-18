@@ -116,7 +116,7 @@ class Sniper(BaseWeapon):
             # bullet args
             time_to_life=1000,
             visibility_offset=0.04,
-            weapon_recoil_factor=0
+            weapon_recoil_factor=10
         )
 
 
@@ -241,7 +241,7 @@ class HandThrownGrenade(BaseWeapon):
             runtime_buffer=runtime_buffer,
             parent=parent,
             reload_time=5,
-            recoil_time=0.1,
+            recoil_time=0.0000001,
             weapon_recoil_factor=.00005,
             mag_size=10000,
             inaccuracy=.5,
