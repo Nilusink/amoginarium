@@ -665,12 +665,6 @@ class BaseGame:
                 Drawn_1.gl_draw(delta)
                 Drawn_2.gl_draw(delta)
 
-                renderer.draw_circle(
-                    Vec2().from_cartesian(4000, 200) - self.global_vars.get_world_position(),
-                    8, 8,
-                    Color().from_1(1, 0, 0)
-                )
-
             # update global vars
             self.global_vars.update()
 

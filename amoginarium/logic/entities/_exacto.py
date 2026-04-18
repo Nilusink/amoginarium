@@ -83,7 +83,7 @@ class ExactoBullet(AerodynamicEntity):
 
         else:
             self._rudder_angle = 0
-        
+
 
 class ExactoSniper(BaseWeapon):
     """exacto sniper"""

@@ -196,7 +196,7 @@ class HandThrownGrenade(WeaponDummy):
 
 class ExactoSniper(WeaponDummy):
     _cid = WeaponCIDs.exacto_sniper
-    _image_name: str = "sniper"
+    _image_name: str = "exacto_sniper"
     _image_size: tuple[int, int] = (120, 60)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
 

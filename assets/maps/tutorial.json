@@ -1,6 +1,6 @@
 {
     "name": "Tutorial",
-    "background": 2,
+    "background": 3,
     "spawn_pos": [100, 600],
     "platforms": [
         {
