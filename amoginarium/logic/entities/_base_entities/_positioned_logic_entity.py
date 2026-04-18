@@ -16,7 +16,7 @@ from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared import base_entity_t, CIDType
 from amoginarium.shared.utility import Vec2
 
-from .._collision import collision_manager
+from .._collision.collision_manager import collision_manager
 from ._base_logic_entity import BaseLogicEntity
 
 
@@ -61,7 +61,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         self.size = size
 
         self._centered = centered
-        self._has_collision = has_collision
+        self._has_collision = False
 
         if self._collision_group is not None and self._has_collision:
             self._collision_id = collision_manager.register_entity(

@@ -5,4 +5,6 @@ Project: amoginarium
 Created: 18.04.2026
 Authors: LukasKrah
 """
-from ._island import Island
+
+from ._text_entity import TextEntity
+from ._island import Island, GrassIsland, GrayBrickIsland, GreenBrickIsland, ISLANDS

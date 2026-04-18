@@ -97,3 +97,7 @@ class BaseGroup(pg.sprite.Group):
     def sprites(self) -> list[BaseLogicEntityLike]:
         """return: list of all sprites in the group"""
         return super().sprites()
+
+CollisionDestroyed = BaseGroup()
+WallBouncer = BaseGroup()
+WallCollider = BaseGroup()

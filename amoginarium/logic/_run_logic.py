@@ -29,11 +29,13 @@ from amoginarium import pv
 
 from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL
 from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, collision_manager
-from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
+from .entities import Updated, Bullets, Players
 from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
 from .entities import GravityAffected, FrictionXAffected, MortarShell, Mortar
 from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeExplosion
 from .graphics_dummies import Controller
+
+# CollisionDestroyed, WallBouncer
 
 
 class LogicProcess:
@@ -390,13 +392,13 @@ class LogicProcess:
         # update entities
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
-        WallBouncer.update()
+        # WallBouncer.update()
 
         Bullets.update(delta)
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
-        CollisionDestroyed.update()
+        # CollisionDestroyed.update()
 
         # update world position
         # _, max_player_pos = Players.get_position_extremes()

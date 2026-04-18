@@ -21,12 +21,11 @@ from amoginarium.shared import base_entity_t, IslandCIDs, ProcessCommand
 from amoginarium.shared import BaseCommandType
 from amoginarium import pv
 
-from logic.entities._base._base_logic_entity import LogicGameEntity
-from ..entities import Walls, Updated
-from ._collision_manager import collision_manager
-from ._collision_relations import collision_group_islands
-from ._collision_groups import GridSystem, GridCell
-from ._debug_rendering import DebugRenderingEntity
+from .._base_entities import LogicGameEntity
+from .._groups import Walls, Updated
+from .._collision.collision_manager import collision_manager
+from .._collision.collision_relations import collision_group_islands
+from .._debug import DebugRenderingEntity
 
 class _PolyMatcher:
     def __init__(self, top, bottom, left, right) -> None:
@@ -82,8 +81,8 @@ class Island(LogicGameEntity):
         self.add(Walls)
         self.update_rect()
 
-        for group in GridSystem.get_cells_by_pos(self.rect.topleft[0], self.rect.topright[0]):
-            self.add(group.walls)
+        # for group in GridSystem.get_cells_by_pos(self.rect.topleft[0], self.rect.topright[0]):
+        #     self.add(group.walls)
 
         # spawn graphics entity
         args: tp.MutableMapping[str, tp.Any] = {

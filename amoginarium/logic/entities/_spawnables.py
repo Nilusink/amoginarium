@@ -7,18 +7,14 @@ collects every spawn-able entity
 Author:
 Nilusink
 """
+
 import typing as tp
 
-# from ._static_turret import BaseTurret, SniperTurret, AkTurret, MinigunTurret, \
-#     MortarTurret, FlakTurret, CRAMTurret
-# from ._sensors import Radar
-# from ._text_entity import TextEntity
-from logic.entities._base._base_logic_entity import LogicGameEntity
-from ._static_turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret
-from ._static_turrets import FlakTurret, CRAMTurret, SkyShield
-from ._static_sensors import VisualRadarSensor, VisualSensor
-from ._text_entity import TextEntity
-from ._debug_rendering import DebugRenderingEntity
+from ._turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret, FlakTurret, CRAMTurret, SkyShield
+from ._sensors import VisualRadarSensor, VisualSensor
+from ._base_entities import LogicGameEntity
+from ._debug import DebugRenderingEntity
+from ._world import TextEntity
 
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {

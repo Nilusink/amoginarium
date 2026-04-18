@@ -1,15 +1,11 @@
-from ._logic_groups import Walls, Players, Bullets, Updated, \
-    WallBouncer, WallCollider, GravityAffected, FrictionXAffected, \
-    CollisionDestroyed
+from ._groups import Walls, Players, Bullets, Updated, GravityAffected, FrictionXAffected
 from ._spawnables import SPAWNABLES
-from logic.entities._base._base_logic_entity import BaseLogicEntity, PositionedLogicEntity, LogicGameEntity
+from ._base_entities import BaseLogicEntity, PositionedLogicEntity, LogicGameEntity
 from ._player import Player
-from ._island import ISLANDS, Island, GrassIsland
+from ._world import ISLANDS, Island, GrassIsland
 from ._bullets import Bullet, MortarShell, Grenade, SniperBullet
-from ._detection_group import DETECTION_GROUP_MANAGER, DetectionGroup, \
+from ._sensors import DETECTION_GROUP_MANAGER, DetectionGroup, \
     DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
 from ._sensors import BaseSensor, MagicSensor
-from ._collision_manager import collision_manager
+from ._collision.collision_manager import collision_manager
 from ._weapons import Mortar
-
-from ._collision_relations import load

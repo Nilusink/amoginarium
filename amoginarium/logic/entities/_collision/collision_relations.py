@@ -6,8 +6,8 @@ Created: 17.04.2026
 Authors: LukasKrah
 """
 
-from .._base_entities._positioned_logic_entity import PositionedLogicEntity
-from ._collision_manager import collision_manager
+from .._base_entities import PositionedLogicEntity
+from .collision_manager import collision_manager
 
 collision_group_players = collision_manager.add_group(max_level=0)
 collision_group_bullets = collision_manager.add_group(max_level=1)

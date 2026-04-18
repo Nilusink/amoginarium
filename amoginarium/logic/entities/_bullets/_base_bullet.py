@@ -24,7 +24,7 @@ from ...audio import LargeExplosion, DistantPop
 from .._groups import Bullets, Updated, GravityAffected
 from .._base_entities import LogicGameEntity
 from amoginarium.shared.collision_detection import CollisionEvent
-from .._collision import collision_group_bullets
+from .._collision.collision_relations import collision_group_bullets
 
 from .._world import Island
 
@@ -244,8 +244,8 @@ class Bullet(LogicGameEntity):
         self._collision = False
 
         self.remove(Updated)
-        if not no_gravity:
-            self.add(GravityAffected)
+        # if not no_gravity:
+        #     self.add(GravityAffected)
 
         if not casing:
             self.add(Bullets)  # Todo - mytodo: CollisionDestroyedTodo
@@ -396,17 +396,17 @@ class Bullet(LogicGameEntity):
         self._visibility_offset -= delta
         self._invincibility_offset -= delta
 
-        # double gravity (because why not)
-        self.acceleration.y *= 2
-
-        self._last_pos = self.position.copy()
-
         if any([
             self._time_to_life <= 0,
             self.on_ground  # This will be True if on_collision was triggered
         ]):
             if self.kill():
                 return
+
+        # double gravity (because why not)
+        self.acceleration.y *= 2
+
+        self._last_pos = self.position.copy()
 
         super()._update(delta)
         self.facing.angle = self.velocity.angle
