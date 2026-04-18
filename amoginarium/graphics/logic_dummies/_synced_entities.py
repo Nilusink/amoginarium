@@ -75,7 +75,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     __slots__ = [
         "pos", "facing", "size", "alive", "param0", "param1", "param2",
-        "param3", "__id", "__was_alive", "param4", "_logic_visibility"
+        "param3", "__id", "param4", "_logic_visibility"
     ]
     pos: Vec2
     facing: Vec2
@@ -111,7 +111,6 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.param3 = 0
         self.param4 = 0
 
-        self.__was_alive = False
         self._update_from_buffer()
 
         # add to manager
@@ -169,15 +168,10 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self._logic_visibility = self._get_bit("flags", 1)
         self._highlight = self._get_bit("flags", 2)
 
-        if not self.__was_alive:
-            if self.alive:
-                self.__was_alive = True
-
-        else:
-            if not self.alive:
-                self._logic_visibility = True
-                self._visible = True
-                self.kill()
+        if not self.alive:
+            self._logic_visibility = True
+            self._visible = True
+            self.kill()
 
         self.param0 = pv.E_BUFF[self.__id].param0
         self.param1 = pv.E_BUFF[self.__id].param1
@@ -194,7 +188,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         if recursive:
             for child in self._children:
                 with suppress(AttributeError):
-                    child._update_from_buffer()
+                    child.update_from_buffer()
 
     # endregion
 
