@@ -78,7 +78,7 @@ class AerodynamicEntity(Bullet):
 
         # game drag
         self._wh = self.size.x / self.size.y
-        self._cd = 0.15 + (self.size.y / self.size.x) * 2
+        self._cd = 0.15 + (self.size.y / self.size.x) * 10
 
     # region properties
     @property
@@ -150,7 +150,7 @@ class AerodynamicEntity(Bullet):
         lift_force = right * (q * self._rudder_size * self._rudder_angle * 50)  # rudder lift
         forward_force += lift_force
 
-        body_force = right * (-self.alpha * q * 20)  # body lift gain
+        body_force = right * (-self.alpha * q * self.size.x * .2)  # body lift gain
         forward_force += body_force
 
         # linear motion
