@@ -263,6 +263,11 @@ class SniperTurretDummy(BaseTurretDummy):
     _cid = TurretCIDs.sniper
 
 
+class ExactoSniperTurretDummy(BaseTurretDummy):
+    __slots__ = []
+    _cid = TurretCIDs.exacto_sniper
+
+
 class AkTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.ak47

@@ -8,17 +8,23 @@ Author:
 Nilusink
 """
 
+from types import EllipsisType
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import math as m
 
 from amoginarium.shared.utility import Vec2, coord_t, multi_raycast_mask, normalize_angle
+from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
+from amoginarium.shared import TurretCIDs
 
 from ..audio import Sniper as SniperSound
 from ._aerodynamic_entity import AerodynamicEntity
 from ._logic_groups import Updated, Walls
 from ._base_entity import LogicGameEntity
+from ._static_turrets import BaseTurret, TargetSolution
+from ._radar import RadarSensor
 from ._weapons import BaseWeapon
 
 
@@ -47,6 +53,7 @@ class ExactoBullet(AerodynamicEntity):
         initial_position: Vec2,
         initial_velocity: Vec2,
         target_callback: tp.Callable[[], Vec2],
+        guidance_delay: float | EllipsisType = ...,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -59,7 +66,7 @@ class ExactoBullet(AerodynamicEntity):
             **kwargs
         )
         self._target_callback = target_callback
-        self._guidance_delay = self._default_guidance_delay
+        self._guidance_delay = get_default(guidance_delay, self._default_guidance_delay)
 
     def _update_rudder(self, delta: float) -> None:
         if self._guidance_delay > 0:
@@ -97,6 +104,8 @@ class ExactoSniper(BaseWeapon):
         runtime_buffer: Array[base_entity_t],
         drop_casings: bool = False,
         parent_position_offset: coord_t = Vec2(),
+        targeting_func: tp.Callable[[], Vec2] | None = None,
+        guidance_delay: float | EllipsisType = ...
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -115,9 +124,11 @@ class ExactoSniper(BaseWeapon):
             # bullet args
             time_to_life=15,
             visibility_offset=.04,
-            target_callback=self._get_current_target
+            target_callback=self._get_current_target,
+            guidance_delay=guidance_delay
         )
         self._current_target = Vec2()
+        self._targeting_func = targeting_func
 
     def _get_current_target(self) -> Vec2:
         return self._current_target
@@ -125,22 +136,94 @@ class ExactoSniper(BaseWeapon):
     def _update(self, delta: float) -> None:
         super()._update(delta)
 
-        hits = multi_raycast_mask(
-            self,
-            Walls.sprites() + Updated.sprites(),
-            self.position + Vec2().from_polar(self.facing.angle, 100),
-            self.position + Vec2().from_polar(self.facing.angle, self._max_range),
-        )
-        if hits:
-            hits = [hit[1] for hit in hits]
-            hits = sorted(hits, key=lambda e: e.length)
+        # if no targeting func, target with straight laser
+        if not self._targeting_func:
+            hits = multi_raycast_mask(
+                self,
+                Walls.sprites() + Updated.sprites(),
+                self.position + Vec2().from_polar(self.facing.angle, 100),
+                self.position + Vec2().from_polar(self.facing.angle, self._max_range),
+            )
+            if hits:
+                hits = [hit[1] for hit in hits]
+                hits = sorted(hits, key=lambda e: e.length)
 
-            self._current_target.xy = hits[0].xy
+                self._current_target.xy = hits[0].xy
+
+            else:
+                self._current_target.xy = (self.position + Vec2().from_polar(
+                    self.facing.angle, self._max_range
+                )).xy
 
         else:
-            self._current_target.xy = (self.position + Vec2().from_polar(
-                self.facing.angle, self._max_range
-            )).xy
+            self._current_target.xy = self._targeting_func().xy
 
         self._buff.param3 = int(normalize_angle(self._current_target.angle) * 10_000)
         self._buff.param4 = int(self._current_target.length)
+
+
+class ExactoTurret(BaseTurret):
+    _cid = TurretCIDs.exacto_sniper
+    _max_hp: int = 60
+
+    _default_turn_speed = 2
+
+    def __init__(
+            self,
+            runtime_buffer: Array[base_entity_t],
+            coalition: Coalitions,
+            position: Vec2,
+            **kwargs
+    ) -> None:
+        self._coalition = coalition
+        weapon = ExactoSniper(
+            self,
+            runtime_buffer,
+            True,
+            parent_position_offset=(0, -13),
+            targeting_func=self.__get_target
+        )
+        weapon.reload(True)
+        
+        super().__init__(
+            runtime_buffer,
+            coalition,
+            Vec2().from_cartesian(31, 32),
+            position,
+            weapon,
+            2400,
+            sensors=[
+                RadarSensor(
+                    runtime_buffer, self, 2500, sphere_accuracy=256
+                )
+            ],
+            **kwargs,
+        )
+        
+        self._current_target = None
+
+    def __get_target(self) -> Vec2:
+        """return current target for exacto"""
+        if self._current_target:
+            return self._current_target.position
+
+        return Vec2()
+
+    def _shoot_weapon(self, solution: TargetSolution) -> bool:
+        shot = self.weapon.shoot(
+            self.facing,
+            solution.tof if self.airburst_munition else ...,
+            target_pos=solution.target_predict,
+            guidance_delay=0  #solution.tof * .3
+        )
+
+        if shot:
+            self._current_target = solution.target
+
+        return shot
+
+    def _turn_at(self, solution: TargetSolution, delta: float) -> None:
+        # modify solution to target player directly
+        solution.angle =  solution.target.position - self.position
+
+        super()._turn_at(solution, delta)

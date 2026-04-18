@@ -205,7 +205,8 @@ class BaseWeapon(Item):
             self,
             direction: Vec2,
             bullet_tof: float | EllipsisType = ...,
-            target_pos: Vec2 | EllipsisType = ...
+            target_pos: Vec2 | EllipsisType = ...,
+            **bullet_args
     ) -> bool:
         """
         shoot a bullet and check for recoil and reload
@@ -262,6 +263,8 @@ class BaseWeapon(Item):
 
         # actual bullet
         kwargs = self._bullet_kwargs.copy()
+
+        kwargs.update(bullet_args)
 
         if not isinstance(bullet_tof, EllipsisType):
             kwargs["time_to_life"] = bullet_tof
