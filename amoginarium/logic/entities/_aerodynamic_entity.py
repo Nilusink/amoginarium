@@ -31,7 +31,8 @@ class AerodynamicEntity(Bullet):
         "_wh",
         "_mass",
         "ang_vel",
-        "_alpha"  # slip angle
+        "_alpha",  # slip angle
+        "_forces_to_add"
     )
 
     _cid = DummyCIDs.aero
@@ -60,6 +61,7 @@ class AerodynamicEntity(Bullet):
         self._rudder_max_angle = get_default(rudder_max_angle, self._default_rudder_max_angle)
         self._mass = get_default(mass, self._default_mass)
 
+        self._forces_to_add: list[tuple[Vec2, Vec2]] = []
         self._rudder_angle = 0
         self._alpha = 0
         self.ang_vel = 0
@@ -99,6 +101,11 @@ class AerodynamicEntity(Bullet):
         return self._alpha
 
     # endregion
+
+    # def velocity interface
+    def apply_force(self, relative_force: Vec2, relative_position: Vec2) -> None:
+        """add a force to the entity resulting in acceleration + turning"""
+        self._forces_to_add.append((relative_force, relative_position))
 
     def _update_rudder(self, delta: float) -> None:
         """update rudder position"""
@@ -141,6 +148,20 @@ class AerodynamicEntity(Bullet):
         damping = self.ang_vel * .8
 
         torque = stability_torque + rudder_torque - damping
+
+        forces = self._forces_to_add.copy()
+        self._forces_to_add.clear()
+        for F, r in forces:
+            # rotate forces into local space
+            F.angle += self.facing.angle
+            r.angle += self.facing.angle
+
+            # linear force:
+            forward_force += F
+
+            # rotational force
+            t = r.x * F.y - r.y * F.x
+            torque += t
 
         ang_acc = torque / inertia
         self.ang_vel += ang_acc * delta

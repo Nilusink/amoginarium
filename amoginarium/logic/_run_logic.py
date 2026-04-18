@@ -37,6 +37,14 @@ from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeEx
 from .graphics_dummies import Controller
 
 
+# class TestEntity(AerodynamicEntity):
+#     def _update(self, delta: float) -> None:
+#         self.apply_force(
+#             Vec2().from_polar(-3.14159/2, 300), Vec2().from_cartesian(-self.size.x / 2, 0)
+#         )
+#         super()._update(delta)
+
+
 class LogicProcess:
     """
     Logic Process data
@@ -376,7 +384,7 @@ class LogicProcess:
         # test stuff
         self._last_spawn -= delta
         if self._last_spawn < 0:
-            self._last_spawn = 1
+            self._last_spawn = 3
         #     ExactoBullet(
         #         self._runtime_buffer,
         #         self._dummy_dad,
@@ -396,15 +404,15 @@ class LogicProcess:
         #         mass=1,
         #         collide_siblings=False
         #     ).rudder_angle = -.5
-        #     AerodynamicEntity(
+        #     TestEntity(
         #         self._runtime_buffer,
         #         self._dummy_dad,
         #         Coalitions.neutral,
-        #         Vec2().from_cartesian(1600, 700),
-        #         initial_velocity=Vec2().from_cartesian(500, -500),
-        #         size=Vec2().from_cartesian(100, 10),
+        #         Vec2().from_cartesian(500, 700),
+        #         initial_velocity=Vec2().from_cartesian(0, -800),
+        #         size=Vec2().from_cartesian(200, 10),
         #         rudder_size=10,
-        #         mass=1,
+        #         mass=10,
         #         collide_siblings=False
         #     )
 
