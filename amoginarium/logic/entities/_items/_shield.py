@@ -21,7 +21,7 @@ from ._base_item import BaseItem
 
 from .._collision.collision_relations import collision_group_shields, collision_group_bullets
 from .._collision.collision_manager import collision_manager
-from .._debug import DebugRenderingEntity
+from .._debug import PolyDebugRenderingEntity
 
 # todo - collision
 
@@ -39,7 +39,7 @@ class Shield(BaseItem):
     _in_use: bool
     _sound: RandomizedEffect
 
-    __debug: DebugRenderingEntity
+    __debug: PolyDebugRenderingEntity
 
     def __init__(
             self,
@@ -57,19 +57,23 @@ class Shield(BaseItem):
         self._in_use = False
         # self._update_mask()
 
-        # self.__collision_id = collision_manager.register_entity(
-        #     group_id=collision_group_shields,
-        #     instance=self,
-        #     pos=self.position,
-        #     size=self.size,
-        #     rotation=self.facing.angle
-        # )
-        # self.__debug = DebugRenderingEntity(
-        #     runtime_buffer,
-        #     self.position,
-        #     self.size,
-        #     points=self.__calc_points(self.position, self.size, self.facing.angle)
-        # )
+        self.__collision_id = collision_manager.register_entity(
+            group_id=collision_group_shields,
+            instance=self,
+            pos=self.position + self.size / 2,
+            size=self.size,
+            centered=True,
+            rotation=self.facing.angle
+        )
+        points = collision_manager.get_points(collision_group_shields, self.__collision_id)
+
+        self.__debug = PolyDebugRenderingEntity(
+            runtime_buffer,
+            p1=points[0],
+            p2=points[1],
+            p3=points[2],
+            p4=points[3],
+        )
 
         self.add(Updated)
 
@@ -104,40 +108,16 @@ class Shield(BaseItem):
 
         self.hit(event.other_entity.damage, event.other_entity)
 
-        # collision_manager.update_entity(
-        #     group_id=collision_group_shields,
-        #     entity_id=self.__collision_id,
-        #     pos=self.position,
-        #     size=self.size,
-        #     rotation=self.facing.angle,
-        #     shift_history=False
-        # )
-
-    # def _update_mask(self) -> None:
-        # angle = self.facing.angle * 180 / m.pi
-        # angle = angle % 360
-        #
-        # if 90 < angle < 270:
-        #     surf = pg.transform.rotate(
-        #         self._mask_left_surf,
-        #         -(angle - 180)
-        #     )
-        #
-        # else:
-        #     surf = pg.transform.rotate(
-        #         self._mask_right_surf,
-        #         -angle
-        #     )
-        #
-        # offset = (surf.size[0] - self.size.x) / 2
-        #
-        # surf = surf.subsurface(
-        #     (offset, offset),
-        #     self.size.xy
-        # )
-
-        # super()._generate_collision_mask()
-        # self.mask = pg.mask.Mask(surf)
+        if self.__collision_id is not None:
+            collision_manager.update_entity(
+                group_id=collision_group_shields,
+                entity_id=self.__collision_id,
+                pos=self.position + self.size / 2,
+                size=self.size,
+                centered=True,
+                rotation=self.facing.angle,
+                shift_history=False
+            )
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         if hit_by is not ...:
@@ -151,6 +131,11 @@ class Shield(BaseItem):
 
         if self._uses_left <= 0:
             self.kill(hit_by)
+
+    def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
+        collision_manager.delete_entity(collision_group_shields, self.__collision_id)
+        self.__collision_id = None
+        super().kill(killed_by)
 
     def _update(self, delta: float, **_) -> None:
         if self.parent:
@@ -167,14 +152,23 @@ class Shield(BaseItem):
 
             super()._update(delta, keep_position=True)
 
-            # collision_manager.update_entity(
-            #     group_id=collision_group_shields,
-            #     entity_id=self.__collision_id,
-            #     pos=self.position,
-            #     size=self.size,
-            #     rotation=self.facing.angle,
-            #     shift_history=False
-            # )
+            collision_manager.update_entity(
+                group_id=collision_group_shields,
+                entity_id=self.__collision_id,
+                pos=self.position + self.size / 2,
+                size=self.size,
+                centered=True,
+                rotation=self.facing.angle,
+                shift_history=False
+            )
+            if self.__collision_id is not None:
+                points = collision_manager.get_points(collision_group_shields, self.__collision_id)
+
+                self.__debug.p1 = points[0]
+                self.__debug.p2 = points[1]
+                self.__debug.p3 = points[2]
+                self.__debug.p4 = points[3]
+
             return
 
         else:
@@ -184,4 +178,3 @@ class Shield(BaseItem):
             self.position.xy = (-1, -1)
 
         super()._update(delta)
-

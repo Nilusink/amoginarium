@@ -112,27 +112,15 @@ class PolyDebugRenderingEntity(SyncedGraphicsEntity):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         world_pos = pv.global_vars.get_world_position()
-        renderer.draw_circle(
-            self.p1 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
-        )
-        renderer.draw_circle(
-            self.p2 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
-        )
-        renderer.draw_circle(
-            self.p3 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
-        )
-        renderer.draw_circle(
-            self.p4 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
-        )
-        renderer.draw_circle(
-            self.p5 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
-        )
-        renderer.draw_circle(
-            self.p6 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
-        )
-        renderer.draw_circle(
-            self.p7 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
-        )
-        renderer.draw_circle(
-            self.p8 - world_pos, self.radius, self.radius, Color().from_1(1, 1, 0)
+
+        points: list[Vec2] = [
+            p - world_pos for p in [self.p1, self.p2, self.p3, self.p4, self.p5, self.p6, self.p7, self.p8]
+            if p.xy != (0, 0)
+        ]
+        for point in points:
+            renderer.draw_circle(point, self.radius, self.radius, Color().from_1(1, 1, 0))
+
+        renderer.draw_polygon(
+            points,
+            color=(1, 1, 0, 0.2)
         )
