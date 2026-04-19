@@ -11,8 +11,8 @@ from contextlib import suppress
 from time import perf_counter
 from ctypes import Array
 from icecream import ic
-import pygame as pg
 import typing as tp
+import math as m
 
 from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
@@ -28,6 +28,7 @@ from .._groups import Players
 from .._items import Shield, HealingPotion, JetBag, Inventory, Item
 from .._base_entities import LogicGameEntity
 from .._collision.collision_relations import collision_group_players, collision_group_islands, collision_group_bullets
+from .._debug import PolyDebugRenderingEntity
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet
