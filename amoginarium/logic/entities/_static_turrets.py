@@ -155,7 +155,7 @@ class BaseTurret(LogicGameEntity):
         self._runtime_buffer[self.id].param3 = MASK64
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": self.cid()}
+            kwargs={"id": self.id, "cid": self.cid(), "weapon_id": self.weapon.id}
         ))
 
     @property

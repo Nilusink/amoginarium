@@ -33,7 +33,7 @@ class _SyncedEntitiesManager:
         # delete old entity if it already exists
         if sync_id in self._entities:
             self.get_entity(sync_id).kill()
-            self.del_entity(sync_id)
+            self.del_entity(sync_id)  # in case entitie ``kill`` has been overwritten
 
         #     raise RuntimeError(f"entity with id {sync_id} already in manager")
 

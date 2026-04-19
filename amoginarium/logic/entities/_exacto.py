@@ -21,8 +21,8 @@ from shared import VisibleGameEntityLike
 
 from ..audio import Sniper as SniperSound
 from ._static_turrets import BaseTurret, TargetSolution
+from ._logic_groups import Updated, Players, Bullets
 from ._aerodynamic_entity import AerodynamicEntity
-from ._logic_groups import Updated, Players
 from ._base_entity import LogicGameEntity
 from ._weapons import BaseWeapon
 from ._radar import RadarSensor
@@ -151,9 +151,12 @@ class ExactoSniper(BaseWeapon):
 
         # if no targeting func, target with straight laser
         if not self._targeting_func:
+            sprites = Updated.sprites() + Players.sprites() + [
+                b for b in Bullets.sprites() if b.parent != self
+            ]
             hits = multi_raycast_mask(
                 self,
-                Updated.sprites() + Players.sprites(),
+                sprites,
                 self.position + Vec2().from_polar(self.facing.angle, 100),
                 self.position + Vec2().from_polar(self.facing.angle, self._max_range),
             )
@@ -224,9 +227,14 @@ class ExactoTurret(BaseTurret):
         if self._current_target:
             if self._current_target in self.available_targets:
                 # raycast towards target
+                sprites = (
+                    Updated.sprites()
+                    + Players.sprites()
+                    + [b for b in Bullets.sprites() if b.parent != self]
+                )
                 hits = multi_raycast_mask(
                     self,
-                    Updated.sprites() + Players.sprites(),
+                    sprites,
                     self.position + Vec2().from_polar(self.facing.angle, 100),
                     self._current_target.position,
                 )
