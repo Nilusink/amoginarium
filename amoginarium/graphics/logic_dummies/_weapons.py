@@ -20,7 +20,7 @@ from amoginarium import pv
 
 from ._synced_entities import SyncedLRImageEntity, Iconifyable
 from ..render_bindings import renderer
-from ..entities import Drawn_1, Drawn_0
+from ..entities import Drawn_1, Drawn_0, Drawn_2
 
 
 class WeaponDummy(Iconifyable, SyncedLRImageEntity):
@@ -202,29 +202,33 @@ class ExactoSniper(WeaponDummy):
 
     def __init__(self, max_range: float, **kwargs):
         super().__init__(**kwargs)
+        self.add(Drawn_2)
         self._max_range = max_range
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
-        super()._gl_draw(delta_cal, layer)
+        if layer == 1:
+            super()._gl_draw(delta_cal, layer)
+            return
 
         # draw laser to target
-        laser_end = (
-            Vec2().from_polar(self.param3 / 10_000, self.param4)
-            - pv.global_vars.get_world_position()
-        )
-        laser_start = (
-            self.world_position
-            + Vec2().from_polar(self.facing.angle, 100)
-            + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
-        )
-        renderer.draw_thick_line(
-            laser_start,
-            laser_end,
-            Color().from_1(1, 0, 0, .1),
-            thickness=3,
-        )
-        renderer.draw_circle(
-            laser_end,
-            8, 16,
-            Color().from_1(1, 0, 0, .3),
-        )
+        if self.param4:
+            laser_end = (
+                Vec2().from_polar(self.param3 / 10_000, self.param4)
+                - pv.global_vars.get_world_position()
+            )
+            laser_start = (
+                self.world_position
+                + Vec2().from_polar(self.facing.angle, 100)
+                + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
+            )
+            renderer.draw_thick_line(
+                laser_start,
+                laser_end,
+                Color().from_1(1, 1, 0, .2),
+                thickness=3,
+            )
+            renderer.draw_circle(
+                laser_end,
+                8, 16,
+                Color().from_1(1, 1, 0, .6),
+            )

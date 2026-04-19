@@ -20,12 +20,12 @@ from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
 from ..audio import Sniper as SniperSound
-from ._aerodynamic_entity import AerodynamicEntity
-from ._logic_groups import Updated, Walls
-from ._base_entity import LogicGameEntity
 from ._static_turrets import BaseTurret, TargetSolution
-from ._radar import RadarSensor
+from ._aerodynamic_entity import AerodynamicEntity
+from ._logic_groups import Updated, Players
+from ._base_entity import LogicGameEntity
 from ._weapons import BaseWeapon
+from ._radar import RadarSensor
 
 
 class ExactoBullet(AerodynamicEntity):
@@ -59,7 +59,7 @@ class ExactoBullet(AerodynamicEntity):
         coalition: Coalitions,
         initial_position: Vec2,
         initial_velocity: Vec2,
-        target_callback: tp.Callable[[], Vec2],
+        target_callback: tp.Callable[[], Vec2 | None],
         guidance_delay: float | EllipsisType = ...,
         **kwargs,
     ) -> None:
@@ -84,18 +84,22 @@ class ExactoBullet(AerodynamicEntity):
 
         self._target_pos = self._target_callback()
 
-        delta_pos = self.position - self._target_pos
-        delta_angle = self.velocity.angle - delta_pos.angle
+        if self._target_pos:
+            delta_pos = self.position - self._target_pos
+            delta_angle = self.velocity.angle - delta_pos.angle
 
-        # normalize to +/- m.pi
-        delta_angle = (delta_angle + m.pi) % (2 * m.pi) - m.pi
+            # normalize to +/- m.pi
+            delta_angle = (delta_angle + m.pi) % (2 * m.pi) - m.pi
 
-        # calculate rudder pos
-        abs_ang = abs(delta_angle)
-        if abs(self.alpha) < self._max_alpha:
-            self._rudder_angle = (delta_angle // abs_ang) * min(
-                (self._rudder_max_angle, abs_ang * .5)
-            )
+            # calculate rudder pos
+            abs_ang = abs(delta_angle)
+            if abs(self.alpha) < self._max_alpha:
+                self._rudder_angle = (delta_angle // abs_ang) * min(
+                    (self._rudder_max_angle, abs_ang * .5)
+                )
+
+            else:
+                self._rudder_angle = 0
 
         else:
             self._rudder_angle = 0
@@ -113,7 +117,7 @@ class ExactoSniper(BaseWeapon):
         runtime_buffer: Array[base_entity_t],
         drop_casings: bool = False,
         parent_position_offset: coord_t = Vec2(),
-        targeting_func: tp.Callable[[], Vec2] | None = None,
+        targeting_func: tp.Callable[[], Vec2 | None] | None = None,
         guidance_delay: float | EllipsisType = ...
     ) -> None:
         super().__init__(
@@ -136,10 +140,10 @@ class ExactoSniper(BaseWeapon):
             target_callback=self._get_current_target,
             guidance_delay=guidance_delay
         )
-        self._current_target = Vec2()
+        self._current_target: Vec2 | None = None
         self._targeting_func = targeting_func
 
-    def _get_current_target(self) -> Vec2:
+    def _get_current_target(self) -> Vec2 | None:
         return self._current_target
 
     def _update(self, delta: float) -> None:
@@ -149,7 +153,7 @@ class ExactoSniper(BaseWeapon):
         if not self._targeting_func:
             hits = multi_raycast_mask(
                 self,
-                Walls.sprites() + Updated.sprites(),
+                Updated.sprites() + Players.sprites(),
                 self.position + Vec2().from_polar(self.facing.angle, 100),
                 self.position + Vec2().from_polar(self.facing.angle, self._max_range),
             )
@@ -157,18 +161,22 @@ class ExactoSniper(BaseWeapon):
                 hits = [hit[1] for hit in hits]
                 hits = sorted(hits, key=lambda e: e.length)
 
-                self._current_target.xy = hits[0].xy
+                self._current_target = hits[0]
 
             else:
-                self._current_target.xy = (self.position + Vec2().from_polar(
+                self._current_target = self.position + Vec2().from_polar(
                     self.facing.angle, self._max_range
-                )).xy
+                )
 
         else:
-            self._current_target.xy = self._targeting_func().xy
+            self._current_target = self._targeting_func()
 
-        self._buff.param3 = int(normalize_angle(self._current_target.angle) * 10_000)
-        self._buff.param4 = int(self._current_target.length)
+        if self._current_target:
+            self._buff.param3 = int(normalize_angle(self._current_target.angle) * 10_000)
+            self._buff.param4 = int(self._current_target.length)
+
+        else:
+            self._buff.param4 = 0
 
 
 class ExactoTurret(BaseTurret):
@@ -203,7 +211,7 @@ class ExactoTurret(BaseTurret):
             2400,
             sensors=[
                 RadarSensor(
-                    runtime_buffer, self, 2500, sphere_accuracy=256
+                    runtime_buffer, self, 2500, sphere_accuracy=256, min_rcs=.03
                 )
             ],
             **kwargs,
@@ -211,12 +219,23 @@ class ExactoTurret(BaseTurret):
         
         self._current_target = None
 
-    def __get_target(self) -> Vec2:
+    def __get_target(self) -> Vec2 | None:
         """return current target for exacto"""
         if self._current_target:
-            return self._current_target.position
+            if self._current_target in self.available_targets:
+                # raycast towards target
+                hits = multi_raycast_mask(
+                    self,
+                    Updated.sprites() + Players.sprites(),
+                    self.position + Vec2().from_polar(self.facing.angle, 100),
+                    self._current_target.position,
+                )
+                if hits:
+                    return hits[0][1]
 
-        return Vec2()
+                return self._current_target.position
+
+        return None
 
     def _get_firing_solution(
             self,

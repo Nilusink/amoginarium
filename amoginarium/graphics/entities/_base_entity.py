@@ -16,7 +16,7 @@ from shared.debugging import run_with_debug
 class BaseGraphicsEntity:
     __slots__ = [
         "__g", "_children", "_parent", "_root_visibility", "_highlight",
-        "_visible", "_lifetime"
+        "_visible", "_lifetime", "_draw_children"
     ]
 
     _cid: str = ...
@@ -37,6 +37,7 @@ class BaseGraphicsEntity:
 
         self._parent = parent
         self._children = []
+        self._draw_children = True
         self._root_visibility = False
         self._highlight = False
         self._lifetime = 0
@@ -166,7 +167,7 @@ class BaseGraphicsEntity:
 
         if draw:
             self._gl_draw(delta_cal, layer=layer)
-            if recursive:
+            if recursive and self._draw_children:
                 for child in self._children:
                     child.gl_draw(
                         delta_cal,

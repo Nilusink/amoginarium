@@ -94,6 +94,7 @@ class PlayerDummy(SyncedLRImageEntity):
             parent: int | None = None
     ) -> None:
         super().__init__(sync_id, parent)
+        self._draw_children = False
         self.add(Drawn_1, Drawn_2)
 
         # load textures
