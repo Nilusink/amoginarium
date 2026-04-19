@@ -6,4 +6,4 @@ Created: 18.04.2026
 Authors: LukasKrah
 """
 
-from ._debug_rendering import DebugRenderingEntity
+from ._debug_rendering import DebugRenderingEntity, PolyDebugRenderingEntity

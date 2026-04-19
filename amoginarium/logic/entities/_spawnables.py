@@ -13,7 +13,7 @@ import typing as tp
 from ._turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret, FlakTurret, CRAMTurret, SkyShield
 from ._sensors import VisualRadarSensor, VisualSensor
 from ._base_entities import LogicGameEntity
-from ._debug import DebugRenderingEntity
+from ._debug import DebugRenderingEntity, PolyDebugRenderingEntity
 from ._world import TextEntity
 
 # noinspection PyTypeChecker

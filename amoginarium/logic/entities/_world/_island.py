@@ -178,7 +178,6 @@ class Island(LogicGameEntity):
                     pass
 
         raw_rects = find_minimum_rectangles_dirty(bitmap)
-        print(len(raw_rects))
 
         for r1, c1, r2, c2 in raw_rects:
             # Calculate cell dimensions
@@ -186,7 +185,6 @@ class Island(LogicGameEntity):
             height_cells = r2 - r1 + 1
 
             # Translate to Pygame world coordinates
-            print("CALCING", c1, r1, self._block_size)
             rect_x = self.position.x + c1 * self._block_size[0]
             rect_y = self.position.y + r1 * self._block_size[1]
             rect_w = width_cells * self._block_size[0]

@@ -99,6 +99,7 @@ class GraphicsCIDs(Enum):
     """
     static_text = "static.text"
     debug_rendering = "debug.rendering"
+    debug_poly = "debug.poly"
 
 
 class _CIDRegister:
