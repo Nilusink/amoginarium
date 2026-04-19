@@ -34,12 +34,12 @@ class Shield(BaseItem):
     _image_size: tp.ClassVar[tuple[int, int]] = (45, 80)
     _max_uses: tp.ClassVar[int] = 200  # acts as HP for shield
 
-    __slots__ = ("_in_use", "_sound", "__collision_id", "__debug")
+    _collision_group = collision_group_shields
+
+    __slots__ = ("_in_use", "_sound")
 
     _in_use: bool
     _sound: RandomizedEffect
-
-    __debug: PolyDebugRenderingEntity
 
     def __init__(
             self,
@@ -51,29 +51,12 @@ class Shield(BaseItem):
             Vec2().from_cartesian(*self._image_size),
             parent_position_offset,
         )
+        self._create_collision()
         # self._generate_collision_mask()
 
         self._sound = MetalPings().set_volume(.4, .5)
         self._in_use = False
         # self._update_mask()
-
-        self.__collision_id = collision_manager.register_entity(
-            group_id=collision_group_shields,
-            instance=self,
-            pos=self.position + self.size / 2,
-            size=self.size,
-            centered=True,
-            rotation=self.facing.angle
-        )
-        points = collision_manager.get_points(collision_group_shields, self.__collision_id)
-
-        self.__debug = PolyDebugRenderingEntity(
-            runtime_buffer,
-            p1=points[0],
-            p2=points[1],
-            p3=points[2],
-            p4=points[3],
-        )
 
         self.add(Updated)
 
@@ -81,6 +64,10 @@ class Shield(BaseItem):
     def hp(self) -> float:
         """hit points"""
         return self._uses_left
+
+    @property
+    def in_use(self) -> bool:
+        return self._in_use
 
     def use(self) -> None:
         """
@@ -105,21 +92,31 @@ class Shield(BaseItem):
         Reaction to collision
         :param event: Event details
         """
-
         self.hit(event.other_entity.damage, event.other_entity)
 
-        if self.__collision_id is not None:
-            collision_manager.update_entity(
-                group_id=collision_group_shields,
-                entity_id=self.__collision_id,
-                pos=self.position + self.size / 2,
-                size=self.size,
-                centered=True,
-                rotation=self.facing.angle,
-                shift_history=False
-            )
+    def _update_collision(
+            self,
+            *,
+            position: Vec2 | EllipsisType = ...,
+            size: Vec2 | EllipsisType = ...,
+            rotation: float = 0.0,
+            positions: list[Vec2] | None = None,
+            centered: bool | EllipsisType = ...,
+            shift_history: bool = True
+    ) -> None:
+        super()._update_collision(
+            position=self.position + self.size / 2,
+            size=size,
+            rotation=self.facing.angle,
+            positions=positions,
+            centered=True,
+            shift_history=shift_history
+        )
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
+        if not self._in_use:
+            return
+
         if hit_by is not ...:
             if hit_by.is_bullet:
                 self._sound.play(pos=self.position)
@@ -133,8 +130,6 @@ class Shield(BaseItem):
             self.kill(hit_by)
 
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
-        collision_manager.delete_entity(collision_group_shields, self.__collision_id)
-        self.__collision_id = None
         super().kill(killed_by)
 
     def _update(self, delta: float, **_) -> None:
@@ -148,27 +143,9 @@ class Shield(BaseItem):
 
             else:
                 self.size.xy = self._image_size[0] * .1, self._image_size[1] * .3
-                self.position = self.parent.position
+                self.position.xy = (0, 3000)
 
             super()._update(delta, keep_position=True)
-
-            collision_manager.update_entity(
-                group_id=collision_group_shields,
-                entity_id=self.__collision_id,
-                pos=self.position + self.size / 2,
-                size=self.size,
-                centered=True,
-                rotation=self.facing.angle,
-                shift_history=False
-            )
-            if self.__collision_id is not None:
-                points = collision_manager.get_points(collision_group_shields, self.__collision_id)
-
-                self.__debug.p1 = points[0]
-                self.__debug.p2 = points[1]
-                self.__debug.p3 = points[2]
-                self.__debug.p4 = points[3]
-
             return
 
         else:

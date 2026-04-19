@@ -19,7 +19,8 @@ from amoginarium.shared.utility import Vec2
 
 from .._collision.collision_manager import collision_manager
 from ._base_logic_entity import BaseLogicEntity
-
+if tp.TYPE_CHECKING:
+    from .._debug import PolyDebugRenderingEntity
 
 class PositionedLogicEntity(BaseLogicEntity):
     """
@@ -28,7 +29,10 @@ class PositionedLogicEntity(BaseLogicEntity):
     """
     _cid: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
 
-    __slots__ = ("position", "size", "_has_collision", "_collision_id", "_centered", "active_normals")
+    DRAW_DEBUG_HITBOXES: tp.ClassVar[bool] = True
+    DEBUG_ENTITY_CLASS: tp.ClassVar[type["PolyDebugRenderingEntity"]]
+
+    __slots__ = ("position", "size", "_has_collision", "_collision_id", "active_normals", "_centered", "__debug")
 
     position: Vec2  # public / no property for faster access
     size: Vec2  # public / no property for faster access
@@ -40,6 +44,8 @@ class PositionedLogicEntity(BaseLogicEntity):
 
     active_normals: dict[int, list[Vec2]]
 
+    __debug: PolyDebugRenderingEntity | None
+
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -48,7 +54,6 @@ class PositionedLogicEntity(BaseLogicEntity):
             *,
             parent: BaseLogicEntity | None = None,
             centered: bool = False,
-            has_collision: bool = False,
     ) -> None:
         """
         A logic entity with position, size, and optional collision detection
@@ -57,25 +62,15 @@ class PositionedLogicEntity(BaseLogicEntity):
         :param position: 2D position of the entity
         :param parent: Optional parent entity
         :param centered: Whether the position is center or top left (relevant for collision detection)
-        :param has_collision: Whether the entity has collision detection
         """
         super().__init__(runtime_buffer=runtime_buffer, parent=parent)
         self.position = position
         self.size = size
-
         self._centered = centered
-        self._has_collision = has_collision
-        self.active_normals = {}
 
-        if self._collision_group is not None and self._has_collision:
-            self._collision_id = collision_manager.register_entity(
-                group_id=self._collision_group,
-                instance=self,
-                pos=self.position,
-                size=self.size,
-                centered=self._centered)
-        else:
-            self._collision_id = None
+        self.active_normals = {}
+        self._collision_id = None
+        self.__debug = None
 
     # region Class-Methods
     @classmethod
@@ -108,14 +103,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         self._on_collision(event)
 
         if self._collision_id is not None:
-            collision_manager.update_entity(
-                group_id=self._collision_group,
-                entity_id=self._collision_id,
-                pos=self.position,
-                size=self.size,
-                centered=self._centered,
-                shift_history=False
-            )
+            self._update_collision(shift_history=False)
 
     @tp.final
     def set_normals(self, group_id: int, normals: list[Vec2]) -> None:
@@ -126,6 +114,76 @@ class PositionedLogicEntity(BaseLogicEntity):
         """
         # ic("SET NORMALS:", self, group_id, normals)
         self.active_normals[group_id] = normals
+
+    def _create_collision(
+            self,
+            *,
+            position: Vec2 | EllipsisType = ...,
+            size: Vec2 | EllipsisType = ...,
+            rotation: float = 0.0,
+            positions: list[Vec2] | None = None,
+            centered: bool | EllipsisType = ...,
+    ) -> None:
+        if position == ...:
+            position = self.position
+        if size == ...:
+            size = self.size
+        if centered == ...:
+            centered = self._centered
+
+        self._collision_id = collision_manager.register_entity(
+            group_id=self._collision_group,
+            instance=self,
+            pos=position,
+            size=size,
+            rotation=rotation,
+            positions=positions,
+            centered=centered
+        )
+        if PositionedLogicEntity.DRAW_DEBUG_HITBOXES:
+            self.__debug = PositionedLogicEntity.DEBUG_ENTITY_CLASS(
+                self._runtime_buffer, radius=1
+            )
+
+    def _update_collision(
+            self,
+            *,
+            position: Vec2 | EllipsisType = ...,
+            size: Vec2 | EllipsisType = ...,
+            rotation: float = 0.0,
+            positions: list[Vec2] | None = None,
+            centered: bool | EllipsisType = ...,
+            shift_history: bool = True
+    ) -> None:
+        if self._collision_id is None:
+            return
+
+        if position == ...:
+            position = self.position
+        if size == ...:
+            size = self.size
+        if centered == ...:
+            centered = self._centered
+
+        collision_manager.update_entity(
+            group_id=self._collision_group,
+            entity_id=self._collision_id,
+            pos=position,
+            size=size,
+            rotation=rotation,
+            positions=positions,
+            centered=centered,
+            shift_history=shift_history
+        )
+        if PositionedLogicEntity.DRAW_DEBUG_HITBOXES:
+            self.__debug.set_points(collision_manager.get_points(self._collision_group, self._collision_id))
+
+    def _delete_collision(self) -> None:
+        if self._collision_id is None:
+            return
+
+        collision_manager.delete_entity(self._collision_group, self._collision_id)
+        self._collision_id = None
 
     # endregion
 
@@ -139,17 +197,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         self._runtime_buffer[self.id].pos_y = self.position.y
         self._runtime_buffer[self.id].size_x = int(self.size.x)
         self._runtime_buffer[self.id].size_y = int(self.size.y)
-
-        if self._collision_id is not None:
-            collision_manager.update_entity(
-                group_id=self._collision_group,
-                entity_id=self._collision_id,
-                pos=self.position,
-                size=self.size,
-                centered=self._centered,
-                shift_history=True
-            )
-
+        self._update_collision()
         super()._update(delta)
 
     def kill(self, killed_by: tp.Any = ...) -> None:
@@ -157,9 +205,9 @@ class PositionedLogicEntity(BaseLogicEntity):
         Remove from groups and collision manager
         :param killed_by: who killed this entity
         """
-        if self._collision_id is not None:
-            collision_manager.delete_entity(self._collision_group, self._collision_id)
-            self._collision_id = None
+        self._delete_collision()
+        if self.__debug is not None:
+            self.__debug.kill()
         super().kill(killed_by)
 
     # endregion

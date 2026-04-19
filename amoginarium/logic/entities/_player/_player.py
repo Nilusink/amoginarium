@@ -82,9 +82,9 @@ class Player(LogicGameEntity):
             initial_velocity=initial_velocity,
             parent=parent,
             coalition=coalition,
-            has_collision=True,
             centered=True
         )
+        self._create_collision()
 
         self._groaning = SoundEffect(("groaning", "hugh_1"))
         self._pickup_sound = OnHoverButtonSound()

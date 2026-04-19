@@ -68,6 +68,9 @@ class PolyDebugRenderingEntity(SyncedGraphicsEntity):
         # self.remove(Drawn_0)
         # self.add(Drawn_2)
 
+        self.remove(Drawn_0)
+        self.add(Drawn_2)
+
         self.radius = radius
         ic("De spawn")
 
@@ -119,9 +122,9 @@ class PolyDebugRenderingEntity(SyncedGraphicsEntity):
             if p.xy != (0, 0)
         ]
         for point in points:
-            renderer.draw_circle(point, self.radius, self.radius, Color().from_1(1, 1, 0))
+            renderer.draw_circle(point, self.radius, self.radius, Color().from_1(1, 0, 0))
 
         renderer.draw_polygon(
             points,
-            color=(1, 1, 0, 0.2)
+            color=(1, 0, 0, 0.2)
         )

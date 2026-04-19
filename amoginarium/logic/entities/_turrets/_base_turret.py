@@ -133,9 +133,9 @@ class BaseTurret(LogicGameEntity):
             size=size,
             position=position,
             coalition=coalition,
-            has_collision=True,
             centered=True
         )
+        self._create_collision()
         self.facing.angle = self._default_facing_angle
         self.weapon.facing.angle = self.facing.angle
 

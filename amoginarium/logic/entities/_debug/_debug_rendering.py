@@ -15,7 +15,7 @@ from amoginarium.shared.utility import Vec2, color_t, convert_color, MASK16, get
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
-from .._base_entities import LogicGameEntity
+from .._base_entities import LogicGameEntity, PositionedLogicEntity
 
 
 class DebugRenderingEntity(LogicGameEntity):
@@ -89,7 +89,7 @@ class PolyDebugRenderingEntity(LogicGameEntity):
     def set_points(self, points: tp.Sequence[Vec2]) -> None:
         """set all points"""
         for i in range(8):
-            if i >= (len(points)-1):
+            if i >= (len(points)):
                 return
 
             getattr(self, f"p{i+1}").xy = points[i].xy
@@ -122,3 +122,6 @@ class PolyDebugRenderingEntity(LogicGameEntity):
             | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
             | (int(self.p8.length) & MASK16) << 48
         )
+
+
+PositionedLogicEntity.DEBUG_ENTITY_CLASS = PolyDebugRenderingEntity

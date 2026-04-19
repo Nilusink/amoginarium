@@ -237,9 +237,9 @@ class Bullet(LogicGameEntity):
             initial_velocity=initial_velocity.copy(),
             coalition=coalition,
             parent=parent,
-            has_collision=True,
             centered=True
         )
+        self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius
 
         if self._cluster_depth > 0:
@@ -362,7 +362,7 @@ class Bullet(LogicGameEntity):
         """bullet has hit someone else"""
         self.kill()
 
-    def __on_collision_general(self, event: CollisionEvent["Island"]) -> None:
+    def __on_collision_general(self, event: CollisionEvent[tp.Union["Island", "Player", "BaseTurret", "Grenade"]]) -> None:
         if event.other_entity == self.parent:
             return
 
@@ -377,6 +377,16 @@ class Bullet(LogicGameEntity):
 
         self.hit(event.other_entity.damage, event.other_entity)
 
+    def __on_collision_shield(self, event: CollisionEvent["Shield"]) -> None:
+        if event.other_entity == self.parent:
+            return
+
+        if event.other_entity.in_use:
+            self.position.x = event.position.x
+            self.position.y = event.position.y
+
+            self.kill(killed_by=event.other_entity)
+
     def _on_collision(self, event: CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]) -> None:
         if event.group_id == collision_group_islands:
             self.__on_collision_general(event)
@@ -389,7 +399,7 @@ class Bullet(LogicGameEntity):
         elif event.group_id == collision_group_grenades:
             self.__on_collision_general(event)
         elif event.group_id == collision_group_shields:
-            self.__on_collision_general(event)
+            self.__on_collision_shield(event)
 
     def _update(self, delta):
         self._time_to_life -= delta

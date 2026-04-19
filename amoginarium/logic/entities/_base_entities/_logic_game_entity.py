@@ -56,7 +56,6 @@ class LogicGameEntity(PositionedLogicEntity):
             parent: LogicGameEntity | None = None,
             coalition: Coalitions | EllipsisType = ...,
             centered: bool = False,
-            has_collision: bool = False,
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -67,15 +66,13 @@ class LogicGameEntity(PositionedLogicEntity):
         :param parent: Optional parent entity
         :param coalition: Coalition of the entity. Defaults to neutral
         :param centered: Whether the position is center or top left (relevant for collision detection)
-        :param has_collision: Whether the entity has collision detection
         """
         super().__init__(
             runtime_buffer=runtime_buffer,
             size=size,
             position=position,
             parent=parent,
-            centered=centered,
-            has_collision=has_collision
+            centered=centered
         )
         # region default parameters
         self._velocity_to_add = Vec2()

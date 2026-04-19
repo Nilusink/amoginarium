@@ -9,11 +9,11 @@ Authors: LukasKrah
 from .._base_entities import PositionedLogicEntity
 from .collision_manager import collision_manager
 
-collision_group_players = collision_manager.add_group(max_level=0, hitbox_type="aabb")
-collision_group_bullets = collision_manager.add_group(max_level=1, hitbox_type="aabb")
-collision_group_grenades = collision_manager.add_group(max_level=1, hitbox_type="aabb")
-collision_group_islands = collision_manager.add_group(max_level=0, hitbox_type="aabb")
-collision_group_turrets = collision_manager.add_group(max_level=0, hitbox_type="aabb")
+collision_group_players = collision_manager.add_group(max_level=0)
+collision_group_bullets = collision_manager.add_group(max_level=1)
+collision_group_grenades = collision_manager.add_group(max_level=1)
+collision_group_islands = collision_manager.add_group(max_level=0)
+collision_group_turrets = collision_manager.add_group(max_level=0)
 collision_group_shields = collision_manager.add_group(max_level=0, hitbox_type="obb")
 
 on_collision = PositionedLogicEntity.on_collision
