@@ -107,8 +107,8 @@ class Grenade(Bullet):
         self.hit(event.other_entity.damage, event.other_entity)
 
     def __on_collision_player(self, event: CollisionEvent["Player"]) -> None:
-        self.add_velocity(event.other_entity.velocity)
         if self._lifetime > 0.5:
+            self.add_velocity(event.other_entity.velocity)
             self.add_velocity(Vec2().from_cartesian(0, -200))
 
     def _on_collision(self, event: CollisionEvent) -> None:

@@ -31,7 +31,8 @@ class _SyncedEntitiesManager:
         add an entity to the manager
         """
         if sync_id in self._entities:
-            raise RuntimeError(f"entity with id {sync_id} already in manager")
+            self.get_entity(sync_id).kill()
+            self.del_entity(sync_id)
 
         self._entities[sync_id] = entity
 

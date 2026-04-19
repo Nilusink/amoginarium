@@ -7,8 +7,18 @@ cdef struct EntityData:
     int id
     bint active
     bint is_centered
+    int h_type
+
     double px_o, py_o, px_n, py_n
     double sx, sy
+    double rot
+
+    vector[double] vx_o
+    vector[double] vy_o
+    vector[double] vx_n
+    vector[double] vy_n
+    vector[double] axes_x
+    vector[double] axes_y
 
     vector[int] bound_min_x
     vector[int] bound_min_y
@@ -18,10 +28,12 @@ cdef struct EntityData:
     vector[vector[uint64_t]] grid_keys
 
     vector[int] col_groups
+    vector[int] col_entities
     vector[double] col_nx
     vector[double] col_ny
 
     vector[int] prev_col_groups
+    vector[int] prev_col_entities
     vector[double] prev_col_nx
     vector[double] prev_col_ny
 
@@ -29,6 +41,7 @@ cdef struct CollisionGroupStruct:
     int id
     int max_level
     bint is_static
+    int h_type
     vector[EntityData] entities
     vector[int] free_ids
 

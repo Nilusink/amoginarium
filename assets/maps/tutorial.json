@@ -120,7 +120,17 @@
     "entities": [
         {
             "type": "turret.static.ak47",
-            "pos": [2000, 700]
+            "pos": [2000, 700],
+            "group": 1
+        },
+        {
+            "type": "sensor.static.radar",
+            "pos": [2000, 700],
+            "args": {
+                "detection_range": 4000,
+                "min_rcs": 0.0001
+            },
+            "group": 1
         },
         {
             "type": "static.text",
@@ -200,8 +210,18 @@
             }
         },
         {
-            "type": "turret.static.ak47",
-            "pos": [10500, 805]
+            "type": "turret.static.cram",
+            "pos": [10500, 805],
+            "group": 2
+        },
+        {
+            "type": "sensor.static.radar",
+            "pos": [10500, 805],
+            "args": {
+                "detection_range": 4000,
+                "min_rcs": 0.0001
+            },
+            "group": 2
         },
         {
             "type": "static.text",

@@ -3,8 +3,28 @@
 # cython: wraparound=False
 # cython: cdivision=True
 
+from libcpp.vector cimport vector
+
 cdef inline double c_max(double a, double b) noexcept: return a if a > b else b
 cdef inline double c_min(double a, double b) noexcept: return a if a < b else b
+
+cdef inline void project_poly(const vector[double]& vx, const vector[double]& vy, double nx, double ny,
+                              double * out_min, double * out_max) noexcept:
+    cdef const double* vx_ptr = vx.data()
+    cdef const double* vy_ptr = vy.data()
+    cdef size_t sz = vx.size()
+    cdef double min_p = vx_ptr[0] * nx + vy_ptr[0] * ny
+    cdef double max_p = min_p
+    cdef double p
+    cdef size_t i
+    for i in range(1, sz):
+        p = vx_ptr[i] * nx + vy_ptr[i] * ny
+        if p < min_p:
+            min_p = p
+        elif p > max_p:
+            max_p = p
+    out_min[0] = min_p
+    out_max[0] = max_p
 
 cdef inline bint aabb_aabb_swept(
         double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_sx, double a_sy,
@@ -14,11 +34,11 @@ cdef inline bint aabb_aabb_swept(
     cdef double v_rel_x = (a_px_n - a_px_o) - (b_px_n - b_px_o)
     cdef double v_rel_y = (a_py_n - a_py_o) - (b_py_n - b_py_o)
 
-    # NO PIXEL HACKS: Exact, mathematically flush boundary detection
-    cdef double min_x = b_px_o - a_sx
-    cdef double max_x = b_px_o + b_sx
-    cdef double min_y = b_py_o - a_sy
-    cdef double max_y = b_py_o + b_sy
+    cdef double epsilon = 0.1
+    cdef double min_x = b_px_o - a_sx - epsilon
+    cdef double max_x = b_px_o + b_sx + epsilon
+    cdef double min_y = b_py_o - a_sy - epsilon
+    cdef double max_y = b_py_o + b_sy + epsilon
 
     cdef double t_near_x = -1e300, t_far_x = 1e300
     if v_rel_x != 0.0:
@@ -42,14 +62,11 @@ cdef inline bint aabb_aabb_swept(
     if t_hit_near > t_hit_far or t_hit_far <= 0.0 or t_hit_near >= 1.0:
         return False
 
-    # Normal Calculation
     if t_hit_near <= 0.0:
-        # Resting Contact: We are perfectly flush or overlapping. Find shortest distance.
         dist_left = a_px_o - min_x
         dist_right = max_x - a_px_o
         dist_top = a_py_o - min_y
         dist_bottom = max_y - a_py_o
-
         min_dist_x = dist_left if dist_left < dist_right else dist_right
         min_dist_y = dist_top if dist_top < dist_bottom else dist_bottom
 
@@ -60,7 +77,6 @@ cdef inline bint aabb_aabb_swept(
             out_norm_x[0] = 0.0
             out_norm_y[0] = -1.0 if dist_top < dist_bottom else 1.0
     else:
-        # Dynamic Impact
         if t_near_x > t_near_y:
             out_norm_x[0] = -1.0 if v_rel_x > 0.0 else 1.0
             out_norm_y[0] = 0.0
@@ -71,10 +87,114 @@ cdef inline bint aabb_aabb_swept(
             out_norm_x[0] = -1.0 if v_rel_x > 0.0 else 1.0
             out_norm_y[0] = -1.0 if v_rel_y > 0.0 else 1.0
 
-    # STRICT Separation Rejection: strictly > 0 means moving AWAY.
-    # If == 0, it allows continuous resting contact!
     if (v_rel_x * out_norm_x[0]) + (v_rel_y * out_norm_y[0]) > 0.0:
         return False
 
     out_t[0] = c_max(0.0, t_hit_near)
+    return True
+
+cdef inline bint swept_sat_generic(
+        const vector[double]& a_vx_o, const vector[double]& a_vy_o, const vector[double]& a_vx_n,
+        const vector[double]& a_vy_n, const vector[double]& a_ax, const vector[double]& a_ay, double a_dx, double a_dy,
+        const vector[double]& b_vx_o, const vector[double]& b_vy_o, const vector[double]& b_vx_n,
+        const vector[double]& b_vy_n, const vector[double]& b_ax, const vector[double]& b_ay, double b_dx, double b_dy,
+        double * out_norm_x, double * out_norm_y, double * out_t
+) noexcept:
+    cdef double v_rel_x = a_dx - b_dx
+    cdef double v_rel_y = a_dy - b_dy
+
+    cdef double t_enter = -1e300
+    cdef double t_exit = 1e300
+    cdef double best_nx = 0.0
+    cdef double best_ny = 0.0
+
+    cdef double min_overlap = 1e300
+    cdef double overlap, mtv_nx = 0.0, mtv_ny = 0.0
+
+    cdef double epsilon = 0.1
+    cdef size_t i
+    cdef double nx, ny, minA, maxA, minB, maxB, v_proj, t0, t1, inv_v
+
+    for i in range(a_ax.size()):
+        nx = a_ax[i]
+        ny = a_ay[i]
+        project_poly(a_vx_o, a_vy_o, nx, ny, &minA, &maxA)
+        project_poly(b_vx_o, b_vy_o, nx, ny, &minB, &maxB)
+
+        minB -= epsilon
+        maxB += epsilon
+
+        if minA > maxB or maxA < minB:
+            overlap = -1.0
+        else:
+            overlap = (maxB - minA) if (maxB - minA) < (maxA - minB) else (maxA - minB)
+            if overlap < min_overlap:
+                min_overlap = overlap
+                if (maxA + minA) > (maxB + minB):
+                    mtv_nx = nx; mtv_ny = ny
+                else:
+                    mtv_nx = -nx; mtv_ny = -ny
+
+        v_proj = v_rel_x * nx + v_rel_y * ny
+        if v_proj == 0.0:
+            if minA >= maxB or maxA <= minB: return False
+        else:
+            inv_v = 1.0 / v_proj
+            t0 = (minB - maxA) * inv_v
+            t1 = (maxB - minA) * inv_v
+            if inv_v < 0.0: t0, t1 = t1, t0
+            if t0 > t_enter:
+                t_enter = t0
+                best_nx = -nx if v_proj > 0 else nx
+                best_ny = -ny if v_proj > 0 else ny
+            if t1 < t_exit: t_exit = t1
+            if t_enter > t_exit: return False
+
+    for i in range(b_ax.size()):
+        nx = b_ax[i]
+        ny = b_ay[i]
+        project_poly(a_vx_o, a_vy_o, nx, ny, &minA, &maxA)
+        project_poly(b_vx_o, b_vy_o, nx, ny, &minB, &maxB)
+
+        minB -= epsilon
+        maxB += epsilon
+
+        if minA > maxB or maxA < minB:
+            overlap = -1.0
+        else:
+            overlap = (maxB - minA) if (maxB - minA) < (maxA - minB) else (maxA - minB)
+            if overlap < min_overlap:
+                min_overlap = overlap
+                if (maxA + minA) > (maxB + minB):
+                    mtv_nx = nx; mtv_ny = ny
+                else:
+                    mtv_nx = -nx; mtv_ny = -ny
+
+        v_proj = v_rel_x * nx + v_rel_y * ny
+        if v_proj == 0.0:
+            if minA >= maxB or maxA <= minB: return False
+        else:
+            inv_v = 1.0 / v_proj
+            t0 = (minB - maxA) * inv_v
+            t1 = (maxB - minA) * inv_v
+            if inv_v < 0.0: t0, t1 = t1, t0
+            if t0 > t_enter:
+                t_enter = t0
+                best_nx = -nx if v_proj > 0 else nx
+                best_ny = -ny if v_proj > 0 else ny
+            if t1 < t_exit: t_exit = t1
+            if t_enter > t_exit: return False
+
+    if t_enter >= 1.0 or t_exit <= 0.0: return False
+
+    if t_enter <= 0.0:
+        out_norm_x[0] = mtv_nx
+        out_norm_y[0] = mtv_ny
+    else:
+        out_norm_x[0] = best_nx
+        out_norm_y[0] = best_ny
+
+    if (v_rel_x * out_norm_x[0]) + (v_rel_y * out_norm_y[0]) > 0.0: return False
+
+    out_t[0] = c_max(0.0, t_enter)
     return True

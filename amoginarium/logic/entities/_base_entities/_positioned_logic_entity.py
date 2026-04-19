@@ -105,7 +105,6 @@ class PositionedLogicEntity(BaseLogicEntity):
         Calls _on_collision and updates collision entity
         :param event: Event details
         """
-        # ic("COLLISION:", self, event)
         self._on_collision(event)
 
         if self._collision_id is not None:
