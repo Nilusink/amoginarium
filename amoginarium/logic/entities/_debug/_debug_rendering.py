@@ -86,6 +86,11 @@ class PolyDebugRenderingEntity(LogicGameEntity):
             kwargs={"id": self.id, "cid": self.cid(), "radius": radius},
         ))
 
+    def set_points(self, points: tp.Sequence[Vec2]) -> None:
+        """set all points"""
+        for i in range(1, 9):
+            getattr(self, f"p{i}").xy = points[i].xy
+
     def _update(self, delta: float) -> None:
         # normal points
         self._buff.pos_x = self.p1.x
