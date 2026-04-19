@@ -11,6 +11,7 @@ import typing as tp
 
 from amoginarium.shared import base_entity_t, SensorCIDs, ProcessCommand
 from amoginarium.shared.utility import coord_t, convert_coord, Vec2
+from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared import BaseCommandType
 from amoginarium import pv
 

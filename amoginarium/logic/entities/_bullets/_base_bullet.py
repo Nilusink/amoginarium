@@ -362,7 +362,7 @@ class Bullet(LogicGameEntity):
         """bullet has hit someone else"""
         self.kill()
 
-    def __on_collision_general(self, event: CollisionEvent[tp.Union["Island", "Player", "BaseTurret", "Grenade"]]) -> None:
+    def __on_collision_general(self, event: CollisionEvent[tp.Union["Island", "Player", "Grenade"]]) -> None:
         if event.other_entity == self.parent:
             return
 

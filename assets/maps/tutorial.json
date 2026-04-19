@@ -125,7 +125,7 @@
         },
         {
             "type": "sensor.static.radar",
-            "pos": [2000, 700],
+            "pos": [2000, 600],
             "args": {
                 "detection_range": 4000,
                 "min_rcs": 0.0001
