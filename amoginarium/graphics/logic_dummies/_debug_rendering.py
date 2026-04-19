@@ -110,6 +110,7 @@ class PolyDebugRenderingEntity(SyncedGraphicsEntity):
         self.p8.length = (self._buff.param4 >> 48) & MASK16
         self.p8.angle = float((self._buff.param4 >> 32) & MASK16) / 10_000
 
+    # noinspection DuplicatedCode
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         world_pos = pv.global_vars.get_world_position()
         renderer.draw_circle(
