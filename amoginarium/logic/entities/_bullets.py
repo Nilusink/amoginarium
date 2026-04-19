@@ -530,7 +530,7 @@ class Grenade(Bullet):
     _default_cluster_step_inertia = 1300
     _default_cluster_step_explosion = 150
     _default_cluster_fuze_ttl_mult = .001
-    _default_cluster_last_step_ttl = 20
+    _default_cluster_last_step_ttl = .2
     _default_cluster_size_mult = .1
 
     def __init__(

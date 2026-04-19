@@ -101,12 +101,9 @@ def multi_raycast_mask(
             continue
 
         if hasattr(sprite, "last_pos"):
-            if raycast_size(start, end, sprite.position, sprite.size):
-                res = raycast_mask(sprite, start, end, sample_rate)
+            res = raycast_size(start, end, sprite.position, sprite.size)
 
-                if not res:
-                    continue
-            else:
+            if not res:
                 continue
 
         elif hasattr(sprite, "form"):  # check if island

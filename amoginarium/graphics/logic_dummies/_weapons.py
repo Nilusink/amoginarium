@@ -224,11 +224,11 @@ class ExactoSniper(WeaponDummy):
             renderer.draw_thick_line(
                 laser_start,
                 laser_end,
-                Color().from_1(1, 1, 0, .2),
+                Color().from_1(1, 0, 0, .2),
                 thickness=3,
             )
             renderer.draw_circle(
                 laser_end,
                 8, 16,
-                Color().from_1(1, 1, 0, .6),
+                Color().from_1(1, 0, 0, .6),
             )
