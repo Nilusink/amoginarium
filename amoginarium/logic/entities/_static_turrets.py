@@ -23,9 +23,9 @@ from amoginarium.shared import TurretCIDs
 from amoginarium.shared.utility import is_related, normalize_angle, MASK32
 from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
 from amoginarium.shared.utility import MASK64, get_default
+from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
 
-from ..audio import MetalPings
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
 from ._weapons import BaseWeapon, Minigun, Ak47, Mortar, Flak, SkyShieldWeapon

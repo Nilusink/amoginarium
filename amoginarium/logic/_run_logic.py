@@ -19,6 +19,7 @@ import ctypes
 import json
 import os
 
+from amoginarium.shared.audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeExplosion
 from amoginarium.shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
 from amoginarium.shared import ProcessCommandType, Coalitions, ENTITY_COUNTER
 from amoginarium.shared import BaseCommandType, INVENTORY_COUNTER
@@ -33,7 +34,6 @@ from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE
 from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
 from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
 from .entities import GravityAffected, FrictionXAffected, ExactoBullet
-from .audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeExplosion
 from .graphics_dummies import Controller
 
 
@@ -425,6 +425,7 @@ class LogicProcess:
         WallBouncer.update()
 
         Bullets.update(delta)
+        # ic(list(Bullets.sprites()))
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 

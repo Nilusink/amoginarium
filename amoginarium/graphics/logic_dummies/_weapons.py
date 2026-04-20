@@ -49,6 +49,12 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         """
         mirror = cls._image_mirror
 
+        cls._texture_id_l, _ = textures.get_texture(
+            name=cls._image_name,
+            size=cls._image_size,
+            mirror=mirror,
+        )
+
         if "x" in mirror:
             mirror.strip("x")
 
@@ -56,11 +62,6 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             mirror += "x"
 
         cls._texture_id_r, _ = textures.get_texture(
-            name=cls._image_name,
-            size=cls._image_size,
-            mirror=mirror,
-        )
-        cls._texture_id_l, _ = textures.get_texture(
             name=cls._image_name,
             size=cls._image_size,
             mirror=mirror,

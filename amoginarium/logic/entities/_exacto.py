@@ -16,10 +16,10 @@ import math as m
 from amoginarium.shared.utility import Vec2, coord_t, multi_raycast_mask, normalize_angle
 from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
+from amoginarium.shared.audio import Sniper as SniperSound
 from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
-from ..audio import Sniper as SniperSound
 from ._static_turrets import BaseTurret, TargetSolution
 from ._logic_groups import Updated, Players, Bullets
 from ._aerodynamic_entity import AerodynamicEntity
@@ -34,7 +34,7 @@ class ExactoBullet(AerodynamicEntity):
 
     _cid = DummyCIDs.base_bullet
 
-    _weight = 5  # knockback
+    _default_weight = 5  # knockback
     _default_base_damage = 15
 
     _default_mass = .1  # aerodynamics

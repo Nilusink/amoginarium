@@ -19,3 +19,6 @@ muzzle_velocity = 2500
 
 [bullet]
 type = "<bullet.cram>"
+
+[sound]
+name = ["shots", "sniper"]

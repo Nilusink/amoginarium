@@ -14,12 +14,12 @@ from icecream import ic
 import pygame as pg
 import typing as tp
 
+from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
 from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
 
-from ..audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ..graphics_dummies import Controller
 from ._weapons import BaseWeapon, Minigun, HandThrownGrenade, Ak47
 from ._exacto import ExactoSniper

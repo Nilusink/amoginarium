@@ -11,14 +11,17 @@ from typing_extensions import deprecated
 from types import EllipsisType
 from random import random
 from ctypes import Array
+from icecream import ic
 import typing as tp
+
+from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
+from amoginarium.shared.audio import RandomizedEffect, SoundEffect, Shotgun, Cannon
+from amoginarium.shared.audio import Minigun as MinigunSound, AK47 as AK47Sound
+from amoginarium.shared.audio import Mortar as MortarSound
 
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
 
-from ..audio import ContinuousSoundEffect, ReloadGeneric, RandomizedEffect
-from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect, Shotgun
-from ..audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
 from ._bullets import SkyShieldBullet, ClusterMortarShell
 from ._logic_groups import CollisionDestroyed, Updated
@@ -42,6 +45,9 @@ class BaseWeapon(Item):
     _default_inaccuracy: float = 1
     _default_muzzle_velocity: float = 1
     _default_recoil_factor: float = 1
+    _default_sound_effect: tp.Type[
+        ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType
+    ] = ...
 
     _default_bullet_type: tp.Type[Bullet] = Bullet
 
@@ -74,7 +80,16 @@ class BaseWeapon(Item):
 
         self._coalition = parent.coalition
         self._drop_casings = drop_casings
-        self._sound_effect = sound_effect
+        
+        if not isinstance(sound_effect, EllipsisType):
+            self._sound_effect = sound_effect
+    
+        elif not isinstance(self._default_sound_effect, EllipsisType):
+            self._sound_effect = self._default_sound_effect()
+        
+        else:
+            self._sound_effect = ...
+
         self._bullet_kwargs = bullet_kwargs
         self._default_mag_size = get_default(mag_size, self._default_mag_size)
         self._inaccuracy = get_default(inaccuracy, self._default_inaccuracy)

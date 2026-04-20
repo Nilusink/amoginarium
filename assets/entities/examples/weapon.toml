@@ -10,7 +10,6 @@ name = "sniper"
 mirror = ""
 rotate_anchor = [25, 33]
 
-
 [behaviour]
 mag_size = 6
 reload_time = 5
@@ -21,3 +20,8 @@ recoil_factor = 1
 
 [bullet]
 type = "<bullet.sniper>"
+
+[sound]
+name = ""  # choose ONE (preset gets priority if both are specified)
+scope = ""
+preset = ""

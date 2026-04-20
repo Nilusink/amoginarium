@@ -15,6 +15,9 @@ import typing as tp
 import tomllib
 
 from amoginarium.shared.utility import Vec2
+from amoginarium.shared.audio import SoundEffect, RandomizedEffect, PRESETS
+from amoginarium.shared.audio import ScopedRandomizedEffect, PresetEffect
+from amoginarium.shared.audio import ContinuousSoundEffect
 
 
 BASE_DIR = "./assets/entities/"
@@ -130,9 +133,50 @@ def load_entities_from_files(
                     for key, value in data["behaviour"].items():
                         __dict[f"_default_{key}"] = check_value(value)
 
+                if "sound" in data:
+                    effect: (
+                        tp.Type[SoundEffect | RandomizedEffect | ContinuousSoundEffect]
+                        | None
+                    ) = None
+                    if "name" in data["sound"]:
+                        sound_name: str | list[str] = data["sound"]["name"]
+
+                        if isinstance(sound_name, list):
+                            sound_class_name = "".join(
+                                [p.capitalize() for p in sound_name]
+                            )
+                        
+                        else:
+                            sound_class_name = sound_name.capitalize()
+
+                        # noinspection PyTypeChecker
+                        effect: tp.Type[PresetEffect] = type(
+                            f"{sound_class_name}Effect",
+                            (PresetEffect,),
+                            {"_sound_name": sound_name}
+                        )
+                    
+                    if "scope" in data["sound"]:
+                        sound_scope: str = data["sound"]["scope"]
+
+                        # noinspection PyTypeChecker
+                        effect: tp.Type[ScopedRandomizedEffect] = type(
+                            f"{sound_scope.capitalize()}Effect",
+                            ScopedRandomizedEffect,
+                            {"_scope": sound_scope}
+                        )
+                    
+                    if "preset" in data["sound"]:
+                        preset = data["sound"]["preset"]
+                        if preset in PRESETS:
+                            effect = PRESETS[preset]
+                    
+                    if effect:
+                        __dict["_default_sound_effect"] = effect
+
             for subsection in data:
                 if process_type == ProcessType.logic:
-                    if subsection in ("id", "visibility", "behaviour", "image") + _GRAPHICS_KEYS:
+                    if subsection in ("id", "visibility", "behaviour", "image", "sound") + _GRAPHICS_KEYS:
                         continue
 
                 elif process_type == ProcessType.base:
@@ -140,7 +184,13 @@ def load_entities_from_files(
                         continue
 
                 for key, value in data[subsection].items():
-                    __dict[f"_{subsection}_{key}"] = check_value(value, True)
+                    if process_type == ProcessType.logic:
+                        dict_key = f"_default_{subsection}_{key}"
+
+                    else:
+                        dict_key = f"_{subsection}_{key}"
+
+                    __dict[dict_key] = check_value(value, True)
 
             # noinspection PyTypeChecker
             new_class: tp.Type = type(
@@ -153,7 +203,8 @@ def load_entities_from_files(
 
     entity_index.update(new_entities)
 
-    ic(list(new_entities.keys()))
+    names = [c.__name__ for c in new_entities.values()]
+    ic(names)
 
     # resolve stuff
     for entity in new_entities.values():

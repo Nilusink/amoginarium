@@ -10,5 +10,6 @@ name = "bullet"
 mirror = "x"
 
 [behaviour]
+ttl = 10
 weight = 5
 base_damage = 15

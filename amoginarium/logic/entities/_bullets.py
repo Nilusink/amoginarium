@@ -20,10 +20,10 @@ import numpy as np
 from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related
 from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
+from amoginarium.shared.audio import LargeExplosion, DistantPop
 from amoginarium.shared import BaseCommandType, DummyCIDs
 from amoginarium import pv
 
-from ..audio import LargeExplosion, DistantPop
 from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
 from ._logic_groups import WallCollider, WallBouncer
 from ._base_entity import LogicGameEntity
@@ -43,14 +43,15 @@ class Bullet(LogicGameEntity):
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cf_ttl_m",
         "_coll_sibling", "_cse", "_csm", "_lst", "_cf_dist", "_cbt", "_csi",
-        "_cluster_args"
+        "_cluster_args", "_weight"
     )
 
     _base_damage: float
     _default_hp: int = -1
-    _weight: float | None = None
+    _weight: float | None
     _cid = DummyCIDs.base_bullet
 
+    _default_weight: float = None
     _default_base_damage: float = 1
     _default_ttl: float = 2
     _default_explosion_radius: float = -1
@@ -176,6 +177,7 @@ class Bullet(LogicGameEntity):
         self._invincibility_offset = get_default(
             invincibility_offset, self._default_invincibility_offset
         )
+        self._weight = self._default_weight
 
         # optional params
         if isinstance(target_pos, EllipsisType):
@@ -283,8 +285,8 @@ class Bullet(LogicGameEntity):
     @classmethod
     def get_weight(cls, size: Vec2 | float) -> float:
         """bullet weight (depending on size if not specified)"""
-        if cls._weight:
-            return cls._weight
+        if cls._default_weight:
+            return cls._default_weight
 
         return cls._weight_from_size(size)
 

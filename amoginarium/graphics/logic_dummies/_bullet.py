@@ -100,7 +100,9 @@ class BulletDummy(SyncedImageEntity):
                 self._original_alpha = self._trace_color.a1
 
         else:
-            if isinstance(self._default_trace_color, tuple):
+            if isinstance(self._default_trace_color, tuple) or isinstance(
+                self._default_trace_color, list
+            ):
                 self._trace_color: tuple[Color, Color] = tuple(
                     convert_color(c, Color) for c in self._default_trace_color
                 )

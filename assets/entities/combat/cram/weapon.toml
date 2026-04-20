@@ -20,3 +20,6 @@ muzzle_velocity = 3000
 
 [bullet]
 type = "<bullet.cram>"
+
+[sound]
+preset = "cram"

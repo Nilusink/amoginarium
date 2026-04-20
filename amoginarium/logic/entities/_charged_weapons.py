@@ -12,11 +12,10 @@ from types import EllipsisType
 from ctypes import Array
 import typing as tp
 
-from amoginarium.logic.audio import ContinuousSoundEffect, PresetEffect
+from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect, SmallExplosion
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from amoginarium.shared.utility import Vec2
 
-from ..audio import SmallExplosion
 from ._weapons import BaseWeapon, Bullet, SniperBullet
 
 
