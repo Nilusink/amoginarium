@@ -33,10 +33,10 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
     _cid = WeaponCIDs.base
     _image_name: str = "minigun"
+    _image_mirror: str = ""
     _image_size: tuple[int, int] = (128, 64)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(35, 30)
     _bar_colors = (Color().from_1(.55, .55, 1),)
-    _image_mirror: bool = False
     _texture_id_l: int = ...
     _texture_id_r: int = ...
 
@@ -47,15 +47,23 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
         .. note:: only execute once!
         """
+        mirror = cls._image_mirror
+
+        if "x" in mirror:
+            mirror.strip("x")
+
+        else:
+            mirror += "x"
+
         cls._texture_id_r, _ = textures.get_texture(
             name=cls._image_name,
             size=cls._image_size,
-            mirror="" if cls._image_mirror else "x",
+            mirror=mirror,
         )
         cls._texture_id_l, _ = textures.get_texture(
             name=cls._image_name,
             size=cls._image_size,
-            mirror="x" if cls._image_mirror else "",
+            mirror=mirror,
         )
 
     def __new__(cls, *args, **kwargs) -> tp.Self:
@@ -150,13 +158,6 @@ class Ak47(WeaponDummy):
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(30, 20)
 
 
-class Sniper(WeaponDummy):
-    _cid = WeaponCIDs.sniper
-    _image_name: str = "sniper"
-    _image_size: tuple[int, int] = (120, 60)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
-
-
 class Mortar(WeaponDummy):
     _cid = WeaponCIDs.mortar
     _image_name: str = "mortar"
@@ -174,7 +175,7 @@ class Flak(WeaponDummy):
 class CRAM(WeaponDummy):
     _cid = WeaponCIDs.cram
     _image_name: str = "CRAM_canon"
-    _image_mirror = True
+    _image_mirror = "x"
     _image_size: tuple[int, int] = (128, 128)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(32, 79)
 
@@ -189,7 +190,7 @@ class SkyShieldGun(WeaponDummy):
 class HandThrownGrenade(WeaponDummy):
     _cid = WeaponCIDs.h_grenade
     _image_name: str = "grenade"
-    _image_mirror = True
+    _image_mirror = "x"
     _image_size: tuple[int, int] = (32, 32)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(16, 16)
 

@@ -1,0 +1,22 @@
+[id]
+from = "weapon.base"
+cid = "weapon.cram"
+
+[visibility]
+size = [120, 60]
+
+[image]
+name = "CRAM_base"
+mirror = ""
+rotate_anchor = [64, 128]
+
+
+[behaviour]
+mag_size = 800
+reload_time = 8
+recoil_time = 0.005
+inaccuracy = 0.001093606
+muzzle_velocity = 3000
+
+[bullet]
+type = "<bullet.cram>"

@@ -1,0 +1,170 @@
+"""
+_load_from_files.py
+20.04.2026
+
+load entities from files
+
+Author:
+Nilusink
+"""
+
+from pathlib import Path
+from icecream import ic
+from enum import Enum
+import typing as tp
+import tomllib
+
+from amoginarium.shared.utility import Vec2
+
+
+BASE_DIR = "./assets/entities/"
+_GRAPHICS_KEYS = ("image",)
+
+
+class ProcessType(Enum):
+    base = 0
+    logic = 1
+
+
+class _ResolveThis:
+    """entities specified as CIDs"""
+
+    def __init__(self, entity_cid: str) -> None:
+        self._cid = entity_cid
+
+    def resolve(self, entity_index: dict[str, tp.Type]) -> tp.Type:
+        """resolve string"""
+        return entity_index[self._cid]
+
+
+def check_value[A](value: A, convert_vec2: bool = False) -> A | _ResolveThis:
+    """checks if a value needs to be resolved"""
+
+    if isinstance(value, str):
+        if value.startswith("<") and value.endswith(">"):
+            return _ResolveThis(value.lstrip("<").rstrip(">"))
+
+    if convert_vec2 and isinstance(value, list):
+        return Vec2().from_cartesian(value[0], value[1])
+
+    return value
+
+
+def _cid(cls):
+    """return cid encased in an object.value (to mimic enum)"""
+    # noinspection PyTypeChecker
+    return cls._cid
+
+
+def load_entities_from_files(
+        process_type: ProcessType,
+        entity_index: dict[str, tp.Type],
+        directory: str = BASE_DIR
+) -> dict[str, tp.Type]:
+    """load all entities specified in assets"""
+
+    entity_index = entity_index.copy()
+    new_entities: dict[str, tp.Type] = {}
+
+    for file in Path(directory).rglob("*.toml", case_sensitive=False):
+        with open(file, "rb") as f:
+            # ignore examples folder
+            if file.parent.parts[-1] == "examples":
+                continue
+
+            # load file
+            data = tomllib.load(f)
+
+            # make sure required data exists
+            if "id" not in data:
+                ic(file, "failed")
+                continue
+
+            if "cid" not in data["id"]:
+                ic(file, "failed")
+                continue
+
+            cid: str = data["id"]["cid"]
+
+            if "from" not in data["id"]:
+                ic(file, "failed")
+                continue
+
+            # try to find parent entity
+            if data["id"]["from"] not in entity_index:
+                ic(file, "failed: inherit", data["id"]["from"])
+                continue
+
+            parent_class = entity_index[data["id"]["from"]]
+
+            class_name = f"File{"".join([p.capitalize() for p in data["id"]["cid"].split(".")])}"
+
+            __dict: dict[str, tp.Any] = {
+                "_cid": cid,
+                "cid": classmethod(_cid)
+            }
+            # fill dict
+            if "visibility" in data:
+                if "size" in data["visibility"]:
+                    size: Vec2 | float | list[float] = data["visibility"]["size"]
+
+                    # convert size if not Vec2
+                    if isinstance(size, float):
+                        size: Vec2 = Vec2().from_cartesian(size, size)
+
+                    elif isinstance(size, list):
+                        size: Vec2 = Vec2().from_cartesian(size[0], size[1])
+
+                    __dict["_default_size"] = size
+
+                if process_type == ProcessType.base:
+                    for key, value in data["visibility"].items():
+                        if key == "size":
+                            continue
+
+                        __dict[f"_default_{key}"] = check_value(value)
+
+            # behaviour
+            if process_type == ProcessType.logic:
+                if "behaviour" in data:
+                    for key, value in data["behaviour"].items():
+                        __dict[f"_default_{key}"] = check_value(value)
+
+            for subsection in data:
+                if process_type == ProcessType.logic:
+                    if subsection in ("id", "visibility", "behaviour", "image") + _GRAPHICS_KEYS:
+                        continue
+
+                elif process_type == ProcessType.base:
+                    if subsection not in _GRAPHICS_KEYS:
+                        continue
+
+                for key, value in data[subsection].items():
+                    __dict[f"_{subsection}_{key}"] = check_value(value, True)
+
+            # noinspection PyTypeChecker
+            new_class: tp.Type = type(
+                class_name,
+                (parent_class,),
+                __dict
+            )  # type: ignore[assignment]
+
+            new_entities[cid] = new_class
+
+    entity_index.update(new_entities)
+
+    ic(list(new_entities.keys()))
+
+    # resolve stuff
+    for entity in new_entities.values():
+        for key, item in entity.__dict__.items():
+            if isinstance(item, _ResolveThis):
+                try:
+                    setattr(entity, key, item.resolve(entity_index))
+
+                except KeyError:
+                    ic(entity, key)
+
+        # ic(entity.cid(), process_type, entity.__dict__)
+
+    return new_entities

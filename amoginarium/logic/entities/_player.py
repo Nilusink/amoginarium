@@ -14,18 +14,19 @@ from icecream import ic
 import pygame as pg
 import typing as tp
 
-from ...shared import Coalitions, ItemLike, ItemSlot, base_entity_t
-from ...shared import ProcessCommand, BaseCommandType, DummyCIDs
-from ...shared.utility import Vec2, convert_coord
-from ... import pv
+from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
+from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
+from amoginarium.shared.utility import Vec2, convert_coord
+from amoginarium import pv
 
 from ..audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ..graphics_dummies import Controller
-from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
+from ._weapons import BaseWeapon, Minigun, HandThrownGrenade, Ak47
 from ._exacto import ExactoSniper
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._items import Shield, HealingPotion, JetBag
+from ._dynamic_entities import DYNAMIC_ENTITIES
 from ._base_entity import LogicGameEntity
 from ._charged_weapons import RailGun
 from ._inventory import Inventory
@@ -99,7 +100,7 @@ class Player(LogicGameEntity):
         items = [
             Ak47(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
-            Sniper(self, self._runtime_buffer, False),
+            DYNAMIC_ENTITIES["weapon.sniper"](self, self._runtime_buffer, False),
             ExactoSniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
             Shield(self._runtime_buffer, Vec2().from_cartesian(64, 0)),
@@ -137,7 +138,7 @@ class Player(LogicGameEntity):
             type=BaseCommandType.spawn_dummy,
             kwargs={
                 "id": self.id,
-                "cid": DummyCIDs.player,
+                "cid": DummyCIDs.player.value,
                 "i_id": self._inventory.id,
                 "h_id": self._hotbar.id,
             },

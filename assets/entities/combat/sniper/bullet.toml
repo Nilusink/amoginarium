@@ -1,0 +1,14 @@
+[id]
+from = "dummy.bullet.base"
+cid = "bullet.sniper"
+
+[visibility]
+size = 15
+
+[image]
+name = "bullet"
+mirror = "x"
+
+[behaviour]
+weight = 5
+base_damage = 15

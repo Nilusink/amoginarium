@@ -28,7 +28,7 @@ from amoginarium import pv
 from ..audio import MetalPings
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon, Minigun, Sniper, Ak47, Mortar, Flak, CRAM, SkyShieldWeapon
+from ._weapons import BaseWeapon, Minigun, Ak47, Mortar, Flak, SkyShieldWeapon
 from ._base_entity import LogicGameEntity
 from ._sensors import MagicSensor, BaseSensor
 from ._detection_group import DetectionGroup
@@ -51,6 +51,8 @@ class BaseTurret(LogicGameEntity):
     base turret type
     """
 
+
+    _cid = TurretCIDs.base
     size: Vec2
     weapon: BaseWeapon
     _max_hp: int = 80
@@ -603,7 +605,7 @@ class SniperTurret(BaseTurret):
             **kwargs
     ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
-        weapon = Sniper(self, runtime_buffer, True, parent_position_offset=(0, -13))
+        weapon = Ak47(self, runtime_buffer, True, parent_position_offset=(0, -13))
         weapon.reload(True)
 
         super().__init__(
@@ -755,7 +757,7 @@ class CRAMTurret(BaseTurret):
             **kwargs
     ) -> None:
         self._coalition = coalition  # needed because the weapon wants it
-        weapon = CRAM(
+        weapon = Ak47(
             self,
             runtime_buffer,
             False,

@@ -1,0 +1,21 @@
+[id]
+from = "weapon.base"
+cid = "weapon.sniper"
+
+[visibility]
+size = 20
+
+[image]
+name = "sniper"
+mirror = ""
+rotate_anchor = [25, 33]
+
+[behaviour]
+mag_size = 6
+reload_time = 5
+recoil_time = 2
+inaccuracy = 0.00500002
+muzzle_velocity = 2500
+
+[bullet]
+type = "<bullet.cram>"

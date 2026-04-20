@@ -294,13 +294,6 @@ class FlakTurretDummy(BaseTurretDummy):
     _body_texture_size = (98, 44)
 
 
-class CRAMTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.cram
-    _body_texture_path = "CRAM_base"
-    _body_texture_size = (64, 128)
-
-
 class SkyShieldDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.sky_shield

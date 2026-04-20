@@ -7,7 +7,6 @@ collects every spawn-able entity
 Author:
 Nilusink
 """
-from icecream import ic
 import typing as tp
 
 # from ._static_turret import BaseTurret, SniperTurret, AkTurret, MinigunTurret, \
@@ -18,13 +17,15 @@ from ._base_entity import LogicGameEntity
 from ._static_turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret
 from ._static_turrets import FlakTurret, CRAMTurret, SkyShield
 from ._static_sensors import VisualRadarSensor, VisualSensor
+from ._bullets import Bullet
 from ._text_entity import TextEntity
 from ._exacto import ExactoTurret
+from ._dynamic_entities import DYNAMIC_ENTITIES
 
 
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
-    e.cid().value: e for e in [
+    e.cid(): e for e in [
         MinigunTurret,
         SniperTurret,
         AkTurret,
@@ -35,6 +36,9 @@ SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
         VisualSensor,
         VisualRadarSensor,
         TextEntity,
-        ExactoTurret
+        ExactoTurret,
+        Bullet
     ]
 }
+SPAWNABLES.update(DYNAMIC_ENTITIES)
+

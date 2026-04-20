@@ -19,7 +19,7 @@ from amoginarium.shared import base_entity_t, WeaponCIDs
 from ..audio import ContinuousSoundEffect, ReloadGeneric, RandomizedEffect
 from ..audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect, Shotgun
 from ..audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
-from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
+from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
 from ._bullets import SkyShieldBullet, ClusterMortarShell
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
@@ -30,17 +30,18 @@ class BaseWeapon(Item):
     """
     basic functionality of all weapons
     """
-    _cid = WeaponCIDs.base
     _no_bullet_gravity: bool = False
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
     _current_reload_time: float = 0
     _mag_state: int = 0
-    _recoil_factor: float
-    _muzzle_velocity: float
-    _recoil_time: float
-    _reload_time: float
-    _mag_size: int
+
+    _default_mag_size: int = 1
+    _default_reload_time: float = 1
+    _default_recoil_time: float = 1
+    _default_inaccuracy: float = 1
+    _default_muzzle_velocity: float = 1
+    _default_recoil_factor: float = 1
 
     _default_bullet_type: tp.Type[Bullet] = Bullet
 
@@ -48,19 +49,18 @@ class BaseWeapon(Item):
         self,
         runtime_buffer: Array[base_entity_t],
         parent: LogicGameEntity,
-        reload_time: float,
-        recoil_time: float,
-        mag_size: int,
-        inaccuracy: float,
         parent_position_offset: Vec2 | tuple[float, float],
-        muzzle_velocity: float,
         *,
-        barrel_length: float = 0,  # where bullets spawn
-        drop_casings: bool = False,
+        mag_size: int | EllipsisType = ...,
+        reload_time: float | EllipsisType = ...,
+        recoil_time: float | EllipsisType = ...,
+        inaccuracy: float | EllipsisType = ...,
+        muzzle_velocity: float | EllipsisType = ...,
+        recoil_factor: float | EllipsisType = ...,
         sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
         bullet_type: tp.Type[Bullet] | EllipsisType = ...,
-        weapon_recoil_factor: float = 1,
         weapon_size: Vec2 | EllipsisType = ...,
+        drop_casings: bool = False,
         spawn_args: dict[str, tp.Any] | EllipsisType = ...,
         **bullet_kwargs,
     ) -> None:
@@ -73,22 +73,24 @@ class BaseWeapon(Item):
         self.remove(CollisionDestroyed, Updated)
 
         self._coalition = parent.coalition
-        self._mag_size = mag_size
-        self._inaccuracy = inaccuracy
-        self._reload_time = reload_time
-        self._recoil_time = recoil_time
-        self._reload_time = reload_time
         self._drop_casings = drop_casings
-        self._recoil_factor = weapon_recoil_factor
-        self._barrel_length = barrel_length
+        self._sound_effect = sound_effect
+        self._bullet_kwargs = bullet_kwargs
+        self._default_mag_size = get_default(mag_size, self._default_mag_size)
+        self._inaccuracy = get_default(inaccuracy, self._default_inaccuracy)
+        self._recoil_time = get_default(recoil_time, self._default_recoil_time)
+        self._reload_time = get_default(reload_time, self._default_reload_time)
+        self._recoil_factor = get_default(recoil_factor, self._default_recoil_factor)
+        self._bullet_type = get_default(bullet_type, self._default_bullet_type)
+        self._muzzle_velocity = get_default(
+            muzzle_velocity, self._default_muzzle_velocity
+        )
+        # noinspection PyTypeChecker
         self._parent_position_offset: Vec2 = convert_coord(
             parent_position_offset, Vec2
         )
-        self._sound_effect = sound_effect
-        self._bullet_type = get_default(bullet_type, self._default_bullet_type)
-        self._muzzle_velocity = muzzle_velocity
+
         self._spawned_graphics = False
-        self._bullet_kwargs = bullet_kwargs
 
         self._runtime_buffer[self.id].param0 = 1
 
@@ -126,14 +128,6 @@ class BaseWeapon(Item):
         """the weapons muzzle velocity"""
         return self._muzzle_velocity
 
-    @property
-    @deprecated("replaced by bullet_visibility_offset")
-    def barrel_length(self) -> float:
-        """
-        length of weapon barrel (unused)
-        """
-        return self._barrel_length
-
     # endregion
 
     def get_mag_state(
@@ -147,7 +141,7 @@ class BaseWeapon(Item):
         """
         if not self._current_reload_time:
             return self._mag_state * (
-                    max_out / self._mag_size
+                    max_out / self._default_mag_size
             ), self._mag_state
 
         return (
@@ -169,7 +163,7 @@ class BaseWeapon(Item):
 
         if self._current_reload_time < 0 and self._mag_state <= 0:
             self._current_reload_time = 0
-            self._mag_state = self._mag_size
+            self._mag_state = self._default_mag_size
             sound_effect = ReloadGeneric()
             sound_effect.play(pos=self.position)
 
@@ -276,7 +270,7 @@ class BaseWeapon(Item):
             initial_position=(
                 self.parent.position
                 + self._parent_position_offset
-                + direction.normalize() * self._barrel_length * 0.45
+                + direction.normalize()
             ),
             initial_velocity=Vec2().from_polar(
                 direction.angle, self.muzzle_velocity
@@ -304,7 +298,7 @@ class BaseWeapon(Item):
         self._current_recoil_time = 0
 
         if instant:
-            self._mag_state = self._mag_size
+            self._mag_state = self._default_mag_size
 
         else:
             self._mag_state = 0
@@ -319,6 +313,23 @@ class BaseWeapon(Item):
         if self._sound_effect is not ...:
             if hasattr(self._sound_effect, "stage_one_done"):
                 self._sound_effect.stop()
+
+
+class FileLoadedWeapon(BaseWeapon):
+    _cid = WeaponCIDs.base
+
+    def __init__(
+            self,
+            parent,
+            runtime_buffer: Array[base_entity_t],
+            drop_casings: bool = False,
+            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
+    ) -> None:
+        super().__init__(
+            runtime_buffer=runtime_buffer,
+            parent=parent,
+            parent_position_offset=parent_position_offset
+        )
 
 
 class Minigun(BaseWeapon):
@@ -341,7 +352,6 @@ class Minigun(BaseWeapon):
             recoil_time=.02,
             mag_size=80,
             inaccuracy=.01093606,
-            barrel_length=0,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=1600,
             drop_casings=drop_casings,
@@ -374,7 +384,6 @@ class Ak47(BaseWeapon):
             recoil_time=.1,
             mag_size=30,
             inaccuracy=0.03,
-            barrel_length=0,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=1250,
             drop_casings=drop_casings,
@@ -384,39 +393,6 @@ class Ak47(BaseWeapon):
             base_damage=2.5,
             time_to_life=10,
             visibility_offset=0.043,
-        )
-
-
-class Sniper(BaseWeapon):
-    """
-    Basic Sniper
-    """
-    _cid = WeaponCIDs.sniper
-
-    def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            drop_casings: bool = False,
-            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
-    ) -> None:
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            reload_time=5,
-            recoil_time=2,
-            mag_size=6,
-            inaccuracy=.00500002,
-            barrel_length=0,
-            parent_position_offset=parent_position_offset,
-            muzzle_velocity=2500,
-            drop_casings=drop_casings,
-            sound_effect=SniperSound(),
-            bullet_type=SniperBullet,
-
-            # bullet args
-            time_to_life=10,
-            visibility_offset=0.04,
         )
 
 
@@ -444,7 +420,6 @@ class Mortar(BaseWeapon):
             recoil_time=.25,
             mag_size=1,
             inaccuracy=.00100002,
-            barrel_length=10,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=muzzle_velocity,
             drop_casings=drop_casings,
@@ -477,7 +452,6 @@ class Flak(BaseWeapon):
             recoil_time=0.15,
             mag_size=4,
             inaccuracy=0.0100002,
-            barrel_length=0,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=1700,
             drop_casings=drop_casings,
@@ -487,39 +461,6 @@ class Flak(BaseWeapon):
             # bullet args
             time_to_life=5,
             visibility_offset=0.13,
-        )
-
-
-class CRAM(BaseWeapon):
-    """
-    CRAM Minigun
-    """
-    _cid = WeaponCIDs.cram
-
-    def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            drop_casings: bool = False,
-            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
-    ) -> None:
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            reload_time=8,
-            recoil_time=.005,
-            mag_size=800,
-            inaccuracy=.001093606,
-            barrel_length=0,
-            parent_position_offset=parent_position_offset,
-            muzzle_velocity=3000,
-            drop_casings=drop_casings,
-            sound_effect=CRAMSound(),
-            bullet_type=CRAMBullet,
-
-            # bullet args
-            time_to_life=10,
-            visibility_offset=.027,
         )
 
 
@@ -545,7 +486,6 @@ class HandThrownGrenade(BaseWeapon):
             weapon_recoil_factor=.5,
             mag_size=1,
             inaccuracy=.01,
-            barrel_length=0,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=800,
             drop_casings=drop_casings,

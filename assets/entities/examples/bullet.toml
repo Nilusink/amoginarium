@@ -1,0 +1,41 @@
+[id]
+from = "dummy.bullet.base"
+cid = "bullet.cram"
+
+[visibility]
+size = 15  # or list of x, y
+
+trace_color = [[255, 80, 40], [255, 100, 60]]  # either one or two colors
+fade_color_time = 1.5
+trace_length = 300
+show_trace = true
+fade_trace = true
+
+[image]
+name = "bullet"
+mirror = "x"
+
+[behaviour]
+hp = 1
+ttl = 2
+weight = 5
+base_damage = 15
+visibility_offset = 0
+invincibility_offset = 0
+
+[explosion]
+radius = -1
+damage = 0
+
+[cluster]
+depth = 0
+amount = 0
+spread = 0.8
+fuze_ttl_mult = 0.5
+fuze_dist = -1
+step_size_mult = 1
+step_inertia = 0
+step_explosion_size = 10
+last_step_ttl = -1
+bullet_type = "<dummy.bullet.base>"  # leaving this out will make self as cluster bullet type, brackets (<>) required!
+

@@ -47,7 +47,7 @@ class Bullet(LogicGameEntity):
     )
 
     _base_damage: float
-    _hp: int = -1
+    _default_hp: int = -1
     _weight: float | None = None
     _cid = DummyCIDs.base_bullet
 
@@ -297,12 +297,12 @@ class Bullet(LogicGameEntity):
 
     def hit(self, _damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         """bullet was hit by someone"""
-        if self._hp <= 0 or not issubclass(hit_by.__class__, Bullet):
+        if self._default_hp <= 0 or not issubclass(hit_by.__class__, Bullet):
             self.kill(killed_by=hit_by)
 
         else:
-            self._hp -= _damage
-            if self._hp <= 0:
+            self._default_hp -= _damage
+            if self._default_hp <= 0:
                 self.kill(killed_by=hit_by)
 
     def hit_someone(self, target_hp: float) -> None:
@@ -485,7 +485,7 @@ class Bullet(LogicGameEntity):
 
 
 class MortarShell(Bullet):
-    _hp = 0.5
+    _default_hp = 0.5
     _weight = 8
     _cid = DummyCIDs.mortar_bullet
 
@@ -513,7 +513,7 @@ class _GrenadeShrapnel(Bullet):
 
 
 class Grenade(Bullet):
-    _hp = 0.05
+    _default_hp = 0.05
     _bounce_friction = 0.7
     _cid = DummyCIDs.grenade
 
@@ -589,16 +589,6 @@ class FlakBullet(Bullet):
 
     _default_explosion_radius = 128
     _default_explosion_damage = 40
-
-
-class CRAMBullet(Bullet):
-    _cid = DummyCIDs.cram
-
-    _default_size = 9
-    _default_base_damage = .1
-
-    _default_explosion_damage = 0.1
-    _default_explosion_radius = 15
 
 
 class SkyShieldBullet(Bullet):

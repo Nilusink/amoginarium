@@ -236,7 +236,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         if isinstance(cls._cid, EllipsisType):
             raise ValueError("__cid is not defined for " + cls.__name__)
 
-        return cls._cid
+        return cls._cid.value
     # endregion
 
     def _update(self, delta: float) -> None:
