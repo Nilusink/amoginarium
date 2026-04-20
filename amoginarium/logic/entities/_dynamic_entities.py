@@ -25,6 +25,8 @@ from ._base_entity import LogicGameEntity
 from ._static_turrets import BaseTurret
 from ._weapons import FileLoadedWeapon
 from ._bullets import Bullet
+from ._sensors import MagicSensor
+from ._radar import RadarSensor
 
 
 # noinspection PyTypeChecker
@@ -32,7 +34,9 @@ _base_entities: dict[str, tp.Type[LogicGameEntity]] = {
     e.cid(): e for e in [
         BaseTurret,
         FileLoadedWeapon,
-        Bullet
+        Bullet,
+        MagicSensor,
+        RadarSensor
     ]
 }
 

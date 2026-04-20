@@ -103,6 +103,8 @@ class MagicSensor(BaseSensor):
     ``param0`` detection range
     """
 
+    _cid = SensorCIDs.sensor_magic
+
     def get_targets(
             self,
             from_entities: tp.Iterable[LogicGameEntity] = None

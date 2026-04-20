@@ -14,7 +14,7 @@ import numpy as np
 
 from amoginarium.shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
 from amoginarium.shared.utility import MASK16
-from amoginarium.shared import base_entity_t
+from amoginarium.shared import base_entity_t, SensorCIDs
 
 from ._base_entity import PositionedLogicEntity, LogicGameEntity
 from ._logic_groups import Players, Bullets
@@ -31,6 +31,7 @@ class RadarSensor(BaseSensor):
     """
     __slots__ = []
 
+    _cid = SensorCIDs.sensor_radar
     _debug: bool = False
     _has_sectors = True
 

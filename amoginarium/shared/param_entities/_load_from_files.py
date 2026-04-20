@@ -176,7 +176,15 @@ def load_entities_from_files(
 
             for subsection in data:
                 if process_type == ProcessType.logic:
-                    if subsection in ("id", "visibility", "behaviour", "image", "sound") + _GRAPHICS_KEYS:
+                    if (
+                        subsection
+                        in ("id", "visibility", "behaviour", "image", "sound")
+                        + _GRAPHICS_KEYS
+                    ):
+                        continue
+
+                    elif subsection.startswith("sensor"):
+                        __dict["_sensors_list"] = list(data[subsection].values())
                         continue
 
                 elif process_type == ProcessType.base:
@@ -186,11 +194,13 @@ def load_entities_from_files(
                 for key, value in data[subsection].items():
                     if process_type == ProcessType.logic:
                         dict_key = f"_default_{subsection}_{key}"
+                        value = check_value(value, False)
 
                     else:
                         dict_key = f"_{subsection}_{key}"
+                        value = check_value(value, True)
 
-                    __dict[dict_key] = check_value(value, True)
+                    __dict[dict_key] = value
 
             # noinspection PyTypeChecker
             new_class: tp.Type = type(
@@ -216,6 +226,20 @@ def load_entities_from_files(
                 except KeyError:
                     ic(entity, key)
 
-        # ic(entity.cid(), process_type, entity.__dict__)
+            elif key == "_sensors_list":
+                preset_sensors = item
+                sensors = []
+                for sensor in preset_sensors:
+                    try:
+                        sensor["type"] = entity_index[
+                            sensor["type"].lstrip("<").rstrip(">")
+                        ]
+                        sensors.append(sensor)
+
+                    except KeyError:
+                        ic(entity, sensor)
+
+                setattr(entity, key, sensors)
+                ic(entity.__dict__)
 
     return new_entities

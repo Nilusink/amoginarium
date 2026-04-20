@@ -16,7 +16,7 @@ from ._synced_entities import SyncedGraphicsEntity
 from ._player import PlayerDummy
 from ._bullet import BulletDummy, MortarShell, Grenade
 from ._turrets import SniperTurretDummy, AkTurretDummy, MinigunTurretDummy
-from ._turrets import MortarTurretDummy, FlakTurretDummy
+from ._turrets import MortarTurretDummy, FlakTurretDummy, BaseTurretDummy
 from ._turrets import SkyShieldDummy, ExactoSniperTurretDummy
 from ._weapons import Minigun, Ak47, Mortar, Flak, CRAM, HandThrownGrenade
 from ._weapons import SkyShieldGun, ExactoSniper, WeaponDummy
@@ -35,6 +35,7 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         BulletDummy,
         MortarShell,
         Grenade,
+        BaseTurretDummy,
         SniperTurretDummy,
         AkTurretDummy,
         MinigunTurretDummy,

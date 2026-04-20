@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 import typing as tp
+from icecream import ic
 
 # from ._static_turret import BaseTurret, SniperTurret, AkTurret, MinigunTurret, \
 #     MortarTurret, FlakTurret, CRAMTurret
@@ -41,4 +42,4 @@ SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
     ]
 }
 SPAWNABLES.update(DYNAMIC_ENTITIES)
-
+ic(SPAWNABLES)

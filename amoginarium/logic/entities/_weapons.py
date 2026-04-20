@@ -21,6 +21,7 @@ from amoginarium.shared.audio import Mortar as MortarSound
 
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
+from shared import Coalitions
 
 from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
 from ._bullets import SkyShieldBullet, ClusterMortarShell
@@ -78,7 +79,6 @@ class BaseWeapon(Item):
         # unless you want the sniper to kill its own bullet
         self.remove(CollisionDestroyed, Updated)
 
-        self._coalition = parent.coalition
         self._drop_casings = drop_casings
         
         if not isinstance(sound_effect, EllipsisType):
@@ -110,6 +110,10 @@ class BaseWeapon(Item):
         self._runtime_buffer[self.id].param0 = 1
 
     # region properties
+    @property
+    def coalition(self) -> Coalitions:
+        return self.parent.coalition
+
     @property
     def parent(self) -> LogicGameEntity:
         """

@@ -208,10 +208,10 @@ class ExactoTurret(BaseTurret):
         super().__init__(
             runtime_buffer,
             coalition,
-            Vec2().from_cartesian(31, 32),
             position,
-            weapon,
-            2400,
+            size=Vec2().from_cartesian(31, 32),
+            weapon=weapon,
+            max_range=2400,
             sensors=[
                 RadarSensor(
                     runtime_buffer, self, 2500, sphere_accuracy=256, min_rcs=.03
