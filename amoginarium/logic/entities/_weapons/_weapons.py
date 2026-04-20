@@ -116,7 +116,7 @@ class Sniper(BaseWeapon):
             # bullet args
             time_to_life=1000,
             visibility_offset=0.04,
-            weapon_recoil_factor=100
+            weapon_recoil_factor=500
         )
 
 

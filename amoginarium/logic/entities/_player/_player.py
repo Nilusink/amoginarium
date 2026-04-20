@@ -267,10 +267,13 @@ class Player(LogicGameEntity):
                     continue
                 if active_normals[1] and event.normal.x > 0.5:
                     continue
-                self.position.x = event.position.x
+                self.position = event.position
+                self.velocity.x = 0
+                self.acceleration.x = 0
                 self._controller.feedback_collide()
                 accepted_collisions[i] = True
                 x_collided = True
+                break
 
             if not y_collided and abs(event.normal.y) > 0.5:
                 if active_normals[2] and event.normal.y < -0.5:
@@ -278,7 +281,9 @@ class Player(LogicGameEntity):
                 if active_normals[3] and event.normal.y > 0.5:
                     continue
 
-                self.position.y = event.position.y
+                self.position = event.position
+                self.velocity.y = 0
+                self.acceleration.y = 0
                 if event.normal.y < -0.5:
                     if self.velocity.y > 3:
                         self._controller.feedback_collide()
@@ -290,6 +295,7 @@ class Player(LogicGameEntity):
                 self._controller.feedback_collide()
                 accepted_collisions[i] = True
                 y_collided = True
+                break
 
         ic("RETURNING", accepted_collisions)
         return accepted_collisions
@@ -449,8 +455,8 @@ class Player(LogicGameEntity):
 
         self._runtime_buffer[self.id].param0 = self._hp / self._max_hp
 
-        if self.position.y > 2000:
-            self.kill()
+        # if self.position.y > 2000:
+        #     self.kill()
 
     def kill(self, killed_by=...) -> None:
         self._alive = False

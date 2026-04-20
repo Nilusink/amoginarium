@@ -640,10 +640,6 @@ cdef class CollisionManager:
                                 if b_id not in events_b_start: events_b_start[b_id] = []
                                 events_b_start[b_id].append((ev, pair_key))
 
-                        else:
-                            ...
-                            # print(f"DEBUG: Collision already exists between {ea.id} and {b_id} (Rel {rel.id}), skipping start event.")
-
         cdef vector[uint64_t] to_remove
         it = rel.active_cols.begin()
         while it != rel.active_cols.end():
@@ -683,24 +679,20 @@ cdef class CollisionManager:
             evs.sort(key=lambda e: e[0].time)
             actual_evs = [e[0] for e in evs]
             ret = callbacks[0](self.group_instances[rel.group_a_id][ent_id], actual_evs)
-            # print(f"DEBUG Callback Return 1: {ret} (type: {type(ret)})")
             if ret is not None:
                 ret_len = len(ret) if len(ret) < len(evs) else len(evs)
                 for idx in range(ret_len):
                     if not ret[idx]:
-                        # print("ERASE")
                         rel.active_cols.erase(<uint64_t> evs[idx][1])
 
         for ent_id, evs in events_b_start.items():
             evs.sort(key=lambda e: e[0].time)
             actual_evs = [e[0] for e in evs]
             ret = callbacks[2](self.group_instances[rel.group_b_id][ent_id], actual_evs)
-            # print(f"DEBUG Callback Return 2: {ret} (type: {type(ret)})")
             if ret is not None:
                 ret_len = len(ret) if len(ret) < len(evs) else len(evs)
                 for idx in range(ret_len):
                     if not ret[idx]:
-                        # print("ERASE")
                         rel.active_cols.erase(<uint64_t> evs[idx][1])
 
         for ent_id, evs in events_a_end.items():
