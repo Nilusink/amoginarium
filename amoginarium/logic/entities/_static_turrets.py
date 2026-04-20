@@ -155,7 +155,7 @@ class BaseTurret(LogicGameEntity):
         self._runtime_buffer[self.id].param3 = MASK64
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": self.cid()}
+            kwargs={"id": self.id, "cid": self.cid(), "weapon_id": self.weapon.id}
         ))
 
     @property
@@ -322,8 +322,8 @@ class BaseTurret(LogicGameEntity):
                     )
 
                     if solution:
-                        self.__turn_at(solution, delta)
-                        self.__shoot_at(solution, max_error=self._max_error)
+                        self._turn_at(solution, delta)
+                        self._shoot_at(solution, max_error=self._max_error)
 
                     else:
                         new_target = None
@@ -332,12 +332,12 @@ class BaseTurret(LogicGameEntity):
                     new_target = None
 
             else:
-                self.__turn_at(solution, delta)
-                self.__shoot_at(solution, max_error=self._max_error)
+                self._turn_at(solution, delta)
+                self._shoot_at(solution, max_error=self._max_error)
 
         # aim but don't shoot
         if new_target is None and simulate_target is not None:
-            self.__turn_at(simulate_target, delta)
+            self._turn_at(simulate_target, delta)
 
         else:
             self._target = None
@@ -464,7 +464,14 @@ class BaseTurret(LogicGameEntity):
 
         return None
 
-    def __shoot_at(
+    def _shoot_weapon(self, solution: TargetSolution) -> bool:
+        return self.weapon.shoot(
+            self.facing,
+            solution.tof if self.airburst_munition else ...,
+            target_pos=solution.target_predict
+        )
+
+    def _shoot_at(
             self,
             solution: TargetSolution,
             *,
@@ -496,11 +503,7 @@ class BaseTurret(LogicGameEntity):
             ]):
                 return
 
-        shot = self.weapon.shoot(
-            self.facing,
-            solution.tof if self.airburst_munition else ...,
-            target_pos=solution.target_predict
-        )
+        shot = self._shoot_weapon(solution)
 
         if shot:
             self._target_predict = [solution.target_predict]
@@ -510,7 +513,7 @@ class BaseTurret(LogicGameEntity):
             else:
                 self.available_targets[solution.target]["shot_at"] = solution.tof
 
-    def __turn_at(self, solution: TargetSolution, delta: float) -> None:
+    def _turn_at(self, solution: TargetSolution, delta: float) -> None:
         """turn towards a target"""
         diff = solution.angle.angle - self.facing.angle
 

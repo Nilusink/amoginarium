@@ -22,6 +22,7 @@ from ... import pv
 from ..audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ..graphics_dummies import Controller
 from ._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47
+from ._exacto import ExactoSniper
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
 from ._items import Shield, HealingPotion, JetBag
@@ -99,6 +100,7 @@ class Player(LogicGameEntity):
             Ak47(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
             Sniper(self, self._runtime_buffer, False),
+            ExactoSniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
             Shield(self._runtime_buffer, Vec2().from_cartesian(64, 0)),
             HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),

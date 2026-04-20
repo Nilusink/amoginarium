@@ -15,13 +15,14 @@ from ._player import PlayerDummy
 from ._bullet import BulletDummy, MortarShell, Grenade, CRAMBullet
 from ._turrets import SniperTurretDummy, AkTurretDummy, MinigunTurretDummy
 from ._turrets import MortarTurretDummy, FlakTurretDummy, CRAMTurretDummy
-from ._turrets import SkyShieldDummy
+from ._turrets import SkyShieldDummy, ExactoSniperTurretDummy
 from ._weapons import Minigun, Ak47, Sniper, Mortar, Flak, CRAM, HandThrownGrenade
-from ._weapons import SkyShieldGun
+from ._weapons import SkyShieldGun, ExactoSniper
 from ._sensors import SensorHUD
 from ._items import Shield, HealingPotion, JetBag
 from ._charged_weapons import RailGunDummy
 from ._text_entity import TextEntity
+from ._aero import AeroDummy
 
 
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
@@ -52,6 +53,9 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         SkyShieldDummy,
         SkyShieldGun,
         SensorHUD,
-        TextEntity
+        TextEntity,
+        AeroDummy,
+        ExactoSniper,
+        ExactoSniperTurretDummy
     ]
 }

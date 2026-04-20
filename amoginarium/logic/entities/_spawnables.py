@@ -19,6 +19,8 @@ from ._static_turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret
 from ._static_turrets import FlakTurret, CRAMTurret, SkyShield
 from ._static_sensors import VisualRadarSensor, VisualSensor
 from ._text_entity import TextEntity
+from ._exacto import ExactoTurret
+
 
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
@@ -33,5 +35,6 @@ SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
         VisualSensor,
         VisualRadarSensor,
         TextEntity,
+        ExactoTurret
     ]
 }

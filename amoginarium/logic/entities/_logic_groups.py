@@ -357,7 +357,7 @@ class _CollisionDestroyed(BaseGroup):
                 for other in self.sprites():
                     # pg.sprite.collide_mask()
 
-                    if 1:
+                    with suppress(TypeError):  # rare pg edge cases
                         if all([
                             pg.sprite.collide_mask(sprite, other),
                             not is_related(sprite, other, 2)

@@ -59,6 +59,9 @@ class BaseLogicEntity:
         self._set_bit("flags", 0, True)  # set alive
         self._set_bit("flags", 1, True)  # set visible
 
+        # directly write to RAM to make sure graphics entity has correct data
+        pv.E_BUFF[self.__id] = self._runtime_buffer[self.__id]
+
         self.add(Updated)
 
     # region properties
