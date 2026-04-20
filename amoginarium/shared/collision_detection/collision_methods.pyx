@@ -32,39 +32,28 @@ cdef bint aabb_aabb_swept(
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept:
-    cdef double v_rel_x = (a_px_n - a_px_o) - (b_px_n - b_px_o)
-    cdef double v_rel_y = (a_py_n - a_py_o) - (b_py_n - b_py_o)
-
-    cdef double a_min_x = c_min(a_px_o, a_px_n)
-    cdef double a_max_x = c_max(a_px_o + a_sx, a_px_n + a_sx)
-    cdef double b_min_x = c_min(b_px_o, b_px_n)
-    cdef double b_max_x = c_max(b_px_o + b_sx, b_px_n + b_sx)
-    cdef double swept_overlap_x = c_min(a_max_x, b_max_x) - c_max(a_min_x, b_min_x)
-
-    cdef double a_min_y = c_min(a_py_o, a_py_n)
-    cdef double a_max_y = c_max(a_py_o + a_sy, a_py_n + a_sy)
-    cdef double b_min_y = c_min(b_py_o, b_py_n)
-    cdef double b_max_y = c_max(b_py_o + b_sy, b_py_n + b_sy)
-    cdef double swept_overlap_y = c_min(a_max_y, b_max_y) - c_max(a_min_y, b_min_y)
-
-    if not is_active:
-        if swept_overlap_x <= 1e-4 or swept_overlap_y <= 1e-4:
-            return False
-    else:
-        if swept_overlap_x < -1e-4 or swept_overlap_y < -1e-4:
-            return False
-
-    cdef double min_x = b_px_o - a_sx
-    cdef double max_x = b_px_o + b_sx
-    cdef double min_y = b_py_o - a_sy
-    cdef double max_y = b_py_o + b_sy
-
-    cdef double t_near_x = -1e300, t_far_x = 1e300
-    cdef double t_near_y = -1e300, t_far_y = 1e300
-    cdef double t_hit_near, t_hit_far
+    cdef double v_rel_x, v_rel_y, min_x, max_x, min_y, max_y
+    cdef double t_near_x, t_far_x, t_near_y, t_far_y, t_hit_near, t_hit_far
     cdef double dist_left, dist_right, dist_top, dist_bottom, min_dist_x, min_dist_y
+    cdef double t_start, t_end, t_mid, a_mid_px, a_mid_py, b_mid_px, b_mid_py
+    cdef double mid_overlap_x, mid_overlap_y, required_overlap
 
-    if min_x > max_x or min_y > max_y:
+    v_rel_x = (a_px_n - a_px_o) - (b_px_n - b_px_o)
+    v_rel_y = (a_py_n - a_py_o) - (b_py_n - b_py_o)
+
+    # Exact bounds (0 margin)
+    min_x = b_px_o - a_sx
+    max_x = b_px_o + b_sx
+    min_y = b_py_o - a_sy
+    max_y = b_py_o + b_sy
+
+    t_near_x = -1e300
+    t_far_x = 1e300
+    t_near_y = -1e300
+    t_far_y = 1e300
+
+    # Tolerance of 1e-6 allows floating point safety on the exact sweep geometry
+    if min_x > max_x + 1e-6 or min_y > max_y + 1e-6:
         return False
 
     if v_rel_x != 0.0:
@@ -72,14 +61,14 @@ cdef bint aabb_aabb_swept(
         t_far_x = (max_x - a_px_o) / v_rel_x
         if t_near_x > t_far_x: t_near_x, t_far_x = t_far_x, t_near_x
     else:
-        if not (min_x <= a_px_o <= max_x): return False
+        if a_px_o < min_x - 1e-6 or a_px_o > max_x + 1e-6: return False
 
     if v_rel_y != 0.0:
         t_near_y = (min_y - a_py_o) / v_rel_y
         t_far_y = (max_y - a_py_o) / v_rel_y
         if t_near_y > t_far_y: t_near_y, t_far_y = t_far_y, t_near_y
     else:
-        if not (min_y <= a_py_o <= max_y): return False
+        if a_py_o < min_y - 1e-6 or a_py_o > max_y + 1e-6: return False
 
     t_hit_near = c_max(t_near_x, t_near_y)
     t_hit_far = c_min(t_far_x, t_far_y)
@@ -87,6 +76,7 @@ cdef bint aabb_aabb_swept(
     if t_hit_near > t_hit_far or t_hit_far <= 0.0 or t_hit_near >= 1.0:
         return False
 
+    # Extract exact normals
     if t_hit_near <= 0.0:
         dist_left = a_px_o - min_x
         dist_right = max_x - a_px_o
@@ -115,6 +105,26 @@ cdef bint aabb_aabb_swept(
     if (v_rel_x * out_norm_x[0]) + (v_rel_y * out_norm_y[0]) > 0.0:
         return False
 
+    # --- MIDPOINT PENETRATION DEPTH CHECK ---
+    # This flawlessly rejects flush slides without altering the exact times or normals.
+    t_start = c_max(0.0, t_hit_near)
+    t_end = c_min(1.0, t_hit_far)
+    t_mid = (t_start + t_end) * 0.5
+
+    a_mid_px = a_px_o + (a_px_n - a_px_o) * t_mid
+    a_mid_py = a_py_o + (a_py_n - a_py_o) * t_mid
+    b_mid_px = b_px_o + (b_px_n - b_px_o) * t_mid
+    b_mid_py = b_py_o + (b_py_n - b_py_o) * t_mid
+
+    # True 1D Penetration Depth calculation (works for points with size=0.0 too)
+    mid_overlap_x = c_min((a_mid_px + a_sx) - b_mid_px, (b_mid_px + b_sx) - a_mid_px)
+    mid_overlap_y = c_min((a_mid_py + a_sy) - b_mid_py, (b_mid_py + b_sy) - a_mid_py)
+
+    required_overlap = 1e-4 if not is_active else -1e-4
+
+    if mid_overlap_x <= required_overlap or mid_overlap_y <= required_overlap:
+        return False
+
     out_t[0] = c_max(0.0, t_hit_near)
     return True
 
@@ -126,55 +136,42 @@ cdef bint swept_sat_generic(
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept:
-    cdef double v_rel_x = a_dx - b_dx
-    cdef double v_rel_y = a_dy - b_dy
-
-    cdef double t_enter = -1e300
-    cdef double t_exit = 1e300
-    cdef double best_nx = 0.0
-    cdef double best_ny = 0.0
-
-    cdef double min_overlap = 1e300
-    cdef double overlap, mtv_nx = 0.0, mtv_ny = 0.0
-
+    cdef double v_rel_x, v_rel_y, t_enter, t_exit, best_nx, best_ny
+    cdef double min_overlap, overlap, mtv_nx, mtv_ny
     cdef size_t i
-    cdef double nx, ny, minA_o, maxA_o, minB_o, maxB_o, minA_n, maxA_n, minB_n, maxB_n
-    cdef double a_min_sw, a_max_sw, b_min_sw, b_max_sw, swept_overlap, v_proj, t0, t1, inv_v
+    cdef double nx, ny, minA_o, maxA_o, minB_o, maxB_o, minA_n, maxA_n, minB_n, maxB_n, v_proj, t0, t1, inv_v
+    cdef double t_start, t_end, t_mid, required_overlap, minA_mid, maxA_mid, minB_mid, maxB_mid, mid_overlap
+
+    v_rel_x = a_dx - b_dx
+    v_rel_y = a_dy - b_dy
+    t_enter = -1e300
+    t_exit = 1e300
+    best_nx = 0.0
+    best_ny = 0.0
+    min_overlap = 1e300
+    mtv_nx = 0.0
+    mtv_ny = 0.0
 
     for i in range(a_ax.size()):
-        nx = a_ax[i]
+        nx = a_ax[i];
         ny = a_ay[i]
 
         project_poly(a_vx_o, a_vy_o, nx, ny, &minA_o, &maxA_o)
-        project_poly(a_vx_n, a_vy_n, nx, ny, &minA_n, &maxA_n)
         project_poly(b_vx_o, b_vy_o, nx, ny, &minB_o, &maxB_o)
-        project_poly(b_vx_n, b_vy_n, nx, ny, &minB_n, &maxB_n)
 
-        # Swept overlap test
-        a_min_sw = c_min(minA_o, minA_n)
-        a_max_sw = c_max(maxA_o, maxA_n)
-        b_min_sw = c_min(minB_o, minB_n)
-        b_max_sw = c_max(maxB_o, maxB_n)
-        swept_overlap = c_min(a_max_sw, b_max_sw) - c_max(a_min_sw, b_min_sw)
-
-        if not is_active:
-            if swept_overlap <= 1e-4: return False
-        else:
-            if swept_overlap < -1e-4: return False
-
-        overlap = (maxB_o - minA_o) if (maxB_o - minA_o) < (maxA_o - minB_o) else (maxA_o - minB_o)
+        overlap = c_min(maxA_o - minB_o, maxB_o - minA_o)
         if overlap < min_overlap:
             min_overlap = overlap
             if (maxA_o + minA_o) > (maxB_o + minB_o):
-                mtv_nx = nx
+                mtv_nx = nx;
                 mtv_ny = ny
             else:
-                mtv_nx = -nx
+                mtv_nx = -nx;
                 mtv_ny = -ny
 
         v_proj = v_rel_x * nx + v_rel_y * ny
         if v_proj == 0.0:
-            if minA_o >= maxB_o or maxA_o <= minB_o: return False
+            if minA_o > maxB_o + 1e-6 or maxA_o < minB_o - 1e-6: return False
         else:
             inv_v = 1.0 / v_proj
             t0 = (minB_o - maxA_o) * inv_v
@@ -188,39 +185,25 @@ cdef bint swept_sat_generic(
             if t_enter > t_exit: return False
 
     for i in range(b_ax.size()):
-        nx = b_ax[i]
+        nx = b_ax[i];
         ny = b_ay[i]
 
         project_poly(a_vx_o, a_vy_o, nx, ny, &minA_o, &maxA_o)
-        project_poly(a_vx_n, a_vy_n, nx, ny, &minA_n, &maxA_n)
         project_poly(b_vx_o, b_vy_o, nx, ny, &minB_o, &maxB_o)
-        project_poly(b_vx_n, b_vy_n, nx, ny, &minB_n, &maxB_n)
 
-        # Swept overlap test
-        a_min_sw = c_min(minA_o, minA_n)
-        a_max_sw = c_max(maxA_o, maxA_n)
-        b_min_sw = c_min(minB_o, minB_n)
-        b_max_sw = c_max(maxB_o, maxB_n)
-        swept_overlap = c_min(a_max_sw, b_max_sw) - c_max(a_min_sw, b_min_sw)
-
-        if not is_active:
-            if swept_overlap <= 1e-4: return False
-        else:
-            if swept_overlap < -1e-4: return False
-
-        overlap = (maxB_o - minA_o) if (maxB_o - minA_o) < (maxA_o - minB_o) else (maxA_o - minB_o)
+        overlap = c_min(maxA_o - minB_o, maxB_o - minA_o)
         if overlap < min_overlap:
             min_overlap = overlap
             if (maxA_o + minA_o) > (maxB_o + minB_o):
-                mtv_nx = nx
+                mtv_nx = nx;
                 mtv_ny = ny
             else:
-                mtv_nx = -nx
+                mtv_nx = -nx;
                 mtv_ny = -ny
 
         v_proj = v_rel_x * nx + v_rel_y * ny
         if v_proj == 0.0:
-            if minA_o >= maxB_o or maxA_o <= minB_o: return False
+            if minA_o > maxB_o + 1e-6 or maxA_o < minB_o - 1e-6: return False
         else:
             inv_v = 1.0 / v_proj
             t0 = (minB_o - maxA_o) * inv_v
@@ -243,6 +226,46 @@ cdef bint swept_sat_generic(
         out_norm_y[0] = best_ny
 
     if (v_rel_x * out_norm_x[0]) + (v_rel_y * out_norm_y[0]) > 0.0: return False
+
+    # --- MIDPOINT PENETRATION DEPTH CHECK ---
+    t_start = c_max(0.0, t_enter)
+    t_end = c_min(1.0, t_exit)
+    t_mid = (t_start + t_end) * 0.5
+    required_overlap = 1e-4 if not is_active else -1e-4
+
+    for i in range(a_ax.size()):
+        nx = a_ax[i];
+        ny = a_ay[i]
+        project_poly(a_vx_o, a_vy_o, nx, ny, &minA_o, &maxA_o)
+        project_poly(a_vx_n, a_vy_n, nx, ny, &minA_n, &maxA_n)
+        project_poly(b_vx_o, b_vy_o, nx, ny, &minB_o, &maxB_o)
+        project_poly(b_vx_n, b_vy_n, nx, ny, &minB_n, &maxB_n)
+
+        minA_mid = minA_o + (minA_n - minA_o) * t_mid
+        maxA_mid = maxA_o + (maxA_n - maxA_o) * t_mid
+        minB_mid = minB_o + (minB_n - minB_o) * t_mid
+        maxB_mid = maxB_o + (maxB_n - maxB_o) * t_mid
+
+        mid_overlap = c_min(maxA_mid - minB_mid, maxB_mid - minA_mid)
+        if mid_overlap <= required_overlap:
+            return False
+
+    for i in range(b_ax.size()):
+        nx = b_ax[i];
+        ny = b_ay[i]
+        project_poly(a_vx_o, a_vy_o, nx, ny, &minA_o, &maxA_o)
+        project_poly(a_vx_n, a_vy_n, nx, ny, &minA_n, &maxA_n)
+        project_poly(b_vx_o, b_vy_o, nx, ny, &minB_o, &maxB_o)
+        project_poly(b_vx_n, b_vy_n, nx, ny, &minB_n, &maxB_n)
+
+        minA_mid = minA_o + (minA_n - minA_o) * t_mid
+        maxA_mid = maxA_o + (maxA_n - maxA_o) * t_mid
+        minB_mid = minB_o + (minB_n - minB_o) * t_mid
+        maxB_mid = maxB_o + (maxB_n - maxB_o) * t_mid
+
+        mid_overlap = c_min(maxA_mid - minB_mid, maxB_mid - minA_mid)
+        if mid_overlap <= required_overlap:
+            return False
 
     out_t[0] = c_max(0.0, t_enter)
     return True
