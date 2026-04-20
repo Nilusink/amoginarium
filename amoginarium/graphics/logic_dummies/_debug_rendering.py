@@ -72,7 +72,6 @@ class PolyDebugRenderingEntity(SyncedGraphicsEntity):
         self.add(Drawn_2)
 
         self.radius = radius
-        ic("De spawn")
 
     def _update_from_buffer(self) -> None:
         self.alive = self._get_bit("flags", 0)

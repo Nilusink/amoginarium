@@ -557,6 +557,7 @@ class BaseTurret(LogicGameEntity):
         if dmg > 0 and event.other_entity.parent != self:
             self.hit(dmg, hit_by=event.other_entity)
 
-    def _on_collision(self, event: CollisionEvent["Bullet"]) -> None:
-        if event.group_id == collision_group_bullets:
-            self.__on_collision_bullet(event)
+    def _collision_start(self, events: list[CollisionEvent["Bullet"]]) -> None:
+        for event in events:
+            if event.group_id == collision_group_bullets:
+                self.__on_collision_bullet(event)

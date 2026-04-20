@@ -32,7 +32,7 @@ elif sys.platform.startswith("darwin"):
 extensions = []
 
 base_package = "amoginarium"
-cpp_files = ["_minrect.pyx", "_minrect_dirty.pyx", "collision_manager.pyx"]
+cpp_files = ["_minrect.pyx", "_minrect_dirty.pyx", "collision_manager.pyx", "collision_methods.pyx"]
 
 for root, _, files in os.walk(base_package):
     for file in files:

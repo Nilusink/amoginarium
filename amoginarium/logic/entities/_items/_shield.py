@@ -87,12 +87,13 @@ class Shield(BaseItem):
             self.remove(Updated)
             # self.remove(CollisionDestroyed)
 
-    def _on_collision(self, event: CollisionEvent) -> None:
+    def _collision_start(self, events: list[CollisionEvent]) -> None:
         """
         Reaction to collision
         :param event: Event details
         """
-        self.hit(event.other_entity.damage, event.other_entity)
+        for event in events:
+            self.hit(event.other_entity.damage, event.other_entity)
 
     def _update_collision(
             self,

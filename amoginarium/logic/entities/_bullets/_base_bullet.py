@@ -387,19 +387,20 @@ class Bullet(LogicGameEntity):
 
             self.kill(killed_by=event.other_entity)
 
-    def _on_collision(self, event: CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]) -> None:
-        if event.group_id == collision_group_islands:
-            self.__on_collision_general(event)
-        elif event.group_id == collision_group_bullets:
-            self.__on_collision_bullet(event)
-        elif event.group_id == collision_group_players:
-            self.__on_collision_general(event)
-        elif event.group_id == collision_group_turrets:
-            self.__on_collision_general(event)
-        elif event.group_id == collision_group_grenades:
-            self.__on_collision_general(event)
-        elif event.group_id == collision_group_shields:
-            self.__on_collision_shield(event)
+    def _collision_start(self, events: list[CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
+        for event in events:
+            if event.group_id == collision_group_islands:
+                self.__on_collision_general(event)
+            elif event.group_id == collision_group_bullets:
+                self.__on_collision_bullet(event)
+            elif event.group_id == collision_group_players:
+                self.__on_collision_general(event)
+            elif event.group_id == collision_group_turrets:
+                self.__on_collision_general(event)
+            elif event.group_id == collision_group_grenades:
+                self.__on_collision_general(event)
+            elif event.group_id == collision_group_shields:
+                self.__on_collision_shield(event)
 
     def _update(self, delta):
         self._time_to_life -= delta

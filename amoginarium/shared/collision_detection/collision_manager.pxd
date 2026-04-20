@@ -1,6 +1,7 @@
 # cython: language_level=3
 from libcpp.vector cimport vector
 from libcpp.unordered_map cimport unordered_map
+from libcpp.unordered_set cimport unordered_set
 from libc.stdint cimport uint64_t
 
 cdef struct EntityData:
@@ -27,16 +28,6 @@ cdef struct EntityData:
 
     vector[vector[uint64_t]] grid_keys
 
-    vector[int] col_groups
-    vector[int] col_entities
-    vector[double] col_nx
-    vector[double] col_ny
-
-    vector[int] prev_col_groups
-    vector[int] prev_col_entities
-    vector[double] prev_col_nx
-    vector[double] prev_col_ny
-
 cdef struct CollisionGroupStruct:
     int id
     int max_level
@@ -46,8 +37,11 @@ cdef struct CollisionGroupStruct:
     vector[int] free_ids
 
 cdef struct CollisionRelationStruct:
+    int id
     int group_a_id
     int group_b_id
+    unordered_map[uint64_t, int] active_cols
+    unordered_set[uint64_t] updated_cols
 
 cdef struct DeferredDeletion:
     int group_id
@@ -65,8 +59,10 @@ cdef class CollisionManager:
     cdef vector[unordered_map[int, unordered_map[uint64_t, vector[int]]]] grids
     cdef vector[DeferredDeletion] pending_deletions
 
+    cdef int next_col_id
+
     cdef void _update_entity_grid(self, int group_id, int entity_id)
     cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id)
-    cdef void _calc_relation(self, CollisionRelationStruct rel, tuple callbacks)
-    cdef void _dispatch_set_normals(self)
+    cdef void _calc_relation(self, CollisionRelationStruct* rel, tuple callbacks)
     cdef void _flush_deletions(self)
+    cdef void _cleanup_entity_collisions(self, int group_id, int entity_id)

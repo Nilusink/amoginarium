@@ -16,23 +16,25 @@ collision_group_islands = collision_manager.add_group(max_level=0)
 collision_group_turrets = collision_manager.add_group(max_level=0)
 collision_group_shields = collision_manager.add_group(max_level=0, hitbox_type="obb")
 
-on_collision = PositionedLogicEntity.on_collision
-set_normals = PositionedLogicEntity.set_normals
+collision_start = PositionedLogicEntity.collision_start
+collision_end = PositionedLogicEntity.collision_end
 
 def create_default_relation(group_a, group_b):
     collision_manager.create_relation(
         group_a_id=group_a,
         group_b_id=group_b,
-        cb_a_on_col=on_collision,
-        cb_b_on_col=on_collision,
-        cb_a_set_norm=set_normals,
-        cb_b_set_norm=set_normals
+        cb_a_on_start=collision_start,
+        cb_b_on_start=collision_start,
+        cb_a_on_end=collision_end,
+        cb_b_on_end=collision_end
     )
 
 # Grenades collide with Islands, Bullets, Players
 create_default_relation(collision_group_grenades, collision_group_islands)
 create_default_relation(collision_group_grenades, collision_group_bullets)
 create_default_relation(collision_group_grenades, collision_group_players)
+
+# collision id / col
 
 # Players collide with Islands, Bullets, (Grenades)
 create_default_relation(collision_group_players, collision_group_islands)

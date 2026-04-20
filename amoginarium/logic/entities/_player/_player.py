@@ -13,12 +13,14 @@ from ctypes import Array
 from icecream import ic
 import typing as tp
 import math as m
+from types import EllipsisType
 
 from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
+from .._collision.collision_manager import collision_manager
 
 from ...audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ...graphics_dummies import Controller
@@ -239,34 +241,71 @@ class Player(LogicGameEntity):
             self._hp = new
             return True
 
-    def __on_collision_island(self, event: CollisionEvent["Island"]) -> None:
-        if abs(event.normal.x) > 0.5:
-            self.position.x = event.position.x
+    def __on_collision_island(self, events: list[CollisionEvent["Island"]]) -> list[bool]:
+        ic("PLAYER COLLISION START:", events)
 
-        if abs(event.normal.y) > 0.5:
-            self.position.y = event.position.y
-            if event.normal.y < -0.5:
-                if self.velocity.y > 3:
-                    self._controller.feedback_collide()
-                if self.velocity.y > 450:
-                    self._groaning.play()
-            elif event.normal.y > 0.5:
-                if self.velocity.y < -3:
-                    self._controller.feedback_collide()
+        accepted_collisions: list[bool] = [False for _ in events]
 
-        if abs(event.normal.x) > 0.5 and abs(self.velocity.x) > 12:
-            self._controller.feedback_collide()
+        x_collided = False
+        y_collided = False
 
-    def __on_collision_bullet(self, event: CollisionEvent["Bullet"]) -> None:
-        dmg = event.other_entity.damage
-        if dmg > 0 and event.other_entity.parent != self:
-            self.hit(dmg, hit_by=event.other_entity)
+        active_normals = [False, False, False, False]  # x-negative, x-positive, y-negative, y-positive
+        if collision_group_islands in self.active_normals.keys():
+            for normal in self.active_normals[collision_group_islands]:
+                if normal.x < -0.5:
+                    active_normals[0] = True
+                elif normal.x > 0.5:
+                    active_normals[1] = True
+                if normal.y < -0.5:
+                    active_normals[2] = True
+                elif normal.y > 0.5:
+                    active_normals[3] = True
 
-    def _on_collision(self, event: CollisionEvent[tp.Union["Bullet", "Island"]]) -> None:
-        if event.group_id == collision_group_islands:
-            self.__on_collision_island(event)
-        elif event.group_id == collision_group_bullets:
-            self.__on_collision_bullet(event)
+        for i, event in enumerate(events):
+            if not x_collided and abs(event.normal.x) > 0.5:
+                if active_normals[0] and event.normal.x < -0.5:
+                    continue
+                if active_normals[1] and event.normal.x > 0.5:
+                    continue
+                self.position.x = event.position.x
+                self._controller.feedback_collide()
+                accepted_collisions[i] = True
+                x_collided = True
+
+            if not y_collided and abs(event.normal.y) > 0.5:
+                if active_normals[2] and event.normal.y < -0.5:
+                    continue
+                if active_normals[3] and event.normal.y > 0.5:
+                    continue
+
+                self.position.y = event.position.y
+                if event.normal.y < -0.5:
+                    if self.velocity.y > 3:
+                        self._controller.feedback_collide()
+                    if self.velocity.y > 450:
+                        self._groaning.play()
+                elif event.normal.y > 0.5:
+                    if self.velocity.y < -3:
+                        self._controller.feedback_collide()
+                self._controller.feedback_collide()
+                accepted_collisions[i] = True
+                y_collided = True
+
+        ic("RETURNING", accepted_collisions)
+        return accepted_collisions
+
+    def __on_collision_bullet(self, events: list[CollisionEvent["Bullet"]]) -> None:
+        for event in events:
+            dmg = event.other_entity.damage
+            if dmg > 0 and event.other_entity.parent != self:
+                self.hit(dmg, hit_by=event.other_entity)
+
+    def _collision_start(self, events: list[CollisionEvent[tp.Union["Bullet", "Island"]]]) -> list[bool] | None:
+        if events[0].group_id == collision_group_islands:
+            return self.__on_collision_island(events)
+        if events[0].group_id == collision_group_bullets:
+            return self.__on_collision_bullet(events)
+        return None
 
     def _update(self, delta):
         self._on_ground = False
@@ -275,19 +314,32 @@ class Player(LogicGameEntity):
             for n in self.active_normals[collision_group_islands]:
                 if n.y < -0.5:
                     self._on_ground = True
-                    self.acceleration.y = 0
+                    if self.acceleration.y > 0:
+                        self.acceleration.y = 0
                     if self.velocity.y > 0:
                         self.velocity.y = 0
                 elif n.y > 0.5:
+                    if self.acceleration.y < 0:
+                        self.acceleration.y = 0
                     if self.velocity.y < 0:
                         self.velocity.y = 0
-                if abs(n.x) > 0.5 and self.velocity.x * n.x < 0:
-                    self.velocity.x = 0
+                if n.x < -0.5:
+                    if self.acceleration.x > 0:
+                        self.acceleration.x = 0
+                    if self.velocity.x > 0:
+                        self.velocity.x = 0
+                elif n.x > 0.5:
+                    if self.acceleration.x < 0:
+                        self.acceleration.x = 0
+                    if self.velocity.x < 0:
+                        self.velocity.x = 0
 
         # update reloads
         for hover_slot in self._hotbar:
             if hover_slot.count > 0:
                 hover_slot.item.update(delta)
+
+        # ic(collision_manager.get_points(self._collision_group, self._collision_id))
 
         acc_fac = pv.global_vars.get_acceleration_factor()
         ppm = pv.global_vars.get_pixel_per_meter()
@@ -388,7 +440,9 @@ class Player(LogicGameEntity):
         else:
             self._inventory_pressed = False
 
+        # ic(self.position, self.velocity.xy, self.acceleration.xy, self._velocity_to_add.xy, self._acceleration_to_add.xy)
         super()._update(delta)
+        # ic(self.position)
 
         if self.item:
             self.item.facing.angle = self.facing.angle
@@ -466,3 +520,23 @@ class Player(LogicGameEntity):
 
         self._acceleration_to_add.x += x
         self._acceleration_to_add.y += y
+
+    def _update_collision(
+            self,
+            *,
+            position: Vec2 | EllipsisType = ...,
+            size: Vec2 | EllipsisType = ...,
+            rotation: float = 0.0,
+            positions: list[Vec2] | None = None,
+            centered: bool | EllipsisType = ...,
+            shift_history: bool = True
+    ) -> None:
+        # ic("UPDATED COLLISION", self.position)
+        super()._update_collision(
+            position=position,
+            size=size,
+            rotation=rotation,
+            positions=positions,
+            centered=centered,
+            shift_history=shift_history
+        )

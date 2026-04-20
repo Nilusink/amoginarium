@@ -32,7 +32,7 @@ class PositionedLogicEntity(BaseLogicEntity):
     DRAW_DEBUG_HITBOXES: tp.ClassVar[bool] = True
     DEBUG_ENTITY_CLASS: tp.ClassVar[type["PolyDebugRenderingEntity"]]
 
-    __slots__ = ("position", "size", "_has_collision", "_collision_id", "active_normals", "_centered", "__debug")
+    __slots__ = ("position", "size", "_has_collision", "_collision_id", "active_collisions", "_centered", "__debug", "active_normals")
 
     position: Vec2  # public / no property for faster access
     size: Vec2  # public / no property for faster access
@@ -42,7 +42,10 @@ class PositionedLogicEntity(BaseLogicEntity):
     _has_collision: bool
     _collision_id: int | None
 
-    active_normals: dict[int, list[Vec2]]
+    # collision_id -> CollisionEvent
+    active_collisions: dict[int, CollisionEvent]  # public / no property for faster access
+    # group_id -> normals
+    active_normals: dict[int, list[Vec2]]  # public / no property for faster access
 
     __debug: PolyDebugRenderingEntity | None
 
@@ -68,6 +71,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         self.size = size
         self._centered = centered
 
+        self.active_collisions = {}
         self.active_normals = {}
         self._collision_id = None
         self.__debug = None
@@ -87,33 +91,50 @@ class PositionedLogicEntity(BaseLogicEntity):
     # endregion
 
     # region Methods: Collision
-    def _on_collision(self, event: CollisionEvent) -> None:
-        """
-        Reaction to collision
-        :param event: Event details
-        """
+    def __calc_normals(self) -> None:
+        active_normals: dict[int, list[Vec2]] = {}
+
+        for event in self.active_collisions.values():
+            if event.group_id not in active_normals:
+                active_normals[event.group_id] = []
+            active_normals[event.group_id].append(event.normal)
+
+        self.active_normals = active_normals
+
+    def _collision_start(self, event: list[CollisionEvent]) -> list[bool] | None:
         ...
 
     @tp.final
-    def on_collision(self, event: CollisionEvent) -> None:
-        """
-        Calls _on_collision and updates collision entity
-        :param event: Event details
-        """
-        self._on_collision(event)
+    def collision_start(self, events: list[CollisionEvent]) -> list[bool] | None:
+        collisions_result = self._collision_start(events)
+
+        for i in range(len(events)):
+            if collisions_result is not None:
+                if not collisions_result[i]:
+                    continue
+            self.active_collisions[events[i].collision_id] = events[i]
+
+        self.__calc_normals()
 
         if self._collision_id is not None:
             self._update_collision(shift_history=False)
+        ic("RETURNING", collisions_result)
+        return collisions_result
+
+    def _collision_end(self, events: list[CollisionEvent]) -> None:
+        ...
 
     @tp.final
-    def set_normals(self, group_id: int, normals: list[Vec2]) -> None:
-        """
-        Called when normal configuration updates
-        :param group_id: Event group id
-        :param normals: list of updated normals
-        """
-        # ic("SET NORMALS:", self, group_id, normals)
-        self.active_normals[group_id] = normals
+    def collision_end(self, events: list[CollisionEvent]) -> None:
+        actual_events = [
+            event for event in events if event.collision_id in self.active_collisions.keys()
+        ]
+        for event in actual_events:
+            if event.collision_id in self.active_collisions.keys():
+                del self.active_collisions[event.collision_id]
+
+        self.__calc_normals()
+        self._collision_end(actual_events)
 
     def _create_collision(
             self,
@@ -134,7 +155,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         self._collision_id = collision_manager.register_entity(
             group_id=self._collision_group,
             instance=self,
-            pos=position,
+            position=position,
             size=size,
             rotation=rotation,
             positions=positions,
@@ -168,7 +189,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         collision_manager.update_entity(
             group_id=self._collision_group,
             entity_id=self._collision_id,
-            pos=position,
+            position=position,
             size=size,
             rotation=rotation,
             positions=positions,

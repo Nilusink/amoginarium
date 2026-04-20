@@ -111,13 +111,14 @@ class Grenade(Bullet):
             self.add_velocity(event.other_entity.velocity)
             self.add_velocity(Vec2().from_cartesian(0, -200))
 
-    def _on_collision(self, event: CollisionEvent) -> None:
-        if event.group_id == collision_group_islands:
-            self.__on_collision_island(event)
-        elif event.group_id == collision_group_bullets:
-            self.__on_collision_bullet(event)
-        elif event.group_id == collision_group_players:
-            self.__on_collision_player(event)
+    def _collision_start(self, events: list[CollisionEvent]) -> None:
+        for event in events:
+            if event.group_id == collision_group_islands:
+                self.__on_collision_island(event)
+            elif event.group_id == collision_group_bullets:
+                self.__on_collision_bullet(event)
+            elif event.group_id == collision_group_players:
+                self.__on_collision_player(event)
 
     def _update(self, delta: float):
         if collision_group_islands in self.active_normals.keys():

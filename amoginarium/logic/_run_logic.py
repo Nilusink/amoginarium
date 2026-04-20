@@ -451,7 +451,7 @@ class LogicProcess:
         for e in Updated.sprites() + Bullets.sprites():
             e.kill()
 
-        # collision_manager.clear_all_entities()
+        collision_manager.clear_all_entities()
 
         # reset shared values
         self._write_lock.acquire()
