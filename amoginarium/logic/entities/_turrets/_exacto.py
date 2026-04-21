@@ -20,10 +20,9 @@ from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
 from .._collision import collision_manager
-from .._collision.collision_relations import collision_group_turrets, collision_group_islands, collision_group_players
+from .._collision.collision_relations import all_groups
 from ...audio import Sniper as SniperSound
 from ._base_turret import BaseTurret, TargetSolution
-from .._groups import Updated, Players, Bullets
 from .._bullets import AerodynamicEntity
 from .._base_entities import LogicGameEntity
 from .._weapons import BaseWeapon
@@ -157,7 +156,7 @@ class ExactoSniper(BaseWeapon):
             #     b for b in Bullets.sprites() if b.parent != self
             # ]
             hits = collision_manager.manual_collision(
-                group_ids=[collision_group_islands, collision_group_turrets, collision_group_players],
+                group_ids=all_groups,
                 start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
                 end_position=self.position + Vec2().from_polar(self.facing.angle, self._max_range)
             )
@@ -225,7 +224,7 @@ class ExactoTurret(BaseTurret):
             if self._current_target in self.available_targets:
                 # raycast towards target
                 hits = collision_manager.manual_collision(
-                    group_ids=[collision_group_islands, collision_group_turrets, collision_group_players],
+                    group_ids=all_groups,
                     start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
                     end_position=self._current_target.position
                 )

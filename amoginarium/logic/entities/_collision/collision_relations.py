@@ -16,6 +16,15 @@ collision_group_islands = collision_manager.add_group(max_level=0)
 collision_group_turrets = collision_manager.add_group(max_level=0)
 collision_group_shields = collision_manager.add_group(max_level=0, hitbox_type="obb")
 
+all_groups = [
+    collision_group_players,
+    collision_group_bullets,
+    collision_group_grenades,
+    collision_group_islands,
+    collision_group_turrets,
+    collision_group_shields,
+]
+
 collision_start = PositionedLogicEntity.collision_start
 collision_end = PositionedLogicEntity.collision_end
 
