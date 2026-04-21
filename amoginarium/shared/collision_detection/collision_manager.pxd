@@ -10,6 +10,8 @@ cdef struct EntityData:
     bint is_centered
     int h_type
 
+    vector[int] ignore_collisions
+
     double px_o, py_o, px_n, py_n
     double sx, sy
     double rot

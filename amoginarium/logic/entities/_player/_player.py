@@ -50,6 +50,10 @@ class Player(LogicGameEntity):
 
     _collision_group = collision_group_players
 
+    __add_position: Vec2
+
+    __should_be_killed: int
+
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -131,6 +135,9 @@ class Player(LogicGameEntity):
             GravityAffected,
             Players
         )
+
+        self.__add_position = Vec2()
+        self.__should_be_killed = 0
 
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
@@ -242,12 +249,7 @@ class Player(LogicGameEntity):
             return True
 
     def __on_collision_island(self, events: list[CollisionEvent["Island"]]) -> list[bool]:
-        ic("PLAYER COLLISION START:", events)
-
         accepted_collisions: list[bool] = [False for _ in events]
-
-        x_collided = False
-        y_collided = False
 
         active_normals = [False, False, False, False]  # x-negative, x-positive, y-negative, y-positive
         if collision_group_islands in self.active_normals.keys():
@@ -262,25 +264,25 @@ class Player(LogicGameEntity):
                     active_normals[3] = True
 
         for i, event in enumerate(events):
-            if not x_collided and abs(event.normal.x) > 0.5:
+            if abs(event.normal.x) > 0.5:
                 if active_normals[0] and event.normal.x < -0.5:
                     continue
                 if active_normals[1] and event.normal.x > 0.5:
                     continue
+                self.__add_position.y += self.position.y - event.position.y  # try to make up for the lost y in the next update!
                 self.position = event.position
                 self.velocity.x = 0
                 self.acceleration.x = 0
                 self._controller.feedback_collide()
                 accepted_collisions[i] = True
-                x_collided = True
                 break
 
-            if not y_collided and abs(event.normal.y) > 0.5:
+            if abs(event.normal.y) > 0.5:
                 if active_normals[2] and event.normal.y < -0.5:
                     continue
                 if active_normals[3] and event.normal.y > 0.5:
                     continue
-
+                self.__add_position.x += self.position.x - event.position.x  # try to make up for the lost y in the next update!
                 self.position = event.position
                 self.velocity.y = 0
                 self.acceleration.y = 0
@@ -294,10 +296,8 @@ class Player(LogicGameEntity):
                         self._controller.feedback_collide()
                 self._controller.feedback_collide()
                 accepted_collisions[i] = True
-                y_collided = True
                 break
 
-        ic("RETURNING", accepted_collisions)
         return accepted_collisions
 
     def __on_collision_bullet(self, events: list[CollisionEvent["Bullet"]]) -> None:
@@ -447,6 +447,8 @@ class Player(LogicGameEntity):
             self._inventory_pressed = False
 
         # ic(self.position, self.velocity.xy, self.acceleration.xy, self._velocity_to_add.xy, self._acceleration_to_add.xy)
+        self.position += self.__add_position
+        self.__add_position *= 0
         super()._update(delta)
         # ic(self.position)
 
@@ -455,8 +457,16 @@ class Player(LogicGameEntity):
 
         self._runtime_buffer[self.id].param0 = self._hp / self._max_hp
 
-        # if self.position.y > 2000:
-        #     self.kill()
+        # Only kill the player if has been below 2000 for 3 updates
+        # to let the CollisionSystem check if that position is valid!
+        # 3 because, because first is for any check to happen, second for restoring the y-axis-position on a wall hit
+        # If you don't know what I mean by this, just ask me. But I won't know by then probably! xD
+        if self.position.y > 2000:
+            if self.__should_be_killed >= 2:
+                self.kill()
+            self.__should_be_killed += 1
+        else:
+            self.__should_be_killed = 0
 
     def kill(self, killed_by=...) -> None:
         self._alive = False

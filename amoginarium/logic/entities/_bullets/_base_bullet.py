@@ -111,6 +111,8 @@ class Bullet(LogicGameEntity):
 
     _hp: int
 
+    _ignore_collision_id: int | None = None
+
     # endregion
 
     def __init__(
@@ -141,7 +143,7 @@ class Bullet(LogicGameEntity):
             target_pos: Vec2 | EllipsisType = ...,
             size: Vec2 | int | EllipsisType = ...,
             visibility_offset: float | EllipsisType = ...,
-            invincibility_offset: float | EllipsisType = ...,
+            invincibility_offset: float | EllipsisType = ...
     ) -> None:
         """
         Base logic bullet
@@ -237,7 +239,8 @@ class Bullet(LogicGameEntity):
             initial_velocity=initial_velocity.copy(),
             coalition=coalition,
             parent=parent,
-            centered=True
+            centered=True,
+            ignore_collision_id=self._ignore_collision_id
         )
         self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius
@@ -388,6 +391,7 @@ class Bullet(LogicGameEntity):
             self.kill(killed_by=event.other_entity)
 
     def _collision_start(self, events: list[CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
+        print("BULLET COLLISION START", events, flush=True)
         for event in events:
             if event.group_id == collision_group_islands:
                 self.__on_collision_general(event)
@@ -489,7 +493,7 @@ class Bullet(LogicGameEntity):
                 for bi in range(self._cluster_amount):
                     self._cluster_bullet_type(
                         self._runtime_buffer,
-                        self.parent,
+                        self,
                         self.coalition,
                         self.position.copy(),
                         Vec2().from_polar(current_angle, self.velocity.length + self._cluster_step_inertia),
@@ -502,7 +506,7 @@ class Bullet(LogicGameEntity):
                         # cluster_spread_angle=self._cluster_spread,
                         target_pos=self._target_pos,
                         size=self.size * self._cluster_size_mult,
-                        collide_siblings=False,
+                        collide_siblings=False
                     )
                     current_angle += angle_spread
 

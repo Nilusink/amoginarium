@@ -1,6 +1,7 @@
 """
 amoginarium/logic/entities/_base_entities/_base_logic_entity.py
-defines the most basic form of logic entity
+
+Defines the most basic form of logic entity
 
 Project: amoginarium
 Created: 28.03.2026
@@ -61,7 +62,7 @@ class BaseLogicEntity:
         """
         self.__groups = []
 
-        self._parent = parent
+        self._parent = parent if parent else None
         self._children = []
         self._lifetime = 0
 

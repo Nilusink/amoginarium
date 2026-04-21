@@ -16,10 +16,12 @@ from cython.operator cimport dereference as deref, preincrement as inc
 
 cdef class CollisionManager:
     def __init__(self, double base_cell_size=1000.0, list level_dividers=None):
+        cdef double current_size
+
         self.base_cell_size = base_cell_size
         self.cell_sizes.push_back(base_cell_size)
 
-        cdef double current_size = base_cell_size
+        current_size = base_cell_size
         if level_dividers:
             for div in level_dividers:
                 current_size = current_size / div
@@ -90,7 +92,9 @@ cdef class CollisionManager:
 
     def register_entity(self, int group_id, object instance, object position=None, object size=None,
                         bint centered=False,
-                        double rotation=0.0, list positions=None, object radius=None) -> int:
+                        double rotation=0.0, list positions=None, object radius=None,
+                        object ignore_collisions=None) -> int:
+        if group_id < 0 or group_id >= self.groups.size(): return -1
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef int e_id, lvl
         cdef EntityData ed
@@ -100,7 +104,7 @@ cdef class CollisionManager:
         if radius is not None:
             _rad = radius
         elif size is not None:
-            _rad = size.x
+            _rad = size.x / 2.0
 
         free_ids_sz = group.free_ids.size()
         if free_ids_sz > 0:
@@ -111,6 +115,14 @@ cdef class CollisionManager:
             group.entities[e_id].is_centered = centered
             group.entities[e_id].rot = rotation
             group.entities[e_id].radius = _rad
+
+            group.entities[e_id].ignore_collisions.clear()
+            if ignore_collisions is not None:
+                if isinstance(ignore_collisions, list):
+                    for ig in ignore_collisions:
+                        group.entities[e_id].ignore_collisions.push_back(ig)
+                else:
+                    group.entities[e_id].ignore_collisions.push_back(ignore_collisions)
 
             if position is not None:
                 group.entities[e_id].px_o = position.x
@@ -154,6 +166,14 @@ cdef class CollisionManager:
             ed.rot = rotation
             ed.radius = _rad
 
+            ed.ignore_collisions.clear()
+            if ignore_collisions is not None:
+                if isinstance(ignore_collisions, list):
+                    for ig in ignore_collisions:
+                        ed.ignore_collisions.push_back(ig)
+                else:
+                    ed.ignore_collisions.push_back(ignore_collisions)
+
             if position is not None:
                 ed.px_o = position.x
                 ed.py_o = position.y
@@ -181,17 +201,19 @@ cdef class CollisionManager:
             group.entities.push_back(ed)
             self.group_instances[group_id].append(instance)
 
-        self.update_entity(group_id, e_id, position, size, centered, rotation, positions, True, radius)
+        self.update_entity(group_id, e_id, position, size, centered, rotation, positions, True, radius,
+                           ignore_collisions)
         return e_id
 
     def delete_entity(self, int group_id, int entity_id):
+        if group_id < 0 or group_id >= self.groups.size(): return
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef EntityData * ed
         cdef DeferredDeletion dd
         cdef size_t ent_sz
 
         ent_sz = group.entities.size()
-        if entity_id < 0 or entity_id >= ent_sz: return
+        if entity_id < 0 or entity_id >= <int> ent_sz: return
 
         ed = &group.entities[entity_id]
         if not ed.active: return
@@ -206,16 +228,22 @@ cdef class CollisionManager:
         cdef uint64_t pair_key
         cdef uint64_t a_id, b_id
         cdef tuple cbs
-        cdef list evs_a = []
-        cdef list evs_b = []
         cdef size_t rel_sz
-        cdef size_t i
+        cdef size_t i, k, to_remove_sz
+        cdef vector[uint64_t] to_remove
+        cdef int g_a_id, g_b_id, r_id
+        cdef object inst_a, inst_b
 
         rel_sz = self.relations.size()
         for i in range(rel_sz):
             rel = &self.relations[i]
-            if rel.group_a_id == group_id or rel.group_b_id == group_id:
+            r_id = rel.id
+            g_a_id = rel.group_a_id
+            g_b_id = rel.group_b_id
+
+            if g_a_id == group_id or g_b_id == group_id:
                 cbs = self.relation_callbacks[i]
+                to_remove.clear()
 
                 it = rel.active_cols.begin()
                 while it != rel.active_cols.end():
@@ -225,37 +253,39 @@ cdef class CollisionManager:
                     a_id = pair_key >> 32
                     b_id = pair_key & 0xFFFFFFFF
 
-                    if (rel.group_a_id == group_id and a_id == entity_id) or \
-                            (rel.group_b_id == group_id and b_id == entity_id):
+                    if (g_a_id == group_id and a_id == entity_id):
+                        if cbs[3] is not None and self.groups[g_b_id].entities.size() > b_id and \
+                                self.groups[g_b_id].entities[b_id].active:
+                            if len(self.group_instances[g_a_id]) > a_id and len(self.group_instances[g_b_id]) > b_id:
+                                inst_a = self.group_instances[g_a_id][a_id]
+                                inst_b = self.group_instances[g_b_id][b_id]
+                                if inst_a is not None and inst_b is not None:
+                                    ev = CollisionEvent(col_id, r_id, g_a_id, inst_a,
+                                                        Vec2().from_cartesian(self.groups[g_b_id].entities[b_id].px_n,
+                                                                              self.groups[g_b_id].entities[b_id].py_n),
+                                                        Vec2(), 1.0)
+                                    cbs[3](self.group_instances[g_b_id][b_id], [ev])
+                        to_remove.push_back(pair_key)
 
-                        if cbs[1] is not None:
-                            inst_a = self.group_instances[rel.group_a_id][a_id]
-                            inst_b = self.group_instances[rel.group_b_id][b_id]
-                            if inst_a is not None and inst_b is not None:
-                                evs_a.append((inst_a, CollisionEvent(col_id, rel.id, rel.group_b_id, inst_b,
-                                                                     Vec2().from_cartesian(
-                                                                         self.groups[rel.group_a_id].entities[
-                                                                             a_id].px_n,
-                                                                         self.groups[rel.group_a_id].entities[
-                                                                             a_id].py_n), Vec2(), 1.0)))
+                    elif (g_b_id == group_id and b_id == entity_id):
+                        if cbs[1] is not None and self.groups[g_a_id].entities.size() > a_id and \
+                                self.groups[g_a_id].entities[a_id].active:
+                            if len(self.group_instances[g_a_id]) > a_id and len(self.group_instances[g_b_id]) > b_id:
+                                inst_a = self.group_instances[g_a_id][a_id]
+                                inst_b = self.group_instances[g_b_id][b_id]
+                                if inst_a is not None and inst_b is not None:
+                                    ev = CollisionEvent(col_id, r_id, g_b_id, inst_b,
+                                                        Vec2().from_cartesian(self.groups[g_a_id].entities[a_id].px_n,
+                                                                              self.groups[g_a_id].entities[a_id].py_n),
+                                                        Vec2(), 1.0)
+                                    cbs[1](self.group_instances[g_a_id][a_id], [ev])
+                        to_remove.push_back(pair_key)
 
-                        if cbs[3] is not None:
-                            inst_b = self.group_instances[rel.group_b_id][b_id]
-                            inst_a = self.group_instances[rel.group_a_id][a_id]
-                            if inst_a is not None and inst_b is not None:
-                                evs_b.append((inst_b, CollisionEvent(col_id, rel.id, rel.group_a_id, inst_a,
-                                                                     Vec2().from_cartesian(
-                                                                         self.groups[rel.group_b_id].entities[
-                                                                             b_id].px_n,
-                                                                         self.groups[rel.group_b_id].entities[
-                                                                             b_id].py_n), Vec2(), 1.0)))
+                    inc(it)
 
-                        it = rel.active_cols.erase(it)
-                    else:
-                        inc(it)
-
-                for ev in evs_a: cbs[1](ev[0], [ev[1]])
-                for ev in evs_b: cbs[3](ev[0], [ev[1]])
+                to_remove_sz = to_remove.size()
+                for k in range(to_remove_sz):
+                    rel.active_cols.erase(to_remove[k])
 
     cdef void _flush_deletions(self):
         cdef size_t i, j, keys_sz, pd_sz
@@ -263,33 +293,42 @@ cdef class CollisionManager:
         cdef CollisionGroupStruct * group
         cdef EntityData * ed
         cdef vector[uint64_t] * keys
+        cdef DeferredDeletion dd
 
-        pd_sz = self.pending_deletions.size()
-        for i in range(pd_sz):
-            g_id = self.pending_deletions[i].group_id
-            e_id = self.pending_deletions[i].entity_id
+        while self.pending_deletions.size() > 0:
+            pd_sz = self.pending_deletions.size()
 
-            self._cleanup_entity_collisions(g_id, e_id)
+            for i in range(pd_sz):
+                dd = self.pending_deletions[i]
 
-            group = &self.groups[g_id]
-            ed = &group.entities[e_id]
+                g_id = dd.group_id
+                e_id = dd.entity_id
 
-            if e_id < len(self.group_instances[g_id]):
-                self.group_instances[g_id][e_id] = None
+                self._cleanup_entity_collisions(g_id, e_id)
 
-            for lvl in range(group.max_level + 1):
-                keys = &ed.grid_keys[lvl]
-                keys_sz = keys[0].size()
-                for j in range(keys_sz):
-                    self._remove_from_cell(lvl, g_id, keys[0][j], e_id)
-                keys[0].clear()
+                group = &self.groups[g_id]
+                ed = &group.entities[e_id]
 
-            group.free_ids.push_back(e_id)
+                if e_id < len(self.group_instances[g_id]):
+                    self.group_instances[g_id][e_id] = None
 
-        self.pending_deletions.clear()
+                for lvl in range(group.max_level + 1):
+                    keys = &ed.grid_keys[lvl]
+                    keys_sz = keys[0].size()
+                    for j in range(keys_sz):
+                        self._remove_from_cell(lvl, g_id, keys[0][j], e_id)
+                    keys[0].clear()
+
+                group.free_ids.push_back(e_id)
+
+            self.pending_deletions.erase(self.pending_deletions.begin(), self.pending_deletions.begin() + pd_sz)
 
     def update_entity(self, int group_id, int entity_id, object position=None, object size=None, object centered=None,
-                      object rotation=None, list positions=None, bint shift_history=True, object radius=None):
+                      object rotation=None, list positions=None, bint shift_history=True, object radius=None,
+                      object ignore_collisions=None):
+        if group_id < 0 or group_id >= self.groups.size(): return
+        if entity_id < 0 or entity_id >= self.groups[group_id].entities.size(): return
+
         cdef EntityData * ed = &self.groups[group_id].entities[entity_id]
         cdef double old_px_n, old_py_n
         cdef double cx, cy, hw, hh, cr, sr, ax, ay, dx, dy, ln
@@ -318,7 +357,15 @@ cdef class CollisionManager:
         if radius is not None:
             ed.radius = radius
         elif size is not None:
-            ed.radius = size.x
+            ed.radius = size.x / 2.0
+
+        if ignore_collisions is not None:
+            ed.ignore_collisions.clear()
+            if isinstance(ignore_collisions, list):
+                for ig in ignore_collisions:
+                    ed.ignore_collisions.push_back(ig)
+            else:
+                ed.ignore_collisions.push_back(ignore_collisions)
 
         if ed.h_type == 0:
             if ed.is_centered:
@@ -551,13 +598,14 @@ cdef class CollisionManager:
             ed.grid_keys[lvl] = new_keys
 
     cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id):
+        if self.grids[lvl][group_id].count(key) == 0: return
         cdef vector[int] * cell = &self.grids[lvl][group_id][key]
         cdef size_t i, cell_sz
         cell_sz = cell[0].size()
         for i in range(cell_sz):
             if cell[0][i] == entity_id:
-                cell[0][i] = cell.back()
-                cell.pop_back()
+                cell[0][i] = cell[0].back()
+                cell[0].pop_back()
                 break
         if cell[0].size() == 0:
             self.grids[lvl][group_id].erase(key)
@@ -594,38 +642,38 @@ cdef class CollisionManager:
                 self._calc_relation(&self.relations[r_id], self.relation_callbacks[r_id])
 
     cdef void _calc_relation(self, CollisionRelationStruct * rel, tuple callbacks):
-        cdef CollisionGroupStruct * ga = &self.groups[rel.group_a_id]
-        cdef CollisionGroupStruct * gb = &self.groups[rel.group_b_id]
-        cdef bint is_same = (rel.group_a_id == rel.group_b_id)
-
-        cdef int check_lvl = ga.max_level if ga.max_level < gb.max_level else gb.max_level
+        cdef int r_id, g_a_id, g_b_id
+        cdef CollisionGroupStruct * ga
+        cdef CollisionGroupStruct * gb
+        cdef bint is_same
+        cdef int check_lvl
         cdef uint64_t pair_key, a_id, b_id
         cdef unordered_set[uint64_t] checked_pairs
-
         cdef EntityData * ea
         cdef EntityData * eb
         cdef double norm_x, norm_y, t
         cdef double imp_ax, imp_ay, imp_bx, imp_by
-
         cdef vector[uint64_t] * a_keys
         cdef vector[int] * cell_b
-
         cdef size_t a_idx, k_idx, b_idx, j, k, a_keys_sz, cell_b_sz, ent_sz, to_remove_sz
         cdef int iterations
         cdef bint hit
         cdef double a_dx, a_dy, b_dx, b_dy
-
         cdef bint is_active_col
         cdef int col_id
-        cdef int ret_len
-        cdef list actual_evs
         cdef object ret
+        cdef vector[uint64_t] to_remove
+        cdef bint ignore
+        cdef size_t ig_a_sz, ig_b_sz, ig_a_i, ig_b_i
 
-        events_a_start = {}
-        events_b_start = {}
-        events_a_end = {}
-        events_b_end = {}
+        r_id = rel.id
+        g_a_id = rel.group_a_id
+        g_b_id = rel.group_b_id
+        ga = &self.groups[g_a_id]
+        gb = &self.groups[g_b_id]
+        is_same = (g_a_id == g_b_id)
 
+        check_lvl = ga.max_level if ga.max_level < gb.max_level else gb.max_level
         checked_pairs.reserve(512)
         rel.updated_cols.clear()
 
@@ -640,13 +688,14 @@ cdef class CollisionManager:
             for k_idx in range(a_keys_sz):
                 if not ea.active: break
 
-                if self.grids[check_lvl][rel.group_b_id].count(a_keys[0][k_idx]) == 0:
+                if self.grids[check_lvl][g_b_id].count(a_keys[0][k_idx]) == 0:
                     continue
 
-                cell_b = &self.grids[check_lvl][rel.group_b_id][a_keys[0][k_idx]]
+                cell_b = &self.grids[check_lvl][g_b_id][a_keys[0][k_idx]]
                 cell_b_sz = cell_b[0].size()
 
                 for b_idx in range(cell_b_sz):
+                    if not ea.active: break
                     b_id = cell_b[0][b_idx]
 
                     if is_same and ea.id >= b_id:
@@ -654,6 +703,19 @@ cdef class CollisionManager:
 
                     eb = &gb.entities[b_id]
                     if not eb.active: continue
+
+                    ignore = False
+                    ig_a_sz = ea.ignore_collisions.size()
+                    ig_b_sz = eb.ignore_collisions.size()
+
+                    if ig_a_sz > 0 and ig_b_sz > 0:
+                        for ig_a_i in range(ig_a_sz):
+                            for ig_b_i in range(ig_b_sz):
+                                if ea.ignore_collisions[ig_a_i] == eb.ignore_collisions[ig_b_i]:
+                                    ignore = True
+                                    break
+                            if ignore: break
+                    if ignore: continue
 
                     pair_key = (<uint64_t> ea.id << 32) | <uint64_t> b_id
                     if checked_pairs.count(pair_key): continue
@@ -734,23 +796,29 @@ cdef class CollisionManager:
                             imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
                             imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
 
+                            # Immediate isolated callback firing for real-time short circuiting
                             if callbacks[0] is not None:
-                                inst_b = self.group_instances[rel.group_b_id][b_id]
-                                ev = CollisionEvent(col_id, rel.id, rel.group_b_id, inst_b,
-                                                    Vec2().from_cartesian(imp_ax, imp_ay),
+                                inst_b = self.group_instances[g_b_id][b_id]
+                                ev = CollisionEvent(col_id, r_id, g_b_id, inst_b, Vec2().from_cartesian(imp_ax, imp_ay),
                                                     Vec2().from_cartesian(norm_x, norm_y), t)
-                                if ea.id not in events_a_start: events_a_start[ea.id] = []
-                                events_a_start[ea.id].append((ev, pair_key))
+                                ret = callbacks[0](self.group_instances[g_a_id][ea.id], [ev])
+                                rel = &self.relations[r_id]
+                                if ret is not None and len(ret) > 0 and not ret[0]:
+                                    rel.active_cols.erase(pair_key)
 
-                            if callbacks[2] is not None:
-                                inst_a = self.group_instances[rel.group_a_id][ea.id]
-                                ev = CollisionEvent(col_id, rel.id, rel.group_a_id, inst_a,
-                                                    Vec2().from_cartesian(imp_bx, imp_by),
+                            if not ea.active: break  # Instantly short-circuit if Entity A was killed
+
+                            if callbacks[2] is not None and eb.active:
+                                inst_a = self.group_instances[g_a_id][ea.id]
+                                ev = CollisionEvent(col_id, r_id, g_a_id, inst_a, Vec2().from_cartesian(imp_bx, imp_by),
                                                     Vec2().from_cartesian(-norm_x, -norm_y), t)
-                                if b_id not in events_b_start: events_b_start[b_id] = []
-                                events_b_start[b_id].append((ev, pair_key))
+                                ret = callbacks[2](self.group_instances[g_b_id][eb.id], [ev])
+                                rel = &self.relations[r_id]
+                                if ret is not None and len(ret) > 0 and not ret[0]:
+                                    rel.active_cols.erase(pair_key)
 
-        cdef vector[uint64_t] to_remove
+                            if not ea.active: break  # Instantly short-circuit if Entity A was killed
+
         it = rel.active_cols.begin()
         while it != rel.active_cols.end():
             pair_key = deref(it).first
@@ -759,25 +827,26 @@ cdef class CollisionManager:
                 a_id = pair_key >> 32
                 b_id = pair_key & 0xFFFFFFFF
 
-                if callbacks[1] is not None:
-                    inst_a = self.group_instances[rel.group_a_id][a_id]
-                    inst_b = self.group_instances[rel.group_b_id][b_id]
-                    if inst_a is not None and inst_b is not None:
-                        ev = CollisionEvent(col_id, rel.id, rel.group_b_id, inst_b,
-                                            Vec2().from_cartesian(ga.entities[a_id].px_n, ga.entities[a_id].py_n),
-                                            Vec2(), 1.0)
-                        if a_id not in events_a_end: events_a_end[a_id] = []
-                        events_a_end[a_id].append(ev)
+                # Firing collision_end events locally mirroring immediate execution
+                if callbacks[1] is not None and ga.entities.size() > a_id and ga.entities[a_id].active:
+                    if len(self.group_instances[g_b_id]) > b_id and len(self.group_instances[g_a_id]) > a_id:
+                        inst_b = self.group_instances[g_b_id][b_id]
+                        if inst_b is not None:
+                            ev = CollisionEvent(col_id, r_id, g_b_id, inst_b,
+                                                Vec2().from_cartesian(ga.entities[a_id].px_n, ga.entities[a_id].py_n),
+                                                Vec2(), 1.0)
+                            callbacks[1](self.group_instances[g_a_id][a_id], [ev])
+                            rel = &self.relations[r_id]
 
-                if callbacks[3] is not None:
-                    inst_b = self.group_instances[rel.group_b_id][b_id]
-                    inst_a = self.group_instances[rel.group_a_id][a_id]
-                    if inst_b is not None and inst_a is not None:
-                        ev = CollisionEvent(col_id, rel.id, rel.group_a_id, inst_a,
-                                            Vec2().from_cartesian(gb.entities[b_id].px_n, gb.entities[b_id].py_n),
-                                            Vec2(), 1.0)
-                        if b_id not in events_b_end: events_b_end[b_id] = []
-                        events_b_end[b_id].append(ev)
+                if callbacks[3] is not None and gb.entities.size() > b_id and gb.entities[b_id].active:
+                    if len(self.group_instances[g_a_id]) > a_id and len(self.group_instances[g_b_id]) > b_id:
+                        inst_a = self.group_instances[g_a_id][a_id]
+                        if inst_a is not None:
+                            ev = CollisionEvent(col_id, r_id, g_a_id, inst_a,
+                                                Vec2().from_cartesian(gb.entities[b_id].px_n, gb.entities[b_id].py_n),
+                                                Vec2(), 1.0)
+                            callbacks[3](self.group_instances[g_b_id][b_id], [ev])
+                            rel = &self.relations[r_id]
 
                 to_remove.push_back(pair_key)
             inc(it)
@@ -786,35 +855,9 @@ cdef class CollisionManager:
         for k in range(to_remove_sz):
             rel.active_cols.erase(to_remove[k])
 
-        for ent_id, evs in events_a_start.items():
-            evs.sort(key=lambda e: e[0].time)
-            actual_evs = [e[0] for e in evs]
-            ret = callbacks[0](self.group_instances[rel.group_a_id][ent_id], actual_evs)
-            if ret is not None:
-                ret_len = len(ret) if len(ret) < len(evs) else len(evs)
-                for idx in range(ret_len):
-                    if not ret[idx]:
-                        rel.active_cols.erase(<uint64_t> evs[idx][1])
-
-        for ent_id, evs in events_b_start.items():
-            evs.sort(key=lambda e: e[0].time)
-            actual_evs = [e[0] for e in evs]
-            ret = callbacks[2](self.group_instances[rel.group_b_id][ent_id], actual_evs)
-            if ret is not None:
-                ret_len = len(ret) if len(ret) < len(evs) else len(evs)
-                for idx in range(ret_len):
-                    if not ret[idx]:
-                        rel.active_cols.erase(<uint64_t> evs[idx][1])
-
-        for ent_id, evs in events_a_end.items():
-            callbacks[1](self.group_instances[rel.group_a_id][ent_id], evs)
-
-        for ent_id, evs in events_b_end.items():
-            callbacks[3](self.group_instances[rel.group_b_id][ent_id], evs)
-
     def manual_collision(self, list group_ids, object start_position, object end_position, object size=None,
                          str hitbox_type="point", bint centered=False, double rotation=0.0,
-                         list start_positions=None, object radius=None) -> list:
+                         list start_positions=None, object radius=None, object ignore_collisions=None) -> list:
         cdef EntityData ed
         cdef double cx, cy, cx_o, cy_o, hw, hh, cr, sr, ax, ay, dx, dy, ln
         cdef double pivot_x, pivot_y
@@ -830,6 +873,9 @@ cdef class CollisionManager:
         cdef unordered_set[int] checked
         cdef size_t cell_b_sz, vx_o_sz, vx_n_sz, vx_o_sz2, vx_n_sz2, vx_o_sz3, vx_n_sz3, grp_sz
         cdef double _rad
+        cdef object inst_b
+        cdef bint ignore
+        cdef size_t ig_a_sz, ig_b_sz, ig_a_i, ig_b_i
 
         events = []
         ed.h_type = 4
@@ -848,8 +894,16 @@ cdef class CollisionManager:
         if radius is not None:
             _rad = radius
         elif size is not None:
-            _rad = size.x
+            _rad = size.x / 2.0
         ed.radius = _rad
+
+        ed.ignore_collisions.clear()
+        if ignore_collisions is not None:
+            if isinstance(ignore_collisions, list):
+                for ig in ignore_collisions:
+                    ed.ignore_collisions.push_back(ig)
+            else:
+                ed.ignore_collisions.push_back(ignore_collisions)
 
         ed.is_centered = centered
         ed.rot = rotation
@@ -1037,6 +1091,19 @@ cdef class CollisionManager:
                             eb = &gb.entities[b_id]
                             if not eb.active: continue
 
+                            ignore = False
+                            ig_a_sz = ed.ignore_collisions.size()
+                            ig_b_sz = eb.ignore_collisions.size()
+
+                            if ig_a_sz > 0 and ig_b_sz > 0:
+                                for ig_a_i in range(ig_a_sz):
+                                    for ig_b_i in range(ig_b_sz):
+                                        if ed.ignore_collisions[ig_a_i] == eb.ignore_collisions[ig_b_i]:
+                                            ignore = True
+                                            break
+                                    if ignore: break
+                            if ignore: continue
+
                             hit = False
                             if ed.h_type == 0 and eb.h_type == 0:
                                 hit = aabb_aabb_swept(
@@ -1109,6 +1176,7 @@ cdef class CollisionManager:
         return events
 
     def get_points(self, int group_id, int entity_id) -> list:
+        if group_id < 0 or group_id >= self.groups.size(): return []
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef size_t ent_sz
         cdef EntityData * ed

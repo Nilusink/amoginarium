@@ -32,6 +32,7 @@ class _GrenadeShrapnel(Bullet):
 
     _default_size = 4
     _default_base_damage = 1
+    _ignore_collision_id = 500
 
     __slots__ = ()
 
@@ -59,6 +60,7 @@ class Grenade(Bullet):
 
     _bounce_friction: tp.ClassVar[float] = 0.7
 
+    _COLLISION_ROOT = True
     _collision_group = collision_group_grenades
     # endregion
 
@@ -112,6 +114,7 @@ class Grenade(Bullet):
             self.add_velocity(Vec2().from_cartesian(0, -200))
 
     def _collision_start(self, events: list[CollisionEvent]) -> None:
+        print("GRENADE COLLISION START", events, flush=True)
         for event in events:
             if event.group_id == collision_group_islands:
                 self.__on_collision_island(event)
@@ -181,3 +184,10 @@ class Grenade(Bullet):
 
         self._acceleration_to_add.x += x
         self._acceleration_to_add.y += y
+
+    def _delete_collision(self) -> None:
+        if self._collision_id is None:
+            return
+        print("DELETE GRENADE", flush=True)
+        collision_manager.delete_entity(self._collision_group, self._collision_id)
+        self._collision_id = None

@@ -56,6 +56,7 @@ class LogicGameEntity(PositionedLogicEntity):
             parent: LogicGameEntity | None = None,
             coalition: Coalitions | EllipsisType = ...,
             centered: bool = False,
+            ignore_collision_id: int | None = None,
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -72,7 +73,8 @@ class LogicGameEntity(PositionedLogicEntity):
             size=size,
             position=position,
             parent=parent,
-            centered=centered
+            centered=centered,
+            ignore_collision_id=ignore_collision_id
         )
         # region default parameters
         self._velocity_to_add = Vec2()
