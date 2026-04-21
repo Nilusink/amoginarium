@@ -28,9 +28,9 @@ from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
 from debugging import run_with_debug
 
-from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
+from ._logic_groups import CollisionDestroyed, Players, Bullets
 from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon, SkyShieldWeapon
+from ._weapons import BaseWeapon
 from ._base_entity import LogicGameEntity
 from ._sensors import MagicSensor, BaseSensor
 from ._detection_group import DetectionGroup
@@ -661,59 +661,3 @@ class BaseTurret(LogicGameEntity):
         # apply rotation
         self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
-
-
-class SkyShield(BaseTurret):
-    _cid = TurretCIDs.sky_shield
-    _default_max_hp: int = 60
-    _default_engagement_aim_type = "low"
-
-    _default_turn_speed = 1.57
-    _default_engagement_valid_angles = (
-        Vec2().from_cartesian(-1, .2),
-        Vec2().from_cartesian(1, .2)
-    )
-
-    def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            **kwargs
-    ) -> None:
-        self._coalition = coalition  # needed because the weapon wants it
-        weapon = SkyShieldWeapon(
-            self,
-            runtime_buffer,
-            parent_position_offset=(0, -8)
-        )  # don't eject casings because I like my pc
-        weapon.reload(True)
-
-        super().__init__(
-            runtime_buffer,
-            coalition,
-            position,
-            size=Vec2().from_cartesian(128, 128),
-            weapon=weapon,
-            max_range=2300,
-            min_range=150,
-            intercept_bullets=True,
-            intercept_players=False,
-            airburst_munition=True,
-            target_taps=1,  # TODO: smart target tap (max)
-            sensors=[
-                RadarSensor(
-                    runtime_buffer,
-                    self,
-                    2200,
-                    sphere_accuracy=256,
-                    min_rcs=.04
-                )
-            ],
-            **kwargs
-        )
-
-    def _update(self, delta: float) -> None:
-        super()._update(delta)
-        self.facing.x = self.weapon.facing.x
-        self.facing.normalize()

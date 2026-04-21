@@ -553,19 +553,3 @@ class Grenade(Bullet):
             return False
 
         return super().kill(killed_by)
-
-
-class SkyShieldBullet(Bullet):
-    _cid = DummyCIDs.cram
-
-    _weight = 1.5
-    _default_size = 18
-    _default_base_damage = 30
-
-    _default_cluster_depth = 1
-    _default_cluster_amount = 11
-    _default_cluster_fuze_ttl_mult = .02
-    _default_cluster_spread = 1.5
-    _default_cluster_size_mult = .3
-    _default_cluster_step_explosion = 10
-    _default_cluster_last_step_ttl = .07

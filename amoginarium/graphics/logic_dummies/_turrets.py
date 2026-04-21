@@ -35,7 +35,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     _image_name = "mortar_turret_base"
     _image_mirror: str = ""
     _default_size = (23, 24)
-    _layer: int = 0
+    _default_layer: int = 0
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
@@ -216,7 +216,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         ):
             return
 
-        if layer == self._layer:
+        if layer == self._default_layer:
             if self._highlight:
                 renderer.start_stencil(True)
 
@@ -267,11 +267,3 @@ class ExactoSniperTurretDummy(BaseTurretDummy):
 class AkTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.ak47
-
-
-class SkyShieldDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.sky_shield
-    _image_name = "skyshield_base"
-    _default_size = (64, 64)
-    _layer = 1

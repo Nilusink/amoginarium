@@ -1,0 +1,23 @@
+[id]
+from = "weapon.base"
+cid = "weapon.sky_shield"
+
+[visibility]
+size = [256, 128]
+
+[image]
+name = "skyshield_gun"
+rotate_anchor = [64, 56]
+
+[behaviour]
+mag_size = 100
+reload_time = 8
+recoil_time = 0.1
+inaccuracy = 0.005
+muzzle_velocity = 3000
+
+[bullet]
+type = "<bullet.sky_shield>"
+
+[sound]
+name = "shotgun"

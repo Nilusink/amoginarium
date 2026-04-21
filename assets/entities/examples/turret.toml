@@ -4,6 +4,7 @@ cid = "turret.static.cram"
 
 [visibility]
 size = [64, 128]
+layer = 1
 
 [image]
 name = "CRAM_base"

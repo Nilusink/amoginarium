@@ -5,8 +5,9 @@ cid = "bullet.mortar"
 [visibility]
 size = [40, 20]
 
-trace_color = [[1, 1, 1, 0.6]]  # either one or two colors
-trace_length = 200
+[trace]
+color = [[1, 1, 1, 0.6]]  # either one or two colors
+length = 200
 
 [image]
 name = "mortar_shell"

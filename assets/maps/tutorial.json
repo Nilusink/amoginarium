@@ -119,7 +119,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.flak",
+            "type": "turret.static.sky_shield",
             "pos": [2500, 700]
         },
         {

@@ -21,7 +21,6 @@ from amoginarium.shared import base_entity_t, WeaponCIDs
 from shared import Coalitions
 
 from ._bullets import Bullet, Grenade
-from ._bullets import SkyShieldBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
 from ._base_item import Item
@@ -394,32 +393,4 @@ class HandThrownGrenade(BaseWeapon):
 
             # bullet args
             visibility_offset=.0,
-        )
-
-
-class SkyShieldWeapon(BaseWeapon):
-    """smart munitions weapon"""
-    _cid = WeaponCIDs.sky_shield
-
-    def __init__(
-        self,
-        parent,
-        runtime_buffer: Array[base_entity_t],
-        drop_casings: bool = False,
-        parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
-    ) -> None:
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            reload_time=8,
-            recoil_time=.1,
-            mag_size=100,
-            inaccuracy=0.005,
-            parent_position_offset=parent_position_offset,
-            muzzle_velocity=3000,
-            sound_effect=Shotgun(),
-            bullet_type=SkyShieldBullet,
-
-            # bullet args
-            visibility_offset=.08,
         )

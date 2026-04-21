@@ -31,7 +31,7 @@ class BulletDummy(SyncedImageEntity):
     """
     __slots__ = [
         "_spawn_time", "_visibility_offset", "_last_pos", "_target_pos", "_trace",
-        "_trace_color", "_show_trace", "_current_trace_length", "_max_trace_length",
+        "_c_trace_color", "_show_trace", "_current_trace_length", "_max_trace_length",
         "_fade_trace", "_original_alpha", "_trace_len", "_trace_only"
     ]
 
@@ -39,11 +39,11 @@ class BulletDummy(SyncedImageEntity):
     _default_size: Vec2 = Vec2().from_cartesian(64, 64)
     _image_name: str = BULLET_PATH
     _image_mirror: str = ""
-    _default_trace_color: Color | tuple[Color, Color] = Color().from_255(255, 255, 60)
-    _fade_color_time: float = 1.5  # only applies if two colors are specified
-    _default_trace_length: float = 100  # length in coords
-    _default_show_trace: bool = True
-    _default_fade_trace: bool = True
+    _trace_color: Color | tuple[Color, Color] = Color().from_255(255, 255, 60)
+    _trace_length: float = 100  # length in coords
+    _trace_fade_color_time: float = 1.5  # only applies if two colors are specified
+    _trace_show: bool = True
+    _trace_fade: bool = True
 
     def __init__(
         self,
@@ -78,13 +78,13 @@ class BulletDummy(SyncedImageEntity):
         self._trace = []
         self._current_trace_length = 0
         self._max_trace_length = (
-            trace_length if trace_length is not ... else self._default_trace_length
+            trace_length if trace_length is not ... else self._trace_length
         )
         self._fade_trace = (
-            fade_trace if trace_length is not ... else self._default_fade_trace
+            fade_trace if trace_length is not ... else self._trace_fade
         )
         self._show_trace = (
-            show_trace if show_trace is not ... else self._default_show_trace
+            show_trace if show_trace is not ... else self._trace_show
         )
 
         if not isinstance(target_pos, EllipsisType):
@@ -93,30 +93,30 @@ class BulletDummy(SyncedImageEntity):
         else:
             self._target_pos = ...
 
-        self._trace_color: Color | tuple[Color, Color]
+        self._c_trace_color: Color | tuple[Color, Color]
         if not isinstance(trace_color, EllipsisType):
             if isinstance(trace_color, (tuple, list)):
-                self._trace_color: tuple[Color, Color] = (
+                self._c_trace_color: tuple[Color, Color] = (
                     convert_color(c, Color) for c in trace_color
                 )
             
             else:
-                self._trace_color: Color = convert_color(trace_color, Color)
-                self._original_alpha = self._trace_color.a1
+                self._c_trace_color: Color = convert_color(trace_color, Color)
+                self._original_alpha = self._c_trace_color.a1
 
         else:
-            if isinstance(self._default_trace_color, (tuple, list)):
-                self._trace_color: tuple[Color, Color] = tuple(
-                    convert_color(c, Color) for c in self._default_trace_color
+            if isinstance(self._trace_color, (tuple, list)):
+                self._c_trace_color: tuple[Color, Color] = tuple(
+                    convert_color(c, Color) for c in self._trace_color
                 )
 
             else:
-                self._trace_color: Color = self._default_trace_color.copy()
-                self._original_alpha = self._trace_color.a1
+                self._c_trace_color: Color = self._trace_color.copy()
+                self._original_alpha = self._c_trace_color.a1
 
         if isinstance(self._trace_color, (list, tuple)) and len(self._trace_color) == 1:
-            self._trace_color: Color = self._trace_color[0]
-            self._original_alpha = self._trace_color.a1
+            self._c_trace_color: Color = self._trace_color[0]
+            self._original_alpha = self._c_trace_color.a1
 
         super().__init__(sync_id, _bullet_image, parent)
 
@@ -228,14 +228,14 @@ class BulletDummy(SyncedImageEntity):
 
         # draw trace
         if self._show_trace and len(self._trace) > 1:
-            if isinstance(self._trace_color, tuple):
+            if isinstance(self._c_trace_color, tuple):
                 color: Color = fade(
-                    *self._trace_color, min(self._lifetime / self._fade_color_time, 1)
+                    *self._c_trace_color, min(self._lifetime / self._trace_fade_color_time, 1)
                 )
                 trace_mult = color.a1
 
             else:
-                color: Color = self._trace_color.copy()
+                color: Color = self._c_trace_color.copy()
                 trace_mult = self._original_alpha
 
             for i in range(len(self._trace)-1):
@@ -257,6 +257,7 @@ class BulletDummy(SyncedImageEntity):
                 )
 
         if self.alive:
+            self.facing *= -1
             super()._gl_draw(delta_cal)
             self._last_pos.xy = self.pos.xy
 
@@ -264,4 +265,4 @@ class BulletDummy(SyncedImageEntity):
 class Grenade(BulletDummy):
     _image_name: str = "grenade"
     _cid = DummyCIDs.grenade
-    _default_show_trace = False
+    _trace_show = False

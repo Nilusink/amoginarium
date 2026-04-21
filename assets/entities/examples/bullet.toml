@@ -5,11 +5,12 @@ cid = "bullet.cram"
 [visibility]
 size = 15  # or list of x, y
 
-trace_color = [[255, 80, 40], [255, 100, 60]]  # either one or two colors
-fade_color_time = 1.5
-trace_length = 300
-show_trace = true
-fade_trace = true
+[trace]
+color = [[255, 80, 40], [255, 100, 60]]  # either one or two colors
+color_time = 1.5
+length = 300
+show = true
+fade = true
 
 [image]
 name = "bullet"

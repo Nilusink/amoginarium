@@ -21,7 +21,7 @@ from amoginarium.shared.audio import ContinuousSoundEffect
 
 
 BASE_DIR = "./assets/entities/"
-_GRAPHICS_KEYS = ("image",)
+_GRAPHICS_KEYS = ("image", "trace")
 
 
 class ProcessType(Enum):
