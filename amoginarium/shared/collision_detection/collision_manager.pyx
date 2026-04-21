@@ -5,7 +5,7 @@
 # cython: nonecheck=False
 
 from .collision_manager cimport CollisionManager, CollisionGroupStruct, EntityData, CollisionRelationStruct, DeferredDeletion
-from .collision_methods cimport aabb_aabb_swept, aabb_circle_swept, circle_circle_swept, swept_sat_generic
+from .collision_methods cimport aabb_aabb_swept, aabb_circle_swept, circle_circle_swept, poly_poly_swept, circle_poly_swept
 from .collision_event import CollisionEvent
 from amoginarium.shared.utility import Vec2
 from libcpp.unordered_set cimport unordered_set
@@ -142,7 +142,7 @@ cdef class CollisionManager:
                 group.entities[e_id].bound_min_y[lvl] = -2147483647
                 group.entities[e_id].bound_max_x[lvl] = -2147483647
                 group.entities[e_id].bound_max_y[lvl] = -2147483647
-                group.entities[e_id].grid_keys[lvl][0].clear()
+                group.entities[e_id].grid_keys[lvl].clear()
 
             self.group_instances[group_id][e_id] = instance
         else:
@@ -684,17 +684,41 @@ cdef class CollisionManager:
                             ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
                             eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
                             is_active_col, &norm_x, &norm_y, &t)
+                    elif ea.h_type >= 4 and eb.h_type < 4:
+                        a_dx = ea.px_n - ea.px_o
+                        a_dy = ea.py_n - ea.py_o
+                        b_dx = eb.px_n - eb.px_o
+                        b_dy = eb.py_n - eb.py_o
+                        hit = circle_poly_swept(
+                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
+                            eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(), eb.vy_n.data(), eb.vx_o.size(),
+                            eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
+                            is_active_col, &norm_x, &norm_y, &t
+                        )
+                    elif ea.h_type < 4 and eb.h_type >= 4:
+                        a_dx = ea.px_n - ea.px_o
+                        a_dy = ea.py_n - ea.py_o
+                        b_dx = eb.px_n - eb.px_o
+                        b_dy = eb.py_n - eb.py_o
+                        hit = circle_poly_swept(
+                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                            ea.vx_o.data(), ea.vy_o.data(), ea.vx_n.data(), ea.vy_n.data(), ea.vx_o.size(),
+                            ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx, a_dy,
+                            is_active_col, &norm_x, &norm_y, &t
+                        )
+                        norm_x = -norm_x
+                        norm_y = -norm_y
                     else:
                         a_dx = ea.px_n - ea.px_o
                         a_dy = ea.py_n - ea.py_o
                         b_dx = eb.px_n - eb.px_o
                         b_dy = eb.py_n - eb.py_o
-
-                        hit = swept_sat_generic(
-                            ea.h_type, ea.vx_o, ea.vy_o, ea.vx_n, ea.vy_n, ea.axes_x, ea.axes_y, a_dx, a_dy, ea.radius,
-                            eb.h_type, eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x, eb.axes_y, b_dx, b_dy, eb.radius,
-                            is_active_col,
-                            &norm_x, &norm_y, &t
+                        hit = poly_poly_swept(
+                            ea.vx_o.data(), ea.vy_o.data(), ea.vx_o.size(),
+                            ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx, a_dy,
+                            eb.vx_o.data(), eb.vy_o.data(), eb.vx_o.size(),
+                            eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
+                            is_active_col, &norm_x, &norm_y, &t
                         )
 
                     if hit:
@@ -1036,16 +1060,40 @@ cdef class CollisionManager:
                                     ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.radius,
                                     eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
                                     False, &norm_x, &norm_y, &t)
-                            else:
-                                a_dx = ed.px_n - ed.px_o;
+                            elif ed.h_type >= 4 and eb.h_type < 4:
+                                a_dx = ed.px_n - ed.px_o
                                 a_dy = ed.py_n - ed.py_o
-                                b_dx = eb.px_n - eb.px_o;
+                                b_dx = eb.px_n - eb.px_o
                                 b_dy = eb.py_n - eb.py_o
-                                hit = swept_sat_generic(
-                                    ed.h_type, ed.vx_o, ed.vy_o, ed.vx_n, ed.vy_n, ed.axes_x, ed.axes_y, a_dx, a_dy,
-                                    ed.radius,
-                                    eb.h_type, eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x, eb.axes_y, b_dx, b_dy,
-                                    eb.radius,
+                                hit = circle_poly_swept(
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.radius,
+                                    eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(), eb.vy_n.data(), eb.vx_o.size(),
+                                    eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
+                                    False, &norm_x, &norm_y, &t
+                                )
+                            elif ed.h_type < 4 and eb.h_type >= 4:
+                                a_dx = ed.px_n - ed.px_o
+                                a_dy = ed.py_n - ed.py_o
+                                b_dx = eb.px_n - eb.px_o
+                                b_dy = eb.py_n - eb.py_o
+                                hit = circle_poly_swept(
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                                    ed.vx_o.data(), ed.vy_o.data(), ed.vx_n.data(), ed.vy_n.data(), ed.vx_o.size(),
+                                    ed.axes_x.data(), ed.axes_y.data(), ed.axes_x.size(), a_dx, a_dy,
+                                    False, &norm_x, &norm_y, &t
+                                )
+                                norm_x = -norm_x
+                                norm_y = -norm_y
+                            else:
+                                a_dx = ed.px_n - ed.px_o
+                                a_dy = ed.py_n - ed.py_o
+                                b_dx = eb.px_n - eb.px_o
+                                b_dy = eb.py_n - eb.py_o
+                                hit = poly_poly_swept(
+                                    ed.vx_o.data(), ed.vy_o.data(), ed.vx_o.size(),
+                                    ed.axes_x.data(), ed.axes_y.data(), ed.axes_x.size(), a_dx, a_dy,
+                                    eb.vx_o.data(), eb.vy_o.data(), eb.vx_o.size(),
+                                    eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
                                     False, &norm_x, &norm_y, &t
                                 )
 

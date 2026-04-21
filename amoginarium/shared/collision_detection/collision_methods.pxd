@@ -22,11 +22,19 @@ cdef bint circle_circle_swept(
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept
 
-cdef bint swept_sat_generic(
-        int a_type, const vector[double]& a_vx_o, const vector[double]& a_vy_o, const vector[double]& a_vx_n,
-        const vector[double]& a_vy_n, const vector[double]& a_ax, const vector[double]& a_ay, double a_dx, double a_dy, double a_radius,
-        int b_type, const vector[double]& b_vx_o, const vector[double]& b_vy_o, const vector[double]& b_vx_n,
-        const vector[double]& b_vy_n, const vector[double]& b_ax, const vector[double]& b_ay, double b_dx, double b_dy, double b_radius,
+cdef bint poly_poly_swept(
+        const double* a_vx_o, const double* a_vy_o, size_t a_sz,
+        const double* a_ax_x, const double* a_ax_y, size_t a_ax_sz, double a_dx, double a_dy,
+        const double* b_vx_o, const double* b_vy_o, size_t b_sz,
+        const double* b_ax_x, const double* b_ax_y, size_t b_ax_sz, double b_dx, double b_dy,
+        bint is_active,
+        double * out_norm_x, double * out_norm_y, double * out_t
+) noexcept
+
+cdef bint circle_poly_swept(
+        double c_px_o, double c_py_o, double c_px_n, double c_py_n, double c_radius,
+        const double* p_vx_o, const double* p_vy_o, const double* p_vx_n, const double* p_vy_n, size_t p_sz,
+        const double* p_ax_x, const double* p_ax_y, size_t p_ax_sz, double p_dx, double p_dy,
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept
