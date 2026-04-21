@@ -184,7 +184,7 @@ class ExactoSniper(BaseWeapon):
 
 class ExactoTurret(BaseTurret):
     _cid = TurretCIDs.exacto_sniper
-    _max_hp: int = 60
+    _default_max_hp: int = 60
 
     _default_turn_speed = 2
 

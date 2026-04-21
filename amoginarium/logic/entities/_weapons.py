@@ -351,38 +351,6 @@ class FileLoadedWeapon(BaseWeapon):
         )
 
 
-class Minigun(BaseWeapon):
-    """
-    Minigun
-    """
-    _cid = WeaponCIDs.minigun
-
-    def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            drop_casings: bool = False,
-            parent_position_offset: coord_t = Vec2()
-    ) -> None:
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            reload_time=3,
-            recoil_time=.02,
-            mag_size=80,
-            inaccuracy=.01093606,
-            parent_position_offset=parent_position_offset,
-            muzzle_velocity=1600,
-            drop_casings=drop_casings,
-            sound_effect=MinigunSound(),
-
-            # bullet args
-            base_damage=2,
-            time_to_life=10,
-            visibility_offset=.058
-        )
-
-
 class Ak47(BaseWeapon):
     """
     Ak-47

@@ -30,7 +30,7 @@ from debugging import run_with_debug
 
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon, Minigun, Ak47, Mortar, Flak, SkyShieldWeapon
+from ._weapons import BaseWeapon, Ak47, Mortar, Flak, SkyShieldWeapon
 from ._base_entity import LogicGameEntity
 from ._sensors import MagicSensor, BaseSensor
 from ._detection_group import DetectionGroup
@@ -56,12 +56,10 @@ class SensorInit(tp.TypedDict):
 def check_target(target: LogicGameEntity, self: LogicGameEntity) -> bool:
     """checks if a target should be fired on"""
     if target.parent == self:
-        ic(target, target.parent, self)
         return False
 
     if not isinstance(target.coalition, (EllipsisType, NoneType)):
         if target.coalition == self.coalition:
-            ic(target, target.coalition, self.coalition)
             return False
 
     return True
@@ -78,7 +76,7 @@ class BaseTurret(LogicGameEntity):
     _cid = TurretCIDs.base
     size: Vec2
     weapon: BaseWeapon
-    _max_hp: int = 80
+    _default_max_hp: int = 80
     _hp: int = 0
     _target: LogicGameEntity | tp.Type[...] = ...
     _target_predict: list[Vec2] = ...
@@ -86,7 +84,7 @@ class BaseTurret(LogicGameEntity):
     _high_tof_multiplier: float = 1.1
     _number_target_taps: int
 
-    _default_size: Vec2 | float | tuple[float, float] | list[float] = 64
+    _default_size: Vec2 | float | tuple[float, float] | list[float] = (23, 24)
     _default_turn_speed: float = np.inf  # max rad/s
     _default_facing_angle: float = np.pi
     _default_max_error: float | EllipsisType = ...
@@ -213,7 +211,7 @@ class BaseTurret(LogicGameEntity):
 
         self._turn_speed = get_default(turn_speed, self._default_turn_speed)
 
-        self._hp = self._max_hp
+        self._hp = self._default_max_hp
 
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -259,7 +257,7 @@ class BaseTurret(LogicGameEntity):
 
     @property
     def max_hp(self) -> int:
-        return self._max_hp
+        return self._default_max_hp
 
     @property
     def hp(self) -> int:
@@ -455,7 +453,7 @@ class BaseTurret(LogicGameEntity):
 
         # update parameters
         ## bars
-        self._runtime_buffer[self.id].param0 = self._hp / self._max_hp
+        self._runtime_buffer[self.id].param0 = self._hp / self._default_max_hp
 
         ## target
         if self._target_predict:
@@ -654,82 +652,9 @@ class BaseTurret(LogicGameEntity):
         self.weapon.facing.angle = self.facing.angle
 
 
-class MinigunTurret(BaseTurret):
-    _cid = TurretCIDs.minigun
-    _max_hp: int = 60
-
-    _default_turn_speed = 2
-
-    def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            **kwargs
-    ) -> None:
-        self._coalition = coalition  # needed because the weapon wants it
-        weapon = Minigun(
-            self,
-            runtime_buffer,
-            False,
-            parent_position_offset=(0, -13)
-        )
-        weapon.reload(True)
-
-        super().__init__(
-            runtime_buffer,
-            coalition,
-            position,
-            size=Vec2().from_cartesian(48, 48),
-            weapon=weapon,
-            max_range=2000,
-            sensors=[
-                MagicSensor(runtime_buffer, self, 1500)
-            ],
-            **kwargs
-        )
-
-
-class SniperTurret(BaseTurret):
-    _cid = TurretCIDs.sniper
-    _max_hp: int = 40
-
-    _default_turn_speed = 2
-
-    def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            **kwargs
-    ) -> None:
-        self._coalition = coalition  # needed because the weapon wants it
-        weapon = Ak47(self, runtime_buffer, True, parent_position_offset=(0, -13))
-        weapon.reload(True)
-
-        super().__init__(
-            runtime_buffer,
-            coalition,
-            position,
-            size=Vec2().from_cartesian(31, 32),
-            weapon=weapon,
-            max_range=2400,
-            sensors=[
-                RadarSensor(
-                    runtime_buffer,
-                    self,
-                    2500,
-                    sphere_accuracy=256,
-                    min_rcs=0.00001,
-                )
-            ],
-            **kwargs,
-        )
-
-
 class AkTurret(BaseTurret):
     _cid = TurretCIDs.ak47
-    _max_hp: int = 60
+    _default_max_hp: int = 60
 
     _default_turn_speed = 2
 
@@ -760,7 +685,7 @@ class AkTurret(BaseTurret):
 
 class MortarTurret(BaseTurret):
     _cid = TurretCIDs.mortar
-    _max_hp: int = 90
+    _default_max_hp: int = 90
     _default_engagement_aim_type = "high"
 
     _default_facing_angle = -np.pi / 2
@@ -804,7 +729,7 @@ class MortarTurret(BaseTurret):
 
 class FlakTurret(BaseTurret):
     _cid = TurretCIDs.flak
-    _max_hp: int = 170
+    _default_max_hp: int = 170
     _default_engagement_aim_type = "low"
 
     _default_turn_speed = .8
@@ -845,7 +770,7 @@ class FlakTurret(BaseTurret):
 
 class CRAMTurret(BaseTurret):
     _cid = TurretCIDs.cram
-    _max_hp: int = 60
+    _default_max_hp: int = 60
     _default_engagement_aim_type = "low"
 
     _default_turn_speed = 1.745
@@ -897,7 +822,7 @@ class CRAMTurret(BaseTurret):
 
 class SkyShield(BaseTurret):
     _cid = TurretCIDs.sky_shield
-    _max_hp: int = 60
+    _default_max_hp: int = 60
     _default_engagement_aim_type = "low"
 
     _default_turn_speed = 1.57

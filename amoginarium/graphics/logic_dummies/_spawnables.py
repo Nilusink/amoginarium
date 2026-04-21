@@ -15,11 +15,8 @@ from amoginarium.shared.param_entities import load_entities_from_files, ProcessT
 from ._synced_entities import SyncedGraphicsEntity
 from ._player import PlayerDummy
 from ._bullet import BulletDummy, MortarShell, Grenade
-from ._turrets import SniperTurretDummy, AkTurretDummy, MinigunTurretDummy
-from ._turrets import MortarTurretDummy, FlakTurretDummy, BaseTurretDummy
-from ._turrets import SkyShieldDummy, ExactoSniperTurretDummy
-from ._weapons import Minigun, Ak47, Mortar, Flak, CRAM, HandThrownGrenade
-from ._weapons import SkyShieldGun, ExactoSniper, WeaponDummy
+from ._turrets import BaseTurretDummy, ExactoSniperTurretDummy
+from ._weapons import HandThrownGrenade, ExactoSniper, WeaponDummy
 from ._sensors import SensorHUD, RadarSensorHUD, MagicSensorHUD, VisualSensorHUD
 from ._items import Shield, HealingPotion, JetBag
 from ._charged_weapons import RailGunDummy
@@ -36,23 +33,11 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         MortarShell,
         Grenade,
         BaseTurretDummy,
-        SniperTurretDummy,
-        AkTurretDummy,
-        MinigunTurretDummy,
-        MortarTurretDummy,
-        FlakTurretDummy,
-        Minigun,
-        Ak47,
-        Mortar,
-        Flak,
-        CRAM,
         HandThrownGrenade,
         Shield,
         HealingPotion,
         JetBag,
         RailGunDummy,
-        SkyShieldDummy,
-        SkyShieldGun,
         SensorHUD,
         TextEntity,
         AeroDummy,

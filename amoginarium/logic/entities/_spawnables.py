@@ -15,8 +15,6 @@ from icecream import ic
 # from ._sensors import Radar
 # from ._text_entity import TextEntity
 from ._base_entity import LogicGameEntity
-from ._static_turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret
-from ._static_turrets import FlakTurret, CRAMTurret, SkyShield
 from ._static_sensors import VisualRadarSensor, VisualSensor
 from ._bullets import Bullet
 from ._text_entity import TextEntity
@@ -27,13 +25,6 @@ from ._dynamic_entities import DYNAMIC_ENTITIES
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
     e.cid(): e for e in [
-        MinigunTurret,
-        SniperTurret,
-        AkTurret,
-        MortarTurret,
-        FlakTurret,
-        CRAMTurret,
-        SkyShield,
         VisualSensor,
         VisualRadarSensor,
         TextEntity,

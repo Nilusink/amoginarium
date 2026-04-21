@@ -119,7 +119,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.sniper",
+            "type": "turret.static.minigun",
             "pos": [2500, 700]
         },
         {

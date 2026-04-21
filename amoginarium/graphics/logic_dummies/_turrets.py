@@ -259,11 +259,6 @@ class BaseTurretDummy(SyncedGraphicsEntity):
             )
 
 
-class SniperTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.sniper
-
-
 class ExactoSniperTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.exacto_sniper
@@ -272,11 +267,6 @@ class ExactoSniperTurretDummy(BaseTurretDummy):
 class AkTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.ak47
-
-
-class MinigunTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.minigun
 
 
 class MortarTurretDummy(BaseTurretDummy):
