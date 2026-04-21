@@ -17,7 +17,7 @@ from amoginarium.shared.utility import Vec2
 from amoginarium.shared import DummyCIDs
 from .. import GravityAffected
 
-from .._collision.collision_manager import collision_manager
+from .._collision import collision_manager, CollisionExceptions
 from .._collision.collision_relations import collision_group_grenades, collision_group_islands, collision_group_bullets, collision_group_players
 from .._base_entities import LogicGameEntity
 from ._base_bullet import Bullet
@@ -32,7 +32,7 @@ class _GrenadeShrapnel(Bullet):
 
     _default_size = 4
     _default_base_damage = 1
-    _ignore_collision_id = 500
+    _ignore_collision_id = CollisionExceptions.GRENADE_CLUSTER_DOES_NOT_HIT_ITSELF
 
     __slots__ = ()
 
@@ -114,7 +114,6 @@ class Grenade(Bullet):
             self.add_velocity(Vec2().from_cartesian(0, -200))
 
     def _collision_start(self, events: list[CollisionEvent]) -> None:
-        print("GRENADE COLLISION START", events, flush=True)
         for event in events:
             if event.group_id == collision_group_islands:
                 self.__on_collision_island(event)
@@ -188,6 +187,5 @@ class Grenade(Bullet):
     def _delete_collision(self) -> None:
         if self._collision_id is None:
             return
-        print("DELETE GRENADE", flush=True)
         collision_manager.delete_entity(self._collision_group, self._collision_id)
         self._collision_id = None

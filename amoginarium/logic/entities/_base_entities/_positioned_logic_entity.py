@@ -166,10 +166,8 @@ class PositionedLogicEntity(BaseLogicEntity):
             centered = self._centered
 
         collision_root = self.collision_root()
-        print("PARENT", self.parent, collision_root)
         if collision_root is not None:
             self.__ignore_collision_id.append(collision_root.id)
-        print("CREATE", self.__ignore_collision_id)
         self._collision_id = collision_manager.register_entity(
             group_id=self._collision_group,
             instance=self,
@@ -223,6 +221,7 @@ class PositionedLogicEntity(BaseLogicEntity):
             shift_history=shift_history,
             ignore_collisions=self.__ignore_collision_id
         )
+        self._update_size_and_pos_in_runtime_buffer()
         if PositionedLogicEntity.DRAW_DEBUG_HITBOXES:
             self.__debug.set_points(collision_manager.get_points(self._collision_group, self._collision_id))
 
@@ -232,6 +231,12 @@ class PositionedLogicEntity(BaseLogicEntity):
         collision_manager.delete_entity(self._collision_group, self._collision_id)
         self._collision_id = None
 
+    def _update_size_and_pos_in_runtime_buffer(self) -> None:
+        self._runtime_buffer[self.id].pos_x = self.position.x
+        self._runtime_buffer[self.id].pos_y = self.position.y
+        self._runtime_buffer[self.id].size_x = int(self.size.x)
+        self._runtime_buffer[self.id].size_y = int(self.size.y)
+
     # endregion
 
     # region Methods: Update, Kill
@@ -240,11 +245,10 @@ class PositionedLogicEntity(BaseLogicEntity):
         Update shared memory and collision entity
         :param delta: time since the last update
         """
-        self._runtime_buffer[self.id].pos_x = self.position.x
-        self._runtime_buffer[self.id].pos_y = self.position.y
-        self._runtime_buffer[self.id].size_x = int(self.size.x)
-        self._runtime_buffer[self.id].size_y = int(self.size.y)
-        self._update_collision()
+        if self._collision_id is not None:
+            self._update_collision()
+        else:
+            self._update_size_and_pos_in_runtime_buffer()
         super()._update(delta)
 
     def kill(self, killed_by: tp.Any = ...) -> None:

@@ -14,7 +14,7 @@ import ctypes
 
 
 # region constants
-MAX_ENTITIES: int = 50_000
+MAX_ENTITIES: int = 10_000
 MAX_CONTROLLERS: int = 8
 MAX_INVENTORIES: int = 64
 MAX_INVENTORY_SLOTS: int = 64

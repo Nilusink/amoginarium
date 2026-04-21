@@ -269,6 +269,7 @@ class Player(LogicGameEntity):
                     continue
                 if active_normals[1] and event.normal.x > 0.5:
                     continue
+                self.__add_position *= 0
                 self.__add_position.y += self.position.y - event.position.y  # try to make up for the lost y in the next update!
                 self.position = event.position
                 self.velocity.x = 0
@@ -282,6 +283,7 @@ class Player(LogicGameEntity):
                     continue
                 if active_normals[3] and event.normal.y > 0.5:
                     continue
+                self.__add_position *= 0
                 self.__add_position.x += self.position.x - event.position.x  # try to make up for the lost y in the next update!
                 self.position = event.position
                 self.velocity.y = 0

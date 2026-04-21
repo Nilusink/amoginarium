@@ -391,7 +391,6 @@ class Bullet(LogicGameEntity):
             self.kill(killed_by=event.other_entity)
 
     def _collision_start(self, events: list[CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
-        print("BULLET COLLISION START", events, flush=True)
         for event in events:
             if event.group_id == collision_group_islands:
                 self.__on_collision_general(event)
