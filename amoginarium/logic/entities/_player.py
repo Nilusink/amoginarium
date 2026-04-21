@@ -21,7 +21,7 @@ from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
 
 from ..graphics_dummies import Controller
-from ._weapons import BaseWeapon, HandThrownGrenade, Ak47
+from ._weapons import BaseWeapon, HandThrownGrenade
 from ._exacto import ExactoSniper
 from ._logic_groups import GravityAffected, FrictionXAffected, Updated
 from ._logic_groups import CollisionDestroyed, WallCollider, Players
@@ -98,7 +98,7 @@ class Player(LogicGameEntity):
         self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
-            Ak47(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
+            DYNAMIC_ENTITIES["weapon.ak47"](self, self._runtime_buffer, False),
             DYNAMIC_ENTITIES["weapon.minigun"](self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
             DYNAMIC_ENTITIES["weapon.sniper"](self, self._runtime_buffer, False),
             ExactoSniper(self, self._runtime_buffer, False),

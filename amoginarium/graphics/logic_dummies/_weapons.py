@@ -167,13 +167,6 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         return cls._texture_id_r, size
 
 
-class Ak47(WeaponDummy):
-    _cid = WeaponCIDs.ak47
-    _image_name: str = "ak47"
-    _default_size: tuple[int, int] = (80, 40)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(30, 20)
-
-
 class Mortar(WeaponDummy):
     _cid = WeaponCIDs.mortar
     _image_name: str = "mortar"

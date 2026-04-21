@@ -7,7 +7,6 @@ size = [128, 64]
 
 [image]
 name = "minigun"
-mirror = ""
 rotate_anchor = [35, 30]
 
 [behaviour]

@@ -162,7 +162,7 @@ def load_entities_from_files(
                         # noinspection PyTypeChecker
                         effect: tp.Type[ScopedRandomizedEffect] = type(
                             f"{sound_scope.capitalize()}Effect",
-                            ScopedRandomizedEffect,
+                            (ScopedRandomizedEffect,),
                             {"_scope": sound_scope}
                         )
                     

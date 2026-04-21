@@ -351,38 +351,6 @@ class FileLoadedWeapon(BaseWeapon):
         )
 
 
-class Ak47(BaseWeapon):
-    """
-    Ak-47
-    """
-    _cid = WeaponCIDs.ak47
-
-    def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            drop_casings: bool = False,
-            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
-    ) -> None:
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            reload_time=2.5,
-            recoil_time=.1,
-            mag_size=30,
-            inaccuracy=0.03,
-            parent_position_offset=parent_position_offset,
-            muzzle_velocity=1250,
-            drop_casings=drop_casings,
-            sound_effect=AK47Sound(),
-
-            # bullet args
-            base_damage=2.5,
-            time_to_life=10,
-            visibility_offset=0.043,
-        )
-
-
 class Mortar(BaseWeapon):
     """
     Mortar

@@ -30,7 +30,7 @@ from debugging import run_with_debug
 
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon, Ak47, Mortar, Flak, SkyShieldWeapon
+from ._weapons import BaseWeapon, Mortar, Flak, SkyShieldWeapon
 from ._base_entity import LogicGameEntity
 from ._sensors import MagicSensor, BaseSensor
 from ._detection_group import DetectionGroup
@@ -100,7 +100,7 @@ class BaseTurret(LogicGameEntity):
     _default_target_players: bool = True
     _default_target_taps: int = -1
 
-    _default_weapon_type: tp.Type[BaseWeapon] = Ak47
+    _default_weapon_type: tp.Type[BaseWeapon] | EllipsisType = ...
     _default_weapon_drop_casings: bool = False
     _default_weapon_position_offset: Vec2 | list[float] | tuple[float, float] = (0, 0)
 
@@ -157,6 +157,9 @@ class BaseTurret(LogicGameEntity):
                     self._default_weapon_position_offset[0],
                     self._default_weapon_position_offset[1]
                 )
+
+            if isinstance(self._default_weapon_type, EllipsisType):
+                raise RuntimeError(f"No weapon set for {self.__class__.__name__}")
 
             self.weapon = self._default_weapon_type(
                 parent=self,
@@ -236,11 +239,12 @@ class BaseTurret(LogicGameEntity):
             if self._sensors_list:
                 sensors: list[BaseSensor] = []
                 for sensor in self._sensors_list:
-                    sensor_type: tp.Type[BaseSensor] = sensor.pop("type")
+                    sensor_args = sensor.copy()
+                    sensor_type: tp.Type[BaseSensor] = sensor_args.pop("type")
                     sensors.append(sensor_type(
                         runtime_buffer=runtime_buffer,
                         parent=self,
-                        **sensor
+                        **sensor_args
                     ))
 
         if sensors is not None:
@@ -652,37 +656,6 @@ class BaseTurret(LogicGameEntity):
         self.weapon.facing.angle = self.facing.angle
 
 
-class AkTurret(BaseTurret):
-    _cid = TurretCIDs.ak47
-    _default_max_hp: int = 60
-
-    _default_turn_speed = 2
-
-    def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            **kwargs
-    ) -> None:
-        self._coalition = coalition  # needed because the weapon wants it
-        weapon = Ak47(self, runtime_buffer, False, parent_position_offset=(0, -13))
-        weapon.reload(True)
-
-        super().__init__(
-            runtime_buffer,
-            coalition,
-            position,
-            size=Vec2().from_cartesian(31, 32),
-            weapon=weapon,
-            max_range=1500,
-            sensors=[
-                RadarSensor(runtime_buffer, self, 1600)
-            ],
-            **kwargs
-        )
-
-
 class MortarTurret(BaseTurret):
     _cid = TurretCIDs.mortar
     _default_max_hp: int = 90
@@ -763,58 +736,6 @@ class FlakTurret(BaseTurret):
             target_taps=2,
             sensors=[
                 RadarSensor(runtime_buffer, self, 1700)
-            ],
-            **kwargs
-        )
-
-
-class CRAMTurret(BaseTurret):
-    _cid = TurretCIDs.cram
-    _default_max_hp: int = 60
-    _default_engagement_aim_type = "low"
-
-    _default_turn_speed = 1.745
-    _default_engagement_valid_angles = (
-        Vec2().from_cartesian(-.5, 1),
-        Vec2().from_cartesian(.5, 1)
-    )
-
-    def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            **kwargs
-    ) -> None:
-        self._coalition = coalition  # needed because the weapon wants it
-        weapon = Ak47(
-            self,
-            runtime_buffer,
-            False,
-            parent_position_offset=(0, 15)
-        )  # don't eject casings because I like my pc
-        weapon.reload(True)
-
-        super().__init__(
-            runtime_buffer,
-            coalition,
-            position,
-            size=Vec2().from_cartesian(64, 128),
-            weapon=weapon,
-            max_range=1900,
-            min_range=150,
-            intercept_bullets=True,
-            intercept_players=False,
-            airburst_munition=True,
-            target_taps=8,  # TODO: smart target tap (max)
-            sensors=[
-                RadarSensor(
-                    runtime_buffer,
-                    self,
-                    2200,
-                    sphere_accuracy=256,
-                    min_rcs=.04
-                )
             ],
             **kwargs
         )
