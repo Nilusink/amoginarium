@@ -22,7 +22,7 @@ import json
 from .. import pv
 from ..shared.debugging import run_with_debug, print_ic_style, cum_timer
 from ..shared.debugging import print_with_prefix, CC, get_fg_color
-from ..shared.utility import Vec2, convert_coord
+from ..shared.utility import Vec2, convert_coord, Color
 from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
 from ..shared.settings import Settings
 from ..graphics.render_bindings import renderer
@@ -520,7 +520,6 @@ class BaseGame:
             pv.WRITE_LOCK.release()
 
             if pg.key.get_pressed()[pg.K_DOWN]:
-                ic("s")
                 pv.global_vars.set_time_mult(.01)
                 t_mult = .01
 

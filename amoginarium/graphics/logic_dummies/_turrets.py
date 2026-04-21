@@ -18,7 +18,7 @@ from amoginarium import pv
 
 from ..render_bindings import renderer
 from ..entities import Drawn_1, Drawn_2
-from ._synced_entities import SyncedGraphicsEntity
+from ._synced_entities import SyncedGraphicsEntity, SE_MANAGER
 
 
 class BaseTurretDummy(SyncedGraphicsEntity):
@@ -53,7 +53,8 @@ class BaseTurretDummy(SyncedGraphicsEntity):
 
     def __init__(
             self,
-            sync_id: int
+            sync_id: int,
+            weapon_id: int
     ) -> None:
         self._target_pos: Vec2 | None = None
         self._range = (0, 0)
@@ -62,6 +63,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         self.add(Drawn_1, Drawn_2)
         
         # defaults
+        self.add_child(SE_MANAGER.get_entity(weapon_id))
         self._hp_colors = (
             Color().from_255(255, 0, 0),
             Color().from_255(180, 90, 20),
@@ -261,6 +263,11 @@ class BaseTurretDummy(SyncedGraphicsEntity):
 class SniperTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.sniper
+
+
+class ExactoSniperTurretDummy(BaseTurretDummy):
+    __slots__ = []
+    _cid = TurretCIDs.exacto_sniper
 
 
 class AkTurretDummy(BaseTurretDummy):

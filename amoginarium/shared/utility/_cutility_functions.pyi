@@ -63,8 +63,7 @@ def infinite_lines_intersect(a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool:
     check if the lines between a-b and c-d intersect (infinite, no bounds)
     """
 
-
-def raycast_size(a: Vec2, b: Vec2, center: Vec2, radius: float) -> Vec2:
+def raycast_size(a: Vec2, b: Vec2, center: Vec2, size: Vec2) -> Vec2:
     """
     checks if the line from a to b intersects the circle at center+radius
     """

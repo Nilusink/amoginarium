@@ -36,6 +36,7 @@ class Item(LogicGameEntity):
             self,
             runtime_buffer: Array[base_entity_t],
             size: Vec2,
+        spawn_args: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         # init logic entity
         super().__init__(runtime_buffer, size=size, position=Vec2())
@@ -44,9 +45,16 @@ class Item(LogicGameEntity):
         self._current_timeout = 0
 
         # spawn graphics counterpart
+        if isinstance(spawn_args, EllipsisType):
+            kwargs = {}
+
+        else:
+            kwargs = spawn_args
+
+        kwargs.update({"id": self.id, "cid": self.cid()})
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": self.cid()},
+            kwargs=kwargs,
         ))
 
     def hit(self, _damage: float, hit_by=...) -> None:

@@ -31,6 +31,7 @@ from .._items import Shield, HealingPotion, JetBag, Inventory, Item
 from .._base_entities import LogicGameEntity
 from .._collision.collision_relations import collision_group_players, collision_group_islands, collision_group_bullets
 from .._debug import PolyDebugRenderingEntity
+from ._exacto import ExactoSniper
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet
@@ -108,6 +109,7 @@ class Player(LogicGameEntity):
             Ak47(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
             Minigun(self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
             Sniper(self, self._runtime_buffer, False),
+            ExactoSniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
             Shield(self._runtime_buffer, Vec2().from_cartesian(64, 0)),
             HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),

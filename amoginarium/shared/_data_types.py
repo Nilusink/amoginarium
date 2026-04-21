@@ -38,6 +38,8 @@ class DummyCIDs(Enum):
     mortar_bullet = "dummy.bullet.mortar"  # -- "" --
     grenade = "dummy.bullet.grenade"  # -- "" --
     cram = "dummy.bullet.cram"
+    aero = "dummy.bullet.aero"
+
 
 class IslandCIDs(Enum):
     """
@@ -60,6 +62,7 @@ class TurretCIDs(Enum):
     cram = "turret.static.cram"
     base = "turret.static.base"
     sky_shield = "turret.static.sky_shield"
+    exacto_sniper = "turret.static.exacto_sniper"
 
 
 class WeaponCIDs(Enum):
@@ -76,6 +79,7 @@ class WeaponCIDs(Enum):
     base = "weapon.base"
     railgun = "weapon.railgun"
     sky_shield = "weapon.sky_shield"
+    exacto_sniper = "weapon.exacto_sniper"
 
 
 class SensorCIDs(Enum):

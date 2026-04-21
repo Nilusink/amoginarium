@@ -154,33 +154,78 @@ cpdef bint infinite_lines_intersect(Vec2 a, Vec2 b, Vec2 c, Vec2 d):
     return denom != 0  # not parallel
 
 
-cpdef Vec2 raycast_size(Vec2 a, Vec2 b, Vec2 center, double radius):
-    cdef Vec2 d = b.sub_vec2(a)  # direction: b - a
-    cdef Vec2 f = a.sub_vec2(center)  # from center to start
+cpdef Vec2 raycast_size(Vec2 a, Vec2 b, Vec2 center, Vec2 size):
+    """
+    Raycast segment a -> b against axis-aligned box.
 
-    cdef double A = d.dot(d)
-    cdef double B = 2.0 * f.dot(d)
-    cdef double C = f.dot(f) - radius * radius
+    center = box center
+    size.x = width
+    size.y = height
 
-    if A == 0.0:
-        return None
+    Returns first hit point or None
+    """
 
-    cdef double discriminant = B * B - 4.0 * A * C
-    cdef double sqrt_disc, t1, t2
+    cdef double min_x = center.x - size.x * 0.5
+    cdef double max_x = center.x + size.x * 0.5
+    cdef double min_y = center.y - size.y * 0.5
+    cdef double max_y = center.y + size.y * 0.5
 
-    if discriminant < 0.0:
-        return None  # no hit
+    cdef double dx = b.x - a.x
+    cdef double dy = b.y - a.y
 
-    sqrt_disc = discriminant ** 0.5
+    cdef double tmin = 0.0
+    cdef double tmax = 1.0
 
-    # nearer intersection first
-    t1 = (-B - sqrt_disc) / (2.0 * A)
-    if 0.0 <= t1 <= 1.0:
-        return a.add_vec2(d.mul_double(t1))
+    cdef double tx1, tx2, ty1, ty2, tmp
 
-    t2 = (-B + sqrt_disc) / (2.0 * A)
-    if 0.0 <= t2 <= 1.0:
-        return a.add_vec2(d.mul_double(t2))
+    # --- X slab ---
+    if dx == 0.0:
+        if a.x < min_x or a.x > max_x:
+            return None
+    else:
+        tx1 = (min_x - a.x) / dx
+        tx2 = (max_x - a.x) / dx
+
+        if tx1 > tx2:
+            tmp = tx1
+            tx1 = tx2
+            tx2 = tmp
+
+        if tx1 > tmin:
+            tmin = tx1
+        if tx2 < tmax:
+            tmax = tx2
+
+        if tmin > tmax:
+            return None
+
+    # --- Y slab ---
+    if dy == 0.0:
+        if a.y < min_y or a.y > max_y:
+            return None
+    else:
+        ty1 = (min_y - a.y) / dy
+        ty2 = (max_y - a.y) / dy
+
+        if ty1 > ty2:
+            tmp = ty1
+            ty1 = ty2
+            ty2 = tmp
+
+        if ty1 > tmin:
+            tmin = ty1
+        if ty2 < tmax:
+            tmax = ty2
+
+        if tmin > tmax:
+            return None
+
+    # first valid hit on segment
+    if 0.0 <= tmin <= 1.0:
+        return Vec2().from_cartesian(
+            a.x + dx * tmin,
+            a.y + dy * tmin
+        )
 
     return None
 

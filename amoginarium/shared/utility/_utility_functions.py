@@ -9,6 +9,7 @@ Nilusink
 """
 
 from types import EllipsisType
+from icecream import ic
 import typing as tp
 import pygame as pg
 import numpy as np
@@ -100,16 +101,13 @@ def multi_raycast_mask(
             continue
 
         if hasattr(sprite, "last_pos"):
-            if raycast_size(start, end, sprite.position, sprite.size.length * 2):
-                res = raycast_mask(sprite, start, end, sample_rate)
+            res = raycast_size(start, end, sprite.position, sprite.size)
 
-                if not res:
-                    continue
-            else:
+            if not res:
                 continue
 
         elif hasattr(sprite, "form"):  # check if island
-            if raycast_size(start, end, sprite.position, sprite.size.length * 2):
+            if raycast_size(start, end, sprite.position + sprite.size / 2, sprite.size):
                 res = raycast_mask(
                     sprite,
                     start,
@@ -121,7 +119,7 @@ def multi_raycast_mask(
                 continue
 
         elif hasattr(sprite, "is_bullet"):  # check if game entity
-            res = raycast_size(start, end, sprite.position, sprite.size.length)
+            res = raycast_size(start, end, sprite.position, sprite.size)
 
             if not res:
                 continue

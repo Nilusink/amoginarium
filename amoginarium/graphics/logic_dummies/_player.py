@@ -94,6 +94,7 @@ class PlayerDummy(SyncedLRImageEntity):
             parent: int | None = None
     ) -> None:
         super().__init__(sync_id, parent)
+        self._draw_children = False
         self.add(Drawn_1, Drawn_2)
 
         # load textures
@@ -118,7 +119,7 @@ class PlayerDummy(SyncedLRImageEntity):
             Color().from_255(180, 90, 20),
             Color().from_255(0, 255, 0)
         )
-        
+
         # inventories
         self._hotbar: Inventory = Inventory(h_id, self)
         self._inventory: Inventory = Inventory(i_id, self)

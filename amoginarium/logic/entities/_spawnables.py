@@ -15,6 +15,7 @@ from ._sensors import VisualRadarSensor, VisualSensor
 from ._base_entities import LogicGameEntity
 from ._debug import DebugRenderingEntity, PolyDebugRenderingEntity
 from ._world import TextEntity
+from ._exacto import ExactoTurret
 
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
@@ -30,5 +31,6 @@ SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
         VisualRadarSensor,
         TextEntity,
         DebugRenderingEntity,
+        ExactoTurret
     ]
 }

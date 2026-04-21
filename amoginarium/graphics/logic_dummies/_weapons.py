@@ -10,6 +10,7 @@ Nilusink
 
 import typing as tp
 import math as m
+import ctypes
 
 from amoginarium.shared.debugging import run_with_debug
 from amoginarium.shared.utility import Vec2, Color
@@ -19,7 +20,7 @@ from amoginarium import pv
 
 from ._synced_entities import SyncedLRImageEntity, Iconifyable
 from ..render_bindings import renderer
-from ..entities import Drawn_1, Drawn_0
+from ..entities import Drawn_1, Drawn_0, Drawn_2
 
 
 class WeaponDummy(Iconifyable, SyncedLRImageEntity):
@@ -191,3 +192,43 @@ class HandThrownGrenade(WeaponDummy):
     _image_mirror = True
     _image_size: tuple[int, int] = (32, 32)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(16, 16)
+
+
+class ExactoSniper(WeaponDummy):
+    _cid = WeaponCIDs.exacto_sniper
+    _image_name: str = "exacto_sniper"
+    _image_size: tuple[int, int] = (120, 60)
+    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
+
+    def __init__(self, max_range: float, **kwargs):
+        super().__init__(**kwargs)
+        self.add(Drawn_2)
+        self._max_range = max_range
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
+        if layer == 1:
+            super()._gl_draw(delta_cal, layer)
+            return
+
+        # draw laser to target
+        if self.param4:
+            laser_end = (
+                Vec2().from_polar(self.param3 / 10_000, self.param4)
+                - pv.global_vars.get_world_position()
+            )
+            laser_start = (
+                self.world_position
+                + Vec2().from_polar(self.facing.angle, 100)
+                + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
+            )
+            renderer.draw_thick_line(
+                laser_start,
+                laser_end,
+                Color().from_1(1, 0, 0, .2),
+                thickness=3,
+            )
+            renderer.draw_circle(
+                laser_end,
+                8, 16,
+                Color().from_1(1, 0, 0, .6),
+            )
