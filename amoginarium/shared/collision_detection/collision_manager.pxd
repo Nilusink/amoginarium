@@ -13,6 +13,7 @@ cdef struct EntityData:
     double px_o, py_o, px_n, py_n
     double sx, sy
     double rot
+    double radius
 
     vector[double] vx_o
     vector[double] vy_o

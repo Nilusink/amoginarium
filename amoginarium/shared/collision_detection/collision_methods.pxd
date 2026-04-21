@@ -9,10 +9,10 @@ cdef bint aabb_aabb_swept(
 ) noexcept
 
 cdef bint swept_sat_generic(
-        const vector[double]& a_vx_o, const vector[double]& a_vy_o, const vector[double]& a_vx_n,
-        const vector[double]& a_vy_n, const vector[double]& a_ax, const vector[double]& a_ay, double a_dx, double a_dy,
-        const vector[double]& b_vx_o, const vector[double]& b_vy_o, const vector[double]& b_vx_n,
-        const vector[double]& b_vy_n, const vector[double]& b_ax, const vector[double]& b_ay, double b_dx, double b_dy,
+        int a_type, const vector[double]& a_vx_o, const vector[double]& a_vy_o, const vector[double]& a_vx_n,
+        const vector[double]& a_vy_n, const vector[double]& a_ax, const vector[double]& a_ay, double a_dx, double a_dy, double a_radius,
+        int b_type, const vector[double]& b_vx_o, const vector[double]& b_vy_o, const vector[double]& b_vx_n,
+        const vector[double]& b_vy_n, const vector[double]& b_ax, const vector[double]& b_ay, double b_dx, double b_dy, double b_radius,
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept

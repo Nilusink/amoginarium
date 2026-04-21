@@ -49,6 +49,8 @@ cdef class CollisionManager:
             group.h_type = 3
         elif hitbox_type == "point":
             group.h_type = 4
+        elif hitbox_type == "circle":
+            group.h_type = 5
 
         self.groups.push_back(group)
         self.group_instances.append([])
@@ -80,10 +82,16 @@ cdef class CollisionManager:
 
     def register_entity(self, int group_id, object instance, object position=None, object size=None,
                         bint centered=False,
-                        double rotation=0.0, list positions=None) -> int:
+                        double rotation=0.0, list positions=None, object radius=None) -> int:
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef int e_id, lvl
         cdef EntityData ed
+        cdef double _rad = 0.0
+
+        if radius is not None:
+            _rad = radius
+        elif size is not None:
+            _rad = size.x
 
         if not group.free_ids.empty():
             e_id = group.free_ids.back()
@@ -92,6 +100,7 @@ cdef class CollisionManager:
             group.entities[e_id].h_type = group.h_type
             group.entities[e_id].is_centered = centered
             group.entities[e_id].rot = rotation
+            group.entities[e_id].radius = _rad
 
             if position is not None:
                 group.entities[e_id].px_o = position.x
@@ -133,6 +142,7 @@ cdef class CollisionManager:
             ed.h_type = group.h_type
             ed.is_centered = centered
             ed.rot = rotation
+            ed.radius = _rad
 
             if position is not None:
                 ed.px_o = position.x
@@ -161,7 +171,7 @@ cdef class CollisionManager:
             group.entities.push_back(ed)
             self.group_instances[group_id].append(instance)
 
-        self.update_entity(group_id, e_id, position, size, centered, rotation, positions, True)
+        self.update_entity(group_id, e_id, position, size, centered, rotation, positions, True, radius)
         return e_id
 
     def delete_entity(self, int group_id, int entity_id):
@@ -262,7 +272,7 @@ cdef class CollisionManager:
         self.pending_deletions.clear()
 
     def update_entity(self, int group_id, int entity_id, object position=None, object size=None, object centered=None,
-                      object rotation=None, list positions=None, bint shift_history=True):
+                      object rotation=None, list positions=None, bint shift_history=True, object radius=None):
         cdef EntityData * ed = &self.groups[group_id].entities[entity_id]
         if not ed.active: return
 
@@ -285,6 +295,11 @@ cdef class CollisionManager:
         if position is not None:
             ed.px_n = position.x
             ed.py_n = position.y
+
+        if radius is not None:
+            ed.radius = radius
+        elif size is not None:
+            ed.radius = size.x
 
         if ed.h_type == 0:
             if ed.is_centered:
@@ -394,6 +409,18 @@ cdef class CollisionManager:
             ed.vx_n.push_back(ed.px_n)
             ed.vy_n.push_back(ed.py_n)
 
+        elif ed.h_type == 5:
+            if ed.is_centered:
+                cx = ed.px_n
+                cy = ed.py_n
+            else:
+                cx = ed.px_n + ed.radius
+                cy = ed.py_n + ed.radius
+            ed.vx_n.clear()
+            ed.vy_n.clear()
+            ed.vx_n.push_back(cx)
+            ed.vy_n.push_back(cy)
+
         if ed.vx_o.empty() or ed.vx_o.size() == 0:
             ed.vx_o = ed.vx_n
             ed.vy_o = ed.vy_n
@@ -424,6 +451,11 @@ cdef class CollisionManager:
             max_py_o = ed.vy_o[0] + ed.sy
             max_py_n = ed.vy_n[0] + ed.sy
             max_py = max_py_o if max_py_o > max_py_n else max_py_n
+        elif ed.h_type == 5:
+            min_px = (ed.vx_o[0] if ed.vx_o[0] < ed.vx_n[0] else ed.vx_n[0]) - ed.radius
+            min_py = (ed.vy_o[0] if ed.vy_o[0] < ed.vy_n[0] else ed.vy_n[0]) - ed.radius
+            max_px = (ed.vx_o[0] if ed.vx_o[0] > ed.vx_n[0] else ed.vx_n[0]) + ed.radius
+            max_py = (ed.vy_o[0] if ed.vy_o[0] > ed.vy_n[0] else ed.vy_n[0]) + ed.radius
         else:
             min_px = ed.vx_o[0]
             max_px = ed.vx_o[0]
@@ -549,7 +581,6 @@ cdef class CollisionManager:
         cdef bint is_active_col
         cdef int col_id
 
-        # Local dicts to group start/end events per entity
         events_a_start = {}
         events_b_start = {}
         events_a_end = {}
@@ -605,8 +636,8 @@ cdef class CollisionManager:
                         b_dy = eb.py_n - eb.py_o
 
                         hit = swept_sat_generic(
-                            ea.vx_o, ea.vy_o, ea.vx_n, ea.vy_n, ea.axes_x, ea.axes_y, a_dx, a_dy,
-                            eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x, eb.axes_y, b_dx, b_dy,
+                            ea.h_type, ea.vx_o, ea.vy_o, ea.vx_n, ea.vy_n, ea.axes_x, ea.axes_y, a_dx, a_dy, ea.radius,
+                            eb.h_type, eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x, eb.axes_y, b_dx, b_dy, eb.radius,
                             is_active_col,
                             &norm_x, &norm_y, &t
                         )
@@ -703,9 +734,9 @@ cdef class CollisionManager:
 
     def manual_collision(self, list group_ids, object start_position, object end_position, object size=None,
                          str hitbox_type="point", bint centered=False, double rotation=0.0,
-                         list start_positions=None) -> list:
+                         list start_positions=None, object radius=None) -> list:
         cdef EntityData ed
-        cdef double cx, cy, hw, hh, cr, sr, ax, ay, dx, dy, ln
+        cdef double cx, cy, cx_o, cy_o, hw, hh, cr, sr, ax, ay, dx, dy, ln
         cdef double pivot_x, pivot_y
         cdef size_t i, num_v
         cdef double min_px, min_py, max_px_o, max_px_n, max_px, max_py_o, max_py_n, max_py
@@ -727,6 +758,15 @@ cdef class CollisionManager:
             ed.h_type = 2
         elif hitbox_type == "polygon":
             ed.h_type = 3
+        elif hitbox_type == "circle":
+            ed.h_type = 5
+
+        cdef double _rad = 0.0
+        if radius is not None:
+            _rad = radius
+        elif size is not None:
+            _rad = size.x
+        ed.radius = _rad
 
         ed.is_centered = centered
         ed.rot = rotation
@@ -826,6 +866,16 @@ cdef class CollisionManager:
             ed.vx_o.push_back(ed.px_o);
             ed.vy_o.push_back(ed.py_o)
 
+        elif ed.h_type == 5:
+            if ed.is_centered:
+                cx = ed.px_n;
+                cy = ed.py_n
+            else:
+                cx = ed.px_n + ed.radius;
+                cy = ed.py_n + ed.radius
+            ed.vx_n.push_back(cx);
+            ed.vy_n.push_back(cy)
+
         if ed.vx_o.empty() and not ed.vx_n.empty():
             dx = ed.px_n - ed.px_o
             dy = ed.py_n - ed.py_o
@@ -842,6 +892,11 @@ cdef class CollisionManager:
             max_py_o = ed.vy_o[0] + ed.sy;
             max_py_n = ed.vy_n[0] + ed.sy
             max_py = max_py_o if max_py_o > max_py_n else max_py_n
+        elif ed.h_type == 5:
+            min_px = (ed.vx_o[0] if ed.vx_o[0] < ed.vx_n[0] else ed.vx_n[0]) - ed.radius
+            min_py = (ed.vy_o[0] if ed.vy_o[0] < ed.vy_n[0] else ed.vy_n[0]) - ed.radius
+            max_px = (ed.vx_o[0] if ed.vx_o[0] > ed.vx_n[0] else ed.vx_n[0]) + ed.radius
+            max_py = (ed.vy_o[0] if ed.vy_o[0] > ed.vy_n[0] else ed.vy_n[0]) + ed.radius
         else:
             min_px = ed.vx_o[0];
             max_px = ed.vx_o[0]
@@ -902,10 +957,10 @@ cdef class CollisionManager:
                                 a_dy = ed.py_n - ed.py_o
                                 b_dx = eb.px_n - eb.px_o;
                                 b_dy = eb.py_n - eb.py_o
-                                hit = swept_sat_generic(ed.vx_o, ed.vy_o, ed.vx_n, ed.vy_n, ed.axes_x, ed.axes_y, a_dx,
-                                                        a_dy,
-                                                        eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x, eb.axes_y, b_dx,
-                                                        b_dy,
+                                hit = swept_sat_generic(ed.h_type, ed.vx_o, ed.vy_o, ed.vx_n, ed.vy_n, ed.axes_x,
+                                                        ed.axes_y, a_dx, a_dy, ed.radius,
+                                                        eb.h_type, eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x,
+                                                        eb.axes_y, b_dx, b_dy, eb.radius,
                                                         False, &norm_x, &norm_y, &t)
 
                             if hit:
@@ -930,6 +985,16 @@ cdef class CollisionManager:
 
         cdef list points = []
         cdef size_t i
+
+        if ed.h_type == 5:
+            # Add 8 representation points for Circle purely for debugging
+            for i in range(8):
+                points.append(Vec2().from_cartesian(
+                    ed.vx_n[0] + ed.radius * cos(i * 3.14159 / 4.0),
+                    ed.vy_n[0] + ed.radius * sin(i * 3.14159 / 4.0)
+                ))
+            return points
+
         for i in range(ed.vx_n.size()):
             points.append(Vec2().from_cartesian(ed.vx_n[i], ed.vy_n[i]))
 
