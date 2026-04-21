@@ -115,6 +115,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         self.param3 = 0
         self.param4 = 0
 
+        self.add(Drawn_0, SyncedEntities)
         self._update_from_buffer()
 
         # add to manager
