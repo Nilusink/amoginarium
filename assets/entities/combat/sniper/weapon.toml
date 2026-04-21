@@ -3,7 +3,7 @@ from = "weapon.base"
 cid = "weapon.sniper"
 
 [visibility]
-size = 20
+size = [120, 60]
 
 [image]
 name = "sniper"
@@ -18,7 +18,7 @@ inaccuracy = 0.00500002
 muzzle_velocity = 2500
 
 [bullet]
-type = "<bullet.cram>"
+type = "<bullet.sniper>"
 
 [sound]
 name = ["shots", "sniper"]

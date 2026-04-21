@@ -10,7 +10,7 @@ Nilusink
 from icecream import ic
 from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, color_t, Color, convert_color
+from amoginarium.shared.utility import Vec2, get_default, Color, convert_color
 from amoginarium.shared.utility import convert_coord, fade
 from amoginarium.shared import DummyCIDs
 from amoginarium.base._textures import textures
@@ -36,6 +36,7 @@ class BulletDummy(SyncedImageEntity):
     ]
 
     _cid = DummyCIDs.base_bullet
+    _default_size: Vec2 = Vec2().from_cartesian(64, 64)
     _bullet_image: str = (BULLET_PATH, "x")
     _default_trace_color: Color | tuple[Color, Color] = Color().from_255(255, 255, 60)
     _fade_color_time: float = 1.5  # only applies if two colors are specified
@@ -47,7 +48,7 @@ class BulletDummy(SyncedImageEntity):
         self,
         sync_id: int,
         spawn_time: float,
-        size: int | Vec2 = 64,
+        size: int | Vec2 | EllipsisType = ...,
         parent: BaseGraphicsEntity | None = None,
         visibility_offset: float = 0,
         target_pos: Vec2 | EllipsisType = ...,
@@ -56,6 +57,8 @@ class BulletDummy(SyncedImageEntity):
         trace_length: float | EllipsisType = ...,
         fade_trace: bool | EllipsisType = ...,
     ) -> None:
+        size = get_default(size, self._default_size)
+
         if not isinstance(size, Vec2):
             size: Vec2 = Vec2().from_cartesian(size, size)  # type: ignore
 

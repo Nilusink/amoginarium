@@ -240,6 +240,5 @@ def load_entities_from_files(
                         ic(entity, sensor)
 
                 setattr(entity, key, sensors)
-                ic(entity.__dict__)
 
     return new_entities

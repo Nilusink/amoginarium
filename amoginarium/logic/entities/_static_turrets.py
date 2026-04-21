@@ -8,11 +8,12 @@ Author:
 Nilusink
 """
 
+from types import EllipsisType, NoneType
 from dataclasses import dataclass
 from contextlib import suppress
-from types import EllipsisType
 from time import perf_counter
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import numpy as np
 import ctypes
@@ -52,6 +53,20 @@ class SensorInit(tp.TypedDict):
     min_rcs: tp.Optional[float]
 
 
+def check_target(target: LogicGameEntity, self: LogicGameEntity) -> bool:
+    """checks if a target should be fired on"""
+    if target.parent == self:
+        ic(target, target.parent, self)
+        return False
+
+    if not isinstance(target.coalition, (EllipsisType, NoneType)):
+        if target.coalition == self.coalition:
+            ic(target, target.coalition, self.coalition)
+            return False
+
+    return True
+
+
 type target_solution_t = TargetSolution | None
 
 
@@ -84,7 +99,7 @@ class BaseTurret(LogicGameEntity):
     _default_engagement_max_range: float = 100
 
     _default_target_bullets: bool = False
-    _default_target_players: bool = False
+    _default_target_players: bool = True
     _default_target_taps: int = -1
 
     _default_weapon_type: tp.Type[BaseWeapon] = Ak47
@@ -123,6 +138,7 @@ class BaseTurret(LogicGameEntity):
             size: Vec2 = Vec2().from_cartesian(size[0], size[1])
 
         size: Vec2
+        position.y -= size.y / 2
 
         self._set_pos = position.copy()
         # position.y -= size.y / 2
@@ -338,7 +354,9 @@ class BaseTurret(LogicGameEntity):
         ]
 
         # filter stuff shot by myself
-        targets = [e for e in targets if not is_related(self, e, depth=4)]
+        targets = [
+            e for e in targets if check_target(e, self)
+        ]
 
         for target in targets:
             if target not in self.available_targets:
@@ -697,9 +715,15 @@ class SniperTurret(BaseTurret):
             weapon=weapon,
             max_range=2400,
             sensors=[
-                RadarSensor(runtime_buffer, self, 2500, sphere_accuracy=256)
+                RadarSensor(
+                    runtime_buffer,
+                    self,
+                    2500,
+                    sphere_accuracy=256,
+                    min_rcs=0.00001,
+                )
             ],
-            **kwargs
+            **kwargs,
         )
 
 

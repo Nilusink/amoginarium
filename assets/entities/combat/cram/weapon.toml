@@ -3,12 +3,12 @@ from = "weapon.base"
 cid = "weapon.cram"
 
 [visibility]
-size = [120, 60]
+size = [128, 128]
 
 [image]
-name = "CRAM_base"
-mirror = ""
-rotate_anchor = [64, 128]
+name = "CRAM_canon"
+mirror = "x"
+rotate_anchor = [32, 79]
 
 
 [behaviour]

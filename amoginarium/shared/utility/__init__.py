@@ -3,15 +3,16 @@ from ._utility_functions import is_parent, classname, \
     coord_t, lidar_sphere, convert_color, color_t
 from ._calculations import calculate_launch_angle_iterative, rk4_update
 from ._cvectors import Vec2, normalize_angle
-from ._cutility_functions import raycast_size
 from ._ccolor import Color, fade, c_255_to_1
-from ._cutility_functions import add_tuple
 from ._constants import SQ2, MASK16, MASK32, MASK64
 from ._tuplemath import TupleMath
 
-from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord, is_related
+from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord
+from ._cutility_functions import is_related, raycast_size, add_tuple, pack_int
+from ._cutility_functions import unpack_int
 from ._ccalculations import calculate_launch_angle
 from ._utility_functions import multi_raycast_mask, get_default
+from ._error_types import WtfError
 
 
 # from ._cutility_functions import point_in_triangle as _pit, raycast_mask as _rm, convert_coord as _cc, is_related as _ir

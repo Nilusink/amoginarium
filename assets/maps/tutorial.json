@@ -119,7 +119,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.exacto_sniper",
+            "type": "turret.static.sniper",
             "pos": [2500, 700]
         },
         {

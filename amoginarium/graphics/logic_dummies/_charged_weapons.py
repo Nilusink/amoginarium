@@ -66,20 +66,20 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
         cls._images = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._image_scope, cls._image_size, mirror="x"
+                cls._image_scope, cls._default_size, mirror="x"
             )
         ]
         cls._images_m = [
             t[0]
             for t in textures.get_all_from_scope(
                 cls._image_scope,
-                cls._image_size,
+                cls._default_size,
             )
         ]
 
     @classmethod
     def get_icon(cls) -> tuple[int, tuple[int, int]]:
-        return cls._images[0], cls._image_size
+        return cls._images[0], cls._default_size
 
     @property
     def _texture_id_r(self) -> int:
@@ -95,5 +95,5 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
 class RailGunDummy(ChargedDynamicWeaponDummy):
     _cid = WeaponCIDs.railgun
     _image_scope = "railgun"
-    _image_size = (128, 64)
+    _default_size = (128, 64)
     _image_rotate_anchor = Vec2().from_cartesian(24, 32)

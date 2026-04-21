@@ -20,7 +20,7 @@ from ._turrets import MortarTurretDummy, FlakTurretDummy, BaseTurretDummy
 from ._turrets import SkyShieldDummy, ExactoSniperTurretDummy
 from ._weapons import Minigun, Ak47, Mortar, Flak, CRAM, HandThrownGrenade
 from ._weapons import SkyShieldGun, ExactoSniper, WeaponDummy
-from ._sensors import SensorHUD
+from ._sensors import SensorHUD, RadarSensorHUD, MagicSensorHUD, VisualSensorHUD
 from ._items import Shield, HealingPotion, JetBag
 from ._charged_weapons import RailGunDummy
 from ._text_entity import TextEntity
@@ -57,8 +57,15 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         TextEntity,
         AeroDummy,
         ExactoSniper,
-        ExactoSniperTurretDummy
+        ExactoSniperTurretDummy,
+        RadarSensorHUD,
+        MagicSensorHUD,
+        VisualSensorHUD,
     ]
 }
 
-GRAPHICS_SPAWNABLES.update(load_entities_from_files(ProcessType.base, GRAPHICS_SPAWNABLES))
+
+# noinspection PyTypeChecker
+GRAPHICS_SPAWNABLES.update(
+    load_entities_from_files(ProcessType.base, GRAPHICS_SPAWNABLES)
+)

@@ -3,12 +3,11 @@ from = "turret.static.base"
 cid = "turret.static.cram"
 
 [visibility]
-size = 20
+size = [64, 128]
 
 [image]
-name = "sniper"
+name = "CRAM_base"
 mirror = ""
-rotate_anchor = [25, 33]
 
 [behaviour]
 turn_speed = 2
