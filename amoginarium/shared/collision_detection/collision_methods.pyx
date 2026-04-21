@@ -14,17 +14,19 @@ cdef inline void project_shape(int h_type, const vector[double]& vx, const vecto
                                double * out_min, double * out_max) noexcept:
     cdef double min_p, max_p, p
     cdef size_t sz = vx.size()
+    cdef const double * vx_ptr = vx.data()
+    cdef const double * vy_ptr = vy.data()
     cdef size_t i
 
     if h_type == 5:
-        p = vx[0] * nx + vy[0] * ny
+        p = vx_ptr[0] * nx + vy_ptr[0] * ny
         out_min[0] = p - radius
         out_max[0] = p + radius
     else:
-        min_p = vx[0] * nx + vy[0] * ny
+        min_p = vx_ptr[0] * nx + vy_ptr[0] * ny
         max_p = min_p
         for i in range(1, sz):
-            p = vx[i] * nx + vy[i] * ny
+            p = vx_ptr[i] * nx + vy_ptr[i] * ny
             if p < min_p:
                 min_p = p
             elif p > max_p:
@@ -38,53 +40,83 @@ cdef bint aabb_aabb_swept(
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept:
-    cdef double v_rel_x, v_rel_y, min_x, max_x, min_y, max_y
-    cdef double t_near_x, t_far_x, t_near_y, t_far_y, t_hit_near, t_hit_far
+    cdef double v_rel_x, v_rel_y, min_x, max_x, min_y, max_y, inv_v_x, inv_v_y
+    cdef double ex_min_x, ex_max_x, ex_min_y, ex_max_y, m_min_x, m_max_x, m_min_y, m_max_y
+    cdef double ex_t_near_x, ex_t_far_x, ex_t_near_y, ex_t_far_y, m_t_near_x, m_t_far_x, m_t_near_y, m_t_far_y
+    cdef double ex_t_hit_near, ex_t_hit_far, m_t_hit_near, m_t_hit_far
     cdef double dist_left, dist_right, dist_top, dist_bottom, min_dist_x, min_dist_y
-    cdef double t_start, t_end, t_mid, a_mid_px, a_mid_py, b_mid_px, b_mid_py
-    cdef double mid_overlap_x, mid_overlap_y, required_overlap
+    cdef double margin
 
     v_rel_x = (a_px_n - a_px_o) - (b_px_n - b_px_o)
     v_rel_y = (a_py_n - a_py_o) - (b_py_n - b_py_o)
 
-    min_x = b_px_o - a_sx
-    max_x = b_px_o + b_sx
-    min_y = b_py_o - a_sy
-    max_y = b_py_o + b_sy
+    margin = 0.0001 if not is_active else -0.0001
 
-    t_near_x = -1e300
-    t_far_x = 1e300
-    t_near_y = -1e300
-    t_far_y = 1e300
+    ex_min_x = b_px_o - a_sx
+    ex_max_x = b_px_o + b_sx
+    ex_min_y = b_py_o - a_sy
+    ex_max_y = b_py_o + b_sy
 
-    if min_x > max_x + 1e-6 or min_y > max_y + 1e-6:
+    m_min_x = ex_min_x + margin
+    m_max_x = ex_max_x - margin
+    m_min_y = ex_min_y + margin
+    m_max_y = ex_max_y - margin
+
+    ex_t_near_x = -1e300
+    ex_t_far_x = 1e300
+    ex_t_near_y = -1e300
+    ex_t_far_y = 1e300
+    m_t_near_x = -1e300
+    m_t_far_x = 1e300
+    m_t_near_y = -1e300
+    m_t_far_y = 1e300
+
+    if ex_min_x > ex_max_x or ex_min_y > ex_max_y:
         return False
 
     if v_rel_x != 0.0:
-        t_near_x = (min_x - a_px_o) / v_rel_x
-        t_far_x = (max_x - a_px_o) / v_rel_x
-        if t_near_x > t_far_x: t_near_x, t_far_x = t_far_x, t_near_x
+        inv_v_x = 1.0 / v_rel_x
+        ex_t_near_x = (ex_min_x - a_px_o) * inv_v_x
+        ex_t_far_x = (ex_max_x - a_px_o) * inv_v_x
+        if ex_t_near_x > ex_t_far_x: ex_t_near_x, ex_t_far_x = ex_t_far_x, ex_t_near_x
+
+        m_t_near_x = (m_min_x - a_px_o) * inv_v_x
+        m_t_far_x = (m_max_x - a_px_o) * inv_v_x
+        if m_t_near_x > m_t_far_x: m_t_near_x, m_t_far_x = m_t_far_x, m_t_near_x
     else:
-        if a_px_o < min_x - 1e-6 or a_px_o > max_x + 1e-6: return False
+        if not (ex_min_x <= a_px_o <= ex_max_x): return False
+        if not (m_min_x <= a_px_o <= m_max_x): return False
 
     if v_rel_y != 0.0:
-        t_near_y = (min_y - a_py_o) / v_rel_y
-        t_far_y = (max_y - a_py_o) / v_rel_y
-        if t_near_y > t_far_y: t_near_y, t_far_y = t_far_y, t_near_y
+        inv_v_y = 1.0 / v_rel_y
+        ex_t_near_y = (ex_min_y - a_py_o) * inv_v_y
+        ex_t_far_y = (ex_max_y - a_py_o) * inv_v_y
+        if ex_t_near_y > ex_t_far_y: ex_t_near_y, ex_t_far_y = ex_t_far_y, ex_t_near_y
+
+        m_t_near_y = (m_min_y - a_py_o) * inv_v_y
+        m_t_far_y = (m_max_y - a_py_o) * inv_v_y
+        if m_t_near_y > m_t_far_y: m_t_near_y, m_t_far_y = m_t_far_y, m_t_near_y
     else:
-        if a_py_o < min_y - 1e-6 or a_py_o > max_y + 1e-6: return False
+        if not (ex_min_y <= a_py_o <= ex_max_y): return False
+        if not (m_min_y <= a_py_o <= m_max_y): return False
 
-    t_hit_near = c_max(t_near_x, t_near_y)
-    t_hit_far = c_min(t_far_x, t_far_y)
+    ex_t_hit_near = c_max(ex_t_near_x, ex_t_near_y)
+    ex_t_hit_far = c_min(ex_t_far_x, ex_t_far_y)
 
-    if t_hit_near > t_hit_far or t_hit_far <= 0.0 or t_hit_near >= 1.0:
+    m_t_hit_near = c_max(m_t_near_x, m_t_near_y)
+    m_t_hit_far = c_min(m_t_far_x, m_t_far_y)
+
+    if ex_t_hit_near > ex_t_hit_far or ex_t_hit_far <= 0.0 or ex_t_hit_near >= 1.0:
         return False
 
-    if t_hit_near <= 0.0:
-        dist_left = a_px_o - min_x
-        dist_right = max_x - a_px_o
-        dist_top = a_py_o - min_y
-        dist_bottom = max_y - a_py_o
+    if m_t_hit_near > m_t_hit_far or m_t_hit_far <= 0.0 or m_t_hit_near >= 1.0:
+        return False
+
+    if ex_t_hit_near <= 0.0:
+        dist_left = a_px_o - ex_min_x
+        dist_right = ex_max_x - a_px_o
+        dist_top = a_py_o - ex_min_y
+        dist_bottom = ex_max_y - a_py_o
         min_dist_x = dist_left if dist_left < dist_right else dist_right
         min_dist_y = dist_top if dist_top < dist_bottom else dist_bottom
 
@@ -95,10 +127,10 @@ cdef bint aabb_aabb_swept(
             out_norm_x[0] = 0.0
             out_norm_y[0] = -1.0 if dist_top < dist_bottom else 1.0
     else:
-        if t_near_x > t_near_y:
+        if ex_t_near_x > ex_t_near_y:
             out_norm_x[0] = -1.0 if v_rel_x > 0.0 else 1.0
             out_norm_y[0] = 0.0
-        elif t_near_y > t_near_x:
+        elif ex_t_near_y > ex_t_near_x:
             out_norm_x[0] = 0.0
             out_norm_y[0] = -1.0 if v_rel_y > 0.0 else 1.0
         else:
@@ -108,24 +140,7 @@ cdef bint aabb_aabb_swept(
     if (v_rel_x * out_norm_x[0]) + (v_rel_y * out_norm_y[0]) > 0.0:
         return False
 
-    t_start = c_max(0.0, t_hit_near)
-    t_end = c_min(1.0, t_hit_far)
-    t_mid = (t_start + t_end) * 0.5
-
-    a_mid_px = a_px_o + (a_px_n - a_px_o) * t_mid
-    a_mid_py = a_py_o + (a_py_n - a_py_o) * t_mid
-    b_mid_px = b_px_o + (b_px_n - b_px_o) * t_mid
-    b_mid_py = b_py_o + (b_py_n - b_py_o) * t_mid
-
-    mid_overlap_x = c_min((a_mid_px + a_sx) - b_mid_px, (b_mid_px + b_sx) - a_mid_px)
-    mid_overlap_y = c_min((a_mid_py + a_sy) - b_mid_py, (b_mid_py + b_sy) - a_mid_py)
-
-    required_overlap = 1e-4 if not is_active else -1e-4
-
-    if mid_overlap_x <= required_overlap or mid_overlap_y <= required_overlap:
-        return False
-
-    out_t[0] = c_max(0.0, t_hit_near)
+    out_t[0] = c_max(0.0, ex_t_hit_near)
     return True
 
 cdef bint swept_sat_generic(
@@ -144,61 +159,87 @@ cdef bint swept_sat_generic(
     cdef double nx, ny, minA_o, maxA_o, minB_o, maxB_o, minA_n, maxA_n, minB_n, maxB_n, v_proj, t0, t1, inv_v
     cdef double t_start, t_end, t_mid, required_overlap, minA_mid, maxA_mid, minB_mid, maxB_mid, mid_overlap
 
-    cdef vector[double] all_ax_x
-    cdef vector[double] all_ax_y
-    all_ax_x.reserve(a_ax.size() + b_ax.size() + 16)
-    all_ax_y.reserve(a_ay.size() + b_ay.size() + 16)
+    cdef double ax_x[64]
+    cdef double ax_y[64]
+    cdef int num_axes = 0
+    cdef double minA_o_arr[64], maxA_o_arr[64]
+    cdef double minA_n_arr[64], maxA_n_arr[64]
+    cdef double minB_o_arr[64], maxB_o_arr[64]
+    cdef double minB_n_arr[64], maxB_n_arr[64]
+
+    cdef const double * a_vx_o_ptr = a_vx_o.data()
+    cdef const double * a_vy_o_ptr = a_vy_o.data()
+    cdef const double * a_vx_n_ptr = a_vx_n.data()
+    cdef const double * a_vy_n_ptr = a_vy_n.data()
+    cdef const double * b_vx_o_ptr = b_vx_o.data()
+    cdef const double * b_vy_o_ptr = b_vy_o.data()
+    cdef const double * b_vx_n_ptr = b_vx_n.data()
+    cdef const double * b_vy_n_ptr = b_vy_n.data()
 
     for i in range(a_ax.size()):
-        all_ax_x.push_back(a_ax[i])
-        all_ax_y.push_back(a_ay[i])
+        ax_x[num_axes] = a_ax[i]
+        ax_y[num_axes] = a_ay[i]
+        num_axes += 1
     for i in range(b_ax.size()):
-        all_ax_x.push_back(b_ax[i])
-        all_ax_y.push_back(b_ay[i])
+        ax_x[num_axes] = b_ax[i]
+        ax_y[num_axes] = b_ay[i]
+        num_axes += 1
 
-    cdef double dx, dy, ln
+    cdef double dx, dy, ln, inv_ln
     if a_type == 5:
         if b_type == 5:
-            dx = b_vx_o[0] - a_vx_o[0];
-            dy = b_vy_o[0] - a_vy_o[0]
+            dx = b_vx_o_ptr[0] - a_vx_o_ptr[0];
+            dy = b_vy_o_ptr[0] - a_vy_o_ptr[0]
             ln = sqrt(dx * dx + dy * dy)
             if ln > 1e-6:
-                all_ax_x.push_back(dx / ln);
-                all_ax_y.push_back(dy / ln)
-            dx = b_vx_n[0] - a_vx_n[0];
-            dy = b_vy_n[0] - a_vy_n[0]
+                inv_ln = 1.0 / ln
+                ax_x[num_axes] = dx * inv_ln;
+                ax_y[num_axes] = dy * inv_ln
+                num_axes += 1
+            dx = b_vx_n_ptr[0] - a_vx_n_ptr[0];
+            dy = b_vy_n_ptr[0] - a_vy_n_ptr[0]
             ln = sqrt(dx * dx + dy * dy)
             if ln > 1e-6:
-                all_ax_x.push_back(dx / ln);
-                all_ax_y.push_back(dy / ln)
+                inv_ln = 1.0 / ln
+                ax_x[num_axes] = dx * inv_ln;
+                ax_y[num_axes] = dy * inv_ln
+                num_axes += 1
         else:
             for i in range(b_vx_o.size()):
-                dx = b_vx_o[i] - a_vx_o[0];
-                dy = b_vy_o[i] - a_vy_o[0]
+                dx = b_vx_o_ptr[i] - a_vx_o_ptr[0];
+                dy = b_vy_o_ptr[i] - a_vy_o_ptr[0]
                 ln = sqrt(dx * dx + dy * dy)
                 if ln > 1e-6:
-                    all_ax_x.push_back(dx / ln);
-                    all_ax_y.push_back(dy / ln)
-                dx = b_vx_n[i] - a_vx_n[0];
-                dy = b_vy_n[i] - a_vy_n[0]
+                    inv_ln = 1.0 / ln
+                    ax_x[num_axes] = dx * inv_ln;
+                    ax_y[num_axes] = dy * inv_ln
+                    num_axes += 1
+                dx = b_vx_n_ptr[i] - a_vx_n_ptr[0];
+                dy = b_vy_n_ptr[i] - a_vy_n_ptr[0]
                 ln = sqrt(dx * dx + dy * dy)
                 if ln > 1e-6:
-                    all_ax_x.push_back(dx / ln);
-                    all_ax_y.push_back(dy / ln)
+                    inv_ln = 1.0 / ln
+                    ax_x[num_axes] = dx * inv_ln;
+                    ax_y[num_axes] = dy * inv_ln
+                    num_axes += 1
     elif b_type == 5:
         for i in range(a_vx_o.size()):
-            dx = b_vx_o[0] - a_vx_o[i];
-            dy = b_vy_o[0] - a_vy_o[i]
+            dx = b_vx_o_ptr[0] - a_vx_o_ptr[i];
+            dy = b_vy_o_ptr[0] - a_vy_o_ptr[i]
             ln = sqrt(dx * dx + dy * dy)
             if ln > 1e-6:
-                all_ax_x.push_back(dx / ln);
-                all_ax_y.push_back(dy / ln)
-            dx = b_vx_n[0] - a_vx_n[i];
-            dy = b_vy_n[0] - a_vy_n[i]
+                inv_ln = 1.0 / ln
+                ax_x[num_axes] = dx * inv_ln;
+                ax_y[num_axes] = dy * inv_ln
+                num_axes += 1
+            dx = b_vx_n_ptr[0] - a_vx_n_ptr[i];
+            dy = b_vy_n_ptr[0] - a_vy_n_ptr[i]
             ln = sqrt(dx * dx + dy * dy)
             if ln > 1e-6:
-                all_ax_x.push_back(dx / ln);
-                all_ax_y.push_back(dy / ln)
+                inv_ln = 1.0 / ln
+                ax_x[num_axes] = dx * inv_ln;
+                ax_y[num_axes] = dy * inv_ln
+                num_axes += 1
 
     v_rel_x = a_dx - b_dx
     v_rel_y = a_dy - b_dy
@@ -210,12 +251,17 @@ cdef bint swept_sat_generic(
     mtv_nx = 0.0
     mtv_ny = 0.0
 
-    for i in range(all_ax_x.size()):
-        nx = all_ax_x[i]
-        ny = all_ax_y[i]
+    for i in range(num_axes):
+        nx = ax_x[i]
+        ny = ax_y[i]
 
         project_shape(a_type, a_vx_o, a_vy_o, a_radius, nx, ny, &minA_o, &maxA_o)
         project_shape(b_type, b_vx_o, b_vy_o, b_radius, nx, ny, &minB_o, &maxB_o)
+
+        minA_o_arr[i] = minA_o;
+        maxA_o_arr[i] = maxA_o
+        minB_o_arr[i] = minB_o;
+        maxB_o_arr[i] = maxB_o
 
         overlap = c_min(maxA_o - minB_o, maxB_o - minA_o)
         if overlap < min_overlap:
@@ -242,6 +288,9 @@ cdef bint swept_sat_generic(
             if t1 < t_exit: t_exit = t1
             if t_enter > t_exit: return False
 
+        project_shape(a_type, a_vx_n, a_vy_n, a_radius, nx, ny, &minA_n_arr[i], &maxA_n_arr[i])
+        project_shape(b_type, b_vx_n, b_vy_n, b_radius, nx, ny, &minB_n_arr[i], &maxB_n_arr[i])
+
     if t_enter >= 1.0 or t_exit <= 0.0: return False
 
     if t_enter <= 0.0:
@@ -258,19 +307,11 @@ cdef bint swept_sat_generic(
     t_mid = (t_start + t_end) * 0.5
     required_overlap = 1e-4 if not is_active else -1e-4
 
-    for i in range(all_ax_x.size()):
-        nx = all_ax_x[i]
-        ny = all_ax_y[i]
-
-        project_shape(a_type, a_vx_o, a_vy_o, a_radius, nx, ny, &minA_o, &maxA_o)
-        project_shape(a_type, a_vx_n, a_vy_n, a_radius, nx, ny, &minA_n, &maxA_n)
-        project_shape(b_type, b_vx_o, b_vy_o, b_radius, nx, ny, &minB_o, &maxB_o)
-        project_shape(b_type, b_vx_n, b_vy_n, b_radius, nx, ny, &minB_n, &maxB_n)
-
-        minA_mid = minA_o + (minA_n - minA_o) * t_mid
-        maxA_mid = maxA_o + (maxA_n - maxA_o) * t_mid
-        minB_mid = minB_o + (minB_n - minB_o) * t_mid
-        maxB_mid = maxB_o + (maxB_n - maxB_o) * t_mid
+    for i in range(num_axes):
+        minA_mid = minA_o_arr[i] + (minA_n_arr[i] - minA_o_arr[i]) * t_mid
+        maxA_mid = maxA_o_arr[i] + (maxA_n_arr[i] - maxA_o_arr[i]) * t_mid
+        minB_mid = minB_o_arr[i] + (minB_n_arr[i] - minB_o_arr[i]) * t_mid
+        maxB_mid = maxB_o_arr[i] + (maxB_n_arr[i] - maxB_o_arr[i]) * t_mid
 
         mid_overlap = c_min(maxA_mid - minB_mid, maxB_mid - minA_mid)
         if mid_overlap <= required_overlap:

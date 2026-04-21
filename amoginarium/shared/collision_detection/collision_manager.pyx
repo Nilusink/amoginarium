@@ -411,10 +411,10 @@ cdef class CollisionManager:
 
         elif ed.h_type == 5:
             if ed.is_centered:
-                cx = ed.px_n
+                cx = ed.px_n;
                 cy = ed.py_n
             else:
-                cx = ed.px_n + ed.radius
+                cx = ed.px_n + ed.radius;
                 cy = ed.py_n + ed.radius
             ed.vx_n.clear()
             ed.vy_n.clear()
@@ -564,6 +564,7 @@ cdef class CollisionManager:
         cdef int check_lvl = ga.max_level if ga.max_level < gb.max_level else gb.max_level
         cdef uint64_t pair_key, a_id, b_id
         cdef unordered_set[uint64_t] checked_pairs
+        checked_pairs.reserve(512)
 
         cdef EntityData * ea
         cdef EntityData * eb
