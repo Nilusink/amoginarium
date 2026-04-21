@@ -75,7 +75,7 @@ class Bullet(LogicGameEntity):
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cluster_fuze_ttl_mult",
         "_coll_sibling", "_cluster_step_explosion", "_cluster_size_mult", "_cluster_last_step_ttl",
-        "_cluster_fuze_dist", "_cluster_bullet_type", "_cluster_step_inertia", "_hp"
+        "_cluster_fuze_dist", "_cluster_bullet_type", "_cluster_step_inertia", "_hp", "_cluster_args"
     )
 
     # region InstanceVars
@@ -215,6 +215,7 @@ class Bullet(LogicGameEntity):
         bullet_default = get_default(self._default_cluster_bullet_type, self.__class__)
         self._cluster_bullet_type: tp.Type[Bullet] = get_default(cluster_bullet_type, bullet_default)
         self._cluster_step_inertia = get_default(cluster_step_inertia, self._default_cluster_step_inertia)
+        self._cluster_args = {}
         self._visibility_offset = get_default(
             visibility_offset, self._default_visibility_offset
         )
@@ -405,7 +406,7 @@ class Bullet(LogicGameEntity):
             elif event.group_id == collision_group_shields:
                 self.__on_collision_shield(event)
 
-    def _update(self, delta):
+    def _update(self, delta, update_facing: bool = True):
         self._time_to_life -= delta
         self._visibility_offset -= delta
         self._invincibility_offset -= delta
@@ -422,7 +423,8 @@ class Bullet(LogicGameEntity):
         self._last_pos = self.position.copy()
 
         super()._update(delta)
-        self.facing.angle = self.velocity.angle
+        if update_facing:
+            self.facing.angle = self.velocity.angle
 
         # check if cluster detonate
         if self._cluster_depth > 0:

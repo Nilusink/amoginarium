@@ -31,7 +31,7 @@ from .._items import Shield, HealingPotion, JetBag, Inventory, Item
 from .._base_entities import LogicGameEntity
 from .._collision.collision_relations import collision_group_players, collision_group_islands, collision_group_bullets
 from .._debug import PolyDebugRenderingEntity
-from ._exacto import ExactoSniper
+from .._turrets import ExactoSniper
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet

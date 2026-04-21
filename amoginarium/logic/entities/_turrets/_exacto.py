@@ -13,19 +13,21 @@ from ctypes import Array
 import typing as tp
 import math as m
 
-from amoginarium.shared.utility import Vec2, coord_t, multi_raycast_mask, normalize_angle
+from amoginarium.shared.utility import Vec2, coord_t, normalize_angle
 from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
 from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
-from ..audio import Sniper as SniperSound
-from ._static_turrets import BaseTurret, TargetSolution
-from ._logic_groups import Updated, Players, Bullets
-from ._aerodynamic_entity import AerodynamicEntity
-from ._base_entity import LogicGameEntity
-from ._weapons import BaseWeapon
-from ._radar import RadarSensor
+from .._collision import collision_manager
+from .._collision.collision_relations import collision_group_turrets, collision_group_islands, collision_group_players
+from ...audio import Sniper as SniperSound
+from ._base_turret import BaseTurret, TargetSolution
+from .._groups import Updated, Players, Bullets
+from .._bullets import AerodynamicEntity
+from .._base_entities import LogicGameEntity
+from .._weapons import BaseWeapon
+from .._sensors import RadarSensor
 
 
 class ExactoBullet(AerodynamicEntity):
@@ -151,21 +153,16 @@ class ExactoSniper(BaseWeapon):
 
         # if no targeting func, target with straight laser
         if not self._targeting_func:
-            sprites = Updated.sprites() + Players.sprites() + [
-                b for b in Bullets.sprites() if b.parent != self
-            ]
-            hits = multi_raycast_mask(
-                self,
-                sprites,
-                self.position + Vec2().from_polar(self.facing.angle, 100),
-                self.position + Vec2().from_polar(self.facing.angle, self._max_range),
+            # sprites = Updated.sprites() + Players.sprites() + [
+            #     b for b in Bullets.sprites() if b.parent != self
+            # ]
+            hits = collision_manager.manual_collision(
+                group_ids=[collision_group_islands, collision_group_turrets, collision_group_players],
+                start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
+                end_position=self.position + Vec2().from_polar(self.facing.angle, self._max_range)
             )
             if hits:
-                hits = [hit[1] for hit in hits]
-                hits = sorted(hits, key=lambda e: e.length)
-
-                self._current_target = hits[0]
-
+                self._current_target = hits[0].position
             else:
                 self._current_target = self.position + Vec2().from_polar(
                     self.facing.angle, self._max_range
@@ -227,19 +224,13 @@ class ExactoTurret(BaseTurret):
         if self._current_target:
             if self._current_target in self.available_targets:
                 # raycast towards target
-                sprites = (
-                    Updated.sprites()
-                    + Players.sprites()
-                    + [b for b in Bullets.sprites() if b.parent != self]
-                )
-                hits = multi_raycast_mask(
-                    self,
-                    sprites,
-                    self.position + Vec2().from_polar(self.facing.angle, 100),
-                    self._current_target.position,
+                hits = collision_manager.manual_collision(
+                    group_ids=[collision_group_islands, collision_group_turrets, collision_group_players],
+                    start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
+                    end_position=self._current_target.position
                 )
                 if hits:
-                    return hits[0][1]
+                    return hits[0].position
 
                 return self._current_target.position
 

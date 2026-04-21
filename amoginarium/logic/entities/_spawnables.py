@@ -14,8 +14,8 @@ from ._turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret, FlakT
 from ._sensors import VisualRadarSensor, VisualSensor
 from ._base_entities import LogicGameEntity
 from ._debug import DebugRenderingEntity, PolyDebugRenderingEntity
+from ._turrets import ExactoTurret
 from ._world import TextEntity
-from ._exacto import ExactoTurret
 
 # noinspection PyTypeChecker
 SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {

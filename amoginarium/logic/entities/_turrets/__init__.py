@@ -7,4 +7,5 @@ Authors: LukasKrah
 """
 
 from ._static_turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret, FlakTurret, CRAMTurret, SkyShield
-from ._base_turret import BaseTurret
+from ._exacto import ExactoBullet, ExactoSniper, ExactoTurret
+from ._base_turret import BaseTurret, TargetSolution

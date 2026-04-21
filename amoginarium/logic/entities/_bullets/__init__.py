@@ -9,5 +9,6 @@ Authors: LukasKrah
 """
 
 from ._bullets import MortarShell, ClusterMortarShell, SniperBullet, FlakBullet, CRAMBullet, SkyShieldBullet
+from ._aerodynamic_entity import AerodynamicEntity
 from ._base_bullet import Bullet
 from ._grenade import Grenade

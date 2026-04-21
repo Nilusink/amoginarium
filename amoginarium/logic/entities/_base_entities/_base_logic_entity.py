@@ -14,6 +14,7 @@ from ctypes import Array
 import typing as tp
 
 from amoginarium.shared import base_entity_t, ENTITY_COUNTER
+from amoginarium import pv
 
 from .._groups import Updated, LogicGroup
 
@@ -71,6 +72,9 @@ class BaseLogicEntity:
 
         self._set_bit("flags", 0, True)  # set alive
         self._set_bit("flags", 1, True)  # set visible
+
+        # directly write to RAM to make sure graphics entity has correct data
+        pv.E_BUFF[self.__id] = self._runtime_buffer[self.__id]
 
         self.add(Updated)
 
