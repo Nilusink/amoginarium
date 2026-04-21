@@ -16,7 +16,8 @@ from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect, SmallE
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from amoginarium.shared.utility import Vec2
 
-from ._weapons import BaseWeapon, Bullet, SniperBullet
+from ._dynamic_entities import DYNAMIC_ENTITIES
+from ._weapons import BaseWeapon, Bullet
 
 
 class ChargedWeapon(BaseWeapon):
@@ -37,7 +38,6 @@ class ChargedWeapon(BaseWeapon):
             mag_size: int,
             inaccuracy: float,
             bullet_speed: tuple[float, float],  # range
-            barrel_length: float,  # where bullets spawn
             parent_position_offset: Vec2 | tuple[float, float],
             bullet_damage: tuple[float, float] = (1, 1),
             bullet_explosion_radius: tuple[float, float] = (-1, -1),
@@ -54,7 +54,6 @@ class ChargedWeapon(BaseWeapon):
             recoil_time=recoil_time,
             mag_size=mag_size,
             inaccuracy=inaccuracy,
-            barrel_length=barrel_length,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=0,
             drop_casings=drop_casings,
@@ -202,12 +201,11 @@ class RailGun(ChargedWeapon):
             inaccuracy=.01093606,
             bullet_speed=(2500, 4000),
             bullet_damage=(1, 10),
-            barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_damage=(10, 200),
             bullet_explosion_radius=(5, 512),
-            bullet_type=SniperBullet,
+            bullet_type=DYNAMIC_ENTITIES["bullet.sniper"],
             sound_effect=SmallExplosion(),
 
             time_to_life=10,

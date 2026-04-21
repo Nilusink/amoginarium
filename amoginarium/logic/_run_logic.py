@@ -288,7 +288,7 @@ class LogicProcess:
                     **args
                 )
 
-            except (KeyError, TypeError):
+            except KeyboardInterrupt:  # (KeyError, TypeError):
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{SPAWNABLES[entity["type"]].__name__}{CC.fg.RED}: "

@@ -21,6 +21,9 @@ recoil_factor = 1
 [bullet]
 type = "<bullet.sniper>"
 
+[cluster_bullet]
+type = "<bullet.mortar.cluster>"
+
 [sound]
 name = ""  # choose ONE (preset gets priority if both are specified)
 scope = ""

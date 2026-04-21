@@ -269,13 +269,6 @@ class AkTurretDummy(BaseTurretDummy):
     _cid = TurretCIDs.ak47
 
 
-class MortarTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.mortar
-    _image_name = "mortar_turret_base"
-    _default_size = (23, 24)
-
-
 class FlakTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.flak

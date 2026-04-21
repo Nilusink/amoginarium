@@ -48,6 +48,15 @@ def check_value[A](value: A, convert_vec2: bool = False) -> A | _ResolveThis:
             return _ResolveThis(value.lstrip("<").rstrip(">"))
 
     if convert_vec2 and isinstance(value, list):
+        # only convert values with length of 2
+        if len(value) != 2:
+            return value
+
+        # make sure values are numbers
+        for val in value:
+            if not isinstance(val, (float, int)):
+                return value
+
         return Vec2().from_cartesian(value[0], value[1])
 
     return value
@@ -69,8 +78,12 @@ def load_entities_from_files(
     entity_index = entity_index.copy()
     new_entities: dict[str, tp.Type] = {}
 
+    # inherits form other dynamic entities 
+    to_inherit = {}
+
     for file in Path(directory).rglob("*.toml", case_sensitive=False):
         with open(file, "rb") as f:
+            lazy_inherit = False
             # ignore examples folder
             if file.parent.parts[-1] == "examples":
                 continue
@@ -95,10 +108,7 @@ def load_entities_from_files(
 
             # try to find parent entity
             if data["id"]["from"] not in entity_index:
-                ic(file, "failed: inherit", data["id"]["from"])
-                continue
-
-            parent_class = entity_index[data["id"]["from"]]
+                lazy_inherit = True
 
             class_name = f"File{"".join([p.capitalize() for p in data["id"]["cid"].split(".")])}"
 
@@ -202,18 +212,46 @@ def load_entities_from_files(
 
                     __dict[dict_key] = value
 
-            # noinspection PyTypeChecker
-            new_class: tp.Type = type(
-                class_name,
-                (parent_class,),
-                __dict
-            )  # type: ignore[assignment]
+            if not lazy_inherit:
+                parent_class = entity_index[data["id"]["from"]]
 
-            new_entities[cid] = new_class
+                # noinspection PyTypeChecker
+                new_class: tp.Type = type(
+                    class_name,
+                    (parent_class,),
+                    __dict
+                )  # type: ignore[assignment]
+                new_entities[cid] = new_class
+
+            else:
+                to_inherit[cid] = (class_name, data["id"]["from"], __dict)
+
+    for _ in range(len(to_inherit)):
+        for cid, params in to_inherit.copy().items():
+            if params[1] not in new_entities and params[1] not in to_inherit:
+                ic(cid, "failed: inherit", params[1])
+                to_inherit.pop(cid)
+                continue
+
+            # if inheritance is possible, append to entity index
+            if params[1] in new_entities:
+                ic(cid, "inherit", new_entities[params[1]])
+                new_entities[cid] = type(
+                    params[0],
+                    (new_entities[params[1]],),
+                    params[2]
+                )
+                to_inherit.pop(cid)
+
+        if not to_inherit:
+            break
+
+    else:
+        raise RuntimeError(f"Circular dependancy detected: {list(to_inherit.keys())}")
 
     entity_index.update(new_entities)
 
-    names = [c.__name__ for c in new_entities.values()]
+    names = [c.__name__ for c in entity_index.values()]
     ic(names)
 
     # resolve stuff
@@ -240,5 +278,7 @@ def load_entities_from_files(
                         ic(entity, sensor)
 
                 setattr(entity, key, sensors)
+
+
 
     return new_entities

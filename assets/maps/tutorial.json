@@ -63,7 +63,7 @@
             "size": [1024, 64]
         },
         {
-            "type": "island.brick.green",
+            "type": "island.grass",
             "args": {
                 "pos": [16100, 650],
                 "form": [
@@ -119,7 +119,7 @@
     ],
     "entities": [
         {
-            "type": "turret.static.ak47",
+            "type": "turret.static.mortar",
             "pos": [2500, 700]
         },
         {

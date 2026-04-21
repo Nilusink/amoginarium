@@ -30,7 +30,7 @@ from debugging import run_with_debug
 
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon, Mortar, Flak, SkyShieldWeapon
+from ._weapons import BaseWeapon, Flak, SkyShieldWeapon
 from ._base_entity import LogicGameEntity
 from ._sensors import MagicSensor, BaseSensor
 from ._detection_group import DetectionGroup
@@ -124,7 +124,8 @@ class BaseTurret(LogicGameEntity):
         detection_group: DetectionGroup = None,
         valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
         turn_speed: float | EllipsisType = ...,
-        allow_static_target: bool | EllipsisType = ...
+        allow_static_target: bool | EllipsisType = ...,
+        cluster: bool = False
     ) -> None:
         size = get_default(size, self._default_size)
 
@@ -161,12 +162,18 @@ class BaseTurret(LogicGameEntity):
             if isinstance(self._default_weapon_type, EllipsisType):
                 raise RuntimeError(f"No weapon set for {self.__class__.__name__}")
 
+            kwargs = {}
+            if cluster:
+                kwargs["cluster"] = True
+
             self.weapon = self._default_weapon_type(
                 parent=self,
                 runtime_buffer=runtime_buffer,
                 drop_casings=self._default_weapon_drop_casings,
-                parent_position_offset=offset
+                parent_position_offset=offset,
+                **kwargs
             )
+            self.weapon.reload(True)
 
         self.weapon.set_parent(self)
         self.weapon.show()
@@ -176,7 +183,7 @@ class BaseTurret(LogicGameEntity):
 
         self.airburst_munition = get_default(
             airburst_munition, self._default_airburst_munition
-        )
+        ) or cluster
         self.intercept_bullets = get_default(
             intercept_bullets, self._default_target_bullets
         )
@@ -654,50 +661,6 @@ class BaseTurret(LogicGameEntity):
         # apply rotation
         self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
-
-
-class MortarTurret(BaseTurret):
-    _cid = TurretCIDs.mortar
-    _default_max_hp: int = 90
-    _default_engagement_aim_type = "high"
-
-    _default_facing_angle = -np.pi / 2
-    _default_turn_speed = .3
-    _default_max_error = .05
-    _default_allow_static_target = True
-
-    def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            cluster: bool = False,
-            **kwargs
-    ) -> None:
-        self._coalition = coalition  # needed because the weapon wants it
-        weapon = Mortar(
-            self,
-            runtime_buffer,
-            False,
-            parent_position_offset=(0, -13),
-            cluster=cluster
-        )
-        weapon.reload(True)
-
-        super().__init__(
-            runtime_buffer,
-            coalition,
-            position,
-            size=Vec2().from_cartesian(23 * 1.5, 24 * 1.5),
-            weapon=weapon,
-            max_range=3000,
-            min_range=550,
-            sensors=[
-                RadarSensor(runtime_buffer, self, 2500, min_rcs=0.01)
-            ],
-            airburst_munition=cluster,
-            **kwargs
-        )
 
 
 class FlakTurret(BaseTurret):

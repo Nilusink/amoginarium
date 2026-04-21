@@ -1,0 +1,23 @@
+[id]
+from = "dummy.bullet.base"
+cid = "bullet.mortar"
+
+[visibility]
+size = [40, 20]
+
+trace_color = [[1, 1, 1, 0.6]]  # either one or two colors
+trace_length = 200
+
+[image]
+name = "mortar_shell"
+
+[behaviour]
+hp = 0.5
+ttl = 7
+weight = 8
+base_damage = 40
+visibility_offset = 0.025
+
+[explosion]
+radius = 150
+damage = 50

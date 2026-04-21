@@ -7,7 +7,7 @@ implements weapons for players and turrets
 Author:
 Nilusink
 """
-from typing_extensions import deprecated
+
 from types import EllipsisType
 from random import random
 from ctypes import Array
@@ -16,15 +16,12 @@ import typing as tp
 
 from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
 from amoginarium.shared.audio import RandomizedEffect, SoundEffect, Shotgun, Cannon
-from amoginarium.shared.audio import Minigun as MinigunSound, AK47 as AK47Sound
-from amoginarium.shared.audio import Mortar as MortarSound
-
-from amoginarium.shared.utility import Vec2, convert_coord, coord_t, get_default
+from amoginarium.shared.utility import Vec2, convert_coord, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from shared import Coalitions
 
-from ._bullets import Bullet, SniperBullet, MortarShell, Grenade, FlakBullet
-from ._bullets import SkyShieldBullet, ClusterMortarShell
+from ._bullets import Bullet, Grenade, FlakBullet
+from ._bullets import SkyShieldBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
 from ._base_item import Item
@@ -51,6 +48,7 @@ class BaseWeapon(Item):
     ] = ...
 
     _default_bullet_type: tp.Type[Bullet] = Bullet
+    _default_cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...
 
     def __init__(
         self,
@@ -68,6 +66,7 @@ class BaseWeapon(Item):
         bullet_type: tp.Type[Bullet] | EllipsisType = ...,
         weapon_size: Vec2 | EllipsisType = ...,
         drop_casings: bool = False,
+        cluster: bool = False,
         spawn_args: dict[str, tp.Any] | EllipsisType = ...,
         **bullet_kwargs,
     ) -> None:
@@ -96,7 +95,19 @@ class BaseWeapon(Item):
         self._recoil_time = get_default(recoil_time, self._default_recoil_time)
         self._reload_time = get_default(reload_time, self._default_reload_time)
         self._recoil_factor = get_default(recoil_factor, self._default_recoil_factor)
-        self._bullet_type = get_default(bullet_type, self._default_bullet_type)
+        if cluster:
+            if isinstance(self._default_cluster_bullet_type, EllipsisType):
+                raise RuntimeError(
+                    f"No cluster munition defined for {self.__class__.__name__}"
+                )
+
+            self._bullet_type = get_default(
+                bullet_type, self._default_cluster_bullet_type
+            )
+
+        else:
+            self._bullet_type = get_default(bullet_type, self._default_bullet_type)
+    
         self._muzzle_velocity = get_default(
             muzzle_velocity, self._default_muzzle_velocity
         )
@@ -342,48 +353,14 @@ class FileLoadedWeapon(BaseWeapon):
             parent,
             runtime_buffer: Array[base_entity_t],
             drop_casings: bool = False,
-            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
-    ) -> None:
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            parent_position_offset=parent_position_offset
-        )
-
-
-class Mortar(BaseWeapon):
-    """
-    Mortar
-    """
-    _cid = WeaponCIDs.mortar
-
-    _default_bullet_type = MortarShell
-
-    def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            drop_casings: bool = False,
             parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
-            muzzle_velocity=1800,
-            cluster: bool = False
+            **kwargs
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
-            reload_time=8,
-            recoil_time=.25,
-            mag_size=1,
-            inaccuracy=.00100002,
             parent_position_offset=parent_position_offset,
-            muzzle_velocity=muzzle_velocity,
-            drop_casings=drop_casings,
-            sound_effect=MortarSound(),
-            bullet_type=ClusterMortarShell if cluster else MortarShell,
-            
-            # bullet args
-            time_to_life=7,
-            visibility_offset=.025,
+            **kwargs
         )
 
 

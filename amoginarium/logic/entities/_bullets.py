@@ -486,27 +486,6 @@ class Bullet(LogicGameEntity):
         return True
 
 
-class MortarShell(Bullet):
-    _default_hp = 0.5
-    _weight = 8
-    _cid = DummyCIDs.mortar_bullet
-
-    _default_base_damage = 40
-    _default_ttl = 6
-    _default_explosion_radius = 150
-    _default_explosion_damage = 50
-    _default_size = Vec2().from_cartesian(40, 20)
-
-
-class ClusterMortarShell(MortarShell):
-    _default_cluster_depth = 2
-    _default_cluster_amount = 3
-    _default_cluster_spread = np.pi/5
-    _default_cluster_fuze_ttl_mult = .3
-    _default_cluster_step_explosion = 0
-    _default_cluster_last_step_ttl = 3
-
-
 class _GrenadeShrapnel(Bullet):
     _cid = DummyCIDs.base_bullet
 
@@ -574,13 +553,6 @@ class Grenade(Bullet):
             return False
 
         return super().kill(killed_by)
-
-
-class SniperBullet(Bullet):
-    _weight = 5
-
-    _default_size = 15
-    _default_base_damage = 15
 
 
 class FlakBullet(Bullet):

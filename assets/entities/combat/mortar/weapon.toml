@@ -1,0 +1,26 @@
+[id]
+from = "weapon.base"
+cid = "weapon.mortar"
+
+[visibility]
+size = [37.5, 25.5]
+
+[image]
+name = "mortar"
+rotate_anchor = [11.25, 12]
+
+[behaviour]
+mag_size = 1
+reload_time = 8
+recoil_time = 0.25
+inaccuracy = 0.00100002
+muzzle_velocity = 1800
+
+[bullet]
+type = "<bullet.mortar>"
+
+[cluster_bullet]
+type = "<bullet.mortar.cluster>"
+
+[sound]
+name = "mortar"
