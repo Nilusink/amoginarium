@@ -5,7 +5,7 @@
 # cython: nonecheck=False
 
 from .collision_manager cimport CollisionManager, CollisionGroupStruct, EntityData, CollisionRelationStruct, DeferredDeletion
-from .collision_methods cimport aabb_aabb_swept, swept_sat_generic
+from .collision_methods cimport aabb_aabb_swept, aabb_circle_swept, circle_circle_swept, swept_sat_generic
 from .collision_event import CollisionEvent
 from amoginarium.shared.utility import Vec2
 from libcpp.unordered_set cimport unordered_set
@@ -31,11 +31,16 @@ cdef class CollisionManager:
         self.next_col_id = 1
 
     def add_group(self, int max_level, bint is_static=False, str hitbox_type="aabb") -> int:
-        if max_level >= self.cell_sizes.size():
-            max_level = self.cell_sizes.size() - 1
-
-        cdef int g_id = self.groups.size()
+        cdef size_t cs_sz
+        cdef int g_id
         cdef CollisionGroupStruct group
+        cdef int lvl
+
+        cs_sz = self.cell_sizes.size()
+        if max_level >= <int> cs_sz:
+            max_level = <int> cs_sz - 1
+
+        g_id = <int> self.groups.size()
         group.id = g_id
         group.max_level = max_level
         group.is_static = is_static
@@ -55,7 +60,6 @@ cdef class CollisionManager:
         self.groups.push_back(group)
         self.group_instances.append([])
 
-        cdef int lvl
         for lvl in range(max_level + 1):
             self.grids[lvl][g_id] = unordered_map[uint64_t, vector[int]]()
 
@@ -65,14 +69,18 @@ cdef class CollisionManager:
         cdef size_t i
         cdef int lvl
         cdef CollisionGroupStruct * group
+        cdef size_t rel_sz
+        cdef size_t grp_sz
 
         self.pending_deletions.clear()
 
-        for i in range(self.relations.size()):
+        rel_sz = self.relations.size()
+        for i in range(rel_sz):
             self.relations[i].active_cols.clear()
             self.relations[i].updated_cols.clear()
 
-        for i in range(self.groups.size()):
+        grp_sz = self.groups.size()
+        for i in range(grp_sz):
             group = &self.groups[i]
             group.entities.clear()
             group.free_ids.clear()
@@ -87,13 +95,15 @@ cdef class CollisionManager:
         cdef int e_id, lvl
         cdef EntityData ed
         cdef double _rad = 0.0
+        cdef size_t free_ids_sz
 
         if radius is not None:
             _rad = radius
         elif size is not None:
             _rad = size.x
 
-        if not group.free_ids.empty():
+        free_ids_sz = group.free_ids.size()
+        if free_ids_sz > 0:
             e_id = group.free_ids.back()
             group.free_ids.pop_back()
             group.entities[e_id].active = True
@@ -132,11 +142,11 @@ cdef class CollisionManager:
                 group.entities[e_id].bound_min_y[lvl] = -2147483647
                 group.entities[e_id].bound_max_x[lvl] = -2147483647
                 group.entities[e_id].bound_max_y[lvl] = -2147483647
-                group.entities[e_id].grid_keys[lvl].clear()
+                group.entities[e_id].grid_keys[lvl][0].clear()
 
             self.group_instances[group_id][e_id] = instance
         else:
-            e_id = group.entities.size()
+            e_id = <int> group.entities.size()
             ed.id = e_id
             ed.active = True
             ed.h_type = group.h_type
@@ -178,8 +188,10 @@ cdef class CollisionManager:
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef EntityData * ed
         cdef DeferredDeletion dd
+        cdef size_t ent_sz
 
-        if entity_id < 0 or entity_id >= group.entities.size(): return
+        ent_sz = group.entities.size()
+        if entity_id < 0 or entity_id >= ent_sz: return
 
         ed = &group.entities[entity_id]
         if not ed.active: return
@@ -196,8 +208,11 @@ cdef class CollisionManager:
         cdef tuple cbs
         cdef list evs_a = []
         cdef list evs_b = []
+        cdef size_t rel_sz
+        cdef size_t i
 
-        for i in range(self.relations.size()):
+        rel_sz = self.relations.size()
+        for i in range(rel_sz):
             rel = &self.relations[i]
             if rel.group_a_id == group_id or rel.group_b_id == group_id:
                 cbs = self.relation_callbacks[i]
@@ -243,13 +258,14 @@ cdef class CollisionManager:
                 for ev in evs_b: cbs[3](ev[0], [ev[1]])
 
     cdef void _flush_deletions(self):
-        cdef size_t i, j
+        cdef size_t i, j, keys_sz, pd_sz
         cdef int g_id, e_id, lvl
         cdef CollisionGroupStruct * group
         cdef EntityData * ed
         cdef vector[uint64_t] * keys
 
-        for i in range(self.pending_deletions.size()):
+        pd_sz = self.pending_deletions.size()
+        for i in range(pd_sz):
             g_id = self.pending_deletions[i].group_id
             e_id = self.pending_deletions[i].entity_id
 
@@ -263,9 +279,10 @@ cdef class CollisionManager:
 
             for lvl in range(group.max_level + 1):
                 keys = &ed.grid_keys[lvl]
-                for j in range(keys.size()):
+                keys_sz = keys[0].size()
+                for j in range(keys_sz):
                     self._remove_from_cell(lvl, g_id, keys[0][j], e_id)
-                keys.clear()
+                keys[0].clear()
 
             group.free_ids.push_back(e_id)
 
@@ -274,6 +291,12 @@ cdef class CollisionManager:
     def update_entity(self, int group_id, int entity_id, object position=None, object size=None, object centered=None,
                       object rotation=None, list positions=None, bint shift_history=True, object radius=None):
         cdef EntityData * ed = &self.groups[group_id].entities[entity_id]
+        cdef double old_px_n, old_py_n
+        cdef double cx, cy, hw, hh, cr, sr, ax, ay, dx, dy, ln
+        cdef double pivot_x, pivot_y
+        cdef size_t i, num_v
+        cdef size_t ax_x_sz, vx_n_sz, vx_n_sz_2, vx_o_sz2, vx_n_sz2, vx_o_sz3, vx_n_sz3
+
         if not ed.active: return
 
         if shift_history:
@@ -282,12 +305,8 @@ cdef class CollisionManager:
             ed.vx_o = ed.vx_n
             ed.vy_o = ed.vy_n
 
-        cdef double old_px_n = ed.px_n
-        cdef double old_py_n = ed.py_n
-
-        cdef double cx, cy, hw, hh, cr, sr, ax, ay, dx, dy, ln
-        cdef double pivot_x, pivot_y
-        cdef size_t i, num_v
+        old_px_n = ed.px_n
+        old_py_n = ed.py_n
 
         if centered is not None: ed.is_centered = centered
         if size is not None: ed.sx = size.x; ed.sy = size.y
@@ -318,7 +337,9 @@ cdef class CollisionManager:
             ed.vy_n.push_back(cy + ed.sy)
             ed.vx_n.push_back(cx)
             ed.vy_n.push_back(cy + ed.sy)
-            if ed.axes_x.empty():
+
+            ax_x_sz = ed.axes_x.size()
+            if ax_x_sz == 0:
                 ed.axes_x.push_back(1.0)
                 ed.axes_y.push_back(0.0)
                 ed.axes_x.push_back(0.0)
@@ -380,7 +401,8 @@ cdef class CollisionManager:
                 dy = ed.py_n - old_py_n
                 ed.vx_o.clear()
                 ed.vy_o.clear()
-                for i in range(ed.vx_n.size()):
+                vx_n_sz = ed.vx_n.size()
+                for i in range(vx_n_sz):
                     ed.vx_o.push_back(ed.vx_n[i] - dx)
                     ed.vy_o.push_back(ed.vy_n[i] - dy)
 
@@ -397,7 +419,8 @@ cdef class CollisionManager:
             elif position is not None:
                 dx = ed.px_n - old_px_n
                 dy = ed.py_n - old_py_n
-                for i in range(ed.vx_n.size()):
+                vx_n_sz_2 = ed.vx_n.size()
+                for i in range(vx_n_sz_2):
                     ed.vx_n[i] += dx
                     ed.vy_n[i] += dy
 
@@ -421,7 +444,8 @@ cdef class CollisionManager:
             ed.vx_n.push_back(cx)
             ed.vy_n.push_back(cy)
 
-        if ed.vx_o.empty() or ed.vx_o.size() == 0:
+        vx_o_sz2 = ed.vx_o.size()
+        if vx_o_sz2 == 0:
             ed.vx_o = ed.vx_n
             ed.vy_o = ed.vy_n
 
@@ -440,7 +464,7 @@ cdef class CollisionManager:
         cdef vector[uint64_t] new_keys
         cdef vector[uint64_t] * old_keys
         cdef bint found
-        cdef size_t i, j
+        cdef size_t i, j, keys_sz, new_keys_sz, vx_o_sz, vx_n_sz
 
         if ed.h_type == 0 or ed.h_type == 4:
             min_px = ed.vx_o[0] if ed.vx_o[0] < ed.vx_n[0] else ed.vx_n[0]
@@ -461,7 +485,8 @@ cdef class CollisionManager:
             max_px = ed.vx_o[0]
             min_py = ed.vy_o[0]
             max_py = ed.vy_o[0]
-            for j in range(1, ed.vx_o.size()):
+            vx_o_sz = ed.vx_o.size()
+            for j in range(1, vx_o_sz):
                 if ed.vx_o[j] < min_px:
                     min_px = ed.vx_o[j]
                 elif ed.vx_o[j] > max_px:
@@ -470,7 +495,8 @@ cdef class CollisionManager:
                     min_py = ed.vy_o[j]
                 elif ed.vy_o[j] > max_py:
                     max_py = ed.vy_o[j]
-            for j in range(ed.vx_n.size()):
+            vx_n_sz = ed.vx_n.size()
+            for j in range(vx_n_sz):
                 if ed.vx_n[j] < min_px:
                     min_px = ed.vx_n[j]
                 elif ed.vx_n[j] > max_px:
@@ -503,17 +529,20 @@ cdef class CollisionManager:
                     new_keys.push_back(key)
 
             old_keys = &ed.grid_keys[lvl]
-            for i in range(old_keys.size()):
+            keys_sz = old_keys[0].size()
+            new_keys_sz = new_keys.size()
+
+            for i in range(keys_sz):
                 found = False
-                for j in range(new_keys.size()):
+                for j in range(new_keys_sz):
                     if old_keys[0][i] == new_keys[j]:
                         found = True
                         break
                 if not found: self._remove_from_cell(lvl, group_id, old_keys[0][i], entity_id)
 
-            for i in range(new_keys.size()):
+            for i in range(new_keys_sz):
                 found = False
-                for j in range(old_keys.size()):
+                for j in range(keys_sz):
                     if new_keys[i] == old_keys[0][j]:
                         found = True
                         break
@@ -523,19 +552,22 @@ cdef class CollisionManager:
 
     cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id):
         cdef vector[int] * cell = &self.grids[lvl][group_id][key]
-        cdef size_t i
-        for i in range(cell.size()):
+        cdef size_t i, cell_sz
+        cell_sz = cell[0].size()
+        for i in range(cell_sz):
             if cell[0][i] == entity_id:
                 cell[0][i] = cell.back()
                 cell.pop_back()
                 break
-        if cell.empty():
+        if cell[0].size() == 0:
             self.grids[lvl][group_id].erase(key)
 
     def create_relation(self, int group_a_id, int group_b_id, object cb_a_on_start=None, object cb_a_on_end=None,
                         object cb_b_on_start=None, object cb_b_on_end=None) -> int:
-        cdef int r_id = self.relations.size()
+        cdef int r_id
         cdef CollisionRelationStruct rel
+
+        r_id = <int> self.relations.size()
         rel.id = r_id
         rel.group_a_id = group_a_id
         rel.group_b_id = group_b_id
@@ -544,16 +576,21 @@ cdef class CollisionManager:
         return r_id
 
     def calculate_all_collisions(self):
+        cdef size_t i, rel_sz
+
         self._flush_deletions()
-        cdef size_t i
-        for i in range(self.relations.size()):
+        rel_sz = self.relations.size()
+        for i in range(rel_sz):
             self._calc_relation(&self.relations[i], self.relation_callbacks[i])
 
     def calculate_collisions(self, list relation_ids):
-        self._flush_deletions()
         cdef int r_id
+        cdef size_t rel_sz
+
+        self._flush_deletions()
+        rel_sz = self.relations.size()
         for r_id in relation_ids:
-            if 0 <= r_id < self.relations.size():
+            if 0 <= r_id < <int> rel_sz:
                 self._calc_relation(&self.relations[r_id], self.relation_callbacks[r_id])
 
     cdef void _calc_relation(self, CollisionRelationStruct * rel, tuple callbacks):
@@ -564,7 +601,6 @@ cdef class CollisionManager:
         cdef int check_lvl = ga.max_level if ga.max_level < gb.max_level else gb.max_level
         cdef uint64_t pair_key, a_id, b_id
         cdef unordered_set[uint64_t] checked_pairs
-        checked_pairs.reserve(512)
 
         cdef EntityData * ea
         cdef EntityData * eb
@@ -574,40 +610,43 @@ cdef class CollisionManager:
         cdef vector[uint64_t] * a_keys
         cdef vector[int] * cell_b
 
-        cdef size_t a_idx, k_idx, b_idx, j, k
+        cdef size_t a_idx, k_idx, b_idx, j, k, a_keys_sz, cell_b_sz, ent_sz, to_remove_sz
         cdef int iterations
         cdef bint hit
         cdef double a_dx, a_dy, b_dx, b_dy
 
         cdef bint is_active_col
         cdef int col_id
+        cdef int ret_len
+        cdef list actual_evs
+        cdef object ret
 
         events_a_start = {}
         events_b_start = {}
         events_a_end = {}
         events_b_end = {}
 
-        cdef int ret_len
-        cdef list actual_evs
-        cdef object ret
-
+        checked_pairs.reserve(512)
         rel.updated_cols.clear()
 
-        for a_idx in range(ga.entities.size()):
+        ent_sz = ga.entities.size()
+        for a_idx in range(ent_sz):
             ea = &ga.entities[a_idx]
             if not ea.active: continue
 
             a_keys = &ea.grid_keys[check_lvl]
+            a_keys_sz = a_keys[0].size()
 
-            for k_idx in range(a_keys.size()):
+            for k_idx in range(a_keys_sz):
                 if not ea.active: break
 
                 if self.grids[check_lvl][rel.group_b_id].count(a_keys[0][k_idx]) == 0:
                     continue
 
                 cell_b = &self.grids[check_lvl][rel.group_b_id][a_keys[0][k_idx]]
+                cell_b_sz = cell_b[0].size()
 
-                for b_idx in range(cell_b.size()):
+                for b_idx in range(cell_b_sz):
                     b_id = cell_b[0][b_idx]
 
                     if is_same and ea.id >= b_id:
@@ -623,13 +662,28 @@ cdef class CollisionManager:
                     is_active_col = (rel.active_cols.count(pair_key) > 0)
                     hit = False
 
-                    if (ea.h_type == 0 or ea.h_type == 4) and (eb.h_type == 0 or eb.h_type == 4):
+                    if ea.h_type == 0 and eb.h_type == 0:
                         hit = aabb_aabb_swept(
                             ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.sx, ea.sy,
                             eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
-                            is_active_col,
-                            &norm_x, &norm_y, &t
-                        )
+                            is_active_col, &norm_x, &norm_y, &t)
+                    elif ea.h_type == 0 and (eb.h_type == 4 or eb.h_type == 5):
+                        hit = aabb_circle_swept(
+                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.sx, ea.sy,
+                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                            is_active_col, &norm_x, &norm_y, &t)
+                    elif (ea.h_type == 4 or ea.h_type == 5) and eb.h_type == 0:
+                        hit = aabb_circle_swept(
+                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
+                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
+                            is_active_col, &norm_x, &norm_y, &t)
+                        norm_x = -norm_x
+                        norm_y = -norm_y
+                    elif (ea.h_type == 4 or ea.h_type == 5) and (eb.h_type == 4 or eb.h_type == 5):
+                        hit = circle_circle_swept(
+                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
+                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                            is_active_col, &norm_x, &norm_y, &t)
                     else:
                         a_dx = ea.px_n - ea.px_o
                         a_dy = ea.py_n - ea.py_o
@@ -704,7 +758,8 @@ cdef class CollisionManager:
                 to_remove.push_back(pair_key)
             inc(it)
 
-        for k in range(to_remove.size()):
+        to_remove_sz = to_remove.size()
+        for k in range(to_remove_sz):
             rel.active_cols.erase(to_remove[k])
 
         for ent_id, evs in events_a_start.items():
@@ -741,7 +796,7 @@ cdef class CollisionManager:
         cdef double pivot_x, pivot_y
         cdef size_t i, num_v
         cdef double min_px, min_py, max_px_o, max_px_n, max_px, max_py_o, max_py_n, max_py
-        cdef list events = []
+        cdef list events
         cdef int g_id, lvl, min_cx, min_cy, max_cx, max_cy, grid_cx, grid_cy, b_id
         cdef double c_size, norm_x, norm_y, t, a_dx, a_dy, b_dx, b_dy
         cdef uint64_t key
@@ -749,7 +804,10 @@ cdef class CollisionManager:
         cdef CollisionGroupStruct * gb
         cdef EntityData * eb
         cdef unordered_set[int] checked
+        cdef size_t cell_b_sz, vx_o_sz, vx_n_sz, vx_o_sz2, vx_n_sz2, vx_o_sz3, vx_n_sz3, grp_sz
+        cdef double _rad
 
+        events = []
         ed.h_type = 4
         if hitbox_type == "aabb":
             ed.h_type = 0
@@ -762,7 +820,7 @@ cdef class CollisionManager:
         elif hitbox_type == "circle":
             ed.h_type = 5
 
-        cdef double _rad = 0.0
+        _rad = 0.0
         if radius is not None:
             _rad = radius
         elif size is not None:
@@ -846,7 +904,8 @@ cdef class CollisionManager:
                 dx = ed.px_n - ed.px_o
                 dy = ed.py_n - ed.py_o
 
-                for i in range(ed.vx_o.size()):
+                vx_o_sz = ed.vx_o.size()
+                for i in range(vx_o_sz):
                     ed.vx_n.push_back(ed.vx_o[i] + dx)
                     ed.vy_n.push_back(ed.vy_o[i] + dy)
 
@@ -877,10 +936,12 @@ cdef class CollisionManager:
             ed.vx_n.push_back(cx);
             ed.vy_n.push_back(cy)
 
-        if ed.vx_o.empty() and not ed.vx_n.empty():
+        vx_o_sz2 = ed.vx_o.size()
+        vx_n_sz2 = ed.vx_n.size()
+        if vx_o_sz2 == 0 and vx_n_sz2 > 0:
             dx = ed.px_n - ed.px_o
             dy = ed.py_n - ed.py_o
-            for i in range(ed.vx_n.size()):
+            for i in range(vx_n_sz2):
                 ed.vx_o.push_back(ed.vx_n[i] - dx)
                 ed.vy_o.push_back(ed.vy_n[i] - dy)
 
@@ -903,7 +964,8 @@ cdef class CollisionManager:
             max_px = ed.vx_o[0]
             min_py = ed.vy_o[0];
             max_py = ed.vy_o[0]
-            for j in range(1, ed.vx_o.size()):
+            vx_o_sz3 = ed.vx_o.size()
+            for j in range(1, vx_o_sz3):
                 if ed.vx_o[j] < min_px:
                     min_px = ed.vx_o[j]
                 elif ed.vx_o[j] > max_px:
@@ -912,7 +974,8 @@ cdef class CollisionManager:
                     min_py = ed.vy_o[j]
                 elif ed.vy_o[j] > max_py:
                     max_py = ed.vy_o[j]
-            for j in range(ed.vx_n.size()):
+            vx_n_sz3 = ed.vx_n.size()
+            for j in range(vx_n_sz3):
                 if ed.vx_n[j] < min_px:
                     min_px = ed.vx_n[j]
                 elif ed.vx_n[j] > max_px:
@@ -922,8 +985,9 @@ cdef class CollisionManager:
                 elif ed.vy_n[j] > max_py:
                     max_py = ed.vy_n[j]
 
+        grp_sz = self.groups.size()
         for g_id in group_ids:
-            if g_id < 0 or g_id >= self.groups.size(): continue
+            if g_id < 0 or g_id >= <int> grp_sz: continue
             gb = &self.groups[g_id]
             checked.clear()
 
@@ -940,7 +1004,8 @@ cdef class CollisionManager:
                         if self.grids[lvl][g_id].count(key) == 0: continue
 
                         cell_b = &self.grids[lvl][g_id][key]
-                        for j in range(cell_b.size()):
+                        cell_b_sz = cell_b[0].size()
+                        for j in range(cell_b_sz):
                             b_id = cell_b[0][j]
                             if checked.count(b_id): continue
                             checked.insert(b_id)
@@ -949,20 +1014,40 @@ cdef class CollisionManager:
                             if not eb.active: continue
 
                             hit = False
-                            if (ed.h_type == 0 or ed.h_type == 4) and (eb.h_type == 0 or eb.h_type == 4):
-                                hit = aabb_aabb_swept(ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.sx, ed.sy,
-                                                      eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
-                                                      False, &norm_x, &norm_y, &t)
+                            if ed.h_type == 0 and eb.h_type == 0:
+                                hit = aabb_aabb_swept(
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.sx, ed.sy,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
+                                    False, &norm_x, &norm_y, &t)
+                            elif ed.h_type == 0 and (eb.h_type == 4 or eb.h_type == 5):
+                                hit = aabb_circle_swept(
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.sx, ed.sy,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                                    False, &norm_x, &norm_y, &t)
+                            elif (ed.h_type == 4 or ed.h_type == 5) and eb.h_type == 0:
+                                hit = aabb_circle_swept(
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.radius,
+                                    False, &norm_x, &norm_y, &t)
+                                norm_x = -norm_x
+                                norm_y = -norm_y
+                            elif (ed.h_type == 4 or ed.h_type == 5) and (eb.h_type == 4 or eb.h_type == 5):
+                                hit = circle_circle_swept(
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.radius,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                                    False, &norm_x, &norm_y, &t)
                             else:
                                 a_dx = ed.px_n - ed.px_o;
                                 a_dy = ed.py_n - ed.py_o
                                 b_dx = eb.px_n - eb.px_o;
                                 b_dy = eb.py_n - eb.py_o
-                                hit = swept_sat_generic(ed.h_type, ed.vx_o, ed.vy_o, ed.vx_n, ed.vy_n, ed.axes_x,
-                                                        ed.axes_y, a_dx, a_dy, ed.radius,
-                                                        eb.h_type, eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x,
-                                                        eb.axes_y, b_dx, b_dy, eb.radius,
-                                                        False, &norm_x, &norm_y, &t)
+                                hit = swept_sat_generic(
+                                    ed.h_type, ed.vx_o, ed.vy_o, ed.vx_n, ed.vy_n, ed.axes_x, ed.axes_y, a_dx, a_dy,
+                                    ed.radius,
+                                    eb.h_type, eb.vx_o, eb.vy_o, eb.vx_n, eb.vy_n, eb.axes_x, eb.axes_y, b_dx, b_dy,
+                                    eb.radius,
+                                    False, &norm_x, &norm_y, &t
+                                )
 
                             if hit:
                                 inst_b = self.group_instances[g_id][b_id]
@@ -977,18 +1062,22 @@ cdef class CollisionManager:
 
     def get_points(self, int group_id, int entity_id) -> list:
         cdef CollisionGroupStruct * group = &self.groups[group_id]
-        if entity_id < 0 or entity_id >= group.entities.size():
+        cdef size_t ent_sz
+        cdef EntityData * ed
+        cdef list points
+        cdef size_t i, vx_n_sz
+
+        ent_sz = group.entities.size()
+        if entity_id < 0 or entity_id >= <int> ent_sz:
             return []
 
-        cdef EntityData * ed = &group.entities[entity_id]
+        ed = &group.entities[entity_id]
         if not ed.active:
             return []
 
-        cdef list points = []
-        cdef size_t i
+        points = []
 
         if ed.h_type == 5:
-            # Add 8 representation points for Circle purely for debugging
             for i in range(8):
                 points.append(Vec2().from_cartesian(
                     ed.vx_n[0] + ed.radius * cos(i * 3.14159 / 4.0),
@@ -996,7 +1085,8 @@ cdef class CollisionManager:
                 ))
             return points
 
-        for i in range(ed.vx_n.size()):
+        vx_n_sz = ed.vx_n.size()
+        for i in range(vx_n_sz):
             points.append(Vec2().from_cartesian(ed.vx_n[i], ed.vy_n[i]))
 
         return points

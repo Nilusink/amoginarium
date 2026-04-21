@@ -8,6 +8,20 @@ cdef bint aabb_aabb_swept(
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept
 
+cdef bint aabb_circle_swept(
+        double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_sx, double a_sy,
+        double b_px_o, double b_py_o, double b_px_n, double b_py_n, double b_radius,
+        bint is_active,
+        double * out_norm_x, double * out_norm_y, double * out_t
+) noexcept
+
+cdef bint circle_circle_swept(
+        double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_radius,
+        double b_px_o, double b_py_o, double b_px_n, double b_py_n, double b_radius,
+        bint is_active,
+        double * out_norm_x, double * out_norm_y, double * out_t
+) noexcept
+
 cdef bint swept_sat_generic(
         int a_type, const vector[double]& a_vx_o, const vector[double]& a_vy_o, const vector[double]& a_vx_n,
         const vector[double]& a_vy_n, const vector[double]& a_ax, const vector[double]& a_ay, double a_dx, double a_dy, double a_radius,
