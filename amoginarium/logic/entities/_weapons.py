@@ -20,7 +20,7 @@ from amoginarium.shared.utility import Vec2, convert_coord, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from shared import Coalitions
 
-from ._bullets import Bullet, Grenade, FlakBullet
+from ._bullets import Bullet, Grenade
 from ._bullets import SkyShieldBullet
 from ._logic_groups import CollisionDestroyed, Updated
 from ._base_entity import LogicGameEntity
@@ -361,38 +361,6 @@ class FileLoadedWeapon(BaseWeapon):
             parent=parent,
             parent_position_offset=parent_position_offset,
             **kwargs
-        )
-
-
-class Flak(BaseWeapon):
-    """
-    Flak Canon
-    """
-    _cid = WeaponCIDs.flak
-
-    def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            drop_casings: bool = False,
-            parent_position_offset: Vec2 | tuple[float, float] = Vec2()
-    ) -> None:
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            reload_time=3,
-            recoil_time=0.15,
-            mag_size=4,
-            inaccuracy=0.0100002,
-            parent_position_offset=parent_position_offset,
-            muzzle_velocity=1700,
-            drop_casings=drop_casings,
-            sound_effect=Cannon(),
-            bullet_type=FlakBullet,
-
-            # bullet args
-            time_to_life=5,
-            visibility_offset=0.13,
         )
 
 

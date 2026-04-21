@@ -269,13 +269,6 @@ class AkTurretDummy(BaseTurretDummy):
     _cid = TurretCIDs.ak47
 
 
-class FlakTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.flak
-    _image_name = "FLAK_base"
-    _default_size = (98, 44)
-
-
 class SkyShieldDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.sky_shield

@@ -555,16 +555,6 @@ class Grenade(Bullet):
         return super().kill(killed_by)
 
 
-class FlakBullet(Bullet):
-    _weight = 5
-
-    _default_size = 18
-    _default_base_damage = 30
-
-    _default_explosion_radius = 128
-    _default_explosion_damage = 40
-
-
 class SkyShieldBullet(Bullet):
     _cid = DummyCIDs.cram
 

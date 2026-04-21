@@ -30,7 +30,7 @@ from debugging import run_with_debug
 
 from ._logic_groups import CollisionDestroyed, Players, Updated, Bullets
 from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon, Flak, SkyShieldWeapon
+from ._weapons import BaseWeapon, SkyShieldWeapon
 from ._base_entity import LogicGameEntity
 from ._sensors import MagicSensor, BaseSensor
 from ._detection_group import DetectionGroup
@@ -661,47 +661,6 @@ class BaseTurret(LogicGameEntity):
         # apply rotation
         self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
-
-
-class FlakTurret(BaseTurret):
-    _cid = TurretCIDs.flak
-    _default_max_hp: int = 170
-    _default_engagement_aim_type = "low"
-
-    _default_turn_speed = .8
-    _default_engagement_valid_angles = (
-        Vec2().from_cartesian(-1, .3),
-        Vec2().from_cartesian(-.1, -1)
-    )
-    _default_allow_static_target = True
-
-    def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            **kwargs
-    ) -> None:
-        self._coalition = coalition  # needed because the weapon wants it
-        weapon = Flak(self, runtime_buffer, True, parent_position_offset=(16, -26))
-        weapon.reload(True)
-
-        super().__init__(
-            runtime_buffer,
-            coalition,
-            position,
-            size=Vec2().from_cartesian(98, 44) * 2,
-            weapon=weapon,
-            max_range=2300,
-            min_range=300,
-            airburst_munition=True,
-            intercept_bullets=False,
-            target_taps=2,
-            sensors=[
-                RadarSensor(runtime_buffer, self, 1700)
-            ],
-            **kwargs
-        )
 
 
 class SkyShield(BaseTurret):

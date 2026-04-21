@@ -112,7 +112,7 @@ class Player(LogicGameEntity):
         for item in items:
             self._hotbar.add_item(
                 item,
-                1
+                2
             )
 
         for slot in self._hotbar:

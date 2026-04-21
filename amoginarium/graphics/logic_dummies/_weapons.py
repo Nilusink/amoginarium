@@ -167,21 +167,6 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         return cls._texture_id_r, size
 
 
-class Flak(WeaponDummy):
-    _cid = WeaponCIDs.flak
-    _image_name: str = "FLAK_canon"
-    _default_size: tuple[int, int] = (256, 128)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(83, 59)
-
-
-class CRAM(WeaponDummy):
-    _cid = WeaponCIDs.cram
-    _image_name: str = "CRAM_canon"
-    _image_mirror = "x"
-    _default_size: tuple[int, int] = (128, 128)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(32, 79)
-
-
 class SkyShieldGun(WeaponDummy):
     _cid = WeaponCIDs.sky_shield
     _image_name: str = "skyshield_gun"

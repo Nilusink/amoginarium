@@ -7,7 +7,6 @@ size = [64, 128]
 
 [image]
 name = "CRAM_base"
-mirror = ""
 
 [behaviour]
 turn_speed = 2
