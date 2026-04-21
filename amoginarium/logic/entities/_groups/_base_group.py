@@ -6,14 +6,15 @@ Created: 25.01.2024
 Authors: Nilusink, LukasKrah
 """
 
-import pygame as pg
 import typing as tp
 
 from amoginarium.shared.utility import Vec2, normalize_angle
 from amoginarium.shared import BaseLogicEntityLike
 
+from ._logic_group import LogicGroup
 
-class BaseGroup(pg.sprite.Group):
+
+class BaseGroup(LogicGroup):
     """Basic group for logic entities"""
 
     @staticmethod

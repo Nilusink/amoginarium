@@ -11,12 +11,11 @@ Authors: Nilusink, LukasKrah
 from __future__ import annotations
 
 from ctypes import Array
-import pygame as pg
 import typing as tp
 
 from amoginarium.shared import base_entity_t, ENTITY_COUNTER
 
-from .._groups import Updated
+from .._groups import Updated, LogicGroup
 
 
 class EntityChildViable(tp.Protocol):
@@ -47,7 +46,7 @@ class BaseLogicEntity:
     _lifetime: float
     _runtime_buffer: Array[base_entity_t]
     __id: int
-    __groups: list[pg.sprite.AbstractGroup]
+    __groups: list[LogicGroup]
 
     def __init__(
             self,
@@ -130,7 +129,7 @@ class BaseLogicEntity:
     # endregion
 
     # region Methods: Groups + Kill
-    def add(self, *groups: pg.sprite.AbstractGroup) -> None:
+    def add(self, *groups: LogicGroup) -> None:
         """
         add entity to one or more groups
         :param groups: to add entity to
@@ -142,7 +141,7 @@ class BaseLogicEntity:
                 group.add_internal(self)  # type: ignore
                 self.__groups.append(group)
 
-    def remove(self, *groups: pg.sprite.AbstractGroup) -> None:
+    def remove(self, *groups: LogicGroup) -> None:
         """
         remove entity from one or more groups
         :param groups: to remove entity from
