@@ -1,8 +1,6 @@
 """
 amoginarium/logic/entities/_base_entities/_base_logic_entity.py
 
-Defines the most basic form of logic entity
-
 Project: amoginarium
 Created: 28.03.2026
 Authors: Nilusink, LukasKrah
@@ -10,6 +8,7 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
+from types import EllipsisType
 from ctypes import Array
 import typing as tp
 
@@ -60,11 +59,11 @@ class BaseLogicEntity:
         :param runtime_buffer: Logic runtime buffer
         :param parent: Optional parent entity
         """
-        self.__groups = []
 
         self._parent = parent if parent else None
         self._children = []
         self._lifetime = 0
+        self.__groups = []
 
         # data block
         self.__id = ENTITY_COUNTER.get_id()
@@ -73,7 +72,7 @@ class BaseLogicEntity:
         self._set_bit("flags", 0, True)  # set alive
         self._set_bit("flags", 1, True)  # set visible
 
-        # directly write to RAM to make sure graphics entity has correct data
+        # directly write to RAM to make sure the graphics entity has correct data
         pv.E_BUFF[self.__id] = self._runtime_buffer[self.__id]
 
         self.add(Updated)
@@ -102,7 +101,7 @@ class BaseLogicEntity:
         return self._children
 
     @property
-    def _buff(self) -> base_entity_t:
+    def _buffer(self) -> base_entity_t:
         """:return: runtime buffer data for this entity"""
         return self._runtime_buffer[self.__id]
 
@@ -135,40 +134,39 @@ class BaseLogicEntity:
     # region Methods: Groups + Kill
     def add(self, *groups: LogicGroup) -> None:
         """
-        add entity to one or more groups
+        add entity to one or more logic groups
         :param groups: to add entity to
         """
         has = self.__groups.__contains__
 
         for group in groups:
             if not has(group):
-                group.add_internal(self)  # type: ignore
+                group.add_internal(self)
                 self.__groups.append(group)
 
     def remove(self, *groups: LogicGroup) -> None:
         """
-        remove entity from one or more groups
+        remove entity from one or more logic groups
         :param groups: to remove entity from
         """
         has = self.__groups.__contains__
 
         for group in groups:
             if has(group):
-                group.remove_internal(self)  # type: ignore
+                group.remove_internal(self)
                 self.__groups.remove(group)
 
-    def kill(self, killed_by: tp.Any = ...) -> None:
+    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
         """
-        remove entity from all groups
+        Kill entity and all its children
         :param killed_by: who killed this entity
         """
         # kill children first
         for child in self._children:
             child.kill()
 
-        # commit suicide
         for group in self.__groups:
-            group.remove_internal(self)  # type: ignore
+            group.remove_internal(self)
 
         self._set_bit("flags", 0, False)  # set alive
         ENTITY_COUNTER.pop_id(self.__id)
@@ -206,7 +204,7 @@ class BaseLogicEntity:
         self._set_bit("flags", 1, True)
 
     def hide(self) -> None:
-        """Set visibility to """
+        """Set visibility to 0"""
         self._set_bit("flags", 1, False)
 
     def highlight(self) -> None:

@@ -22,7 +22,7 @@ from ._base_turret import BaseTurret
 
 
 class MinigunTurret(BaseTurret):
-    _cid = TurretCIDs.minigun
+    _COMPONENT_ID = TurretCIDs.minigun
     _max_hp: int = 60
 
     _default_turn_speed = 2
@@ -58,7 +58,7 @@ class MinigunTurret(BaseTurret):
 
 
 class SniperTurret(BaseTurret):
-    _cid = TurretCIDs.sniper
+    _COMPONENT_ID = TurretCIDs.sniper
     _max_hp: int = 40
 
     _default_turn_speed = 2
@@ -89,7 +89,7 @@ class SniperTurret(BaseTurret):
 
 
 class AkTurret(BaseTurret):
-    _cid = TurretCIDs.ak47
+    _COMPONENT_ID = TurretCIDs.ak47
     _max_hp: int = 60
 
     _default_turn_speed = 2
@@ -120,7 +120,7 @@ class AkTurret(BaseTurret):
 
 
 class MortarTurret(BaseTurret):
-    _cid = TurretCIDs.mortar
+    _COMPONENT_ID = TurretCIDs.mortar
     _max_hp: int = 90
     _aim_type = "high"
 
@@ -164,7 +164,7 @@ class MortarTurret(BaseTurret):
 
 
 class FlakTurret(BaseTurret):
-    _cid = TurretCIDs.flak
+    _COMPONENT_ID = TurretCIDs.flak
     _max_hp: int = 170
     _aim_type = "low"
 
@@ -205,7 +205,7 @@ class FlakTurret(BaseTurret):
 
 
 class CRAMTurret(BaseTurret):
-    _cid = TurretCIDs.cram
+    _COMPONENT_ID = TurretCIDs.cram
     _max_hp: int = 60
     _aim_type = "low"
 
@@ -257,7 +257,7 @@ class CRAMTurret(BaseTurret):
 
 
 class SkyShield(BaseTurret):
-    _cid = TurretCIDs.sky_shield
+    _COMPONENT_ID = TurretCIDs.sky_shield
     _max_hp: int = 60
     _aim_type = "low"
 

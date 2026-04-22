@@ -28,7 +28,7 @@ if tp.TYPE_CHECKING:
 
 
 class _GrenadeShrapnel(Bullet):
-    _cid = DummyCIDs.base_bullet
+    _COMPONENT_ID = DummyCIDs.base_bullet
 
     _default_size = 4
     _default_base_damage = 1
@@ -39,7 +39,7 @@ class _GrenadeShrapnel(Bullet):
 
 class Grenade(Bullet):
     # region ClassVars
-    _cid = DummyCIDs.grenade
+    _COMPONENT_ID = DummyCIDs.grenade
     _default_hp = 0.05
 
     _default_size = 32
@@ -60,8 +60,8 @@ class Grenade(Bullet):
 
     _bounce_friction: tp.ClassVar[float] = 0.7
 
-    _COLLISION_ROOT = True
-    _collision_group = collision_group_grenades
+    _DEFAULT_COLLISION_ROOT = True
+    _DEFAULT_COLLISION_GROUP = collision_group_grenades
     # endregion
 
     __slots__ = ()

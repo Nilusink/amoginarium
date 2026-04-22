@@ -56,7 +56,7 @@ class LogicGameEntity(PositionedLogicEntity):
             parent: LogicGameEntity | None = None,
             coalition: Coalitions | EllipsisType = ...,
             centered: bool = False,
-            ignore_collision_id: int | None = None,
+            collision_exceptions: int | None = None,
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -74,7 +74,7 @@ class LogicGameEntity(PositionedLogicEntity):
             position=position,
             parent=parent,
             centered=centered,
-            ignore_collision_id=ignore_collision_id
+            collision_exceptions=collision_exceptions
         )
         # region default parameters
         self._velocity_to_add = Vec2()
@@ -109,7 +109,7 @@ class LogicGameEntity(PositionedLogicEntity):
     @property
     def serializable(self) -> bool:
         """:return: whether the entity is serializable or not"""
-        return self._cid is not ...
+        return self._COMPONENT_ID is not ...
 
     # endregion
 

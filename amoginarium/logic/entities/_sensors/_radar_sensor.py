@@ -144,19 +144,19 @@ class RadarSensor(BaseSensor):
             self._sphere = self._calculate_sphere()
 
         # reset sectors
-        self._buff.param3 = 0
-        self._buff.param4 = 0
+        self._buffer.param3 = 0
+        self._buffer.param4 = 0
         for i in range(8):
             if i > len(self._highlighted_sectors)-1:
                 break
 
             if i < 4:
                 index = i
-                param = self._buff.param3
+                param = self._buffer.param3
 
             else:
                 index = i - 4
-                param = self._buff.param4
+                param = self._buffer.param4
 
             # write data
             param |= (self._highlighted_sectors[i] & MASK16) << (16*index)

@@ -49,7 +49,7 @@ class Player(LogicGameEntity):
 
     on_wall: bool = False
 
-    _collision_group = collision_group_players
+    _DEFAULT_COLLISION_GROUP = collision_group_players
 
     __add_position: Vec2
 
@@ -349,7 +349,7 @@ class Player(LogicGameEntity):
             if hover_slot.count > 0:
                 hover_slot.item.update(delta)
 
-        # ic(collision_manager.get_points(self._collision_group, self._collision_id))
+        # ic(collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self._collision_id))
 
         acc_fac = pv.global_vars.get_acceleration_factor()
         ppm = pv.global_vars.get_pixel_per_meter()

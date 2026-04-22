@@ -34,7 +34,7 @@ class AerodynamicEntity(Bullet):
         "_forces_to_add"
     )
 
-    _cid = DummyCIDs.aero
+    _COMPONENT_ID = DummyCIDs.aero
 
     _default_ttl: float = 20
 
@@ -181,5 +181,5 @@ class AerodynamicEntity(Bullet):
         self._alpha = normalize_angle(self.facing.angle - airflow_d.angle)
 
         # debugging
-        self._buff.param0 = self.velocity.angle
-        self._buff.param1 = self.velocity.length
+        self._buffer.param0 = self.velocity.angle
+        self._buffer.param1 = self.velocity.length

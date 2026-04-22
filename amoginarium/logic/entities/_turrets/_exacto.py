@@ -33,7 +33,7 @@ class ExactoBullet(AerodynamicEntity):
 
     __slots__ = ("_target_callback", "_guidance_delay")
 
-    _cid = DummyCIDs.base_bullet
+    _COMPONENT_ID = DummyCIDs.base_bullet
 
     _weight = 5  # knockback
     _default_base_damage = 15
@@ -50,7 +50,7 @@ class ExactoBullet(AerodynamicEntity):
     # _default_cluster_step_inertia = 500
 
     _default_guidance_delay: float = .01
-    
+
     _max_alpha: float = .1
 
     def __init__(
@@ -109,7 +109,7 @@ class ExactoBullet(AerodynamicEntity):
 class ExactoSniper(BaseWeapon):
     """exacto sniper"""
 
-    _cid = WeaponCIDs.exacto_sniper
+    _COMPONENT_ID = WeaponCIDs.exacto_sniper
     _max_range = 3500
 
     def __init__(
@@ -171,15 +171,15 @@ class ExactoSniper(BaseWeapon):
             self._current_target = self._targeting_func()
 
         if self._current_target:
-            self._buff.param3 = int(normalize_angle(self._current_target.angle) * 10_000)
-            self._buff.param4 = int(self._current_target.length)
+            self._buffer.param3 = int(normalize_angle(self._current_target.angle) * 10_000)
+            self._buffer.param4 = int(self._current_target.length)
 
         else:
-            self._buff.param4 = 0
+            self._buffer.param4 = 0
 
 
 class ExactoTurret(BaseTurret):
-    _cid = TurretCIDs.exacto_sniper
+    _COMPONENT_ID = TurretCIDs.exacto_sniper
     _max_hp: int = 60
 
     _default_turn_speed = 2
@@ -200,7 +200,7 @@ class ExactoTurret(BaseTurret):
             targeting_func=self.__get_target
         )
         weapon.reload(True)
-        
+
         super().__init__(
             runtime_buffer,
             coalition,
@@ -215,7 +215,7 @@ class ExactoTurret(BaseTurret):
             ],
             **kwargs,
         )
-        
+
         self._current_target = None
 
     def __get_target(self) -> Vec2 | None:

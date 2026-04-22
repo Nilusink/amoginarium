@@ -19,7 +19,7 @@ from .._base_entities import LogicGameEntity, PositionedLogicEntity
 
 
 class DebugRenderingEntity(LogicGameEntity):
-    _cid = GraphicsCIDs.debug_rendering
+    _COMPONENT_ID = GraphicsCIDs.debug_rendering
 
     __slots__ = ()
 
@@ -51,7 +51,7 @@ class DebugRenderingEntity(LogicGameEntity):
 
 
 class PolyDebugRenderingEntity(LogicGameEntity):
-    _cid = GraphicsCIDs.debug_poly
+    _COMPONENT_ID = GraphicsCIDs.debug_poly
 
     def __init__(
             self,
@@ -96,19 +96,19 @@ class PolyDebugRenderingEntity(LogicGameEntity):
 
     def _update(self, delta: float) -> None:
         # normal points
-        self._buff.pos_x = self.p1.x
-        self._buff.pos_y = self.p1.y
+        self._buffer.pos_x = self.p1.x
+        self._buffer.pos_y = self.p1.y
 
-        self._buff.size_x = int(normalize_angle(self.p2.angle) * 10_000)
-        self._buff.size_y = int(self.p2.length)
+        self._buffer.size_x = int(normalize_angle(self.p2.angle) * 10_000)
+        self._buffer.size_y = int(self.p2.length)
 
         # float points
-        self._buff.param0 = self.p3.angle
-        self._buff.param1 = self.p4.angle
-        self._buff.param2 = self.p5.angle
-        self._buff.facing = int(normalize_angle(self.p6.angle) * 10_000)
+        self._buffer.param0 = self.p3.angle
+        self._buffer.param1 = self.p4.angle
+        self._buffer.param2 = self.p5.angle
+        self._buffer.facing = int(normalize_angle(self.p6.angle) * 10_000)
 
-        self._buff.param3 = (
+        self._buffer.param3 = (
             int(self.p3.length) & MASK16
             | (int(self.p4.length) & MASK16) << 16
             | (int(self.p5.length) & MASK16) << 32
@@ -116,7 +116,7 @@ class PolyDebugRenderingEntity(LogicGameEntity):
         )
 
         # dual-packed variables
-        self._buff.param4 = (
+        self._buffer.param4 = (
             int(normalize_angle(self.p7.angle) * 10_000) & MASK16
             | (int(self.p7.length) & MASK16) << 16
             | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
@@ -124,4 +124,4 @@ class PolyDebugRenderingEntity(LogicGameEntity):
         )
 
 
-PositionedLogicEntity.DEBUG_ENTITY_CLASS = PolyDebugRenderingEntity
+PositionedLogicEntity.__debug_entity_class = PolyDebugRenderingEntity

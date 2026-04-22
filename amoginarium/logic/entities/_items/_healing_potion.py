@@ -24,7 +24,7 @@ class HealingPotion(BaseItem):
     ``param0``: f_tilt
     """
 
-    _cid = ItemCIDs.healing_potion
+    _COMPONENT_ID = ItemCIDs.healing_potion
     _max_uses = 80
 
     _heal_per_sec: tp.ClassVar[int] = 20

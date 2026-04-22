@@ -67,7 +67,7 @@ class BaseTurret(LogicGameEntity):
     _default_max_error: float | EllipsisType = ...
     _default_allow_static_target: bool = False
 
-    _collision_group = collision_group_turrets
+    _DEFAULT_COLLISION_GROUP = collision_group_turrets
 
     def __init__(
             self,

@@ -25,7 +25,7 @@ class BaseSensor(PositionedLogicEntity):
 
     ``param0`` detection range
     """
-    _cid = SensorCIDs.hud
+    _COMPONENT_ID = SensorCIDs.hud
     _has_sectors: tp.ClassVar[bool] = False
 
     _parent: PositionedLogicEntity
@@ -43,7 +43,7 @@ class BaseSensor(PositionedLogicEntity):
             runtime_buffer=runtime_buffer, position=Vec2(), size=Vec2(), parent=parent
         )
         self.remove(Updated)
-        self._buff.param0 = detection_range
+        self._buffer.param0 = detection_range
 
         self._detection_range = detection_range
         self._visible = visible

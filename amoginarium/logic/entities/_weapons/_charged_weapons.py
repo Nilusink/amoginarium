@@ -19,7 +19,7 @@ from ...audio import SmallExplosion
 
 
 class RailGun(BaseChargedWeapon):
-    _cid = WeaponCIDs.railgun
+    _COMPONENT_ID = WeaponCIDs.railgun
 
     def __init__(
             self,

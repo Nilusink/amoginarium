@@ -28,13 +28,13 @@ from .._debug import PolyDebugRenderingEntity
 from icecream import ic
 
 class Shield(BaseItem):
-    _cid = ItemCIDs.shield
+    _COMPONENT_ID = ItemCIDs.shield
 
     _image_name: tp.ClassVar[tuple[str, str] | str] = ("Shield_6", "4")
     _image_size: tp.ClassVar[tuple[int, int]] = (45, 80)
     _max_uses: tp.ClassVar[int] = 200  # acts as HP for shield
 
-    _collision_group = collision_group_shields
+    _DEFAULT_COLLISION_GROUP = collision_group_shields
 
     __slots__ = ("_in_use", "_sound")
 

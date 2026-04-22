@@ -45,7 +45,7 @@ class Island(LogicGameEntity):
     _block_size: tuple[int, int] = (64, 64)
     debug = False
 
-    _collision_group = collision_group_islands
+    _DEFAULT_COLLISION_GROUP = collision_group_islands
 
     def __init__(
             self,
@@ -317,17 +317,17 @@ class Island(LogicGameEntity):
 
 class GrassIsland(Island):
     _block_size = (64, 64)
-    _cid = IslandCIDs.grass_island
+    _COMPONENT_ID = IslandCIDs.grass_island
 
 
 class GrayBrickIsland(Island):
     _block_size = (24 * 3, 24 * 3)
-    _cid = IslandCIDs.gray_brick_island
+    _COMPONENT_ID = IslandCIDs.gray_brick_island
 
 
 class GreenBrickIsland(Island):
     _block_size = (24 * 3, 24 * 3)
-    _cid = IslandCIDs.green_brick_island
+    _COMPONENT_ID = IslandCIDs.green_brick_island
 
 
 # class PillarIsland(Island):

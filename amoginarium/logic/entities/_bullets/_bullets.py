@@ -16,7 +16,7 @@ from ._base_bullet import Bullet
 
 
 class MortarShell(Bullet):
-    _cid = DummyCIDs.mortar_bullet
+    _COMPONENT_ID = DummyCIDs.mortar_bullet
 
     _default_hp = 0.5
     _weight = 8
@@ -63,7 +63,7 @@ class FlakBullet(Bullet):
 
 
 class CRAMBullet(Bullet):
-    _cid = DummyCIDs.cram
+    _COMPONENT_ID = DummyCIDs.cram
 
     _default_size = 9
     _default_base_damage = .1
@@ -75,7 +75,7 @@ class CRAMBullet(Bullet):
 
 
 class SkyShieldBullet(Bullet):
-    _cid = DummyCIDs.cram
+    _COMPONENT_ID = DummyCIDs.cram
 
     _weight = 1.5
     _default_size = 18

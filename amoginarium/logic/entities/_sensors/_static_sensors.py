@@ -34,12 +34,12 @@ if tp.TYPE_CHECKING:
 class VisualSensor(LogicGameEntity):
     __slots__ = ("detection_group", "coalition", "_hp")
 
-    _cid = SensorCIDs.magic
+    _COMPONENT_ID = SensorCIDs.magic
     _sensor_type: tp.Type[BaseSensor] = MagicSensor
     _size: tuple[float, float] = (64, 64)
     _max_hp = 40
 
-    _collision_group = collision_group_turrets
+    _DEFAULT_COLLISION_GROUP = collision_group_turrets
 
     def __init__(
             self,
@@ -99,5 +99,5 @@ class VisualSensor(LogicGameEntity):
 class VisualRadarSensor(VisualSensor):
     __slots__ = ()
 
-    _cid = SensorCIDs.radar
+    _COMPONENT_ID = SensorCIDs.radar
     _sensor_type = RadarSensor

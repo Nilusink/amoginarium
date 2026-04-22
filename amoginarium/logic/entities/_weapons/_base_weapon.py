@@ -27,7 +27,7 @@ class BaseWeapon(Item):
     """
     basic functionality of all weapons
     """
-    _cid = WeaponCIDs.base
+    _COMPONENT_ID = WeaponCIDs.base
     _no_bullet_gravity: bool = False
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
