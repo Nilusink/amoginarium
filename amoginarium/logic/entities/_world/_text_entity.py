@@ -21,7 +21,7 @@ class TextEntity(LogicGameEntity):
     """
     Static text logic game entity
     """
-    _COMPONENT_ID = GraphicsCIDs.static_text
+    _CID = GraphicsCIDs.static_text
 
     def __init__(
             self,

@@ -33,7 +33,7 @@ class ExactoBullet(AerodynamicEntity):
 
     __slots__ = ("_target_callback", "_guidance_delay")
 
-    _COMPONENT_ID = DummyCIDs.base_bullet
+    _CID = DummyCIDs.base_bullet
 
     _weight = 5  # knockback
     _default_base_damage = 15
@@ -109,7 +109,7 @@ class ExactoBullet(AerodynamicEntity):
 class ExactoSniper(BaseWeapon):
     """exacto sniper"""
 
-    _COMPONENT_ID = WeaponCIDs.exacto_sniper
+    _CID = WeaponCIDs.exacto_sniper
     _max_range = 3500
 
     def __init__(
@@ -179,7 +179,7 @@ class ExactoSniper(BaseWeapon):
 
 
 class ExactoTurret(BaseTurret):
-    _COMPONENT_ID = TurretCIDs.exacto_sniper
+    _CID = TurretCIDs.exacto_sniper
     _max_hp: int = 60
 
     _default_turn_speed = 2

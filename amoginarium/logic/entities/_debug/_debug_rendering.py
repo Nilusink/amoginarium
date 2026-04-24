@@ -15,11 +15,11 @@ from amoginarium.shared.utility import Vec2, color_t, convert_color, MASK16, get
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
-from .._base_entities import LogicGameEntity, PositionedLogicEntity
+from .._base_entities import LogicGameEntity, CollisionLogicEntity
 
 
 class DebugRenderingEntity(LogicGameEntity):
-    _COMPONENT_ID = GraphicsCIDs.debug_rendering
+    _CID = GraphicsCIDs.debug_rendering
 
     __slots__ = ()
 
@@ -51,7 +51,7 @@ class DebugRenderingEntity(LogicGameEntity):
 
 
 class PolyDebugRenderingEntity(LogicGameEntity):
-    _COMPONENT_ID = GraphicsCIDs.debug_poly
+    _CID = GraphicsCIDs.debug_poly
 
     def __init__(
             self,
@@ -124,4 +124,4 @@ class PolyDebugRenderingEntity(LogicGameEntity):
         )
 
 
-PositionedLogicEntity.__debug_entity_class = PolyDebugRenderingEntity
+CollisionLogicEntity.__debug_entity_class = PolyDebugRenderingEntity

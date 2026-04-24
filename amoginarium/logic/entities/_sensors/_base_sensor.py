@@ -25,7 +25,7 @@ class BaseSensor(PositionedLogicEntity):
 
     ``param0`` detection range
     """
-    _COMPONENT_ID = SensorCIDs.hud
+    _CID = SensorCIDs.hud
     _has_sectors: tp.ClassVar[bool] = False
 
     _parent: PositionedLogicEntity

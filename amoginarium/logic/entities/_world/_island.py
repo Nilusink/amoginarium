@@ -317,17 +317,17 @@ class Island(LogicGameEntity):
 
 class GrassIsland(Island):
     _block_size = (64, 64)
-    _COMPONENT_ID = IslandCIDs.grass_island
+    _CID = IslandCIDs.grass_island
 
 
 class GrayBrickIsland(Island):
     _block_size = (24 * 3, 24 * 3)
-    _COMPONENT_ID = IslandCIDs.gray_brick_island
+    _CID = IslandCIDs.gray_brick_island
 
 
 class GreenBrickIsland(Island):
     _block_size = (24 * 3, 24 * 3)
-    _COMPONENT_ID = IslandCIDs.green_brick_island
+    _CID = IslandCIDs.green_brick_island
 
 
 # class PillarIsland(Island):

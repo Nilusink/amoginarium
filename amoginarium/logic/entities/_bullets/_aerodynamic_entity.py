@@ -34,7 +34,7 @@ class AerodynamicEntity(Bullet):
         "_forces_to_add"
     )
 
-    _COMPONENT_ID = DummyCIDs.aero
+    _CID = DummyCIDs.aero
 
     _default_ttl: float = 20
 

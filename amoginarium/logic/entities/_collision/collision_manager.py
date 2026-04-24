@@ -12,3 +12,10 @@ collision_manager = CollisionManager(
     base_cell_size=500,
     level_dividers=[10],
 )
+
+class CollisionType:
+    type CollisionID = int
+    type EntityID = int
+    type GroupID = int
+    type RelationID = int
+    type ExceptionID = int

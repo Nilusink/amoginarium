@@ -254,8 +254,8 @@ class Player(LogicGameEntity):
         accepted_collisions: list[bool] = [False for _ in events]
 
         active_normals = [False, False, False, False]  # x-negative, x-positive, y-negative, y-positive
-        if collision_group_islands in self.active_normals.keys():
-            for normal in self.active_normals[collision_group_islands]:
+        if collision_group_islands in self._active_normals.keys():
+            for normal in self._active_normals[collision_group_islands]:
                 if normal.x < -0.5:
                     active_normals[0] = True
                 elif normal.x > 0.5:
@@ -320,8 +320,8 @@ class Player(LogicGameEntity):
     def _update(self, delta):
         self._on_ground = False
 
-        if collision_group_islands in self.active_normals.keys():
-            for n in self.active_normals[collision_group_islands]:
+        if collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[collision_group_islands]:
                 if n.y < -0.5:
                     self._on_ground = True
                     if self.acceleration.y > 0:
@@ -349,7 +349,7 @@ class Player(LogicGameEntity):
             if hover_slot.count > 0:
                 hover_slot.item.update(delta)
 
-        # ic(collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self._collision_id))
+        # ic(collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id))
 
         acc_fac = pv.global_vars.get_acceleration_factor()
         ppm = pv.global_vars.get_pixel_per_meter()
@@ -513,8 +513,8 @@ class Player(LogicGameEntity):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self.active_normals.keys():
-            for n in self.active_normals[collision_group_islands]:
+        if collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
@@ -531,8 +531,8 @@ class Player(LogicGameEntity):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self.active_normals.keys():
-            for n in self.active_normals[collision_group_islands]:
+        if collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x

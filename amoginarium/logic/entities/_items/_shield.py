@@ -28,7 +28,7 @@ from .._debug import PolyDebugRenderingEntity
 from icecream import ic
 
 class Shield(BaseItem):
-    _COMPONENT_ID = ItemCIDs.shield
+    _CID = ItemCIDs.shield
 
     _image_name: tp.ClassVar[tuple[str, str] | str] = ("Shield_6", "4")
     _image_size: tp.ClassVar[tuple[int, int]] = (45, 80)

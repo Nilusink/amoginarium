@@ -6,7 +6,7 @@ Created: 17.04.2026
 Authors: LukasKrah
 """
 
-from .._base_entities import PositionedLogicEntity
+from .._base_entities import CollisionLogicEntity
 from .collision_manager import collision_manager
 
 collision_group_players = collision_manager.add_group(max_level=0)
@@ -25,8 +25,8 @@ all_groups = [
     collision_group_shields,
 ]
 
-collision_start = PositionedLogicEntity.collision_start
-collision_end = PositionedLogicEntity.collision_end
+collision_start = CollisionLogicEntity.collision_start
+collision_end = CollisionLogicEntity.collision_end
 
 def create_default_relation(group_a, group_b):
     collision_manager.create_relation(

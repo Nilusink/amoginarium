@@ -28,7 +28,7 @@ if tp.TYPE_CHECKING:
 
 
 class _GrenadeShrapnel(Bullet):
-    _COMPONENT_ID = DummyCIDs.base_bullet
+    _CID = DummyCIDs.base_bullet
 
     _default_size = 4
     _default_base_damage = 1
@@ -39,7 +39,7 @@ class _GrenadeShrapnel(Bullet):
 
 class Grenade(Bullet):
     # region ClassVars
-    _COMPONENT_ID = DummyCIDs.grenade
+    _CID = DummyCIDs.grenade
     _default_hp = 0.05
 
     _default_size = 32
@@ -60,7 +60,7 @@ class Grenade(Bullet):
 
     _bounce_friction: tp.ClassVar[float] = 0.7
 
-    _DEFAULT_COLLISION_ROOT = True
+    _DEFAULT_COLLISION_EXCEPTION_ROOT = True
     _DEFAULT_COLLISION_GROUP = collision_group_grenades
     # endregion
 
@@ -123,8 +123,8 @@ class Grenade(Bullet):
                 self.__on_collision_player(event)
 
     def _update(self, delta: float):
-        if collision_group_islands in self.active_normals.keys():
-            for n in self.active_normals[collision_group_islands]:
+        if collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[collision_group_islands]:
                 if n.y < -0.5:
                     self.acceleration.y = 0
                     if self.velocity.y > 0:
@@ -156,8 +156,8 @@ class Grenade(Bullet):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self.active_normals.keys():
-            for n in self.active_normals[collision_group_islands]:
+        if collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
@@ -174,8 +174,8 @@ class Grenade(Bullet):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self.active_normals.keys():
-            for n in self.active_normals[collision_group_islands]:
+        if collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
@@ -185,7 +185,7 @@ class Grenade(Bullet):
         self._acceleration_to_add.y += y
 
     def _delete_collision(self) -> None:
-        if self._collision_id is None:
+        if self.__collision_entity_id is None:
             return
-        collision_manager.delete_entity(self._collision_group, self._collision_id)
+        collision_manager.delete_entity(self._collision_group, self.__collision_entity_id)
         self._collision_id = None

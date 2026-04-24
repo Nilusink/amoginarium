@@ -45,7 +45,7 @@ class Bullet(LogicGameEntity):
     """
 
     # region ClassVars
-    _COMPONENT_ID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
+    _CID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
 
     _default_hp: tp.ClassVar[int] = -1
     _weight: tp.ClassVar[float | None] = None
@@ -241,7 +241,7 @@ class Bullet(LogicGameEntity):
             coalition=coalition,
             parent=parent,
             centered=True,
-            collision_exceptions=self._ignore_collision_id
+            collision_exception_ids=self._ignore_collision_id
         )
         self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius

@@ -24,7 +24,7 @@ class Minigun(BaseWeapon):
     """
     Minigun
     """
-    _COMPONENT_ID = WeaponCIDs.minigun
+    _CID = WeaponCIDs.minigun
 
     def __init__(
             self,
@@ -57,7 +57,7 @@ class Ak47(BaseWeapon):
     """
     Ak-47
     """
-    _COMPONENT_ID = WeaponCIDs.ak47
+    _CID = WeaponCIDs.ak47
 
     def __init__(
             self,
@@ -90,7 +90,7 @@ class Sniper(BaseWeapon):
     """
     Basic Sniper
     """
-    _COMPONENT_ID = WeaponCIDs.sniper
+    _CID = WeaponCIDs.sniper
 
     def __init__(
             self,
@@ -124,7 +124,7 @@ class Mortar(BaseWeapon):
     """
     Mortar
     """
-    _COMPONENT_ID = WeaponCIDs.mortar
+    _CID = WeaponCIDs.mortar
 
     _default_bullet_type = MortarShell
 
@@ -161,7 +161,7 @@ class Flak(BaseWeapon):
     """
     Flak Canon
     """
-    _COMPONENT_ID = WeaponCIDs.flak
+    _CID = WeaponCIDs.flak
 
     def __init__(
             self,
@@ -194,7 +194,7 @@ class CRAM(BaseWeapon):
     """
     CRAM Minigun
     """
-    _COMPONENT_ID = WeaponCIDs.cram
+    _CID = WeaponCIDs.cram
 
     def __init__(
             self,
@@ -228,7 +228,7 @@ class HandThrownGrenade(BaseWeapon):
     A grenade ... thrown by ...
     your hand
     """
-    _COMPONENT_ID = WeaponCIDs.h_grenade
+    _CID = WeaponCIDs.h_grenade
 
     def __init__(
             self,
@@ -259,7 +259,7 @@ class HandThrownGrenade(BaseWeapon):
 
 class SkyShieldWeapon(BaseWeapon):
     """smart munitions weapon"""
-    _COMPONENT_ID = WeaponCIDs.sky_shield
+    _CID = WeaponCIDs.sky_shield
 
     def __init__(
         self,

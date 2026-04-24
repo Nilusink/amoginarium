@@ -8,27 +8,33 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
-from ctypes import Array
 import typing as tp
 
-from amoginarium.shared import base_entity_t, ENTITY_COUNTER
+from amoginarium.shared import ENTITY_COUNTER
 from amoginarium import pv
 
-from .._groups import Updated, LogicGroup
+from .._groups import Updated
+
+if tp.TYPE_CHECKING:
+    from types import EllipsisType
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+
+    from .._groups import LogicGroup
 
 
 class EntityChildViable(tp.Protocol):
-    """min requirements to be assigned as a child"""
+    """Minimum requirements for an object to be assigned as a child of a logic entity."""
 
     def update(self, delta: float) -> None:
         """
-        update function
-        :param delta: time since the last update
+        Update function
+        :param delta: Tme since the last update
         """
 
     def kill(self) -> None:
-        """clean up child"""
+        """Clean up and terminate the child."""
 
 
 class BaseLogicEntity:
@@ -59,8 +65,7 @@ class BaseLogicEntity:
         :param runtime_buffer: Logic runtime buffer
         :param parent: Optional parent entity
         """
-
-        self._parent = parent if parent else None
+        self._parent = parent
         self._children = []
         self._lifetime = 0
         self.__groups = []

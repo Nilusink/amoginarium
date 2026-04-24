@@ -19,7 +19,7 @@ from ._base_item import BaseItem
 class JetBag(BaseItem):
     """makes you flyyyyyy"""
 
-    _COMPONENT_ID = ItemCIDs.jetbag
+    _CID = ItemCIDs.jetbag
     _reload_per_second: float = .2
     _acceleration = 19
     _max_uses: int = 5

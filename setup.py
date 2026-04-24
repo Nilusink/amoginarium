@@ -16,17 +16,8 @@ c_args = []
 l_args = []
 
 if sys.platform.startswith("win"):
-    # Windows (MSVC)
     c_args = ['/O2', '/openmp', '/fp:fast']
     l_args = ['/openmp']
-elif sys.platform.startswith("linux"):
-    # Linux (GCC/Clang)
-    c_args = ['-O3', '-fopenmp', '-ffast-math', '-march=native']
-    l_args = ['-fopenmp']
-elif sys.platform.startswith("darwin"):
-    # macOS (Requires `brew install libomp` in terminal first)
-    c_args = ['-O3', '-Xpreprocessor', '-fopenmp']
-    l_args = ['-lomp']
 
 # 2. Dynamic File Discovery
 extensions = []

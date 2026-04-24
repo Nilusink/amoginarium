@@ -8,19 +8,26 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
-from ctypes import Array
+import typing as tp
 
-from amoginarium.shared.utility import Vec2, normalize_angle
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import Coalitions, base_entity_t
+from amoginarium.shared.utility import Vec2, normalize_angle, get_default
+from amoginarium.shared.debugging import print_ic_style, CC, cum_timer
+from amoginarium.shared import Coalitions
 
 from amoginarium import pv
 
-from ._positioned_logic_entity import PositionedLogicEntity
+from ._collision_logic_entity import CollisionLogicEntity
+
+if tp.TYPE_CHECKING:
+    from types import EllipsisType
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+
+    from .._collision import CollisionType
 
 
-class LogicGameEntity(PositionedLogicEntity):
+class LogicGameEntity(CollisionLogicEntity):
     """
     Implements all basic stuff for logic entities
     - Parent/Children relations
@@ -56,7 +63,10 @@ class LogicGameEntity(PositionedLogicEntity):
             parent: LogicGameEntity | None = None,
             coalition: Coalitions | EllipsisType = ...,
             centered: bool = False,
-            collision_exceptions: int | None = None,
+            collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+            collision_exception_ids: list[int] | int | None = None,
+            collision_exception_root: bool | EllipsisType = ...,
+            collision_exception_root_additive: bool | EllipsisType = ...,
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -65,8 +75,17 @@ class LogicGameEntity(PositionedLogicEntity):
         :param position: 2D position of the entity
         :param initial_velocity: Optional 2D initial velocity of the entity
         :param parent: Optional parent entity
-        :param coalition: Coalition of the entity. Defaults to neutral
+        :param coalition: Coalition of the entity. Defaults to Coalitions.neutral
         :param centered: Whether the position is center or top left (relevant for collision detection)
+            Edit afterward with self._centered
+        :param collision_group: Collision Group ID. Defaults to cls._DEFAULT_COLLISION_GROUP.
+        :param collision_exception_ids: Optional list of collision exception rules.
+            Edit afterward with self._collision_exception_ids
+        :param collision_exception_root: Groups this entity and all its children recursive to a collision exception
+            rule. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT.
+        :param collision_exception_root_additive: Whether root collision exception rules created from parents are also
+            added to this entity and its children recursive. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
+            Recurses until the next parents sets this to false
         """
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -74,21 +93,17 @@ class LogicGameEntity(PositionedLogicEntity):
             position=position,
             parent=parent,
             centered=centered,
-            collision_exceptions=collision_exceptions
+            collision_group=collision_group,
+            collision_exception_ids=collision_exception_ids,
+            collision_exception_root=collision_exception_root,
+            collision_exception_root_additive=collision_exception_root_additive,
         )
         # region default parameters
         self._velocity_to_add = Vec2()
         self._acceleration_to_add = Vec2()
 
-        if not initial_velocity:
-            self.velocity = Vec2()
-        else:
-            self.velocity = initial_velocity
-
-        if coalition is ...:
-            self._coalition = Coalitions.neutral
-        else:
-            self._coalition = coalition
+        self.velocity = initial_velocity if initial_velocity is not None else Vec2()  # do not use get_default here
+        self._coalition = get_default(coalition, Coalitions.neutral)
 
         self.acceleration = Vec2()
         self.__world_position = Vec2()  # actual world position
@@ -109,7 +124,7 @@ class LogicGameEntity(PositionedLogicEntity):
     @property
     def serializable(self) -> bool:
         """:return: whether the entity is serializable or not"""
-        return self._COMPONENT_ID is not ...
+        return self._CID is not ...
 
     # endregion
 
@@ -141,6 +156,7 @@ class LogicGameEntity(PositionedLogicEntity):
         """
         self._acceleration_to_add += value
 
+    @cum_timer.time_this
     def _update(self, delta: float) -> None:
         """
         Update logic game entity
