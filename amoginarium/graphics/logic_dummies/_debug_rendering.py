@@ -78,16 +78,6 @@ class PolyDebugRenderingEntity(SyncedGraphicsEntity):
         self._logic_visibility = self._get_bit("flags", 1)
         self._highlight = self._get_bit("flags", 2)
 
-        if not self._was_alive:
-            if self.alive:
-                self._was_alive = True
-
-        else:
-            if not self.alive:
-                self._logic_visibility = True
-                self._visible = True
-                self.kill()
-
         # normal positions
         self.p1.x = self._buff.pos_x
         self.p1.y = self._buff.pos_y

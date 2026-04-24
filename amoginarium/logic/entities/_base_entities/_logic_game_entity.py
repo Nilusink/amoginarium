@@ -11,7 +11,7 @@ from __future__ import annotations
 import typing as tp
 
 from amoginarium.shared.utility import Vec2, normalize_angle, get_default
-from amoginarium.shared.debugging import print_ic_style, CC, cum_timer
+from amoginarium.shared.debugging import print_ic_style, CC
 from amoginarium.shared import Coalitions
 
 from amoginarium import pv
@@ -156,7 +156,6 @@ class LogicGameEntity(CollisionLogicEntity):
         """
         self._acceleration_to_add += value
 
-    @cum_timer.time_this
     def _update(self, delta: float) -> None:
         """
         Update logic game entity

@@ -28,7 +28,7 @@ from .._groups import Players, Bullets, GravityAffected
 from .._weapons import BaseWeapon
 from .._base_entities import LogicGameEntity
 from .._sensors import BaseSensor, DetectionGroup
-from .._collision.collision_relations import collision_group_turrets, collision_group_bullets
+from .._collision.collision_groups import collision_group_turrets, collision_group_bullets
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet

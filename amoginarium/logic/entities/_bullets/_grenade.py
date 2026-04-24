@@ -18,7 +18,7 @@ from amoginarium.shared import DummyCIDs
 from .. import GravityAffected
 
 from .._collision import collision_manager, CollisionExceptions
-from .._collision.collision_relations import collision_group_grenades, collision_group_islands, collision_group_bullets, collision_group_players
+from .._collision.collision_groups import collision_group_grenades, collision_group_islands, collision_group_bullets, collision_group_players
 from .._base_entities import LogicGameEntity
 from ._base_bullet import Bullet
 
@@ -183,9 +183,3 @@ class Grenade(Bullet):
 
         self._acceleration_to_add.x += x
         self._acceleration_to_add.y += y
-
-    def _delete_collision(self) -> None:
-        if self.__collision_entity_id is None:
-            return
-        collision_manager.delete_entity(self._collision_group, self.__collision_entity_id)
-        self._collision_id = None

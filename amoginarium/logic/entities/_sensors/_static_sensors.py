@@ -23,7 +23,7 @@ from ._detection_group import DetectionGroup
 from ._magic_sensor import MagicSensor
 from ._radar_sensor import RadarSensor
 from ._base_sensor import BaseSensor
-from .._collision.collision_relations import collision_group_turrets, collision_group_bullets
+from .._collision.collision_groups import collision_group_turrets, collision_group_bullets
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet

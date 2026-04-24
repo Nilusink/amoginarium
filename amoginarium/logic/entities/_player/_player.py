@@ -20,7 +20,7 @@ from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
-from .._collision.collision_manager import collision_manager
+from .._collision import collision_manager
 
 from ...audio import DeathSound, SoundEffect, OnHoverButtonSound
 from ...graphics_dummies import Controller
@@ -29,7 +29,7 @@ from .._groups import GravityAffected, FrictionXAffected, Updated, Walls
 from .._groups import Players
 from .._items import Shield, HealingPotion, JetBag, Inventory, Item
 from .._base_entities import LogicGameEntity
-from .._collision.collision_relations import collision_group_players, collision_group_islands, collision_group_bullets
+from .._collision.collision_groups import collision_group_players, collision_group_islands, collision_group_bullets
 from .._debug import PolyDebugRenderingEntity
 from .._turrets import ExactoSniper
 

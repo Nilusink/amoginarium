@@ -23,8 +23,9 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.utility import Vec2
 
-    from .._collision import CollisionType
+    from ._base_logic_entity import BaseLogicEntity
     from .._debug import PolyDebugRenderingEntity
+    from .._collision import CollisionType
 
 
 class CollisionLogicEntity(PositionedLogicEntity):
@@ -33,12 +34,15 @@ class CollisionLogicEntity(PositionedLogicEntity):
     Integrates with the global collision_manager to handle hitboxes, collision events,
     and collision filtering via exception IDs.
     """
+
+    # region ClassVars
     __debug_draw_hitboxes: tp.ClassVar[bool] = False
     __debug_entity_class: tp.ClassVar[type["PolyDebugRenderingEntity"]]
 
     _DEFAULT_COLLISION_EXCEPTION_ROOT: tp.ClassVar[bool] = False
     _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = False
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = None
+    # endregion
 
     __slots__ = (
         "_centered", "__collision_entity_id", "__collision_group", "_collision_exception_ids",
@@ -46,6 +50,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         "_active_collisions", "_active_normals", "__debug_entity"
     )
 
+    # region InstanceVars
     _parent: CollisionLogicEntity | None
 
     _centered: bool
@@ -61,6 +66,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     _active_normals: dict[CollisionType.GroupID, list[Vec2]]  # protected / no property for faster access
 
     __debug_entity: PolyDebugRenderingEntity | None
+    # endregion
 
     def __init__(
             self,
@@ -125,6 +131,25 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
         self.__debug_entity = None
 
+    # region Class-Methods
+    @classmethod
+    def debug_draw_hitboxes(cls, value: bool) -> None:
+        """
+        Enables or disables global debug rendering for hitboxes.
+        :param value: True to enable, False to disable.
+        """
+        cls.__debug_draw_hitboxes = value
+
+    @classmethod
+    def debug_entity_class(cls, value: type[PolyDebugRenderingEntity]) -> None:
+        """
+        Sets the class used for rendering debug hitboxes.
+        :param value: A subclass of PolyDebugRenderingEntity.
+        """
+        cls.__debug_entity_class = value
+
+    # endregion
+
     # region Properties
     @property
     def _collision_entity_id(self) -> CollisionType.EntityID | None:
@@ -168,27 +193,26 @@ class CollisionLogicEntity(PositionedLogicEntity):
     # endregion
 
     # region Methods: Collision Start
-    def _collision_start(self, event: list[CollisionEvent]) -> list[bool] | None:
+    def _collision_start(self, event: list[CollisionEvent[CollisionLogicEntity]]) -> list[bool] | None:
         """
         Called on collision start
         :param event: All details regarding the collisions
         :return: List of bools stating whether each collision is accepted.
-           If False the CollisionManager will not call collision_end
-           and will call collision_start again if there still is a collision in the next update
+           If False the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again if there still is a collision in the next update
         """
 
     @tp.final
-    def collision_start(self, events: list[CollisionEvent]) -> list[bool] | None:
+    def collision_start(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> list[bool] | None:
         """
         Callback for collision start, called by the collision manager
         Shouldn't be overwritten in inheritance. Instead, use _collision_start
         :param events: All details regarding the collisions
         :return: List of bools stating whether each collision is accepted.
-           If False the CollisionManager will not call collision_end
-           and will call collision_start again if there still is a collision in the next update
+           If False the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again if there still is a collision in the next update
         """
         collisions_result: list[bool] | None = self._collision_start(events)
-        print("COLLISION", events)
 
         # Save accepted collisions in self._active_collisions
         for i in range(len(events)):
@@ -205,16 +229,16 @@ class CollisionLogicEntity(PositionedLogicEntity):
     # endregion
 
     # region Methods: Collision End
-    def _collision_end(self, events: list[CollisionEvent]) -> None:
+    def _collision_end(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> None:
         """
         Called on collision end
         :param events: All details regarding the collisions
         """
 
     @tp.final
-    def collision_end(self, events: list[CollisionEvent]) -> None:
+    def collision_end(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> None:
         """
-        Callback on collision_end, called by the collision manager
+        Callback on COLLISION_END, called by the collision manager
         :param events: All details regarding the collisions
         """
         # Filter for collisions that are still active
@@ -268,10 +292,6 @@ class CollisionLogicEntity(PositionedLogicEntity):
             centered=centered,
             ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids
         )
-        if CollisionLogicEntity.__debug_draw_hitboxes:
-            self.__debug_entity = CollisionLogicEntity.__debug_entity_class(
-                self._runtime_buffer, radius=1
-            )
 
     def _update_collision(
             self,
@@ -315,6 +335,10 @@ class CollisionLogicEntity(PositionedLogicEntity):
             ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids
         )
         if CollisionLogicEntity.__debug_draw_hitboxes:
+            if self.__debug_entity is None:
+                self.__debug_entity = CollisionLogicEntity.__debug_entity_class(
+                    self._runtime_buffer, radius=1
+                )
             self.__debug_entity.set_points(
                 collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id)
             )
@@ -341,7 +365,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         self._update_collision()
         super()._update(delta)
 
-    def kill(self, killed_by: tp.Any = ...) -> None:
+    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
         """
         Remove from groups and collision manager
         :param killed_by: who killed this entity

@@ -19,8 +19,8 @@ from ...audio import MetalPings, RandomizedEffect
 from .._base_entities import LogicGameEntity
 from ._base_item import BaseItem
 
-from .._collision.collision_relations import collision_group_shields, collision_group_bullets
-from .._collision.collision_manager import collision_manager
+from .._collision.collision_groups import collision_group_shields, collision_group_bullets
+from .._collision import collision_manager
 from .._debug import PolyDebugRenderingEntity
 
 # todo - collision

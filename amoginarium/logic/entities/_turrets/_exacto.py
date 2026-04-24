@@ -20,7 +20,7 @@ from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
 from .._collision import collision_manager
-from .._collision.collision_relations import all_groups
+from .._collision.collision_groups import all_groups
 from ...audio import Sniper as SniperSound
 from ._base_turret import BaseTurret, TargetSolution
 from .._bullets import AerodynamicEntity

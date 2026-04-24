@@ -65,6 +65,7 @@ class PolyDebugRenderingEntity(LogicGameEntity):
             p6: Vec2 | EllipsisType = ...,
             p7: Vec2 | EllipsisType = ...,
             p8: Vec2 | EllipsisType = ...,
+            points: tp.Sequence[Vec2] | EllipsisType = ...,
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -80,6 +81,8 @@ class PolyDebugRenderingEntity(LogicGameEntity):
         self.p6 = get_default(p6, Vec2())
         self.p7 = get_default(p7, Vec2())
         self.p8 = get_default(p8, Vec2())
+        if points is not ...:
+            self.set_points(points)
 
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
@@ -124,4 +127,4 @@ class PolyDebugRenderingEntity(LogicGameEntity):
         )
 
 
-CollisionLogicEntity.__debug_entity_class = PolyDebugRenderingEntity
+CollisionLogicEntity.debug_entity_class(PolyDebugRenderingEntity)

@@ -14,8 +14,7 @@ import pygame as pg
 import typing as tp
 import random
 
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord
-from amoginarium.shared.cd_old import find_minimum_rectangles_dirty
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord, find_minimum_rectangles_dirty
 from amoginarium.shared.debugging import print_ic_style, CC, cum_timer
 from amoginarium.shared import base_entity_t, IslandCIDs, ProcessCommand
 from amoginarium.shared import BaseCommandType
@@ -23,8 +22,8 @@ from amoginarium import pv
 
 from .._base_entities import LogicGameEntity
 from .._groups import Walls, Updated
-from .._collision.collision_manager import collision_manager
-from .._collision.collision_relations import collision_group_islands
+from .._collision import collision_manager
+from .._collision.collision_groups import collision_group_islands
 from .._debug import DebugRenderingEntity
 
 class _PolyMatcher:

@@ -7,7 +7,7 @@ from ._bullets import Bullet, MortarShell, Grenade, SniperBullet
 from ._sensors import DETECTION_GROUP_MANAGER, DetectionGroup, \
     DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
 from ._sensors import BaseSensor, MagicSensor
-from ._collision.collision_manager import collision_manager
+from ._collision import collision_manager
 from ._weapons import Mortar
 from ._turrets import ExactoBullet
 from ._bullets import AerodynamicEntity

@@ -10,6 +10,7 @@ from ._constants import SQ2, MASK16, MASK32, MASK64
 from ._tuplemath import TupleMath
 
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord, is_related
+from ._minrect_algorithm import find_minimum_rectangles_dirty, find_minimum_rectangles
 from ._ccalculations import calculate_launch_angle
 from ._utility_functions import multi_raycast_mask, get_default
 

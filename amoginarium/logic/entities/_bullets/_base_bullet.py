@@ -7,45 +7,52 @@ Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
-from types import EllipsisType
+
 from time import perf_counter
-from ctypes import Array
 import typing as tp
 import numpy as np
 
-from amoginarium.shared.cd_old import collision_detection_aabb_aabb_minkowski_raycast
-from amoginarium.shared.utility import Vec2
-from amoginarium.shared.utility import get_default
-from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
-from amoginarium.shared import BaseCommandType, DummyCIDs, CIDType
+from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
+from amoginarium.shared.utility import Vec2, get_default
 from amoginarium import pv
 
-from ...audio import LargeExplosion, DistantPop
 from .._groups import Bullets, Updated, GravityAffected
+from ...audio import LargeExplosion, DistantPop
 from .._base_entities import LogicGameEntity
-from amoginarium.shared.collision_detection import CollisionEvent
-from .._collision.collision_relations import (
+from .._collision.collision_groups import (
     collision_group_bullets, collision_group_islands, collision_group_turrets,
-    collision_group_players, collision_group_grenades, collision_group_shields)
+    collision_group_players, collision_group_grenades, collision_group_shields,
+)
 
 if tp.TYPE_CHECKING:
-    from .._world import Island
-    from .._player import Player
+    from types import EllipsisType
+    from ctypes import Array
+
+    from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared import base_entity_t, Coalitions, CIDType
+
+    from .._collision import CollisionType
     from .._turrets import BaseTurret
-    from .._items import Shield
     from ._grenade import Grenade
+    from .._player import Player
+    from .._world import Island
+    from .._items import Shield
 
 
-SQR2: np.float64 = np.sqrt(2)
+SQR2: tp.Final[np.float64] = np.sqrt(2)
 
 
 class Bullet(LogicGameEntity):
     """
-    Basic logic bullet
+    Base logic bullet entity handling physics, collision, and clustering.
+    Manages lifecycle states including Time-To-Life, explosive payloads, and
+    recursive cluster fragmentation.
     """
 
     # region ClassVars
     _CID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
+
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = collision_group_bullets
 
     _default_hp: tp.ClassVar[int] = -1
     _weight: tp.ClassVar[float | None] = None
@@ -107,8 +114,6 @@ class Bullet(LogicGameEntity):
     _target_pos: Vec2 | EllipsisType
     _o_dist: float
 
-    _DEFAULT_COLLISION_GROUP = collision_group_bullets
-
     _hp: int
 
     _ignore_collision_id: int | None = None
@@ -123,6 +128,11 @@ class Bullet(LogicGameEntity):
             initial_position: Vec2,
             initial_velocity: Vec2,
             *,
+            centered: bool = True,
+            collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+            collision_exception_ids: list[int] | int | None = None,
+            collision_exception_root: bool | EllipsisType = ...,
+            collision_exception_root_additive: bool | EllipsisType = ...,
             casing: bool = False,
             no_gravity: bool = False,
             collide_siblings: bool = True,
@@ -152,6 +162,16 @@ class Bullet(LogicGameEntity):
         :param coalition: Coalition
         :param initial_position: spawn pos
         :param initial_velocity: spawn speed
+        :param centered: Whether the position is center or top left (relevant for collision detection)
+            Edit afterward with self._centered
+        :param collision_group: Collision Group ID. Defaults to cls._DEFAULT_COLLISION_GROUP.
+        :param collision_exception_ids: Optional list of collision exception rules.
+            Edit afterward with self._collision_exception_ids
+        :param collision_exception_root: Groups this entity and all its children recursive to a collision exception
+            rule. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT.
+        :param collision_exception_root_additive: Whether root collision exception rules created from parents are also
+            added to this entity and its children recursive. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
+            Recurses until the next parents sets this to false
         :param casing: is casing
         :param no_gravity: ignore gravity
         :param collide_siblings: collide with bullets from same gun
@@ -224,7 +244,7 @@ class Bullet(LogicGameEntity):
         )
 
         # optional params
-        if isinstance(target_pos, EllipsisType):
+        if target_pos == ...:
             self._target_pos = ...
             self._o_dist = 0.0
 
@@ -240,8 +260,11 @@ class Bullet(LogicGameEntity):
             initial_velocity=initial_velocity.copy(),
             coalition=coalition,
             parent=parent,
-            centered=True,
-            collision_exception_ids=self._ignore_collision_id
+            centered=centered,
+            collision_group=collision_group,
+            collision_exception_ids=collision_exception_ids,
+            collision_exception_root=collision_exception_root,
+            collision_exception_root_additive=collision_exception_root_additive
         )
         self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius
@@ -260,7 +283,7 @@ class Bullet(LogicGameEntity):
             self.add(GravityAffected)
 
         if not casing:
-            self.add(Bullets)  # Todo - mytodo: CollisionDestroyedTodo
+            self.add(Bullets)
 
         # spawn dummy
         kwargs = {
@@ -270,7 +293,7 @@ class Bullet(LogicGameEntity):
             "visibility_offset": self._visibility_offset,
             "position": self.position.xy,
         }
-        if not isinstance(self._target_pos, EllipsisType):
+        if self._target_pos != ...:
             kwargs["target_pos"] = self._target_pos.xy
 
         pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs))
@@ -291,11 +314,6 @@ class Bullet(LogicGameEntity):
         return damage
 
     @property
-    def is_bullet(self) -> bool:  # todo - remove
-        """yes"""
-        return True
-
-    @property
     def weight(self) -> float:
         """:return: bullet weight (depending on size if not specified)"""
         if self._weight:
@@ -311,44 +329,7 @@ class Bullet(LogicGameEntity):
     @property
     def last_pos(self) -> Vec2:
         """:return: bullets previous position"""
-        return self._last_pos
-
-    # endregion
-
-    # region Static/Class-Methods
-    @staticmethod
-    def _weight_from_size(size: Vec2 | float) -> float:
-        """
-        Calculate bullet weight from size
-        :param size: bullet size
-        :return: calculated weight from size
-        """
-        if isinstance(size, Vec2):
-            return size.length / 100
-
-        return (size * SQR2) / 100
-
-    @classmethod
-    def get_weight(cls, size: Vec2 | float) -> float:
-        """
-        Bullet weight getter
-        :param size: bullet size
-        :return: bullet weight (depending on size if not specified)
-        """
-        if cls._weight:
-            return cls._weight
-
-        return cls._weight_from_size(size)
-
-    @classmethod
-    def get_recoil_fac(cls, weight: float, velocity: float) -> float:
-        """
-        Recoil \"dampener\" getter
-        :param weight: bullet weight
-        :param velocity: bullet velocity
-        :return: weapons recoil \"dampener\
-        """
-        return (weight / 2.5) * (velocity / 10)
+        return self._last_pos.copy()
 
     # endregion
 
@@ -435,7 +416,7 @@ class Bullet(LogicGameEntity):
 
             # distance fuze
             elif self._cluster_fuze_dist > 0:
-                if not isinstance(self._target_pos, EllipsisType):
+                if self._target_pos != ...:
                     if (self.position - self._target_pos).length < self._cluster_fuze_dist:
                         self.kill(self)
 
@@ -443,7 +424,7 @@ class Bullet(LogicGameEntity):
         self._runtime_buffer[self.id].param1 = self.velocity.length
 
     def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
-        if not isinstance(killed_by, EllipsisType) and killed_by != self:
+        if killed_by != ... and killed_by != self:
             if killed_by.parent == self.parent:
                 if not self._coll_sibling:
                     return True
@@ -554,3 +535,40 @@ class Bullet(LogicGameEntity):
         super().kill()
 
         return True
+
+    # region Static/Class-Methods
+    @staticmethod
+    def _weight_from_size(size: Vec2 | float) -> float:
+        """
+        Calculate bullet weight from size
+        :param size: bullet size
+        :return: calculated weight from size
+        """
+        if isinstance(size, Vec2):
+            return size.length / 100
+
+        return (size * SQR2) / 100
+
+    @classmethod
+    def get_weight(cls, size: Vec2 | float) -> float:
+        """
+        Bullet weight getter
+        :param size: bullet size
+        :return: bullet weight (depending on size if not specified)
+        """
+        if cls._weight:
+            return cls._weight
+
+        return cls._weight_from_size(size)
+
+    @classmethod
+    def get_recoil_fac(cls, weight: float, velocity: float) -> float:
+        """
+        Recoil \"dampener\" getter
+        :param weight: bullet weight
+        :param velocity: bullet velocity
+        :return: weapons recoil \"dampener\
+        """
+        return (weight / 2.5) * (velocity / 10)
+
+    # endregion

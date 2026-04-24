@@ -6,5 +6,5 @@ Created: 21.04.2026
 Authors: LukasKrah
 """
 
-from .collision_manager import collision_manager, CollisionType
+from ._collision_manager import collision_manager, CollisionType
 from ._collision_exceptions import CollisionExceptions

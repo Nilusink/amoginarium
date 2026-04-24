@@ -8,12 +8,12 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
 import typing as tp
 
 from ._base_logic_entity import BaseLogicEntity
 
 if tp.TYPE_CHECKING:
+    from types import EllipsisType
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t, CIDType
@@ -58,7 +58,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         :return: the entities' component ID
         :raises ValueError: if the class has no __cid
         """
-        if isinstance(cls._CID, EllipsisType):
+        if cls._CID == ...:
             raise ValueError("__cid is not defined for " + cls.__name__)
 
         return cls._CID
