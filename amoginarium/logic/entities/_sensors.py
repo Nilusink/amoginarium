@@ -127,7 +127,7 @@ class BaseSensor(PositionedLogicEntity):
             self._buff.param1 = 0
             self._buff.param2 = 0
 
-        # write sectors sectors
+        # write sectors
         self._buff.param3 = -1
         self._buff.param4 = -1
         sectors = self._highlighted_sectors.copy()

@@ -295,7 +295,7 @@ class BaseWeapon(Item):
         self._bullet_type(
             runtime_buffer=self._runtime_buffer,
             parent=self.parent,
-            coalition=self._coalition,
+            coalition=self.coalition,
             initial_position=(
                 self.parent.position
                 + self._parent_position_offset
@@ -370,6 +370,8 @@ class HandThrownGrenade(BaseWeapon):
     """
     _cid = WeaponCIDs.h_grenade
 
+    _default_recoil_factor = .5
+
     def __init__(
             self,
             parent,
@@ -382,7 +384,6 @@ class HandThrownGrenade(BaseWeapon):
             parent=parent,
             reload_time=5,
             recoil_time=2,
-            weapon_recoil_factor=.5,
             mag_size=1,
             inaccuracy=.01,
             parent_position_offset=parent_position_offset,

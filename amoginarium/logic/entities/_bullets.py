@@ -53,7 +53,7 @@ class Bullet(LogicGameEntity):
 
     _default_weight: float = None
     _default_base_damage: float = 1
-    _default_ttl: float = 2
+    _default_ttl: float = 1
     _default_explosion_radius: float = -1
     _default_explosion_damage: float = 0
     _default_cluster_depth: int = 0

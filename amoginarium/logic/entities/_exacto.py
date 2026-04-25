@@ -34,6 +34,7 @@ class ExactoBullet(AerodynamicEntity):
 
     _cid = DummyCIDs.base_bullet
 
+    _default_ttl = 10
     _default_weight = 5  # knockback
     _default_base_damage = 15
 
@@ -118,7 +119,8 @@ class ExactoSniper(BaseWeapon):
         drop_casings: bool = False,
         parent_position_offset: coord_t = Vec2(),
         targeting_func: tp.Callable[[], Vec2 | None] | None = None,
-        guidance_delay: float | EllipsisType = ...
+        guidance_delay: float | EllipsisType = ...,
+        **kwargs
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -138,7 +140,8 @@ class ExactoSniper(BaseWeapon):
             time_to_life=15,
             visibility_offset=.04,
             target_callback=self._get_current_target,
-            guidance_delay=guidance_delay
+            guidance_delay=guidance_delay,
+            **kwargs
         )
         self._current_target: Vec2 | None = None
         self._targeting_func = targeting_func
@@ -187,6 +190,8 @@ class ExactoTurret(BaseTurret):
     _default_max_hp: int = 60
 
     _default_turn_speed = 2
+    _default_weapon_position_offset = (0, -13)
+    _default_weapon_type = ExactoSniper
 
     def __init__(
             self,
@@ -196,27 +201,19 @@ class ExactoTurret(BaseTurret):
             **kwargs
     ) -> None:
         self._coalition = coalition
-        weapon = ExactoSniper(
-            self,
-            runtime_buffer,
-            True,
-            parent_position_offset=(0, -13),
-            targeting_func=self.__get_target
-        )
-        weapon.reload(True)
         
         super().__init__(
             runtime_buffer,
             coalition,
             position,
             size=Vec2().from_cartesian(31, 32),
-            weapon=weapon,
             max_range=2400,
             sensors=[
                 RadarSensor(
                     runtime_buffer, self, 2500, sphere_accuracy=256, min_rcs=.03
                 )
             ],
+            weapon_kwargs={"targeting_func": self.__get_target},
             **kwargs,
         )
         

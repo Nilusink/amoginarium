@@ -115,7 +115,7 @@ class BulletDummy(SyncedImageEntity):
                 self._original_alpha = self._c_trace_color.a1
 
         if isinstance(self._trace_color, (list, tuple)) and len(self._trace_color) == 1:
-            self._c_trace_color: Color = self._trace_color[0]
+            self._c_trace_color: Color = self._c_trace_color[0]
             self._original_alpha = self._c_trace_color.a1
 
         super().__init__(sync_id, _bullet_image, parent)
@@ -256,7 +256,7 @@ class BulletDummy(SyncedImageEntity):
                     thickness=self.size.length / 3,
                 )
 
-        if self.alive:
+        if self.alive and not self._trace_only:
             self.facing *= -1
             super()._gl_draw(delta_cal)
             self._last_pos.xy = self.pos.xy

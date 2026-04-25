@@ -11,6 +11,7 @@ length = 200
 
 [image]
 name = "mortar_shell"
+mirror = "x"
 
 [behaviour]
 hp = 0.5

@@ -235,7 +235,6 @@ def load_entities_from_files(
 
             # if inheritance is possible, append to entity index
             if params[1] in new_entities:
-                ic(cid, "inherit", new_entities[params[1]])
                 new_entities[cid] = type(
                     params[0],
                     (new_entities[params[1]],),
@@ -252,7 +251,6 @@ def load_entities_from_files(
     entity_index.update(new_entities)
 
     names = [c.__name__ for c in entity_index.values()]
-    ic(names)
 
     # resolve stuff
     for entity in new_entities.values():
@@ -278,7 +276,5 @@ def load_entities_from_files(
                         ic(entity, sensor)
 
                 setattr(entity, key, sensors)
-
-
 
     return new_entities

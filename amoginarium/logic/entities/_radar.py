@@ -102,7 +102,7 @@ class RadarSensor(BaseSensor):
                         if da >= self._min_rcs:
                             out.append(target)
 
-                            if self.parent.coalition is not target.coalition:
+                            if self.parent.coalition != target.coalition:
                                 if angle_index not in self._highlighted_sectors:
                                     self._highlighted_sectors.append(angle_index)
 

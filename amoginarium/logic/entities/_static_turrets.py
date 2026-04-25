@@ -125,9 +125,11 @@ class BaseTurret(LogicGameEntity):
         valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
         turn_speed: float | EllipsisType = ...,
         allow_static_target: bool | EllipsisType = ...,
-        cluster: bool = False
+        cluster: bool = False,
+        weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...
     ) -> None:
         size = get_default(size, self._default_size)
+        weapon_kwargs: dict = get_default(weapon_kwargs, {})
 
         if isinstance(size, (float, int)):
             size: Vec2 = Vec2().from_cartesian(size, size)
@@ -162,16 +164,15 @@ class BaseTurret(LogicGameEntity):
             if isinstance(self._default_weapon_type, EllipsisType):
                 raise RuntimeError(f"No weapon set for {self.__class__.__name__}")
 
-            kwargs = {}
             if cluster:
-                kwargs["cluster"] = True
+                weapon_kwargs["cluster"] = True
 
             self.weapon = self._default_weapon_type(
                 parent=self,
                 runtime_buffer=runtime_buffer,
                 drop_casings=self._default_weapon_drop_casings,
                 parent_position_offset=offset,
-                **kwargs
+                **weapon_kwargs
             )
             self.weapon.reload(True)
 

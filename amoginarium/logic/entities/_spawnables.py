@@ -33,4 +33,3 @@ SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
     ]
 }
 SPAWNABLES.update(DYNAMIC_ENTITIES)
-ic(SPAWNABLES)
