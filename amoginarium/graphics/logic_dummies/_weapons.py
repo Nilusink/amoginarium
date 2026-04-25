@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 
+from icecream import ic
 import typing as tp
 import math as m
 import ctypes
@@ -56,7 +57,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         )
 
         if "x" in mirror:
-            mirror.strip("x")
+            mirror = mirror.strip("x")
 
         else:
             mirror += "x"
