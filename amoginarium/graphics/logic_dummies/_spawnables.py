@@ -20,7 +20,7 @@ from ._weapons import Minigun, Ak47, Sniper, Mortar, Flak, CRAM, HandThrownGrena
 from ._weapons import SkyShieldGun, ExactoSniper
 from ._sensors import SensorHUD
 from ._items import Shield, HealingPotion, JetBag
-from ._debug_rendering import DebugRenderingEntity, PolyDebugRenderingEntity
+from ._debug_rendering import DebugRectangleEntity, DebugPolygonEntity
 from ._charged_weapons import RailGunDummy
 from ._text_entity import TextEntity
 from ._aero import AeroDummy
@@ -57,7 +57,7 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         AeroDummy,
         ExactoSniper,
         ExactoSniperTurretDummy,
-        DebugRenderingEntity,
-        PolyDebugRenderingEntity
+        DebugRectangleEntity,
+        DebugPolygonEntity
     ]
 }

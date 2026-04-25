@@ -34,21 +34,23 @@ class CollisionLogicEntity(PositionedLogicEntity):
     Integrates with the global collision_manager to handle hitboxes, collision events,
     and collision filtering via exception IDs.
     """
-
-    # region ClassVars
-    __debug_draw_hitboxes: tp.ClassVar[bool] = False
-    __debug_entity_class: tp.ClassVar[type["PolyDebugRenderingEntity"]]
-
-    _DEFAULT_COLLISION_EXCEPTION_ROOT: tp.ClassVar[bool] = False
-    _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = False
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = None
-    # endregion
-
     __slots__ = (
         "_centered", "__collision_entity_id", "__collision_group", "_collision_exception_ids",
         "__collision_exception_root", "__collision_exception_root_additive", "__collision_exception_root_ids",
         "_active_collisions", "_active_normals", "__debug_entity"
     )
+
+    # region ClassVars
+    __debug_draw_hitboxes: tp.ClassVar[bool] = False
+    __debug_entity_classes: tp.ClassVar[
+        type["DebugPolygonEntity"]
+    ]
+
+    _DEFAULT_COLLISION_EXCEPTION_ROOT: tp.ClassVar[bool] = False
+    _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = False
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = None
+
+    # endregion
 
     # region InstanceVars
     _parent: CollisionLogicEntity | None
@@ -65,7 +67,8 @@ class CollisionLogicEntity(PositionedLogicEntity):
     _active_collisions: dict[CollisionType.CollisionID, CollisionEvent]  # protected / no property for faster access
     _active_normals: dict[CollisionType.GroupID, list[Vec2]]  # protected / no property for faster access
 
-    __debug_entity: PolyDebugRenderingEntity | None
+    __debug_entity: DebugRectangle | None
+
     # endregion
 
     def __init__(
@@ -144,7 +147,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     def debug_entity_class(cls, value: type[PolyDebugRenderingEntity]) -> None:
         """
         Sets the class used for rendering debug hitboxes.
-        :param value: A subclass of PolyDebugRenderingEntity.
+        :param value: A subclass of DebugPolygonEntity.
         """
         cls.__debug_entity_class = value
 

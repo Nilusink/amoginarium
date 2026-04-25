@@ -44,6 +44,7 @@ class LogicGameEntity(CollisionLogicEntity):
         "_velocity_to_add", "_acceleration_to_add", "__world_position"
     )
 
+    # region InstanceVars
     facing: Vec2  # public / no property for faster access
     velocity: Vec2  # public / no property for faster access
     acceleration: Vec2  # public / no property for faster access
@@ -52,6 +53,8 @@ class LogicGameEntity(CollisionLogicEntity):
     _velocity_to_add: Vec2
     _acceleration_to_add: Vec2
     __world_position: Vec2
+
+    # endregion
 
     def __init__(
             self,

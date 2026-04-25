@@ -18,8 +18,8 @@ from ..entities import Drawn_2, Drawn_0
 from ..render_bindings import renderer
 
 
-class DebugRenderingEntity(SyncedGraphicsEntity):
-    _cid = GraphicsCIDs.debug_rendering
+class DebugRectangleEntity(SyncedGraphicsEntity):
+    _cid = GraphicsCIDs.debug_rectangle
 
     __rendering: DebugRendering
     __convert_global: bool
@@ -50,9 +50,9 @@ class DebugRenderingEntity(SyncedGraphicsEntity):
                                         color=self.__color, convert_global=self.__convert_global)
 
 
-class PolyDebugRenderingEntity(SyncedGraphicsEntity):
+class DebugPolygonEntity(SyncedGraphicsEntity):
     __slots__ = ("p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "radius")
-    _cid = GraphicsCIDs.debug_poly
+    _cid = GraphicsCIDs.debug_polygon
 
     def __init__(self, radius=8, **kwargs):
         self.p1 = Vec2()

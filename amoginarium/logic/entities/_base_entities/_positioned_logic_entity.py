@@ -22,15 +22,21 @@ if tp.TYPE_CHECKING:
 
 class PositionedLogicEntity(BaseLogicEntity):
     """A logic entity with position and size."""
-    _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
-
     __slots__ = ("position", "size")
 
+    # region ClassVars
+    _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
+
+    # endregion
+
+    # region InstanceVars
     _parent: PositionedLogicEntity | None
 
     # public / no property for faster access
     position: Vec2
     size: Vec2
+
+    # endregion
 
     def __init__(
             self,

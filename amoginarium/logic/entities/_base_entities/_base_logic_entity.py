@@ -47,12 +47,15 @@ class BaseLogicEntity:
     """
     __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id", "__groups")
 
+    # region InstanceVars
     _parent: BaseLogicEntity | None
     _children: list[EntityChildViable]
     _lifetime: float
     _runtime_buffer: Array[base_entity_t]
     __id: int
     __groups: list[LogicGroup]
+
+    # endregion
 
     def __init__(
             self,
