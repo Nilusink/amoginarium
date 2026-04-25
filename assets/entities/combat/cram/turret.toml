@@ -1,0 +1,39 @@
+[id]
+from = "turret.static.base"
+cid = "turret.static.cram"
+
+[visibility]
+size = [64, 128]
+
+[image]
+name = "CRAM_base"
+
+[behaviour]
+turn_speed = 2
+facing_angle = 3.14159
+max_error = 0  # not recommendet to set at 0. if not set will use weapons inaccuracy.
+allow_static_target = false  # if turret can't find solution for target + movement, allow static target
+airburst_munition = true  # set ttl of bullet to predicrted intercept
+
+[engagement]
+valid_angles = [2, 1.1]
+aim_type = "low"
+min_range = 150
+max_range = 1900
+
+[target]
+bullets = true
+players = false
+taps = 8
+
+[weapon]
+type = "<weapon.cram>"
+drop_casings = false
+position_offset = [0, 15]
+
+[sensors.0]
+type = "<sensor.radar>"
+detection_range = 2200
+sphere_accuracy = 256
+min_rcs = 0.04
+

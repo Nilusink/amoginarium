@@ -1,0 +1,23 @@
+[id]
+from = "weapon.base"
+cid = "weapon.ak47"
+
+[visibility]
+size = [80, 40]
+
+[image]
+name = "ak47"
+rotate_anchor = [30, 20]
+
+[behaviour]
+mag_size = 30
+reload_time = 2.5
+recoil_time = 0.1
+inaccuracy = 0.03
+muzzle_velocity = 1250
+
+[bullet]
+type = "<bullet.ak47>"
+
+[sound]
+scope = "ak47"

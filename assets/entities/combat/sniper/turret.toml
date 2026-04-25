@@ -1,0 +1,19 @@
+[id]
+from = "turret.static.base"
+cid = "turret.static.sniper"
+
+[behaviour]
+max_hp = 40
+turn_speed = 2
+
+[engagement]
+max_range = 2400
+
+[weapon]
+type = "<weapon.sniper>"
+position_offset = [0, -13]
+
+[sensors.0]
+type = "<sensor.radar>"
+detection_range = 2500
+sphere_accuracy = 256

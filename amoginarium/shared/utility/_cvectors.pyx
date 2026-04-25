@@ -4,9 +4,9 @@ from libc.math cimport sqrt, atan2, cos, sin, pi, fmod
 
 
 cdef class Vec2:
-    def __cinit__(self):
-        self.x = 0.0
-        self.y = 0.0
+    def __cinit__(self, double x=0, double y=0):
+        self.x = x
+        self.y = y
 
     # Vector length
     @property
@@ -152,6 +152,9 @@ cdef class Vec2:
 
     def __abs__(self):
         return self.get_length()
+
+    def __reduce__(self):
+        return Vec2, (self.x, self.y)
 
     def __repr__(self) -> str:
         return f"<Vec2; {self.x}, {self.y}>"

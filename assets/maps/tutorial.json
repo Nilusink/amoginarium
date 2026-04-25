@@ -62,7 +62,7 @@
             "size": [1024, 64]
         },
         {
-            "type": "island.brick.green",
+            "type": "island.grass",
             "args": {
                 "pos": [16100, 650],
                 "form": [
@@ -118,8 +118,18 @@
     ],
     "entities": [
         {
-            "type": "turret.static.exacto_sniper",
-            "pos": [2500, 700]
+            "type": "turret.static.cram",
+            "pos": [2500, 700],
+            "group": 0
+        },
+        {
+            "type": "sensor.static.radar",
+            "pos": [2500, 500],
+            "args": {
+                "detection_range": 4000,
+                "min_rcs": 0.0001
+            },
+            "group": 0
         },
         {
             "type": "static.text",

@@ -15,7 +15,7 @@ import typing as tp
 import math as m
 
 from amoginarium.base._textures import textures
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord, WtfError
 from amoginarium.shared import IslandCIDs
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium import pv
@@ -558,7 +558,7 @@ class Island(SyncedGraphicsEntity):
                             texture = self._textures.island_single_right_texture
 
                         case _:
-                            raise ValueError(
+                            raise WtfError(
                                 "idek how you got here",
                                 poly
                             )

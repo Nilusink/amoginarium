@@ -107,7 +107,7 @@ class BaseGraphicsEntity:
         if cls._cid is ...:
             raise ValueError("__cid is not defined for " + cls.__name__)
 
-        return cls._cid
+        return cls._cid.value
     # endregion
 
     # region highlighting

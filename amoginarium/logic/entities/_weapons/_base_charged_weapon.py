@@ -12,12 +12,14 @@ from types import EllipsisType
 from ctypes import Array
 import typing as tp
 
-from amoginarium.logic.audio import ContinuousSoundEffect, PresetEffect
+from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect, SmallExplosion
 from amoginarium.shared import base_entity_t
 from amoginarium.shared.utility import Vec2
 
 from ._base_weapon import BaseWeapon
 from .._bullets import Bullet
+from ._dynamic_entities import DYNAMIC_ENTITIES
+from ._weapons import BaseWeapon, Bullet
 
 class BaseChargedWeapon(BaseWeapon):
     """
@@ -37,7 +39,6 @@ class BaseChargedWeapon(BaseWeapon):
             mag_size: int,
             inaccuracy: float,
             bullet_speed: tuple[float, float],  # range
-            barrel_length: float,  # where bullets spawn
             parent_position_offset: Vec2 | tuple[float, float],
             bullet_damage: tuple[float, float] = (1, 1),
             bullet_explosion_radius: tuple[float, float] = (-1, -1),
@@ -54,7 +55,6 @@ class BaseChargedWeapon(BaseWeapon):
             recoil_time=recoil_time,
             mag_size=mag_size,
             inaccuracy=inaccuracy,
-            barrel_length=barrel_length,
             parent_position_offset=parent_position_offset,
             muzzle_velocity=0,
             drop_casings=drop_casings,

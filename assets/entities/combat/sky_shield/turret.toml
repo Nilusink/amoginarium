@@ -1,0 +1,35 @@
+[id]
+from = "turret.static.base"
+cid = "turret.static.sky_shield"
+
+[visibility]
+size = [128, 128]
+layer = 1
+
+[image]
+name = "skyshield_base"
+
+[behaviour]
+turn_speed = 1.57
+airburst_munition = true
+
+[engagement]
+valid_angles = [2.944, 0.197]
+min_range = 150
+max_range = 2300
+
+[target]
+bullets = true
+players = false
+taps = 1
+
+[weapon]
+type = "<weapon.sky_shield>"
+position_offset = [0, -8]
+
+[sensors.0]
+type = "<sensor.radar>"
+detection_range = 2200
+sphere_accuracy = 256
+min_rcs = 0.004
+

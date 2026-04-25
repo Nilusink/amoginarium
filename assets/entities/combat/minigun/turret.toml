@@ -1,0 +1,18 @@
+[id]
+from = "turret.static.base"
+cid = "turret.static.minigun"
+
+[behaviour]
+max_hp = 60
+turn_speed = 2
+
+[engagement]
+max_range = 2000
+
+[weapon]
+type = "<weapon.minigun>"
+position_offset = [0, -13]
+
+[sensors.0]
+type = "<sensor.radar>"
+detection_range = 1900

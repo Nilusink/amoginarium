@@ -32,24 +32,23 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     ]
     _cid = TurretCIDs.base
     _body_texture: int = ...
-    _body_texture_path = "mortar_turret_base"
-    _body_texture_size = (23, 24)
-    _layer: int = 0
+    _image_name = "mortar_turret_base"
+    _image_mirror: str = ""
+    _default_size = (23, 24)
+    _default_layer: int = 0
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
         if cls._body_texture is ...:
             cls.load_textures()
 
-        return super(BaseTurretDummy, cls).__new__(cls)
+        return super().__new__(cls)
 
     @classmethod
     def load_textures(cls) -> None:
-        if cls._body_texture is ...:
-            cls._body_texture, _ = textures.get_texture(
-                cls._body_texture_path,
-                cls._body_texture_size
-            )
+        cls._body_texture, _ = textures.get_texture(
+            cls._image_name, cls._default_size, cls._image_mirror
+        )
 
     def __init__(
             self,
@@ -217,7 +216,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         ):
             return
 
-        if layer == self._layer:
+        if layer == self._default_layer:
             if self._highlight:
                 renderer.start_stencil(True)
 
@@ -260,11 +259,6 @@ class BaseTurretDummy(SyncedGraphicsEntity):
             )
 
 
-class SniperTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.sniper
-
-
 class ExactoSniperTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.exacto_sniper
@@ -273,37 +267,3 @@ class ExactoSniperTurretDummy(BaseTurretDummy):
 class AkTurretDummy(BaseTurretDummy):
     __slots__ = []
     _cid = TurretCIDs.ak47
-
-
-class MinigunTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.minigun
-
-
-class MortarTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.mortar
-    _body_texture_path = "mortar_turret_base"
-    _body_texture_size = (23, 24)
-
-
-class FlakTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.flak
-    _body_texture_path = "FLAK_base"
-    _body_texture_size = (98, 44)
-
-
-class CRAMTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.cram
-    _body_texture_path = "CRAM_base"
-    _body_texture_size = (64, 128)
-
-
-class SkyShieldDummy(BaseTurretDummy):
-    __slots__ = []
-    _cid = TurretCIDs.sky_shield
-    _body_texture_path = "skyshield_base"
-    _body_texture_size = (64, 64)
-    _layer = 1
