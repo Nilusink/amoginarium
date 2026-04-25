@@ -1,0 +1,17 @@
+[id]
+from = "dummy.bullet.base"
+cid = "bullet.flak"
+
+[visibility]
+size = 18
+
+[behaviour]
+hp = 0.5
+ttl = 5
+weight = 8
+base_damage = 30
+visibility_offset = 0.13
+
+[explosion]
+radius = 128
+damage = 40

@@ -10,15 +10,14 @@ Nilusink
 from icecream import ic
 import typing as tp
 
+from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
+
 from ._synced_entities import SyncedGraphicsEntity
 from ._player import PlayerDummy
-from ._bullet import BulletDummy, MortarShell, Grenade, CRAMBullet
-from ._turrets import SniperTurretDummy, AkTurretDummy, MinigunTurretDummy
-from ._turrets import MortarTurretDummy, FlakTurretDummy, CRAMTurretDummy
-from ._turrets import SkyShieldDummy, ExactoSniperTurretDummy
-from ._weapons import Minigun, Ak47, Sniper, Mortar, Flak, CRAM, HandThrownGrenade
-from ._weapons import SkyShieldGun, ExactoSniper
-from ._sensors import SensorHUD
+from ._bullet import BulletDummy, Grenade
+from ._turrets import BaseTurretDummy, ExactoSniperTurretDummy
+from ._weapons import HandThrownGrenade, ExactoSniper, WeaponDummy
+from ._sensors import SensorHUD, RadarSensorHUD, MagicSensorHUD, VisualSensorHUD
 from ._items import Shield, HealingPotion, JetBag
 from ._charged_weapons import RailGunDummy
 from ._text_entity import TextEntity
@@ -28,34 +27,29 @@ from ._aero import AeroDummy
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
     e.cid(): e
     for e in [
+        WeaponDummy,
         PlayerDummy,
         BulletDummy,
-        MortarShell,
         Grenade,
-        SniperTurretDummy,
-        AkTurretDummy,
-        MinigunTurretDummy,
-        MortarTurretDummy,
-        FlakTurretDummy,
-        CRAMTurretDummy,
-        Minigun,
-        Ak47,
-        Sniper,
-        Mortar,
-        Flak,
-        CRAM,
+        BaseTurretDummy,
         HandThrownGrenade,
-        CRAMBullet,
         Shield,
         HealingPotion,
         JetBag,
         RailGunDummy,
-        SkyShieldDummy,
-        SkyShieldGun,
         SensorHUD,
         TextEntity,
         AeroDummy,
         ExactoSniper,
-        ExactoSniperTurretDummy
+        ExactoSniperTurretDummy,
+        RadarSensorHUD,
+        MagicSensorHUD,
+        VisualSensorHUD,
     ]
 }
+
+
+# noinspection PyTypeChecker
+GRAPHICS_SPAWNABLES.update(
+    load_entities_from_files(ProcessType.base, GRAPHICS_SPAWNABLES)
+)

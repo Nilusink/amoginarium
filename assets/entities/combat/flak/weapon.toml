@@ -1,0 +1,24 @@
+[id]
+from = "weapon.base"
+cid = "weapon.flak"
+
+[visibility]
+size = [256, 128]
+
+[image]
+name = "FLAK_canon"
+rotate_anchor = [83, 59]
+
+
+[behaviour]
+mag_size = 4
+reload_time = 3
+recoil_time = 0.15
+inaccuracy = 0.0100002
+muzzle_velocity = 1700
+
+[bullet]
+type = "<bullet.flak>"
+
+[sound]
+scope = "cannon"

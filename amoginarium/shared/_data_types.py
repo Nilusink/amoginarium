@@ -87,6 +87,9 @@ class SensorCIDs(Enum):
     radar = "sensor.static.radar"
     visual = "sensor.static.visual"
     magic = "sensor.static.magic"
+    sensor_radar = "sensor.radar"
+    sensor_visual = "sensor.visual"
+    sensor_magic = "sensor.magic"
     hud = "sensor.static.hud"
 
 

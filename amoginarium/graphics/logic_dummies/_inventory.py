@@ -16,7 +16,6 @@ from ..entities import BaseGraphicsEntity, Drawn_0
 from ..ui import UIRectangle, AnimatedColorValues
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity, SE_MANAGER
-from ._drawable_items import ITEM_IDS
 
 
 class Inventory(BaseGraphicsEntity):

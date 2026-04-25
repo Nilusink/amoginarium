@@ -8,12 +8,13 @@ Author:
 Nilusink
 """
 
+from icecream import ic
 import typing as tp
 import math as m
 import ctypes
 
+from amoginarium.shared.utility import Vec2, Color, WtfError
 from amoginarium.shared.debugging import run_with_debug
-from amoginarium.shared.utility import Vec2, Color
 from amoginarium.base._textures import textures
 from amoginarium.shared import WeaponCIDs
 from amoginarium import pv
@@ -33,10 +34,10 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
     _cid = WeaponCIDs.base
     _image_name: str = "minigun"
-    _image_size: tuple[int, int] = (128, 64)
+    _image_mirror: str = ""
+    _default_size: tuple[int, int] | Vec2 = (128, 64)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(35, 30)
     _bar_colors = (Color().from_1(.55, .55, 1),)
-    _image_mirror: bool = False
     _texture_id_l: int = ...
     _texture_id_r: int = ...
 
@@ -47,15 +48,24 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
         .. note:: only execute once!
         """
-        cls._texture_id_r, _ = textures.get_texture(
-            name=cls._image_name,
-            size=cls._image_size,
-            mirror="" if cls._image_mirror else "x",
-        )
+        mirror = cls._image_mirror
+
         cls._texture_id_l, _ = textures.get_texture(
             name=cls._image_name,
-            size=cls._image_size,
-            mirror="x" if cls._image_mirror else "",
+            size=cls._default_size,
+            mirror=mirror,
+        )
+
+        if "x" in mirror:
+            mirror = mirror.strip("x")
+
+        else:
+            mirror += "x"
+
+        cls._texture_id_r, _ = textures.get_texture(
+            name=cls._image_name,
+            size=cls._default_size,
+            mirror=mirror,
         )
 
     def __new__(cls, *args, **kwargs) -> tp.Self:
@@ -68,6 +78,19 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         super().__init__(
             sync_id=sync_id,
         )
+        if not isinstance(self._default_size, Vec2):
+            if isinstance(self._default_size, (tuple, list)):
+                self._default_size: Vec2 = Vec2().from_cartesian(
+                    self._default_size[0], self._default_size[1]
+                )
+
+            elif isinstance(self._default_size, (int, float)):
+                self._default_size: Vec2 = Vec2().from_cartesian(
+                    self._default_size, self._default_size
+                )
+
+        self._default_size: Vec2
+
         self.remove(Drawn_0)
         self.add(Drawn_1)
 
@@ -82,7 +105,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
         if self.facing.x < 0:
             anchor = Vec2().from_cartesian(
-                (self._image_size[0] - self._image_rotate_anchor.x) * self.param0,
+                (self._default_size.x - self._image_rotate_anchor.x) * self.param0,
                 self._image_rotate_anchor.y * self.param0,
             )
             pos = self.pos - anchor
@@ -91,7 +114,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             renderer.draw_textured_quad(
                 self._texture_id_l,
                 pos,
-                self._image_size,
+                self._default_size,
                 rotate_angle=angle - 180,
                 rotate_anchor=anchor,
                 pixel_perfect=True
@@ -108,7 +131,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             renderer.draw_textured_quad(
                 self._texture_id_r,
                 pos,
-                self._image_size,
+                self._default_size,
                 rotate_angle=angle,
                 rotate_anchor=anchor,
                 pixel_perfect=True
@@ -132,72 +155,31 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             )
 
     @classmethod
-    def get_icon(cls) -> tuple[int, tuple[int, int]]:
-        return cls._texture_id_r, cls._image_size
+    def get_icon(cls) -> tuple[int, tuple[float, float]]:
+        if isinstance(cls._default_size, Vec2):
+            size: tuple[float, float] = cls._default_size.xy
 
+        elif isinstance(cls._default_size, tuple):
+            size: tuple[float, float] = cls._default_size
 
-class Minigun(WeaponDummy):
-    _cid = WeaponCIDs.minigun
-    _image_name: str = "minigun"
-    _image_size: tuple[int, int] = (128, 64)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(35, 30)
+        else:
+            raise WtfError("?")
 
-
-class Ak47(WeaponDummy):
-    _cid = WeaponCIDs.ak47
-    _image_name: str = "ak47"
-    _image_size: tuple[int, int] = (80, 40)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(30, 20)
-
-
-class Sniper(WeaponDummy):
-    _cid = WeaponCIDs.sniper
-    _image_name: str = "sniper"
-    _image_size: tuple[int, int] = (120, 60)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
-
-
-class Mortar(WeaponDummy):
-    _cid = WeaponCIDs.mortar
-    _image_name: str = "mortar"
-    _image_size: tuple[int, int] = (25 * 1.5, 17 * 1.5)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(7.5 * 1.5, 8 * 1.5)
-
-
-class Flak(WeaponDummy):
-    _cid = WeaponCIDs.flak
-    _image_name: str = "FLAK_canon"
-    _image_size: tuple[int, int] = (256, 128)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(83, 59)
-
-
-class CRAM(WeaponDummy):
-    _cid = WeaponCIDs.cram
-    _image_name: str = "CRAM_canon"
-    _image_mirror = True
-    _image_size: tuple[int, int] = (128, 128)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(32, 79)
-
-
-class SkyShieldGun(WeaponDummy):
-    _cid = WeaponCIDs.sky_shield
-    _image_name: str = "skyshield_gun"
-    _image_size: tuple[int, int] = (256, 128)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(64, 28*2)
+        return cls._texture_id_r, size
 
 
 class HandThrownGrenade(WeaponDummy):
     _cid = WeaponCIDs.h_grenade
     _image_name: str = "grenade"
-    _image_mirror = True
-    _image_size: tuple[int, int] = (32, 32)
+    _image_mirror = "x"
+    _default_size: tuple[int, int] = (32, 32)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(16, 16)
 
 
 class ExactoSniper(WeaponDummy):
     _cid = WeaponCIDs.exacto_sniper
     _image_name: str = "exacto_sniper"
-    _image_size: tuple[int, int] = (120, 60)
+    _default_size: tuple[int, int] = (120, 60)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
 
     def __init__(self, max_range: float, **kwargs):

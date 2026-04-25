@@ -167,7 +167,7 @@ class SoundEffect:
         if isinstance(self._sound_name, pg.mixer.Sound):
             self._sound = self._sound_name
 
-        elif isinstance(self._sound_name, tuple):
+        elif isinstance(self._sound_name, tuple) or isinstance(self._sound_name, list):
             self._sound = sounds.get_sound(*self._sound_name[::-1])
 
         else:
@@ -588,3 +588,9 @@ class MetalPings(ScopedRandomizedEffect):
 
 class LargeExplosion(ScopedRandomizedEffect):
     _scope = "explosion_large"
+
+
+PRESETS: dict[str, tp.Type[SoundEffect | ContinuousSoundEffect | RandomizedEffect]] = {
+    "minigun": Minigun,
+    "cram": CRAM,
+}

@@ -20,10 +20,10 @@ import numpy as np
 from amoginarium.shared.utility import Vec2, multi_raycast_mask, is_related
 from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, ProcessCommand
+from amoginarium.shared.audio import LargeExplosion, DistantPop
 from amoginarium.shared import BaseCommandType, DummyCIDs
 from amoginarium import pv
 
-from ..audio import LargeExplosion, DistantPop
 from ._logic_groups import Bullets, Updated, GravityAffected, CollisionDestroyed
 from ._logic_groups import WallCollider, WallBouncer
 from ._base_entity import LogicGameEntity
@@ -43,16 +43,17 @@ class Bullet(LogicGameEntity):
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cf_ttl_m",
         "_coll_sibling", "_cse", "_csm", "_lst", "_cf_dist", "_cbt", "_csi",
-        "_cluster_args"
+        "_cluster_args", "_weight"
     )
 
     _base_damage: float
-    _hp: int = -1
-    _weight: float | None = None
+    _default_hp: int = -1
+    _weight: float | None
     _cid = DummyCIDs.base_bullet
 
+    _default_weight: float = None
     _default_base_damage: float = 1
-    _default_ttl: float = 2
+    _default_ttl: float = 1
     _default_explosion_radius: float = -1
     _default_explosion_damage: float = 0
     _default_cluster_depth: int = 0
@@ -176,6 +177,7 @@ class Bullet(LogicGameEntity):
         self._invincibility_offset = get_default(
             invincibility_offset, self._default_invincibility_offset
         )
+        self._weight = self._default_weight
 
         # optional params
         if isinstance(target_pos, EllipsisType):
@@ -283,8 +285,8 @@ class Bullet(LogicGameEntity):
     @classmethod
     def get_weight(cls, size: Vec2 | float) -> float:
         """bullet weight (depending on size if not specified)"""
-        if cls._weight:
-            return cls._weight
+        if cls._default_weight:
+            return cls._default_weight
 
         return cls._weight_from_size(size)
 
@@ -297,12 +299,12 @@ class Bullet(LogicGameEntity):
 
     def hit(self, _damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         """bullet was hit by someone"""
-        if self._hp <= 0 or not issubclass(hit_by.__class__, Bullet):
+        if self._default_hp <= 0 or not issubclass(hit_by.__class__, Bullet):
             self.kill(killed_by=hit_by)
 
         else:
-            self._hp -= _damage
-            if self._hp <= 0:
+            self._default_hp -= _damage
+            if self._default_hp <= 0:
                 self.kill(killed_by=hit_by)
 
     def hit_someone(self, target_hp: float) -> None:
@@ -484,27 +486,6 @@ class Bullet(LogicGameEntity):
         return True
 
 
-class MortarShell(Bullet):
-    _hp = 0.5
-    _weight = 8
-    _cid = DummyCIDs.mortar_bullet
-
-    _default_base_damage = 40
-    _default_ttl = 6
-    _default_explosion_radius = 150
-    _default_explosion_damage = 50
-    _default_size = Vec2().from_cartesian(40, 20)
-
-
-class ClusterMortarShell(MortarShell):
-    _default_cluster_depth = 2
-    _default_cluster_amount = 3
-    _default_cluster_spread = np.pi/5
-    _default_cluster_fuze_ttl_mult = .3
-    _default_cluster_step_explosion = 0
-    _default_cluster_last_step_ttl = 3
-
-
 class _GrenadeShrapnel(Bullet):
     _cid = DummyCIDs.base_bullet
 
@@ -513,7 +494,7 @@ class _GrenadeShrapnel(Bullet):
 
 
 class Grenade(Bullet):
-    _hp = 0.05
+    _default_hp = 0.05
     _bounce_friction = 0.7
     _cid = DummyCIDs.grenade
 
@@ -572,46 +553,3 @@ class Grenade(Bullet):
             return False
 
         return super().kill(killed_by)
-
-
-class SniperBullet(Bullet):
-    _weight = 5
-
-    _default_size = 15
-    _default_base_damage = 15
-
-
-class FlakBullet(Bullet):
-    _weight = 5
-
-    _default_size = 18
-    _default_base_damage = 30
-
-    _default_explosion_radius = 128
-    _default_explosion_damage = 40
-
-
-class CRAMBullet(Bullet):
-    _cid = DummyCIDs.cram
-
-    _default_size = 9
-    _default_base_damage = .1
-
-    _default_explosion_damage = 0.1
-    _default_explosion_radius = 15
-
-
-class SkyShieldBullet(Bullet):
-    _cid = DummyCIDs.cram
-
-    _weight = 1.5
-    _default_size = 18
-    _default_base_damage = 30
-
-    _default_cluster_depth = 1
-    _default_cluster_amount = 11
-    _default_cluster_fuze_ttl_mult = .02
-    _default_cluster_spread = 1.5
-    _default_cluster_size_mult = .3
-    _default_cluster_step_explosion = 10
-    _default_cluster_last_step_ttl = .07

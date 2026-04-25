@@ -1,0 +1,19 @@
+[id]
+from = "dummy.bullet.base"
+cid = "bullet.cram"
+
+[visibility]
+size = 9  # or list of x, y
+
+[trace]
+color = [[255, 80, 40], [255, 100, 60]]  # either one or two colors
+length = 300
+
+[behaviour]
+ttl = 10
+base_damage = 0.1
+visibility_offset = 0.027
+
+[explosion]
+radius = 15
+damage = 0.1

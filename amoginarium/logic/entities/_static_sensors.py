@@ -63,7 +63,7 @@ class VisualSensor(LogicGameEntity):
         pv.COQ.put(
             ProcessCommand(
                 type=BaseCommandType.spawn_dummy,
-                kwargs={"id": self.id, "cid": DummyCIDs.base_bullet, "spawn_time": 0},
+                kwargs={"id": self.id, "cid": DummyCIDs.base_bullet.value, "spawn_time": 0},
             )
         )
 

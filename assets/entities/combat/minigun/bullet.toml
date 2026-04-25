@@ -1,0 +1,9 @@
+[id]
+from = "dummy.bullet.base"
+cid = "bullet.minigun"
+
+[behaviour]
+ttl = 10
+base_damage = 2
+visibility_offset = 0.1
+

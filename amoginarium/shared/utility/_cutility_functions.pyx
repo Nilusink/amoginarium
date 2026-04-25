@@ -232,3 +232,30 @@ cpdef Vec2 raycast_size(Vec2 a, Vec2 b, Vec2 center, Vec2 size):
 
 cpdef object add_tuple(object t1, object t2):
     return t1[0] + t2[0], t1[1] + t2[1]
+
+
+cpdef unsigned long long int pack_int(uint8_t i, uint8_t n, object values):
+    # calculate mask
+    cdef uint8_t bits_per_value = i // n
+    cdef int mask = (1ULL << bits_per_value) - 1
+
+    # pack values into int
+    cdef unsigned long long int out = 0;
+    cdef uint8_t curr_value;
+    for curr_value in range(n):
+        out |= (values[curr_value] & mask) << (bits_per_value * curr_value)
+
+    return out
+
+
+cpdef object unpack_int(uint8_t i, uint8_t n, unsigned long long int value):
+    cdef uint8_t bits_per_value = i // n
+    cdef int mask = (1ULL << bits_per_value) - 1
+
+    cdef list out = [0] * n
+    cdef uint8_t curr_value;
+    for curr_value in range(n):
+        shift = bits_per_value * curr_value
+        out[curr_value] = ((value >> shift) & mask)
+
+    return out

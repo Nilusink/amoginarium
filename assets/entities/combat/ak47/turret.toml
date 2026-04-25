@@ -1,0 +1,21 @@
+[id]
+from = "turret.static.base"
+cid = "turret.static.ak47"
+
+[visibility]
+size = [31, 32]
+
+[behaviour]
+max_hp = 60
+turn_speed = 2
+
+[engagement]
+max_range = 1500
+
+[weapon]
+type = "<weapon.ak47>"
+position_offset = [0, -13]
+
+[sensors.0]
+type = "<sensor.radar>"
+detection_range = 1600

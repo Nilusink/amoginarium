@@ -72,3 +72,11 @@ def add_tuple(t1: tuple[float, float], t2: tuple[float, float]) -> float: #tuple
     """
     add two 2-dimensional tuples together
     """
+
+
+def pack_int(i: int, n: int, values: list[int]) -> int:
+    """pack ``n`` amount of values into an integer with ``i`` bits"""
+
+
+def unpack_int(i: int, n: int, value: int) -> list[int]:
+    """pack ``n`` amount of values from an integer with ``i`` bits"""

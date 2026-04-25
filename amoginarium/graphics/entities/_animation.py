@@ -7,6 +7,8 @@ An animation made from multiple images
 Author:
 Nilusink
 """
+
+from icecream import ic
 import typing as tp
 
 from amoginarium.graphics.render_bindings import renderer
@@ -168,7 +170,7 @@ class ImageAnimation:
         either position or position_reference have to be given
         """
         if self._textures is ...:
-            self.load_textures() #Vec2().from_cartesian(256, 256))
+            self.load_textures()
 
         Animation(
             self._textures,

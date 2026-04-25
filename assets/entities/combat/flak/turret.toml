@@ -1,0 +1,33 @@
+[id]
+from = "turret.static.base"
+cid = "turret.static.flak"
+
+[visibility]
+size = [186, 88]
+
+[image]
+name = "FLAK_base"
+
+[behaviour]
+max_hp = 170
+turn_speed = 0.8
+allow_static_target = true
+airburst_munition = true
+
+[engagement]
+valid_angles = [2.850, 4.613]
+min_range = 300
+max_range = 2300
+
+[target]
+taps = 2
+
+[weapon]
+type = "<weapon.flak>"
+drop_casings = false
+position_offset = [16, -26]
+
+[sensors.0]
+type = "<sensor.radar>"
+detection_range = 1700
+
