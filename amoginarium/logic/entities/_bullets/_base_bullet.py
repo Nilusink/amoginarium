@@ -17,7 +17,7 @@ from amoginarium.shared.utility import Vec2, get_default
 from amoginarium import pv
 
 from .._groups import Bullets, Updated, GravityAffected
-from ...audio import LargeExplosion, DistantPop
+from amoginarium.shared.audio import LargeExplosion, DistantPop
 from .._base_entities import LogicGameEntity
 from .._collision.collision_groups import (
     collision_group_bullets, collision_group_islands, collision_group_turrets,
@@ -55,7 +55,6 @@ class Bullet(LogicGameEntity):
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = collision_group_bullets
 
     _default_hp: tp.ClassVar[int] = -1
-    _weight: tp.ClassVar[float | None] = None
 
     _default_base_damage: tp.ClassVar[float] = 1
     _default_ttl: tp.ClassVar[float] = 2
@@ -74,6 +73,8 @@ class Bullet(LogicGameEntity):
     _default_size: tp.ClassVar[Vec2 | int] = 10
     _default_visibility_offset: tp.ClassVar[float] = 0
     _default_invincibility_offset: tp.ClassVar[float] = 0
+    _default_hp: int = -1
+    _default_weight: float = None
     # endregion
 
     __slots__ = (
@@ -82,7 +83,8 @@ class Bullet(LogicGameEntity):
         "_base_damage", "_last_pos", "_cluster_depth", "_cluster_amount",
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cluster_fuze_ttl_mult",
         "_coll_sibling", "_cluster_step_explosion", "_cluster_size_mult", "_cluster_last_step_ttl",
-        "_cluster_fuze_dist", "_cluster_bullet_type", "_cluster_step_inertia", "_hp", "_cluster_args"
+        "_cluster_fuze_dist", "_cluster_bullet_type", "_cluster_step_inertia", "_hp", "_cluster_args",
+        "_weight"
     )
 
     # region InstanceVars
@@ -242,6 +244,7 @@ class Bullet(LogicGameEntity):
         self._invincibility_offset = get_default(
             invincibility_offset, self._default_invincibility_offset
         )
+        self._weight = self._default_weight
 
         # optional params
         if target_pos == ...:
@@ -264,7 +267,7 @@ class Bullet(LogicGameEntity):
             collision_group=collision_group,
             collision_exception_ids=collision_exception_ids,
             collision_exception_root=collision_exception_root,
-            collision_exception_root_additive=collision_exception_root_additive
+            collision_exception_root_additive=collision_exception_root_additive,
         )
         self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius

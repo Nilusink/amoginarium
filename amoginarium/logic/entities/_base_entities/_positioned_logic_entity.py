@@ -67,7 +67,7 @@ class PositionedLogicEntity(BaseLogicEntity):
         if cls._CID == ...:
             raise ValueError("__cid is not defined for " + cls.__name__)
 
-        return cls._CID
+        return cls._CID.value  # type: ignore
 
     # endregion
 

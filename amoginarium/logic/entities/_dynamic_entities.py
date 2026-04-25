@@ -7,26 +7,19 @@ dynamically loaded entities
 Author:
 Nilusink
 """
-"""
-_spawnables.py
-15.03.2026
 
-collects every spawn-able entity
-
-Author:
-Nilusink
-"""
+from __future__ import annotations
 
 import typing as tp
 
 from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
 
-from ._base_entity import LogicGameEntity
-from ._static_turrets import BaseTurret
+from ._base_entities import LogicGameEntity
+from ._turrets import BaseTurret
 from ._weapons import FileLoadedWeapon
 from ._bullets import Bullet
 from ._sensors import MagicSensor
-from ._radar import RadarSensor
+from ._sensors import RadarSensor
 
 
 # noinspection PyTypeChecker

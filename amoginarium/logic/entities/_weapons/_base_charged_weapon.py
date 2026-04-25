@@ -18,8 +18,6 @@ from amoginarium.shared.utility import Vec2
 
 from ._base_weapon import BaseWeapon
 from .._bullets import Bullet
-from ._dynamic_entities import DYNAMIC_ENTITIES
-from ._weapons import BaseWeapon, Bullet
 
 class BaseChargedWeapon(BaseWeapon):
     """

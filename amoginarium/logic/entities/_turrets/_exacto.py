@@ -22,18 +22,12 @@ from shared import VisibleGameEntityLike
 
 from .._collision import collision_manager
 from .._collision.collision_groups import all_groups
-from ...audio import Sniper as SniperSound
+from amoginarium.shared.audio import Sniper as SniperSound
 from ._base_turret import BaseTurret, TargetSolution
 from .._bullets import AerodynamicEntity
 from .._base_entities import LogicGameEntity
 from .._weapons import BaseWeapon
 from .._sensors import RadarSensor
-from ._static_turrets import BaseTurret, TargetSolution
-from ._logic_groups import Updated, Players, Bullets
-from ._aerodynamic_entity import AerodynamicEntity
-from ._base_entity import LogicGameEntity
-from ._weapons import BaseWeapon
-from ._radar import RadarSensor
 
 
 class ExactoBullet(AerodynamicEntity):

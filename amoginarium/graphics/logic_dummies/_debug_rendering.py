@@ -19,7 +19,7 @@ from ..render_bindings import renderer
 
 
 class DebugRectangleEntity(SyncedGraphicsEntity):
-    _cid = GraphicsCIDs.debug_rectangle
+    _CID = GraphicsCIDs.debug_rectangle
 
     __rendering: DebugRendering
     __convert_global: bool
@@ -52,7 +52,7 @@ class DebugRectangleEntity(SyncedGraphicsEntity):
 
 class DebugPolygonEntity(SyncedGraphicsEntity):
     __slots__ = ("p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "radius")
-    _cid = GraphicsCIDs.debug_polygon
+    _CID = GraphicsCIDs.debug_polygon
 
     def __init__(self, radius=8, **kwargs):
         self.p1 = Vec2()

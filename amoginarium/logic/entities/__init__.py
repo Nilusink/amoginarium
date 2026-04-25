@@ -11,5 +11,3 @@ from ._collision import collision_manager
 from ._weapons import Mortar
 from ._turrets import ExactoBullet
 from ._bullets import AerodynamicEntity
-from ._aerodynamic_entity import AerodynamicEntity
-from ._exacto import ExactoBullet

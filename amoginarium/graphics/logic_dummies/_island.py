@@ -599,17 +599,17 @@ class Island(SyncedGraphicsEntity):
 
 class GrassIsland(Island):
     _scope = "dirt_islands"
-    _cid = IslandCIDs.grass_island
+    _CID = IslandCIDs.grass_island
 
 
 class GrayBrickIsland(Island):
     _scope = "bricks_gray"
-    _cid = IslandCIDs.gray_brick_island
+    _CID = IslandCIDs.gray_brick_island
 
 
 class GreenBrickIsland(Island):
     _scope = "bricks_green"
-    _cid = IslandCIDs.green_brick_island
+    _CID = IslandCIDs.green_brick_island
 
 
 __islands: tp.Iterable[tp.Type[Island]] = [

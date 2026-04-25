@@ -33,11 +33,11 @@ class _ResolveThis:
     """entities specified as CIDs"""
 
     def __init__(self, entity_cid: str) -> None:
-        self._cid = entity_cid
+        self._CID = entity_cid
 
     def resolve(self, entity_index: dict[str, tp.Type]) -> tp.Type:
         """resolve string"""
-        return entity_index[self._cid]
+        return entity_index[self._CID]
 
 
 def check_value[A](value: A, convert_vec2: bool = False) -> A | _ResolveThis:
@@ -65,7 +65,7 @@ def check_value[A](value: A, convert_vec2: bool = False) -> A | _ResolveThis:
 def _cid(cls):
     """return cid encased in an object.value (to mimic enum)"""
     # noinspection PyTypeChecker
-    return cls._cid
+    return cls._CID
 
 
 def load_entities_from_files(

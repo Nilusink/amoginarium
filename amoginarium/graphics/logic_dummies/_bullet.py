@@ -36,7 +36,7 @@ class BulletDummy(SyncedImageEntity):
         "_fade_trace", "_original_alpha", "_trace_len", "_trace_only", "_kill_next"
     ]
 
-    _cid = DummyCIDs.base_bullet
+    _CID = DummyCIDs.base_bullet
     _default_size: Vec2 = Vec2().from_cartesian(64, 64)
     _image_name: str = BULLET_PATH
     _image_mirror: str = ""
@@ -287,5 +287,5 @@ class BulletDummy(SyncedImageEntity):
 
 class Grenade(BulletDummy):
     _image_name: str = "grenade"
-    _cid = DummyCIDs.grenade
+    _CID = DummyCIDs.grenade
     _trace_show = False

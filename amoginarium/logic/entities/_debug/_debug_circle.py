@@ -6,6 +6,8 @@ Created: 25.04.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
 from amoginarium.shared import DebugRendering, GraphicsCIDs, Coalitions

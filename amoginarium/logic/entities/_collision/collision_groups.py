@@ -54,6 +54,8 @@ def create_default_relation(group_a: CollisionType.GroupID, group_b: CollisionTy
         cb_b_on_end=COLLISION_END
     )
 
+# todo cleaner ! create that accepts single and list and ignores that already exist
+
 # Grenades collide with Islands, Bullets, Players
 create_default_relation(collision_group_grenades, collision_group_islands)
 create_default_relation(collision_group_grenades, collision_group_bullets)

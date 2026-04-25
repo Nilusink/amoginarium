@@ -47,6 +47,7 @@ class Grenade(Bullet):
     _default_ttl = 500
     _default_explosion_radius = 150
     _default_explosion_damage = 50
+    _default_recoil_factor = .5
 
     _default_cluster_depth = 1
     _default_cluster_amount = 32

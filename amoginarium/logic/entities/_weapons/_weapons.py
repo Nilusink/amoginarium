@@ -13,8 +13,8 @@ from ctypes import Array
 from amoginarium.shared.utility import Vec2, coord_t
 from amoginarium.shared import base_entity_t, WeaponCIDs
 
-from ...audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect, Shotgun
-from ...audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
+from amoginarium.shared.audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect, Shotgun
+from amoginarium.shared.audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
 from .._bullets import SniperBullet, MortarShell, Grenade, FlakBullet, CRAMBullet
 from .._bullets import SkyShieldBullet, ClusterMortarShell
 from ._base_weapon import BaseWeapon

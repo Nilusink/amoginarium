@@ -19,7 +19,7 @@ class BaseGraphicsEntity:
         "_visible", "_lifetime", "_draw_children"
     ]
 
-    _cid: str = ...
+    _CID: str = ...
 
     _visible: bool
     _parent: BaseGraphicsEntity | None
@@ -104,10 +104,10 @@ class BaseGraphicsEntity:
     # region class methods
     @classmethod
     def cid(cls) -> str:
-        if cls._cid is ...:
+        if cls._CID is ...:
             raise ValueError("__cid is not defined for " + cls.__name__)
 
-        return cls._cid.value
+        return cls._CID.value
     # endregion
 
     # region highlighting

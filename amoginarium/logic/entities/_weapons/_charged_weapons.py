@@ -15,8 +15,7 @@ from amoginarium.shared.utility import Vec2
 
 from .._bullets import SniperBullet
 from ._base_charged_weapon import BaseChargedWeapon
-from ...audio import SmallExplosion
-
+from amoginarium.shared.audio import SmallExplosion
 
 class RailGun(BaseChargedWeapon):
     _CID = WeaponCIDs.railgun
@@ -39,14 +38,11 @@ class RailGun(BaseChargedWeapon):
             inaccuracy=.01093606,
             bullet_speed=(2500, 4000),
             bullet_damage=(1, 10),
-            barrel_length=0,
             parent_position_offset=parent_position_offset,
             drop_casings=drop_casings,
             bullet_explosion_damage=(10, 200),
             bullet_explosion_radius=(5, 512),
-            bullet_type=SniperBullet,
             sound_effect=SmallExplosion(),
-
             time_to_life=10,
             visibility_offset=.058,
         )

@@ -19,7 +19,7 @@ from ._synced_entities import SyncedGraphicsEntity
 
 
 class AeroDummy(SyncedGraphicsEntity):
-    _cid = DummyCIDs.aero
+    _CID = DummyCIDs.aero
 
     def __init__(
         self,

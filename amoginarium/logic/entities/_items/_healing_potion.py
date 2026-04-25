@@ -13,7 +13,7 @@ import math as m
 from amoginarium.shared.utility import Vec2
 from amoginarium.shared import base_entity_t, ItemCIDs
 
-from ...audio import PotionDrink, ContinuousSoundEffect
+from amoginarium.shared.audio import PotionDrink, ContinuousSoundEffect
 from ._base_item import BaseItem
 
 

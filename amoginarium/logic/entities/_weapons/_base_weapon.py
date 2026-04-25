@@ -18,17 +18,11 @@ from amoginarium.shared.utility import Vec2, convert_coord, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from shared import Coalitions
 
-from ...audio import ContinuousSoundEffect, ReloadGeneric, RandomizedEffect, SoundEffect
 from .._bullets import Bullet
 from .._groups import Updated
 from .._base_entities import LogicGameEntity
 from .._items import Item
-from ._bullets import Bullet, Grenade
-from ._logic_groups import CollisionDestroyed, Updated
-from ._base_entity import LogicGameEntity
-from ._base_item import Item
 
-# todo - mytodo - collisiondestroyed
 
 class BaseWeapon(Item):
     """
@@ -349,7 +343,7 @@ class BaseWeapon(Item):
 
 
 class FileLoadedWeapon(BaseWeapon):
-    _cid = WeaponCIDs.base
+    _CID = WeaponCIDs.base
 
     def __init__(
             self,

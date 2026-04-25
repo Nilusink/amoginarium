@@ -32,7 +32,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
     __slots__ = ()
 
-    _cid = WeaponCIDs.base
+    _CID = WeaponCIDs.base
     _image_name: str = "minigun"
     _image_mirror: str = ""
     _default_size: tuple[int, int] | Vec2 = (128, 64)
@@ -169,7 +169,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
 
 class HandThrownGrenade(WeaponDummy):
-    _cid = WeaponCIDs.h_grenade
+    _CID = WeaponCIDs.h_grenade
     _image_name: str = "grenade"
     _image_mirror = "x"
     _default_size: tuple[int, int] = (32, 32)
@@ -177,7 +177,7 @@ class HandThrownGrenade(WeaponDummy):
 
 
 class ExactoSniper(WeaponDummy):
-    _cid = WeaponCIDs.exacto_sniper
+    _CID = WeaponCIDs.exacto_sniper
     _image_name: str = "exacto_sniper"
     _default_size: tuple[int, int] = (120, 60)
     _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)

@@ -93,7 +93,7 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
 
 
 class RailGunDummy(ChargedDynamicWeaponDummy):
-    _cid = WeaponCIDs.railgun
+    _CID = WeaponCIDs.railgun
     _image_scope = "railgun"
     _default_size = (128, 64)
     _image_rotate_anchor = Vec2().from_cartesian(24, 32)

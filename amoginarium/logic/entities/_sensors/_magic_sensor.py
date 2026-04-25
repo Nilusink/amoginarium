@@ -8,9 +8,12 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
+from amoginarium.shared import SensorCIDs
+
 from .._base_entities import LogicGameEntity
 from .._groups import Players, Bullets
 from ._base_sensor import BaseSensor
+
 
 class MagicSensor(BaseSensor):
     """
@@ -19,6 +22,7 @@ class MagicSensor(BaseSensor):
 
     ``param0`` detection range
     """
+    _CID = SensorCIDs.sensor_magic
 
     def get_targets(
             self,
@@ -31,8 +35,10 @@ class MagicSensor(BaseSensor):
         else:
             targets = from_entities
 
-        return [e[1] for e in Players.entities_in_circle(
+        self._targets = [e[1] for e in Players.entities_in_circle(
             targets,
             self.parent.position + self._position_offset,
             self.detection_range,
         )]
+
+        return self._targets.copy()

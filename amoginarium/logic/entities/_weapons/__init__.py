@@ -9,4 +9,4 @@ Authors: Nilusink, LukasKrah
 from ._weapons import Minigun, Ak47, Sniper, Mortar, Flak, CRAM, HandThrownGrenade, SkyShieldWeapon
 from ._base_charged_weapon import BaseChargedWeapon
 from ._charged_weapons import RailGun
-from ._base_weapon import BaseWeapon
+from ._base_weapon import BaseWeapon, FileLoadedWeapon

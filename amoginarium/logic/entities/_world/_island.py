@@ -24,7 +24,7 @@ from .._base_entities import LogicGameEntity
 from .._groups import Walls, Updated
 from .._collision import collision_manager
 from .._collision.collision_groups import collision_group_islands
-from .._debug import DebugRenderingEntity
+from .._debug import DebugRectangleEntity
 
 class _PolyMatcher:
     def __init__(self, top, bottom, left, right) -> None:
@@ -158,7 +158,7 @@ class Island(LogicGameEntity):
             )
             collision_manager.register_entity(collision_group_islands, self,
                                               self.position, self.size)
-            DebugRenderingEntity(self._runtime_buffer, self.position, self.size)
+            DebugRectangleEntity(self._runtime_buffer, self.position, self.size)
             return
 
         # Collision rects
@@ -195,7 +195,7 @@ class Island(LogicGameEntity):
             self.collision_rects.append(pg.Rect(rect_x, rect_y, rect_w, rect_h))
             collision_manager.register_entity(collision_group_islands, self,
                                               position, size)
-            DebugRenderingEntity(self._runtime_buffer, position, size)
+            DebugRectangleEntity(self._runtime_buffer, position, size)
         # collide sprite and rect
         entity_mask = pg.Mask(self.size.xy)
         block_mask = self._get_block_mask()

@@ -18,7 +18,7 @@ from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
 
 from .._groups import GravityAffected
 from .._base_entities import LogicGameEntity
-from ._bullets import Bullet
+from ._base_bullet import Bullet
 
 
 class AerodynamicEntity(Bullet):

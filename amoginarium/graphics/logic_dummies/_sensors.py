@@ -32,7 +32,7 @@ class SensorHUD(SyncedGraphicsEntity):
 
     __slots__ = ("_sectors", "_min_rcs", "_vpp")
 
-    _cid = SensorCIDs.hud
+    _CID = SensorCIDs.hud
 
     def __init__(
         self,
@@ -83,11 +83,11 @@ class SensorHUD(SyncedGraphicsEntity):
 
 
 class MagicSensorHUD(SensorHUD):
-    _cid = SensorCIDs.sensor_magic
+    _CID = SensorCIDs.sensor_magic
 
 
 class RadarSensorHUD(SensorHUD):
-    _cid = SensorCIDs.sensor_radar
+    _CID = SensorCIDs.sensor_radar
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
@@ -116,4 +116,4 @@ class RadarSensorHUD(SensorHUD):
 
 
 class VisualSensorHUD(SensorHUD):
-    _cid = SensorCIDs.sensor_visual
+    _CID = SensorCIDs.sensor_visual

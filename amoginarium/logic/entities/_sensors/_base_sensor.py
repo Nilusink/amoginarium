@@ -113,39 +113,39 @@ class BaseSensor(PositionedLogicEntity):
     def _update(self, delta: float) -> None:
         if hasattr(self.parent, "position"):
             self.position = self.parent.position + self._position_offset
-            # ic(self.position, self._buff.param0)
+            # ic(self.position, self._buffer.param0)
 
         super()._update(delta)
 
         # set target
         if self._targets:
-            self._buff.param1 = self._targets[0].position.x
-            self._buff.param2 = self._targets[0].position.y
+            self._buffer.param1 = self._targets[0].position.x
+            self._buffer.param2 = self._targets[0].position.y
 
         else:
-            self._buff.param1 = 0
-            self._buff.param2 = 0
+            self._buffer.param1 = 0
+            self._buffer.param2 = 0
 
         # write sectors
-        self._buff.param3 = -1
-        self._buff.param4 = -1
+        self._buffer.param3 = -1
+        self._buffer.param4 = -1
         sectors = self._highlighted_sectors.copy()
         self._highlighted_sectors.clear()
         if sectors:
             if len(sectors) > self._values_per_param:
-                self._buff.param3 = pack_int(
+                self._buffer.param3 = pack_int(
                     64, self._values_per_param, sectors[: self._values_per_param]
                 )
 
                 if len(sectors) > 2*self._values_per_param:
-                    self._buff.param4 = pack_int(
+                    self._buffer.param4 = pack_int(
                         64,
                         self._values_per_param,
                         sectors[self._values_per_param:2 * self._values_per_param],
                     )
 
                 else:
-                    self._buff.param4 = pack_int(
+                    self._buffer.param4 = pack_int(
                         64,
                         self._values_per_param,
                         sectors[self._values_per_param:]
@@ -153,7 +153,7 @@ class BaseSensor(PositionedLogicEntity):
                     )
 
             else:
-                self._buff.param3 = pack_int(
+                self._buffer.param3 = pack_int(
                     64,
                     self._values_per_param,
                     sectors + [MASK16] * (self._values_per_param - len(sectors)),

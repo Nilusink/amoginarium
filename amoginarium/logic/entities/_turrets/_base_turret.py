@@ -17,7 +17,7 @@ import numpy as np
 import ctypes
 
 from amoginarium.shared import Coalitions, VisibleGameEntityLike, base_entity_t
-from amoginarium.shared import ProcessCommand, BaseCommandType
+from amoginarium.shared import ProcessCommand, BaseCommandType, TurretCIDs
 from amoginarium.shared.utility import is_related, normalize_angle, MASK32
 from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
 from amoginarium.shared.utility import MASK64, get_default
@@ -25,14 +25,6 @@ from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
 from amoginarium.shared.collision_detection import CollisionEvent
 
-from ._logic_groups import CollisionDestroyed, Players, Bullets
-from ._logic_groups import GravityAffected
-from ._weapons import BaseWeapon
-from ._base_entity import LogicGameEntity
-from ._sensors import MagicSensor, BaseSensor
-from ._detection_group import DetectionGroup
-from ._radar import RadarSensor
-from ...audio import MetalPings
 from .._groups import Players, Bullets, GravityAffected
 from .._weapons import BaseWeapon
 from .._base_entities import LogicGameEntity
@@ -79,7 +71,7 @@ class BaseTurret(LogicGameEntity):
     base turret type
     """
 
-    _cid = TurretCIDs.base
+    _CID = TurretCIDs.base
     size: Vec2
     weapon: BaseWeapon
     _default_max_hp: int = 80

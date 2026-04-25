@@ -12,43 +12,25 @@ from time import perf_counter
 from ctypes import Array
 from icecream import ic
 import typing as tp
-import math as m
 from types import EllipsisType
 
-from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
-from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
-from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
-from amoginarium.shared.utility import Vec2, convert_coord
-from amoginarium import pv
 from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
-from .._collision import collision_manager
 
-from ...audio import DeathSound, SoundEffect, OnHoverButtonSound
-from ...graphics_dummies import Controller
-from .._weapons import BaseWeapon, Minigun, Sniper, HandThrownGrenade, Ak47, RailGun
-from .._groups import GravityAffected, FrictionXAffected, Updated, Walls
+from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
+from .._weapons import BaseWeapon, HandThrownGrenade, RailGun
+from .._groups import GravityAffected, FrictionXAffected, Updated
 from .._groups import Players
-from .._items import Shield, HealingPotion, JetBag, Inventory, Item
-from .._base_entities import LogicGameEntity
+from .._items import Shield, HealingPotion, JetBag, Inventory
 from .._collision.collision_groups import collision_group_players, collision_group_islands, collision_group_bullets
-from .._debug import PolyDebugRenderingEntity
 from .._turrets import ExactoSniper
-from ..graphics_dummies import Controller
-from ._weapons import BaseWeapon, HandThrownGrenade
-from ._exacto import ExactoSniper
-from ._logic_groups import GravityAffected, FrictionXAffected, Updated
-from ._logic_groups import CollisionDestroyed, WallCollider, Players
-from ._items import Shield, HealingPotion, JetBag
-from ._dynamic_entities import DYNAMIC_ENTITIES
-from ._base_entity import LogicGameEntity
-from ._charged_weapons import RailGun
-from ._inventory import Inventory
-from ._island import Island
-from ._base_item import Item
+from .._base_entities import LogicGameEntity
+from ...graphics_dummies import Controller
+from .._dynamic_entities import DYNAMIC_ENTITIES
+from .._items import Item
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet

@@ -30,7 +30,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     __slots__ = [
         "_target_pos", "_range", "_angles", "_hp_colors"
     ]
-    _cid = TurretCIDs.base
+    _CID = TurretCIDs.base
     _body_texture: int = ...
     _image_name = "mortar_turret_base"
     _image_mirror: str = ""
@@ -261,9 +261,9 @@ class BaseTurretDummy(SyncedGraphicsEntity):
 
 class ExactoSniperTurretDummy(BaseTurretDummy):
     __slots__ = []
-    _cid = TurretCIDs.exacto_sniper
+    _CID = TurretCIDs.exacto_sniper
 
 
 class AkTurretDummy(BaseTurretDummy):
     __slots__ = []
-    _cid = TurretCIDs.ak47
+    _CID = TurretCIDs.ak47

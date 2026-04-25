@@ -19,7 +19,7 @@ class TextEntity(SyncedGraphicsEntity):
     """
     Static text synced graphics entity
     """
-    _cid = GraphicsCIDs.static_text
+    _CID = GraphicsCIDs.static_text
 
     def __init__(
             self,

@@ -31,7 +31,7 @@ class RadarSensor(BaseSensor):
     """
     # __slots__ = []
 
-    _cid = SensorCIDs.sensor_radar
+    _CID = SensorCIDs.sensor_radar
     _debug: tp.ClassVar[bool] = False
     _has_sectors = True
 

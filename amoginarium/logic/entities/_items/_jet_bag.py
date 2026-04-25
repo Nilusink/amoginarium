@@ -12,7 +12,7 @@ from amoginarium.shared.utility import Vec2
 from amoginarium.shared import base_entity_t, ItemCIDs
 from amoginarium import pv
 
-from ...audio import RocketSound
+from amoginarium.shared.audio import RocketSound
 from ._base_item import BaseItem
 
 
