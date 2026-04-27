@@ -1,0 +1,21 @@
+graph TD
+
+    subgraph Group [" "]
+        _base_entities
+        _collision
+        _debug
+        _game_entities
+        _groups
+    end
+
+    _base --- _base_entities
+    _base --- _collision
+    _base --- _debug
+    _base --- _game_entities
+    _base --- _groups
+
+    _base_entities --> _groups
+    _debug --> _base_entities
+    _game_entities --> _base_entities
+    _game_entities --> _collision
+    _game_entities --> _debug

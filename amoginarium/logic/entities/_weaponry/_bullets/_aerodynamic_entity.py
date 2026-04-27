@@ -16,8 +16,7 @@ import math as m
 from amoginarium.shared.utility import Vec2, get_default, normalize_angle
 from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
 
-from .._groups import GravityAffected
-from .._base_entities import LogicGameEntity
+from .._base import GravityAffected, LogicGameEntity
 from ._base_bullet import Bullet
 
 
@@ -43,18 +42,18 @@ class AerodynamicEntity(Bullet):
     _default_rudder_max_angle: float = 1
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        coalition: Coalitions,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        size: Vec2,
-        *,
-        rudder_size: float | EllipsisType = ...,
-        rudder_max_angle: float | EllipsisType = ...,
-        mass: float | EllipsisType = ...,
-        **kwargs
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            size: Vec2,
+            *,
+            rudder_size: float | EllipsisType = ...,
+            rudder_max_angle: float | EllipsisType = ...,
+            mass: float | EllipsisType = ...,
+            **kwargs
     ) -> None:
         self._rudder_size = get_default(rudder_size, self._default_rudder_size)
         self._rudder_max_angle = get_default(rudder_max_angle, self._default_rudder_max_angle)

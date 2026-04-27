@@ -11,5 +11,3 @@ from ._entity_type_groups import Bullets, Walls, Players
 from ._logic_group import LogicGroup
 from ._base_group import BaseGroup
 from ._updated import Updated
-
-from ._base_group import WallCollider, WallBouncer, CollisionDestroyed

@@ -1,0 +1,23 @@
+graph TD
+
+    subgraph Group [" "]
+        _animations
+        _base
+        _components
+        _debug
+        _surface_renderer
+        _types
+        _widgets
+    end
+
+    ui --- _animations
+    ui --- _base
+    ui --- _types
+    ui --- _widgets
+
+    _base --> _types
+    _base --> _widgets
+    _widgets --> _animations
+    _widgets --> _base
+    _widgets --> _surface_renderer
+    _widgets --> _types

@@ -6,6 +6,7 @@ Created: 21.04.2026
 Authors: LukasKrah
 """
 
+
 class CollisionExceptions:
     """
     Static container for collision exception rules
@@ -15,7 +16,3 @@ class CollisionExceptions:
           or by custom collision exception rules working with entity IDs.
     """
     GRENADE_CLUSTER_DOES_NOT_HIT_ITSELF = -10
-
-# todo - counter function create_expcetion( -> int
-
-# todo - wtf grenade shrep?!

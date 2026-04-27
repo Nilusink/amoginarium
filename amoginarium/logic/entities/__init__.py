@@ -1,13 +1,10 @@
-from ._groups import Walls, Players, Bullets, Updated, GravityAffected, FrictionXAffected
-from ._spawnables import SPAWNABLES
-from ._base_entities import BaseLogicEntity, PositionedLogicEntity, LogicGameEntity
+from ._base import BaseLogicEntity, Bullets, FrictionXAffected, GameCollisions, GravityAffected, LogicGameEntity, \
+    Players, PositionedLogicEntity, Updated, Walls
+from ._bullets import AerodynamicEntity, Bullet, Grenade
 from ._player import Player
-from ._world import ISLANDS, Island, GrassIsland
-from ._bullets import Bullet, Grenade
-from ._sensors import DETECTION_GROUP_MANAGER, DetectionGroup, \
-    DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
-from ._sensors import BaseSensor, MagicSensor
-from ._collision import collision_manager
+from ._sensors import BaseSensor, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED, \
+    DETECTION_GROUP_MANAGER, DetectionGroup, MagicSensor
+from ._spawnables import SPAWNABLES
 from ._turrets import ExactoBullet
-from ._bullets import AerodynamicEntity
-from ._collision._collision_relations import *
+from ._world import GrassIsland, Island, ISLANDS
+

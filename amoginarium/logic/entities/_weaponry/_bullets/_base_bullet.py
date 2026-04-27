@@ -16,13 +16,10 @@ from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.utility import Vec2, get_default
 from amoginarium import pv
 
-from .._groups import Bullets, Updated, GravityAffected
+from .._base import Bullets, Updated, GravityAffected
 from amoginarium.shared.audio import LargeExplosion, DistantPop
-from .._base_entities import LogicGameEntity
-from .._collision.collision_groups import (
-    collision_group_bullets, collision_group_islands, collision_group_turrets,
-    collision_group_players, collision_group_grenades, collision_group_shields,
-)
+from .._base import LogicGameEntity
+from .._base import GameCollisions
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
@@ -37,7 +34,6 @@ if tp.TYPE_CHECKING:
     from .._player import Player
     from .._world import Island
     from .._items import Shield
-
 
 SQR2: tp.Final[np.float64] = np.sqrt(2)
 
@@ -375,7 +371,8 @@ class Bullet(LogicGameEntity):
 
             self.kill(killed_by=event.other_entity)
 
-    def _collision_start(self, events: list[CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
+    def _collision_start(self, events: list[
+        CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
         for event in events:
             if event.group_id == collision_group_islands:
                 self.__on_collision_general(event)

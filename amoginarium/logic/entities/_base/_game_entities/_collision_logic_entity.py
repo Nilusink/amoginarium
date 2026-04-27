@@ -13,10 +13,9 @@ import typing as tp
 
 from amoginarium.shared.utility import get_default
 
-from ._positioned_logic_entity import PositionedLogicEntity
+from .._base_entities import PositionedLogicEntity
 from .._debug import DebugPolygonEntity, DebugRectangleEntity, DebugCircleEntity
-from .._collision import collision_manager
-from .._collision.collision_hitboxes import hitboxes
+from .._collision import GameCollisions
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
@@ -26,7 +25,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.utility import Vec2
 
-    from ._base_logic_entity import BaseLogicEntity
+    from .._base_entities import BaseLogicEntity
     from .._collision import CollisionType, HitboxTypes
 
 
@@ -277,7 +276,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
         self.__collision_exception_root_ids = self._get_root_collision_exceptions()
 
-        self.__collision_entity_id = collision_manager.register_entity(
+        self.__collision_entity_id = GameCollisions.collision_manager.register_entity(
             group_id=self.__collision_group,
             instance=self,
             position=position,
@@ -318,7 +317,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         if centered == ...:
             centered = self._centered
 
-        collision_manager.update_entity(
+        GameCollisions.collision_manager.update_entity(
             group_id=self._DEFAULT_COLLISION_GROUP,
             entity_id=self.__collision_entity_id,
             position=position,
@@ -329,7 +328,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
             shift_history=shift_history,
         )
         if CollisionLogicEntity.__debug_draw_hitboxes:
-            hitbox: HitboxTypes = hitboxes[self.__collision_group]
+            hitbox: HitboxTypes = GameCollisions.hitboxes[self.__collision_group]
 
             if self.__debug_entity is None:
                 match hitbox:
@@ -352,18 +351,22 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
             match hitbox:
                 case HitboxTypes.aabb:
-                    self.__debug_entity.position = collision_manager.get_position(self._DEFAULT_COLLISION_GROUP,
-                                                                                  self.__collision_entity_id)
-                    self.__debug_entity.size = collision_manager.get_size(self._DEFAULT_COLLISION_GROUP,
-                                                                          self.__collision_entity_id)
+                    self.__debug_entity.position = GameCollisions.collision_manager.get_position(
+                        self._DEFAULT_COLLISION_GROUP,
+                        self.__collision_entity_id)
+                    self.__debug_entity.size = GameCollisions.collision_manager.get_size(self._DEFAULT_COLLISION_GROUP,
+                                                                                         self.__collision_entity_id)
                 case HitboxTypes.circle:
-                    self.__debug_entity.position = collision_manager.get_position(self._DEFAULT_COLLISION_GROUP,
-                                                                                  self.__collision_entity_id)
-                    self.__debug_entity.radius = collision_manager.get_radius(self._DEFAULT_COLLISION_GROUP,
-                                                                              self.__collision_entity_id)
+                    self.__debug_entity.position = GameCollisions.collision_manager.get_position(
+                        self._DEFAULT_COLLISION_GROUP,
+                        self.__collision_entity_id)
+                    self.__debug_entity.radius = GameCollisions.collision_manager.get_radius(
+                        self._DEFAULT_COLLISION_GROUP,
+                        self.__collision_entity_id)
                 case _:
                     self.__debug_entity.set_points(
-                        collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id)
+                        GameCollisions.collision_manager.get_points(self._DEFAULT_COLLISION_GROUP,
+                                                                    self.__collision_entity_id)
                     )
 
     @tp.final
@@ -373,7 +376,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         """
         if self.__collision_entity_id is None:
             return
-        collision_manager.delete_entity(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id)
+        GameCollisions.collision_manager.delete_entity(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id)
         self.__collision_entity_id = None
         if self.__debug_entity is not None:
             self.__debug_entity.kill()

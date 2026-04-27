@@ -1,0 +1,85 @@
+graph RL
+
+    subgraph Group1 [" "]
+        Anchor
+        AnimatedColorValues
+        AnimatedFloatValues
+        AnimatedVec2Values
+    end
+
+    subgraph Group2 [" "]
+        AnimationPhase
+        PeakedSCurve
+        Positions
+        PygameSurfaceRenderer
+    end
+
+    subgraph Group3 [" "]
+        UIElementData
+        UIElementValueNamesEnum
+        UIElementValueTypesEnum
+        _ButtonClickSound
+    end
+
+    subgraph Group4 [" "]
+        _FloatAnimationHelper
+        _OnButtonLeaveSound
+        _OnHoverButtonSound
+    end
+
+    subgraph Group5 [" "]
+        ColorAnimation
+        MultiAnimation
+        Vec2Animation
+    end
+
+    subgraph Group6 [" "]
+        ComplexAnimation
+        SimpleAnimation
+    end
+
+    subgraph Group7 [" "]
+        Focus
+        _FocusHandler
+        _SharedFocusStructure
+    end
+
+    subgraph Group8 [" "]
+        UIButton
+        UICursor
+        UIDynamicText
+        UIElement
+        UIEntity
+        UIEventElement
+        UIRectangle
+        UIStaticText
+    end
+
+    subgraph Group9 [" "]
+        UIElementValueFloat
+        UIElementValueFloatOneAbsolute
+        _UIElementValueFloatBase
+    end
+
+    subgraph Group10 [" "]
+        UIElementValueVec2
+        UIElementValueVec2OneAbsolute
+        _UIElementValueVec2Base
+    end
+
+    ColorAnimation --> MultiAnimation
+    ComplexAnimation --> SimpleAnimation
+    Vec2Animation --> MultiAnimation
+    Focus --> _SharedFocusStructure
+    _FocusHandler --> _SharedFocusStructure
+    UIElement --> UIEntity
+    UIElementValueFloat --> _UIElementValueFloatBase
+    UIElementValueFloatOneAbsolute --> _UIElementValueFloatBase
+    UIElementValueVec2 --> _UIElementValueVec2Base
+    UIElementValueVec2OneAbsolute --> _UIElementValueVec2Base
+    UIEventElement --> UIElement
+    UIButton --> UIRectangle
+    UICursor --> UIEventElement
+    UIDynamicText --> UIEventElement
+    UIRectangle --> UIEventElement
+    UIStaticText --> UIEventElement

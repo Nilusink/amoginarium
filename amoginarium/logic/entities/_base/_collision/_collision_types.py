@@ -1,20 +1,12 @@
 """
-amoginarium/logic/entities/_collisions.py
+amoginarium/logic/entities/_base/_collision/_collision_types.py
 
 Project: amoginarium
-Created: 16.04.2026
+Created: 27.04.2026
 Authors: LukasKrah
 """
 
 from enum import StrEnum
-
-from amoginarium.shared.collision_detection import CollisionManager
-
-
-collision_manager = CollisionManager(
-    base_cell_size=500,
-    level_dividers=[10],
-)
 
 
 class CollisionType:
