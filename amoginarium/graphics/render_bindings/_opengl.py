@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 import os
+
 # Stop Windows from minimizing/re-initializing the window if it thinks it lost focus
 os.environ['SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS'] = '0'
 # Stop Windows DPI scaling from slightly altering the window size and triggering a loop
@@ -53,8 +54,8 @@ from .opengl_fonts import GLFont
 
 from amoginarium import pv
 
-# define types
 
+# define types
 
 
 # noinspection DuplicatedCode
@@ -393,7 +394,7 @@ class OpenGLRenderer(BaseRenderer):
         glClearColor(*conv_color.rgba1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) ->None:
+    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) -> None:
         """
         Should be called when the display gets updated
         :param position: Position of the display
@@ -731,6 +732,65 @@ class OpenGLRenderer(BaseRenderer):
 
         for vertice in vertices_vec2:
             glVertex2f(vertice.x, vertice.y)
+
+        glEnd()
+        glPopMatrix()
+
+    def draw_polygon_line(
+            self,
+            vertices: tp.Iterable[coord_t],
+            color: Color | tColor,
+            *,
+            thickness: float = 1.0,
+            center: coord_t = None,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a polygon outline without fill
+        :param vertices: Coord of the corner points of the polygon
+        :param color: Drawing color
+        :param thickness: Thickness of the outline
+        :param center: Optional center position
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: NOT SUPPORTED
+        """
+        vertices_vec2: list[Vec2] = [convert_coord(v, Vec2) for v in vertices]
+        if not vertices_vec2:
+            return
+
+        if convert_global:
+            thickness = pv.global_vars.translate_scale(thickness)
+            if center:
+                vertices_vec2 = [pv.global_vars.translate_scale(v) for v in vertices_vec2]
+            else:
+                vertices_vec2 = [pv.global_vars.translate_screen_coord(v) for v in vertices_vec2]
+
+        glPushMatrix()
+        if center is not None:
+            center_vec2: Vec2 = convert_coord(center, Vec2)
+            if convert_global:
+                center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
+            glTranslate(center_vec2.x, center_vec2.y, 0)
+
+        self.__set_color(color)
+
+        # Use TRIANGLE_STRIP to create a thick outline by calculating offsets for each segment
+        glBegin(GL_TRIANGLE_STRIP)
+        num_verts = len(vertices_vec2)
+        for i in range(num_verts + 1):
+            v1 = vertices_vec2[i % num_verts]
+            v2 = vertices_vec2[(i + 1) % num_verts]
+
+            dx, dy = v2.x - v1.x, v2.y - v1.y
+            length = m.hypot(dx, dy)
+            if length == 0:
+                continue
+
+            off_x, off_y = (-dy / length) * (thickness * 0.5), (dx / length) * (thickness * 0.5)
+
+            glVertex2f(v1.x + off_x, v1.y + off_y)
+            glVertex2f(v1.x - off_x, v1.y - off_y)
 
         glEnd()
         glPopMatrix()
@@ -1313,7 +1373,7 @@ class OpenGLRenderer(BaseRenderer):
             offscreen_check: bool = True
     ) -> None:
         """
-        Draw a dashed circle line with num_segments segments
+        Draw a dashed circle line with point_num_segments segments
         :param center: Absolute center position
         :param radius: Radius of the circle
         :param num_segments: Number of segments. Every second segment is drawn
@@ -1395,7 +1455,7 @@ class OpenGLRenderer(BaseRenderer):
             offscreen_check: bool = True
     ) -> None:
         """
-        Draw a partial dashed circle line with num_segments segments
+        Draw a partial dashed circle line with point_num_segments segments
         :param center: Absolute center position
         :param radius: Radius of the circle
         :param angle_start: Angle to start at as vector
@@ -1788,6 +1848,5 @@ class OpenGLRenderer(BaseRenderer):
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds((px, py), (scaled_w, scaled_h))
-
 
     # endregion

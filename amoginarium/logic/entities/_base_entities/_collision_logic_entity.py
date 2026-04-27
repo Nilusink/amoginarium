@@ -14,7 +14,9 @@ import typing as tp
 from amoginarium.shared.utility import get_default
 
 from ._positioned_logic_entity import PositionedLogicEntity
+from .._debug import DebugPolygonEntity, DebugRectangleEntity, DebugCircleEntity
 from .._collision import collision_manager
+from .._collision.collision_hitboxes import hitboxes
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
@@ -25,8 +27,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import Vec2
 
     from ._base_logic_entity import BaseLogicEntity
-    from .._debug import PolyDebugRenderingEntity
-    from .._collision import CollisionType
+    from .._collision import CollisionType, HitboxTypes
 
 
 class CollisionLogicEntity(PositionedLogicEntity):
@@ -43,9 +44,6 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
     # region ClassVars
     __debug_draw_hitboxes: tp.ClassVar[bool] = False
-    __debug_entity_class: tp.ClassVar[
-        type["DebugPolygonEntity"]
-    ]
 
     _DEFAULT_COLLISION_EXCEPTION_ROOT: tp.ClassVar[bool] = False
     _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = True
@@ -68,7 +66,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     _active_collisions: dict[CollisionType.CollisionID, CollisionEvent]  # protected / no property for faster access
     _active_normals: dict[CollisionType.GroupID, list[Vec2]]  # protected / no property for faster access
 
-    __debug_entity: DebugRectangle | None
+    __debug_entity: DebugCircleEntity | DebugPolygonEntity | DebugRectangleEntity | None
 
     # endregion
 
@@ -142,14 +140,6 @@ class CollisionLogicEntity(PositionedLogicEntity):
         :param value: True to enable, False to disable.
         """
         cls.__debug_draw_hitboxes = value
-
-    @classmethod
-    def debug_entity_class(cls, value: type[PolyDebugRenderingEntity]) -> None:
-        """
-        Sets the class used for rendering debug hitboxes.
-        :param value: A subclass of DebugPolygonEntity.
-        """
-        cls.__debug_entity_class = value
 
     # endregion
 
@@ -339,13 +329,42 @@ class CollisionLogicEntity(PositionedLogicEntity):
             shift_history=shift_history,
         )
         if CollisionLogicEntity.__debug_draw_hitboxes:
+            hitbox: HitboxTypes = hitboxes[self.__collision_group]
+
             if self.__debug_entity is None:
-                self.__debug_entity = CollisionLogicEntity.__debug_entity_class(
-                    self._runtime_buffer, radius=1
-                )
-            self.__debug_entity.set_points(
-                collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id)
-            )
+                match hitbox:
+                    case HitboxTypes.aabb:
+                        self.__debug_entity = DebugRectangleEntity(
+                            runtime_buffer=self._runtime_buffer,
+                            position=self.position,
+                            size=self.size,
+                        )
+                    case HitboxTypes.circle:
+                        self.__debug_entity = DebugCircleEntity(
+                            runtime_buffer=self._runtime_buffer,
+                            position=self.position,
+                            radius=self.size.x / 2,
+                        )
+                    case _:
+                        self.__debug_entity = DebugPolygonEntity(
+                            runtime_buffer=self._runtime_buffer,
+                        )
+
+            match hitbox:
+                case HitboxTypes.aabb:
+                    self.__debug_entity.position = collision_manager.get_position(self._DEFAULT_COLLISION_GROUP,
+                                                                                  self.__collision_entity_id)
+                    self.__debug_entity.size = collision_manager.get_size(self._DEFAULT_COLLISION_GROUP,
+                                                                          self.__collision_entity_id)
+                case HitboxTypes.circle:
+                    self.__debug_entity.position = collision_manager.get_position(self._DEFAULT_COLLISION_GROUP,
+                                                                                  self.__collision_entity_id)
+                    self.__debug_entity.radius = collision_manager.get_radius(self._DEFAULT_COLLISION_GROUP,
+                                                                              self.__collision_entity_id)
+                case _:
+                    self.__debug_entity.set_points(
+                        collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id)
+                    )
 
     @tp.final
     def _delete_collision(self) -> None:

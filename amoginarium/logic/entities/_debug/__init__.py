@@ -8,4 +8,4 @@ Authors: LukasKrah
 
 from ._debug_rectangle import DebugRectangleEntity
 from ._debug_polygon import DebugPolygonEntity
-from ._debug_circle import DebugCircle
+from ._debug_circle import DebugCircleEntity

@@ -1235,3 +1235,70 @@ cdef class CollisionManager:
             points.append(Vec2().from_cartesian(ed.vx_n[i], ed.vy_n[i]))
 
         return points
+
+    def get_hitbox(self, int group_id) -> str:
+        if group_id < 0 or group_id >= self.groups.size():
+            return ""
+
+        cdef int h_type = self.groups.data()[group_id].h_type
+
+        if h_type == 1:
+            return "obb"
+        elif h_type == 2:
+            return "triangle"
+        elif h_type == 3:
+            return "polygon"
+
+        return "aabb"
+
+    def get_position(self, int group_id, int entity_id):
+        if group_id < 0 or group_id >= self.groups.size():
+            return None
+
+        cdef int e_size = self.groups.data()[group_id].entities.size()
+        if entity_id < 0 or entity_id >= e_size:
+            return None
+
+        cdef EntityData * ed = &self.groups.data()[group_id].entities.data()[entity_id]
+        if not ed.active:
+            return None
+
+        cdef double px = ed.px_n
+        cdef double py = ed.py_n
+
+        # Force top-left translation if it was registered as centered
+        if ed.is_centered:
+            px -= (ed.sx / 2.0)
+            py -= (ed.sy / 2.0)
+
+        return Vec2().from_cartesian(px, py)
+
+    def get_size(self, int group_id, int entity_id):
+        if group_id < 0 or group_id >= self.groups.size():
+            return None
+
+        cdef int e_size = self.groups.data()[group_id].entities.size()
+        if entity_id < 0 or entity_id >= e_size:
+            return None
+
+        cdef EntityData * ed = &self.groups.data()[group_id].entities.data()[entity_id]
+        if not ed.active:
+            return None
+
+        return Vec2().from_cartesian(ed.sx, ed.sy)
+
+    def get_radius(self, int group_id, int entity_id) -> float:
+        cdef vector[CollisionGroupStruct] * _g = &self.groups
+        if group_id < 0 or group_id >= _g[0].size():
+            return 0.0
+
+        cdef CollisionGroupStruct * group = &(_g[0][group_id])
+        if entity_id < 0 or entity_id >= group.entities.size():
+            return 0.0
+
+        cdef EntityData * ed = &group.entities.data()[entity_id]
+        if not ed.active:
+            return 0.0
+
+        # Radius is exactly half the width (size.x / 2)
+        return ed.sx / 2.0

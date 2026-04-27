@@ -11,20 +11,21 @@ from __future__ import annotations
 import typing as tp
 
 from amoginarium.shared import GraphicsCIDs
-from amoginarium.shared.utility import Vec2, MASK16, get_default, normalize_angle
+from amoginarium.shared.utility import Vec2, MASK16, get_default, normalize_angle, convert_color
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
-from .._base_entities import LogicGameEntity, CollisionLogicEntity
+from .._base_entities import PositionedLogicEntity
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t
+    from amoginarium.shared.utility import color_t
 
 
-class DebugPolygonEntity(LogicGameEntity):
+class DebugPolygonEntity(PositionedLogicEntity):
     """A debug entity used to render arbitrary polygons by packing vertex data into the entity buffer. """
     _CID = GraphicsCIDs.debug_polygon
 
@@ -41,6 +42,15 @@ class DebugPolygonEntity(LogicGameEntity):
             p7: Vec2 | EllipsisType = ...,
             p8: Vec2 | EllipsisType = ...,
             points: tp.Sequence[Vec2] | EllipsisType = ...,
+            *,
+            point_color: color_t = (255, 255, 255),
+            point_radius: int = 0,
+            point_num_segments: int = 8,
+            outline_color: color_t = (255, 255, 255),
+            outline_thickness: int = 1,
+            fill_color: color_t = (255, 0, 0, 128),
+            convert_global: bool = True,
+            **kwargs: tp.Any
     ) -> None:
         """
         Initializes the debug polygon with up to 8 vertices.
@@ -55,12 +65,15 @@ class DebugPolygonEntity(LogicGameEntity):
         :param p7: Vertex 7.
         :param p8: Vertex 8.
         :param points: Optional sequence to batch set vertices.
+        :param point_color: RGB/A color tuple for the vertex points.
+        :param point_radius: Radius for vertex points in pixels.
+        :param point_num_segments: Resolution for vertex points.
+        :param outline_color: RGB/A color tuple for polygon outline.
+        :param outline_thickness: Outline thickness in pixels.
+        :param fill_color: RGB/A color tuple for filled area.
+        :param convert_global: Whether to use global coordinate space.
         """
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            position=Vec2(),
-            size=Vec2()
-        )
+        super().__init__(runtime_buffer, position=Vec2(), size=Vec2())
 
         self.p1 = get_default(p1, Vec2())
         self.p2 = get_default(p2, Vec2())
@@ -73,9 +86,20 @@ class DebugPolygonEntity(LogicGameEntity):
         if points is not ...:
             self.set_points(points)
 
+        kwargs["id"] = self.id
+        kwargs["cid"] = self.cid()
+        kwargs["radius"] = radius
+        kwargs["point_color"] = convert_color(point_color)
+        kwargs["point_radius"] = point_radius
+        kwargs["point_num_segments"] = point_num_segments
+        kwargs["outline_color"] = convert_color(outline_color)
+        kwargs["outline_thickness"] = outline_thickness
+        kwargs["fill_color"] = convert_color(fill_color)
+        kwargs["convert_global"] = convert_global
+
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": self.cid(), "radius": radius},
+            kwargs=kwargs,
         ))
 
     def set_points(self, points: tp.Sequence[Vec2]) -> None:
@@ -121,5 +145,3 @@ class DebugPolygonEntity(LogicGameEntity):
                 | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
                 | (int(self.p8.length) & MASK16) << 48
         )
-
-CollisionLogicEntity.debug_entity_class(DebugPolygonEntity)

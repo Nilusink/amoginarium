@@ -10,3 +10,4 @@ from ._sensors import BaseSensor, MagicSensor
 from ._collision import collision_manager
 from ._turrets import ExactoBullet
 from ._bullets import AerodynamicEntity
+from ._collision._collision_relations import *

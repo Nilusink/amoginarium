@@ -19,7 +19,7 @@ class BaseGraphicsEntity:
         "_visible", "_lifetime", "_draw_children"
     ]
 
-    _CID: str = ...
+    _CID: tp.ClassVar[str] = ...
 
     _visible: bool
     _parent: BaseGraphicsEntity | None
@@ -108,6 +108,7 @@ class BaseGraphicsEntity:
             raise ValueError("__cid is not defined for " + cls.__name__)
 
         return cls._CID.value
+
     # endregion
 
     # region highlighting
@@ -145,11 +146,11 @@ class BaseGraphicsEntity:
 
     @tp.final
     def gl_draw(
-        self,
-        delta_cal: float,
-        recursive: bool = True,
-        force_draw: bool = False,
-        layer: int = 0,
+            self,
+            delta_cal: float,
+            recursive: bool = True,
+            force_draw: bool = False,
+            layer: int = 0,
     ) -> None:
         """
         Draw this UI-entity.
@@ -176,6 +177,7 @@ class BaseGraphicsEntity:
                     )
 
         self._after_gl_draw(draw)
+
     # endregion
 
     # region Methods: children

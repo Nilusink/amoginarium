@@ -439,7 +439,7 @@ class BaseRenderer(abc.ABC):
             offscreen_check: bool = True
     ) -> None:
         """
-        Draw a dashed circle line with num_segments segments
+        Draw a dashed circle line with point_num_segments segments
         :param center: Absolute center position
         :param radius: Radius of the circle
         :param num_segments: Number of segments. Every second segment is drawn
@@ -470,7 +470,7 @@ class BaseRenderer(abc.ABC):
             offscreen_check: bool = True
     ) -> None:
         """
-        Draw a partial dashed circle line with num_segments segments
+        Draw a partial dashed circle line with point_num_segments segments
         :param center: Absolute center position
         :param radius: Radius of the circle
         :param angle_start: Angle to start at as vector
