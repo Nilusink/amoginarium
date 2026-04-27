@@ -45,7 +45,7 @@ class BaseLogicEntity:
     - update
     - visibility
     """
-    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id", "__groups")
+    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id", "__groups", "__alive")
 
     # region InstanceVars
     _parent: BaseLogicEntity | None
@@ -54,6 +54,8 @@ class BaseLogicEntity:
     _runtime_buffer: Array[base_entity_t]
     __id: int
     __groups: list[LogicGroup]
+
+    __alive: bool
 
     # endregion
 
@@ -72,6 +74,7 @@ class BaseLogicEntity:
         self._children = []
         self._lifetime = 0
         self.__groups = []
+        self.__alive = True
 
         # data block
         self.__id = ENTITY_COUNTER.get_id()
@@ -164,7 +167,7 @@ class BaseLogicEntity:
                 group.remove_internal(self)
                 self.__groups.remove(group)
 
-    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
@@ -180,6 +183,16 @@ class BaseLogicEntity:
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__groups.clear()
+
+    @tp.final
+    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+        """
+        Kill entity and all its children
+        :param killed_by: who killed this entity
+        """
+        if self.__alive:
+            self.__alive = False
+            self._kill(killed_by)
 
     # endregion
 

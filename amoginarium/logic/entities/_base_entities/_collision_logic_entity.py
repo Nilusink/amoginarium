@@ -8,6 +8,7 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
+from icecream import ic
 import typing as tp
 
 from amoginarium.shared.utility import get_default
@@ -42,12 +43,12 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
     # region ClassVars
     __debug_draw_hitboxes: tp.ClassVar[bool] = False
-    __debug_entity_classes: tp.ClassVar[
+    __debug_entity_class: tp.ClassVar[
         type["DebugPolygonEntity"]
     ]
 
     _DEFAULT_COLLISION_EXCEPTION_ROOT: tp.ClassVar[bool] = False
-    _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = False
+    _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = True
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = None
 
     # endregion
@@ -118,7 +119,6 @@ class CollisionLogicEntity(PositionedLogicEntity):
                 self._collision_exception_ids = [collision_exception_ids]
             elif isinstance(collision_exception_ids, list):
                 self._collision_exception_ids = collision_exception_ids
-
         self.__collision_exception_root = get_default(
             collision_exception_root,
             self.__class__._DEFAULT_COLLISION_EXCEPTION_ROOT
@@ -188,7 +188,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         my_add: list[CollisionType.ExceptionID] = []
         if self.__collision_exception_root:
             my_add.append(self.id)
-
+        # todo: update func - update on tree update
         if self.__collision_exception_root_additive and self._parent is not None:
             return self._parent._get_root_collision_exceptions() + my_add
         return my_add
@@ -215,6 +215,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
            If False the CollisionManager will not call COLLISION_END
            and will call COLLISION_START again if there still is a collision in the next update
         """
+        # ic(self, [event.other_entity for event in events])
         collisions_result: list[bool] | None = self._collision_start(events)
 
         # Save accepted collisions in self._active_collisions
@@ -258,6 +259,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     # endregion
 
     # region Methods: Create/Update/Delete Collision
+    @tp.final
     def _create_collision(
             self,
             *,
@@ -293,7 +295,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
             rotation=rotation,
             positions=positions,
             centered=centered,
-            ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids
+            ignore_collisions=self._collision_exception_ids
         )
 
     def _update_collision(
@@ -335,7 +337,6 @@ class CollisionLogicEntity(PositionedLogicEntity):
             positions=positions,
             centered=centered,
             shift_history=shift_history,
-            ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids
         )
         if CollisionLogicEntity.__debug_draw_hitboxes:
             if self.__debug_entity is None:
@@ -346,6 +347,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
                 collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id)
             )
 
+    @tp.final
     def _delete_collision(self) -> None:
         """
         Removes the entity from the collision manager and cleans up debug visuals.
@@ -368,12 +370,12 @@ class CollisionLogicEntity(PositionedLogicEntity):
         self._update_collision()
         super()._update(delta)
 
-    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
         """
         Remove from groups and collision manager
         :param killed_by: who killed this entity
         """
         self._delete_collision()
-        super().kill(killed_by)
+        super()._kill(killed_by)
 
     # endregion

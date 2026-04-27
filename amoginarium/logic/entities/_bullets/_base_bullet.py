@@ -426,7 +426,7 @@ class Bullet(LogicGameEntity):
         # update velocity
         self._runtime_buffer[self.id].param1 = self.velocity.length
 
-    def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
+    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
         if killed_by != ... and killed_by != self:
             if killed_by.parent == self.parent:
                 if not self._coll_sibling:
@@ -535,7 +535,7 @@ class Bullet(LogicGameEntity):
                 exp.set_volume(0.8, 0.3)
                 exp.play(pos=self.position)
 
-        super().kill()
+        super()._kill()
 
         return True
 
@@ -559,8 +559,8 @@ class Bullet(LogicGameEntity):
         :param size: bullet size
         :return: bullet weight (depending on size if not specified)
         """
-        if cls._weight:
-            return cls._weight
+        if cls._default_weight:
+            return cls._default_weight
 
         return cls._weight_from_size(size)
 

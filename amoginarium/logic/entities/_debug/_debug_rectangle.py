@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import DebugRendering, GraphicsCIDs, Coalitions
+from amoginarium.shared import GraphicsCIDs, Coalitions
 from amoginarium.shared.utility import convert_color
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
@@ -61,7 +61,6 @@ class DebugRectangleEntity(LogicGameEntity):
         kwargs["cid"] = self.cid()
         kwargs["color"] = convert_color(color)
         kwargs["convert_global"] = convert_global
-        kwargs["rendering"] = DebugRendering.RECTANGLE
         kwargs["centered"] = centered
 
         pv.COQ.put(ProcessCommand(

@@ -159,11 +159,11 @@ class BaseSensor(PositionedLogicEntity):
                     sectors + [MASK16] * (self._values_per_param - len(sectors)),
                 )
 
-    def kill(self, *_args, **_kwargs) -> None:
+    def _kill(self, *_args, **_kwargs) -> None:
         if self._detection_group:
             self._detection_group.remove_sensor(self)
 
-        super().kill(*_args, **_kwargs)
+        super()._kill(*_args, **_kwargs)
 
 
     def __repr__(self) -> str:

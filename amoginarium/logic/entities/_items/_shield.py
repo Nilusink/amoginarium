@@ -12,7 +12,7 @@ import typing as tp
 
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import base_entity_t, ItemCIDs, DebugRendering
+from amoginarium.shared import base_entity_t, ItemCIDs
 from .. import Updated
 
 from amoginarium.shared.audio import MetalPings, RandomizedEffect
@@ -130,8 +130,8 @@ class Shield(BaseItem):
         if self._uses_left <= 0:
             self.kill(hit_by)
 
-    def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
-        super().kill(killed_by)
+    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
+        super()._kill(killed_by)
 
     def _update(self, delta: float, **_) -> None:
         if self.parent:

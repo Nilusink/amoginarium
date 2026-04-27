@@ -118,11 +118,6 @@
     ],
     "entities": [
         {
-            "type": "turret.static.cram",
-            "pos": [2500, 700],
-            "group": 0
-        },
-        {
             "type": "sensor.static.radar",
             "pos": [2500, 500],
             "args": {

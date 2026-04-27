@@ -292,10 +292,10 @@ class BaseTurret(LogicGameEntity):
         if self._hp <= 0:
             self.kill(hit_by)
 
-    def kill(self, killed_by=...):
+    def _kill(self, killed_by=...):
         self.weapon.stop()
         self.weapon.kill(killed_by)
-        super().kill(killed_by)
+        super()._kill(killed_by)
 
     def get_next_target(self, include_all: bool = False) -> target_solution_t:
         """
@@ -671,6 +671,9 @@ class BaseTurret(LogicGameEntity):
             self.hit(dmg, hit_by=event.other_entity)
 
     def _collision_start(self, events: list[CollisionEvent["Bullet"]]) -> None:
+
+        # bullet - 5 turrets - events länge 5
+        # turret - events 1 bullet
         for event in events:
             if event.group_id == collision_group_bullets:
                 self.__on_collision_bullet(event)

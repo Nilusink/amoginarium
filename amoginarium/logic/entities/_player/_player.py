@@ -54,6 +54,7 @@ class Player(LogicGameEntity):
 
     __should_be_killed: int
 
+    # noinspection PyArgumentEqualDefault
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -471,7 +472,7 @@ class Player(LogicGameEntity):
         else:
             self.__should_be_killed = 0
 
-    def kill(self, killed_by=...) -> None:
+    def _kill(self, killed_by=...) -> None:
         self._alive = False
         self._death_sound.play()
 
@@ -480,7 +481,7 @@ class Player(LogicGameEntity):
         elif hasattr(self.item, "stop_shooting"):
             self.item.stop_shooting()
 
-        super().kill(killed_by)
+        super()._kill(killed_by)
 
     def respawn(self, pos: Vec2 = ...) -> None:
         self._alive = True

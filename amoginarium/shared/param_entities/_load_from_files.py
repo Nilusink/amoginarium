@@ -113,7 +113,7 @@ def load_entities_from_files(
             class_name = f"File{"".join([p.capitalize() for p in data["id"]["cid"].split(".")])}"
 
             __dict: dict[str, tp.Any] = {
-                "_cid": cid,
+                "_CID": cid,
                 "cid": classmethod(_cid)
             }
             # fill dict

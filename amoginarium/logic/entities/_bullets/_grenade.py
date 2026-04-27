@@ -32,11 +32,13 @@ class _GrenadeShrapnel(Bullet):
 
     _default_size = 4
     _default_base_damage = 1
-    _ignore_collision_id = CollisionExceptions.GRENADE_CLUSTER_DOES_NOT_HIT_ITSELF
-
     __slots__ = ()
 
+    def __init__(self, *args, **kwargs) -> None:
+        kwargs["collision_exception_ids"] = [CollisionExceptions.GRENADE_CLUSTER_DOES_NOT_HIT_ITSELF]
+        super().__init__(*args, **kwargs)
 
+# todo folder : Weaponry
 class Grenade(Bullet):
     # region ClassVars
     _CID = DummyCIDs.grenade
@@ -139,7 +141,7 @@ class Grenade(Bullet):
 
         super()._update(delta)
 
-    def kill(self, killed_by: tp.Any = ...):
+    def _kill(self, killed_by: tp.Any = ...):
         if killed_by is not ...:
             if issubclass(killed_by.__class__, Bullet):
                 self._time_to_life = 0
@@ -147,7 +149,7 @@ class Grenade(Bullet):
         if self._time_to_life > 0:
             return False
 
-        return super().kill(killed_by)
+        return super()._kill(killed_by)
 
     def add_velocity(self, value: Vec2) -> None:
         """

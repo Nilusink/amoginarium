@@ -14,4 +14,8 @@ class CollisionExceptions:
     NOTE: Use negative numbers, as the positives are used for root collision exceptions
           or by custom collision exception rules working with entity IDs.
     """
-    GRENADE_CLUSTER_DOES_NOT_HIT_ITSELF = -1
+    GRENADE_CLUSTER_DOES_NOT_HIT_ITSELF = -10
+
+# todo - counter function create_expcetion( -> int
+
+# todo - wtf grenade shrep?!

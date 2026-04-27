@@ -10,7 +10,6 @@ Nilusink
 import typing as tp
 from icecream import ic
 
-from ._turrets import MinigunTurret, SniperTurret, AkTurret, MortarTurret, FlakTurret, CRAMTurret, SkyShield
 from ._sensors import VisualRadarSensor, VisualSensor
 from ._base_entities import LogicGameEntity
 from ._turrets import ExactoTurret

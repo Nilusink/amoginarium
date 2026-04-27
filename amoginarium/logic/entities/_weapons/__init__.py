@@ -6,7 +6,7 @@ Created: 18.04.2026
 Authors: Nilusink, LukasKrah
 """
 
-from ._weapons import Minigun, Ak47, Sniper, Mortar, Flak, CRAM, HandThrownGrenade, SkyShieldWeapon
+from ._weapons import HandThrownGrenade
 from ._base_charged_weapon import BaseChargedWeapon
 from ._charged_weapons import RailGun
 from ._base_weapon import BaseWeapon, FileLoadedWeapon

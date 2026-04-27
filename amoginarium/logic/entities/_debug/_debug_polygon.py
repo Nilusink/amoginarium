@@ -15,7 +15,7 @@ from amoginarium.shared.utility import Vec2, MASK16, get_default, normalize_angl
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
-from .._base_entities import LogicGameEntity
+from .._base_entities import LogicGameEntity, CollisionLogicEntity
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
@@ -121,3 +121,5 @@ class DebugPolygonEntity(LogicGameEntity):
                 | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
                 | (int(self.p8.length) & MASK16) << 48
         )
+
+CollisionLogicEntity.debug_entity_class(DebugPolygonEntity)

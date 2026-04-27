@@ -13,7 +13,6 @@ from ctypes import Array
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from amoginarium.shared.utility import Vec2
 
-from .._bullets import SniperBullet
 from ._base_charged_weapon import BaseChargedWeapon
 from amoginarium.shared.audio import SmallExplosion
 

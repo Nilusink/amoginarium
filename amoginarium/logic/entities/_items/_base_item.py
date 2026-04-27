@@ -88,12 +88,12 @@ class BaseItem(Item):
         self.stop_use()
         self._set_bit("flags", 14, False)  # set use to false
 
-    def kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
+    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
         if self._used_callback and self._used_callback(1):
             self._uses_left = self._max_uses
 
         else:
-            super().kill()
+            super()._kill()
 
     def reset(self) -> None:
         """reset the item"""
