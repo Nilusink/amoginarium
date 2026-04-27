@@ -1,4 +1,10 @@
-# Structure
+# amoginarium/logic/entities/_base
+
+Description
+
+<details>
+
+<summary><h2 style="display:inline-block">Structure</h2></summary>
 
 ```mermaid
 graph TD
@@ -24,7 +30,11 @@ _game_entities --> _collision
 _game_entities --> _debug
 ```
 
-# Classes
+</details>
+
+<details>
+
+<summary><h2 style="display:inline-block">Classes</h2></summary>
 
 ```mermaid
 graph RL
@@ -75,3 +85,5 @@ _FrictionXAffected --> BaseGroup
 _GravityAffected --> BaseGroup
 _Updated --> BaseGroup
 ```
+
+</details>
