@@ -22,7 +22,7 @@ from ._weaponry.templates import (
     AerodynamicEntity,
     Bullet,
 )
-from ._world import GrassIsland, Island, ISLANDS
+from ._world import GrassIsland, Island
 from ._spawnables import SPAWNABLES
 from ._player import Player
 
