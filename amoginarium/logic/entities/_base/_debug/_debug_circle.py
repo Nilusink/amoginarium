@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_debug/_debug_circle.py
+amoginarium/logic/entities/_base/_debug/_debug_circle.py
 
 Project: amoginarium
 Created: 25.04.2026

@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_game_entities/__init__.py
+amoginarium/logic/entities/_base/_game_entities/__init__.py
 
 Basic types of logic entities:
 - CollisionLogicEntity: Adds collision detection

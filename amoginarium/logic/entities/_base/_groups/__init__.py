@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_groups/__init__.oy.py
+amoginarium/logic/entities/_base/_groups/__init__.py
 
 Project: amoginarium
 Created: 18.04.2026

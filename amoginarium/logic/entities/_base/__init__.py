@@ -5,6 +5,7 @@ Project: amoginarium
 Created: 27.04.2026
 Authors: LukasKrah
 """
+
 from ._groups import GravityAffected, FrictionXAffected, Bullets, Walls, Players, LogicGroup, BaseGroup, Updated
 from ._collision import CollisionType, HitboxTypes, GameCollisions
 from ._base_entities import BaseLogicEntity, EntityChildViable, PositionedLogicEntity

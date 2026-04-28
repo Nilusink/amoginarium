@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_base_entities/_positioned_logic_entity.py
+amoginarium/logic/entities/_base/_base_entities/_positioned_logic_entity.py
 
 Project: amoginarium
 Created: 28.03.2026

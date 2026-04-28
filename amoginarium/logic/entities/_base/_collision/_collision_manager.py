@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_collisions.py
+amoginarium/logic/entities/_base/_collision/_collision_manager.py
 
 Project: amoginarium
 Created: 16.04.2026

@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_debug/__init__.py
+amoginarium/logic/entities/_base/_debug/__init__.py
 
 Project: amoginarium
 Created: 18.04.2026

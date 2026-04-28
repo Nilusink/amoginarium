@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_base_entities/__init__.py
+amoginarium/logic/entities/_base/_base_entities/__init__.py
 
 Basic types of logic entities:
 - BaseLogicEntity: Most basic type of logic entity.

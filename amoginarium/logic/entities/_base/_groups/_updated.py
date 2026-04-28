@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_groups/_updated.py
+amoginarium/logic/entities/_base/_groups/_updated.py
 
 Project: amoginarium
 Created: 25.01.2024

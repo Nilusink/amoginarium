@@ -5,7 +5,7 @@ _item.py
 all items should inherit from this
 
 Author:
-Nilusink
+Nilusink, LukasKrah
 """
 
 from types import EllipsisType
