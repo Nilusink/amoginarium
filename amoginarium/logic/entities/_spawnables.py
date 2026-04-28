@@ -18,7 +18,7 @@ from ._world import TextEntity
 #     MortarTurret, FlakTurret, CRAMTurret
 # from ._sensors import Radar
 # from ._text_entity import TextEntity
-from ._weaponry import Bullet
+from ._weaponry.templates import Bullet
 from ._dynamic_entities import DYNAMIC_ENTITIES
 
 

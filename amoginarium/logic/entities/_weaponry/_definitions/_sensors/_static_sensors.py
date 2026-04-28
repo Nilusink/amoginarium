@@ -17,18 +17,13 @@ from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
-# from .._groups import CollisionDestroyed
-from ..._base import LogicGameEntity, GameCollisions
-from ._detection_group import DetectionGroup
-from ._magic_sensor import MagicSensor
-from ._radar_sensor import RadarSensor
-from ._base_sensor import BaseSensor
+from ...._base import LogicGameEntity, GameCollisions
+from ...templates import DetectionGroup, BaseSensor
+from ...templates import MagicSensor, RadarSensor
 
 if tp.TYPE_CHECKING:
-    from .._bullets import Bullet
+    from ...templates import Bullet
 
-
-# todo - mytodo - collisiondestroyed
 
 class VisualSensor(LogicGameEntity):
     __slots__ = ("detection_group", "coalition", "_hp")

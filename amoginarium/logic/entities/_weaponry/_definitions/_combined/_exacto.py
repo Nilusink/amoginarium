@@ -15,16 +15,13 @@ import math as m
 
 from amoginarium.shared.utility import Vec2, coord_t, normalize_angle
 from amoginarium.shared.utility import get_default
+from amoginarium.shared.audio import Sniper as SniperSound
 from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
 from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
-from ..._base import GameCollisions, LogicGameEntity
-from amoginarium.shared.audio import Sniper as SniperSound
-from ._base_turret import BaseTurret, TargetSolution
-from .._bullets import AerodynamicEntity
-from .._weapons import BaseWeapon
-from .._sensors import RadarSensor
+from ...templates import BaseTurret, TargetSolution, BaseWeapon, AerodynamicEntity, RadarSensor
+from ...._base import GameCollisions, LogicGameEntity
 
 
 class ExactoBullet(AerodynamicEntity):

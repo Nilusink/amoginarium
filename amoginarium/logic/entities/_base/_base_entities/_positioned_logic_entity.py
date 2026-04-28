@@ -62,13 +62,18 @@ class PositionedLogicEntity(BaseLogicEntity):
 
     # region Class-Methods
     @classmethod
+    def has_cid(cls) -> bool:
+        """returns True if the entity has a CID"""
+        return cls._CID != ...
+
+    @classmethod
     def cid(cls) -> CIDType:
         """
         :return: the entities' component ID
         :raises ValueError: if the class has no __cid
         """
         if cls._CID == ...:
-            raise ValueError("__cid is not defined for " + cls.__name__)
+            raise ValueError("_CID is not defined for " + cls.__name__)
 
         return cls._CID.value  # type: ignore
 

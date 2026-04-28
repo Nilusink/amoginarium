@@ -93,6 +93,11 @@ class BaseLogicEntity:
 
     # region Properties
     @property
+    def alive(self) -> bool:
+        """is entity alive?"""
+        return self.__alive
+
+    @property
     def id(self) -> int:
         """:return: entity id (+ buffer location)"""
         return self.__id

@@ -10,12 +10,11 @@ Nilusink
 
 from ctypes import Array
 
-from amoginarium.shared.utility import Vec2, coord_t
 from amoginarium.shared import base_entity_t, WeaponCIDs
+from amoginarium.shared.audio import SoundEffect
+from amoginarium.shared.utility import Vec2
 
-from amoginarium.shared.audio import Minigun as MinigunSound, AK47 as AK47Sound, SoundEffect, Shotgun
-from amoginarium.shared.audio import Mortar as MortarSound, CRAM as CRAMSound, Cannon, Sniper as SniperSound
-from ._base_weapon import BaseWeapon
+from ...templates import BaseWeapon
 from .._bullets import Grenade
 
 
