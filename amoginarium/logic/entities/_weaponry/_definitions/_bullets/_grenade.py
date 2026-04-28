@@ -15,14 +15,14 @@ from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared.utility import Vec2
 from amoginarium.shared import DummyCIDs
-from ..._base import GravityAffected, GameCollisions
 
-from ..._base import LogicGameEntity
-from ._base_bullet import Bullet
+from ...._base import GravityAffected, GameCollisions
+from ...._base import LogicGameEntity
+from ...templates import Bullet
 
 if tp.TYPE_CHECKING:
-    from ..._world import Island
-    from ..._player import Player
+    from ...._world import Island
+    from ...._player import Player
 
 
 class _GrenadeShrapnel(Bullet):
@@ -38,7 +38,7 @@ class _GrenadeShrapnel(Bullet):
         kwargs["collision_exception_ids"] = [_GrenadeShrapnel._col_expection_grenade_cluster]
         super().__init__(*args, **kwargs)
 
-# todo folder : Weaponry
+
 class Grenade(Bullet):
     # region ClassVars
     _CID = DummyCIDs.grenade
@@ -87,7 +87,7 @@ class Grenade(Bullet):
             **kwargs,
         )
 
-    def __on_collision_island(self, event: CollisionEvent["island"]) -> None:
+    def __on_collision_island(self, event: CollisionEvent["Island"]) -> None:
         self.position.x = event.position.x
         self.position.y = event.position.y
 

@@ -16,8 +16,8 @@ from amoginarium.shared.utility import pack_int, MASK16
 from amoginarium.shared import BaseCommandType
 from amoginarium import pv
 
-from ..._base import PositionedLogicEntity, LogicGameEntity
-from ..._base import Updated
+from ...._base import PositionedLogicEntity, LogicGameEntity
+from ...._base import Updated
 
 
 class BaseSensor(PositionedLogicEntity):

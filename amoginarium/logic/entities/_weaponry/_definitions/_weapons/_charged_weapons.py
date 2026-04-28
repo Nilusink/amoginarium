@@ -11,10 +11,11 @@ Nilusink
 from ctypes import Array
 
 from amoginarium.shared import base_entity_t, WeaponCIDs
+from amoginarium.shared.audio import SmallExplosion
 from amoginarium.shared.utility import Vec2
 
-from ._base_charged_weapon import BaseChargedWeapon
-from amoginarium.shared.audio import SmallExplosion
+from ...templates import BaseChargedWeapon
+
 
 class RailGun(BaseChargedWeapon):
     _CID = WeaponCIDs.railgun

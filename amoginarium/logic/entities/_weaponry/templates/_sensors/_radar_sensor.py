@@ -16,8 +16,8 @@ import numpy as np
 from amoginarium.shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
 from amoginarium.shared import base_entity_t, SensorCIDs
 
-from ..._base import LogicGameEntity
-from ..._base import Players, Bullets
+from ...._base import LogicGameEntity
+from ...._base import Players, Bullets
 from ._base_sensor import BaseSensor
 
 

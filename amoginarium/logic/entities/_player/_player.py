@@ -21,7 +21,8 @@ from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
 
 from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
-from .._weaponry import BaseWeapon, HandThrownGrenade, RailGun
+from .._weaponry.templates import BaseWeapon
+from .._weaponry import HandThrownGrenade, RailGun
 from .._base import GravityAffected, FrictionXAffected, Updated
 from .._base import Players, GameCollisions
 from .._items import Shield, HealingPotion, JetBag, Inventory

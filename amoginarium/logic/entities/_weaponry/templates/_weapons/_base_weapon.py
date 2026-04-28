@@ -19,8 +19,8 @@ from amoginarium.shared import base_entity_t, WeaponCIDs
 from shared import Coalitions
 
 from .._bullets import Bullet
-from ..._base import Updated, LogicGameEntity
-from ..._items import Item
+from ...._base import Updated, LogicGameEntity
+from ...._items import Item
 
 
 class BaseWeapon(Item):

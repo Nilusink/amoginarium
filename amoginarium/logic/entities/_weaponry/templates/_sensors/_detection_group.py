@@ -12,21 +12,24 @@ from dataclasses import dataclass
 from time import perf_counter
 import typing as tp
 
-from ..._base import Bullets, Players
+from ...._base import Bullets, Players
 
 from ._base_sensor import BaseSensor
 
 if tp.TYPE_CHECKING:
-    from ..._base import PositionedLogicEntity
+    from ...._base import PositionedLogicEntity
 
 
 @dataclass(frozen=False)
 class TargetInfo:
+    """target info"""
     last_seen: float
     seen_by: PositionedLogicEntity
 
 
 class _DetectionGroupManager:
+    """manages all detection groups"""
+
     _instance: _DetectionGroupManager = ...
     _detection_groups: list[DetectionGroup]
 
@@ -79,6 +82,8 @@ detection_id: int = 0
 
 
 class DetectionGroup:
+    """Group of sensors"""
+
     _targets: dict[PositionedLogicEntity, TargetInfo]
     _sensors: list[BaseSensor]
 

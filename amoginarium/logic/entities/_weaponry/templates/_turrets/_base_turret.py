@@ -11,24 +11,22 @@ from dataclasses import dataclass
 from contextlib import suppress
 from time import perf_counter
 from ctypes import Array
-from icecream import ic
 import typing as tp
 import numpy as np
 import ctypes
 
 from amoginarium.shared import Coalitions, VisibleGameEntityLike, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, TurretCIDs
-from amoginarium.shared.utility import is_related, normalize_angle, MASK32
+from amoginarium.shared.utility import normalize_angle, MASK32
 from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
 from amoginarium.shared.utility import MASK64, get_default
 from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
 from amoginarium.shared.collision_detection import CollisionEvent
 
-from ..._base import Players, Bullets, GravityAffected
-from .._weapons import BaseWeapon
-from ..._base import LogicGameEntity, GameCollisions
+from ...._base import Players, Bullets, GravityAffected, LogicGameEntity, GameCollisions
 from .._sensors import BaseSensor, DetectionGroup
+from .._weapons import BaseWeapon
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet
@@ -36,6 +34,7 @@ if tp.TYPE_CHECKING:
 
 @dataclass
 class TargetSolution:
+    """a solution for pollution"""
     target: VisibleGameEntityLike
     target_predict: Vec2
     angle: Vec2

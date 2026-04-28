@@ -5,6 +5,4 @@ Project: amoginarium
 Created: 18.04.2026
 Authors: LukasKrah
 """
-
-from ._exacto import ExactoBullet, ExactoSniper, ExactoTurret
 from ._base_turret import BaseTurret, TargetSolution
