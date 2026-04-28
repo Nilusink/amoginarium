@@ -288,7 +288,7 @@ class BaseGame:
         for island in ISLANDS.values():
             island.load_textures()
         #
-        # for entity in Updated.entities():
+        # for entity in Updated.sprites():
         #     if hasattr(entity, "load_textures"):
         #         entity.load_textures()
         # self._update_loading_screen(22)

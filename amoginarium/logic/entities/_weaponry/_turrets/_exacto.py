@@ -16,16 +16,13 @@ import math as m
 from amoginarium.shared.utility import Vec2, coord_t, normalize_angle
 from amoginarium.shared.utility import get_default
 from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
-from amoginarium.shared.audio import Sniper as SniperSound
 from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
-from .._collision import collision_manager
-from .._collision.collision_groups import all_groups
+from ..._base import GameCollisions, LogicGameEntity
 from amoginarium.shared.audio import Sniper as SniperSound
 from ._base_turret import BaseTurret, TargetSolution
 from .._bullets import AerodynamicEntity
-from .._base_entities import LogicGameEntity
 from .._weapons import BaseWeapon
 from .._sensors import RadarSensor
 
@@ -159,8 +156,8 @@ class ExactoSniper(BaseWeapon):
             # entities = Updated.entities() + Players.entities() + [
             #     b for b in Bullets.entities() if b.parent != self
             # ]
-            hits = collision_manager.manual_collision(
-                group_ids=all_groups,
+            hits = GameCollisions.collision_manager.manual_collision(
+                group_ids=GameCollisions.all_groups,
                 start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
                 end_position=self.position + Vec2().from_polar(self.facing.angle, self._max_range)
             )
@@ -221,8 +218,8 @@ class ExactoTurret(BaseTurret):
         if self._current_target:
             if self._current_target in self.available_targets:
                 # raycast towards target
-                hits = collision_manager.manual_collision(
-                    group_ids=all_groups,
+                hits = GameCollisions.collision_manager.manual_collision(
+                    group_ids=GameCollisions.all_groups,
                     start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
                     end_position=self._current_target.position
                 )

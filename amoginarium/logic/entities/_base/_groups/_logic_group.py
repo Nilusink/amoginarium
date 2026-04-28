@@ -39,6 +39,8 @@ class LogicGroup[T: BaseLogicEntityLike]:
         """
         self._entities[entity] = None
 
+    add_internal = add
+
     def remove(self, entity: T) -> None:
         """
         Removes an entity from the group if it exists.
@@ -48,6 +50,8 @@ class LogicGroup[T: BaseLogicEntityLike]:
             del self._entities[entity]
         except KeyError:
             pass
+
+    remove_internal = remove
 
     def has(self, entity: T) -> bool:
         """

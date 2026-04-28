@@ -7,9 +7,10 @@ an island in the sky
 Author:
 Nilusink
 """
+
 from __future__ import annotations
+
 from ctypes import Array
-from icecream import ic
 import pygame as pg
 import typing as tp
 import random
@@ -20,11 +21,8 @@ from amoginarium.shared import base_entity_t, IslandCIDs, ProcessCommand
 from amoginarium.shared import BaseCommandType
 from amoginarium import pv
 
-from .._base_entities import LogicGameEntity
-from .._groups import Walls, Updated
-from .._collision import collision_manager
-from .._collision.collision_groups import collision_group_islands
-from .._debug import DebugRectangleEntity
+from .._base import LogicGameEntity, Walls, Updated, GameCollisions, DebugRectangleEntity
+
 
 class _PolyMatcher:
     def __init__(self, top, bottom, left, right) -> None:
@@ -44,7 +42,7 @@ class Island(LogicGameEntity):
     _block_size: tuple[int, int] = (64, 64)
     debug = False
 
-    _DEFAULT_COLLISION_GROUP = collision_group_islands
+    _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_islands
 
     def __init__(
             self,
@@ -156,8 +154,8 @@ class Island(LogicGameEntity):
             self.collision_rects.append(
                 pg.Rect(self.position.x, self.position.y, self.size.x, self.size.y)
             )
-            collision_manager.register_entity(collision_group_islands, self,
-                                              self.position, self.size)
+            GameCollisions.collision_manager.register_entity(GameCollisions.collision_group_islands, self,
+                                                             self.position, self.size)
             DebugRectangleEntity(self._runtime_buffer, self.position, self.size)
             return
 
@@ -193,8 +191,8 @@ class Island(LogicGameEntity):
             size = convert_coord((rect_w, rect_h), Vec2)
 
             self.collision_rects.append(pg.Rect(rect_x, rect_y, rect_w, rect_h))
-            collision_manager.register_entity(collision_group_islands, self,
-                                              position, size)
+            GameCollisions.collision_manager.register_entity(GameCollisions.collision_group_islands, self,
+                                                             position, size)
             DebugRectangleEntity(self._runtime_buffer, position, size)
         # collide entity and rect
         entity_mask = pg.Mask(self.size.xy)

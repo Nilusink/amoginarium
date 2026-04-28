@@ -17,20 +17,18 @@ from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
-from .._groups import GravityAffected, Updated
-from .._base_entities import LogicGameEntity
-
-
-# todo - mytodo - collisiondestroyed, wallcollider
+from .._base import GravityAffected, Updated, LogicGameEntity
 
 
 class Item(LogicGameEntity):
     """base item class"""
-    _drop_timeout: tp.ClassVar[int] = 1
 
     __slots__ = ("_current_timeout",)
-
-    _current_timeout: int
+    # region ClassVars
+    _drop_timeout: tp.ClassVar[int] = 1
+    # endregion
+    # region InstanceVars
+    _current_timeout: int  # endregion
 
     def __init__(
             self,
@@ -47,7 +45,6 @@ class Item(LogicGameEntity):
         # spawn graphics counterpart
         if isinstance(spawn_args, EllipsisType):
             kwargs = {}
-
         else:
             kwargs = spawn_args
 

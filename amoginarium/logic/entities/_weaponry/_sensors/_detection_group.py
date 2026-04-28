@@ -12,12 +12,12 @@ from dataclasses import dataclass
 from time import perf_counter
 import typing as tp
 
-from .._groups import Bullets, Players
+from ..._base import Bullets, Players
 
 from ._base_sensor import BaseSensor
 
 if tp.TYPE_CHECKING:
-    from .._base_entities import PositionedLogicEntity
+    from ..._base import PositionedLogicEntity
 
 
 @dataclass(frozen=False)

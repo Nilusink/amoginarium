@@ -13,8 +13,7 @@ from amoginarium.shared import GraphicsCIDs, base_entity_t, BaseCommandType, Pro
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
-from .._base_entities import LogicGameEntity
-from .._groups import Updated
+from .._base import LogicGameEntity, Updated
 
 
 class TextEntity(LogicGameEntity):

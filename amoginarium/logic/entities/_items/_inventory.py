@@ -14,7 +14,7 @@ from amoginarium.shared.utility import Vec2
 from amoginarium.shared import ItemSlot, INVENTORY_COUNTER
 from amoginarium import pv
 
-from .._base_entities import LogicGameEntity
+from .._base import LogicGameEntity
 from ._item import Item
 
 

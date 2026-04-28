@@ -15,9 +15,9 @@ import typing as tp
 if tp.TYPE_CHECKING:
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, CIDType, Coalitions
-    from amoginarium.shared.collision_detection import CollisionEvent
-    from amoginarium.shared.utility import Vec2
+    from . import base_entity_t, CIDType, Coalitions
+    from .collision_detection import CollisionEvent
+    from .utility import Vec2
 
 
 class EntityChildViable(tp.Protocol):

@@ -30,7 +30,7 @@ from amoginarium import pv
 
 from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL, \
     AerodynamicEntity
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, collision_manager
+from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, GameCollisions
 from .entities import Updated, Bullets, Players
 from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
 from .entities import GravityAffected, FrictionXAffected, ExactoBullet
@@ -574,7 +574,7 @@ def run_continuous(
 
         # update entities
         last_update_success = lp.update_entities(delta)
-        collision_manager.calculate_all_collisions()
+        GameCollisions.collision_manager.calculate_all_collisions()
 
         # don't update if paused
         if lp.paused:

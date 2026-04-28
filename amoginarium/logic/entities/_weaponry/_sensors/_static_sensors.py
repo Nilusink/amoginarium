@@ -18,12 +18,11 @@ from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
 # from .._groups import CollisionDestroyed
-from .._base_entities import LogicGameEntity
+from ..._base import LogicGameEntity, GameCollisions
 from ._detection_group import DetectionGroup
 from ._magic_sensor import MagicSensor
 from ._radar_sensor import RadarSensor
 from ._base_sensor import BaseSensor
-from .._collision.collision_groups import collision_group_turrets, collision_group_bullets
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet
@@ -39,7 +38,7 @@ class VisualSensor(LogicGameEntity):
     _size: tuple[float, float] = (64, 64)
     _max_hp = 40
 
-    _DEFAULT_COLLISION_GROUP = collision_group_turrets
+    _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
     def __init__(
             self,
@@ -92,7 +91,7 @@ class VisualSensor(LogicGameEntity):
 
     def _collision_start(self, events: list[CollisionEvent["Bullet"]]) -> None:
         for event in events:
-            if event.group_id == collision_group_bullets:
+            if event.group_id == GameCollisions.collision_group_bullets:
                 self.__on_collision_bullet(event)
 
 

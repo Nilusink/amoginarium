@@ -13,7 +13,7 @@ import typing as tp
 from amoginarium.shared import base_entity_t
 from amoginarium.shared.utility import Vec2
 
-from ..bv import LogicGameEntity
+from .._base import LogicGameEntity
 from ._item import Item
 
 

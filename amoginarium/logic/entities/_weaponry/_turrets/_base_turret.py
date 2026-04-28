@@ -25,11 +25,10 @@ from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
 from amoginarium.shared.collision_detection import CollisionEvent
 
-from .._groups import Players, Bullets, GravityAffected
+from ..._base import Players, Bullets, GravityAffected
 from .._weapons import BaseWeapon
-from .._base_entities import LogicGameEntity
+from ..._base import LogicGameEntity, GameCollisions
 from .._sensors import BaseSensor, DetectionGroup
-from .._collision.collision_groups import collision_group_turrets, collision_group_bullets
 
 if tp.TYPE_CHECKING:
     from .._bullets import Bullet
@@ -104,7 +103,7 @@ class BaseTurret(LogicGameEntity):
 
     _sensors_list: list[SensorInit] = []
 
-    _DEFAULT_COLLISION_GROUP = collision_group_turrets
+    _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
     def __init__(
             self,
@@ -675,5 +674,5 @@ class BaseTurret(LogicGameEntity):
         # bullet - 5 turrets - events länge 5
         # turret - events 1 bullet
         for event in events:
-            if event.group_id == collision_group_bullets:
+            if event.group_id == GameCollisions.collision_group_bullets:
                 self.__on_collision_bullet(event)

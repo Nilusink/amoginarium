@@ -16,7 +16,7 @@ import math as m
 from amoginarium.shared.utility import Vec2, get_default, normalize_angle
 from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
 
-from .._base import GravityAffected, LogicGameEntity
+from ..._base import GravityAffected, LogicGameEntity
 from ._base_bullet import Bullet
 
 

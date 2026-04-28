@@ -15,16 +15,14 @@ from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared.utility import Vec2
 from amoginarium.shared import DummyCIDs
-from .. import GravityAffected
+from ..._base import GravityAffected, GameCollisions
 
-from .._collision import collision_manager, CollisionExceptions
-from .._collision.collision_groups import collision_group_grenades, collision_group_islands, collision_group_bullets, collision_group_players
-from .._base_entities import LogicGameEntity
+from ..._base import LogicGameEntity
 from ._base_bullet import Bullet
 
 if tp.TYPE_CHECKING:
-    from .._world import Island
-    from .._player import Player
+    from ..._world import Island
+    from ..._player import Player
 
 
 class _GrenadeShrapnel(Bullet):
@@ -32,10 +30,12 @@ class _GrenadeShrapnel(Bullet):
 
     _default_size = 4
     _default_base_damage = 1
+
+    _col_expection_grenade_cluster = GameCollisions.add_exception()
     __slots__ = ()
 
     def __init__(self, *args, **kwargs) -> None:
-        kwargs["collision_exception_ids"] = [CollisionExceptions.GRENADE_CLUSTER_DOES_NOT_HIT_ITSELF]
+        kwargs["collision_exception_ids"] = [_GrenadeShrapnel._col_expection_grenade_cluster]
         super().__init__(*args, **kwargs)
 
 # todo folder : Weaponry
@@ -64,7 +64,7 @@ class Grenade(Bullet):
     _bounce_friction: tp.ClassVar[float] = 0.7
 
     _DEFAULT_COLLISION_EXCEPTION_ROOT = True
-    _DEFAULT_COLLISION_GROUP = collision_group_grenades
+    _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_grenades
     # endregion
 
     __slots__ = ()
@@ -118,16 +118,16 @@ class Grenade(Bullet):
 
     def _collision_start(self, events: list[CollisionEvent]) -> None:
         for event in events:
-            if event.group_id == collision_group_islands:
+            if event.group_id == GameCollisions.collision_group_islands:
                 self.__on_collision_island(event)
-            elif event.group_id == collision_group_bullets:
+            elif event.group_id == GameCollisions.collision_group_bullets:
                 self.__on_collision_bullet(event)
-            elif event.group_id == collision_group_players:
+            elif event.group_id == GameCollisions.collision_group_players:
                 self.__on_collision_player(event)
 
     def _update(self, delta: float):
-        if collision_group_islands in self._active_normals.keys():
-            for n in self._active_normals[collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
                 if n.y < -0.5:
                     self.acceleration.y = 0
                     if self.velocity.y > 0:
@@ -159,8 +159,8 @@ class Grenade(Bullet):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self._active_normals.keys():
-            for n in self._active_normals[collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
@@ -177,8 +177,8 @@ class Grenade(Bullet):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self._active_normals.keys():
-            for n in self._active_normals[collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x

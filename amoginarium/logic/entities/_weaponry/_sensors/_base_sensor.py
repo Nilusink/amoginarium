@@ -12,13 +12,12 @@ import numpy as np
 
 from amoginarium.shared import base_entity_t, SensorCIDs, ProcessCommand
 from amoginarium.shared.utility import coord_t, convert_coord, Vec2
-from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import pack_int, MASK16
 from amoginarium.shared import BaseCommandType
 from amoginarium import pv
 
-from .._base_entities import PositionedLogicEntity, LogicGameEntity
-from .._groups import Updated
+from ..._base import PositionedLogicEntity, LogicGameEntity
+from ..._base import Updated
 
 
 class BaseSensor(PositionedLogicEntity):

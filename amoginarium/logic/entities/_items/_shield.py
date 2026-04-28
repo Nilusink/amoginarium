@@ -16,16 +16,11 @@ from amoginarium.shared import base_entity_t, ItemCIDs
 from .. import Updated
 
 from amoginarium.shared.audio import MetalPings, RandomizedEffect
-from .._base_entities import LogicGameEntity
+from .._base import LogicGameEntity
 from ._base_item import BaseItem
 
-from .._collision.collision_groups import collision_group_shields, collision_group_bullets
-from .._collision import collision_manager
-from .._debug import DebugPolygonEntity
+from .._base import GameCollisions
 
-# todo - collision
-
-from icecream import ic
 
 class Shield(BaseItem):
     _CID = ItemCIDs.shield
@@ -34,7 +29,7 @@ class Shield(BaseItem):
     _image_size: tp.ClassVar[tuple[int, int]] = (45, 80)
     _max_uses: tp.ClassVar[int] = 200  # acts as HP for shield
 
-    _DEFAULT_COLLISION_GROUP = collision_group_shields
+    _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_shields
 
     __slots__ = ("_in_use", "_sound")
 

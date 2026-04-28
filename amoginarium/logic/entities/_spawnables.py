@@ -10,15 +10,15 @@ Nilusink
 import typing as tp
 from icecream import ic
 
-from ._sensors import VisualRadarSensor, VisualSensor
-from ._base_entities import LogicGameEntity
-from ._turrets import ExactoTurret
+from ._weaponry import VisualRadarSensor, VisualSensor
+from ._base import LogicGameEntity
+from ._weaponry import ExactoTurret
 from ._world import TextEntity
 # from ._static_turret import BaseTurret, SniperTurret, AkTurret, MinigunTurret, \
 #     MortarTurret, FlakTurret, CRAMTurret
 # from ._sensors import Radar
 # from ._text_entity import TextEntity
-from ._bullets import Bullet
+from ._weaponry import Bullet
 from ._dynamic_entities import DYNAMIC_ENTITIES
 
 

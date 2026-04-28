@@ -16,10 +16,10 @@ from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.utility import Vec2, get_default
 from amoginarium import pv
 
-from .._base import Bullets, Updated, GravityAffected
+from ..._base import Bullets, Updated, GravityAffected
 from amoginarium.shared.audio import LargeExplosion, DistantPop
-from .._base import LogicGameEntity
-from .._base import GameCollisions
+from ..._base import LogicGameEntity
+from ..._base import GameCollisions
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
@@ -28,12 +28,12 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared import base_entity_t, Coalitions, CIDType
 
-    from .._collision import CollisionType
+    from ..._base import CollisionType
     from .._turrets import BaseTurret
     from ._grenade import Grenade
-    from .._player import Player
-    from .._world import Island
-    from .._items import Shield
+    from ..._player import Player
+    from ..._world import Island
+    from ..._items import Shield
 
 SQR2: tp.Final[np.float64] = np.sqrt(2)
 
@@ -48,7 +48,7 @@ class Bullet(LogicGameEntity):
     # region ClassVars
     _CID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
 
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = collision_group_bullets
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = GameCollisions.collision_group_bullets
 
     _default_hp: tp.ClassVar[int] = -1
 
@@ -374,17 +374,17 @@ class Bullet(LogicGameEntity):
     def _collision_start(self, events: list[
         CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
         for event in events:
-            if event.group_id == collision_group_islands:
+            if event.group_id == GameCollisions.collision_group_islands:
                 self.__on_collision_general(event)
-            elif event.group_id == collision_group_bullets:
+            elif event.group_id == GameCollisions.collision_group_bullets:
                 self.__on_collision_bullet(event)
-            elif event.group_id == collision_group_players:
+            elif event.group_id == GameCollisions.collision_group_players:
                 self.__on_collision_general(event)
-            elif event.group_id == collision_group_turrets:
+            elif event.group_id == GameCollisions.collision_group_turrets:
                 self.__on_collision_general(event)
-            elif event.group_id == collision_group_grenades:
+            elif event.group_id == GameCollisions.collision_group_grenades:
                 self.__on_collision_general(event)
-            elif event.group_id == collision_group_shields:
+            elif event.group_id == GameCollisions.collision_group_shields:
                 self.__on_collision_shield(event)
 
     def _update(self, delta, update_facing: bool = True):

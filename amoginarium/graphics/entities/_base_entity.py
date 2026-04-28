@@ -71,7 +71,7 @@ class BaseGraphicsEntity:
 
         for group in groups:
             if not has(group):
-                group.add(self)
+                group.add_internal(self)
                 self.__g.append(group)
 
     def remove(self, *groups) -> None:
@@ -82,7 +82,7 @@ class BaseGraphicsEntity:
 
         for group in groups:
             if has(group):
-                group.remove(self)
+                group.remove_internal(self)
                 self.__g.remove(group)
 
     def kill(self) -> None:
@@ -95,7 +95,7 @@ class BaseGraphicsEntity:
 
         # commit suicide
         for group in self.__g:
-            group.remove(self)
+            group.remove_internal(self)
 
         self.__g.clear()
 

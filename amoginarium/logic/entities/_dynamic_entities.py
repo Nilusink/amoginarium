@@ -14,12 +14,12 @@ import typing as tp
 
 from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
 
-from ._base_entities import LogicGameEntity
-from ._turrets import BaseTurret
-from ._weapons import FileLoadedWeapon
-from ._bullets import Bullet
-from ._sensors import MagicSensor
-from ._sensors import RadarSensor
+from ._base import LogicGameEntity
+from ._weaponry import BaseTurret
+from ._weaponry import FileLoadedWeapon
+from ._weaponry import Bullet
+from ._weaponry import MagicSensor
+from ._weaponry import RadarSensor
 
 
 # noinspection PyTypeChecker

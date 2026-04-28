@@ -21,19 +21,18 @@ from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
 
 from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
-from .._weapons import BaseWeapon, HandThrownGrenade, RailGun
-from .._groups import GravityAffected, FrictionXAffected, Updated
-from .._groups import Players
+from .._weaponry import BaseWeapon, HandThrownGrenade, RailGun
+from .._base import GravityAffected, FrictionXAffected, Updated
+from .._base import Players, GameCollisions
 from .._items import Shield, HealingPotion, JetBag, Inventory
-from .._collision.collision_groups import collision_group_players, collision_group_islands, collision_group_bullets
-from .._turrets import ExactoSniper
-from .._base_entities import LogicGameEntity
+from .._weaponry import ExactoSniper
+from .._base import LogicGameEntity
 from ...graphics_dummies import Controller
 from .._dynamic_entities import DYNAMIC_ENTITIES
 from .._items import Item
 
 if tp.TYPE_CHECKING:
-    from .._bullets import Bullet
+    from .._weaponry import Bullet
     from .._world import Island
 
 
@@ -48,7 +47,7 @@ class Player(LogicGameEntity):
 
     on_wall: bool = False
 
-    _DEFAULT_COLLISION_GROUP = collision_group_players
+    _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_players
 
     __add_position: Vec2
 
@@ -254,8 +253,8 @@ class Player(LogicGameEntity):
         accepted_collisions: list[bool] = [False for _ in events]
 
         active_normals = [False, False, False, False]  # x-negative, x-positive, y-negative, y-positive
-        if collision_group_islands in self._active_normals.keys():
-            for normal in self._active_normals[collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for normal in self._active_normals[GameCollisions.collision_group_islands]:
                 if normal.x < -0.5:
                     active_normals[0] = True
                 elif normal.x > 0.5:
@@ -311,17 +310,17 @@ class Player(LogicGameEntity):
                 self.hit(dmg, hit_by=event.other_entity)
 
     def _collision_start(self, events: list[CollisionEvent[tp.Union["Bullet", "Island"]]]) -> list[bool] | None:
-        if events[0].group_id == collision_group_islands:
+        if events[0].group_id == GameCollisions.collision_group_islands:
             return self.__on_collision_island(events)
-        if events[0].group_id == collision_group_bullets:
+        if events[0].group_id == GameCollisions.collision_group_bullets:
             return self.__on_collision_bullet(events)
         return None
 
     def _update(self, delta):
         self._on_ground = False
 
-        if collision_group_islands in self._active_normals.keys():
-            for n in self._active_normals[collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
                 if n.y < -0.5:
                     self._on_ground = True
                     if self.acceleration.y > 0:
@@ -513,8 +512,8 @@ class Player(LogicGameEntity):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self._active_normals.keys():
-            for n in self._active_normals[collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
@@ -531,8 +530,8 @@ class Player(LogicGameEntity):
         x = value.x
         y = value.y
 
-        if collision_group_islands in self._active_normals.keys():
-            for n in self._active_normals[collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
