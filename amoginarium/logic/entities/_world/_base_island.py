@@ -46,9 +46,7 @@ class Island(LogicGameEntity):
     _size: EllipsisType | Vec2
     _form: EllipsisType | list[list[int]]
     _damage: float
-    _bounce: float
-
-    # endregion
+    _bounce: float  # endregion
 
     def __init__(
             self,

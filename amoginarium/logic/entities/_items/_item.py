@@ -17,7 +17,7 @@ from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
-from .._base import GravityAffected, Updated, LogicGameEntity
+from .._base import GravityAffected, Updated, LogicGameEntity, GameCollisions, CollisionType
 
 
 class Item(LogicGameEntity):
@@ -25,6 +25,7 @@ class Item(LogicGameEntity):
     __slots__ = ("_current_timeout",)
 
     # region ClassVars
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = GameCollisions.collision_group_items
     _drop_timeout: tp.ClassVar[int] = 1
     # endregion
     # region InstanceVars
@@ -38,6 +39,7 @@ class Item(LogicGameEntity):
     ) -> None:
         # init logic entity
         super().__init__(runtime_buffer, size=size, position=Vec2())
+        self._create_collision()
 
         # set defaults
         self._current_timeout = 0

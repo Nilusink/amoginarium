@@ -18,18 +18,21 @@ from ._base_island import Island
 
 
 class GrassIsland(Island):
-    _block_size = (64, 64)
-    _CID = IslandCIDs.grass_island
+    __slots__ = ()
+    _block_size: tp.ClassVar[tuple[int, int]] = (64, 64)
+    _CID: tp.ClassVar[CIDType] = IslandCIDs.grass_island
 
 
 class GrayBrickIsland(Island):
-    _block_size = (24 * 3, 24 * 3)
-    _CID = IslandCIDs.gray_brick_island
+    __slots__ = ()
+    _block_size: tp.ClassVar[tuple[int, int]] = (24 * 3, 24 * 3)
+    _CID: tp.ClassVar[CIDType] = IslandCIDs.gray_brick_island
 
 
 class GreenBrickIsland(Island):
-    _block_size = (24 * 3, 24 * 3)
-    _CID = IslandCIDs.green_brick_island
+    __slots__ = ()
+    _block_size: tp.ClassVar[tuple[int, int]] = (24 * 3, 24 * 3)
+    _CID: tp.ClassVar[CIDType] = IslandCIDs.green_brick_island
 
 
 # class PillarIsland(Island):
@@ -53,4 +56,5 @@ __islands: tp.Iterable[tp.Type[Island]] = [
 Island.ISLANDS: dict[CIDType, tp.Type[Island]] = {
     c.cid(): c for c in __islands
 }
-Island.ISLANDS_REVERSE = {v: k for k, v in Island.ISLANDS.items()}
+
+Island._islands_reverse = {v: k for k, v in Island.ISLANDS.items()}

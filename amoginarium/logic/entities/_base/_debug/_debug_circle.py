@@ -48,7 +48,7 @@ class DebugCircleEntity(PositionedLogicEntity):
             *,
             point_color: color_t = (255, 255, 255),
             point_radius: int = 3,
-            point_num_segments: int = 8,
+            point_num_segments: int = 32,
             outline_color: color_t = (255, 255, 255),
             outline_thickness: int = 1,
             fill_color: color_t = (255, 0, 0, 128),

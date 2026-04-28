@@ -42,12 +42,15 @@ class _GameCollisions:
     collision_manager: tp.Final[CollisionManager]
     COLLISION_START: CollisionCallback
     COLLISION_END: CollisionCallback
+
     collision_group_players: CollisionType.GroupID
     collision_group_bullets: CollisionType.GroupID
     collision_group_grenades: CollisionType.GroupID
     collision_group_islands: CollisionType.GroupID
     collision_group_turrets: CollisionType.GroupID
     collision_group_shields: CollisionType.GroupID
+    collision_group_items: CollisionType.GroupID
+
     all_groups: list[CollisionType.GroupID]
     hitboxes: dict[CollisionType.GroupID, HitboxTypes]
     _registered_relations: set[tuple[int, int]]
@@ -79,10 +82,12 @@ class _GameCollisions:
         self.collision_group_islands = self.collision_manager.add_group(max_level=0)
         self.collision_group_turrets = self.collision_manager.add_group(max_level=0)
         self.collision_group_shields = self.collision_manager.add_group(max_level=0, hitbox_type="obb")
+        self.collision_group_items = self.collision_manager.add_group(max_level=0)
 
         self.all_groups = [
             self.collision_group_players, self.collision_group_bullets, self.collision_group_grenades,
             self.collision_group_islands, self.collision_group_turrets, self.collision_group_shields,
+            self.collision_group_items,
         ]
 
         self.hitboxes = {  # type: ignore
@@ -137,6 +142,14 @@ class _GameCollisions:
             [
                 self.collision_group_bullets,
                 self.collision_group_grenades
+            ]
+        )
+
+        self.create_relations(
+            self.collision_group_items,
+            [
+                self.collision_group_players,
+                self.collision_group_islands
             ]
         )
 

@@ -40,7 +40,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     __slots__ = (
         "_centered", "__collision_entity_id", "__collision_group", "_collision_exception_ids",
         "__collision_exception_root", "__collision_exception_root_additive", "__collision_exception_root_ids",
-        "_active_collisions", "_active_normals", "__debug_entity"
+        "_collision_active", "_active_collisions", "_active_normals", "__debug_entity"
     )
 
     # region ClassVars
@@ -63,6 +63,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     __collision_exception_root: bool
     __collision_exception_root_additive: bool
     __collision_exception_root_ids: list[CollisionType.ExceptionID]  # Calculated/Used only internally
+    _collision_active: bool
 
     _active_collisions: dict[CollisionType.CollisionID, CollisionEvent]  # protected / no property for faster access
     _active_normals: dict[CollisionType.GroupID, list[Vec2]]  # protected / no property for faster access
@@ -127,6 +128,8 @@ class CollisionLogicEntity(PositionedLogicEntity):
             self.__class__._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE
         )
         self.__collision_exception_root_ids = []
+
+        self._collision_active = False
 
         self._active_collisions = {}
         self._active_normals = {}
@@ -274,6 +277,8 @@ class CollisionLogicEntity(PositionedLogicEntity):
             size = self.size
         if centered == ...:
             centered = self._centered
+
+        self._collision_active = True
 
         self.__collision_exception_root_ids = self._get_root_collision_exceptions()
 
