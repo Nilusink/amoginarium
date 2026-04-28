@@ -4,7 +4,7 @@
 
 <summary><h2 style="display:inline-block">Structure</h2></summary>
 
-<!--- MermaidStructureStart --->
+
 ```mermaid
 graph TD
     subgraph Group [" "]
@@ -27,7 +27,7 @@ graph TD
     _functionality_groups --> _base_group
     _updated --> _base_group
 ```
-<!--- MermaidStructureEnd --->
+
 
 </details>
 
@@ -35,7 +35,7 @@ graph TD
 
 <summary><h2 style="display:inline-block">Classes</h2></summary>
 
-<!--- MermaidClassesStart --->
+
 ```mermaid
 graph RL
     subgraph Group1 [" "]
@@ -56,6 +56,6 @@ graph RL
     _GravityAffected --> BaseGroup
     _Updated --> BaseGroup
 ```
-<!--- MermaidClassesEnd --->
+
 
 </details>

@@ -39,17 +39,12 @@ graph TD
 ```mermaid
 graph RL
     subgraph Group1 [" "]
-        CollisionExceptions
         CollisionType
         EntityChildViable
-        FrictionXAffectedEntityLike
-        GameCollisions
+        HitboxTypes
+        _GameCollisions
     end
     subgraph Group2 [" "]
-        GravityAffectedEntityLike
-        HitboxTypes
-    end
-    subgraph Group3 [" "]
         BaseGroup
         LogicGroup
         _Bullets
@@ -59,7 +54,7 @@ graph RL
         _Updated
         _Walls
     end
-    subgraph Group4 [" "]
+    subgraph Group3 [" "]
         BaseLogicEntity
         CollisionLogicEntity
         DebugCircleEntity
