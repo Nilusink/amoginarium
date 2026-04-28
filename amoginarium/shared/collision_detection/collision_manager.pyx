@@ -1248,6 +1248,10 @@ cdef class CollisionManager:
             return "triangle"
         elif h_type == 3:
             return "polygon"
+        elif h_type == 4:
+            return "point"
+        elif h_type == 5:
+            return "circle"
 
         return "aabb"
 

@@ -6,5 +6,5 @@ from ._weaponry import BaseSensor, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTR
     DETECTION_GROUP_MANAGER, DetectionGroup, MagicSensor
 from ._spawnables import SPAWNABLES
 from ._weaponry import ExactoBullet
-from ._world import GrassIsland, Island, ISLANDS
+from ._world import GrassIsland, GrayBrickIsland, GreenBrickIsland, Island
 

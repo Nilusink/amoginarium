@@ -22,8 +22,8 @@ from .._base import GravityAffected, Updated, LogicGameEntity
 
 class Item(LogicGameEntity):
     """base item class"""
-
     __slots__ = ("_current_timeout",)
+
     # region ClassVars
     _drop_timeout: tp.ClassVar[int] = 1
     # endregion
@@ -34,7 +34,7 @@ class Item(LogicGameEntity):
             self,
             runtime_buffer: Array[base_entity_t],
             size: Vec2,
-        spawn_args: dict[str, tp.Any] | EllipsisType = ...,
+            spawn_args: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         # init logic entity
         super().__init__(runtime_buffer, size=size, position=Vec2())

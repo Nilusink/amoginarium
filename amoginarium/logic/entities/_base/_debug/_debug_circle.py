@@ -14,7 +14,7 @@ from __future__ import annotations
 import typing as tp
 
 from amoginarium.shared import GraphicsCIDs, Coalitions
-from amoginarium.shared.utility import convert_color
+from amoginarium.shared.utility import convert_color, Vec2
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
@@ -25,7 +25,7 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t, CIDType
-    from amoginarium.shared.utility import Vec2, color_t
+    from amoginarium.shared.utility import color_t
 
 
 class DebugCircleEntity(PositionedLogicEntity):
@@ -47,7 +47,7 @@ class DebugCircleEntity(PositionedLogicEntity):
             radius: float,
             *,
             point_color: color_t = (255, 255, 255),
-            point_radius: int = 0,
+            point_radius: int = 3,
             point_num_segments: int = 8,
             outline_color: color_t = (255, 255, 255),
             outline_thickness: int = 1,

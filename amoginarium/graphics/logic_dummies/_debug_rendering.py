@@ -170,7 +170,6 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
         :param fill_color: RGBA or RGB tuple for the polygon fill.
         :param convert_global: Whether to convert coordinates to global screen space.
         """
-        super().__init__(sync_id)
         self.__p1 = Vec2()
         self.__p2 = Vec2()
         self.__p3 = Vec2()
@@ -187,6 +186,8 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
         self.__outline_thickness = outline_thickness
         self.__fill_color = fill_color
         self.__convert_global = convert_global
+
+        super().__init__(sync_id)
 
         self.add(Drawn_2)
         self.remove(Drawn_0)
@@ -238,7 +239,7 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
 
         # 1. Fill
         renderer.draw_polygon(
-            points=points,
+            vertices=points,
             color=self.__fill_color,
             convert_global=self.__convert_global
         )
@@ -246,7 +247,7 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
         # 2. Outline
         if self.__outline_thickness > 0:
             renderer.draw_polygon_line(
-                points=points,
+                vertices=points,
                 color=self.__outline_color,
                 thickness=self.__outline_thickness,
                 convert_global=self.__convert_global

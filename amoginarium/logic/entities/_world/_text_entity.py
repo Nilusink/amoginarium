@@ -1,26 +1,35 @@
 """
-amoginarium/logic/entities/_text_entity.py
+amoginarium/logic/entities/_world/_text_entity.py
+
+Logic representation for static text elements.
 
 Project: amoginarium
 Created: 11.04.2026
 Authors: LukasKrah
 """
 
-from ctypes import Array
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared import GraphicsCIDs, base_entity_t, BaseCommandType, ProcessCommand, Coalitions
+from amoginarium.shared import GraphicsCIDs, BaseCommandType, ProcessCommand, Coalitions
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
 from .._base import LogicGameEntity, Updated
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t, CIDType
 
 
 class TextEntity(LogicGameEntity):
     """
     Static text logic game entity
     """
-    _CID = GraphicsCIDs.static_text
+    __slots__ = ()
+    _CID: tp.ClassVar[CIDType] = GraphicsCIDs.static_text
 
     def __init__(
             self,

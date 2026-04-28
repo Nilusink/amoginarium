@@ -99,7 +99,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
         :param args: Positional arguments passed to entity.update.
         :param kwargs: Keyword arguments passed to entity.update.
         """
-        for entity in self._entities:
+        for entity in self._entities.copy():
             entity.update(*args, **kwargs)
 
     def empty(self) -> None:

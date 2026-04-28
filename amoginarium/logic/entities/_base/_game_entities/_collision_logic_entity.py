@@ -17,7 +17,7 @@ from amoginarium.shared.utility import get_default
 
 from .._debug import DebugPolygonEntity, DebugRectangleEntity, DebugCircleEntity
 from .._base_entities import PositionedLogicEntity
-from .._collision import GameCollisions
+from .._collision import GameCollisions, HitboxTypes
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
@@ -28,7 +28,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import Vec2
 
     from .._base_entities import BaseLogicEntity
-    from .._collision import CollisionType, HitboxTypes
+    from .._collision import CollisionType
 
 
 class CollisionLogicEntity(PositionedLogicEntity):
@@ -44,7 +44,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     )
 
     # region ClassVars
-    __debug_draw_hitboxes: tp.ClassVar[bool] = False
+    __debug_draw_hitboxes: tp.ClassVar[bool] = True
 
     _DEFAULT_COLLISION_EXCEPTION_ROOT: tp.ClassVar[bool] = False
     _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = True

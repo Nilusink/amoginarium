@@ -32,7 +32,7 @@ from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_
     AerodynamicEntity
 from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, GameCollisions
 from .entities import Updated, Bullets, Players
-from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
+from .entities import LogicGameEntity, GrassIsland, SPAWNABLES, Player, Island
 from .entities import GravityAffected, FrictionXAffected, ExactoBullet
 from .graphics_dummies import Controller
 
@@ -223,8 +223,8 @@ class LogicProcess:
         for island in data["platforms"]:
             island_type = GrassIsland
             if "type" in island:
-                if island["type"] in ISLANDS:
-                    island_type = ISLANDS[island["type"]]
+                if island["type"] in Island.ISLANDS:
+                    island_type = Island.ISLANDS[island["type"]]
 
             if "args" in island:
                 i = island_type(self._runtime_buffer, **island["args"])

@@ -43,7 +43,7 @@ class DebugRectangleEntity(PositionedLogicEntity):
             size: Vec2,
             *,
             point_color: color_t = (255, 255, 255),
-            point_radius: int = 0,
+            point_radius: int = 3,
             point_num_segments: int = 8,
             outline_color: color_t = (255, 255, 255),
             outline_thickness: int = 1,
