@@ -1,6 +1,9 @@
 """
 amoginarium/logic/entities/_base/_groups/_base_group.py
 
+Defines the BaseGroup class, extending LogicGroup with spatial querying methods.
+Provides static and instance methods for finding entities within circles or arcs.
+
 Project: amoginarium
 Created: 25.01.2024
 Authors: Nilusink, LukasKrah

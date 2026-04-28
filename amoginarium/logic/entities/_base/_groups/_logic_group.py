@@ -1,6 +1,9 @@
 """
 amoginarium/logic/entities/_base/_groups/_logic_group.py
 
+Defines the base LogicGroup class for managing collections of logic entities.
+Allows batch operations like updates and efficient membership testing.
+
 Project: amoginarium
 Created: 21.04.2026
 Authors: Nilusink, LukasKrah

@@ -1,6 +1,9 @@
 """
 amoginarium/logic/entities/_base/_base_entities/_base_logic_entity.py
 
+Defines the most basic logic entity structure.
+Includes hierarchy management, lifecycle hooks, and bitwise buffer access.
+
 Project: amoginarium
 Created: 28.03.2026
 Authors: Nilusink, LukasKrah

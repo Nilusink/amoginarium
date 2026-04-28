@@ -1,10 +1,8 @@
 """
 amoginarium/logic/entities/_base/_game_entities/__init__.py
 
-Basic types of logic entities:
-- CollisionLogicEntity: Adds collision detection
-- LogicGameEntity: Implements all basic stuff for logic entities
-
+Initialization file for game entities, which build on top of base entities to
+provide game-specific capabilities like collision detection and physics.
 
 Project: amoginarium
 Created: 27.04.2026

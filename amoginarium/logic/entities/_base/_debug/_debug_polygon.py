@@ -1,5 +1,8 @@
 """
-amoginarium/logic/entities/_base/_debug/_debug_circle.py
+amoginarium/logic/entities/_base/_debug/_debug_polygon.py
+
+Contains the DebugPolygonEntity for rendering arbitrary polygons.
+Packs vertex data efficiently into the entity buffer for the renderer.
 
 Project: amoginarium
 Created: 25.04.2026

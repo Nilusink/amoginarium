@@ -1,6 +1,9 @@
 """
 amoginarium/logic/entities/_base/_groups/_functionality_groups.py
 
+Contains logical groups that apply global physics properties.
+Includes FrictionXAffected and GravityAffected for batch physics processing.
+
 Project: amoginarium
 Created: 25.01.2024
 Authors: Nilusink, LukasKrah

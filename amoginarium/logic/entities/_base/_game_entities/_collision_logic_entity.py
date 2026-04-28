@@ -1,6 +1,9 @@
 """
 amoginarium/logic/entities/_base/_game_entities/_collision_logic_entity.py
 
+Defines an entity that integrates with the collision manager.
+Handles registering, updating, and removing hitboxes, as well as collision callbacks.
+
 Project: amoginarium
 Created: 23.04.2026
 Authors: LukasKrah

@@ -1,6 +1,9 @@
 """
 amoginarium/logic/entities/_base/_debug/_debug_circle.py
 
+Contains the DebugCircleEntity class for rendering debug circles on the graphics side.
+Useful for visualizing hitboxes, blast radii, or other circular areas.
+
 Project: amoginarium
 Created: 25.04.2026
 Authors: LukasKrah
