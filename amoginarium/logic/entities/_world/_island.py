@@ -196,7 +196,7 @@ class Island(LogicGameEntity):
             collision_manager.register_entity(collision_group_islands, self,
                                               position, size)
             DebugRectangleEntity(self._runtime_buffer, position, size)
-        # collide sprite and rect
+        # collide entity and rect
         entity_mask = pg.Mask(self.size.xy)
         block_mask = self._get_block_mask()
         special_mask = None
@@ -284,7 +284,7 @@ class Island(LogicGameEntity):
         tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]
     ]:
         """
-        check which sides of a sprite collide with the wall
+        check which sides of a entity collide with the wall
         """
         top_offset = top_collider[0] - self.position
         top_collides = (

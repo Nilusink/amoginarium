@@ -3,212 +3,109 @@ amoginarium/logic/entities/_new_groups/_logic_group.py
 
 Project: amoginarium
 Created: 21.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
-class LogicGroup:
-    def __init__(self, *sprites):
-        self.spritedict = {}
-        self.lostsprites = []
+from __future__ import annotations
 
-        self.add(*sprites)
+import typing as tp
 
-    def sprites(self):
-        return list(self.spritedict)
+from amoginarium.shared import BaseLogicEntityLike
 
-    def add_internal(
-        self,
-        sprite,
-        layer=None,  # noqa pylint: disable=unused-argument; supporting legacy derived classes that override in non-pythonic way
-    ):
+
+class LogicGroup[T: BaseLogicEntityLike]:
+    """
+    A container for T objects to facilitate batch updates and management.
+    """
+    __slots__ = ("_entities",)
+
+    _entities: dict[T, None]
+
+    def __init__(self, *entities: T):
         """
-        For adding a sprite to this group internally.
-
-        :param sprite: The sprite we are adding.
-        :param layer: the layer to add to, if the group type supports layers
+        Initialize the group with an optional sequence of entities.
+        :param entities: Initial entities to add to the group.
         """
-        self.spritedict[sprite] = None
+        self._entities = {e: None for e in entities}
 
-    def remove_internal(self, sprite):
+    def entities(self) -> list[T]:
+        """:return: A shallow copy of the internal entity list."""
+        return list(self._entities.keys())
+
+    def add(self, entity: T) -> None:
         """
-        For removing a sprite from this group internally.
-
-        :param sprite: The sprite we are removing.
+        Adds an entity to the group if it is not already present.
+        :param entity: The logic entity to add.
         """
-        if lost_rect := self.spritedict[sprite]:
-            self.lostsprites.append(lost_rect)
-        del self.spritedict[sprite]
+        self._entities[entity] = None
 
-    def has_internal(self, sprite):
+    def remove(self, entity: T) -> None:
         """
-        For checking if a sprite is in this group internally.
-
-        :param sprite: The sprite we are checking.
+        Removes an entity from the group if it exists.
+        :param entity: The logic entity to remove.
         """
-        return sprite in self.spritedict
+        try:
+            del self._entities[entity]
+        except KeyError:
+            pass
 
-    def copy(self):
-        """copy a group with all the same sprites
-
-        Group.copy(): return Group
-
-        Returns a copy of the group that is an instance of the same class
-        and has the same sprites in it.
-
+    def has(self, entity: T) -> bool:
         """
-        return self.__class__(  # noqa pylint: disable=too-many-function-args
-            self.sprites()  # Needed because copy() won't work on AbstractGroup
-        )
-
-    def __iter__(self):
-        return iter(self.sprites())
-
-    def __contains__(self, sprite):
-        return self.has(sprite)
-
-    def add(self, *sprites):
-        """add sprite(s) to group
-
-        Group.add(sprite, list, group, ...): return None
-
-        Adds a sprite or sequence of sprites to a group.
-
+        Checks if the entity is a member of this group.
+        :param entity: The logic entity to check.
+        :return: True if present, False otherwise.
         """
-        for sprite in sprites:
-            # It's possible that some sprite is also an iterator.
-            # If this is the case, we should add the sprite itself,
-            # and not the iterator object.
-            if not self.has_internal(sprite):
-                self.add_internal(sprite)
-                sprite.add_internal(self)
+        return entity in self._entities
 
-    def remove(self, *sprites):
-        """remove sprite(s) from group
-
-        Group.remove(sprite, list, or group, ...): return None
-
-        Removes a sprite or sequence of sprites from a group.
-
+    def copy(self) -> LogicGroup:
         """
-        # This function behaves essentially the same as Group.add. It first
-        # tries to handle each argument as an instance of the Sprite class. If
-        # that fails, then it tries to handle the argument as an iterable
-        # object. If that fails, then it tries to handle the argument as an
-        # old-style sprite group. Lastly, if that fails, it assumes that the
-        # normal Sprite methods should be used.
-        for sprite in sprites:
-            if self.has_internal(sprite):
-                self.remove_internal(sprite)
-                sprite.remove_internal(self)
-
-    def has(self, *sprites):
-        """ask if group has a sprite or sprites
-
-        Group.has(sprite or group, ...): return bool
-
-        Returns True if the given sprite or sprites are contained in the
-        group. Alternatively, you can get the same information using the
-        'in' operator, e.g. 'sprite in group', 'subgroup in group'.
-
+        Creates a new group containing the same entities.
+        :return: A new LogicGroup instance.
         """
-        if not sprites:
-            return False  # return False if no sprites passed in
+        new_group = self.__class__()
+        new_group._entities = self._entities.copy()
+        return new_group
 
-        for sprite in sprites:
-            if not self.has_internal(sprite):
-                return False
+    def __iter__(self) -> tp.Iterator[T]:
+        """:return: An iterator over the entities in the group."""
+        return iter(self._entities)
 
-        return True
-
-    def update(self, *args, **kwargs):
-        """call the update method of every member sprite
-
-        Group.update(*args, **kwargs): return None
-
-        Calls the update method of every member sprite. All arguments that
-        were passed to this method are passed to the Sprite update function.
-
+    def __contains__(self, entity: T) -> bool:
         """
-        for sprite in self.sprites():
-            sprite.update(*args, **kwargs)
-
-    def draw(self, surface, bgd=None, special_flags=0):  # noqa pylint: disable=unused-argument; bgd arg used in LayeredDirty
-        """draw all sprites onto the surface
-
-        Group.draw(surface, bgd=None, special_flags=0): return Rect_list
-
-        Draws all of the member sprites onto the given surface.
-
+        Membership check for the 'in' operator.
+        :param entity: The logic entity to check.
+        :return: True if present, False otherwise.
         """
-        sprites = self.sprites()
-        if hasattr(surface, "blits"):
-            self.spritedict.update(
-                zip(
-                    sprites,
-                    surface.blits(
-                        (spr.image, spr.rect, None, special_flags) for spr in sprites
-                    ),
-                )
-            )
-        else:
-            for spr in sprites:
-                self.spritedict[spr] = surface.blit(
-                    spr.image, spr.rect, None, special_flags
-                )
-        self.lostsprites = []
-        dirty = self.lostsprites
+        return entity in self._entities
 
-        return dirty
-
-    def clear(self, surface, bgd):
-        """erase the previous position of all sprites
-
-        Group.clear(surface, bgd): return None
-
-        Clears the area under every drawn sprite in the group. The bgd
-        argument should be Surface which is the same dimensions as the
-        screen surface. The bgd could also be a function which accepts
-        the given surface and the area to be cleared as arguments.
-
+    def has_any(self, *sprites: T) -> bool:
         """
-        if callable(bgd):
-            for lost_clear_rect in self.lostsprites:
-                bgd(surface, lost_clear_rect)
-            for clear_rect in self.spritedict.values():
-                if clear_rect:
-                    bgd(surface, clear_rect)
-        else:
-            surface_blit = surface.blit
-            for lost_clear_rect in self.lostsprites:
-                surface_blit(bgd, lost_clear_rect, lost_clear_rect)
-            for clear_rect in self.spritedict.values():
-                if clear_rect:
-                    surface_blit(bgd, clear_rect, clear_rect)
-
-    def empty(self):
-        """remove all sprites
-
-        Group.empty(): return None
-
-        Removes all the sprites from the group.
-
+        Checks if any of the provided entities are in this group.
+        :param sprites: Logic entities to check.
+        :return: True if at least one entity is present.
         """
-        for sprite in self.sprites():
-            self.remove_internal(sprite)
-            sprite.remove_internal(self)
+        return not self._entities.keys().isdisjoint(sprites)
 
-    def __bool__(self):
-        return bool(self.sprites())
-
-    def __len__(self):
-        """return number of sprites in group
-
-        Group.len(group): return int
-
-        Returns the number of sprites contained in the group.
-
+    def update(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         """
-        return len(self.sprites())
+        Batch update all entities in the group.
+        :param args: Positional arguments passed to entity.update.
+        :param kwargs: Keyword arguments passed to entity.update.
+        """
+        for entity in self._entities:
+            entity.update(*args, **kwargs)
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__}({len(self)} sprites)>"
+    def empty(self) -> None:
+        """Removes all entities from the group."""
+        self._entities.clear()
+
+    def __bool__(self) -> bool:
+        """:return: True if the group is not empty."""
+        return bool(self._entities)
+
+    def __len__(self) -> int:
+        """:return: The number of entities in the group."""
+        return len(self._entities)
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}({len(self)} entities)>"

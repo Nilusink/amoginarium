@@ -427,7 +427,7 @@ class LogicProcess:
         # WallBouncer.update()
 
         Bullets.update(delta)
-        # ic(list(Bullets.sprites()))
+        # ic(list(Bullets.entities()))
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
@@ -435,7 +435,7 @@ class LogicProcess:
 
         # update world position
         # _, max_player_pos = Players.get_position_extremes()
-        players = Players.sprites()
+        players = Players.entities()
         if len(players) > 0:
             max_player_pos = players[0].position
             pv.audio_observer_pos.xy = max_player_pos.xy
@@ -481,7 +481,7 @@ class LogicProcess:
     def reset_game(self) -> None:
         """reset game state"""
         # kill all entities
-        for e in Updated.sprites() + Bullets.sprites():
+        for e in Updated.entities() + Bullets.entities():
             e.kill()
 
         # collision_manager.clear_all_entities()
@@ -501,7 +501,7 @@ class LogicProcess:
     def end(self) -> None:
         """close the logic thread"""
         # print entity stats
-        entities = Updated.sprites() + Bullets.sprites()
+        entities = Updated.entities() + Bullets.entities()
         entities = [e.__class__.__name__ for e in entities]
         unique = set(entities)
         print_ic_style(CC.fg.YELLOW + "entities: " + CC.ctrl.ENDC)

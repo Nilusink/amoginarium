@@ -152,7 +152,7 @@ class BaseLogicEntity:
 
         for group in groups:
             if not has(group):
-                group.add_internal(self)
+                group.add(self)
                 self.__groups.append(group)
 
     def remove(self, *groups: LogicGroup) -> None:
@@ -164,7 +164,7 @@ class BaseLogicEntity:
 
         for group in groups:
             if has(group):
-                group.remove_internal(self)
+                group.remove(self)
                 self.__groups.remove(group)
 
     def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
@@ -177,7 +177,7 @@ class BaseLogicEntity:
             child.kill()
 
         for group in self.__groups:
-            group.remove_internal(self)
+            group.remove(self)
 
         self._set_bit("flags", 0, False)  # set alive
         ENTITY_COUNTER.pop_id(self.__id)

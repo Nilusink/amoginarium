@@ -360,8 +360,8 @@ class BaseTurret(LogicGameEntity):
         # only check targets that are supposed to be engaged
         targets = [
             t for t in targets if any([
-                t in Players.sprites() if self.intercept_players else False,
-                t in Bullets.sprites() if self.intercept_bullets else False
+                t in Players.entities() if self.intercept_players else False,
+                t in Bullets.entities() if self.intercept_bullets else False
             ])
         ]
 
@@ -513,7 +513,7 @@ class BaseTurret(LogicGameEntity):
                 player_acceleration.y -= GravityAffected.gravity
 
         # if issubclass(Bullet, target.__class__)
-        # if 1:  # target in Bullets.sprites():
+        # if 1:  # target in Bullets.entities():
         target_position = target.position
 
         # else:

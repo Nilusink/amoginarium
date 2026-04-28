@@ -156,8 +156,8 @@ class ExactoSniper(BaseWeapon):
 
         # if no targeting func, target with straight laser
         if not self._targeting_func:
-            # sprites = Updated.sprites() + Players.sprites() + [
-            #     b for b in Bullets.sprites() if b.parent != self
+            # entities = Updated.entities() + Players.entities() + [
+            #     b for b in Bullets.entities() if b.parent != self
             # ]
             hits = collision_manager.manual_collision(
                 group_ids=all_groups,

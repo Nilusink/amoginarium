@@ -7,5 +7,4 @@ Authors: LukasKrah
 """
 
 from ._collision_types import CollisionType, HitboxTypes
-from ._collision_exceptions import CollisionExceptions
 from ._collision_manager import GameCollisions

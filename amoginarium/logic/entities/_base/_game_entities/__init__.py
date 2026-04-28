@@ -2,8 +2,6 @@
 amoginarium/logic/entities/_game_entities/__init__.py
 
 Basic types of logic entities:
-- BaseLogicEntity: Most basic type of logic entity.
-- PositionedLogicEntity: Adds position/size
 - CollisionLogicEntity: Adds collision detection
 - LogicGameEntity: Implements all basic stuff for logic entities
 

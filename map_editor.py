@@ -69,7 +69,7 @@ def main() -> None:
                 delta: Vec2 = last_mouse_pos - x
                 # delta *= (1 / global_vars.pixel_per_meter)
 
-                # move sprite
+                # move entity
                 if selected:
                     selected.position = x + Updated.world_position - selected_offset
                     selected.update_rect()
@@ -91,7 +91,7 @@ def main() -> None:
             not selected,
             selected and not CollisionDestroyed.point_in_sprite(selected, mouse_pos.xy)
         ]):
-            for entity in Updated.sprites():
+            for entity in Updated.entities():
                 entity: VisibleGameEntityLike
 
                 if hasattr(entity, "highlight"):

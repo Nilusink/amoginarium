@@ -6,24 +6,30 @@ Created: 25.01.2024
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, normalize_angle
-from amoginarium.shared import BaseLogicEntityLike
+from amoginarium.shared.utility import normalize_angle
+from amoginarium.shared import PositionedLogicEntityLike
 
 from ._logic_group import LogicGroup
 
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import Vec2
 
-class BaseGroup(LogicGroup):
+
+class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
     """Basic group for logic entities"""
+    __slots__ = ()
 
     @staticmethod
     def entities_in_circle(
-            entities: list[BaseLogicEntityLike],
+            entities: list[PositionedLogicEntityLike],
             center: Vec2,
             radius: float,
             min_radius: float = 0
-    ) -> list[tuple[float, tp.Any]]:
+    ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
         Check which of the given entities are in the circle
         :param entities: List of entities to check
@@ -44,13 +50,13 @@ class BaseGroup(LogicGroup):
 
     @staticmethod
     def entities_in_partial_circle(
-            entities: list[BaseLogicEntityLike],
+            entities: list[PositionedLogicEntityLike],
             center: Vec2,
             radius: float,
             angle_start: Vec2,
             angle_end: Vec2,
             min_radius: float = 0
-    ) -> list[tuple[float, BaseLogicEntityLike]]:
+    ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
         Check which of the given entities are in the partial circle
         :param entities: List of entities to check
@@ -86,15 +92,11 @@ class BaseGroup(LogicGroup):
             self,
             center: Vec2,
             radius: float
-    ) -> list[tuple[float, tp.Any]]:
+    ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
         get all entities of this group inside a circle, sorted by distance (closest first)
         :param center: center of the circle
         :param radius: radius of the circle
         :return: list of tuples (distance, entity) of entities in the circle
         """
-        return self.entities_in_circle(self.sprites(), center, radius)
-
-    def sprites(self) -> list[BaseLogicEntityLike]:
-        """return: list of all sprites in the group"""
-        return super().sprites()
+        return self.entities_in_circle(self.entities(), center, radius)

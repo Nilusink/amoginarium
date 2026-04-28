@@ -8,13 +8,12 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from icecream import ic
 import typing as tp
 
 from amoginarium.shared.utility import get_default
 
-from .._base_entities import PositionedLogicEntity
 from .._debug import DebugPolygonEntity, DebugRectangleEntity, DebugCircleEntity
+from .._base_entities import PositionedLogicEntity
 from .._collision import GameCollisions
 
 if tp.TYPE_CHECKING:
@@ -176,8 +175,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         """Calculates root collision exceptions rules"""
         my_add: list[CollisionType.ExceptionID] = []
         if self.__collision_exception_root:
-            my_add.append(self.id)
-        # todo: update func - update on tree update
+            my_add.append(GameCollisions.add_exception())
         if self.__collision_exception_root_additive and self._parent is not None:
             return self._parent._get_root_collision_exceptions() + my_add
         return my_add
@@ -284,7 +282,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
             rotation=rotation,
             positions=positions,
             centered=centered,
-            ignore_collisions=self._collision_exception_ids
+            ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids
         )
 
     def _update_collision(
@@ -325,6 +323,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
             rotation=rotation,
             positions=positions,
             centered=centered,
+            ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids,
             shift_history=shift_history,
         )
         if CollisionLogicEntity.__debug_draw_hitboxes:

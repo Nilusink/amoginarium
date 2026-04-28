@@ -9,75 +9,166 @@ Authors: LukasKrah
 import typing as tp
 
 from amoginarium.shared.collision_detection import CollisionManager, CollisionCallback
+
 from ._collision_types import CollisionType, HitboxTypes
 
 
-class GameCollisions:
-    collision_manager: tp.Final[CollisionManager] = CollisionManager(
-        base_cell_size=500,
-        level_dividers=[10],
+# noinspection DuplicatedCode
+class _GameCollisions:
+    """
+    Manages the collision groups and relations for the game world.
+    Handles the registration of hitboxes and bidirectional collision callbacks.
+    """
+
+    __slots__ = (
+        "collision_manager",
+        "COLLISION_START",
+        "COLLISION_END",
+        "collision_group_players",
+        "collision_group_bullets",
+        "collision_group_grenades",
+        "collision_group_islands",
+        "collision_group_turrets",
+        "collision_group_shields",
+        "all_groups",
+        "hitboxes",
+        "_registered_relations",
+        "__exception_num"
     )
 
-    @classmethod
-    def init(cls, callback_start: CollisionCallback, callback_end: CollisionCallback) -> None:
-        cls.COLLISION_START = callback_start
-        cls.COLLISION_END = callback_end
+    collision_manager: tp.Final[CollisionManager]
+    COLLISION_START: CollisionCallback
+    COLLISION_END: CollisionCallback
+    collision_group_players: CollisionType.GroupID
+    collision_group_bullets: CollisionType.GroupID
+    collision_group_grenades: CollisionType.GroupID
+    collision_group_islands: CollisionType.GroupID
+    collision_group_turrets: CollisionType.GroupID
+    collision_group_shields: CollisionType.GroupID
+    all_groups: list[CollisionType.GroupID]
+    hitboxes: dict[CollisionType.GroupID, HitboxTypes]
+    _registered_relations: set[tuple[int, int]]
+    __exception_num: int
 
-        cls.collision_group_players: tp.Final[CollisionType.GroupID] = cls.collision_manager.add_group(max_level=0)
-        cls.collision_group_bullets: tp.Final[CollisionType.GroupID] = cls.collision_manager.add_group(max_level=1,
-                                                                                                       hitbox_type="circle")
-        cls.collision_group_grenades: tp.Final[CollisionType.GroupID] = cls.collision_manager.add_group(max_level=1,
-                                                                                                        hitbox_type="circle")
-        cls.collision_group_islands: tp.Final[CollisionType.GroupID] = cls.collision_manager.add_group(max_level=0)
-        cls.collision_group_turrets: tp.Final[CollisionType.GroupID] = cls.collision_manager.add_group(max_level=0)
-        cls.collision_group_shields: tp.Final[CollisionType.GroupID] = cls.collision_manager.add_group(max_level=0,
-                                                                                                       hitbox_type="obb")
+    def __init__(self) -> None:
+        self.collision_manager = CollisionManager(
+            base_cell_size=500,
+            level_dividers=[10],
+        )
+        self._registered_relations = set()
+        self.__exception_num = -1
 
-        cls.all_groups: tp.Final[list[CollisionType.GroupID]] = [
-            cls.collision_group_players,
-            cls.collision_group_bullets,
-            cls.collision_group_grenades,
-            cls.collision_group_islands,
-            cls.collision_group_turrets,
-            cls.collision_group_shields,
+    def init(self, callback_start: CollisionCallback, callback_end: CollisionCallback) -> None:
+        """
+        Initializes the collision groups and sets up the default relations.
+        :param callback_start: The callback triggered when a collision begins.
+        :param callback_end: The callback triggered when a collision ends.
+        """
+        self.COLLISION_START = callback_start
+        self.COLLISION_END = callback_end
+        self._setup_groups()
+
+    def _setup_groups(self) -> None:
+        """Internal method to define collision groups and their relationships."""
+        self.collision_group_players = self.collision_manager.add_group(max_level=0)
+        self.collision_group_bullets = self.collision_manager.add_group(max_level=1, hitbox_type="circle")
+        self.collision_group_grenades = self.collision_manager.add_group(max_level=1, hitbox_type="circle")
+        self.collision_group_islands = self.collision_manager.add_group(max_level=0)
+        self.collision_group_turrets = self.collision_manager.add_group(max_level=0)
+        self.collision_group_shields = self.collision_manager.add_group(max_level=0, hitbox_type="obb")
+
+        self.all_groups = [
+            self.collision_group_players, self.collision_group_bullets, self.collision_group_grenades,
+            self.collision_group_islands, self.collision_group_turrets, self.collision_group_shields,
         ]
 
-        cls.hitboxes: tp.Final[dict[CollisionType.GroupID, HitboxTypes]] = {
-            collision_group: cls.collision_manager.get_hitbox(collision_group) for collision_group in cls.all_groups
+        self.hitboxes = {  # type: ignore
+            group: self.collision_manager.get_hitbox(group) for group in self.all_groups
         }
 
-        # Grenades collide with Islands, Bullets, Players
-        cls.create_default_relation(cls.collision_group_grenades, cls.collision_group_islands)
-        cls.create_default_relation(cls.collision_group_grenades, cls.collision_group_bullets)
-        cls.create_default_relation(cls.collision_group_grenades, cls.collision_group_players)
-
-        # Players collide with Islands, Bullets, (Grenades)
-        cls.create_default_relation(cls.collision_group_players, cls.collision_group_islands)
-        cls.create_default_relation(cls.collision_group_players, cls.collision_group_bullets)
-
-        # Bullets collide with Islands, Bullets, Turrets, (Players, Grenades)
-        cls.create_default_relation(cls.collision_group_bullets, cls.collision_group_islands)
-        cls.create_default_relation(cls.collision_group_bullets, cls.collision_group_bullets)
-        cls.create_default_relation(cls.collision_group_bullets, cls.collision_group_turrets)
-
-        # Shield collides with Bullets, Grenades
-        cls.create_default_relation(cls.collision_group_shields, cls.collision_group_bullets)
-        cls.create_default_relation(cls.collision_group_shields, cls.collision_group_grenades)
-
-    @classmethod
-    def create_default_relation(cls, group_a: CollisionType.GroupID, group_b: CollisionType.GroupID) -> None:
-        """
-        Registers a bidirectional collision relation between two groups using default callbacks.
-        :param group_a: The ID of the first collision group.
-        :param group_b: The ID of the second collision group.
-        """
-        cls.collision_manager.create_relation(
-            group_a_id=group_a,
-            group_b_id=group_b,
-            cb_a_on_start=cls.COLLISION_START,
-            cb_b_on_start=cls.COLLISION_START,
-            cb_a_on_end=cls.COLLISION_END,
-            cb_b_on_end=cls.COLLISION_END
+        self.create_relations(
+            self.collision_group_players,
+            [
+                self.collision_group_islands,
+                self.collision_group_bullets,
+                self.collision_group_grenades
+            ]
+        )
+        self.create_relations(
+            self.collision_group_bullets,
+            [
+                self.collision_group_islands,
+                self.collision_group_bullets,
+                self.collision_group_turrets,
+                self.collision_group_players,
+                self.collision_group_grenades,
+                self.collision_group_shields
+            ]
+        )
+        self.create_relations(
+            self.collision_group_grenades,
+            [
+                self.collision_group_islands,
+                self.collision_group_bullets,
+                self.collision_group_players,
+                self.collision_group_shields
+            ]
+        )
+        self.create_relations(
+            self.collision_group_islands,
+            [
+                self.collision_group_players,
+                self.collision_group_bullets,
+                self.collision_group_grenades
+            ]
+        )
+        self.create_relations(
+            self.collision_group_turrets,
+            [
+                self.collision_group_bullets
+            ]
+        )
+        self.create_relations(
+            self.collision_group_shields,
+            [
+                self.collision_group_bullets,
+                self.collision_group_grenades
+            ]
         )
 
-    __slots__ = ()
+    def create_relations(self, group_a: CollisionType.GroupID, targets: list[CollisionType.GroupID]) -> None:
+        """
+        Registers bidirectional collision relations between a group and multiple target groups.
+        Prevents redundant registration if the relation already exists.
+        :param group_a: The ID of the first collision group.
+        :param targets: A list of group IDs to collide with.
+        """
+        for group_b in targets:
+            if group_a <= group_b:
+                rel_key = (group_a, group_b)
+            else:
+                rel_key = (group_b, group_a)
+
+            if rel_key in self._registered_relations:
+                continue
+
+            self.collision_manager.create_relation(
+                group_a_id=group_a,
+                group_b_id=group_b,
+                cb_a_on_start=self.COLLISION_START,
+                cb_b_on_start=self.COLLISION_START,
+                cb_a_on_end=self.COLLISION_END,
+                cb_b_on_end=self.COLLISION_END
+            )
+            self._registered_relations.add(rel_key)
+
+    def add_exception(self) -> int:
+        """
+        Registers a new collision exception rule and returns its unique identifier.
+        :return: A unique integer identifier for the collision exception.
+        :rtype: int
+        """
+        self.__exception_num += 1
+        return self.__exception_num
+
+GameCollisions: tp.Final[_GameCollisions] = _GameCollisions()

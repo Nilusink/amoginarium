@@ -60,8 +60,8 @@ class _DetectionGroupManager:
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
-        targets = [p for p in Players.sprites() if p.alive]
-        targets.extend(Bullets.sprites())
+        targets = [p for p in Players.entities() if p.alive]
+        targets.extend(Bullets.entities())
 
         for group in self._detection_groups:
             group.update_detection(targets)

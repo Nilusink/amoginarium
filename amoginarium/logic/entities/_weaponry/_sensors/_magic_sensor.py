@@ -29,8 +29,8 @@ class MagicSensor(BaseSensor):
             from_entities: tp.Iterable[LogicGameEntity] = None
     ) -> list[LogicGameEntity]:
         if from_entities is None:
-            targets = [p for p in Players.sprites() if p.alive]
-            targets.extend(Bullets.sprites())
+            targets = [p for p in Players.entities() if p.alive]
+            targets.extend(Bullets.entities())
 
         else:
             targets = from_entities
