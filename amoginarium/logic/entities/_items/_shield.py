@@ -122,6 +122,11 @@ class Shield(Something):
             shift_history=shift_history
         )
 
+    def hit(self, _damage: float, hit_by=...) -> None:
+        """get hit by ``player``"""
+        if self._parent is None:
+            super().hit(_damage, hit_by)
+
     def hit_by_bullet(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         if not self._in_use:
             return
@@ -153,6 +158,11 @@ class Shield(Something):
             else:
                 self.size.xy = self._image_size[0] * .1, self._image_size[1] * .3
                 self.position = self.parent.position
+
+            self.velocity *= 0
+            self.acceleration *= 0
+            self._velocity_to_add *= 0
+            self._acceleration_to_add *= 0
 
             super()._update(delta, keep_position=True)
             return
