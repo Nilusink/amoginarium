@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import typing as tp
 
+from amoginarium.shared import PositionedLogicEntityLike
+
 from ._base_logic_entity import BaseLogicEntity
 
 if tp.TYPE_CHECKING:
@@ -23,7 +25,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import Vec2
 
 
-class PositionedLogicEntity(BaseLogicEntity):
+class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
     """A logic entity with position and size."""
     __slots__ = ("position", "size")
 

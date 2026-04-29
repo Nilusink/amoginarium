@@ -13,10 +13,10 @@ from amoginarium.shared import base_entity_t, ItemCIDs
 from amoginarium import pv
 
 from amoginarium.shared.audio import RocketSound
-from ._base_item import BaseItem
+from ._something import Something
 
 
-class JetBag(BaseItem):
+class JetBag(Something):
     """makes you flyyyyyy"""
 
     _CID = ItemCIDs.jetbag

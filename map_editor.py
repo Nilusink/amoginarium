@@ -64,7 +64,7 @@ def main() -> None:
 
         # moving
         if pg.mouse.get_pressed()[0]:
-            # now_pos = convert_coord(event.pos, Vec2)
+            # now_pos = convert_coord(events.pos, Vec2)
             if last_mouse_pos:
                 delta: Vec2 = last_mouse_pos - x
                 # delta *= (1 / global_vars.pixel_per_meter)

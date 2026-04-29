@@ -1,5 +1,7 @@
 """
-amoginarium/logic/entities/_items/_base_item.py
+amoginarium/logic/entities/_items/_something.py
+
+IDK what this is. Definitely something.
 
 Project: amoginarium
 Created: 18.04.2026
@@ -17,7 +19,7 @@ from .._base import LogicGameEntity
 from ._item import Item
 
 
-class BaseItem(Item):
+class Something(Item):
     _max_uses: tp.ClassVar[int] = 1
 
     __slots__ = ("_uses_left", "_parent_position_offset", "_used_callback")

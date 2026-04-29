@@ -14,10 +14,10 @@ from amoginarium.shared.utility import Vec2
 from amoginarium.shared import base_entity_t, ItemCIDs
 
 from amoginarium.shared.audio import PotionDrink, ContinuousSoundEffect
-from ._base_item import BaseItem
+from ._something import Something
 
 
-class HealingPotion(BaseItem):
+class HealingPotion(Something):
     """
     healing potion
 

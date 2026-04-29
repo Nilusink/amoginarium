@@ -603,8 +603,8 @@ class BaseGame:
                 elif event.type == pg.QUIT:
                     self.__clean_end()
 
-                # elif event.type == pg.JOYDEVICEADDED:
-                #     self.__add_joystick(event)
+                # elif events.type == pg.JOYDEVICEADDED:
+                #     self.__add_joystick(events)
 
                 elif event.type == pg.KEYUP:
                     if event.key == pg.K_F11:

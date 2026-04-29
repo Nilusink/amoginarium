@@ -16,13 +16,17 @@ from amoginarium.shared import base_entity_t, ItemCIDs
 from .. import Updated
 
 from amoginarium.shared.audio import MetalPings, RandomizedEffect
-from .._base import LogicGameEntity
-from ._base_item import BaseItem
+from .._base import LogicGameEntity, GameCollisions, CollisionType
+from ._something import Something
 
-from .._base import GameCollisions
+if tp.TYPE_CHECKING:
+    from .._weaponry.templates import Bullet
+    from .._weaponry import Grenade
+    from .._player import Player
+    from .._world import Island
 
 
-class Shield(BaseItem):
+class Shield(Something):
     _CID = ItemCIDs.shield
 
     _image_name: tp.ClassVar[tuple[str, str] | str] = ("Shield_6", "4")
@@ -84,13 +88,20 @@ class Shield(BaseItem):
             self.remove(Updated)
             # self.remove(CollisionDestroyed)
 
-    def _collision_start(self, events: list[CollisionEvent]) -> None:
+    def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
+        super().remove_parent(at_pos - Vec2().from_cartesian(self._image_size[0] * .45, self._image_size[1] * .7), velocity)
+
+    def _collision_start(self, events: list[CollisionEvent[tp.Union["Island", "Bullet", "Grenade", "Player"]]]) -> None:
         """
         Reaction to collision
-        :param event: Event details
+        :param events: Event details
         """
-        for event in events:
-            self.hit(event.other_entity.damage, event.other_entity)
+        group_id: CollisionType.GroupID = events[0].group_id
+        if group_id == GameCollisions.collision_group_islands:
+            self.position = events[0].position - self.size / 2
+        elif group_id in (GameCollisions.collision_group_bullets, GameCollisions.collision_group_grenades):
+            for event in events:
+                self.hit_by_bullet(event.other_entity.damage, event.other_entity)
 
     def _update_collision(
             self,
@@ -111,7 +122,7 @@ class Shield(BaseItem):
             shift_history=shift_history
         )
 
-    def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
+    def hit_by_bullet(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         if not self._in_use:
             return
 
@@ -141,15 +152,12 @@ class Shield(BaseItem):
 
             else:
                 self.size.xy = self._image_size[0] * .1, self._image_size[1] * .3
-                self.position.xy = (0, 3000)
+                self.position = self.parent.position
 
             super()._update(delta, keep_position=True)
             return
 
         else:
             self.size.xy = self._image_size
-
-            # move shield out of way
-            self.position.xy = (-1, -1)
 
         super()._update(delta)

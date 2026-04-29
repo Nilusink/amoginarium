@@ -310,11 +310,19 @@ class Player(LogicGameEntity):
             if dmg > 0 and event.other_entity.parent != self:
                 self.hit(dmg, hit_by=event.other_entity)
 
+    def __on_collision_item(self, events: list[CollisionEvent["Item"]]) -> None:
+        for event in events:
+            event.other_entity.hit(0, self)
+
     def _collision_start(self, events: list[CollisionEvent[tp.Union["Bullet", "Island"]]]) -> list[bool] | None:
         if events[0].group_id == GameCollisions.collision_group_islands:
             return self.__on_collision_island(events)
         if events[0].group_id == GameCollisions.collision_group_bullets:
             return self.__on_collision_bullet(events)
+        if events[0].group_id == GameCollisions.collision_group_items:
+            return self.__on_collision_item(events)
+        if events[0].group_id == GameCollisions.collision_group_shields:
+            return self.__on_collision_item(events)
         return None
 
     def _update(self, delta):
@@ -429,7 +437,7 @@ class Player(LogicGameEntity):
             )
             self._hotbar.drop_item(
                 self._current_weapon,
-                self.position,
+                self.position + Vec2().from_cartesian(0, self.size.y / 2),
                 vel
             )
 

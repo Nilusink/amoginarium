@@ -11,8 +11,10 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
+from icecream import ic
 import typing as tp
 
+from amoginarium.shared import CollisionLogicEntityLike
 from amoginarium.shared.utility import get_default
 
 from .._debug import DebugPolygonEntity, DebugRectangleEntity, DebugCircleEntity
@@ -31,7 +33,7 @@ if tp.TYPE_CHECKING:
     from .._collision import CollisionType
 
 
-class CollisionLogicEntity(PositionedLogicEntity):
+class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     """
     A logic entity that supports collision detection and response.
     Integrates with the global collision_manager to handle hitboxes, collision events,
@@ -69,9 +71,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
     _active_collisions: dict[CollisionType.CollisionID, CollisionEvent]  # protected / no property for faster access
     _active_normals: dict[CollisionType.GroupID, list[Vec2]]  # protected / no property for faster access
 
-    __debug_entity: DebugCircleEntity | DebugPolygonEntity | DebugRectangleEntity | None
-
-    # endregion
+    __debug_entity: DebugCircleEntity | DebugPolygonEntity | DebugRectangleEntity | None  # endregion
 
     def __init__(
             self,
@@ -161,11 +161,6 @@ class CollisionLogicEntity(PositionedLogicEntity):
         """:return: Collision Group ID"""
         return self.__collision_group
 
-    @property
-    def _collision_exception_root_ids(self) -> list[CollisionType.ExceptionID]:
-        """:return: Root Collision exceptions rules. Maybe an empty list if they haven't been calculated yet"""
-        return self.__collision_exception_root_ids
-
     # endregion
 
     # region Methods: Collision calculations
@@ -215,10 +210,10 @@ class CollisionLogicEntity(PositionedLogicEntity):
     # endregion
 
     # region Methods: Collision Start
-    def _collision_start(self, event: list[CollisionEvent[CollisionLogicEntity]]) -> list[bool] | None:
+    def _collision_start(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> list[bool] | None:
         """
         Called on collision start
-        :param event: All details regarding the collisions
+        :param events: All details regarding the collisions
         :return: List of bools stating whether each collision is accepted.
            If False the CollisionManager will not call COLLISION_END
            and will call COLLISION_START again if there still is a collision in the next update
@@ -234,7 +229,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
            If False the CollisionManager will not call COLLISION_END
            and will call COLLISION_START again if there still is a collision in the next update
         """
-        # ic(self, [event.other_entity for event in events])
+        # ic("COL START", self, events)
         collisions_result: list[bool] | None = self._collision_start(events)
 
         # Save accepted collisions in self._active_collisions
@@ -264,6 +259,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         Callback on COLLISION_END, called by the collision manager
         :param events: All details regarding the collisions
         """
+        # ic("COL END", self, events)
         # Filter for collisions that are still active
         actual_events = [
             event for event in events if event.collision_id in self._active_collisions.keys()
@@ -279,7 +275,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
     # region Methods: Create/Update/Delete Collision
     @tp.final
-    def _create_collision(
+    def _create_collision(  # type: ignore
             self,
             *,
             position: Vec2 | EllipsisType = ...,
@@ -324,7 +320,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
             is_active=collision_active,
         )
 
-    def _update_collision(
+    def _update_collision(  # type: ignore
             self,
             *,
             position: Vec2 | EllipsisType = ...,

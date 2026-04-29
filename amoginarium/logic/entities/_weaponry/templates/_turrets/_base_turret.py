@@ -142,6 +142,14 @@ class BaseTurret(LogicGameEntity):
         self._set_pos = position.copy()
         # position.y -= size.y / 2
 
+        super().__init__(
+            runtime_buffer=runtime_buffer,
+            size=size,
+            position=position,
+            coalition=coalition,
+            centered=True
+        )
+
         # audio
         self._ping = MetalPings().set_volume(.4, .5)
 
@@ -222,13 +230,6 @@ class BaseTurret(LogicGameEntity):
 
         self._hp = self._default_max_hp
 
-        super().__init__(
-            runtime_buffer=runtime_buffer,
-            size=size,
-            position=position,
-            coalition=coalition,
-            centered=True
-        )
         self._create_collision()
         self.facing.angle = self._default_facing_angle
         self.weapon.facing.angle = self.facing.angle

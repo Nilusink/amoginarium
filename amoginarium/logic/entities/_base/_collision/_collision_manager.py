@@ -101,7 +101,9 @@ class _GameCollisions:
             [
                 self.collision_group_islands,
                 self.collision_group_bullets,
-                self.collision_group_grenades
+                self.collision_group_grenades,
+                self.collision_group_items,
+                self.collision_group_shields
             ]
         )
         self.create_relations(
@@ -129,7 +131,8 @@ class _GameCollisions:
             [
                 self.collision_group_players,
                 self.collision_group_bullets,
-                self.collision_group_grenades
+                self.collision_group_grenades,
+                self.collision_group_shields
             ]
         )
         self.create_relations(
@@ -142,7 +145,9 @@ class _GameCollisions:
             self.collision_group_shields,
             [
                 self.collision_group_bullets,
-                self.collision_group_grenades
+                self.collision_group_grenades,
+                self.collision_group_islands,
+                self.collision_group_players
             ]
         )
 

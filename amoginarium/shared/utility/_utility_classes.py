@@ -95,7 +95,7 @@ class WDTimer(_BaseTimer):
 
     def on_timeout(self, cb: tp.Callable):
         """
-        Registers a callback handler (must be async) for the timeout event
+        Registers a callback handler (must be async) for the timeout events
         (aka. when the timer isn't refreshed before the timeout time.)
 
         Note: There can only be one callback, registering a second one
@@ -107,7 +107,7 @@ class WDTimer(_BaseTimer):
 
     def on_restart(self, cb: tp.Callable):
         """
-        Registers a callback handler (must be async) for the restart event
+        Registers a callback handler (must be async) for the restart events
         (aka. when the timer restarts counting after a timeout or
         on initial start)
 

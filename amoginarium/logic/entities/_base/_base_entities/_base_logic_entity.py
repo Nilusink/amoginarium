@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import ENTITY_COUNTER
+from amoginarium.shared import ENTITY_COUNTER, BaseLogicEntityLike
 from amoginarium import pv
 
 from .._groups import Updated
@@ -40,7 +40,7 @@ class EntityChildViable(tp.Protocol):
         """Clean up and terminate the child."""
 
 
-class BaseLogicEntity:
+class BaseLogicEntity(BaseLogicEntityLike):
     """
     Most basic type of logic entity.
     - Parent/Children relations

@@ -198,7 +198,7 @@ class Inventory:
 
         # drop item
         item = self._slots[item_id].item
-        item.remove_parent(pos, vel)
+        item.remove_parent(pos - Vec2().from_cartesian(item.size.x / 2, item.size.y), vel)
 
         # reset slot
         self.clear_slot(item_id)

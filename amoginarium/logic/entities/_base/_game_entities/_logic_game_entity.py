@@ -15,7 +15,7 @@ import typing as tp
 
 from amoginarium.shared.utility import Vec2, normalize_angle, get_default
 from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import Coalitions
+from amoginarium.shared import Coalitions, LogicGameEntityLike
 
 from amoginarium import pv
 
@@ -30,7 +30,7 @@ if tp.TYPE_CHECKING:
     from .._collision import CollisionType
 
 
-class LogicGameEntity(CollisionLogicEntity):
+class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
     """
     Implements all basic stuff for logic entities
     - Parent/Children relations
@@ -76,7 +76,8 @@ class LogicGameEntity(CollisionLogicEntity):
             collision_exception_ids: list[int] | int | None = None,
             collision_exception_root: bool | EllipsisType = ...,
             collision_exception_root_additive: bool | EllipsisType = ...,
-            tags: list[str] | None = None
+            tags: list[str] | None = None,
+            collision_active: bool = True
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -97,6 +98,7 @@ class LogicGameEntity(CollisionLogicEntity):
             added to this entity and its children recursive. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
             Recurses until the next parents sets this to false
         :param tags: Optional list of tags for the entity
+        :param collision_active: Whether the collision detection is active.
         """
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -108,6 +110,7 @@ class LogicGameEntity(CollisionLogicEntity):
             collision_exception_ids=collision_exception_ids,
             collision_exception_root=collision_exception_root,
             collision_exception_root_additive=collision_exception_root_additive,
+            collision_active=collision_active
         )
         # region default parameters
         self._velocity_to_add = Vec2()

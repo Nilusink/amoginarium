@@ -237,10 +237,19 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
             size: Vec2 | EllipsisType = ...,
             rotation: float = 0.0,
             positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...
+            centered: bool | EllipsisType = ...,
+            radius: float | None = None,
+            collision_active: bool | EllipsisType = ...,
     ) -> None:
         """
         Registers this entity with the collision manager.
+        :param position: The 2D position for the hitbox. Defaults to self.position.
+        :param size: The 2D size for the hitbox. Defaults to self.size.
+        :param rotation: Rotation of the hitbox in radians.
+        :param positions: Optional list of vertices for polygonal hitboxes.
+        :param centered: Whether the hitbox is centered on the position.
+        :param radius: Optional radius for circular hitboxes.
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active
         """
         ...
 
@@ -252,10 +261,20 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
             rotation: float = 0.0,
             positions: list[Vec2] | None = None,
             centered: bool | EllipsisType = ...,
+            radius: float | None = None,
+            collision_active: bool | EllipsisType = ...,
             shift_history: bool = True
     ) -> None:
         """
         Updates the entity's hitbox parameters in the collision manager.
+        :param position: The 2D position for the hitbox. Defaults to self.position.
+        :param size: The 2D size for the hitbox. Defaults to self.size.
+        :param rotation: Rotation of the hitbox in radians.
+        :param positions: Optional list of vertices for polygonal hitboxes.
+        :param centered: Whether the hitbox is centered on the position.
+        :param radius: Optional radius for circular hitboxes.
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
+        :param shift_history: Whether to update the previous position state for CCD.
         """
         ...
 

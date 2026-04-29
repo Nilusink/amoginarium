@@ -255,32 +255,33 @@ cdef class CollisionManager:
                     a_id = pair_key >> 32
                     b_id = pair_key & 0xFFFFFFFF
 
-                    if (g_a_id == group_id and a_id == entity_id):
-                        if cbs[3] is not None and self.groups[g_b_id].entities.size() > b_id and \
-                                self.groups[g_b_id].entities[b_id].active:
+                    # If either A or B is the entity being deactivated/deleted
+                    if (g_a_id == group_id and a_id == entity_id) or (g_b_id == group_id and b_id == entity_id):
+                        if self.groups[g_a_id].entities.size() > a_id and self.groups[g_b_id].entities.size() > b_id:
                             if len(self.group_instances[g_a_id]) > a_id and len(self.group_instances[g_b_id]) > b_id:
                                 inst_a = self.group_instances[g_a_id][a_id]
                                 inst_b = self.group_instances[g_b_id][b_id]
-                                if inst_a is not None and inst_b is not None:
-                                    ev = CollisionEvent(col_id, r_id, g_a_id, inst_a,
-                                                        Vec2().from_cartesian(self.groups[g_b_id].entities[b_id].px_n,
-                                                                              self.groups[g_b_id].entities[b_id].py_n),
-                                                        Vec2(), 1.0)
-                                    cbs[3](self.group_instances[g_b_id][b_id], [ev])
-                        to_remove.push_back(pair_key)
 
-                    elif (g_b_id == group_id and b_id == entity_id):
-                        if cbs[1] is not None and self.groups[g_a_id].entities.size() > a_id and \
-                                self.groups[g_a_id].entities[a_id].active:
-                            if len(self.group_instances[g_a_id]) > a_id and len(self.group_instances[g_b_id]) > b_id:
-                                inst_a = self.group_instances[g_a_id][a_id]
-                                inst_b = self.group_instances[g_b_id][b_id]
                                 if inst_a is not None and inst_b is not None:
-                                    ev = CollisionEvent(col_id, r_id, g_b_id, inst_b,
-                                                        Vec2().from_cartesian(self.groups[g_a_id].entities[a_id].px_n,
-                                                                              self.groups[g_a_id].entities[a_id].py_n),
-                                                        Vec2(), 1.0)
-                                    cbs[1](self.group_instances[g_a_id][a_id], [ev])
+
+                                    # Trigger End for A (cbs[1])
+                                    if cbs[1] is not None:
+                                        ev_a = CollisionEvent(col_id, r_id, g_b_id, inst_b,
+                                                              Vec2().from_cartesian(
+                                                                  self.groups[g_a_id].entities[a_id].px_n,
+                                                                  self.groups[g_a_id].entities[a_id].py_n),
+                                                              Vec2(), 1.0)
+                                        cbs[1](inst_a, [ev_a])
+
+                                    # Trigger End for B (cbs[3])
+                                    if cbs[3] is not None:
+                                        ev_b = CollisionEvent(col_id, r_id, g_a_id, inst_a,
+                                                              Vec2().from_cartesian(
+                                                                  self.groups[g_b_id].entities[b_id].px_n,
+                                                                  self.groups[g_b_id].entities[b_id].py_n),
+                                                              Vec2(), 1.0)
+                                        cbs[3](inst_b, [ev_b])
+
                         to_remove.push_back(pair_key)
 
                     inc(it)
