@@ -312,7 +312,8 @@ class Player(LogicGameEntity):
 
     def __on_collision_item(self, events: list[CollisionEvent["Item"]]) -> None:
         for event in events:
-            event.other_entity.hit(0, self)
+            if event.other_entity.item_pickupable():
+                self.pickup_item(event.other_entity)
 
     def _collision_start(self, events: list[CollisionEvent[tp.Union["Bullet", "Island"]]]) -> list[bool] | None:
         if events[0].group_id == GameCollisions.collision_group_islands:
@@ -548,23 +549,3 @@ class Player(LogicGameEntity):
 
         self._acceleration_to_add.x += x
         self._acceleration_to_add.y += y
-
-    def _update_collision(
-            self,
-            *,
-            position: Vec2 | EllipsisType = ...,
-            size: Vec2 | EllipsisType = ...,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...,
-            shift_history: bool = True
-    ) -> None:
-        # ic("UPDATED COLLISION", self.position)
-        super()._update_collision(
-            position=position,
-            size=size,
-            rotation=rotation,
-            positions=positions,
-            centered=centered,
-            shift_history=shift_history
-        )

@@ -14,13 +14,14 @@ from amoginarium import pv
 
 from amoginarium.shared.audio import RocketSound
 from ._something import Something
+from .._base import GameCollisions
 
 
 class JetBag(Something):
     """makes you flyyyyyy"""
 
     _CID = ItemCIDs.jetbag
-    _reload_per_second: float = .2
+    _reload_per_second: float = .5
     _acceleration = 19
     _max_uses: int = 5
 
@@ -98,11 +99,14 @@ class JetBag(Something):
 
                 self._set_bit("flags", 14, False)  # set use to false
 
-        elif self.parent.on_ground:
-            if self._uses_left < self._max_uses:
-                self._uses_left = min(
-                    self._uses_left + self._reload_per_second * delta,
-                    self._max_uses
-                )
+        elif GameCollisions.collision_group_islands in self.parent._active_normals:
+            for normal in self.parent._active_normals[GameCollisions.collision_group_islands]:
+                if normal.y < -0.5:
+                    if self._uses_left < self._max_uses:
+                        self._uses_left = min(
+                            self._uses_left + self._reload_per_second * delta,
+                            self._max_uses
+                        )
+                    continue
 
         super()._update(delta, keep_position=True)

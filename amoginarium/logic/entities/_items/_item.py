@@ -64,14 +64,9 @@ class Item(LogicGameEntity):
             kwargs=kwargs,
         ))
 
-    def hit(self, _damage: float, hit_by=...) -> None:
-        """get hit by ``player``"""
-        if self._current_timeout > 0:
-            return
-
-        if hasattr(hit_by, "pickup_item"):
-            hit_by.pickup_item(self)
-            self._current_timeout = self._drop_timeout
+    def item_pickupable(self) -> bool:
+        """ :return: Whether this item can be picked up """
+        return self._current_timeout <= 0
 
     def set_parent(self, parent: LogicGameEntity) -> None:
         """assign parent to item and remove own physics"""

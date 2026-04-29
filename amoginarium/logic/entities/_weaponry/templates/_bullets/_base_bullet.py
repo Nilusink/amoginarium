@@ -264,6 +264,7 @@ class Bullet(LogicGameEntity):
             collision_exception_ids=collision_exception_ids,
             collision_exception_root=collision_exception_root,
             collision_exception_root_additive=collision_exception_root_additive,
+            tags=["bullet"]
         )
         self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius

@@ -8,6 +8,8 @@ Author:
 Nilusink
 """
 
+from __future__ import annotations
+
 from types import EllipsisType
 from ctypes import Array
 import typing as tp
@@ -21,7 +23,7 @@ from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
 from ...templates import BaseTurret, TargetSolution, BaseWeapon, AerodynamicEntity, RadarSensor
-from ...._base import GameCollisions, LogicGameEntity
+from ...._base import GameCollisions, LogicGameEntity, CollisionType
 
 
 class ExactoBullet(AerodynamicEntity):
@@ -49,6 +51,8 @@ class ExactoBullet(AerodynamicEntity):
 
     _max_alpha: float = .1
 
+    EXACTO_DOES_NOT_TRACE_ITSELF: CollisionType.ExceptionID = GameCollisions.add_exception()
+
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
@@ -68,6 +72,7 @@ class ExactoBullet(AerodynamicEntity):
             initial_position=initial_position,
             initial_velocity=initial_velocity,
             size=Vec2().from_cartesian(15, 5),
+            collision_exception_ids=ExactoBullet.EXACTO_DOES_NOT_TRACE_ITSELF,
             **kwargs
         )
         self._target_callback = target_callback
@@ -156,7 +161,8 @@ class ExactoSniper(BaseWeapon):
             hits = GameCollisions.collision_manager.manual_collision(
                 group_ids=GameCollisions.all_groups,
                 start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
-                end_position=self.position + Vec2().from_polar(self.facing.angle, self._max_range)
+                end_position=self.position + Vec2().from_polar(self.facing.angle, self._max_range),
+                ignore_collisions=[ExactoBullet.EXACTO_DOES_NOT_TRACE_ITSELF]
             )
             if hits:
                 self._current_target = hits[0].position
@@ -218,7 +224,8 @@ class ExactoTurret(BaseTurret):
                 hits = GameCollisions.collision_manager.manual_collision(
                     group_ids=GameCollisions.all_groups,
                     start_position=self.position + Vec2().from_polar(self.facing.angle, 100),
-                    end_position=self._current_target.position
+                    end_position=self._current_target.position,
+                    ignore_collisions=[ExactoBullet.EXACTO_DOES_NOT_TRACE_ITSELF]
                 )
                 if hits:
                     return hits[0].position

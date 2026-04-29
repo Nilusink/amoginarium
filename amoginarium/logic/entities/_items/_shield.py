@@ -122,10 +122,8 @@ class Shield(Something):
             shift_history=shift_history
         )
 
-    def hit(self, _damage: float, hit_by=...) -> None:
-        """get hit by ``player``"""
-        if self._parent is None:
-            super().hit(_damage, hit_by)
+    def item_pickupable(self) -> bool:
+        return self._parent is None and super().item_pickupable()
 
     def hit_by_bullet(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         if not self._in_use:
@@ -134,9 +132,6 @@ class Shield(Something):
         if hit_by is not ...:
             if hit_by._tags.__contains__("bullet"):
                 self._sound.play(pos=self.position)
-
-        if not self.parent:
-            super().hit(damage, hit_by)
 
         self._uses_left -= damage
 

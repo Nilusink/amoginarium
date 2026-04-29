@@ -53,6 +53,7 @@ class AerodynamicEntity(Bullet):
             rudder_size: float | EllipsisType = ...,
             rudder_max_angle: float | EllipsisType = ...,
             mass: float | EllipsisType = ...,
+            collision_exception_ids: list[int] | int | None = None,
             **kwargs
     ) -> None:
         self._rudder_size = get_default(rudder_size, self._default_rudder_size)
@@ -71,6 +72,7 @@ class AerodynamicEntity(Bullet):
             initial_velocity=initial_velocity,
             parent=parent,
             coalition=coalition,
+            collision_exception_ids=collision_exception_ids,
             **kwargs
         )
         self.facing.angle = self.velocity.angle

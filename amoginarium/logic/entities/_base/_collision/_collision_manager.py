@@ -94,7 +94,6 @@ class _GameCollisions:
         self.hitboxes = {  # type: ignore
             group: self.collision_manager.get_hitbox(group) for group in self.all_groups
         }
-        print(self.hitboxes)
 
         self.create_relations(
             self.collision_group_players,
