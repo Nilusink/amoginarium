@@ -44,7 +44,8 @@ class LogicGameEntity(CollisionLogicEntity):
     """
     __slots__ = (
         "facing", "velocity", "acceleration", "_coalition",
-        "_velocity_to_add", "_acceleration_to_add", "__world_position"
+        "_velocity_to_add", "_acceleration_to_add", "__world_position",
+        "_tags"
     )
 
     # region InstanceVars
@@ -56,6 +57,8 @@ class LogicGameEntity(CollisionLogicEntity):
     _velocity_to_add: Vec2
     _acceleration_to_add: Vec2
     __world_position: Vec2
+
+    _tags: dict[str, None]
 
     # endregion
 
@@ -73,6 +76,7 @@ class LogicGameEntity(CollisionLogicEntity):
             collision_exception_ids: list[int] | int | None = None,
             collision_exception_root: bool | EllipsisType = ...,
             collision_exception_root_additive: bool | EllipsisType = ...,
+            tags: list[str] | None = None
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -92,6 +96,7 @@ class LogicGameEntity(CollisionLogicEntity):
         :param collision_exception_root_additive: Whether root collision exception rules created from parents are also
             added to this entity and its children recursive. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
             Recurses until the next parents sets this to false
+        :param tags: Optional list of tags for the entity
         """
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -114,6 +119,10 @@ class LogicGameEntity(CollisionLogicEntity):
         self.acceleration = Vec2()
         self.__world_position = Vec2()  # actual world position
         self.facing = Vec2().from_polar(0, 1)
+
+        self._tags = {}
+        if tags is not None:
+            self._tags.update({tag: None for tag in tags})
         # endregion
 
     # region Properties

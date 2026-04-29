@@ -85,6 +85,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
             collision_exception_ids: list[int] | int | None = None,
             collision_exception_root: bool | EllipsisType = ...,
             collision_exception_root_additive: bool | EllipsisType = ...,
+            collision_active: bool = True,
     ) -> None:
         """
         A logic entity with position, size, and optional collision detection
@@ -102,6 +103,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         :param collision_exception_root_additive: Whether root collision exception rules created from parents are also
             added to this entity and its children recursive. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
             Recurses until the next parents sets this to false
+        :param collision_active: Whether the collision detection is active.
         """
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -130,7 +132,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
         )
         self.__collision_exception_root_ids = []
 
-        self._collision_active = False
+        self._collision_active = collision_active
 
         self._active_collisions = {}
         self._active_normals = {}
@@ -284,16 +286,19 @@ class CollisionLogicEntity(PositionedLogicEntity):
             size: Vec2 | EllipsisType = ...,
             rotation: float = 0.0,
             positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...
+            centered: bool | EllipsisType = ...,
+            radius: float | None = None,
+            collision_active: bool | EllipsisType = ...,
     ) -> None:
         """
         Registers this entity with the collision manager.
-
         :param position: The 2D position for the hitbox. Defaults to self.position.
         :param size: The 2D size for the hitbox. Defaults to self.size.
         :param rotation: Rotation of the hitbox in radians.
         :param positions: Optional list of vertices for polygonal hitboxes.
         :param centered: Whether the hitbox is centered on the position.
+        :param radius: Optional radius for circular hitboxes.
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active
         """
         if position == ...:
             position = self.position
@@ -301,8 +306,8 @@ class CollisionLogicEntity(PositionedLogicEntity):
             size = self.size
         if centered == ...:
             centered = self._centered
-
-        self._collision_active = True
+        if collision_active == ...:
+            collision_active = self._collision_active
 
         self._calculate_root_collision_exceptions()
 
@@ -314,7 +319,9 @@ class CollisionLogicEntity(PositionedLogicEntity):
             rotation=rotation,
             positions=positions,
             centered=centered,
-            ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids
+            radius=radius,
+            ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids,
+            is_active=collision_active,
         )
 
     def _update_collision(
@@ -325,16 +332,19 @@ class CollisionLogicEntity(PositionedLogicEntity):
             rotation: float = 0.0,
             positions: list[Vec2] | None = None,
             centered: bool | EllipsisType = ...,
+            radius: float | None = None,
+            collision_active: bool | EllipsisType = ...,
             shift_history: bool = True
     ) -> None:
         """
         Updates the entity's hitbox parameters in the collision manager.
-
-        :param position: New 2D position.
-        :param size: New 2D size.
-        :param rotation: New rotation in radians.
-        :param positions: New list of vertices for polygonal hitboxes.
-        :param centered: Whether the hitbox is centered.
+        :param position: The 2D position for the hitbox. Defaults to self.position.
+        :param size: The 2D size for the hitbox. Defaults to self.size.
+        :param rotation: Rotation of the hitbox in radians.
+        :param positions: Optional list of vertices for polygonal hitboxes.
+        :param centered: Whether the hitbox is centered on the position.
+        :param radius: Optional radius for circular hitboxes.
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
         :param shift_history: Whether to update the previous position state for CCD.
         """
         if self.__collision_entity_id is None:
@@ -346,6 +356,8 @@ class CollisionLogicEntity(PositionedLogicEntity):
             size = self.size
         if centered == ...:
             centered = self._centered
+        if collision_active == ...:
+            collision_active = self._collision_active
 
         GameCollisions.collision_manager.update_entity(
             group_id=self._DEFAULT_COLLISION_GROUP,
@@ -355,10 +367,12 @@ class CollisionLogicEntity(PositionedLogicEntity):
             rotation=rotation,
             positions=positions,
             centered=centered,
+            radius=radius,
+            is_active=collision_active,
             ignore_collisions=self._collision_exception_ids + self.__collision_exception_root_ids,
             shift_history=shift_history,
         )
-        if CollisionLogicEntity.__debug_draw_hitboxes:
+        if CollisionLogicEntity.__debug_draw_hitboxes and self._collision_active:
             hitbox: HitboxTypes = GameCollisions.hitboxes[self.__collision_group]
 
             if self.__debug_entity is None:
@@ -399,6 +413,11 @@ class CollisionLogicEntity(PositionedLogicEntity):
                         GameCollisions.collision_manager.get_points(self._DEFAULT_COLLISION_GROUP,
                                                                     self.__collision_entity_id)
                     )
+
+        else:
+            if self.__debug_entity is not None:
+                self.__debug_entity.kill()
+                self.__debug_entity = None
 
     @tp.final
     def _delete_collision(self) -> None:

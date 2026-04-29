@@ -93,7 +93,7 @@ cdef class CollisionManager:
     def register_entity(self, int group_id, object instance, object position=None, object size=None,
                         bint centered=False,
                         double rotation=0.0, list positions=None, object radius=None,
-                        object ignore_collisions=None) -> int:
+                        object ignore_collisions=None, bint is_active=True) -> int:
         if group_id < 0 or group_id >= self.groups.size(): return -1
         cdef CollisionGroupStruct * group = &self.groups[group_id]
         cdef int e_id, lvl
@@ -111,6 +111,7 @@ cdef class CollisionManager:
             e_id = group.free_ids.back()
             group.free_ids.pop_back()
             group.entities[e_id].active = True
+            group.entities[e_id].is_active = is_active
             group.entities[e_id].h_type = group.h_type
             group.entities[e_id].is_centered = centered
             group.entities[e_id].rot = rotation
@@ -161,6 +162,7 @@ cdef class CollisionManager:
             e_id = <int> group.entities.size()
             ed.id = e_id
             ed.active = True
+            ed.is_active = is_active
             ed.h_type = group.h_type
             ed.is_centered = centered
             ed.rot = rotation
@@ -288,11 +290,10 @@ cdef class CollisionManager:
                     rel.active_cols.erase(to_remove[k])
 
     cdef void _flush_deletions(self):
-        cdef size_t i, j, keys_sz, pd_sz
-        cdef int g_id, e_id, lvl
+        cdef size_t i, pd_sz
+        cdef int g_id, e_id
         cdef CollisionGroupStruct * group
         cdef EntityData * ed
-        cdef vector[uint64_t] * keys
         cdef DeferredDeletion dd
 
         while self.pending_deletions.size() > 0:
@@ -312,12 +313,7 @@ cdef class CollisionManager:
                 if e_id < len(self.group_instances[g_id]):
                     self.group_instances[g_id][e_id] = None
 
-                for lvl in range(group.max_level + 1):
-                    keys = &ed.grid_keys[lvl]
-                    keys_sz = keys[0].size()
-                    for j in range(keys_sz):
-                        self._remove_from_cell(lvl, g_id, keys[0][j], e_id)
-                    keys[0].clear()
+                self._remove_entity_from_grid(g_id, e_id)
 
                 group.free_ids.push_back(e_id)
 
@@ -325,7 +321,7 @@ cdef class CollisionManager:
 
     def update_entity(self, int group_id, int entity_id, object position=None, object size=None, object centered=None,
                       object rotation=None, list positions=None, bint shift_history=True, object radius=None,
-                      object ignore_collisions=None):
+                      object ignore_collisions=None, object is_active=None):
         if group_id < 0 or group_id >= self.groups.size(): return
         if entity_id < 0 or entity_id >= self.groups[group_id].entities.size(): return
 
@@ -335,8 +331,24 @@ cdef class CollisionManager:
         cdef double pivot_x, pivot_y
         cdef size_t i, num_v
         cdef size_t ax_x_sz, vx_n_sz, vx_n_sz_2, vx_o_sz2, vx_n_sz2, vx_o_sz3, vx_n_sz3
+        cdef bint old_is_active, transitioned_to_active, transitioned_to_inactive
 
         if not ed.active: return
+
+        old_is_active = ed.is_active
+        transitioned_to_active = False
+        transitioned_to_inactive = False
+
+        if is_active is not None:
+            ed.is_active = is_active
+            if old_is_active and not ed.is_active:
+                transitioned_to_inactive = True
+            elif not old_is_active and ed.is_active:
+                transitioned_to_active = True
+
+        if transitioned_to_inactive:
+            self._cleanup_entity_collisions(group_id, entity_id)
+            self._remove_entity_from_grid(group_id, entity_id)
 
         if shift_history:
             ed.px_o = ed.px_n
@@ -492,12 +504,15 @@ cdef class CollisionManager:
             ed.vy_n.push_back(cy)
 
         vx_o_sz2 = ed.vx_o.size()
-        if vx_o_sz2 == 0:
+        if vx_o_sz2 == 0 or transitioned_to_active or not ed.is_active:
             ed.vx_o = ed.vx_n
             ed.vy_o = ed.vy_n
+            ed.px_o = ed.px_n
+            ed.py_o = ed.py_n
 
         if not self.groups[group_id].is_static:
-            self._update_entity_grid(group_id, entity_id)
+            if ed.is_active:
+                self._update_entity_grid(group_id, entity_id)
 
     cdef void _update_entity_grid(self, int group_id, int entity_id):
         cdef CollisionGroupStruct * group = &self.groups[group_id]
@@ -597,6 +612,24 @@ cdef class CollisionManager:
 
             ed.grid_keys[lvl] = new_keys
 
+    cdef void _remove_entity_from_grid(self, int group_id, int entity_id):
+        cdef CollisionGroupStruct * group = &self.groups[group_id]
+        cdef EntityData * ed = &group.entities[entity_id]
+        cdef int lvl
+        cdef vector[uint64_t] * keys
+        cdef size_t j, keys_sz
+
+        for lvl in range(group.max_level + 1):
+            keys = &ed.grid_keys[lvl]
+            keys_sz = keys[0].size()
+            for j in range(keys_sz):
+                self._remove_from_cell(lvl, group_id, keys[0][j], entity_id)
+            keys[0].clear()
+            ed.bound_min_x[lvl] = -2147483647
+            ed.bound_min_y[lvl] = -2147483647
+            ed.bound_max_x[lvl] = -2147483647
+            ed.bound_max_y[lvl] = -2147483647
+
     cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id):
         if self.grids[lvl][group_id].count(key) == 0: return
         cdef vector[int] * cell = &self.grids[lvl][group_id][key]
@@ -689,6 +722,7 @@ cdef class CollisionManager:
         for a_idx in range(ent_sz):
             ea = &ga.entities[a_idx]
             if not ea.active: continue
+            if not ea.is_active: continue
 
             a_keys = &ea.grid_keys[check_lvl]
             a_keys_sz = a_keys[0].size()
@@ -710,6 +744,7 @@ cdef class CollisionManager:
 
                     eb = &gb.entities[b_id]
                     if not eb.active: continue
+                    if not eb.is_active: continue
 
                     ignore = False
                     ig_a_sz = ea.ignore_collisions.size()
@@ -1119,6 +1154,7 @@ cdef class CollisionManager:
 
                             eb = &gb.entities[b_id]
                             if not eb.active: continue
+                            if not eb.is_active: continue
 
                             ignore = False
                             ig_a_sz = ed.ignore_collisions.size()

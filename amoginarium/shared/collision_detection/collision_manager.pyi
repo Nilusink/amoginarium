@@ -12,14 +12,16 @@ class CollisionManager:
 
     def register_entity(self, group_id: int, instance: tp.Any, position: Vec2 | None = None, size: Vec2 | None = None,
                         centered: bool = False, rotation: float = 0.0, positions: list[Vec2] | None = None,
-                        radius: float | None = None, ignore_collisions: int | list[int] | None = None) -> int: ...
+                        radius: float | None = None, ignore_collisions: int | list[int] | None = None,
+                        is_active: bool = True) -> int: ...
 
     def delete_entity(self, group_id: int, entity_id: int) -> None: ...
 
     def update_entity(self, group_id: int, entity_id: int, position: Vec2 | None = None, size: Vec2 | None = None,
                       centered: bool | None = None, rotation: float | None = None, positions: list[Vec2] | None = None,
                       shift_history: bool = True, radius: float | None = None,
-                      ignore_collisions: int | list[int] | None = None) -> None: ...
+                      ignore_collisions: int | list[int] | None = None,
+                      is_active: bool | None = None) -> None: ...
 
     def create_relation(self, group_a_id: int, group_b_id: int, cb_a_on_start: CollisionCallback | None = None,
                         cb_a_on_end: CollisionCallback | None = None, cb_b_on_start: CollisionCallback | None = None,

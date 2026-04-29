@@ -33,6 +33,7 @@ class _GameCollisions:
         "collision_group_islands",
         "collision_group_turrets",
         "collision_group_shields",
+        "collision_group_items",
         "all_groups",
         "hitboxes",
         "_registered_relations",

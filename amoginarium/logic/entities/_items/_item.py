@@ -36,10 +36,14 @@ class Item(LogicGameEntity):
             runtime_buffer: Array[base_entity_t],
             size: Vec2,
             spawn_args: dict[str, tp.Any] | EllipsisType = ...,
+            create_collision: bool = True,
+            collision_active: bool = False
     ) -> None:
         # init logic entity
         super().__init__(runtime_buffer, size=size, position=Vec2())
-        self._create_collision()
+        self._collision_active = collision_active
+        if create_collision:
+            self._create_collision()
 
         # set defaults
         self._current_timeout = 0

@@ -229,14 +229,17 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
         :param layer: The rendering layer index.
         """
         # Filter active points (non-zero)
+        world_pos = pv.global_vars.get_world_position()
+
         points: list[Vec2] = [
-            p for p in (self.__p1, self.__p2, self.__p3, self.__p4, self.__p5, self.__p6, self.__p7, self.__p8)
+            p - world_pos for p in (self.__p1, self.__p2, self.__p3, self.__p4, self.__p5, self.__p6, self.__p7, self.__p8)
             if p.x != 0 or p.y != 0
         ]
 
         if not points:
             return
 
+        self.__convert_global = True
         # 1. Fill
         renderer.draw_polygon(
             vertices=points,

@@ -126,6 +126,11 @@
             },
             "group": 0
         },
+                {
+            "type": "turret.static.ak47",
+            "pos": [2500, 400],
+            "group": 0
+        },
         {
             "type": "static.text",
             "pos": [200, 200],

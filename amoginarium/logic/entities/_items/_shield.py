@@ -69,6 +69,7 @@ class Shield(BaseItem):
         start using the item
         """
         if not self._in_use:
+            self._collision_active = True
             self._in_use = True
             self.add(Updated)
             # self.add(CollisionDestroyed)
@@ -78,6 +79,7 @@ class Shield(BaseItem):
         stop using the item
         """
         if self._in_use:
+            self._collision_active = False
             self._in_use = False
             self.remove(Updated)
             # self.remove(CollisionDestroyed)
@@ -114,7 +116,7 @@ class Shield(BaseItem):
             return
 
         if hit_by is not ...:
-            if hit_by.is_bullet:
+            if hit_by._tags.__contains__("bullet"):
                 self._sound.play(pos=self.position)
 
         if not self.parent:

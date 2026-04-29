@@ -283,7 +283,7 @@ class BaseTurret(LogicGameEntity):
 
         # ping on bullet hit
         if hit_by is not ...:
-            if hit_by.is_bullet:
+            if hit_by._tags.__contains__("bullet"):
                 self._ping.play(pos=self.position)
 
         # check for turret death

@@ -7,6 +7,7 @@ from libc.stdint cimport uint64_t
 cdef struct EntityData:
     int id
     bint active
+    bint is_active
     bint is_centered
     int h_type
 
@@ -66,6 +67,7 @@ cdef class CollisionManager:
 
     cdef void _update_entity_grid(self, int group_id, int entity_id)
     cdef void _remove_from_cell(self, int lvl, int group_id, uint64_t key, int entity_id)
+    cdef void _remove_entity_from_grid(self, int group_id, int entity_id)
     cdef void _calc_relation(self, CollisionRelationStruct* rel, tuple callbacks)
     cdef void _flush_deletions(self)
     cdef void _cleanup_entity_collisions(self, int group_id, int entity_id)
