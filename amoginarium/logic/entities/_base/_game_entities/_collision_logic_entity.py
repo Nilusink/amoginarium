@@ -54,6 +54,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
     # region InstanceVars
     _parent: CollisionLogicEntity | None
+    _children: list[CollisionLogicEntity]
 
     _centered: bool
 
@@ -177,14 +178,37 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
         self._active_normals = active_normals
 
-    def _get_root_collision_exceptions(self) -> list[CollisionType.ExceptionID]:
+    @property
+    def _collision_exception_root_ids(self) -> list[CollisionType.ExceptionID]:
+        """Returns root collision exceptions rules"""
+        return self.__collision_exception_root_ids
+
+    @_collision_exception_root_ids.setter
+    def _collision_exception_root_ids(self, value: list[CollisionType.ExceptionID]) -> None:
+        """Sets root collision exceptions rules"""
+        self.__collision_exception_root_ids = value
+        for child in self._children:
+            child._calculate_root_collision_exceptions()
+
+    def _calculate_root_collision_exceptions(self) -> list[CollisionType.ExceptionID] | None:
         """Calculates root collision exceptions rules"""
-        my_add: list[CollisionType.ExceptionID] = []
+        collision_exception_root_ids: list[CollisionType.ExceptionID] = []
+
         if self.__collision_exception_root:
-            my_add.append(GameCollisions.add_exception())
+            collision_exception_root_ids.append(GameCollisions.add_exception())
+
         if self.__collision_exception_root_additive and self._parent is not None:
-            return self._parent._get_root_collision_exceptions() + my_add
-        return my_add
+            collision_exception_root_ids += self._parent._collision_exception_root_ids
+
+        self._collision_exception_root_ids = collision_exception_root_ids
+
+    def _change_parent(self, parent: CollisionLogicEntity | None) -> None:
+        """
+        Change parent and update root collision exceptions down the tree
+        :param parent: New parent
+        """
+        self._parent = parent
+        self._calculate_root_collision_exceptions()
 
     # endregion
 
@@ -280,7 +304,7 @@ class CollisionLogicEntity(PositionedLogicEntity):
 
         self._collision_active = True
 
-        self.__collision_exception_root_ids = self._get_root_collision_exceptions()
+        self._calculate_root_collision_exceptions()
 
         self.__collision_entity_id = GameCollisions.collision_manager.register_entity(
             group_id=self.__collision_group,
