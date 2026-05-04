@@ -23,6 +23,7 @@ from ...templates import Bullet
 if tp.TYPE_CHECKING:
     from ...._world import Island
     from ...._player import Player
+    from ...._items import Shield
 
 
 class _GrenadeShrapnel(Bullet):
@@ -116,7 +117,33 @@ class Grenade(Bullet):
             self.add_velocity(event.other_entity.velocity)
             self.add_velocity(Vec2().from_cartesian(0, -200))
 
-    def _collision_start(self, events: list[CollisionEvent]) -> None:
+    def __on_collision_shield(self, event: CollisionEvent["Shield"]) -> None:
+        self.position.x = event.position.x
+        self.position.y = event.position.y
+
+        # Calculate relative velocity (Grenade - Shield)
+        vx = self.velocity.x - event.other_entity.parent.velocity.x
+        vy = self.velocity.y - event.other_entity.parent.velocity.y
+        nx, ny = event.normal.x, event.normal.y
+
+        # Calculate dot product of relative velocity and surface normal
+        dot_product = (vx * nx) + (vy * ny)
+
+        # If moving towards the shield surface (relatively), reflect the velocity
+        if dot_product < 0:
+            # Reflection vector: R = V - 2 * (V . N) * N
+            rx = vx - 2 * dot_product * nx
+            ry = vy - 2 * dot_product * ny
+
+            # Apply bounce friction and restore world-space velocity by adding shield velocity back
+            self.velocity.x = (rx * self._bounce_friction) + event.other_entity.parent.velocity.x
+            self.velocity.y = (ry * self._bounce_friction) + event.other_entity.parent.velocity.y
+        else:
+            # If already moving away but still colliding, ensure the shield's velocity is inherited
+            self.velocity.x += event.other_entity.parent.velocity.x
+            self.velocity.y += event.other_entity.parent.velocity.y
+
+    def _collision_start(self, events: list[CollisionEvent]) -> list[bool] | None:
         for event in events:
             if event.group_id == GameCollisions.collision_group_islands:
                 self.__on_collision_island(event)
@@ -124,6 +151,11 @@ class Grenade(Bullet):
                 self.__on_collision_bullet(event)
             elif event.group_id == GameCollisions.collision_group_players:
                 self.__on_collision_player(event)
+            elif event.group_id == GameCollisions.collision_group_shields:
+                self.__on_collision_shield(event)
+        if event.group_id == GameCollisions.collision_group_shields:
+            return [False for _ in events]
+        return None
 
     def _update(self, delta: float):
         if GameCollisions.collision_group_islands in self._active_normals.keys():
