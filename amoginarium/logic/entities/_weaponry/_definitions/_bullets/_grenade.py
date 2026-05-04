@@ -46,7 +46,7 @@ class Grenade(Bullet):
 
     _default_size = 32
     _default_base_damage = 0
-    _default_ttl = 500
+    _default_ttl = 5
     _default_explosion_radius = 150
     _default_explosion_damage = 50
     _default_recoil_factor = .5
