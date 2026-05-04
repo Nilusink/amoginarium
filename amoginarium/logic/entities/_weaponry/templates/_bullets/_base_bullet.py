@@ -17,7 +17,7 @@ from amoginarium.shared.audio import LargeExplosion, DistantPop
 from amoginarium.shared.utility import Vec2, get_default
 from amoginarium import pv
 
-from ...._base import Bullets, Updated, GravityAffected
+from ...._base import Bullets, Updated, GravityAffected, BaseGroup
 from ...._base import LogicGameEntity
 from ...._base import GameCollisions
 
@@ -30,7 +30,7 @@ if tp.TYPE_CHECKING:
 
     from ...._base import CollisionType
     from .._turrets import BaseTurret
-    from ._grenade import Grenade
+    from ..._definitions import Grenade
     from ...._player import Player
     from ...._world import Island
     from ...._items import Shield
@@ -495,32 +495,33 @@ class Bullet(LogicGameEntity):
 
         # explode (only if not cluster)
         if self._explosion_radius > 0:
-            # todo - mytodo: CollisionDestroyedTodo
-            # for d, entity in CollisionDestroyed.get_entities_in_circle(
-            #         self.position, self._explosion_radius * 2
-            # ):
-            #     if all([entity != self, not issubclass(entity.__class__, Bullet)]):
-            #         if hasattr(entity, "hit"):
-            #             entity.hit(
-            #                 (1 - 0.8 * d / (self._explosion_radius * 2))
-            #                 * self._explosion_damage,
-            #                 hit_by=self,
-            #             )
-            #
-            #         if hasattr(entity, "_impulse_resistance_factor"):
-            #             d -= entity.size.length
-            #             d = max(d, 1)
-            #             delta = entity.position - self.position
-            #             delta = (
-            #                     delta.normalize()
-            #                     * entity._impulse_resistance_factor
-            #                     * (1 - d / (self._explosion_radius * 1))
-            #                     * self._explosion_damage
-            #                     * 4
-            #             )
-            #
-            #             entity.add_velocity(delta)
-            #
+
+            for d, entity in BaseGroup.entities_in_circle(
+                    entities=Updated.entities(),
+                    center=self.position,
+                    radius=self._explosion_radius * 2
+            ):
+                if all([entity != self, not issubclass(entity.__class__, Bullet)]):
+                    if hasattr(entity, "hit"):
+                        entity.hit(
+                            (1 - 0.8 * d / (self._explosion_radius * 2))
+                            * self._explosion_damage,
+                            hit_by=self,
+                        )
+
+                    if hasattr(entity, "_impulse_resistance_factor"):
+                        d -= entity.size.length
+                        d = max(d, 1)
+                        delta = entity.position - self.position
+                        delta = (
+                                delta.normalize()
+                                * entity._impulse_resistance_factor
+                                * (1 - d / (self._explosion_radius * 1))
+                                * self._explosion_damage
+                                * 4
+                        )
+
+                        entity.add_velocity(delta)
 
             if self._explosion_radius > 64:
                 exp = LargeExplosion()
