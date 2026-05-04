@@ -13,12 +13,17 @@ import inspect
 from ._console_colors import get_fg_color, CC
 
 
-def print_with_prefix(content: str, prefix: str = "", color: bool = True) -> None:
+def print_with_prefix(
+        content: str,
+        prefix: str = "",
+        color: bool = True
+) -> None:
+    """stderrPrint with prefix and togglable colorization"""
     if color:
         content = colorize(content)
 
     with supportTerminalColorsInWindows():
-        stderrPrint(prefix + get_fg_color(247) +  content + CC.ctrl.ENDC)
+        stderrPrint(prefix + get_fg_color(247) + content + CC.ctrl.ENDC)
 
 
 def get_caller_name(extended: bool = False) -> str | dict:
@@ -52,4 +57,4 @@ def print_ic_style(*values, sep=" ") -> None:
 
     value = sep.join(vals)
 
-    ic.outputFunction(f"{value}" + f"{CC.ctrl.ENDC}")
+    ic.outputFunction(f"{value}" + f"{CC.ctrl.ENDC}", color=False)
