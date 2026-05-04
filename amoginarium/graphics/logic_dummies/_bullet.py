@@ -167,6 +167,7 @@ class BulletDummy(SyncedImageEntity):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         if self._visibility_offset > self._lifetime:
+            self._last_pos.length = 0
             self._lifetime += delta_cal
             return
 
@@ -179,13 +180,8 @@ class BulletDummy(SyncedImageEntity):
             if self._show_trace and self._max_trace_length > 0: # and delta_cal > 0:
                 if len(self._trace) == 0:
                     img_offset = Vec2().from_polar(self.facing.angle, self.size.x / 2)
-
-                    self._trace.append(self._last_pos.copy() - img_offset)
-
-                    trace_pos = self.pos.copy() - img_offset
-                    self._trace.insert(0, trace_pos)
-
-                    self._current_trace_length = (trace_pos - self._trace[1]).length
+                    self._trace.append(self.pos.copy() - img_offset)
+                    self._trace_len = 1
 
                 else:
                     now_pos = self.pos.copy()
@@ -218,11 +214,11 @@ class BulletDummy(SyncedImageEntity):
                     or self.pos.y - (self._max_trace_length + self.size.y / 2)
                     > world_pos.y + resolution.y
             ):
-                self._trace.clear()
+                self._last_pos.length = 0
                 return
 
             if pv.global_vars.show_targets and not isinstance(
-                self._target_pos, EllipsisType
+                    self._target_pos, EllipsisType
             ):
                 renderer.draw_line(
                     self.pos - world_pos,
