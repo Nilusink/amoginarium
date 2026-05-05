@@ -15,6 +15,10 @@ import typing as tp
 from ._entity_hints import ItemLike
 
 
+if tp.TYPE_CHECKING:
+    from .utility import Vec2
+
+
 type item_t = ItemLike | None  # ItemLike | WeaponLike | None
 
 
@@ -29,6 +33,13 @@ class ItemSlot:
     id: int
 
 
+@dataclass
+class CurrentView:
+    """current player view"""
+    pos: "Vec2"
+    zoom: float
+
+
 class DummyCIDs(Enum):
     """
     Component IDs for Graphics dummies
@@ -39,6 +50,12 @@ class DummyCIDs(Enum):
     grenade = "dummy.bullet.grenade"  # -- "" --
     cram = "dummy.bullet.cram"
     aero = "dummy.bullet.aero"
+
+
+class MissileCIDs(Enum):
+    """Component IDs for missiles"""
+    base = "dummy.missile.base"
+    multi_stage = "dummy.missile.multi_stage"
 
 
 class IslandCIDs(Enum):
@@ -141,7 +158,9 @@ class _CIDRegister:
 
 
 CID_REGISTER = _CIDRegister(WeaponCIDs)  #, TurretCIDs, IslandCIDs, DummyCIDs)
-type CIDType = DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs | GraphicsCIDs
+type CIDType = (
+    DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs | GraphicsCIDs | MissileCIDs
+)
 
 
 class ProcessCommandType(Enum):

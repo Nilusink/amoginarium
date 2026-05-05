@@ -1,0 +1,35 @@
+[id]
+from = "dummy.missile.multi_stage"
+cid = "missile.rpg"
+
+[visibility]
+size = [100, 10]
+
+[trace]
+color = [[255, 255, 255]]  # either one or two colors
+length = 300
+
+#[image]
+#name = "bullet"
+#mirror = "x"
+
+[behaviour]
+hp = -1
+ttl = 20
+weight = 5  # knockback
+mass = 10  # aerodynamics
+base_damage = 30
+#invincibility_offset = 0.1
+
+[explosion]
+radius = 128
+damage = 0  #64
+
+[rudder]
+size = 100
+max_angle = 0.01
+
+[motor]
+start = [0, 0]
+launch = [0.2, 100_000, 50]
+accel = [0.5, 30_000, 10]

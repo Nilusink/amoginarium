@@ -151,7 +151,8 @@ class Bullet(LogicGameEntity):
             target_pos: Vec2 | EllipsisType = ...,
             size: Vec2 | int | EllipsisType = ...,
             visibility_offset: float | EllipsisType = ...,
-            invincibility_offset: float | EllipsisType = ...
+            invincibility_offset: float | EllipsisType = ...,
+            spawn_cid: str | None = None
     ) -> None:
         """
         Base logic bullet
@@ -288,7 +289,7 @@ class Bullet(LogicGameEntity):
         # spawn dummy
         kwargs = {
             "id": self.id,
-            "cid": self.cid(),
+            "cid": spawn_cid if spawn_cid else self.cid(),
             "spawn_time": self._start_time,
             "visibility_offset": self._visibility_offset,
             "position": self.position.xy,
@@ -372,8 +373,14 @@ class Bullet(LogicGameEntity):
 
             self.kill(killed_by=event.other_entity)
 
-    def _collision_start(self, events: list[
-        CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
+    def _collision_start(
+        self,
+        events: list[
+            CollisionEvent[
+                tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]
+            ]
+        ],
+    ) -> None:
         for event in events:
             if event.group_id == GameCollisions.collision_group_islands:
                 self.__on_collision_general(event)

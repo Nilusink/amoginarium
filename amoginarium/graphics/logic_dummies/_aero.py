@@ -28,6 +28,7 @@ class AeroDummy(SyncedGraphicsEntity):
         spawn_time: float = 0,
         visibility_offset: float = 0,
         target_pos: Vec2 | EllipsisType = ...,
+        **kwargs
     ):
         super().__init__(sync_id)
 

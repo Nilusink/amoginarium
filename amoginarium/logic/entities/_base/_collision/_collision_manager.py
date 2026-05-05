@@ -27,9 +27,10 @@ class _GameCollisions:
         "collision_manager",
         "COLLISION_START",
         "COLLISION_END",
+        "collision_group_missiles",
+        "collision_group_grenades",
         "collision_group_players",
         "collision_group_bullets",
-        "collision_group_grenades",
         "collision_group_islands",
         "collision_group_turrets",
         "collision_group_shields",
@@ -44,9 +45,10 @@ class _GameCollisions:
     COLLISION_START: CollisionCallback
     COLLISION_END: CollisionCallback
 
+    collision_group_missiles: CollisionType.GroupID
+    collision_group_grenades: CollisionType.GroupID
     collision_group_players: CollisionType.GroupID
     collision_group_bullets: CollisionType.GroupID
-    collision_group_grenades: CollisionType.GroupID
     collision_group_islands: CollisionType.GroupID
     collision_group_turrets: CollisionType.GroupID
     collision_group_shields: CollisionType.GroupID
@@ -77,9 +79,10 @@ class _GameCollisions:
 
     def _setup_groups(self) -> None:
         """Internal method to define collision groups and their relationships."""
+        self.collision_group_missiles = self.collision_manager.add_group(max_level=1, hitbox_type="obb")
+        self.collision_group_grenades = self.collision_manager.add_group(max_level=1, hitbox_type="circle")
         self.collision_group_players = self.collision_manager.add_group(max_level=0)
         self.collision_group_bullets = self.collision_manager.add_group(max_level=1, hitbox_type="circle")
-        self.collision_group_grenades = self.collision_manager.add_group(max_level=1, hitbox_type="circle")
         self.collision_group_islands = self.collision_manager.add_group(max_level=0)
         self.collision_group_turrets = self.collision_manager.add_group(max_level=0)
         self.collision_group_shields = self.collision_manager.add_group(max_level=0, hitbox_type="obb")
@@ -88,7 +91,7 @@ class _GameCollisions:
         self.all_groups = [
             self.collision_group_players, self.collision_group_bullets, self.collision_group_grenades,
             self.collision_group_islands, self.collision_group_turrets, self.collision_group_shields,
-            self.collision_group_items,
+            self.collision_group_items, self.collision_group_missiles
         ]
 
         self.hitboxes = {  # type: ignore
@@ -96,17 +99,7 @@ class _GameCollisions:
         }
 
         self.create_relations(
-            self.collision_group_players,
-            [
-                self.collision_group_islands,
-                self.collision_group_bullets,
-                self.collision_group_grenades,
-                self.collision_group_items,
-                self.collision_group_shields
-            ]
-        )
-        self.create_relations(
-            self.collision_group_bullets,
+            self.collision_group_missiles,
             [
                 self.collision_group_islands,
                 self.collision_group_bullets,
@@ -119,35 +112,62 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_grenades,
             [
+                self.collision_group_missiles,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_players,
-                self.collision_group_shields
-            ]
+                self.collision_group_shields,
+            ],
+        )
+        self.create_relations(
+            self.collision_group_players,
+            [
+                self.collision_group_missiles,
+                self.collision_group_islands,
+                self.collision_group_bullets,
+                self.collision_group_grenades,
+                self.collision_group_items,
+                self.collision_group_shields,
+            ],
+        )
+        self.create_relations(
+            self.collision_group_bullets,
+            [
+                self.collision_group_missiles,
+                self.collision_group_islands,
+                self.collision_group_bullets,
+                self.collision_group_turrets,
+                self.collision_group_players,
+                self.collision_group_grenades,
+                self.collision_group_shields,
+            ],
         )
         self.create_relations(
             self.collision_group_islands,
             [
+                self.collision_group_missiles,
                 self.collision_group_players,
                 self.collision_group_bullets,
                 self.collision_group_grenades,
-                self.collision_group_shields
-            ]
+                self.collision_group_shields,
+            ],
         )
         self.create_relations(
             self.collision_group_turrets,
             [
-                self.collision_group_bullets
-            ]
+                self.collision_group_missiles,
+                self.collision_group_bullets,
+            ],
         )
         self.create_relations(
             self.collision_group_shields,
             [
+                self.collision_group_missiles,
                 self.collision_group_bullets,
                 self.collision_group_grenades,
                 self.collision_group_islands,
-                self.collision_group_players
-            ]
+                self.collision_group_players,
+            ],
         )
 
         self.create_relations(
@@ -192,5 +212,6 @@ class _GameCollisions:
         """
         self.__exception_num += 1
         return self.__exception_num
+
 
 GameCollisions: tp.Final[_GameCollisions] = _GameCollisions()

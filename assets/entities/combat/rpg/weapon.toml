@@ -1,0 +1,23 @@
+[id]
+from = "weapon.base"
+cid = "weapon.rpg"
+
+[visibility]
+size = [128, 64]
+
+[image]
+name = "minigun"
+rotate_anchor = [35, 30]
+
+[behaviour]
+mag_size = 1
+reload_time = 1
+recoil_time = 0.02
+inaccuracy = 0.01093606
+muzzle_velocity = 500
+
+[bullet]
+type = "<missile.rpg>"
+
+#[sound]
+#preset = "minigun"

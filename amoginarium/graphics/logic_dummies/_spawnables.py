@@ -23,6 +23,8 @@ from ._debug_rendering import DebugRectangleEntity, DebugPolygonEntity, DebugCir
 from ._charged_weapons import RailGunDummy
 from ._text_entity import TextEntity
 from ._aero import AeroDummy
+from ._missiles import MultiStageMissileDummy
+
 
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
     e.cid(): e
@@ -48,6 +50,7 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         RadarSensorHUD,
         MagicSensorHUD,
         VisualSensorHUD,
+        MultiStageMissileDummy
     ]
 }
 

@@ -437,7 +437,7 @@ class LogicProcess:
         # _, max_player_pos = Players.get_position_extremes()
         players = Players.entities()
         if len(players) > 0:
-            max_player_pos = players[0].position
+            max_player_pos = players[0].get_current_view().pos
             pv.audio_observer_pos.xy = max_player_pos.xy
             world_position = pv.global_vars.get_world_position()
 

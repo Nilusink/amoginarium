@@ -46,7 +46,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     )
 
     # region ClassVars
-    __debug_draw_hitboxes: tp.ClassVar[bool] = False
+    __debug_draw_hitboxes: tp.ClassVar[bool] = True
 
     _DEFAULT_COLLISION_EXCEPTION_ROOT: tp.ClassVar[bool] = False
     _DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE: tp.ClassVar[bool] = True
