@@ -64,8 +64,10 @@ class LogicProcess:
             base_comm: Connection,
             process_comm: Connection,
             start_time: float,
+            run_name: str
     ) -> None:
         self._start = start_time
+        self._run_name = run_name
         ic.configureOutput(
             prefix="",
             outputFunction=lambda s, **kwargs: print_with_prefix(
@@ -520,7 +522,14 @@ class LogicProcess:
         self._background_player.stop()
 
         # write debug data
-        with open("logic_debug.json", "w") as out:
+        with open(f"debug/logic_debug_{self._run_name}_{int(self._start)}.json",
+                  "w") as out:
+            json.dump({
+                "logic": self._logic_loop_times,
+                "bullets": self._n_bullets_times
+            }, out)
+        with open(f"logic_debug.json",
+                  "w") as out:
             json.dump({
                 "logic": self._logic_loop_times,
                 "bullets": self._n_bullets_times
@@ -538,7 +547,8 @@ def run_continuous(
         base_comm: Connection,
         process_comm: Connection,
         start_time: float,
-        time_multiplier: float
+        time_multiplier: float,
+        run_name: str
 ) -> None:
     """
     run the logic process continuously
@@ -557,6 +567,7 @@ def run_continuous(
         base_comm,
         process_comm,
         start_time,
+        run_name,
     )
 
     ic("logic process start")
