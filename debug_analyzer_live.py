@@ -27,7 +27,11 @@ DEFAULT_SETTINGS = {
     "comparison_mode": "Merged",  # "Merged" or "Side-by-Side"
     "theme": "Dark",              # "Dark" or "Light"
     "sash_position": 300,
-    "sidebar_collapsed": False
+    "sidebar_collapsed": False,
+    "batch_rules": {
+        "pygame": "-", "logic": "-", "entities": "-",
+        "top": "-", "bot": "-"
+    }
 }
 
 def load_settings():
@@ -35,7 +39,15 @@ def load_settings():
         try:
             with open(SETTINGS_FILE, "r") as f:
                 settings = json.load(f)
-                return {**DEFAULT_SETTINGS, **settings}
+
+                # Ensure all nested defaults exist
+                for k, v in DEFAULT_SETTINGS.items():
+                    if k not in settings:
+                        settings[k] = v
+                if "batch_rules" not in settings:
+                    settings["batch_rules"] = DEFAULT_SETTINGS["batch_rules"].copy()
+
+                return settings
         except (json.JSONDecodeError, OSError):
             pass
     return DEFAULT_SETTINGS.copy()
@@ -101,10 +113,9 @@ class GraphWidget(ctk.CTkFrame):
     def toggle_minimize(self):
         if self.is_fullscreen: return
 
-        # Override global rule for row
+        # Break the rule since the user manually clicked it
         is_top = "r" in self.graph_id
-        self.app.visibility_rules["top" if is_top else "bot"] = None
-        self.app.update_batch_ui()
+        self.app.override_rule("top" if is_top else "bot")
 
         self.is_minimized = not self.is_minimized
         self.btn_min.configure(text="▶" if self.is_minimized else "▼")
@@ -122,13 +133,11 @@ class GraphWidget(ctk.CTkFrame):
 
         orig_handles = {}
         h1, l1 = self.ax.get_legend_handles_labels()
-        for h, l in zip(h1, l1):
-            orig_handles[l] = h
+        for h, l in zip(h1, l1): orig_handles[l] = h
 
         if self.ax_twin:
             h2, l2 = self.ax_twin.get_legend_handles_labels()
-            for h, l in zip(h2, l2):
-                orig_handles[l] = h
+            for h, l in zip(h2, l2): orig_handles[l] = h
 
         self.linedict = {}
         for leg_obj, text_obj in zip(leg.legend_handles, leg.texts):
@@ -158,11 +167,10 @@ class GraphWidget(ctk.CTkFrame):
                 break
 
         for k in ["pygame", "logic", "entities"]:
-            if k in lbl_text:
-                self.app.visibility_rules[k] = None
-        self.app.update_batch_ui()
+            if k in lbl_text: self.app.override_rule(k)
 
         self.sync_legend_alphas()
+        self.rescale_y_axes()
         self.canvas.draw_idle()
 
     def sync_legend_alphas(self):
@@ -176,6 +184,46 @@ class GraphWidget(ctk.CTkFrame):
                 vis = origline.get_visible()
                 l_h.set_alpha(1.0 if vis else 0.3)
                 l_t.set_alpha(1.0 if vis else 0.3)
+
+    def rescale_y_axes(self):
+        """Dynamically rescales the Y-axis based on currently visible lines."""
+        for axis in [self.ax, self.ax_twin]:
+            if not axis: continue
+
+            y_min, y_max = float('inf'), float('-inf')
+            has_visible = False
+
+            # Check standard plots
+            for line in axis.get_lines():
+                if line.get_visible():
+                    ydata = line.get_ydata()
+                    valid_y = [y for y in ydata if y is not None and y == y]
+                    if valid_y:
+                        y_min = min(y_min, min(valid_y))
+                        y_max = max(y_max, max(valid_y))
+                        has_visible = True
+
+            # Check scatter collections
+            for collection in axis.collections:
+                if collection.get_visible():
+                    offsets = collection.get_offsets()
+                    if len(offsets) > 0:
+                        ydata = offsets[:, 1]
+                        valid_y = [y for y in ydata if y is not None and y == y]
+                        if valid_y:
+                            y_min = min(y_min, min(valid_y))
+                            y_max = max(y_max, max(valid_y))
+                            has_visible = True
+
+            if has_visible:
+                margin = (y_max - y_min) * 0.05
+                if margin == 0: margin = abs(y_max) * 0.05 if y_max != 0 else 0.1
+                bottom = y_min - margin
+                top = y_max + margin
+
+                # Visual anchor: Keep bottom pinned to 0 if data naturally starts there
+                if y_min >= 0 and bottom < 0: bottom = 0
+                axis.set_ylim(bottom, top)
 
 
 # --- MAIN APP ---
@@ -195,18 +243,12 @@ class DebugAnalyzerApp:
         self.selected_identifiers = []
         self.data_cache = {}
         self.graphs = {}
-        self.batch_buttons = {}
+        self.rule_segs = {}
         self.fullscreen_widget = None
 
         self._is_plotting = False
         self._is_saving_settings = False
         self._is_updating_list = False
-
-        # Batch toggles: True = Forced Show/Minimized, False = Forced Hide/Expanded, None = User Override
-        self.visibility_rules = {
-            "pygame": None, "logic": None, "entities": None,
-            "top": None, "bot": None
-        }
 
         self.apply_theme_settings()
         self._setup_ui()
@@ -263,8 +305,6 @@ class DebugAnalyzerApp:
         for gw in self.graphs.values():
             self._sync_widget_theme(gw)
 
-        self.update_batch_ui()
-
     def _sync_widget_theme(self, gw):
         gw.configure(bg_color=self.pw_bg)
         gw.content_frame.configure(bg=self.graph_bg)
@@ -284,7 +324,7 @@ class DebugAnalyzerApp:
             gw.ax_twin.tick_params(colors=self.mpl_fg)
             for spine in gw.ax_twin.spines.values(): spine.set_color(self.mpl_fg)
 
-        # Clean native unicode toolbar (No PIL)
+        # Clean native unicode toolbar styling
         toolbar_bg = self.header_bg if self.settings["theme"] == "Dark" else "#e5e5e5"
         icons = ["⌂", "◀", "▶", "✥", "🔍", "⚙", "💾"]
         try:
@@ -320,22 +360,7 @@ class DebugAnalyzerApp:
         self.btn_collapse = ctk.CTkButton(left_header, text="◀", width=30, height=25, command=self.collapse_sidebar, fg_color="transparent")
         self.btn_collapse.pack(side=tk.RIGHT)
 
-        # 1. Listbox
-        self.listbox_frame = ctk.CTkFrame(self.left_frame, corner_radius=0, fg_color="transparent")
-        self.listbox_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-
-        list_scroll = ctk.CTkScrollbar(self.listbox_frame)
-        list_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.listbox = tk.Listbox(
-            self.listbox_frame, selectmode=tk.EXTENDED, bd=0, highlightthickness=0,
-            font=("Consolas", 10), activestyle="none", exportselection=False
-        )
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        list_scroll.configure(command=self.listbox.yview)
-        self.listbox.configure(yscrollcommand=list_scroll.set)
-        self.listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
-
-        # 3. Settings Area (Bottom-most)
+        # 1. Settings Area (Packed Bottom)
         settings_frame = ctk.CTkFrame(self.left_frame, corner_radius=8, fg_color=("gray85", "#222222"))
         settings_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=(10, 15))
 
@@ -371,33 +396,48 @@ class DebugAnalyzerApp:
         self.max_files_entry.bind("<Return>", self.save_current_settings)
         self.max_files_entry.bind("<FocusOut>", self.save_current_settings)
 
-        # 2. Batch Actions (Middle - packed above settings)
+        # 2. Batch Rules Area (Packed Bottom above Settings)
         batch_frame = ctk.CTkFrame(self.left_frame, corner_radius=8, fg_color=("gray85", "#222222"))
         batch_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=(5, 10))
 
-        ctk.CTkLabel(batch_frame, text="Batch Actions", font=("Arial", 12, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
+        ctk.CTkLabel(batch_frame, text="Batch Rules", font=("Arial", 12, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
 
-        btn_grid = ctk.CTkFrame(batch_frame, fg_color="transparent")
-        btn_grid.pack(fill=tk.X, padx=10, pady=5)
-        btn_grid.grid_columnconfigure((0, 1), weight=1)
+        def create_rule_row(parent, target, text):
+            row = ctk.CTkFrame(parent, fg_color="transparent")
+            row.pack(fill=tk.X, padx=10, pady=2)
+            ctk.CTkLabel(row, text=text, width=60, anchor="w", font=("Arial", 11)).pack(side=tk.LEFT)
+            seg = ctk.CTkSegmentedButton(row, values=["Hide", "-", "Show"],
+                                         command=lambda v, t=target: self.on_rule_change(t, v))
+            seg.set(self.settings["batch_rules"].get(target, "-"))
+            seg.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=(5, 0))
+            self.rule_segs[target] = seg
 
-        self.batch_buttons["pygame"] = ctk.CTkButton(btn_grid, text="Pygame", height=24, command=lambda: self.toggle_batch_visibility("pygame"))
-        self.batch_buttons["pygame"].grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-        self.batch_buttons["logic"] = ctk.CTkButton(btn_grid, text="Logic", height=24, command=lambda: self.toggle_batch_visibility("logic"))
-        self.batch_buttons["logic"].grid(row=0, column=1, padx=2, pady=2, sticky="ew")
+        create_rule_row(batch_frame, "pygame", "Pygame")
+        create_rule_row(batch_frame, "logic", "Logic")
+        create_rule_row(batch_frame, "entities", "Entities")
 
-        self.batch_buttons["entities"] = ctk.CTkButton(btn_grid, text="Entities", height=24, command=lambda: self.toggle_batch_visibility("entities"))
-        self.batch_buttons["entities"].grid(row=1, column=0, padx=2, pady=2, sticky="ew")
-        self.batch_buttons["show_all"] = ctk.CTkButton(btn_grid, text="Show All", height=24, fg_color="#333", command=lambda: self.toggle_batch_visibility("show_all"))
-        self.batch_buttons["show_all"].grid(row=1, column=1, padx=2, pady=2, sticky="ew")
+        btn_row = ctk.CTkFrame(batch_frame, fg_color="transparent")
+        btn_row.pack(fill=tk.X, padx=10, pady=(2, 6))
+        ctk.CTkButton(btn_row, text="Hide All", height=24, fg_color="#553333", command=lambda: self.toggle_all_rules("Hide")).pack(side=tk.LEFT, expand=True, padx=2)
+        ctk.CTkButton(btn_row, text="Show All", height=24, fg_color="#3a7ebf", command=lambda: self.toggle_all_rules("Show")).pack(side=tk.RIGHT, expand=True, padx=2)
 
-        self.batch_buttons["top"] = ctk.CTkButton(btn_grid, text="Top Graphs", height=24, command=lambda: self.toggle_collapse_batch("top"))
-        self.batch_buttons["top"].grid(row=2, column=0, padx=2, pady=2, sticky="ew")
-        self.batch_buttons["bot"] = ctk.CTkButton(btn_grid, text="Bot Graphs", height=24, command=lambda: self.toggle_collapse_batch("bot"))
-        self.batch_buttons["bot"].grid(row=2, column=1, padx=2, pady=2, sticky="ew")
+        create_rule_row(batch_frame, "top", "Top Graph")
+        create_rule_row(batch_frame, "bot", "Bot Graph")
 
-        self.batch_buttons["hide_all"] = ctk.CTkButton(btn_grid, text="Hide All", height=24, fg_color="#333", command=lambda: self.toggle_batch_visibility("hide_all"))
-        self.batch_buttons["hide_all"].grid(row=3, column=0, columnspan=2, padx=2, pady=2, sticky="ew")
+        # 3. Listbox (Packed filling remaining space)
+        self.listbox_frame = ctk.CTkFrame(self.left_frame, corner_radius=0, fg_color="transparent")
+        self.listbox_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+        list_scroll = ctk.CTkScrollbar(self.listbox_frame)
+        list_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.listbox = tk.Listbox(
+            self.listbox_frame, selectmode=tk.EXTENDED, bd=0, highlightthickness=0,
+            font=("Consolas", 10), activestyle="none", exportselection=False
+        )
+        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        list_scroll.configure(command=self.listbox.yview)
+        self.listbox.configure(yscrollcommand=list_scroll.set)
+        self.listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
 
         # --- RIGHT PANEL ---
         self.graphs_container = ctk.CTkFrame(self.paned_window, corner_radius=0, fg_color="transparent")
@@ -419,7 +459,6 @@ class DebugAnalyzerApp:
             try: self.paned_window.sash_place(0, self.settings.get("sash_position", 300), 0)
             except tk.TclError: pass
 
-    # --- UI EVENT HANDLERS ---
     def collapse_sidebar(self):
         self.settings["sidebar_collapsed"] = True
         try:
@@ -520,73 +559,50 @@ class DebugAnalyzerApp:
                 self.listbox.selection_set(i)
         self._is_updating_list = False
 
-    # --- BATCH ACTIONS ---
-    def toggle_batch_visibility(self, target):
-        if target == "show_all":
-            for k in ["pygame", "logic", "entities"]: self.visibility_rules[k] = True
-        elif target == "hide_all":
-            for k in ["pygame", "logic", "entities"]: self.visibility_rules[k] = False
-        else:
-            curr = self.visibility_rules.get(target)
-            self.visibility_rules[target] = False if curr in [True, None] else True
+    # --- BATCH RULES ---
+    def on_rule_change(self, target, value):
+        self.settings["batch_rules"][target] = value
+        self.save_settings_no_focus()
 
-        self.update_batch_ui()
+        if target in ["top", "bot"]:
+            self.apply_layout()
+        else:
+            self.apply_visibility_rules()
+
+    def toggle_all_rules(self, state):
+        for k in ["pygame", "logic", "entities"]:
+            self.rule_segs[k].set(state)
+            self.settings["batch_rules"][k] = state
+        self.save_settings_no_focus()
         self.apply_visibility_rules()
 
-    def toggle_collapse_batch(self, target):
-        curr = self.visibility_rules.get(target)
-        new_state = False if curr in [True, None] else True # True = Minimized
-        self.visibility_rules[target] = new_state
-        self.update_batch_ui()
-
-        for gw in self.graphs.values():
-            is_r_graph = gw.graph_id.startswith("merged_r") or gw.graph_id.startswith("r_")
-            is_l_graph = gw.graph_id.startswith("merged_l") or gw.graph_id.startswith("l_")
-            if target == "top" and is_r_graph: gw.is_minimized = new_state
-            if target == "bot" and is_l_graph: gw.is_minimized = new_state
-            gw.btn_min.configure(text="▶" if gw.is_minimized else "▼")
-
-        self.root.after(10, self.apply_layout)
+    def override_rule(self, target):
+        if target in self.rule_segs:
+            self.rule_segs[target].set("-")
+            self.settings["batch_rules"][target] = "-"
+            self.save_settings_no_focus()
 
     def apply_visibility_rules(self):
         for gw in self.graphs.values():
             axes = [gw.ax]
             if gw.ax_twin: axes.append(gw.ax_twin)
             needs_draw = False
+
             for axis in axes:
                 lines, labels = axis.get_legend_handles_labels()
                 for line, label in zip(lines, labels):
                     lbl_lower = label.lower()
                     for k in ["pygame", "logic", "entities"]:
-                        if k in lbl_lower and self.visibility_rules[k] is not None:
-                            if line.get_visible() != self.visibility_rules[k]:
-                                line.set_visible(self.visibility_rules[k])
+                        rule = self.settings["batch_rules"].get(k, "-")
+                        if k in lbl_lower and rule != "-":
+                            should_be_visible = (rule == "Show")
+                            if line.get_visible() != should_be_visible:
+                                line.set_visible(should_be_visible)
                                 needs_draw = True
             if needs_draw:
                 gw.sync_legend_alphas()
+                gw.rescale_y_axes()
                 gw.canvas.draw_idle()
-
-    def update_batch_ui(self):
-        sel_color = self.listbox_sel
-        hid_color = "#553333" if self.settings["theme"] == "Dark" else "#cc9999"
-        neu_color = ["#3a7ebf", "#1f538d"]
-
-        for k in ["pygame", "logic", "entities"]:
-            state = self.visibility_rules[k]
-            btn = self.batch_buttons.get(k)
-            if not btn: continue
-            if state is True: btn.configure(text=f"{k.capitalize()} (Shown)", fg_color=sel_color)
-            elif state is False: btn.configure(text=f"{k.capitalize()} (Hidden)", fg_color=hid_color)
-            else: btn.configure(text=f"{k.capitalize()}", fg_color=neu_color)
-
-        for k in ["top", "bot"]:
-            state = self.visibility_rules[k]
-            btn = self.batch_buttons.get(k)
-            name = "Top Graphs" if k == "top" else "Bot Graphs"
-            if not btn: continue
-            if state is True: btn.configure(text=f"{name} (Hidden)", fg_color=hid_color)
-            elif state is False: btn.configure(text=f"{name} (Shown)", fg_color=sel_color)
-            else: btn.configure(text=name, fg_color=neu_color)
 
     # --- LAYOUT MANAGEMENT ---
     def get_or_create_graph(self, g_id, title):
@@ -641,15 +657,18 @@ class DebugAnalyzerApp:
         row_0_weight = 0
         row_1_weight = 0
 
+        rule_top = self.settings["batch_rules"].get("top", "-")
+        rule_bot = self.settings["batch_rules"].get("bot", "-")
+
         for g_r, g_l, col_idx in active_widgets:
             self.graphs_container.grid_columnconfigure(col_idx, weight=1, uniform="colGroup")
 
-            # Apply global rules to newly generated layouts
-            if self.visibility_rules["top"] is not None:
-                g_r.is_minimized = self.visibility_rules["top"]
+            # Apply global rules
+            if rule_top != "-":
+                g_r.is_minimized = (rule_top == "Hide")
                 g_r.btn_min.configure(text="▶" if g_r.is_minimized else "▼")
-            if self.visibility_rules["bot"] is not None:
-                g_l.is_minimized = self.visibility_rules["bot"]
+            if rule_bot != "-":
+                g_l.is_minimized = (rule_bot == "Hide")
                 g_l.btn_min.configure(text="▶" if g_l.is_minimized else "▼")
 
             if g_r.is_minimized:
@@ -936,6 +955,7 @@ class DebugAnalyzerApp:
                 gw.ax.grid(True, alpha=0.3)
                 gw.ax.legend(loc='upper left', fontsize='small')
 
+            gw.rescale_y_axes()
             gw.fig.canvas.draw()
             gw.setup_interactive_legend()
             gw.sync_legend_alphas()
