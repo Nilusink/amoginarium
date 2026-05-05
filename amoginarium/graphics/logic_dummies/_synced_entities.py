@@ -119,7 +119,6 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         # add to manager
         SE_MANAGER.add_entity(self.__id, self)
-
         self.add(Drawn_0, SyncedEntities)
 
     # region entity management
@@ -141,6 +140,10 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         """
         return self.pos - pv.global_vars.get_world_position()
 
+    @property
+    def _buff(self):
+        """:return: runtime buffer data for this entity"""
+        return pv.E_BUFF[self.__id]
     # endregion
 
     # region buffer control

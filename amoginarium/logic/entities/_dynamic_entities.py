@@ -7,38 +7,29 @@ dynamically loaded entities
 Author:
 Nilusink
 """
-"""
-_spawnables.py
-15.03.2026
 
-collects every spawn-able entity
-
-Author:
-Nilusink
-"""
+from __future__ import annotations
 
 import typing as tp
 
 from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
 
-from ._base_entity import LogicGameEntity
-from ._static_turrets import BaseTurret
-from ._weapons import FileLoadedWeapon
-from ._bullets import Bullet
-from ._sensors import MagicSensor
-from ._radar import RadarSensor
+from ._base import LogicGameEntity
+from ._weaponry import templates
 
 
-# noinspection PyTypeChecker
+# gets all base-entities (BaseTurret, BaseWeapon, ...) from templates module
 _base_entities: dict[str, tp.Type[LogicGameEntity]] = {
-    e.cid(): e for e in [
-        BaseTurret,
-        FileLoadedWeapon,
-        Bullet,
-        MagicSensor,
-        RadarSensor
+    e.cid(): e
+    for e in [
+        attr
+        for a in dir(templates)  # lists attributes of module
+        if not a.startswith("_")  # checks if module is private / protected
+        for attr in [getattr(templates, a)]  # converts string name to actual attribute
+        if hasattr(attr, "has_cid") and attr.has_cid()  # checks if it is a base entity
     ]
 }
+
 
 new = load_entities_from_files(ProcessType.logic, _base_entities)
 new.update(_base_entities)

@@ -180,4 +180,3 @@ def lidar_sphere(
 def get_default[T](param: T | EllipsisType, default: T) -> T:
     """return param if not Ellipsis else default"""
     return default if isinstance(param, EllipsisType) else param
-

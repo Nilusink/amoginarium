@@ -19,10 +19,10 @@ from ._turrets import BaseTurretDummy, ExactoSniperTurretDummy
 from ._weapons import HandThrownGrenade, ExactoSniper, WeaponDummy
 from ._sensors import SensorHUD, RadarSensorHUD, MagicSensorHUD, VisualSensorHUD
 from ._items import Shield, HealingPotion, JetBag
+from ._debug_rendering import DebugRectangleEntity, DebugPolygonEntity, DebugCircleEntity
 from ._charged_weapons import RailGunDummy
 from ._text_entity import TextEntity
 from ._aero import AeroDummy
-
 
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
     e.cid(): e
@@ -42,12 +42,14 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         AeroDummy,
         ExactoSniper,
         ExactoSniperTurretDummy,
+        DebugRectangleEntity,
+        DebugPolygonEntity,
+        DebugCircleEntity,
         RadarSensorHUD,
         MagicSensorHUD,
         VisualSensorHUD,
     ]
 }
-
 
 # noinspection PyTypeChecker
 GRAPHICS_SPAWNABLES.update(

@@ -23,16 +23,33 @@ from ._synced_entities import SyncedGraphicsEntity
 
 
 class _PolyMatcher:
-    def __init__(self, top, bottom, left, right) -> None:
+    """Helper class for matching polygon edges."""
+    __slots__ = ("top", "bottom", "left", "right")
+    top: bool
+    bottom: bool
+    left: bool
+    right: bool
+
+    def __init__(self, top: bool, bottom: bool, left: bool, right: bool) -> None:
+        """
+        Helper class for matching polygon edges.
+
+        :param top: Whether the top edge is active.
+        :param bottom: Whether the bottom edge is active.
+        :param left: Whether the left edge is active.
+        :param right: Whether the right edge is active.
+        """
         self.top = top
         self.bottom = bottom
         self.left = left
         self.right = right
 
     def __str__(self) -> str:
+        """:return: String formatted as [top, bottom, left, right]."""
         return f"[{self.top}, {self.bottom}, {self.left}, {self.right}]"
 
     def __repr__(self) -> str:
+        """:return: String representation via __str__."""
         return self.__str__()
 
 
@@ -599,17 +616,17 @@ class Island(SyncedGraphicsEntity):
 
 class GrassIsland(Island):
     _scope = "dirt_islands"
-    _cid = IslandCIDs.grass_island
+    _CID = IslandCIDs.grass_island
 
 
 class GrayBrickIsland(Island):
     _scope = "bricks_gray"
-    _cid = IslandCIDs.gray_brick_island
+    _CID = IslandCIDs.gray_brick_island
 
 
 class GreenBrickIsland(Island):
     _scope = "bricks_green"
-    _cid = IslandCIDs.green_brick_island
+    _CID = IslandCIDs.green_brick_island
 
 
 __islands: tp.Iterable[tp.Type[Island]] = [

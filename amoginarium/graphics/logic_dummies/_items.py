@@ -133,7 +133,7 @@ class Shield(BaseItem):
     """
     __slots__ = ()
 
-    _cid = ItemCIDs.shield
+    _CID = ItemCIDs.shield
     _image_name: tuple[str, str] | str = ("Shield_6", "4")
     _image_size: tuple[int, int] = (45, 80)
 
@@ -148,7 +148,7 @@ class HealingPotion(BaseItem):
 
     __slots__ = ()
 
-    _cid = ItemCIDs.healing_potion
+    _CID = ItemCIDs.healing_potion
     _image_name = ("potions", "empty")
     _image_size = (32, 32)
     _empty_mask = ("potions", "empty_mask")
@@ -221,7 +221,7 @@ class JetBag(BaseItem):
     
     __slots__ = ()
 
-    _cid = ItemCIDs.jetbag
+    _CID = ItemCIDs.jetbag
     _image_name: tuple[str, str] | str = ("missiles", "Missile02F")
     _image_size: tuple[int, int] = (32, 64)
     _animation_scope: str = "flame"

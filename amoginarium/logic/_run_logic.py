@@ -30,11 +30,13 @@ from amoginarium import pv
 
 from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL, \
     AerodynamicEntity
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE
-from .entities import Updated, CollisionDestroyed, WallBouncer, Bullets, Players
-from .entities import LogicGameEntity, ISLANDS, GrassIsland, SPAWNABLES, Player
+from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, GameCollisions
+from .entities import Updated, Bullets, Players
+from .entities import LogicGameEntity, GrassIsland, SPAWNABLES, Player, Island
 from .entities import GravityAffected, FrictionXAffected, ExactoBullet
 from .graphics_dummies import Controller
+
+# CollisionDestroyed, WallBouncer
 
 
 # class TestEntity(AerodynamicEntity):
@@ -221,8 +223,8 @@ class LogicProcess:
         for island in data["platforms"]:
             island_type = GrassIsland
             if "type" in island:
-                if island["type"] in ISLANDS:
-                    island_type = ISLANDS[island["type"]]
+                if island["type"] in Island.ISLANDS:
+                    island_type = Island.ISLANDS[island["type"]]
 
             if "args" in island:
                 i = island_type(self._runtime_buffer, **island["args"])
@@ -422,18 +424,18 @@ class LogicProcess:
         # update entities
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
-        WallBouncer.update()
+        # WallBouncer.update()
 
         Bullets.update(delta)
-        # ic(list(Bullets.sprites()))
+        # ic(list(Bullets.entities()))
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
-        CollisionDestroyed.update()
+        # CollisionDestroyed.update()
 
         # update world position
         # _, max_player_pos = Players.get_position_extremes()
-        players = Players.sprites()
+        players = Players.entities()
         if len(players) > 0:
             max_player_pos = players[0].position
             pv.audio_observer_pos.xy = max_player_pos.xy
@@ -479,8 +481,10 @@ class LogicProcess:
     def reset_game(self) -> None:
         """reset game state"""
         # kill all entities
-        for e in Updated.sprites() + Bullets.sprites():
+        for e in Updated.entities() + Bullets.entities():
             e.kill()
+
+        # collision_manager.clear_all_entities()
 
         # reset shared values
         self._write_lock.acquire()
@@ -497,7 +501,7 @@ class LogicProcess:
     def end(self) -> None:
         """close the logic thread"""
         # print entity stats
-        entities = Updated.sprites() + Bullets.sprites()
+        entities = Updated.entities() + Bullets.entities()
         entities = [e.__class__.__name__ for e in entities]
         unique = set(entities)
         print_ic_style(CC.fg.YELLOW + "entities: " + CC.ctrl.ENDC)
@@ -570,6 +574,7 @@ def run_continuous(
 
         # update entities
         last_update_success = lp.update_entities(delta)
+        GameCollisions.collision_manager.calculate_all_collisions()
 
         # don't update if paused
         if lp.paused:

@@ -36,7 +36,7 @@ class PlayerDummy(SyncedLRImageEntity):
     """
     __slots__ = ["_hp_colors", "_hotbar", "_inventory"]
 
-    _cid = DummyCIDs.player
+    _CID = DummyCIDs.player
 
     _player_right_64_texture: int = ...
     _player_left_64_texture: int = ...

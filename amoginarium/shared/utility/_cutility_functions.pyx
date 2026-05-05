@@ -84,14 +84,14 @@ cpdef Vec2 raycast_mask(
         Vec2 end,
         uint8_t sample_rate = 10
 ):
-    # subtract sprites position (masks don't have positions)
+    # subtract entities position (masks don't have positions)
     cdef Vec2 sprite_start = sprite.position
 
     # check if in collision box first to save time
     clipped = sprite.rect.clipline((start.x, start.y), (end.x, end.y))
     cdef Vec2 delta
     if clipped:
-        # only calculate points actually in sprite
+        # only calculate points actually in entity
         # start, end = clipped
 
         # position offsets

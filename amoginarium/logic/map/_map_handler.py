@@ -25,7 +25,7 @@ def save_map(filepaht: str) -> None:
         "platforms": [],
         "entities": []
     }
-    for entity in Updated.sprites():
+    for entity in Updated.entities():
         entity: GameEntityLike
         if isinstance(entity, Island):
             entity: Island

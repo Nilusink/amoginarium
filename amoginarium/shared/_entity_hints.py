@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import Protocol
 import pygame as pg
 
-from amoginarium.shared.utility import Vec2
-from amoginarium.shared import Coalitions
+from .utility import Vec2
+from ._linked import Coalitions
 
 
 class HasPosition(Protocol):

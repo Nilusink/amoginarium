@@ -144,6 +144,12 @@ test2.py
 assets/images/tiles/
 ideas.md
 *.c
+*.cpp
 
 unused/
 test*
+
+collision_benchmark_results.png
+
+classes.mmd
+structure.mmd

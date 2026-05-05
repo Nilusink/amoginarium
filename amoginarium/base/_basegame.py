@@ -603,8 +603,8 @@ class BaseGame:
                 elif event.type == pg.QUIT:
                     self.__clean_end()
 
-                # elif event.type == pg.JOYDEVICEADDED:
-                #     self.__add_joystick(event)
+                # elif events.type == pg.JOYDEVICEADDED:
+                #     self.__add_joystick(events)
 
                 elif event.type == pg.KEYUP:
                     if event.key == pg.K_F11:
@@ -640,7 +640,8 @@ class BaseGame:
                 if active_scene in ["PauseMenu", "PauseSettings"]:
                     SyncedEntities.update_from_buffer()
                     Drawn_0.gl_draw(0)
-                    Drawn_0.gl_draw(0)
+                    Drawn_1.gl_draw(0)
+                    Drawn_2.gl_draw(0)
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)

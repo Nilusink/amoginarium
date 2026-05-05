@@ -10,6 +10,7 @@ from ._tuplemath import TupleMath
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord
 from ._cutility_functions import is_related, raycast_size, add_tuple, pack_int
 from ._cutility_functions import unpack_int
+from ._minrect_algorithm import find_minimum_rectangles_dirty, find_minimum_rectangles
 from ._ccalculations import calculate_launch_angle
 from ._utility_functions import multi_raycast_mask, get_default
 from ._error_types import WtfError

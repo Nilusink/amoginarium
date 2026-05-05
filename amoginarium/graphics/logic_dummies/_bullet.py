@@ -10,8 +10,9 @@ Nilusink
 from icecream import ic
 from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, Color, convert_color
+from amoginarium.shared.utility import Vec2, get_default, Color, convert_color, coord_t
 from amoginarium.shared.utility import convert_coord, fade
+from amoginarium.shared.debugging import run_with_debug
 from amoginarium.shared import DummyCIDs
 from amoginarium.base._textures import textures
 from amoginarium import pv
@@ -32,10 +33,10 @@ class BulletDummy(SyncedImageEntity):
     __slots__ = [
         "_spawn_time", "_visibility_offset", "_last_pos", "_target_pos", "_trace",
         "_c_trace_color", "_show_trace", "_current_trace_length", "_max_trace_length",
-        "_fade_trace", "_original_alpha", "_trace_len", "_trace_only"
+        "_fade_trace", "_original_alpha", "_trace_len", "_trace_only", "_kill_next"
     ]
 
-    _cid = DummyCIDs.base_bullet
+    _CID = DummyCIDs.base_bullet
     _default_size: Vec2 = Vec2().from_cartesian(64, 64)
     _image_name: str = BULLET_PATH
     _image_mirror: str = ""
@@ -45,10 +46,13 @@ class BulletDummy(SyncedImageEntity):
     _trace_show: bool = True
     _trace_fade: bool = True
 
+    _kill_next: int | None
+
     def __init__(
         self,
         sync_id: int,
         spawn_time: float,
+        position: coord_t,
         size: int | Vec2 | EllipsisType = ...,
         parent: BaseGraphicsEntity | None = None,
         visibility_offset: float = 0,
@@ -74,7 +78,8 @@ class BulletDummy(SyncedImageEntity):
         self._trace_len = 1
         self._spawn_time = spawn_time
         self._visibility_offset = visibility_offset
-        self._last_pos: Vec2 = Vec2()
+        self._last_pos: Vec2 = Vec2().from_cartesian(*convert_coord(position, Vec2).xy)
+        self.pos = self._last_pos.copy()
         self._trace = []
         self._current_trace_length = 0
         self._max_trace_length = (
@@ -86,6 +91,8 @@ class BulletDummy(SyncedImageEntity):
         self._show_trace = (
             show_trace if show_trace is not ... else self._trace_show
         )
+
+        self._kill_next = None
 
         if not isinstance(target_pos, EllipsisType):
             self._target_pos = convert_coord(target_pos, Vec2)
@@ -120,7 +127,7 @@ class BulletDummy(SyncedImageEntity):
 
         super().__init__(sync_id, _bullet_image, parent)
 
-    def kill(self) -> None:
+    def _kill(self) -> None:
         if len(self._trace) > 0:
             if not self._trace_only:
                 self._trace_only = True
@@ -148,6 +155,16 @@ class BulletDummy(SyncedImageEntity):
 
         super().kill()
 
+    def kill(self) -> None:
+        if self._kill_next is not None:
+            if self._kill_next <= 0:
+                self._kill_next = None
+                self._kill()
+            else:
+                self._kill_next -= 1
+        else:
+            self._kill_next = 1
+
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         if self._visibility_offset > self._lifetime:
             self._last_pos.length = 0
@@ -156,7 +173,9 @@ class BulletDummy(SyncedImageEntity):
 
         world_pos = pv.global_vars.get_world_position()
         resolution = pv.global_vars.resolution_screen
-        if self.alive:
+
+        draw = self.alive or (self._kill_next is not None and self._kill_next > 0)
+        if draw:
             # calculate trace
             if self._show_trace and self._max_trace_length > 0: # and delta_cal > 0:
                 if len(self._trace) == 0:
@@ -188,18 +207,18 @@ class BulletDummy(SyncedImageEntity):
                         self._trace_len = len(self._trace)
 
             if (
-                self.pos.x + (self._max_trace_length + self.size.x / 2) < world_pos.x
-                or self.pos.x - (self._max_trace_length + self.size.x / 2)
-                > world_pos.x + resolution.x
-                or self.pos.y + (self._max_trace_length + self.size.y / 2) < world_pos.y
-                or self.pos.y - (self._max_trace_length + self.size.y / 2)
-                > world_pos.y + resolution.y
+                    self.pos.x + (self._max_trace_length + self.size.x / 2) < world_pos.x
+                    or self.pos.x - (self._max_trace_length + self.size.x / 2)
+                    > world_pos.x + resolution.x
+                    or self.pos.y + (self._max_trace_length + self.size.y / 2) < world_pos.y
+                    or self.pos.y - (self._max_trace_length + self.size.y / 2)
+                    > world_pos.y + resolution.y
             ):
                 self._last_pos.length = 0
                 return
 
             if pv.global_vars.show_targets and not isinstance(
-                self._target_pos, EllipsisType
+                    self._target_pos, EllipsisType
             ):
                 renderer.draw_line(
                     self.pos - world_pos,
@@ -256,7 +275,7 @@ class BulletDummy(SyncedImageEntity):
                     thickness=self.size.length / 3,
                 )
 
-        if self.alive and not self._trace_only:
+        if draw and not self._trace_only:
             self.facing *= -1
             super()._gl_draw(delta_cal)
             self._last_pos.xy = self.pos.xy
@@ -264,5 +283,5 @@ class BulletDummy(SyncedImageEntity):
 
 class Grenade(BulletDummy):
     _image_name: str = "grenade"
-    _cid = DummyCIDs.grenade
+    _CID = DummyCIDs.grenade
     _trace_show = False

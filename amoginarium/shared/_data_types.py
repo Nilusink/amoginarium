@@ -105,6 +105,9 @@ class GraphicsCIDs(Enum):
     Component IDs for other Graphics
     """
     static_text = "static.text"
+    debug_rectangle = "debug.rectangle"
+    debug_polygon = "debug.polygon"
+    debug_circle = "debug.circle"
 
 
 class _CIDRegister:
