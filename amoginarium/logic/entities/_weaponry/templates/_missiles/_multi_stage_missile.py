@@ -40,12 +40,13 @@ class MultiStageMissile(BaseMissile):
 
     _CID = MissileCIDs.multi_stage
 
-    # section motor stages
+    # region motor stages
     _default_motor_start: crude_motor_stage_t = (.5, 0)
     _default_motor_launch: crude_motor_stage_t = (1, 300, 50)
     _default_motor_accel: crude_motor_stage_t = (2, 100, 10)
     _default_motor_march: crude_motor_stage_t = (0, 0)
     _default_motor_inertial: crude_motor_stage_t = (0, 0)
+    # endregion
 
     def __init__(
         self,

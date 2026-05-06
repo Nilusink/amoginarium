@@ -15,7 +15,7 @@ import typing as tp
 from amoginarium.shared import Coalitions, base_entity_t
 from amoginarium.shared.utility import Vec2, get_default
 
-from amoginarium.shared import MissileCIDs, DummyCIDs
+from amoginarium.shared import MissileCIDs
 from audio import PresetEffect
 
 from ...._base import LogicGameEntity
@@ -99,10 +99,12 @@ class BaseMissile(AerodynamicEntity):
         return self._mass + self._fuel_mass
 
     def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
-        super()._kill(killed_by)
+        val = super()._kill(killed_by)
 
         if not isinstance(self._sound, EllipsisType):
             self._sound.stop()
+
+        return val
 
     def _update(self, delta: float) -> None:
         self.apply_force(
