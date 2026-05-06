@@ -23,4 +23,4 @@ visible = true  # missile visible while in weapon
 mount_point = [27, -2]
 
 #[sound]
-#preset = "minigun"
+#name = "explosion_small"

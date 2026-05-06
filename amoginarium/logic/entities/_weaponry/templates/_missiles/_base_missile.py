@@ -10,11 +10,13 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
+import typing as tp
 
 from amoginarium.shared import Coalitions, base_entity_t
 from amoginarium.shared.utility import Vec2, get_default
 
 from amoginarium.shared import MissileCIDs, DummyCIDs
+from audio import PresetEffect
 
 from ...._base import LogicGameEntity
 from .._bullets import AerodynamicEntity
@@ -30,6 +32,8 @@ class BaseMissile(AerodynamicEntity):
 
     _default_fuel_mass = 0
     _default_size = [100, 10]
+
+    _default_sound_effect: tp.Type[PresetEffect] | EllipsisType = ...
 
     def __init__(
         self,
@@ -73,6 +77,13 @@ class BaseMissile(AerodynamicEntity):
         )
         self.__fuel_mass = get_default(fuel_mass, self._default_fuel_mass)
 
+        if isinstance(self._default_sound_effect, EllipsisType):
+            self._sound = ...
+
+        else:
+            self._sound = self._default_sound_effect()
+            self._sound.volume = .5
+
     @property
     def _fuel_mass(self) -> float:
         """current fuel mass"""
@@ -87,10 +98,25 @@ class BaseMissile(AerodynamicEntity):
     def mass(self) -> float:
         return self._mass + self._fuel_mass
 
+    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
+        super()._kill(killed_by)
+
+        if not isinstance(self._sound, EllipsisType):
+            self._sound.stop()
+
     def _update(self, delta: float) -> None:
         self.apply_force(
             Vec2().from_polar(0, self.thrust),
             Vec2().from_cartesian(-self.size.x / 2, 0),
         )
+
+        if not isinstance(self._sound, EllipsisType):
+            self._sound.update_position(self.position)
+
+            if self.thrust > 0 and not self._sound.playing:
+                self._sound.play()
+
+            elif self.thrust <= 0 and self._sound.playing:
+                self._sound.stop()
 
         super()._update(delta)

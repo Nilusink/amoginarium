@@ -185,6 +185,9 @@ class SoundEffect:
 
     def update_position(self, pos: Vec2) -> None:
         """update the sounds current position"""
+        if isinstance(self._pos, EllipsisType):
+            self._pos = Vec2()
+
         self._pos.xy = pos.xy
 
     def stop(self) -> None:

@@ -13,7 +13,6 @@ width_mult = 0.3  # trace width multiplier
 
 [image]
 name = "rpg_rocket"
-#mirror = "x"
 
 [behaviour]
 hp = 0.5
@@ -36,6 +35,8 @@ start = [0.3, 0]
 launch = [0.2, 40_000, 3]
 accel = [0.5, 8_000, 0.8]
 
+[sound]
+name = "jetbag"
 
 #[cluster]  # fun stuff
 #depth = 1
