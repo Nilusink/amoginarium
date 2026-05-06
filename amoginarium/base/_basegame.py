@@ -10,6 +10,7 @@ Nilusink
 import subprocess
 from time import perf_counter, strftime, time, perf_counter_ns
 from multiprocessing import Process
+from os import makedirs
 from dataclasses import dataclass
 
 from icecream import ic, colorizedStderrPrint
@@ -750,6 +751,8 @@ class BaseGame:
 
         # write debug data
         ic("writing debug data")
+
+        makedirs("debug", exist_ok=True)
         with open(f"debug/graphic_debug_{self._git_branch}_{int(self._game_start)}.json",
                   "w") as out:
             json.dump({

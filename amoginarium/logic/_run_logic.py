@@ -522,6 +522,7 @@ class LogicProcess:
         self._background_player.stop()
 
         # write debug data
+        os.makedirs("debug", exist_ok=True)
         with open(f"debug/logic_debug_{self._run_name}_{int(self._start)}.json",
                   "w") as out:
             json.dump({

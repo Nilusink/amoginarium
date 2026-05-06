@@ -19,6 +19,8 @@ import typing as tp
 import datetime
 import threading
 
+os.makedirs("debug", exist_ok=True)
+
 # --- SETTINGS MANAGEMENT ---
 SETTINGS_FILE = "debug_viewer_settings.json"
 DEFAULT_SETTINGS = {
