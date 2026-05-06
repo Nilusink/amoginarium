@@ -1,7 +1,7 @@
 import json
 import math
 
-data = json.load(open("debug.json", "r"))
+data = json.load(open("graphic_debug.json", "r"))
 
 
 # filter out first second
