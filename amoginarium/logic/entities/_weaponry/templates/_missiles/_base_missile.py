@@ -15,8 +15,8 @@ import typing as tp
 from amoginarium.shared import Coalitions, base_entity_t
 from amoginarium.shared.utility import Vec2, get_default
 
+from amoginarium.shared.audio import PresetEffect
 from amoginarium.shared import MissileCIDs
-from audio import PresetEffect
 
 from ...._base import LogicGameEntity
 from .._bullets import AerodynamicEntity

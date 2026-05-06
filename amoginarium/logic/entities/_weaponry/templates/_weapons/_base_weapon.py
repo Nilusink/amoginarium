@@ -13,8 +13,8 @@ from icecream import ic
 import typing as tp
 
 from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
-from amoginarium.shared.audio import RandomizedEffect, SoundEffect, Shotgun, Cannon
-from amoginarium.shared.utility import Vec2, convert_coord, get_default, PI_4, PI_3_4
+from amoginarium.shared.audio import RandomizedEffect, SoundEffect
+from amoginarium.shared.utility import Vec2, convert_coord, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
 from shared import Coalitions
 
