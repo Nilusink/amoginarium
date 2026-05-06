@@ -7,8 +7,10 @@ Defines the core game
 Author:
 Nilusink
 """
+import subprocess
 from time import perf_counter, strftime, time, perf_counter_ns
 from multiprocessing import Process
+from os import makedirs
 from dataclasses import dataclass
 
 from icecream import ic, colorizedStderrPrint
@@ -96,6 +98,15 @@ class BaseGame:
             ),
         )
 
+        try:
+            self._git_branch: str = (
+                subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+                .decode("ascii")
+                .strip()
+            )
+        except (Exception,):
+            self._git_branch = "unknown"
+
         # multiprocessing setup
         pv.create_shared_process_values()
 
@@ -112,7 +123,8 @@ class BaseGame:
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start,
-                "time_multiplier": time_multiplier
+                "time_multiplier": time_multiplier,
+                "run_name": self._git_branch
             }
         )
         self._logic_process.start()
@@ -739,7 +751,16 @@ class BaseGame:
 
         # write debug data
         ic("writing debug data")
-        with open("debug.json", "w") as out:
+
+        makedirs("debug", exist_ok=True)
+        with open(f"debug/graphic_debug_{self._git_branch}_{int(self._game_start)}.json",
+                  "w") as out:
+            json.dump({
+                "pygame": self._pygame_loop_times,
+                "total": self._total_loop_times
+            }, out)
+        with open(f"graphic_debug.json",
+                  "w") as out:
             json.dump({
                 "pygame": self._pygame_loop_times,
                 "total": self._total_loop_times

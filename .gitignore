@@ -153,3 +153,7 @@ collision_benchmark_results.png
 
 classes.mmd
 structure.mmd
+
+debug/
+debug_viewer_settings.json
+graphic_debug.json
