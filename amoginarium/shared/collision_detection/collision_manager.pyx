@@ -271,7 +271,7 @@ cdef class CollisionManager:
                                                                   self.groups[g_a_id].entities[a_id].px_n,
                                                                   self.groups[g_a_id].entities[a_id].py_n),
                                                               Vec2(), 1.0)
-                                        cbs[1](inst_a, [ev_a])
+                                        cbs[1](inst_a, g_b_id, [ev_a])
 
                                     # Trigger End for B (cbs[3])
                                     if cbs[3] is not None:
@@ -280,7 +280,7 @@ cdef class CollisionManager:
                                                                   self.groups[g_b_id].entities[b_id].px_n,
                                                                   self.groups[g_b_id].entities[b_id].py_n),
                                                               Vec2(), 1.0)
-                                        cbs[3](inst_b, [ev_b])
+                                        cbs[3](inst_b, g_a_id, [ev_b])
 
                         to_remove.push_back(pair_key)
 
@@ -892,7 +892,7 @@ cdef class CollisionManager:
         for ent_id, evs in events_a_start.items():
             evs.sort(key=lambda e: e[0].time)
             actual_evs = [e[0] for e in evs]
-            ret = callbacks[0](self.group_instances[g_a_id][ent_id], actual_evs)
+            ret = callbacks[0](self.group_instances[g_a_id][ent_id], g_b_id, actual_evs)
             rel = &self.relations[r_id]
             if ret is not None:
                 ret_len = len(ret) if len(ret) < len(evs) else len(evs)
@@ -903,7 +903,7 @@ cdef class CollisionManager:
         for ent_id, evs in events_b_start.items():
             evs.sort(key=lambda e: e[0].time)
             actual_evs = [e[0] for e in evs]
-            ret = callbacks[2](self.group_instances[g_b_id][ent_id], actual_evs)
+            ret = callbacks[2](self.group_instances[g_b_id][ent_id], g_a_id, actual_evs)
             rel = &self.relations[r_id]
             if ret is not None:
                 ret_len = len(ret) if len(ret) < len(evs) else len(evs)
@@ -913,11 +913,11 @@ cdef class CollisionManager:
 
         # --- END CALLBACKS ---
         for ent_id, evs in events_a_end.items():
-            callbacks[1](self.group_instances[g_a_id][ent_id], evs)
+            callbacks[1](self.group_instances[g_a_id][ent_id], g_b_id, evs)
             rel = &self.relations[r_id]
 
         for ent_id, evs in events_b_end.items():
-            callbacks[3](self.group_instances[g_b_id][ent_id], evs)
+            callbacks[3](self.group_instances[g_b_id][ent_id], g_a_id, evs)
             rel = &self.relations[r_id]
 
     def manual_collision(self, list group_ids, object start_position, object end_position, object size=None,

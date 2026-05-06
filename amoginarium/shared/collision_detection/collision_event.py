@@ -34,4 +34,4 @@ class CollisionEvent[T]:
         return f"<CollisionEvent(col_id={self.collision_id}, rel_id={self.relation_id}, group={self.group_id}, other={self.other_entity}, pos={self.position}, norm={self.normal}, time={self.time})>"
 
 
-type CollisionCallback = tp.Callable[[tp.Any, list[CollisionEvent[tp.Any]]], list[bool] | None]
+type CollisionCallback = tp.Callable[[tp.Any, int, list[CollisionEvent[tp.Any]]], list[bool] | None]

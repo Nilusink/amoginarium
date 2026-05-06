@@ -233,10 +233,12 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     # region Methods: Collision Start
     def _collision_start(
             self,
+            group_id: CollisionType.GroupID,
             events: list[CollisionEvent[CollisionLogicEntity]]
     ) -> list[bool] | None:
         """
         Called on collision start
+        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collisions
         :return: List of booleans stating whether each collision is accepted.
            If false, the CollisionManager will not call COLLISION_END
@@ -247,11 +249,13 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     @tp.final
     def collision_start(
             self,
+            group_id: CollisionType.GroupID,
             events: list[CollisionEvent[CollisionLogicEntity]]
     ) -> list[bool] | None:
         """
         Callback for collision start, called by the collision manager.
         Shouldn't be overwritten in inheritance. Instead, use _collision_start
+        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collision
         :return: List of booleans stating whether each collision is accepted.
            If false, the CollisionManager will not call COLLISION_END
@@ -259,7 +263,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
            if there still is a collision in the next update
         """
         # ic("COL START", self, events)
-        collisions_result: list[bool] | None = self._collision_start(events)
+        collisions_result: list[bool] | None = self._collision_start(group_id, events)
 
         # Save accepted collisions in self._active_collisions
         for i in range(len(events)):
@@ -278,17 +282,24 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     # region Methods: Collision End
     def _collision_end(
             self,
+            group_id: CollisionType.GroupID,
             events: list[CollisionEvent[CollisionLogicEntity]]
     ) -> None:
         """
         Called on collision end
+        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collisions
         """
 
     @tp.final
-    def collision_end(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> None:
+    def collision_end(
+            self,
+            group_id: CollisionType.GroupID,
+            events: list[CollisionEvent[CollisionLogicEntity]]
+    ) -> None:
         """
         Callback on COLLISION_END, called by the collision manager
+        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collisions
         """
         # ic("COL END", self, events)
@@ -302,7 +313,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
                 del self._active_collisions[event.collision_id]
 
         self.__calculate_active_normals()
-        self._collision_end(actual_events)
+        self._collision_end(group_id, actual_events)
 
     # endregion
 

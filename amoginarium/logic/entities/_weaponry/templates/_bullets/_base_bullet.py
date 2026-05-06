@@ -347,46 +347,82 @@ class Bullet(LogicGameEntity):
         """bullet has hit someone else"""
         self.kill()
 
-    def __on_collision_general(self, event: CollisionEvent[tp.Union["Island", "Player", "Grenade"]]) -> None:
-        if event.other_entity == self.parent:
-            return
+    # region Collision
+    def __collision_general(
+            self,
+            events: list[CollisionEvent[tp.Union["Island", "Player", "Grenade"]]]
+    ) -> None:
+        """
+        General collision reaction is to destroy the bullet
+        :param events: Collision events
+        """
+        for event in events:
+            if event.other_entity == self.parent:
+                continue
 
-        self.position.x = event.position.x
-        self.position.y = event.position.y
-
-        self.kill(killed_by=event.other_entity)
-
-    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
-        if event.other_entity.parent == self.parent:
-            return
-
-        self.hit(event.other_entity.damage, event.other_entity)
-
-    def __on_collision_shield(self, event: CollisionEvent["Shield"]) -> None:
-        if event.other_entity == self.parent:
-            return
-
-        if event.other_entity.in_use:
             self.position.x = event.position.x
             self.position.y = event.position.y
 
             self.kill(killed_by=event.other_entity)
 
-    def _collision_start(self, events: list[
-        CollisionEvent[tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]]]) -> None:
+    def __collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
+        """
+        When colliding with other bullets
+        that are not from the same parent (turret, gun, ...)
+        the bullets will hit each other
+        :param events: Collision events
+        """
         for event in events:
-            if event.group_id == GameCollisions.collision_group_islands:
-                self.__on_collision_general(event)
-            elif event.group_id == GameCollisions.collision_group_bullets:
-                self.__on_collision_bullet(event)
-            elif event.group_id == GameCollisions.collision_group_players:
-                self.__on_collision_general(event)
-            elif event.group_id == GameCollisions.collision_group_turrets:
-                self.__on_collision_general(event)
-            elif event.group_id == GameCollisions.collision_group_grenades:
-                self.__on_collision_general(event)
-            elif event.group_id == GameCollisions.collision_group_shields:
-                self.__on_collision_shield(event)
+            if event.other_entity.parent == self.parent:
+                continue
+
+            self.hit(event.other_entity.damage, event.other_entity)
+
+    def __collision_shield(self, events: list[CollisionEvent["Shield"]]) -> None:
+        for event in events:
+            if event.other_entity == self.parent:
+                continue
+
+            if event.other_entity.in_use:
+                self.position.x = event.position.x
+                self.position.y = event.position.y
+
+                self.kill(killed_by=event.other_entity)
+
+    def _collision_start(
+            self,
+            group_id: CollisionType.GroupID,
+            events: list[
+                CollisionEvent[
+                    tp.Union[
+                        "Island",
+                        Bullet,
+                        "Player",
+                        "BaseTurret",
+                        "Grenade",
+                        "Shield"
+                    ]
+                ]
+            ]
+    ) -> None:
+        if (
+                group_id == GameCollisions.collision_group_islands
+                or group_id == GameCollisions.collision_group_players
+                or group_id == GameCollisions.collision_group_turrets
+                or group_id == GameCollisions.collision_group_grenades
+        ):
+            events: list[CollisionEvent[tp.Union["Island", "Player", "Grenade"]]]
+            self.__collision_general(events)
+
+        elif group_id == GameCollisions.collision_group_bullets:
+            events: list[CollisionEvent[Bullet]]
+            self.__collision_bullet(events)
+
+        elif group_id == GameCollisions.collision_group_shields:
+            events: list[CollisionEvent["Shield"]]
+            self.__collision_shield(events)
+
+    # endregion
 
     def _update(self, delta, update_facing: bool = True):
         self._time_to_life -= delta

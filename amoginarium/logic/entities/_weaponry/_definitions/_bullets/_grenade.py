@@ -109,7 +109,7 @@ class Grenade(Bullet):
             if ny < -0.5 and abs(self.velocity.y) < 30:
                 self.velocity.y = 0
 
-    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
+    def __collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
         self.hit(event.other_entity.damage, event.other_entity)
 
     def __on_collision_player(self, event: CollisionEvent["Player"]) -> None:
@@ -117,7 +117,7 @@ class Grenade(Bullet):
             self.add_velocity(event.other_entity.velocity)
             self.add_velocity(Vec2().from_cartesian(0, -200))
 
-    def __on_collision_shield(self, event: CollisionEvent["Shield"]) -> None:
+    def __collision_shield(self, event: CollisionEvent["Shield"]) -> None:
         self.position.x = event.position.x
         self.position.y = event.position.y
 
@@ -148,11 +148,11 @@ class Grenade(Bullet):
             if event.group_id == GameCollisions.collision_group_islands:
                 self.__on_collision_island(event)
             elif event.group_id == GameCollisions.collision_group_bullets:
-                self.__on_collision_bullet(event)
+                self.__collision_bullet(event)
             elif event.group_id == GameCollisions.collision_group_players:
                 self.__on_collision_player(event)
             elif event.group_id == GameCollisions.collision_group_shields:
-                self.__on_collision_shield(event)
+                self.__collision_shield(event)
         if event.group_id == GameCollisions.collision_group_shields:
             return [False for _ in events]
         return None
