@@ -24,7 +24,11 @@ type crude_motor_stage_t = tuple[float, float, tp.Optional[float]]
 
 
 class MultiStageMissile(BaseMissile):
-    """thrust defined by stages"""
+    """
+    thrust defined by stages
+
+    ``flags[14]``: thrust active
+    """
 
     __slots__ = (
         "__current_fuel_weight",
@@ -51,6 +55,7 @@ class MultiStageMissile(BaseMissile):
         initial_position: Vec2,
         initial_velocity: Vec2,
         *,
+        initial_facing: float | EllipsisType = ...,
         rudder_size: float | EllipsisType = ...,
         rudder_max_angle: float | EllipsisType = ...,
         base_mass: float | EllipsisType = ...,
@@ -69,7 +74,6 @@ class MultiStageMissile(BaseMissile):
         self.__current_fuel_weight = 0
         self.__current_stage = 0
         self.__current_stage_t = self._stages[0][0]
-
         # calculate fuel weight per stage
         for stage in self._stages:
             if len(stage) > 2:
@@ -81,6 +85,7 @@ class MultiStageMissile(BaseMissile):
             coalition,
             initial_position,
             initial_velocity,
+            initial_facing=initial_facing,
             rudder_size=rudder_size,
             rudder_max_angle=rudder_max_angle,
             fuel_mass=self.__current_fuel_weight,
@@ -114,6 +119,7 @@ class MultiStageMissile(BaseMissile):
 
         # increment thrust and weight
         self.__current_thrust = self._stages[self.__current_stage][1]
+        self._set_bit("flags", 14, self.__current_thrust > 0)
 
         if len(self._stages[self.__current_stage]) > 2:
             self.__current_fuel_weight -= (
@@ -129,6 +135,7 @@ class MultiStageMissile(BaseMissile):
                 self.__current_fuel_weight = 0
                 self.__current_thrust = 0
                 self.__current_stage = -1
+                self._set_bit("flags", 14, False)
                 return
 
             # set next stage time (+ overflow from last stage)

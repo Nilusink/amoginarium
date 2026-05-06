@@ -45,6 +45,7 @@ from ._entity_hints import (
     PlayerLike,
     VisibleGameEntityLike,
     WeaponLike,
+    HasFacing
 )
 from ._logic_entity_hints import (
     BaseLogicEntityLike,

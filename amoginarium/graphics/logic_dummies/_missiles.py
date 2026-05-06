@@ -8,10 +8,93 @@ Author:
 Nilusink
 """
 
-from amoginarium.shared import MissileCIDs
+import math as m
 
+from amoginarium.base._textures import textures
+from amoginarium.shared.utility import Vec2
+from amoginarium.shared import MissileCIDs
+from amoginarium import pv
+
+from ..render_bindings import renderer
+from ..entities import Animation
 from ._bullet import BulletDummy
 
 
 class MultiStageMissileDummy(BulletDummy):
+    """
+    ``flags[14]``: thrust active
+    """
     _CID = MissileCIDs.multi_stage
+
+    _animation_scope: str = "flame"
+    _animation_size: tuple[int, int] = (16, 16)
+    _animation_textures: list[int] = ...
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls._animation_textures is not ...:
+            return
+
+        cls._animation_textures = [
+            t[0]
+            for t in textures.get_all_from_scope(
+                cls._animation_scope, cls._animation_size
+            )
+        ]
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self._animation = Animation(
+            self._animation_textures,
+            self._animation_size,
+            0.05,
+            position_reference=self._flame_position,
+            rotation_reference=self,
+            rotation_offset=-3.14159265/2,
+            loop=True,
+        )
+
+    def _flame_position(self) -> Vec2:
+        """flame position for animation"""
+        return self.pos + Vec2().from_polar(
+            self.facing.angle,
+            self.size.x / 5
+        )
+
+    def _kill(self) -> None:
+        self._animation.stop()
+        super()._kill()
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
+        # update animation
+        if not self._get_bit("flags", 14):
+            self._show_trace = False
+
+            if self._animation.playing:
+                self._animation.stop()
+
+        elif self._get_bit("flags", 14):
+            self._show_trace = True
+
+            if not self._animation.playing:
+                self._animation.play()
+
+        # update trace
+        super()._gl_draw(delta_cal, layer, False)
+
+        # draw missile
+        world_position = pv.global_vars.get_world_position()
+
+        self.facing *= -1  # bullets are weird (yes, a missile is a bullet, duh)
+
+        renderer.draw_textured_quad(
+            self._texture_id,
+            (
+                self.pos.x - world_position.x - self.size.x / 2,
+                self.pos.y - world_position.y - self.size.y / 2,
+            ),
+            (self.size.x, self.size.y),
+            rotate_angle=self.facing.angle * (180 / m.pi),
+            pixel_perfect=True
+        )

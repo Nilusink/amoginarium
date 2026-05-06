@@ -11,6 +11,7 @@ color_time = 1.5
 length = 300
 show = true
 fade = true
+width_mult = 1  # trace width multiplier
 
 [image]
 name = "bullet"

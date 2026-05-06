@@ -302,6 +302,7 @@ class BaseWeapon(Item):
                 direction.angle, self.muzzle_velocity
             )
             + self.parent.velocity,
+            initial_facing=direction.angle,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,
             **kwargs

@@ -29,6 +29,7 @@ class BulletDummy(SyncedImageEntity):
     """
     ``param0`` explosion size
     ``param1`` velocity (length)
+    ``param2`` velocity (angle)
     """
     __slots__ = [
         "_spawn_time", "_visibility_offset", "_last_pos", "_target_pos", "_trace",
@@ -45,6 +46,7 @@ class BulletDummy(SyncedImageEntity):
     _trace_fade_color_time: float = 1.5  # only applies if two colors are specified
     _trace_show: bool = True
     _trace_fade: bool = True
+    _trace_width_mult: float = 1
 
     _kill_next: int | None
 
@@ -165,7 +167,7 @@ class BulletDummy(SyncedImageEntity):
         else:
             self._kill_next = 1
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0, draw_entity: bool = True):
         if self._visibility_offset > self._lifetime:
             self._last_pos.length = 0
             self._lifetime += delta_cal
@@ -272,13 +274,16 @@ class BulletDummy(SyncedImageEntity):
                     p1 - world_pos,
                     p2 - world_pos,
                     color,  # ignore: type
-                    thickness=self.size.length / 3,
+                    thickness=(self.size.length / 3) * self._trace_width_mult,
                 )
 
-        if draw and not self._trace_only:
+        if draw and not self._trace_only and draw_entity:
             self.facing *= -1
             super()._gl_draw(delta_cal)
             self._last_pos.xy = self.pos.xy
+
+        else:
+            self._lifetime += delta_cal
 
 
 class Grenade(BulletDummy):

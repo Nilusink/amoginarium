@@ -54,6 +54,7 @@ class AerodynamicEntity(Bullet):
             initial_velocity: Vec2,
             size: Vec2,
             *,
+            initial_facing: float | EllipsisType,
             rudder_size: float | EllipsisType = ...,
             rudder_max_angle: float | EllipsisType = ...,
             mass: float | EllipsisType = ...,
@@ -74,12 +75,12 @@ class AerodynamicEntity(Bullet):
             size=size,
             initial_position=initial_position,
             initial_velocity=initial_velocity,
+            initial_facing=initial_facing,
             parent=parent,
             coalition=coalition,
             collision_exception_ids=collision_exception_ids,
             **kwargs
         )
-        self.facing.angle = self.velocity.angle
         self.add(GravityAffected)
 
         # game drag
@@ -188,7 +189,7 @@ class AerodynamicEntity(Bullet):
         self._alpha = normalize_angle(self.facing.angle - airflow_d.angle)
 
         # debugging
-        self._buffer.param0 = self.velocity.angle
+        self._buffer.param2 = self.velocity.angle
         self._buffer.param1 = self.velocity.length
 
     def _update_collision(  # type: ignore

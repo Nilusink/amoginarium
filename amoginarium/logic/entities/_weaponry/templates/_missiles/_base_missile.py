@@ -39,6 +39,7 @@ class BaseMissile(AerodynamicEntity):
         initial_position: Vec2,
         initial_velocity: Vec2,
         *,
+        initial_facing: float | EllipsisType = ...,
         rudder_size: float | EllipsisType = ...,
         rudder_max_angle: float | EllipsisType = ...,
         fuel_mass: float | EllipsisType = ...,
@@ -62,11 +63,11 @@ class BaseMissile(AerodynamicEntity):
             initial_position,
             initial_velocity,
             size,
+            initial_facing=initial_facing,
             rudder_size=rudder_size,
             rudder_max_angle=rudder_max_angle,
             mass=base_mass,
             collision_exception_ids=collision_exception_ids,
-            spawn_cid=DummyCIDs.aero.value,
             **kwargs,
         )
         self.__fuel_mass = get_default(fuel_mass, self._default_fuel_mass)

@@ -126,6 +126,7 @@ class Bullet(LogicGameEntity):
             initial_position: Vec2,
             initial_velocity: Vec2,
             *,
+            initial_facing: float | EllipsisType = ...,
             centered: bool = True,
             collision_group: CollisionType.GroupID | EllipsisType | None = ...,
             collision_exception_ids: list[int] | int | None = None,
@@ -152,7 +153,8 @@ class Bullet(LogicGameEntity):
             size: Vec2 | int | EllipsisType = ...,
             visibility_offset: float | EllipsisType = ...,
             invincibility_offset: float | EllipsisType = ...,
-            spawn_cid: str | None = None
+            spawn_cid: str | None = None,
+            graphics_spawn_args: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         """
         Base logic bullet
@@ -267,6 +269,9 @@ class Bullet(LogicGameEntity):
             collision_exception_root_additive=collision_exception_root_additive,
             tags=["bullet"]
         )
+        # set facing
+        self.facing.angle = get_default(initial_facing, self.velocity.angle)
+
         self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius
 
@@ -287,13 +292,15 @@ class Bullet(LogicGameEntity):
             self.add(Bullets)
 
         # spawn dummy
-        kwargs = {
+        kwargs = get_default(graphics_spawn_args, {})
+        kwargs.update({
             "id": self.id,
             "cid": spawn_cid if spawn_cid else self.cid(),
             "spawn_time": self._start_time,
             "visibility_offset": self._visibility_offset,
             "position": self.position.xy,
-        }
+        })
+
         if self._target_pos != ...:
             kwargs["target_pos"] = self._target_pos.xy
 

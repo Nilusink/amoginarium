@@ -53,7 +53,7 @@ class AeroDummy(SyncedGraphicsEntity):
         # draw velocity vec
         renderer.draw_thick_line(
             self.world_position,
-            self.world_position + Vec2().from_polar(self.param0, self.param1 / 10),
+            self.world_position + Vec2().from_polar(self.param2, self.param1 / 10),
             Color().from_1(0, 1, 0),
             thickness=2
         )

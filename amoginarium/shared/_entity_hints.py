@@ -19,6 +19,10 @@ class HasPosition(Protocol):
     position: Vec2
 
 
+class HasFacing(Protocol):
+    facing: Vec2
+
+
 class BaseEntityLike(Protocol):
     mask: pg.Mask
     rect: pg.Rect
