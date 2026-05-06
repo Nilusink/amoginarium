@@ -19,7 +19,7 @@ name = "rpg_rocket"
 hp = 0.5
 ttl = 6  # rpg fuzes after 4-6 seconds with no target
 weight = 5  # knockback
-mass = 10  # aerodynamics
+mass = 5  # aerodynamics
 base_damage = 30
 #invincibility_offset = 0.1
 
@@ -28,13 +28,13 @@ radius = 128
 damage = 80
 
 [rudder]
-size = 100
+size = 1
 max_angle = 0.01
 
 [motor]
 start = [0.3, 0]
-launch = [0.2, 80_000, 50]
-accel = [0.5, 25_000, 10]
+launch = [0.2, 40_000, 3]
+accel = [0.5, 8_000, 0.8]
 
 
 #[cluster]  # fun stuff
