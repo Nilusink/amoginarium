@@ -56,6 +56,7 @@ class BaseMissile(AerodynamicEntity):
 
         size: Vec2
 
+        kwargs.pop("size", None)
         super().__init__(
             runtime_buffer,
             parent,

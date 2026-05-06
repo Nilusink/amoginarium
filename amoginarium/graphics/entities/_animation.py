@@ -12,16 +12,13 @@ from types import EllipsisType
 import typing as tp
 
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord, normalize_angle
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord, normalize_angle, RTD
 from amoginarium.shared import HasPosition, HasFacing
 from amoginarium.base._textures import textures
 from amoginarium import pv
 
 from ._graphics_groups import Drawn_0
 from ._base_entity import BaseGraphicsEntity
-
-
-RTD = 180/3.14159265358979
 
 
 class Animation(BaseGraphicsEntity):

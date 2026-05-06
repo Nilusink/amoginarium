@@ -3,11 +3,11 @@ from = "weapon.base"
 cid = "weapon.rpg"
 
 [visibility]
-size = [128, 64]
+size = [96, 32]
 
 [image]
-name = "minigun"
-rotate_anchor = [35, 30]
+name = "rpg"
+rotate_anchor = [74, 18]
 
 [behaviour]
 mag_size = 1
@@ -19,6 +19,8 @@ recoil_factor = 0.1
 
 [bullet]
 type = "<missile.rpg>"
+visible = true  # missile visible while in weapon
+mount_point = [27, -2]
 
 #[sound]
 #preset = "minigun"

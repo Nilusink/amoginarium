@@ -50,6 +50,25 @@ class BulletDummy(SyncedImageEntity):
 
     _kill_next: int | None
 
+    _bullet_image = ...
+
+    @classmethod
+    def load_textures(cls) -> None:
+        if cls.__dict__.get("_bullet_image", ...) is ...:
+            ic(id(cls), cls.__name__, cls._image_name)
+            if isinstance(cls._default_size, (int, float)):
+                cls._default_size = Vec2().from_cartesian(cls._default_size, cls._default_size)
+
+            cls._bullet_image, _ = textures.get_texture(
+                cls._image_name, cls._default_size, cls._image_mirror
+            )
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        # make sure subclasses initialize their own bullet textures
+        cls._bullet_image = ...
+
     def __init__(
         self,
         sync_id: int,
@@ -68,13 +87,6 @@ class BulletDummy(SyncedImageEntity):
 
         if not isinstance(size, Vec2):
             size: Vec2 = Vec2().from_cartesian(size, size)  # type: ignore
-
-        isize = size.xy
-        _bullet_image, _ = textures.get_texture(
-            self._image_name,
-            isize,
-            self._image_mirror
-        )
 
         self._trace_only = False
         self._trace_len = 1
@@ -127,7 +139,7 @@ class BulletDummy(SyncedImageEntity):
             self._c_trace_color: Color = self._c_trace_color[0]
             self._original_alpha = self._c_trace_color.a1
 
-        super().__init__(sync_id, _bullet_image, parent)
+        super().__init__(sync_id, self._bullet_image, parent)  # type: ignore
 
     def _kill(self) -> None:
         if len(self._trace) > 0:
@@ -166,6 +178,24 @@ class BulletDummy(SyncedImageEntity):
                 self._kill_next -= 1
         else:
             self._kill_next = 1
+
+    @classmethod
+    def draw_at(
+        cls,
+        position: coord_t,
+        size: coord_t,
+        rotation: float = 0,
+    ) -> None:
+        """draw an entity at specified position and size"""
+        if cls._bullet_image is ...:
+            cls.load_textures()
+
+        renderer.draw_textured_quad(
+            cls._bullet_image,  # type: ignore
+            position,
+            size,
+            rotate_angle=rotation,
+        )
 
     def _gl_draw(self, delta_cal: float, layer: int = 0, draw_entity: bool = True):
         if self._visibility_offset > self._lifetime:

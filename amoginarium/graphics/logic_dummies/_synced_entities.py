@@ -13,7 +13,7 @@ from contextlib import suppress
 from icecream import ic
 import math as m
 
-from amoginarium.shared.utility import Vec2, Color
+from amoginarium.shared.utility import Vec2, Color, coord_t
 from amoginarium import pv
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
@@ -240,21 +240,32 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         self._lifetime = 0
         super().__init__(sync_id, parent)
 
+    def draw_at(
+        self,
+        position: coord_t,
+        size: coord_t,
+        rotation: float = 0
+    ) -> None:
+        """draw an entity at specified position and size"""
+        renderer.draw_textured_quad(
+            self._texture_id,
+            position,
+            size,
+            rotate_angle=rotation,
+        )
+
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         self._lifetime += delta_cal
 
         world_position = pv.global_vars.get_world_position()
-        renderer.draw_textured_quad(
-            self._texture_id,
+
+        self.draw_at(
             (
                 self.pos.x - world_position.x - self.size.x / 2,
-                self.pos.y - world_position.y - self.size.y / 2
+                self.pos.y - world_position.y - self.size.y / 2,
             ),
-            (
-                self.size.x,
-                self.size.y
-            ),
-            rotate_angle=self.facing.angle * (180 / m.pi)
+            (self.size.x, self.size.y),
+            self.facing.angle * (180 / m.pi),
         )
 
 

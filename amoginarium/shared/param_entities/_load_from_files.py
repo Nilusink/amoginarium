@@ -22,6 +22,7 @@ from amoginarium.shared.audio import ContinuousSoundEffect
 
 BASE_DIR = "./assets/entities/"
 _GRAPHICS_KEYS = ("image", "trace")
+_SHARED_KEYS = ("bullet",)
 
 
 class ProcessType(Enum):
@@ -198,7 +199,7 @@ def load_entities_from_files(
                         continue
 
                 elif process_type == ProcessType.base:
-                    if subsection not in _GRAPHICS_KEYS:
+                    if subsection not in (_GRAPHICS_KEYS + _SHARED_KEYS):
                         continue
 
                 for key, value in data[subsection].items():

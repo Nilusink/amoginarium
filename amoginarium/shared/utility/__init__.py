@@ -4,7 +4,7 @@ from ._utility_functions import is_parent, classname, \
 from ._calculations import calculate_launch_angle_iterative, rk4_update
 from ._cvectors import Vec2, normalize_angle
 from ._ccolor import Color, fade, c_255_to_1
-from ._constants import SQ2, MASK16, MASK32, MASK64
+from ._constants import *  # noqa: F403
 from ._tuplemath import TupleMath
 
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord

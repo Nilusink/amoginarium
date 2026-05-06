@@ -20,6 +20,8 @@ recoil_factor = 1
 
 [bullet]
 type = "<bullet.sniper>"
+visible = true  # bullet visible while in weapon
+mount_point = [0, 0]  # offset for visible bullets, CHANGES SPAWN POINT!
 
 [cluster_bullet]
 type = "<bullet.mortar.cluster>"

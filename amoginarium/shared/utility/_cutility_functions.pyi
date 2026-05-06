@@ -19,7 +19,7 @@ class EntityLike(tp.Protocol):
 def convert_coord[A: Vec2 | tuple | float](
         coord: coord_t,
         convert_to: type[A] = tuple
-) -> A | tuple[float, float] | tuple[A, A]:
+) -> A | tuple[A, A]:
     """
     accepts both tuple and Vec2
     """

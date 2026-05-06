@@ -35,3 +35,10 @@ max_angle = 0.01
 start = [0.3, 0]
 launch = [0.2, 80_000, 50]
 accel = [0.5, 25_000, 10]
+
+
+#[cluster]  # fun stuff
+#depth = 1
+#amount = 3
+#spread=0.3
+#fuze_ttl_mult = 0.9

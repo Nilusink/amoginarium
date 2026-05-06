@@ -11,9 +11,8 @@ Nilusink
 import math as m
 
 from amoginarium.base._textures import textures
-from amoginarium.shared.utility import Vec2
+from amoginarium.shared.utility import Vec2, coord_t
 from amoginarium.shared import MissileCIDs
-from amoginarium import pv
 
 from ..render_bindings import renderer
 from ..entities import Animation
@@ -32,6 +31,8 @@ class MultiStageMissileDummy(BulletDummy):
 
     @classmethod
     def load_textures(cls) -> None:
+        super().load_textures()
+
         if cls._animation_textures is not ...:
             return
 
@@ -66,6 +67,25 @@ class MultiStageMissileDummy(BulletDummy):
         self._animation.stop()
         super()._kill()
 
+    @classmethod
+    def draw_at(
+        cls,
+        position: coord_t,
+        size: coord_t,
+        rotation: float = 0
+    ) -> None:
+        """draw an entity at specified position and size"""
+        if cls._bullet_image is ...:
+            cls.load_textures()
+
+        renderer.draw_textured_quad(
+            cls._bullet_image,  # type: ignore
+            position,
+            size,
+            rotate_angle=rotation,
+            pixel_perfect=True
+        )
+
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         # update animation
         if not self._get_bit("flags", 14):
@@ -80,21 +100,5 @@ class MultiStageMissileDummy(BulletDummy):
             if not self._animation.playing:
                 self._animation.play()
 
-        # update trace
-        super()._gl_draw(delta_cal, layer, False)
-
-        # draw missile
-        world_position = pv.global_vars.get_world_position()
-
-        self.facing *= -1  # bullets are weird (yes, a missile is a bullet, duh)
-
-        renderer.draw_textured_quad(
-            self._texture_id,
-            (
-                self.pos.x - world_position.x - self.size.x / 2,
-                self.pos.y - world_position.y - self.size.y / 2,
-            ),
-            (self.size.x, self.size.y),
-            rotate_angle=self.facing.angle * (180 / m.pi),
-            pixel_perfect=True
-        )
+        # update trace and bullet
+        super()._gl_draw(delta_cal, layer)
