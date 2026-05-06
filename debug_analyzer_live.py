@@ -149,11 +149,11 @@ class GraphWidget(ctk.CTkFrame):
         if self.is_fullscreen: return
 
         # Break the rule since the user manually clicked it
-        is_top = "r" in self.graph_id
+        is_top = self.graph_id.startswith("merged_r") or self.graph_id.startswith("r_")
         self.app.override_rule("top" if is_top else "bot")
 
         self.is_minimized = not self.is_minimized
-        self.btn_min.configure(text="▲" if self.is_minimized else "▼")
+        self.btn_min.configure(text="▶" if self.is_minimized else "▼")
         self.app.root.after(10, self.app.apply_layout)
 
     def toggle_fullscreen(self) -> None:
@@ -805,15 +805,19 @@ class DebugAnalyzerApp:
             needs_draw = False
 
             for axis in axes:
-                lines, labels = axis.get_legend_handles_labels()
-                for line, label in zip(lines, labels):
+                # Catch all artists including invisible ones to re-enable them
+                artists = axis.get_lines() + axis.collections
+                for artist in artists:
+                    label = artist.get_label()
+                    if not label or label.startswith('_'): continue
+
                     lbl_lower = label.lower()
                     for k in ["pygame", "logic", "entities"]:
                         rule = self.settings["batch_rules"].get(k, "-")
                         if k in lbl_lower and rule != "-":
                             should_be_visible = (rule == "Show")
-                            if line.get_visible() != should_be_visible:
-                                line.set_visible(should_be_visible)
+                            if artist.get_visible() != should_be_visible:
+                                artist.set_visible(should_be_visible)
                                 needs_draw = True
             if needs_draw:
                 gw.sync_legend_alphas()
@@ -1213,9 +1217,7 @@ class DebugAnalyzerApp:
             target_l.ax.plot(pd["av_bullet_xs"], pd["av_bullet_ys"],
                              label=f"{prefix}avg", color=c_ent, linewidth=2)
 
-        # Enforce batch visibility rules generated while parsing
-        self.apply_visibility_rules()
-
+        # Setup standard layout and legends BEFORE applying rules to ensure correct initial legend generation
         for gw in self.graphs.values():
             if not gw.ax.lines and not gw.ax.collections:
                 continue
@@ -1248,10 +1250,19 @@ class DebugAnalyzerApp:
                 gw.ax.grid(True, alpha=0.3)
                 gw.ax.legend(loc='upper left', fontsize='small')
 
-            gw.rescale_y_axes()
-            gw.fig.canvas.draw()
             gw.setup_interactive_legend()
+
+        # Enforce batch visibility rules generated while parsing
+        self.apply_visibility_rules()
+
+        # Final adjustments, single render pass to eliminate flashing
+        for gw in self.graphs.values():
+            if not gw.ax.lines and not gw.ax.collections:
+                continue
+
+            gw.rescale_y_axes()
             gw.sync_legend_alphas()
+            gw.fig.canvas.draw()
 
             gw.toolbar.update()
             if hasattr(gw.toolbar, '_nav_stack'): gw.toolbar._nav_stack.clear()
