@@ -2,7 +2,8 @@
 amoginarium/logic/entities/_base/_collision/_collision_manager.py
 
 Central manager for handling all game collision logic.
-Registers groups, handles hitboxes, and establishes bidirectional collision relationships.
+Registers groups, handles hitboxes,
+and establishes bidirectional collision relationships.
 
 Project: amoginarium
 Created: 16.04.2026
@@ -65,11 +66,15 @@ class _GameCollisions:
         self._registered_relations = set()
         self.__exception_num = -1
 
-    def init(self, callback_start: CollisionCallback, callback_end: CollisionCallback) -> None:
+    def init(
+            self,
+            callback_start: CollisionCallback,
+            callback_end: CollisionCallback
+    ) -> None:
         """
         Initializes the collision groups and sets up the default relations.
-        :param callback_start: The callback triggered when a collision begins.
-        :param callback_end: The callback triggered when a collision ends.
+        :param callback_start: The callback is triggered when a collision begins.
+        :param callback_end: The callback is triggered when a collision ends.
         """
         self.COLLISION_START = callback_start
         self.COLLISION_END = callback_end
@@ -78,16 +83,23 @@ class _GameCollisions:
     def _setup_groups(self) -> None:
         """Internal method to define collision groups and their relationships."""
         self.collision_group_players = self.collision_manager.add_group(max_level=0)
-        self.collision_group_bullets = self.collision_manager.add_group(max_level=1, hitbox_type="circle")
-        self.collision_group_grenades = self.collision_manager.add_group(max_level=1, hitbox_type="circle")
+        self.collision_group_bullets = \
+            self.collision_manager.add_group(max_level=1, hitbox_type="circle")
+        self.collision_group_grenades = \
+            self.collision_manager.add_group(max_level=1, hitbox_type="circle")
         self.collision_group_islands = self.collision_manager.add_group(max_level=0)
         self.collision_group_turrets = self.collision_manager.add_group(max_level=0)
-        self.collision_group_shields = self.collision_manager.add_group(max_level=0, hitbox_type="obb")
+        self.collision_group_shields = \
+            self.collision_manager.add_group(max_level=0, hitbox_type="obb")
         self.collision_group_items = self.collision_manager.add_group(max_level=0)
 
         self.all_groups = [
-            self.collision_group_players, self.collision_group_bullets, self.collision_group_grenades,
-            self.collision_group_islands, self.collision_group_turrets, self.collision_group_shields,
+            self.collision_group_players,
+            self.collision_group_bullets,
+            self.collision_group_grenades,
+            self.collision_group_islands,
+            self.collision_group_turrets,
+            self.collision_group_shields,
             self.collision_group_items,
         ]
 
@@ -158,9 +170,14 @@ class _GameCollisions:
             ]
         )
 
-    def create_relations(self, group_a: CollisionType.GroupID, targets: list[CollisionType.GroupID]) -> None:
+    def create_relations(
+            self,
+            group_a: CollisionType.GroupID,
+            targets: list[CollisionType.GroupID]
+    ) -> None:
         """
-        Registers bidirectional collision relations between a group and multiple target groups.
+        Registers bidirectional collision relations between a group
+        and multiple target groups.
         Prevents redundant registration if the relation already exists.
         :param group_a: The ID of the first collision group.
         :param targets: A list of group IDs to collide with.
@@ -188,9 +205,9 @@ class _GameCollisions:
         """
         Registers a new collision exception rule and returns its unique identifier.
         :return: A unique integer identifier for the collision exception.
-        :rtype: int
         """
         self.__exception_num += 1
         return self.__exception_num
+
 
 GameCollisions: tp.Final[_GameCollisions] = _GameCollisions()

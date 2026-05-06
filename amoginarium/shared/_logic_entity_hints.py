@@ -200,10 +200,10 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         """Calculates root collision exceptions rules"""
         ...
 
-    def _collision_start(self, event: list[CollisionEvent[CollisionLogicEntityLike]]) -> list[bool] | None:
+    def _collision_start(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> list[bool] | None:
         """
         Called on collision start
-        :param event: All details regarding the collisions
+        :param events: All details regarding the collisions
         :return: List of bools stating whether each collision is accepted.
         """
         ...

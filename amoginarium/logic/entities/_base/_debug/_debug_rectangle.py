@@ -53,7 +53,8 @@ class DebugRectangleEntity(PositionedLogicEntity):
             **kwargs: tp.Any
     ) -> None:
         """
-        Initializes a debug rectangle and queues a spawn command for the graphics process.
+        Initializes a debug rectangle
+        and queues a spawn command for the graphics process.
         :param runtime_buffer: C-level memory buffer for entity state.
         :param position: Initial 2D position.
         :param size: Dimensions of the rectangle.

@@ -57,7 +57,8 @@ class DebugCircleEntity(PositionedLogicEntity):
             **kwargs: tp.Any
     ) -> None:
         """
-        Initializes the DebugCircleEntity and sends a spawn command to the graphics process.
+        Initializes the DebugCircleEntity
+        and sends a spawn command to the graphics process.
         :param runtime_buffer: The C-level memory buffer for entity state.
         :param position: Initial 2D position vector.
         :param radius: Radius of the circle.
@@ -70,7 +71,8 @@ class DebugCircleEntity(PositionedLogicEntity):
         :param convert_global: Whether to convert coordinates to global space.
         :param centered: Whether the shape should be rendered centered on position.
         """
-        super().__init__(runtime_buffer, size=Vec2().from_cartesian(radius, 0), position=position)
+        super().__init__(runtime_buffer, size=Vec2().from_cartesian(radius, 0),
+                         position=position)
         kwargs["id"] = self.id
         kwargs["coalition"] = Coalitions.neutral
         kwargs["cid"] = self.cid()

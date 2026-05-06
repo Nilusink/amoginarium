@@ -42,7 +42,6 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
         """
         if _Players._spawn_point:
             return Updated.world_position + _Players._spawn_point
-
         return None
 
     @spawn_point.setter
@@ -58,8 +57,8 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
         Calculate the maximum X-axis position among all players.
         :return: Vec2 representing the position of the rightmost player.
         """
-        max_sprite = None
-        max_x = -float('inf')
+        max_sprite: PositionedLogicEntityLike | None = None
+        max_x: float = -float('inf')
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -74,8 +73,8 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
         Calculate the minimum X-axis position among all players.
         :return: Vec2 representing the position of the leftmost player.
         """
-        min_sprite = None
-        min_x = float('inf')
+        min_sprite: PositionedLogicEntityLike | None = None
+        min_x: float = float('inf')
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -83,17 +82,19 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
                 min_x = px
                 min_sprite = sprite
 
-        return min_sprite.position.copy() if min_sprite else Vec2().from_cartesian(float('inf'), float('inf'))
+        if min_sprite is None:
+            return Vec2().from_cartesian(float('inf'), float('inf'))
+        return min_sprite.position.copy()
 
     def get_position_extremes(self) -> tuple[Vec2, Vec2]:
         """
         Get the minimum and maximum X-axis positions in a single pass.
         :return: A tuple of (min_pos, max_pos) Vec2 objects.
         """
-        max_sprite = None
-        min_sprite = None
-        max_x = -float('inf')
-        min_x = float('inf')
+        max_sprite: PositionedLogicEntityLike | None = None
+        min_sprite: PositionedLogicEntityLike | None = None
+        max_x: float = -float('inf')
+        min_x: float = float('inf')
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -105,7 +106,8 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
                 min_sprite = sprite
 
         return (
-            min_sprite.position.copy() if min_sprite else Vec2().from_cartesian(float('inf'), float('inf')),
+            min_sprite.position.copy() if min_sprite else
+            Vec2().from_cartesian(float('inf'), float('inf')),
             max_sprite.position.copy() if max_sprite else Vec2()
         )
 

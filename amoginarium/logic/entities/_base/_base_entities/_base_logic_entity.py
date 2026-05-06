@@ -28,7 +28,9 @@ if tp.TYPE_CHECKING:
 
 
 class EntityChildViable(tp.Protocol):
-    """Minimum requirements for an object to be assigned as a child of a logic entity."""
+    """
+    Minimum requirements for an object to be assigned as a child of a logic entity.
+    """
 
     def update(self, delta: float) -> None:
         """
@@ -44,11 +46,13 @@ class BaseLogicEntity(BaseLogicEntityLike):
     """
     Most basic type of logic entity.
     - Parent/Children relations
-    - groups
-    - update
-    - visibility
+    - Groups
+    - Update
+    - Visibility
     """
-    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id", "__groups", "__alive")
+
+    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id",
+                 "__groups", "__alive")
 
     # region InstanceVars
     _parent: BaseLogicEntity | None
@@ -104,7 +108,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     @property
     def parent(self) -> BaseLogicEntity | None:
-        """:return: entities parent if present"""
+        """:return: entity parent if present"""
         return self._parent
 
     @property
@@ -175,7 +179,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
                 group.remove(self)
                 self.__groups.remove(group)
 
-    def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def _kill(self, killed_by: BaseLogicEntityLike | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
@@ -193,7 +197,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.__groups.clear()
 
     @tp.final
-    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def kill(self, killed_by: BaseLogicEntityLike | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity

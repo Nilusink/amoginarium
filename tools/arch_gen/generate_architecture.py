@@ -20,7 +20,7 @@ def process_packages():
     if not os.path.exists(input_file):
         return
 
-    with open(input_file, 'r') as f:
+    with open(input_file, 'r', encoding="utf-8") as f:
         lines = f.readlines()
 
     edges, classes = [], set()
@@ -65,13 +65,13 @@ def process_packages():
             cross_links.add((ts, td))
 
     root_name = root_dir.resolve().name or "_base"
-    mmd = ["graph TD\n", '    subgraph Group [" "]\n']
+    mmd = ["graph TD\n", '    subgraph Group ["\u200E"]\n']
     mmd += [f"        {i}\n" for i in valid_top_items]
     mmd += ["    end\n\n"]
     mmd += [f"    {root_name} --- {i}\n" for i in valid_top_items if i in init_imports]
     mmd += ["\n"] + [f"    {s} --> {d}\n" for s, d in sorted(cross_links)]
 
-    with open(output_file, 'w') as f:
+    with open(output_file, 'w', encoding="utf-8") as f:
         f.writelines(mmd)
 
 def process_classes():
@@ -80,7 +80,7 @@ def process_classes():
     if not os.path.exists(input_file):
         return
 
-    with open(input_file, 'r') as f:
+    with open(input_file, 'r', encoding="utf-8") as f:
         lines = f.readlines()
     classes, edges = set(), []
     cp, ep = re.compile(r'class\s+(\w+)\s*\{?'), re.compile(r'(\w+)\s+(.*?)\s+(\w+)')
@@ -121,21 +121,21 @@ def process_classes():
 
     mmd, g_idx = ["graph RL"], 1
     for i in range(0, len(isolated), 5):
-        mmd += [f'\n    subgraph Group{g_idx} [" "]\n'] + [f'        {n}\n' for n in isolated[i:i + 5]] + ['    end']
+        mmd += [f'\n    subgraph Group{g_idx} ["\u200E"]\n'] + [f'        {n}\n' for n in isolated[i:i + 5]] + ['    end']
         g_idx += 1
     for t in trees:
-        mmd += [f'\n    subgraph Group{g_idx} [" "]\n'] + [f'        {n}\n' for n in t] + ['    end']
+        mmd += [f'\n    subgraph Group{g_idx} ["\u200E"]\n'] + [f'        {n}\n' for n in t] + ['    end']
         g_idx += 1
     mmd += ["\n"] + [f'    {u} --> {v}\n' for u, v in edges]
 
-    with open(input_file, 'w') as f:
+    with open(input_file, 'w', encoding="utf-8") as f:
         f.writelines(mmd)
 
 def update_readme_file():
     """Updates the README in the current folder, injecting content between specific tags."""
     sf, cf, rf = "structure.mmd", "classes.mmd", "README.md"
-    sc = open(sf).read().strip() if os.path.exists(sf) else ""
-    cc = open(cf).read().strip() if os.path.exists(cf) else ""
+    sc = open(sf, encoding="utf-8").read().strip() if os.path.exists(sf) else ""
+    cc = open(cf, encoding="utf-8").read().strip() if os.path.exists(cf) else ""
 
     cwd = Path.cwd().resolve().as_posix()
     h_path = cwd[cwd.find("amoginarium"):] if "amoginarium" in cwd else Path.cwd().name
@@ -148,17 +148,17 @@ def update_readme_file():
     if not os.path.exists(rf):
         # CREATE: Only if there is actual data
         if sc or cc:
-            with open(rf, 'w') as f:
+            with open(rf, 'w', encoding="utf-8") as f:
                 f.write(f"# {h_path}\n\n")
                 if sc:
-                    f.write(f"<details open>\n\n<summary><h2 style=\"display:inline-block\">Structure</h2></summary>\n\n{S_START}\n{ticks}mermaid\n{sc}\n{ticks}\n{S_END}\n\n</details>\n\n")
+                    f.write(f"<details open>\n\n<summary><h2 style=\"display:inline-block\">Structure</h2></summary>\n{S_START}\n\n{ticks}mermaid\n{sc}\n{ticks}\n\n{S_END}\n</details>\n\n")
                 if cc:
-                    f.write(f"<details open>\n\n<summary><h2 style=\"display:inline-block\">Classes</h2></summary>\n\n{C_START}\n{ticks}mermaid\n{cc}\n{ticks}\n{C_END}\n\n</details>\n")
+                    f.write(f"<details open>\n\n<summary><h2 style=\"display:inline-block\">Classes</h2></summary>\n{C_START}\n\n{ticks}mermaid\n{cc}\n{ticks}\n\n{C_END}\n</details>\n")
             print("  -> Created README.md")
         ss, cs = bool(sc), bool(cc)
     else:
         # UPDATE: Strict tag checking
-        content = open(rf).read()
+        content = open(rf, encoding="utf-8").read()
         ss, cs, updated = False, False, False
 
         # Structure Injection
@@ -166,7 +166,7 @@ def update_readme_file():
         if s_idx != -1:
             e_idx = content.find(S_END, s_idx)
             if e_idx != -1:
-                replacement = f"\n{ticks}mermaid\n{sc}\n{ticks}\n" if sc else "\n"
+                replacement = f"\n\n{ticks}mermaid\n{sc}\n{ticks}\n\n" if sc else "\n"
                 content = content[:s_idx + len(S_START)] + replacement + content[e_idx:]
                 ss, updated = True, True
 
@@ -175,12 +175,12 @@ def update_readme_file():
         if c_idx != -1:
             e_idx = content.find(C_END, c_idx)
             if e_idx != -1:
-                replacement = f"\n{ticks}mermaid\n{cc}\n{ticks}\n" if cc else "\n"
+                replacement = f"\n\n{ticks}mermaid\n{cc}\n{ticks}\n\n" if cc else "\n"
                 content = content[:c_idx + len(C_START)] + replacement + content[e_idx:]
                 cs, updated = True, True
 
         if updated:
-            with open(rf, 'w') as f:
+            with open(rf, 'w', encoding="utf-8") as f:
                 f.write(content)
             print("  -> Updated README.md")
         else:

@@ -83,10 +83,12 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
 
     # region Properties (and other getters)
     def _get_ids(self) -> list[int]:
-        """:return: list of all entity IDs including this one and its parents recursively"""
-        if self.parent is None:
+        """
+        :return: list of all entity IDs including this one and its parents recursively
+        """
+        if self._parent is None:
             return [self.id]
-        return self.parent._get_ids() + [self.id]
+        return self._parent._get_ids() + [self.id]
 
     # endregion
 

@@ -11,17 +11,18 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
+from types import EllipsisType
 import typing as tp
 
 from amoginarium.shared import GraphicsCIDs
-from amoginarium.shared.utility import Vec2, MASK16, get_default, normalize_angle, convert_color
+from amoginarium.shared.utility import (Vec2, MASK16, get_default, normalize_angle,
+                                        convert_color)
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
 from .._base_entities import PositionedLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t
@@ -29,7 +30,10 @@ if tp.TYPE_CHECKING:
 
 
 class DebugPolygonEntity(PositionedLogicEntity):
-    """A debug entity used to render arbitrary polygons by packing vertex data into the entity buffer. """
+    """
+    A debug entity used to render arbitrary polygons
+    by packing vertex data into the entity buffer.
+    """
     _CID = GraphicsCIDs.debug_polygon
 
     def __init__(
@@ -86,7 +90,7 @@ class DebugPolygonEntity(PositionedLogicEntity):
         self.p6 = get_default(p6, Vec2())
         self.p7 = get_default(p7, Vec2())
         self.p8 = get_default(p8, Vec2())
-        if points is not ...:
+        if not isinstance(points, EllipsisType):
             self.set_points(points)
 
         kwargs["id"] = self.id

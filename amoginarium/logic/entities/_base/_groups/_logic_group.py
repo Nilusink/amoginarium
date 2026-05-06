@@ -69,7 +69,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
         Creates a new group containing the same entities.
         :return: A new LogicGroup instance.
         """
-        new_group = self.__class__()
+        new_group: LogicGroup = self.__class__()
         new_group._entities = self._entities.copy()
         return new_group
 
@@ -99,6 +99,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
         :param args: Positional arguments passed to entity.update.
         :param kwargs: Keyword arguments passed to entity.update.
         """
+        entity: T
         for entity in self._entities.copy():
             entity.update(*args, **kwargs)
 
