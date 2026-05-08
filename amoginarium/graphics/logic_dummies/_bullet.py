@@ -55,7 +55,6 @@ class BulletDummy(SyncedImageEntity):
     @classmethod
     def load_textures(cls) -> None:
         if cls.__dict__.get("_bullet_image", ...) is ...:
-            ic(id(cls), cls.__name__, cls._image_name)
             if isinstance(cls._default_size, (int, float)):
                 cls._default_size = Vec2().from_cartesian(cls._default_size, cls._default_size)
 

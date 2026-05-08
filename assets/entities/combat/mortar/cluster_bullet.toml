@@ -6,8 +6,10 @@ cid = "bullet.mortar.cluster"
 depth = 2
 amount = 3
 spread = 0.6
-fuze_ttl_mult = 0.3
 step_size_mult = 1
 step_explosion_size = 0
 last_step_ttl = 3
 
+[fuze.0]
+type="ttl_mult"
+mult = 0.3

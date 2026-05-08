@@ -16,10 +16,10 @@ from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
 from amoginarium.shared.audio import RandomizedEffect, SoundEffect
 from amoginarium.shared.utility import Vec2, convert_coord, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
-from shared import Coalitions
+from amoginarium.shared import Coalitions
 
 from .._bullets import Bullet
-from ...._base import Updated, LogicGameEntity
+from ...._base import Updated, LogicGameEntity, GameCollisions
 from ...._items import Item
 
 
@@ -67,10 +67,17 @@ class BaseWeapon(Item):
         spawn_args: dict[str, tp.Any] | EllipsisType = ...,
         **bullet_kwargs,
     ) -> None:
+
         if weapon_size is ...:
             weapon_size: Vec2 = Vec2().from_cartesian(20, 20)
 
-        super().__init__(runtime_buffer=runtime_buffer, size=weapon_size, spawn_args=spawn_args)
+        super().__init__(
+            runtime_buffer=runtime_buffer,
+            size=weapon_size,
+            spawn_args=spawn_args
+        )
+
+        self._e_id = GameCollisions.add_exception()
 
         # unless you want the sniper to kill its own bullet
         self.remove(Updated)  # CollisionDestroyed
@@ -321,6 +328,7 @@ class BaseWeapon(Item):
                 direction.angle, self.muzzle_velocity
             )
             + self.parent.velocity,
+            weapon_collision_exception_id=self._e_id,
             initial_facing=direction.angle,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,

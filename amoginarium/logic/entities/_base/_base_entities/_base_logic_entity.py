@@ -28,7 +28,9 @@ if tp.TYPE_CHECKING:
 
 
 class EntityChildViable(tp.Protocol):
-    """Minimum requirements for an object to be assigned as a child of a logic entity."""
+    """
+    Minimum requirements for an object to be assigned as a child of a logic entity.
+    """
 
     def update(self, delta: float) -> None:
         """
@@ -38,6 +40,14 @@ class EntityChildViable(tp.Protocol):
 
     def kill(self) -> None:
         """Clean up and terminate the child."""
+
+
+class MurderViable(tp.Protocol):
+    """can kill someone"""
+
+    @property
+    def parent(self) -> BaseLogicEntity:
+        """parent"""
 
 
 class BaseLogicEntity(BaseLogicEntityLike):
@@ -124,6 +134,11 @@ class BaseLogicEntity(BaseLogicEntityLike):
         """:return: runtime buffer data for this entity"""
         return self._runtime_buffer[self.__id]
 
+    @property
+    def lifetime(self) -> float:
+        """time since entity spawn"""
+        return self._lifetime
+
     # endregion
 
     # region Methods: bitwise fun
@@ -175,7 +190,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
                 group.remove(self)
                 self.__groups.remove(group)
 
-    def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def _kill(self, killed_by: MurderViable | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
@@ -193,7 +208,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.__groups.clear()
 
     @tp.final
-    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def kill(self, killed_by: MurderViable | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity

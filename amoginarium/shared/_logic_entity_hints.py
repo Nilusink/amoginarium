@@ -92,14 +92,14 @@ class BaseLogicEntityLike(tp.Protocol):
         """
         ...
 
-    def _kill(self, killed_by: BaseLogicEntityLike | EllipsisType = ...) -> None:
+    def _kill(self, killed_by: tp.Any | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
         """
         ...
 
-    def kill(self, killed_by: BaseLogicEntityLike | EllipsisType = ...) -> None:
+    def kill(self, killed_by: tp.Any | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity

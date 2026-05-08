@@ -44,7 +44,13 @@ def get_caller_name(extended: bool = False) -> str | dict:
     }
 
 
-def print_ic_style(*values, sep=" ") -> None:
+def print_ic_style(
+    *values,
+    sep=" ",
+    error: bool = False,
+    warning: bool = False,
+) -> None:
+    """print like ic but without colors"""
     if not ic.enabled:
         return
 
@@ -56,5 +62,11 @@ def print_ic_style(*values, sep=" ") -> None:
         vals.append(v)
 
     value = sep.join(vals)
+    
+    if error:
+        value = CC.fg.RED + value
+
+    elif warning:
+        value = CC.fg.YELLOW + value
 
     ic.outputFunction(f"{value}" + f"{CC.ctrl.ENDC}", color=False)

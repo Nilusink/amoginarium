@@ -39,6 +39,9 @@ class Vec2:
     def mirror(self, mirror_by: Vec2) -> Vec2:
         ...
 
+    def rotate_by(self, other: Vec2) -> Vec2:
+        """rotate vector by another vector"""
+
     def __add__(self, other: Vec2 | float) -> Vec2:
         ...
 

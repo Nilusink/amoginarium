@@ -198,6 +198,17 @@ def load_entities_from_files(
                         __dict["_sensors_list"] = list(data[subsection].values())
                         continue
 
+                    # check if list
+                    k0: str = list(data[subsection].keys())[0]
+
+                    if k0.isnumeric() and isinstance(data[subsection][k0], dict):
+
+                        # if is list, append to values and continue
+                        __dict[f"_default_{subsection}"] = list(
+                            data[subsection].values()
+                        )
+                        continue
+
                 elif process_type == ProcessType.base:
                     if subsection not in (_GRAPHICS_KEYS + _SHARED_KEYS):
                         continue

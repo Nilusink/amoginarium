@@ -15,34 +15,36 @@ cdef class Vec2:
     cpdef set_polar(self, double angle, double length)
 
     # maths
-    cpdef double dot(self, Vec2 other)
+    cpdef double dot(self, object other)
 
     cpdef copy(self)
 
-    cpdef tuple split_vector(self, Vec2 direction)
+    cpdef tuple split_vector(self, object direction)
 
-    cpdef Vec2 normalize(self)
+    cpdef object normalize(self)
 
-    cpdef Vec2 mirror(self, Vec2 mirror_by)
+    cpdef object mirror(self, object mirror_by)
+
+    cpdef object rotate_by(self, object other)
 
     # magic stuff
-    cdef Vec2 add_vec2(self, Vec2 other)
+    cdef object add_vec2(self, object other)
 
-    cdef Vec2 add_double(self, double other)
+    cdef object add_double(self, double other)
 
-    cdef Vec2 sub_vec2(self, Vec2 other)
+    cdef object sub_vec2(self, object other)
 
-    cdef Vec2 sub_double(self, double other)
+    cdef object sub_double(self, double other)
 
-    cdef Vec2 mul_vec2(self, Vec2 other)
+    cdef object mul_vec2(self, object other)
 
-    cdef Vec2 mul_double(self, double other)
+    cdef object mul_double(self, double other)
 
-    cdef Vec2 div(self, double other)
+    cdef object div(self, double other)
 
     # constructors
-    cpdef Vec2 from_cartesian(self, double x, double y)
+    cpdef object from_cartesian(self, double x, double y)
 
-    cpdef Vec2 from_polar(self, double angle, double length)
+    cpdef object from_polar(self, double angle, double length)
 
 cpdef double normalize_angle(double value)
