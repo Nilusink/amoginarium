@@ -16,7 +16,7 @@ from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared.utility import Vec2
 from amoginarium.shared import DummyCIDs
 
-from ...._base import GravityAffected, GameCollisions
+from ...._base import GameCollisions, CollisionType
 from ...._base import LogicGameEntity
 from ...templates import Bullet
 
@@ -32,11 +32,13 @@ class _GrenadeShrapnel(Bullet):
     _default_size = 4
     _default_base_damage = 1
 
-    _col_expection_grenade_cluster = GameCollisions.add_exception()
+    _col_exception_grenade_cluster = GameCollisions.add_exception()
     __slots__ = ()
 
     def __init__(self, *args, **kwargs) -> None:
-        kwargs["collision_exception_ids"] = [_GrenadeShrapnel._col_expection_grenade_cluster]
+        kwargs["collision_exception_ids"] = [
+            _GrenadeShrapnel._col_exception_grenade_cluster
+        ]
         super().__init__(*args, **kwargs)
 
 
@@ -88,76 +90,93 @@ class Grenade(Bullet):
             **kwargs,
         )
 
-    def __on_collision_island(self, event: CollisionEvent["Island"]) -> None:
-        self.position.x = event.position.x
-        self.position.y = event.position.y
-
-        vx = self.velocity.x
-        vy = self.velocity.y
-        nx = event.normal.x
-        ny = event.normal.y
-
-        dot_product = (vx * nx) + (vy * ny)
-
-        if dot_product < 0:
-            rx = vx - 2 * dot_product * nx
-            ry = vy - 2 * dot_product * ny
-
-            self.velocity.x = rx * self._bounce_friction
-            self.velocity.y = ry * self._bounce_friction
-
-            if ny < -0.5 and abs(self.velocity.y) < 30:
-                self.velocity.y = 0
-
-    def __collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
-        self.hit(event.other_entity.damage, event.other_entity)
-
-    def __on_collision_player(self, event: CollisionEvent["Player"]) -> None:
-        if self._lifetime > 0.5:
-            self.add_velocity(event.other_entity.velocity)
-            self.add_velocity(Vec2().from_cartesian(0, -200))
-
-    def __collision_shield(self, event: CollisionEvent["Shield"]) -> None:
-        self.position.x = event.position.x
-        self.position.y = event.position.y
-
-        # Calculate relative velocity (Grenade - Shield)
-        vx = self.velocity.x - event.other_entity.parent.velocity.x
-        vy = self.velocity.y - event.other_entity.parent.velocity.y
-        nx, ny = event.normal.x, event.normal.y
-
-        # Calculate dot product of relative velocity and surface normal
-        dot_product = (vx * nx) + (vy * ny)
-
-        # If moving towards the shield surface (relatively), reflect the velocity
-        if dot_product < 0:
-            # Reflection vector: R = V - 2 * (V . N) * N
-            rx = vx - 2 * dot_product * nx
-            ry = vy - 2 * dot_product * ny
-
-            # Apply bounce friction and restore world-space velocity by adding shield velocity back
-            self.velocity.x = (rx * self._bounce_friction) + event.other_entity.parent.velocity.x
-            self.velocity.y = (ry * self._bounce_friction) + event.other_entity.parent.velocity.y
-        else:
-            # If already moving away but still colliding, ensure the shield's velocity is inherited
-            self.velocity.x += event.other_entity.parent.velocity.x
-            self.velocity.y += event.other_entity.parent.velocity.y
-
-    def _collision_start(self, events: list[CollisionEvent]) -> list[bool] | None:
+    def __on_collision_island(self, events: list[CollisionEvent["Island"]]) -> None:
         for event in events:
-            if event.group_id == GameCollisions.collision_group_islands:
-                self.__on_collision_island(event)
-            elif event.group_id == GameCollisions.collision_group_bullets:
-                self.__collision_bullet(event)
-            elif event.group_id == GameCollisions.collision_group_players:
-                self.__on_collision_player(event)
-            elif event.group_id == GameCollisions.collision_group_shields:
-                self.__collision_shield(event)
-        if event.group_id == GameCollisions.collision_group_shields:
+            self.position.x = event.position.x
+            self.position.y = event.position.y
+
+            vx = self.velocity.x
+            vy = self.velocity.y
+            nx = event.normal.x
+            ny = event.normal.y
+
+            dot_product = (vx * nx) + (vy * ny)
+
+            if dot_product < 0:
+                rx = vx - 2 * dot_product * nx
+                ry = vy - 2 * dot_product * ny
+
+                self.velocity.x = rx * self._bounce_friction
+                self.velocity.y = ry * self._bounce_friction
+
+                if ny < -0.5 and abs(self.velocity.y) < 30:
+                    self.velocity.y = 0
+
+    def __collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
+        for event in events:
+            self.hit(event.other_entity.damage, event.other_entity)
+
+    def __on_collision_player(self, events: list[CollisionEvent["Player"]]) -> None:
+        for event in events:
+            if self._lifetime > 0.5:
+                self.add_velocity(event.other_entity.velocity)
+                self.add_velocity(Vec2().from_cartesian(0, -200))
+
+    def __collision_shield(self, events: list[CollisionEvent["Shield"]]) -> None:
+        for event in events:
+            self.position.x = event.position.x
+            self.position.y = event.position.y
+
+            # Calculate relative velocity (Grenade - Shield)
+            other_parent_velocity
+            vx = self.velocity.x - event.other_entity.parent.velocity.x
+            vy = self.velocity.y - event.other_entity.parent.velocity.y
+            nx, ny = event.normal.x, event.normal.y
+
+            # Calculate dot product of relative velocity and surface normal
+            dot_product = (vx * nx) + (vy * ny)
+
+            # If moving towards the shield surface (relatively), reflect the velocity
+            if dot_product < 0:
+                # Reflection vector: R = V - 2 * (V . N) * N
+                rx = vx - 2 * dot_product * nx
+                ry = vy - 2 * dot_product * ny
+
+                # Apply bounce friction and restore world-space velocity
+                # by adding shield velocity back
+                self.velocity.x = ((rx * self._bounce_friction)
+                                   + event.other_entity.parent.velocity.x)
+                self.velocity.y = ((ry * self._bounce_friction)
+                                   + event.other_entity.parent.velocity.y)
+            else:
+                # If already moving away but still colliding,
+                # ensure the shield's velocity is inherited
+                self.velocity.x += event.other_entity.parent.velocity.x
+                self.velocity.y += event.other_entity.parent.velocity.y
+
+    def _collision_start(
+            self,
+            group_id: CollisionType.GroupID,
+            events: list[
+                CollisionEvent[tp.Union["Island", "Bullet", "Player", "Shield"]]
+            ]
+    ) -> list[bool] | None:
+        if group_id == GameCollisions.collision_group_islands:
+            events: list[CollisionEvent["Island"]]
+            self.__on_collision_island(events)
+        elif group_id == GameCollisions.collision_group_bullets:
+            events: list[CollisionEvent["Bullet"]]
+            self.__collision_bullet(events)
+        elif group_id == GameCollisions.collision_group_players:
+            events: list[CollisionEvent["Player"]]
+            self.__on_collision_player(events)
+        elif group_id == GameCollisions.collision_group_shields:
+            events: list[CollisionEvent["Shield"]]
+            self.__collision_shield(events)
             return [False for _ in events]
         return None
 
-    def _update(self, delta: float):
+    def _update(self, delta: float, update_facing: bool = True):
         if GameCollisions.collision_group_islands in self._active_normals.keys():
             for n in self._active_normals[GameCollisions.collision_group_islands]:
                 if n.y < -0.5:
@@ -171,7 +190,7 @@ class Grenade(Bullet):
                 if abs(n.x) > 0.5 and self.velocity.x * n.x < 0:
                     self.velocity.x = 0
 
-        super()._update(delta)
+        super()._update(delta, update_facing)
 
     def _kill(self, killed_by: tp.Any = ...):
         if killed_by is not ...:
@@ -183,9 +202,11 @@ class Grenade(Bullet):
 
         return super()._kill(killed_by)
 
+    # noinspection DuplicatedCode
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        add velocity to the entity and guarantee
+        that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         x = value.x
@@ -201,9 +222,11 @@ class Grenade(Bullet):
         self._velocity_to_add.x += x
         self._velocity_to_add.y += y
 
+    # noinspection DuplicatedCode
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        add acceleration to the entity and guarantee
+        that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         x = value.x

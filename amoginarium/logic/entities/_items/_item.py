@@ -18,7 +18,8 @@ from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 from shared.collision_detection import CollisionEvent
 
-from .._base import GravityAffected, Updated, LogicGameEntity, GameCollisions, CollisionType, CollisionLogicEntity
+from .._base import (GravityAffected, Updated, LogicGameEntity, GameCollisions,
+                     CollisionType)
 
 if tp.TYPE_CHECKING:
     from .._player import Player
@@ -30,7 +31,8 @@ class Item(LogicGameEntity):
     __slots__ = ("_current_timeout",)
 
     # region ClassVars
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = GameCollisions.collision_group_items
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = \
+        GameCollisions.collision_group_items
     _drop_timeout: tp.ClassVar[int] = 1
     # endregion
     # region InstanceVars
@@ -45,7 +47,8 @@ class Item(LogicGameEntity):
             collision_active: bool = False
     ) -> None:
         # init logic entity
-        super().__init__(runtime_buffer, size=size, position=Vec2(), collision_active=collision_active)
+        super().__init__(runtime_buffer, size=size, position=Vec2(),
+                         collision_active=collision_active)
         if create_collision:
             self._create_collision()
 
@@ -77,8 +80,11 @@ class Item(LogicGameEntity):
         self.stop_highlight()
         self._collision_active = False
 
-    def _collision_start(self, events: list[CollisionEvent[tp.Union["Player", "Island"]]]) -> list[bool] | None:
-        group_id: CollisionType.GroupID = events[0].group_id
+    def _collision_start(
+            self,
+            group_id: CollisionType.GroupID,
+            events: list[CollisionEvent[tp.Union["Player", "Island"]]]
+    ) -> list[bool] | None:
         if group_id == GameCollisions.collision_group_islands:
             self.position = events[0].position
         return None

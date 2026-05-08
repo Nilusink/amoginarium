@@ -47,7 +47,7 @@ class TextEntity(LogicGameEntity):
         """
         Create a static text entity
         :param runtime_buffer: Runtime buffer synced between logic and graphic process
-        :param position: Position of the text
+        :param position: Position
         :param text: Text to be displayed
         :param color: Color of the text
         :param bg_color: Background color

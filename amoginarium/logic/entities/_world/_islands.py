@@ -2,7 +2,7 @@
 amoginarium/logic/entities/_world/_islands.py
 26. January 2024
 
-an island in the sky
+An island in the sky
 
 Author:
 Nilusink, Lukas
@@ -53,7 +53,7 @@ __islands: tp.Iterable[tp.Type[Island]] = [
     GreenBrickIsland
 ]
 
-Island.ISLANDS: dict[CIDType, tp.Type[Island]] = {
+Island.ISLANDS = {
     c.cid(): c for c in __islands
 }
 

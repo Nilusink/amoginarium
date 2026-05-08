@@ -8,19 +8,21 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
+from types import EllipsisType
 import typing as tp
 import random
 
-from amoginarium.shared.utility import Vec2, convert_coord, find_minimum_rectangles_dirty
+from amoginarium.shared.utility import (Vec2, convert_coord,
+                                        find_minimum_rectangles_dirty, get_default)
 from amoginarium.shared.debugging import print_ic_style, CC
 from amoginarium.shared import BaseCommandType, CIDType
 from amoginarium.shared import ProcessCommand
 from amoginarium import pv
 
-from .._base import LogicGameEntity, Walls, GameCollisions, DebugRectangleEntity, CollisionType
+from .._base import (LogicGameEntity, Walls, GameCollisions,
+                     DebugRectangleEntity, CollisionType)
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
 
     from amoginarium.shared.utility import coord_t
@@ -35,16 +37,20 @@ class Island(LogicGameEntity):
     __slots__ = ("_size", "_form", "_damage", "_bounce")
     # region ClassVars
     _block_size: tp.ClassVar[tuple[int, int]] = (64, 64)
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = GameCollisions.collision_group_islands
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = \
+        GameCollisions.collision_group_islands
     __DEBUG_DRAW_HITBOXES: tp.ClassVar[bool] = False
+
+    _BASE_DAMAGE: tp.ClassVar[float] = 0.0
+    _BASE_BOUNCE: tp.ClassVar[float] = 0.0
 
     ISLANDS: tp.ClassVar[dict[CIDType, tp.Type[Island]]] = {}
     ISLANDS_REVERSE: tp.ClassVar[dict[tp.Type[Island], CIDType]] = {}
 
     # endregion
     # region InstanceVars
-    _size: EllipsisType | Vec2
-    _form: EllipsisType | list[list[int]]
+    _size: Vec2
+    _form: list[list[int]] | None
     _damage: float
     _bounce: float  # endregion
 
@@ -70,12 +76,15 @@ class Island(LogicGameEntity):
             raise ValueError("either size or form have to be given!")
 
         start = convert_coord(pos, Vec2)
-        self._size = ... if size is ... else convert_coord(size, Vec2)
-        self._form = form
-        self._damage = damage
-        self._bounce = bounce
 
-        if form is not ...:
+        self._size = Vec2() if isinstance(size, EllipsisType) \
+            else convert_coord(size, Vec2)
+
+        self._form = get_default(form, None)
+        self._damage = get_default(damage, self.__class__._BASE_DAMAGE)
+        self._bounce = get_default(bounce, self.__class__._BASE_BOUNCE)
+
+        if not isinstance(form, EllipsisType):
             self._size = Vec2().from_cartesian(
                 self.__class__._block_size[0] * max(len(r) for r in form),
                 self.__class__._block_size[1] * len(form)
@@ -89,7 +98,7 @@ class Island(LogicGameEntity):
 
         self.add(Walls)
 
-        self._create_collision_entites()
+        self._create_collision_entities()
 
         # spawn graphics entity
         kwargs: dict[str, tp.Any] = {
@@ -150,19 +159,21 @@ class Island(LogicGameEntity):
         Get a copy of the island's structural form.
         :return: 2D list of integers or None if no form is defined.
         """
-        if self._form is ...:
+        if self._form is None:
             return None
         return self._form.copy()
 
-    def _create_collision_entites(self) -> None:
+    def _create_collision_entities(self) -> None:
         """
         Generates collision rectangles for the island.
         If a form is provided, it uses a greedy algorithm to find the minimum number of
         rectangles covering the solid blocks to optimize collision checks.
         """
-        if self._form is ...:
-            GameCollisions.collision_manager.register_entity(GameCollisions.collision_group_islands, self,
-                                                             self.position, self.size)
+        if self._form is None:
+            GameCollisions.collision_manager.register_entity(
+                GameCollisions.collision_group_islands, self,
+                self.position, self.size
+            )
             if Island.__DEBUG_DRAW_HITBOXES:
                 DebugRectangleEntity(self._runtime_buffer, self.position, self.size)
             return
@@ -171,7 +182,7 @@ class Island(LogicGameEntity):
         n_rows = len(self._form)
         n_columns = max(len(row) for row in self._form)
 
-        bitmap = [[0] * n_columns for _ in range(n_rows)]
+        bitmap: list[list[int]] = [[0] * n_columns for _ in range(n_rows)]
         for r in range(n_rows):
             for c in range(n_columns):
                 try:
@@ -182,7 +193,8 @@ class Island(LogicGameEntity):
                     # Jagged edge, leave as 0
                     pass
 
-        raw_rects = find_minimum_rectangles_dirty(bitmap)
+        raw_rects: list[tuple[int, int, int, int]] = \
+            find_minimum_rectangles_dirty(bitmap)
 
         for r1, c1, r2, c2 in raw_rects:
             # Calculate cell dimensions
@@ -198,8 +210,10 @@ class Island(LogicGameEntity):
             position = convert_coord((rect_x, rect_y), Vec2)
             size = convert_coord((rect_w, rect_h), Vec2)
 
-            GameCollisions.collision_manager.register_entity(GameCollisions.collision_group_islands, self,
-                                                             position, size)
+            GameCollisions.collision_manager.register_entity(
+                GameCollisions.collision_group_islands, self,
+                position, size
+            )
             if Island.__DEBUG_DRAW_HITBOXES:
                 DebugRectangleEntity(self._runtime_buffer, position, size)
 

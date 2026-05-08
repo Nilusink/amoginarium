@@ -24,7 +24,7 @@ from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
 from .._weaponry.templates import BaseWeapon
 from .._weaponry import HandThrownGrenade, RailGun
 from .._base import GravityAffected, FrictionXAffected, Updated
-from .._base import Players, GameCollisions
+from .._base import Players, GameCollisions, CollisionType
 from .._items import Shield, HealingPotion, JetBag, Inventory
 from .._weaponry import ExactoSniper
 from .._base import LogicGameEntity
@@ -33,7 +33,7 @@ from .._dynamic_entities import DYNAMIC_ENTITIES
 from .._items import Item
 
 if tp.TYPE_CHECKING:
-    from .._weaponry import Bullet
+    from .._weaponry.templates import Bullet
     from .._world import Island
 
 
@@ -315,15 +315,23 @@ class Player(LogicGameEntity):
             if event.other_entity.item_pickupable():
                 self.pickup_item(event.other_entity)
 
-    def _collision_start(self, events: list[CollisionEvent[tp.Union["Bullet", "Island"]]]) -> list[bool] | None:
-        if events[0].group_id == GameCollisions.collision_group_islands:
+    def _collision_start(
+            self,
+            group_id: CollisionType.GroupID,
+            events: list[CollisionEvent[tp.Union["Item", "Shield", "Bullet", "Island"]]]
+    ) -> list[bool] | None:
+        if group_id == GameCollisions.collision_group_islands:
+            events: list[CollisionEvent["Island"]]
             return self.__on_collision_island(events)
-        if events[0].group_id == GameCollisions.collision_group_bullets:
-            return self.__on_collision_bullet(events)
-        if events[0].group_id == GameCollisions.collision_group_items:
-            return self.__on_collision_item(events)
-        if events[0].group_id == GameCollisions.collision_group_shields:
-            return self.__on_collision_item(events)
+        elif group_id == GameCollisions.collision_group_bullets:
+            events: list[CollisionEvent["Bullet"]]
+            self.__on_collision_bullet(events)
+        elif group_id == GameCollisions.collision_group_items:
+            events: list[CollisionEvent["Item"]]
+            self.__on_collision_item(events)
+        elif group_id == GameCollisions.collision_group_shields:
+            events: list[CollisionEvent["Shield"]]
+            self.__on_collision_item(events)
         return None
 
     def _update(self, delta):

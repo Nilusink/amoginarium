@@ -24,7 +24,8 @@ from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
 from amoginarium.shared.collision_detection import CollisionEvent
 
-from ...._base import Players, Bullets, GravityAffected, LogicGameEntity, GameCollisions
+from ...._base import (Players, Bullets, GravityAffected, LogicGameEntity,
+                       GameCollisions, CollisionType)
 from .._sensors import BaseSensor, DetectionGroup
 from .._weapons import BaseWeapon
 
@@ -664,15 +665,16 @@ class BaseTurret(LogicGameEntity):
         self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
 
-    def __on_collision_bullet(self, event: CollisionEvent["Bullet"]) -> None:
-        dmg = event.other_entity.damage
-        if dmg > 0 and event.other_entity.parent != self:
-            self.hit(dmg, hit_by=event.other_entity)
-
-    def _collision_start(self, events: list[CollisionEvent["Bullet"]]) -> None:
-
-        # bullet - 5 turrets - events länge 5
-        # turret - events 1 bullet
+    def __on_collision_bullet(self, events: list[CollisionEvent["Bullet"]]) -> None:
         for event in events:
-            if event.group_id == GameCollisions.collision_group_bullets:
-                self.__on_collision_bullet(event)
+            dmg = event.other_entity.damage
+            if dmg > 0 and event.other_entity.parent != self:
+                self.hit(dmg, hit_by=event.other_entity)
+
+    def _collision_start(
+            self,
+            group_id: CollisionType.GroupID,
+            events: list[CollisionEvent["Bullet"]]
+    ) -> None:
+        if group_id == GameCollisions.collision_group_bullets:
+            self.__on_collision_bullet(events)

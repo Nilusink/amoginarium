@@ -200,35 +200,58 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         """Calculates root collision exceptions rules"""
         ...
 
-    def _collision_start(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> list[bool] | None:
+    def _collision_start(
+            self,
+            group_id: int,
+            events: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> list[bool] | None:
         """
         Called on collision start
+        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collisions
-        :return: List of bools stating whether each collision is accepted.
+        :return: List of booleans stating whether each collision is accepted.
+           If false, the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again
+           if there still is a collision in the next update
         """
-        ...
 
-    def collision_start(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> list[bool] | None:
+    def collision_start(
+            self,
+            group_id: int,
+            events: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> list[bool] | None:
         """
-        Callback for collision start, called by the collision manager
-        :param events: All details regarding the collisions
-        :return: List of bools stating whether each collision is accepted.
+        Callback for collision start, called by the collision manager.
+        Shouldn't be overwritten in inheritance. Instead, use _collision_start
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
+        :return: List of booleans stating whether each collision is accepted.
+           If false, the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again
+           if there still is a collision in the next update
         """
-        ...
 
-    def _collision_end(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> None:
+    def _collision_end(
+            self,
+            group_id: int,
+            events: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> None:
         """
         Called on collision end
+        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collisions
         """
-        ...
 
-    def collision_end(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> None:
+    def collision_end(
+            self,
+            group_id: int,
+            events: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> None:
         """
         Callback on COLLISION_END, called by the collision manager
+        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collisions
         """
-        ...
 
     def _create_collision(
             self,

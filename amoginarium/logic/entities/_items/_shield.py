@@ -91,15 +91,21 @@ class Shield(Something):
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
         super().remove_parent(at_pos - Vec2().from_cartesian(self._image_size[0] * .45, self._image_size[1] * .7), velocity)
 
-    def _collision_start(self, events: list[CollisionEvent[tp.Union["Island", "Bullet", "Grenade", "Player"]]]) -> None:
+    def _collision_start(
+            self,
+            group_id: CollisionType.GroupID,
+            events: list[
+                CollisionEvent[tp.Union["Island", "Bullet", "Grenade", "Player"]]
+            ]
+    ) -> None:
         """
         Reaction to collision
         :param events: Event details
         """
-        group_id: CollisionType.GroupID = events[0].group_id
         if group_id == GameCollisions.collision_group_islands:
             self.position = events[0].position - self.size / 2
-        elif group_id in (GameCollisions.collision_group_bullets, GameCollisions.collision_group_grenades):
+        elif group_id in (GameCollisions.collision_group_bullets,
+                          GameCollisions.collision_group_grenades):
             for event in events:
                 self.hit_by_bullet(event.other_entity.damage, event.other_entity)
 
