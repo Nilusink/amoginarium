@@ -15,4 +15,5 @@ from ._logic_entity_hints import (BaseLogicEntityLike, CollisionLogicEntityLike,
                                   PositionedLogicEntityLike)
 from ._linked import Coalitions, generate_global_vars, GlobalVars
 from ._entity_counter import ENTITY_COUNTER, INVENTORY_COUNTER
+from ._debug_vars import DebugVarsEnum
 from ._controlls import Controls

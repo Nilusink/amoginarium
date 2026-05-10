@@ -20,6 +20,8 @@ import typing as tp
 import pygame as pg  # Will be removed after controller/keybind refactoring
 import json
 
+from amoginarium.shared import DebugVarsEnum
+
 # from ..shared.controllers import Controllers, Controller, GameController
 from .. import pv
 from ..shared.debugging import run_with_debug, print_ic_style, cum_timer
@@ -175,6 +177,9 @@ class BaseGame:
 
         # create keyboard controller
         KeyboardController.get()
+
+        self._last_pressed_keys = None
+
 
         # add decorator with callback to self.end
         for func in ("_run_pygame",):
@@ -624,7 +629,7 @@ class BaseGame:
                             renderer.display_set_windowed()
                         else:
                             renderer.display_windowed_fullscreen()
-                    if event.key == pg.K_ESCAPE:
+                    elif event.key == pg.K_ESCAPE:
                         if active_scene == "Game":
                             pause_game()
                         elif active_scene == "PauseMenu":
@@ -633,6 +638,8 @@ class BaseGame:
                             close_settings()
                         elif active_scene == "StartSettings":
                             close_settings()
+                    elif event.key == pg.K_h:
+                        pv.global_vars.toggle_debug_var(DebugVarsEnum.DRAW_HITBOXES)
                 elif event.type == pg.MOUSEBUTTONUP:
                     if event.button == pg.BUTTON_LEFT:
                         for sprite in UIEntities:

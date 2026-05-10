@@ -8,11 +8,12 @@ Author:
 Nilusink
 """
 from multiprocessing.sharedctypes import Synchronized
-from ctypes import c_double, c_int8
+from ctypes import c_double, c_int8, c_int32
 from multiprocessing import Value
 from enum import Enum
 import typing as tp
 
+from ._debug_vars import DebugVarsEnum
 from .debugging import cum_timer
 from .utility import Vec2
 
@@ -36,7 +37,8 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
     "time": c_double,
     "t_mult": c_double,
     "max_fps": c_double,
-    "background_position": c_double
+    "background_position": c_double,
+    "debug_vars": c_int32
 }
 
 
@@ -85,6 +87,8 @@ class GlobalVars:
         self._time = 0
         self._t_mult = 1
 
+        self._debug_vars = 0
+
         if set:
             self._set_from_current()
 
@@ -108,6 +112,7 @@ class GlobalVars:
         self.__values["t_mult"].value = self._t_mult
         self.__values["max_fps"].value = self._max_fps
         self.__values["background_position"].value = self._background_position
+        self.__values["debug_vars"].value = self._debug_vars
 
     def get_values(self) -> dict[str, Synchronized]:
         return self.__values
@@ -232,6 +237,21 @@ class GlobalVars:
 
         self.__values["pixel_per_meter"].value = value
 
+    def get_debug_var(self, num: DebugVarsEnum) -> bool:
+        return bool((self._debug_vars >> num.value) & 1)
+
+    def set_debug_var(self, num: DebugVarsEnum, value: bool) -> None:
+        if value:
+            self._debug_vars |= (1 << num.value)
+        else:
+            self._debug_vars &= ~(1 << num.value)
+
+        self.__values["debug_vars"].value = self._debug_vars
+
+    def toggle_debug_var(self, num: DebugVarsEnum) -> None:
+        self._debug_vars ^= (1 << num.value)
+        self.__values["debug_vars"].value = self._debug_vars
+
     @property
     def screen_pixels(self) -> Vec2:
         return self._screen_size_real / self._pixel_per_meter
@@ -287,3 +307,5 @@ class GlobalVars:
         self._scaling = self.__values["scaling"].value
         self._time = self.__values["time"].value
         self._t_mult = self.__values["t_mult"].value
+
+        self._debug_vars = self.__values["debug_vars"].value

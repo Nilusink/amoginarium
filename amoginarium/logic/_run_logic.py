@@ -22,7 +22,7 @@ import os
 from amoginarium.shared.audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeExplosion
 from amoginarium.shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
 from amoginarium.shared import ProcessCommandType, Coalitions, ENTITY_COUNTER
-from amoginarium.shared import BaseCommandType, INVENTORY_COUNTER
+from amoginarium.shared import BaseCommandType, INVENTORY_COUNTER, DebugVarsEnum
 from amoginarium.shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
 from amoginarium.shared.debugging import print_with_prefix, get_fg_color
 from amoginarium.shared.utility import Vec2, calculate_launch_angle
@@ -31,7 +31,7 @@ from amoginarium import pv
 from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL, \
     AerodynamicEntity
 from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, GameCollisions
-from .entities import Updated, Bullets, Players
+from .entities import Updated, Bullets, Players, CollisionLogicEntity
 from .entities import LogicGameEntity, GrassIsland, SPAWNABLES, Player, Island
 from .entities import GravityAffected, FrictionXAffected, ExactoBullet
 from .graphics_dummies import Controller
@@ -583,6 +583,11 @@ def run_continuous(
 
         else:
             delta = 0
+
+        # set debug vars
+        CollisionLogicEntity.debug_draw_hitboxes(
+            pv.global_vars.get_debug_var(num=DebugVarsEnum.DRAW_HITBOXES)
+        )
 
         # update entities
         last_update_success = lp.update_entities(delta)

@@ -7,6 +7,7 @@ from ._base import (
     LogicGameEntity,
     Players,
     PositionedLogicEntity,
+    CollisionLogicEntity,
     Updated,
     Walls,
 )
