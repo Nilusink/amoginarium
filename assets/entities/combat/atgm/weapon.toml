@@ -3,11 +3,11 @@ from = "weapon.base"
 cid = "weapon.atgm"
 
 [visibility]
-size = [96, 32]
+size = [64, 32]
 
 [image]
-name = "rpg"
-rotate_anchor = [74, 18]
+name = "atgm"
+rotate_anchor = [33, 16]
 
 [behaviour]
 mag_size = 1
@@ -19,8 +19,8 @@ recoil_factor = 0.1
 
 [bullet]
 type = "<missile.atgm>"
-visible = true  # missile visible while in weapon
-mount_point = [27, -2]
+visible = false
+mount_point = [4, 0]  # slightly forward to not explode when against wall
 
 [sound]
 name = "explosion_small"

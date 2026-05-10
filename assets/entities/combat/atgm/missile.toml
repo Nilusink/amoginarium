@@ -12,7 +12,7 @@ width_mult = 0.3  # trace width multiplier
 
 
 [image]
-name = "rpg_rocket"
+name = "atgm_missile"
 
 [behaviour]
 hp = 0.5
