@@ -213,12 +213,14 @@ class Island(LogicGameEntity):
                                 DebugRectangleEntity(self._runtime_buffer, position,
                                                      size)
                             )
+            if self._debug_entities is not None:
+                for debug_entity in self._debug_entities:
+                    debug_entity.show()
 
         else:
             if self._debug_entities is not None:
                 for debug_entity in self._debug_entities:
-                    debug_entity.kill()
-                self._debug_entities = None
+                    debug_entity.hide()
 
     def _create_collision_entities(self) -> None:
         """

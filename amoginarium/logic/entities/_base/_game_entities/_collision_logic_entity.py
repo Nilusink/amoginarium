@@ -447,8 +447,11 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
                         self.__debug_entity = DebugPolygonEntity(
                             runtime_buffer=self._runtime_buffer,
                         )
+            if self.__debug_entity is None:
+                return
             collision_group: CollisionType.GroupID | None = self._collision_group
             if collision_group is not None and self.__collision_entity_id is not None:
+                self.__debug_entity.show()
                 match hitbox:
                     case HitboxTypes.aabb:
                         debug_pos: Vec2 | None = \
@@ -492,8 +495,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
         else:
             if self.__debug_entity is not None:
-                self.__debug_entity.kill()
-                self.__debug_entity = None
+                self.__debug_entity.hide()
 
     @tp.final
     def _delete_collision(self) -> None:
