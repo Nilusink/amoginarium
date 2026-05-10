@@ -33,6 +33,7 @@ from .._dynamic_entities import DYNAMIC_ENTITIES
 from .._items import Item
 
 if tp.TYPE_CHECKING:
+    from .._weaponry import Grenade
     from .._weaponry.templates import Bullet
     from .._world import Island
 
@@ -54,6 +55,8 @@ class Player(LogicGameEntity):
 
     __should_be_killed: int
 
+    _bullets_do_not_initially_hit_player: CollisionType.ExceptionID
+
     # noinspection PyArgumentEqualDefault
     def __init__(
             self,
@@ -69,6 +72,8 @@ class Player(LogicGameEntity):
         self._controller = controller
         self._on_ground = False
         self._alive = True
+
+        self._bullets_do_not_initially_hit_player = GameCollisions.add_exception()
 
         if not size:
             size: Vec2 = Vec2().from_cartesian(64, 64)
@@ -89,8 +94,14 @@ class Player(LogicGameEntity):
             initial_velocity=initial_velocity,
             parent=parent,
             coalition=coalition,
-            centered=True
+            centered=True,
+            tags=["player"]
         )
+
+        self._collision_exception_ids.append(
+            self._bullets_do_not_initially_hit_player
+        )
+
         self._create_collision()
 
         self._groaning = SoundEffect(("groaning", "hugh_1"))
@@ -167,6 +178,10 @@ class Player(LogicGameEntity):
         return self._hp
 
     @property
+    def can_pickup_item(self) -> bool:
+        return True
+
+    @property
     def on_ground(self) -> bool:
         if self._controller.joy_y < 0:
             return False
@@ -222,7 +237,7 @@ class Player(LogicGameEntity):
         self._hotbar.set_highlight(self._current_weapon)
 
     def _item_used(self, item_id: int, used_amount: int = 1) -> bool:
-        ic(item_id, used_amount)
+        # ic(item_id, used_amount)
         with suppress(KeyError, IndexError):
             self._hotbar.use_item(self._current_weapon, used_amount)
             return self._hotbar.get_count(self._current_weapon) > 0
@@ -250,10 +265,21 @@ class Player(LogicGameEntity):
             self._hp = new
             return True
 
-    def __on_collision_island(self, events: list[CollisionEvent["Island"]]) -> list[bool]:
+    def __collision_island(
+            self,
+            events: list[CollisionEvent["Island"]]
+    ) -> list[bool]:
+        """
+        Player collision reaction to islands.
+        Guarantees that the player won't get stuck
+        in walls or fly through them and can still move along them.
+        :param events: All details regarding the collisions
+        :return: Which collisions were accepted.
+        """
         accepted_collisions: list[bool] = [False for _ in events]
 
-        active_normals = [False, False, False, False]  # x-negative, x-positive, y-negative, y-positive
+        active_normals = [False, False,  # x-negative, x-positive
+                          False, False]  # y-negative, y-positive
         if GameCollisions.collision_group_islands in self._active_normals.keys():
             for normal in self._active_normals[GameCollisions.collision_group_islands]:
                 if normal.x < -0.5:
@@ -272,7 +298,8 @@ class Player(LogicGameEntity):
                 if active_normals[1] and event.normal.x > 0.5:
                     continue
                 self.__add_position *= 0
-                self.__add_position.y += self.position.y - event.position.y  # try to make up for the lost y in the next update!
+                # try to make up for the lost y movement in the next update!
+                self.__add_position.y += self.position.y - event.position.y
                 self.position = event.position
                 self.velocity.x = 0
                 self.acceleration.x = 0
@@ -286,7 +313,8 @@ class Player(LogicGameEntity):
                 if active_normals[3] and event.normal.y > 0.5:
                     continue
                 self.__add_position *= 0
-                self.__add_position.x += self.position.x - event.position.x  # try to make up for the lost y in the next update!
+                # try to make up for the lost x movement in the next update!
+                self.__add_position.x += self.position.x - event.position.x
                 self.position = event.position
                 self.velocity.y = 0
                 self.acceleration.y = 0
@@ -304,35 +332,33 @@ class Player(LogicGameEntity):
 
         return accepted_collisions
 
-    def __on_collision_bullet(self, events: list[CollisionEvent["Bullet"]]) -> None:
-        for event in events:
-            dmg = event.other_entity.damage
-            if dmg > 0 and event.other_entity.parent != self:
-                self.hit(dmg, hit_by=event.other_entity)
-
-    def __on_collision_item(self, events: list[CollisionEvent["Item"]]) -> None:
-        for event in events:
-            if event.other_entity.item_pickupable():
-                self.pickup_item(event.other_entity)
-
     def _collision_start(
             self,
             group_id: CollisionType.GroupID,
-            events: list[CollisionEvent[tp.Union["Item", "Shield", "Bullet", "Island"]]]
+            events: list[CollisionEvent[
+                tp.Union["Item", "Shield", "Bullet", "Island", "Grenade"]]
+            ]
     ) -> list[bool] | None:
+        """
+        Distribute collision start events to different methods
+
+        - Island:  Player walks on islands / collides with them
+        - Items: Item decides if it can be picked up and calls pickup_item if so
+        - Shield: Same goes for shield except is even more complex
+        - Grenades: No reaction to Grenades for the player
+        - Bullets: The bullet calls hit to avoid hitting too much when tunneling
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
+        :return: List of booleans stating whether each collision is accepted.
+        """
         if group_id == GameCollisions.collision_group_islands:
             events: list[CollisionEvent["Island"]]
-            return self.__on_collision_island(events)
-        elif group_id == GameCollisions.collision_group_bullets:
-            events: list[CollisionEvent["Bullet"]]
-            self.__on_collision_bullet(events)
-        elif group_id == GameCollisions.collision_group_items:
-            events: list[CollisionEvent["Item"]]
-            self.__on_collision_item(events)
-        elif group_id == GameCollisions.collision_group_shields:
-            events: list[CollisionEvent["Shield"]]
-            self.__on_collision_item(events)
+            return self.__collision_island(events)
         return None
+
+    def get_initial_root_collision_exception(self) -> CollisionType.ExceptionID:
+        return self._bullets_do_not_initially_hit_player
 
     def _update(self, delta):
         self._on_ground = False

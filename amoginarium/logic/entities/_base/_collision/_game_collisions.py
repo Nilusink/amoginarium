@@ -1,5 +1,5 @@
 """
-amoginarium/logic/entities/_base/_collision/_collision_manager.py
+amoginarium/logic/entities/_base/_collision/_game_collisions.py
 
 Central manager for handling all game collision logic.
 Registers groups, handles hitboxes,
@@ -114,7 +114,7 @@ class _GameCollisions:
                 self.collision_group_bullets,
                 self.collision_group_grenades,
                 self.collision_group_items,
-                self.collision_group_shields
+                self.collision_group_shields,
             ]
         )
         self.create_relations(
@@ -125,7 +125,7 @@ class _GameCollisions:
                 self.collision_group_turrets,
                 self.collision_group_players,
                 self.collision_group_grenades,
-                self.collision_group_shields
+                self.collision_group_shields,
             ]
         )
         self.create_relations(
@@ -134,7 +134,7 @@ class _GameCollisions:
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_players,
-                self.collision_group_shields
+                self.collision_group_shields,
             ]
         )
         self.create_relations(
@@ -143,13 +143,13 @@ class _GameCollisions:
                 self.collision_group_players,
                 self.collision_group_bullets,
                 self.collision_group_grenades,
-                self.collision_group_shields
+                self.collision_group_shields,
             ]
         )
         self.create_relations(
             self.collision_group_turrets,
             [
-                self.collision_group_bullets
+                self.collision_group_bullets,
             ]
         )
         self.create_relations(
@@ -158,7 +158,7 @@ class _GameCollisions:
                 self.collision_group_bullets,
                 self.collision_group_grenades,
                 self.collision_group_islands,
-                self.collision_group_players
+                self.collision_group_players,
             ]
         )
 
@@ -166,7 +166,7 @@ class _GameCollisions:
             self.collision_group_items,
             [
                 self.collision_group_players,
-                self.collision_group_islands
+                self.collision_group_islands,
             ]
         )
 

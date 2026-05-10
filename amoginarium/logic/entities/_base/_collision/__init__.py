@@ -10,4 +10,4 @@ Authors: LukasKrah
 """
 
 from ._collision_types import CollisionType, HitboxTypes
-from ._collision_manager import GameCollisions
+from ._game_collisions import GameCollisions

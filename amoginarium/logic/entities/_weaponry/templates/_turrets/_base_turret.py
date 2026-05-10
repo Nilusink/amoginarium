@@ -105,13 +105,15 @@ class BaseTurret(LogicGameEntity):
 
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
+    _bullets_do_not_initially_hit_turret: CollisionType.ExceptionID
+
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
             coalition: Coalitions,
             position: Vec2,
             *,
-        size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
+            size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
             weapon: BaseWeapon| EllipsisType = ...,
             max_range: float | EllipsisType = ...,
             min_range: float | EllipsisType = ...,
@@ -124,8 +126,8 @@ class BaseTurret(LogicGameEntity):
             valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
             turn_speed: float | EllipsisType = ...,
             allow_static_target: bool | EllipsisType = ...,
-        cluster: bool = False,
-        weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...
+            cluster: bool = False,
+            weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...
     ) -> None:
         size = get_default(size, self._default_size)
         weapon_kwargs: dict = get_default(weapon_kwargs, {})
@@ -150,6 +152,8 @@ class BaseTurret(LogicGameEntity):
             coalition=coalition,
             centered=True
         )
+
+        self._bullets_do_not_initially_hit_turret = GameCollisions.add_exception()
 
         # audio
         self._ping = MetalPings().set_volume(.4, .5)
@@ -231,7 +235,12 @@ class BaseTurret(LogicGameEntity):
 
         self._hp = self._default_max_hp
 
+        self._collision_exception_ids.append(
+            self._bullets_do_not_initially_hit_turret
+        )
+
         self._create_collision()
+
         self.facing.angle = self._default_facing_angle
         self.weapon.facing.angle = self.facing.angle
 
@@ -665,16 +674,5 @@ class BaseTurret(LogicGameEntity):
         self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
 
-    def __on_collision_bullet(self, events: list[CollisionEvent["Bullet"]]) -> None:
-        for event in events:
-            dmg = event.other_entity.damage
-            if dmg > 0 and event.other_entity.parent != self:
-                self.hit(dmg, hit_by=event.other_entity)
-
-    def _collision_start(
-            self,
-            group_id: CollisionType.GroupID,
-            events: list[CollisionEvent["Bullet"]]
-    ) -> None:
-        if group_id == GameCollisions.collision_group_bullets:
-            self.__on_collision_bullet(events)
+    def get_initial_root_collision_exception(self) -> CollisionType.ExceptionID:
+        return self._bullets_do_not_initially_hit_turret

@@ -22,6 +22,7 @@ from .._base import (GravityAffected, Updated, LogicGameEntity, GameCollisions,
                      CollisionType)
 
 if tp.TYPE_CHECKING:
+    from .._weaponry.templates import Bullet
     from .._player import Player
     from .._world import Island
 
@@ -80,13 +81,39 @@ class Item(LogicGameEntity):
         self.stop_highlight()
         self._collision_active = False
 
+    def __collision_player(
+            self,
+            events: list[CollisionEvent["Player"]]
+    ) -> None:
+        if not self.item_pickupable():
+            return
+
+        for event in events:
+            if not event.other_entity.can_pickup_item:
+                continue
+            event.other_entity.pickup_item(self)
+
     def _collision_start(
             self,
             group_id: CollisionType.GroupID,
-            events: list[CollisionEvent[tp.Union["Player", "Island"]]]
+            events: list[CollisionEvent[tp.Union["Player", "Island", "Bullet"]]]
     ) -> list[bool] | None:
+        """
+        Distribute collision start events to different methods
+
+        - Player: Player picks up the item if both sides agree
+        - Island: Item falls to the ground and hovers over it when not in inventory
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
+        """
+
         if group_id == GameCollisions.collision_group_islands:
+            events: list[CollisionEvent["Island"]]
             self.position = events[0].position
+        elif group_id == GameCollisions.collision_group_players:
+            events: list[CollisionEvent["Player"]]
+            self.__collision_player(events)
         return None
 
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:

@@ -76,7 +76,6 @@ class Shield(Something):
             self._collision_active = True
             self._in_use = True
             self.add(Updated)
-            # self.add(CollisionDestroyed)
 
     def stop_use(self) -> None:
         """
@@ -86,7 +85,6 @@ class Shield(Something):
             self._collision_active = False
             self._in_use = False
             self.remove(Updated)
-            # self.remove(CollisionDestroyed)
 
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
         super().remove_parent(at_pos - Vec2().from_cartesian(self._image_size[0] * .45, self._image_size[1] * .7), velocity)
@@ -99,15 +97,23 @@ class Shield(Something):
             ]
     ) -> None:
         """
-        Reaction to collision
-        :param events: Event details
+        Distribute collision start events to different methods
+
+        - Island: Shield falls to the ground and hovers over it when not in inventory
+        - Bullet: The bullet calls hit to avoid hitting too much when tunneling
+        - Grenade: Grenades bounce back from shields. No reaction to the shield
+        - Player: Players collect the shield if they have no parent
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
         """
-        if group_id == GameCollisions.collision_group_islands:
-            self.position = events[0].position - self.size / 2
-        elif group_id in (GameCollisions.collision_group_bullets,
-                          GameCollisions.collision_group_grenades):
-            for event in events:
-                self.hit_by_bullet(event.other_entity.damage, event.other_entity)
+        if (
+                group_id == GameCollisions.collision_group_islands
+                or group_id == GameCollisions.collision_group_players
+                or group_id == GameCollisions.collision_group_bullets
+        ):
+            events: list[CollisionEvent[tp.Union["Island", "Player", "Bullet"]]]
+            super()._collision_start(group_id, events)
 
     def _update_collision(
             self,
@@ -131,11 +137,11 @@ class Shield(Something):
     def item_pickupable(self) -> bool:
         return self._parent is None and super().item_pickupable()
 
-    def hit_by_bullet(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
+    def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         if not self._in_use:
-            return
+            super().hit(damage, hit_by)
 
-        if hit_by is not ...:
+        if not isinstance(hit_by, EllipsisType):
             if hit_by._tags.__contains__("bullet"):
                 self._sound.play(pos=self.position)
 

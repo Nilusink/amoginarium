@@ -19,7 +19,7 @@ from amoginarium.shared import base_entity_t, WeaponCIDs
 from shared import Coalitions
 
 from .._bullets import Bullet
-from ...._base import Updated, LogicGameEntity
+from ...._base import Updated, LogicGameEntity, CollisionType
 from ...._items import Item
 
 
@@ -47,29 +47,30 @@ class BaseWeapon(Item):
     _default_cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        parent_position_offset: Vec2 | tuple[float, float],
-        *,
-        mag_size: int | EllipsisType = ...,
-        reload_time: float | EllipsisType = ...,
-        recoil_time: float | EllipsisType = ...,
-        inaccuracy: float | EllipsisType = ...,
-        muzzle_velocity: float | EllipsisType = ...,
-        recoil_factor: float | EllipsisType = ...,
-        sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
-        bullet_type: tp.Type[Bullet] | EllipsisType = ...,
-        weapon_size: Vec2 | EllipsisType = ...,
-        drop_casings: bool = False,
-        cluster: bool = False,
-        spawn_args: dict[str, tp.Any] | EllipsisType = ...,
-        **bullet_kwargs,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            parent_position_offset: Vec2 | tuple[float, float],
+            *,
+            mag_size: int | EllipsisType = ...,
+            reload_time: float | EllipsisType = ...,
+            recoil_time: float | EllipsisType = ...,
+            inaccuracy: float | EllipsisType = ...,
+            muzzle_velocity: float | EllipsisType = ...,
+            recoil_factor: float | EllipsisType = ...,
+            sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
+            bullet_type: tp.Type[Bullet] | EllipsisType = ...,
+            weapon_size: Vec2 | EllipsisType = ...,
+            drop_casings: bool = False,
+            cluster: bool = False,
+            spawn_args: dict[str, tp.Any] | EllipsisType = ...,
+            **bullet_kwargs,
     ) -> None:
         if weapon_size is ...:
             weapon_size: Vec2 = Vec2().from_cartesian(20, 20)
 
         super().__init__(runtime_buffer=runtime_buffer, size=weapon_size, spawn_args=spawn_args)
+
 
         # unless you want the sniper to kill its own bullet
         self.remove(Updated)  # CollisionDestroyed
@@ -301,7 +302,7 @@ class BaseWeapon(Item):
             initial_velocity=Vec2().from_polar(
                 direction.angle, self.muzzle_velocity
             )
-            + self.parent.velocity,
+                             + self.parent.velocity,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,
             **kwargs

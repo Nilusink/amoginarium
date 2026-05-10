@@ -8,14 +8,14 @@
 ```mermaid
 graph TD
     subgraph Group ["‎"]
-        _collision_manager
+        _game_collisions
         _collision_types
     end
 
-    _collision --- _collision_manager
+    _collision --- _game_collisions
     _collision --- _collision_types
 
-    _collision_manager --> _collision_types
+    _game_collisions --> _collision_types
 ```
 
 <!--- MermaidStructureEnd --->

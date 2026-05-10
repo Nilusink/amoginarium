@@ -52,7 +52,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     """
 
     __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id",
-                 "__groups", "__alive")
+                 "__groups", "_alive")
 
     # region InstanceVars
     _parent: BaseLogicEntity | None
@@ -62,7 +62,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     __id: int
     __groups: list[LogicGroup]
 
-    __alive: bool
+    _alive: bool
 
     # endregion
 
@@ -81,7 +81,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self._children = []
         self._lifetime = 0
         self.__groups = []
-        self.__alive = True
+        self._alive = True
 
         # data block
         self.__id = ENTITY_COUNTER.get_id()
@@ -99,7 +99,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     @property
     def alive(self) -> bool:
         """is entity alive?"""
-        return self.__alive
+        return self._alive
 
     @property
     def id(self) -> int:
@@ -202,8 +202,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
         Kill entity and all its children
         :param killed_by: who killed this entity
         """
-        if self.__alive:
-            self.__alive = False
+        if self._alive:
+            self._alive = False
             self._kill(killed_by)
 
     # endregion

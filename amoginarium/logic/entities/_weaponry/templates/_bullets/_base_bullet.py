@@ -11,6 +11,7 @@ from __future__ import annotations
 from time import perf_counter
 import typing as tp
 import numpy as np
+from icecream import ic
 
 from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.audio import LargeExplosion, DistantPop
@@ -33,7 +34,7 @@ if tp.TYPE_CHECKING:
     from ..._definitions import Grenade
     from ...._player import Player
     from ...._world import Island
-    from ...._items import Shield
+    from ...._items import Shield, Item
 
 SQR2: tp.Final[np.float64] = np.sqrt(2)
 
@@ -80,7 +81,7 @@ class Bullet(LogicGameEntity):
         "_cluster_spread", "_o_dist", "_invincibility_offset", "_cluster_fuze_ttl_mult",
         "_coll_sibling", "_cluster_step_explosion", "_cluster_size_mult", "_cluster_last_step_ttl",
         "_cluster_fuze_dist", "_cluster_bullet_type", "_cluster_step_inertia", "_hp", "_cluster_args",
-        "_weight"
+        "_weight", "_left_root", "_initial_root_collision_exception", "_root_entity"
     )
 
     # region InstanceVars
@@ -108,6 +109,10 @@ class Bullet(LogicGameEntity):
     _visibility_offset: float
     _invincibility_offset: float
     _last_pos: Vec2
+
+    _left_root: bool
+    _initial_root_collision_exception: CollisionType.ExceptionID | None
+    _root_entity: LogicGameEntity | None
 
     _target_pos: Vec2 | EllipsisType
     _o_dist: float
@@ -151,7 +156,7 @@ class Bullet(LogicGameEntity):
             target_pos: Vec2 | EllipsisType = ...,
             size: Vec2 | int | EllipsisType = ...,
             visibility_offset: float | EllipsisType = ...,
-            invincibility_offset: float | EllipsisType = ...
+            invincibility_offset: float | EllipsisType = ...,
     ) -> None:
         """
         Base logic bullet
@@ -266,7 +271,21 @@ class Bullet(LogicGameEntity):
             collision_exception_root_additive=collision_exception_root_additive,
             tags=["bullet"]
         )
+
+        self._left_root = False
+        self._root_entity = self.root
+        self._initial_root_collision_exception = None
+        if self._root_entity is not None:
+            if hasattr(self._root_entity, "get_initial_root_collision_exception"):
+                self._initial_root_collision_exception = \
+                    self._root_entity.get_initial_root_collision_exception()
+                if self._initial_root_collision_exception is not None:
+                    self._collision_exception_ids.append(
+                        self._initial_root_collision_exception
+                    )
+
         self._create_collision()
+
         runtime_buffer[self.id].param0 = self._explosion_radius
 
         if self._cluster_depth > 0:
@@ -348,46 +367,55 @@ class Bullet(LogicGameEntity):
         self.kill()
 
     # region Collision
-    def __collision_general(
+    def __collision_island(
             self,
-            events: list[CollisionEvent[tp.Union["Island", "Player", "Grenade"]]]
+            events: list[CollisionEvent["Island"]]
     ) -> None:
         """
-        General collision reaction is to destroy the bullet
-        :param events: Collision events
+        Collision reaction to islands: Bullet dies
+        :param events: All details regarding the collisions
         """
+        event: CollisionEvent["Island"] = events[0]
+        self.position = event.position
+        self.acceleration *= 0
+        self.velocity *= 0
+        self.kill(killed_by=event.other_entity)
+
+    def __collision_general_hit(
+            self,
+            events: list[CollisionEvent[
+                tp.Union["BaseTurret", "Player", "Grenade", "Shield"]]
+            ]
+    ) -> None:
+        """
+        General collision reaction is to try to hit the other entity
+        and if it can be hit, the bullet will be killed
+        :param events: All details regarding the collisions
+        """
+        if not self._alive:
+            return
+
         for event in events:
-            if event.other_entity == self.parent:
-                continue
+            if hasattr(event.other_entity, "hit"):
+                # noinspection PyNoneFunctionAssignment
+                hit_success: bool | None = event.other_entity.hit(
+                    self.damage,
+                    hit_by=self,
+                )
+                if hit_success is None or hit_success is True:
+                    self.position.x = event.position.x
+                    self.position.y = event.position.y
 
-            self.position.x = event.position.x
-            self.position.y = event.position.y
-
-            self.kill(killed_by=event.other_entity)
+                    self.kill(killed_by=event.other_entity)
+                    break
 
     def __collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
         """
-        When colliding with other bullets
-        that are not from the same parent (turret, gun, ...)
-        the bullets will hit each other
-        :param events: Collision events
+        Bullet hit each other
+        :param events: All details regarding the collisions
         """
         for event in events:
-            if event.other_entity.parent == self.parent:
-                continue
-
             self.hit(event.other_entity.damage, event.other_entity)
-
-    def __collision_shield(self, events: list[CollisionEvent["Shield"]]) -> None:
-        for event in events:
-            if event.other_entity == self.parent:
-                continue
-
-            if event.other_entity.in_use:
-                self.position.x = event.position.x
-                self.position.y = event.position.y
-
-                self.kill(killed_by=event.other_entity)
 
     def _collision_start(
             self,
@@ -400,27 +428,56 @@ class Bullet(LogicGameEntity):
                         "Player",
                         "BaseTurret",
                         "Grenade",
-                        "Shield"
+                        "Shield",
                     ]
                 ]
             ]
-    ) -> None:
+    ) -> list[bool] | None:
+        """
+        Distribute collision start events to different methods
+
+        - Island: Bullet kills itself
+        - Bullet: Bullets hit each other
+        - Player: Bullet hits the player and either pierces through or dies
+        - BaseTurret: Bullet hits the turret and either pierces through or dies
+        - Grenade: Bullet hits the grenade and either pierces through or dies
+        - Shield: Bullet hits the shield and either pierces through or dies
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
+        :return: List of booleans stating whether each collision is accepted.
+        """
+        if self._invincibility_offset > 0:
+            return [False for event in events]
+
         if (
-                group_id == GameCollisions.collision_group_islands
-                or group_id == GameCollisions.collision_group_players
-                or group_id == GameCollisions.collision_group_turrets
-                or group_id == GameCollisions.collision_group_grenades
+                group_id == GameCollisions.collision_group_grenades
+                or group_id == GameCollisions.collision_group_shields
         ):
-            events: list[CollisionEvent[tp.Union["Island", "Player", "Grenade"]]]
-            self.__collision_general(events)
+            events: list[CollisionEvent[
+                tp.Union["Grenade", "Shield"]]
+            ]
+            self.__collision_general_hit(events)
+
+        elif (
+                group_id == GameCollisions.collision_group_players
+                or group_id == GameCollisions.collision_group_turrets
+        ):
+            events: list[CollisionEvent[
+                tp.Union["BaseTurret", "Player"]]
+            ]
+            if self._left_root:
+                self.__collision_general_hit(events)
+
+        elif group_id == GameCollisions.collision_group_islands:
+            events: list[CollisionEvent["Island"]]
+            self.__collision_island(events)
 
         elif group_id == GameCollisions.collision_group_bullets:
             events: list[CollisionEvent[Bullet]]
             self.__collision_bullet(events)
 
-        elif group_id == GameCollisions.collision_group_shields:
-            events: list[CollisionEvent["Shield"]]
-            self.__collision_shield(events)
+        return None
 
     # endregion
 
@@ -429,11 +486,30 @@ class Bullet(LogicGameEntity):
         self._visibility_offset -= delta
         self._invincibility_offset -= delta
 
+        if not self._left_root:
+            root = self.root
+            if root is not None:
+                offset: int = 10
+                if (
+                        self.position.x + self.size.x <= root.position.x - offset
+                        or self.position.x >= root.position.x + root.size.x + offset
+                        or self.position.y + self.size.y <= root.position.y - offset
+                        or self.position.y >= root.position.y + root.size.y + offset
+                ):
+                    self._left_root = True
+                    if (
+                            self._initial_root_collision_exception is not None
+                            and self._initial_root_collision_exception
+                            in self._collision_exception_ids):
+                        self._collision_exception_ids.remove(
+                            self._initial_root_collision_exception
+                        )
+
         if any([
             self._time_to_life <= 0
         ]):
-            if self.kill():
-                return
+            self.kill()
+            return
 
         # double gravity (because why not)
         self.acceleration.y *= 2
