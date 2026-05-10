@@ -54,16 +54,18 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def load_texture(
-            self,
-            image: Image.Image,
-            size: coord_t | None = None,
-            mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+        self,
+        image: Image.Image,
+        size: coord_t | None = None,
+        mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+        pixel_perfect: bool = False,
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         Load an image texture (saves it internally)
         :param image: Image to load
         :param size: Size of image or None
         :param mirror: Axes to mirror the image on
+        :param pixel_perfect: set texture scaling behavior
         :returns: texture_id, (width, height)
         :raises NotImplementedError: If the renderer does not implement this method
         """
@@ -175,11 +177,12 @@ class BaseRenderer(abc.ABC):
             texture_id: TextureID,
             pos: coord_t,
             size: coord_t,
+            layer,
+            *,
             convert_global: bool = True,
             rotate_angle: float = 0,
             rotate_anchor: coord_t | EllipsisType = ...,
-            pixel_perfect: bool = False,
-            offscreen_check: bool = True
+            offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -190,11 +193,27 @@ class BaseRenderer(abc.ABC):
         :param rotate_angle: Angle in degrees to rotate the image at
         :param rotate_anchor: At what pixel to rotate at. Defaults to center position
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :param pixel_perfect: Whether to draw pixel perfect
+        :param layer: Layer number
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
 
+    def flush(self) -> None:
+        """
+        flush all texture layers
+
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    def flush_layer(self, layer: int) -> None:
+        """
+        flush one texture layer
+
+        :param layer: layer to flush
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
     # endregion
 
     # region Basic shapes

@@ -170,9 +170,9 @@ class Animation(BaseGraphicsEntity):
             texture,
             self.position - (self._size / 2) - pv.global_vars.get_world_position(),
             self._size,
-            pixel_perfect=True,
             rotate_angle=self.rotation * RTD,
-            rotate_anchor=self.rotate_anchor
+            rotate_anchor=self.rotate_anchor,
+            layer=layer
         )
 
 

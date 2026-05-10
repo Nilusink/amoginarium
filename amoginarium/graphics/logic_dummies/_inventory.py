@@ -103,6 +103,7 @@ class Inventory(BaseGraphicsEntity):
         slots_per_row: int,
         width: float,
         delta_cal: float,
+        layer: int
     ) -> None:
         """draw inventory at center of screen"""
         self._ui["root"].position.relative_global = position
@@ -184,6 +185,7 @@ class Inventory(BaseGraphicsEntity):
                         pos,
                         (size[0] * factor, size[1] * factor),
                         convert_global=False,
+                        layer=layer
                     )
 
     # endregion

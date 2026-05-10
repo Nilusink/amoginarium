@@ -59,7 +59,10 @@ class BulletDummy(SyncedImageEntity):
                 cls._default_size = Vec2().from_cartesian(cls._default_size, cls._default_size)
 
             cls._bullet_image, _ = textures.get_texture(
-                cls._image_name, cls._default_size, cls._image_mirror
+                cls._image_name,
+                cls._default_size,
+                cls._image_mirror,
+                pixel_perfect=True,
             )
 
     def __init_subclass__(cls, **kwargs):
@@ -183,6 +186,8 @@ class BulletDummy(SyncedImageEntity):
         cls,
         position: coord_t,
         size: coord_t,
+        layer: int,
+        *,
         rotation: float = 0,
     ) -> None:
         """draw an entity at specified position and size"""
@@ -194,6 +199,7 @@ class BulletDummy(SyncedImageEntity):
             position,
             size,
             rotate_angle=rotation,
+            layer=layer,
         )
 
     def _gl_draw(self, delta_cal: float, layer: int = 0, draw_entity: bool = True):

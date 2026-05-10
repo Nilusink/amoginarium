@@ -39,7 +39,7 @@ class MultiStageMissileDummy(BulletDummy):
         cls._animation_textures = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._animation_scope, cls._animation_size
+                cls._animation_scope, cls._animation_size, pixel_perfect=True
             )
         ]
 
@@ -66,25 +66,6 @@ class MultiStageMissileDummy(BulletDummy):
     def _kill(self) -> None:
         self._animation.stop()
         super()._kill()
-
-    @classmethod
-    def draw_at(
-        cls,
-        position: coord_t,
-        size: coord_t,
-        rotation: float = 0
-    ) -> None:
-        """draw an entity at specified position and size"""
-        if cls._bullet_image is ...:
-            cls.load_textures()
-
-        renderer.draw_textured_quad(
-            cls._bullet_image,  # type: ignore
-            position,
-            size,
-            rotate_angle=rotation,
-            pixel_perfect=True
-        )
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         # update animation

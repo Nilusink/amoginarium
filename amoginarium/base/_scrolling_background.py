@@ -159,11 +159,13 @@ class ParalaxBackground:
                 self._textures[layer],
                 (image_pos, 0),
                 self._sizes[layer],
-                convert_global=False
+                convert_global=False,
+                layer=-layer
             )
             renderer.draw_textured_quad(
                 self._textures[layer],
                 (image_pos + screen_size.x, 0),
                 self._sizes[layer],
-                convert_global=False
+                convert_global=False,
+                layer=-layer
             )

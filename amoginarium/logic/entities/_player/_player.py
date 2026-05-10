@@ -105,7 +105,9 @@ class Player(Passenger, LogicGameEntity):
         self._hotbar.set_highlight(0)
         items = [
             DYNAMIC_ENTITIES["weapon.ak47"](self, self._runtime_buffer, False),
-            DYNAMIC_ENTITIES["weapon.rpg"](self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
+            DYNAMIC_ENTITIES["weapon.minigun"](
+                self, self._runtime_buffer, False, parent_position_offset=(0, 10)
+            ),
             DYNAMIC_ENTITIES["weapon.sniper"](self, self._runtime_buffer, False),
             ExactoSniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
@@ -113,6 +115,7 @@ class Player(Passenger, LogicGameEntity):
             HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),
             JetBag(self._runtime_buffer, Vec2().from_cartesian(-24, 0)),
             RailGun(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
+            DYNAMIC_ENTITIES["weapon.rpg"](self, self._runtime_buffer, False),
         ]
         for item in items:
             self._hotbar.add_item(

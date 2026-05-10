@@ -646,14 +646,20 @@ class BaseGame:
                 "PauseSettings",
             ]:
                 # update background music
-                self._background.scroll(delta / 200)
+                self._background.set_position(world_pos.x)
                 self._background.draw(delta)
+                renderer.flush()
 
                 if active_scene in ["PauseMenu", "PauseSettings"]:
+                    # handle groups
                     SyncedEntities.update_from_buffer()
-                    Drawn_0.gl_draw(0)
+                    Drawn_0.gl_draw(delta)
+                    renderer.flush_layer(0)
                     Drawn_1.gl_draw(0)
+                    renderer.flush_layer(1)
                     Drawn_2.gl_draw(0)
+                    renderer.flush_layer(2)
+                    renderer.flush()
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)
@@ -671,12 +677,17 @@ class BaseGame:
                 # draw background
                 self._background.set_position(world_pos.x)
                 self._background.draw(delta)
+                renderer.flush()
 
                 # handle groups
                 SyncedEntities.update_from_buffer()
                 Drawn_0.gl_draw(delta)
-                Drawn_1.gl_draw(delta)
-                Drawn_2.gl_draw(delta)
+                renderer.flush_layer(0)
+                Drawn_1.gl_draw(0)
+                renderer.flush_layer(1)
+                Drawn_2.gl_draw(0)
+                renderer.flush_layer(2)
+                renderer.flush()
 
             # update global vars
             self.global_vars.update()
@@ -708,8 +719,14 @@ class BaseGame:
         renderer.clear_display()
 
         self._background.draw(0)
-        Drawn_0.gl_draw()
-        Drawn_1.gl_draw()
+        SyncedEntities.update_from_buffer()
+        Drawn_0.gl_draw(0)
+        Drawn_1.gl_draw(0)
+        Drawn_2.gl_draw(0)
+        renderer.flush_layer(0)
+        renderer.flush_layer(1)
+        renderer.flush_layer(2)
+        renderer.flush()
 
         renderer.display_draw_frame()
 

@@ -66,6 +66,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             name=cls._image_name,
             size=cls._default_size,
             mirror=mirror,
+            pixel_perfect=True,
         )
 
         if "x" in mirror:
@@ -78,6 +79,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             name=cls._image_name,
             size=cls._default_size,
             mirror=mirror,
+            pixel_perfect=True,
         )
 
     def __new__(cls, *args, **kwargs) -> tp.Self:
@@ -142,7 +144,8 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             self._bullet_type.draw_at(
                 bullet_pos,
                 bullet_size,
-                (self.facing.angle + PI) * RTD,
+                layer=layer,
+                rotation=(self.facing.angle + PI) * RTD,
             )
 
         if self.facing.x < 0:
@@ -159,7 +162,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._default_size,
                 rotate_angle=angle - 180,
                 rotate_anchor=anchor,
-                pixel_perfect=True
+                layer=layer
             )
 
         else:
@@ -176,7 +179,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._default_size,
                 rotate_angle=angle,
                 rotate_anchor=anchor,
-                pixel_perfect=True
+                layer=layer
             )
 
         # draw ammo bar

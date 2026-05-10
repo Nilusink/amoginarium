@@ -168,13 +168,15 @@ class PlayerDummy(SyncedLRImageEntity):
                     (0.5, 0.65),
                     10,
                     0.5,
-                    delta_cal
+                    delta_cal,
+                    layer=layer
                 )
                 self._hotbar.draw_at(
                     (0.5, 0.85),
                     10,
                     0.5,
-                    delta_cal
+                    delta_cal,
+                    layer=layer
                 )
 
                 # character display
@@ -191,5 +193,6 @@ class PlayerDummy(SyncedLRImageEntity):
                     (0.5, 0.95),
                     10,
                     0.4,
-                    delta_cal
+                    delta_cal,
+                    layer=layer
                 )

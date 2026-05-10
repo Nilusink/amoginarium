@@ -42,26 +42,25 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
         if isinstance(cls._image_name, str):
             cls._texture_id_r, _ = textures.get_texture(
-                cls._image_name,
-                cls._image_size
+                cls._image_name, cls._image_size, pixel_perfect=True
             )
             cls._texture_id_l, _ = textures.get_texture(
-                cls._image_name,
-                cls._image_size,
-                mirror="x"
+                cls._image_name, cls._image_size, mirror="x", pixel_perfect=True
             )
 
         else:
             cls._texture_id_r, _ = textures.get_texture(
                 cls._image_name[1],
                 cls._image_size,
-                scope=cls._image_name[0]
+                scope=cls._image_name[0],
+                pixel_perfect=True,
             )
             cls._texture_id_l, _ = textures.get_texture(
                 cls._image_name[1],
                 cls._image_size,
                 mirror="x",
-                scope=cls._image_name[0]
+                scope=cls._image_name[0],
+                pixel_perfect=True,
             )
 
     def __new__(cls, *args, **kwargs) -> tp.Self:
@@ -95,7 +94,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
                     self.world_position,
                     self.size,
                     rotate_angle=angle - 180,
-                    pixel_perfect=True
+                    layer=layer,
                 )
 
             else:
@@ -104,7 +103,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
                     self.world_position,
                     self.size,
                     rotate_angle=angle,
-                    pixel_perfect=True
+                    layer=layer,
                 )
 
         # draw usage bar
@@ -179,6 +178,7 @@ class HealingPotion(BaseItem):
             own_pos + self._internal_offset,
             self._image_size,
             rotate_angle=angle - (180 if 90 < angle < 270 else 0),
+            layer=layer
         )
 
         fill_line = 5 + (self.size.y - 10) * (1 - self.param1)
@@ -236,7 +236,7 @@ class JetBag(BaseItem):
         cls._animation_textures = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._animation_scope, cls._animation_size
+                cls._animation_scope, cls._animation_size, pixel_perfect=True
             )
         ]
 
@@ -278,7 +278,7 @@ class JetBag(BaseItem):
                     self.size.x,
                     self.size.y
                 ),
-                pixel_perfect=True
+                layer=layer
             )
             self._facing = False
 
@@ -290,7 +290,7 @@ class JetBag(BaseItem):
                     self.size.x,
                     self.size.y
                 ),
-                pixel_perfect=True
+                layer=layer
             )
             self._facing = True
 

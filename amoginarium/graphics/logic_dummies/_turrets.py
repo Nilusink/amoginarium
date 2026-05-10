@@ -47,7 +47,10 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     @classmethod
     def load_textures(cls) -> None:
         cls._body_texture, _ = textures.get_texture(
-            cls._image_name, cls._default_size, cls._image_mirror
+            cls._image_name,
+            cls._default_size,
+            cls._image_mirror,
+            pixel_perfect=True
         )
 
     def __init__(
@@ -225,7 +228,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                     self._body_texture,
                     self.world_position - self.size / 2,
                     self.size,
-                    pixel_perfect=True
+                    layer=layer
                 )
 
             else:
@@ -234,7 +237,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                     self._body_texture,
                     self.world_position - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
                     (-self.size.x, self.size.y),
-                    pixel_perfect=True
+                    layer=layer
                 )
 
             if self._highlight:

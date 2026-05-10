@@ -244,6 +244,8 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         self,
         position: coord_t,
         size: coord_t,
+        layer: int,
+        *,
         rotation: float = 0
     ) -> None:
         """draw an entity at specified position and size"""
@@ -252,6 +254,7 @@ class SyncedImageEntity(SyncedGraphicsEntity):
             position,
             size,
             rotate_angle=rotation,
+            layer=layer,
         )
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
@@ -265,7 +268,8 @@ class SyncedImageEntity(SyncedGraphicsEntity):
                 self.pos.y - world_position.y - self.size.y / 2,
             ),
             (self.size.x, self.size.y),
-            self.facing.angle * (180 / m.pi),
+            layer=layer,
+            rotation=self.facing.angle * (180 / m.pi),
         )
 
 
@@ -281,6 +285,7 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
             self.world_position - self.size / 2,
             self.size,
+            layer=layer
         )
 
 

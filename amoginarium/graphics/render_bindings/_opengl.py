@@ -35,8 +35,6 @@ from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
 
-from pygame.locals import DOUBLEBUF, OPENGL
-from pygame._sdl2.video import Window
 from types import EllipsisType
 from icecream import ic
 from PIL import Image
@@ -82,6 +80,10 @@ class OpenGLRenderer(BaseRenderer):
     __previous_window_position: tp.Final[Vec2]
     __previous_window_size: tp.Final[Vec2]
     __display_state: tp.Literal["windowed", "windowed_fullscreen", "fullscreen"]
+
+    def __init__(self) -> None:
+        self.__layer_cache = {}
+        super().__init__()
 
     # region Extra internal methods
     # todo: WHAT?
@@ -337,13 +339,15 @@ class OpenGLRenderer(BaseRenderer):
             self,
             image: Image.Image,
             size: coord_t | None = None,
-            mirror: tp.Literal["x", "y", "xy", "yx", ""] = ""
+            mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+            pixel_perfect: bool = False,
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         Load an image texture (saves it internally)
         :param image: Image to load
         :param size: Size of image or None
         :param mirror: Axes to mirror the image on
+        :param pixel_perfect: set texture scaling behavior
         :returns: integer texture id, (width, height)
         """
         if size is not None:
@@ -367,10 +371,19 @@ class OpenGLRenderer(BaseRenderer):
         # noinspection PyArgumentList
         texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_id)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        # set scaling behavior
+        if pixel_perfect:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        else:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGBA, width, height,
             0, GL_RGBA, GL_UNSIGNED_BYTE, img_data
@@ -561,6 +574,7 @@ class OpenGLRenderer(BaseRenderer):
             *args: A.args,
             **kwargs: A.kwargs
     ) -> None:
+        return
         self.start_stencil(show_stencil)
 
         stencil_func(*args, **kwargs)
@@ -571,6 +585,7 @@ class OpenGLRenderer(BaseRenderer):
         """
         call this, then draw stencil, then draw enable_stencil
         """
+        return
         glEnable(GL_STENCIL_TEST)
         glClear(GL_STENCIL_BUFFER_BIT)
 
@@ -588,6 +603,7 @@ class OpenGLRenderer(BaseRenderer):
         """
         start_stencil must be called first
         """
+        return
         if not show_stencil:
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
 
@@ -595,6 +611,7 @@ class OpenGLRenderer(BaseRenderer):
         glStencilFunc(GL_EQUAL, 1, 0xFF)
 
     def disable_stencil(self) -> None:
+        return
         glDisable(GL_STENCIL_TEST)
         glStencilMask(0xFF)
         glStencilFunc(GL_ALWAYS, 0, 0xFF)
@@ -603,16 +620,16 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Textured
     def draw_textured_quad(
-            self,
-            texture_id: TextureID,
-            pos: coord_t,
-            size: coord_t,
-            *,
-            convert_global: bool = True,
-            rotate_angle: float = 0,
-            rotate_anchor: coord_t | EllipsisType = ...,
-            pixel_perfect: bool = False,
-            offscreen_check: bool = True
+        self,
+        texture_id: TextureID,
+        pos: coord_t,
+        size: coord_t,
+        layer: int,
+        *,
+        convert_global: bool = True,
+        rotate_angle: float = 0,
+        rotate_anchor: coord_t | EllipsisType = ...,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -622,11 +639,11 @@ class OpenGLRenderer(BaseRenderer):
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param rotate_angle: Angle in degrees to rotate the image at
         :param rotate_anchor: At what pixel to rotate at. Defaults to center position
-        :param pixel_perfect: Whether to draw pixel perfect
         :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param layer: Layer number
         """
-        pos_vec2: Vec2 = convert_coord(pos, Vec2)
-        size_vec2: Vec2 = convert_coord(size, Vec2)
+        pos_vec2: Vec2 = convert_coord(pos, Vec2)  # type: ignore
+        size_vec2: Vec2 = convert_coord(size, Vec2)  # type: ignore
 
         if convert_global:
             pos_vec2 = pv.global_vars.translate_screen_coord(pos_vec2)
@@ -635,56 +652,101 @@ class OpenGLRenderer(BaseRenderer):
         if offscreen_check and self._check_out_of_screen(pos_vec2, size_vec2):
             return
 
-        # reset color
-        glColor3f(1.0, 1.0, 1.0)
-
-        glPushMatrix()
-        glTranslate(pos_vec2.x, pos_vec2.y, 0.0)
-
-        glEnable(GL_TEXTURE_2D)
-        glBindTexture(GL_TEXTURE_2D, texture_id)
-
-        if pixel_perfect:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
-        else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        if layer not in self.__layer_cache:
+            self.__layer_cache[layer] = []
 
         # rotate
+        rx = 0
+        ry = 0
         if rotate_angle != 0.0:
             if isinstance(rotate_anchor, EllipsisType):
                 rx, ry = size_vec2.x / 2.0, size_vec2.y / 2.0
             else:
-                anchor: Vec2 = convert_coord(rotate_anchor, Vec2)
+                anchor: Vec2 = convert_coord(  # type: ignore
+                    rotate_anchor, Vec2
+                )
+
                 if convert_global:
                     anchor = pv.global_vars.translate_scale(anchor)
+
                 rx, ry = anchor.x, anchor.y
 
-            glTranslated(rx, ry, 0.0)
-            glRotated(rotate_angle, 0.0, 0.0, 1.0)
-            glTranslated(-rx, -ry, 0.0)
+        self.__layer_cache[layer].append({
+            "texture_id": texture_id,
+            "pos": pos_vec2,
+            "size": size_vec2,
+            "rotate_angle": rotate_angle,
+            "rotate_anchor": (rx, ry),
+        })
 
-        glBegin(GL_QUADS)
+    def __draw_layer(self, layer: list[dict[str, tp.Any]]) -> None:
+        """draw one texture layer"""
+        layer = sorted(
+            layer, key=lambda x: x["texture_id"]
+        )
 
-        # draw rectangle and texture
-        glTexCoord2f(1.0, 0.0)
-        glVertex2f(0.0, 0.0)
-        glTexCoord2f(0.0, 0.0)
-        glVertex2f(size_vec2.x, 0.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex2f(size_vec2.x, size_vec2.y)
-        glTexCoord2f(1.0, 1.0)
-        glVertex2f(0.0, size_vec2.y)
+        # reset color
+        glColor3f(1.0, 1.0, 1.0)
 
-        glEnd()
-        glDisable(GL_TEXTURE_2D)
-        glPopMatrix()
+        current_texture = -1
+        for sprite in layer:
+            pos: Vec2 = sprite["pos"]
+            size: Vec2 = sprite["size"]
 
-        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
-            self._draw_debug_bounds(pos_vec2, size_vec2)
+            texture_id: int = sprite["texture_id"]
 
+            rotate_angle: float = sprite["rotate_angle"]
+            rx, ry = sprite["rotate_anchor"]
+
+            glPushMatrix()
+            glTranslate(pos.x, pos.y, 0.0)
+
+            # only re-bind texture on sprite type change
+            if texture_id != current_texture:
+                glBindTexture(GL_TEXTURE_2D, texture_id)
+                current_texture = texture_id
+
+            glEnable(GL_TEXTURE_2D)
+
+            if rotate_angle != 0.0:
+                glTranslated(rx, ry, 0.0)
+                glRotated(rotate_angle, 0.0, 0.0, 1.0)
+                glTranslated(-rx, -ry, 0.0)
+
+            glBegin(GL_QUADS)
+
+            # draw rectangle and texture
+            glTexCoord2f(1.0, 0.0)
+            glVertex2f(0.0, 0.0)
+            glTexCoord2f(0.0, 0.0)
+            glVertex2f(size.x, 0.0)
+            glTexCoord2f(0.0, 1.0)
+            glVertex2f(size.x, size.y)
+            glTexCoord2f(1.0, 1.0)
+            glVertex2f(0.0, size.y)
+
+            glEnd()
+            glDisable(GL_TEXTURE_2D)
+            glPopMatrix()
+
+            if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+                self._draw_debug_bounds(pos, size)
+
+    def flush_layer(self, layer: int) -> None:
+        # get layer from cache and delete
+        sprites = self.__layer_cache.pop(layer, [])
+
+        # draw layer
+        self.__draw_layer(sprites)
+
+    def flush(self) -> None:
+        layers = self.__layer_cache.copy().keys()
+        layers = sorted(layers)
+
+        # sort cache by texture_id, pixel perfect
+        for layer_id in sorted(layers):
+            self.__draw_layer(self.__layer_cache.pop(layer_id))
+    
     # endregion
 
     # region Basic shapes

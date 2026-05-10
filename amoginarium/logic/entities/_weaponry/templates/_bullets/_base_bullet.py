@@ -199,6 +199,7 @@ class Bullet(LogicGameEntity):
         self._start_time = perf_counter()
 
         self._hp = self._default_hp
+        self._weapon_ceid = weapon_collision_exception_id
 
         size = get_default(size, self._default_size)
         if not isinstance(size, Vec2):
@@ -572,7 +573,8 @@ class Bullet(LogicGameEntity):
                         # cluster_spread_angle=self._cluster_spread,
                         target_pos=self._target_pos,
                         size=self.size * self._cluster_size_mult,
-                        collide_siblings=False
+                        collide_siblings=False,
+                        weapon_collision_exception_id=self._weapon_ceid
                     )
                     current_angle += angle_spread
 
