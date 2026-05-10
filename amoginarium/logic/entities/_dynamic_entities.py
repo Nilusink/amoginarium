@@ -13,13 +13,13 @@ from __future__ import annotations
 import typing as tp
 
 from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
+from amoginarium.shared import DynamicEntityParentViable
 
-from ._base import LogicGameEntity
 from ._weaponry import templates
 
 
 # gets all base-entities (BaseTurret, BaseWeapon, ...) from templates module
-_base_entities: dict[str, tp.Type[LogicGameEntity]] = {
+_base_entities: dict[str, tp.Type[DynamicEntityParentViable]] = {
     e.cid(): e
     for e in [
         attr

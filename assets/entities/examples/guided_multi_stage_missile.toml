@@ -1,6 +1,6 @@
 [id]
-from = "dummy.missile.multi_stage"
-cid = "missile.rpg"
+from = "dummy.missile.guided_multi_stage"
+cid = "missile.javelin"
 
 [visibility]
 size = [100, 10]
@@ -53,28 +53,12 @@ accel = [2, 100, 10]
 march = [0, 0]
 inertial = [0, 0]
 
-[fuze.0]
-type = "ttl_mult"  # ttl multiplier fuze
-mult = 0.5
+[sensor.0]  # ONLY ONE SENSOR WILL BE USED!
+type = "<sensor.weapon.laser>"
+offset = [32, 0]
+code = 1688
+function_delay = 0.1
 
-[fuze.1]
-type = "distance"  # distance to predicted target position
-distance = 20
-
-[fuze.2]
-type = "proximity"  # proximity to entity
-distance = 100
+[guidance]
+max_alpha = 0.2
 function_delay = 0.2
-
-[fuze.3]
-type = "ttl"  # dies after specified time (behaviour/ttl SHOULD BE USED!)
-ttl = 10
-
-[fuze.4]
-type = "alt"  # height above ground (must be above height to arm first)
-height = 300
-
-# all fuzes:
-[fuze.4]
-offset = [0, 0] # offset from parent (oriented)
-arm_delay = 2  # arm delay in seconds

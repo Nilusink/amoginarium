@@ -185,6 +185,7 @@ cdef class Vec2:
     
         return v
 
+
 cpdef double normalize_angle(double value):
     cdef double a = value
     cdef double b = pi * 2
@@ -193,3 +194,39 @@ cpdef double normalize_angle(double value):
     if r < 0:
         r += b
     return r
+
+
+cpdef double normalize_angle_neg(double value):
+    return normalize_angle(value + pi) - pi
+
+
+cpdef double clamp_angle(double angle, double center, double max_delta):
+    diff = normalize_angle_neg(angle - center)
+
+    diff = max(-max_delta, min(max_delta, diff))
+
+    return normalize_angle(center + diff)
+
+
+cpdef double max_angle(double center, double[:] angles):
+    cdef:
+        Py_ssize_t i
+        double best = angles[0]
+
+    for i in range(1, angles.shape[0]):
+        if abs(angles[i] - center) > abs(best - center):
+            best = angles[i]
+
+    return best
+
+
+cpdef double min_angle(double center, double[:] angles):
+    cdef:
+        Py_ssize_t i
+        double best = angles[0]
+
+    for i in range(1, angles.shape[0]):
+        if abs(angles[i] - center) < abs(best - center):
+            best = angles[i]
+
+    return best

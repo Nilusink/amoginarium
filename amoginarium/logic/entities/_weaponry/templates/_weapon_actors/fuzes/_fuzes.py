@@ -15,11 +15,11 @@ import typing as tp
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
 
-from ...._base import GameCollisions
+from ....._base import GameCollisions
 from ._base import BaseFuze
 
 if tp.TYPE_CHECKING:
-    from .._bullets import Bullet
+    from ..._bullets import Bullet
 
 
 class TTLFuze(BaseFuze):
@@ -77,6 +77,9 @@ class PositionFuze(BaseFuze):
         self._target_position = position
         self._distance = distance
 
+        if self._dbe:
+            self._dbe.radius = self._distance
+
     def _update(self) -> None:
         # update position
         super()._update()
@@ -103,6 +106,9 @@ class ProximityFuze(BaseFuze):
         self._ceid = collision_exception_id
         self._collision_groups = GameCollisions.all_groups
         self._distance = distance
+
+        if self._dbe:
+            self._dbe.radius = self._distance
 
     def _update(self) -> None:
         # update position

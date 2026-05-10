@@ -83,3 +83,7 @@ class MultiStageMissileDummy(BulletDummy):
 
         # update trace and bullet
         super()._gl_draw(delta_cal, layer)
+
+
+class GuidedMultiStageMissileDummy(MultiStageMissileDummy):
+    _CID = MissileCIDs.guided_multi_stage

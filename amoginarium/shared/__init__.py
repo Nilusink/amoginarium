@@ -34,7 +34,8 @@ from ._data_types import (
     TurretCIDs,
     WeaponCIDs,
     CurrentView,
-    MissileCIDs
+    MissileCIDs,
+    WeaponSensorCIDs
 )
 from ._entity_hints import (
     BaseEntityLike,
@@ -45,7 +46,8 @@ from ._entity_hints import (
     PlayerLike,
     VisibleGameEntityLike,
     WeaponLike,
-    HasFacing
+    HasFacing,
+    DynamicEntityParentViable
 )
 from ._logic_entity_hints import (
     BaseLogicEntityLike,

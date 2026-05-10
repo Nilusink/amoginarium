@@ -1,8 +1,9 @@
 """
 amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
 
-Defines the core LogicGameEntity which combines spatial data, physics (velocity/acceleration),
-and collision detection, serving as the base class for standard game objects.
+Defines the core LogicGameEntity which combines spatial data, physics
+(velocity/acceleration), and collision detection, serving as the base class for
+standard game objects.
 
 Project: amoginarium
 Created: 28.03.2026
@@ -16,6 +17,7 @@ import typing as tp
 from amoginarium.shared.utility import Vec2, normalize_angle, get_default
 from amoginarium.shared.debugging import print_ic_style, CC
 from amoginarium.shared import Coalitions, LogicGameEntityLike
+from amoginarium.shared import DynamicEntityParentViable
 
 from amoginarium import pv
 
@@ -30,7 +32,9 @@ if tp.TYPE_CHECKING:
     from .._collision import CollisionType
 
 
-class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
+class LogicGameEntity(
+    CollisionLogicEntity, LogicGameEntityLike, DynamicEntityParentViable
+):
     """
     Implements all basic stuff for logic entities
     - Parent/Children relations
@@ -87,9 +91,10 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
         :param initial_velocity: Optional 2D initial velocity of the entity
         :param parent: Optional parent entity
         :param coalition: Coalition of the entity. Defaults to Coalitions.neutral
-        :param centered: Whether the position is center or top left (relevant for collision detection)
-            Edit afterward with self._centered
-        :param collision_group: Collision Group ID. Defaults to cls._DEFAULT_COLLISION_GROUP.
+        :param centered: Whether the position is center or top left (relevant for
+            collision detection) Edit afterward with self._centered
+        :param collision_group: Collision Group ID. Defaults to
+            cls._DEFAULT_COLLISION_GROUP.
         :param collision_exception_ids: Optional list of collision exception rules.
             Edit afterward with self._collision_exception_ids
         :param collision_exception_root: Groups this entity and all its children recursive to a collision exception
@@ -181,7 +186,9 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
         """
         self.__world_position = pv.global_vars.get_world_position()
 
-        self.velocity += (self._acceleration_to_add + self.acceleration) * delta + self._velocity_to_add
+        self.velocity += (
+            self._acceleration_to_add + self.acceleration
+        ) * delta + self._velocity_to_add
         self.position += self.velocity * delta
         self.acceleration.x *= 0
 

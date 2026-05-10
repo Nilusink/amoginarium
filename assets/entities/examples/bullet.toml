@@ -51,7 +51,7 @@ distance = 20
 [fuze.2]
 type = "proximity"  # proximity to entity
 distance = 100
-arm_delay = 0.2
+function_delay = 0.2
 
 [fuze.3]
 type = "ttl"  # dies after specified time (behaviour/ttl SHOULD BE USED!)

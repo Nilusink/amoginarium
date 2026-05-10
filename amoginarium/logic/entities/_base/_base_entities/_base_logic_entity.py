@@ -139,6 +139,11 @@ class BaseLogicEntity(BaseLogicEntityLike):
         """time since entity spawn"""
         return self._lifetime
 
+    @property
+    def runtime_buffer(self) -> Array[base_entity_t]:
+        """entity runtime buffer"""
+        return self._runtime_buffer
+
     # endregion
 
     # region Methods: bitwise fun

@@ -104,7 +104,7 @@ class Player(Passenger, LogicGameEntity):
         self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
-            DYNAMIC_ENTITIES["weapon.ak47"](self, self._runtime_buffer, False),
+            DYNAMIC_ENTITIES["weapon.atgm"](self, self._runtime_buffer, False),
             DYNAMIC_ENTITIES["weapon.minigun"](
                 self, self._runtime_buffer, False, parent_position_offset=(0, 10)
             ),

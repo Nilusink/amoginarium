@@ -10,6 +10,7 @@ Nilusink
 from __future__ import annotations
 from typing import Protocol
 import pygame as pg
+from abc import ABC, abstractmethod
 
 from .utility import Vec2
 from ._linked import Coalitions
@@ -21,6 +22,20 @@ class HasPosition(Protocol):
 
 class HasFacing(Protocol):
     facing: Vec2
+
+
+class DynamicEntityParentViable(ABC):
+    """can be used as dynamic entity parent"""
+
+    @classmethod
+    @abstractmethod
+    def has_cid(cls) -> bool:
+        """entity has component ID?"""
+
+    @classmethod
+    @abstractmethod
+    def cid(cls) -> str:
+        """component ID"""
 
 
 class BaseEntityLike(Protocol):

@@ -56,6 +56,14 @@ class MissileCIDs(Enum):
     """Component IDs for missiles"""
     base = "dummy.missile.base"
     multi_stage = "dummy.missile.multi_stage"
+    guided_multi_stage = "dummy.missile.guided_multi_stage"
+
+
+class WeaponSensorCIDs(Enum):
+    """Component IDs for weapon sensors"""
+    base = "sensor.weapon.base"
+    laser = "sensor.weapon.laser"
+    heat = "sensor.weapon.heat"
 
 
 class IslandCIDs(Enum):
@@ -157,9 +165,10 @@ class _CIDRegister:
         return 0
 
 
-CID_REGISTER = _CIDRegister(WeaponCIDs)  #, TurretCIDs, IslandCIDs, DummyCIDs)
+CID_REGISTER = _CIDRegister(WeaponCIDs)
 type CIDType = (
     DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs | GraphicsCIDs | MissileCIDs
+    | WeaponSensorCIDs
 )
 
 

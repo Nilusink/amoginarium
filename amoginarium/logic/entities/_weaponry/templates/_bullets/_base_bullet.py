@@ -21,7 +21,7 @@ from amoginarium.shared.utility import Vec2, get_default
 from amoginarium.shared.debugging import print_ic_style
 from amoginarium import pv
 
-from .._fuzes import BaseFuze, TTLFuze, PositionFuze, ProximityFuze, FUZES
+from .._weapon_actors.fuzes import BaseFuze, TTLFuze, PositionFuze, ProximityFuze, FUZES
 from ...._base import Bullets, Updated, GravityAffected, BaseGroup
 from ...._base import LogicGameEntity, GameCollisions
 
@@ -186,8 +186,6 @@ class Bullet(LogicGameEntity):
         :param cluster_depth: n of cluster steps
         :param cluster_amount: n of bullets per cluster step
         :param cluster_spread_angle: spread of bullets
-        :param cluster_fuze_ttl_mult: % of ttl where cluster step occurs
-        :param cluster_fuze_dist: distance to predicted target where cluster step occurs
         :param cluster_step_explosion: explosion size per cluster step (0 if None)
         :param cluster_size_mult: size multiplier per cluster step
         :param cluster_last_step_ttl: last cluster step bullet ttl (-1 if dynamic)
@@ -329,12 +327,23 @@ class Bullet(LogicGameEntity):
                         [p for p in params if params[p].default == inspect._empty]
                     )
 
-                    print_ic_style(
-                        f"invalid params for fuze type \"{fuze_name}\" "
-                        f"({self.__class__.__name__}), missing: {req - spec}, "
-                        f"additional: {spec - req}",
-                        error=True
+                    debug_str = (
+                        f"invalid params for fuze type \"{fuze_type.__name__}\" "
+                        f"({self.__class__.__name__})"
                     )
+
+                    miss = req - spec
+                    if miss:
+                        debug_str += f", missing: {miss}"
+
+                    add = spec - req
+                    if add:
+                        debug_str += f", additional: {add}"
+
+                    if not miss and not add:
+                        debug_str += ", argument list OK"
+
+                    print_ic_style(debug_str, error=True)
 
             else:
                 print_ic_style(
@@ -516,6 +525,10 @@ class Bullet(LogicGameEntity):
 
         if self._invincibility_offset > 0:
             return True
+
+        # kill fuzes
+        for fuze in self._fuzes:
+            fuze.kill(killed_by)
 
         # check if casing
         if all([self._casing, not Updated.out_of_bounds_x(self)]):

@@ -183,6 +183,9 @@ def load_entities_from_files(
                             effect = PRESETS[preset]
                     
                     if effect:
+                        if "volume" in data["sound"]:
+                            effect.volume = data["sound"]["volume"]
+
                         __dict["_default_sound_effect"] = effect
 
             for subsection in data:
@@ -241,7 +244,7 @@ def load_entities_from_files(
     for _ in range(len(to_inherit)):
         for cid, params in to_inherit.copy().items():
             if params[1] not in new_entities and params[1] not in to_inherit:
-                ic(cid, "failed: inherit", params[1])
+                ic(process_type, cid, "failed: inherit", params[1])
                 to_inherit.pop(cid)
                 continue
 
@@ -258,11 +261,9 @@ def load_entities_from_files(
             break
 
     else:
-        raise RuntimeError(f"Circular dependancy detected: {list(to_inherit.keys())}")
+        raise RuntimeError(f"Circular dependency detected: {list(to_inherit.keys())}")
 
     entity_index.update(new_entities)
-
-    names = [c.__name__ for c in entity_index.values()]
 
     # resolve stuff
     for entity in new_entities.values():
@@ -285,7 +286,7 @@ def load_entities_from_files(
                         sensors.append(sensor)
 
                     except KeyError:
-                        ic(entity, sensor)
+                        ic(entity, sensor, entity_index)
 
                 setattr(entity, key, sensors)
 

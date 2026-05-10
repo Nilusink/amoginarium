@@ -47,4 +47,17 @@ cdef class Vec2:
 
     cpdef object from_polar(self, double angle, double length)
 
+
 cpdef double normalize_angle(double value)
+
+
+cpdef double normalize_angle_neg(double value)
+
+
+cpdef double clamp_angle(double angle, double center, double max_delta)
+
+
+cpdef double max_angle(double center, double[:] angles)
+
+
+cpdef double min_angle(double center, double[:] angles)

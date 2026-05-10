@@ -71,3 +71,19 @@ class Vec2:
 
 def normalize_angle(value: float) -> float:
     ...
+
+
+def normalize_angle_neg(value: float) -> float:
+    """normalize angle +/- pi"""
+
+
+def clamp_angle(angle: float, center: float, max_delta: float) -> float:
+    """clamp angle +/- max_delta around center"""
+
+
+def max_angle(center: float, *angles) -> float:
+    """max angle compared to center"""
+
+
+def min_angle(center: float, *angles) -> float:
+    """min angle compared to center"""
