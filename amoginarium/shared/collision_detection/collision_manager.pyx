@@ -685,7 +685,7 @@ cdef class CollisionManager:
         cdef unordered_set[uint64_t] checked_pairs
         cdef EntityData * ea
         cdef EntityData * eb
-        cdef double norm_x, norm_y, t
+        cdef double norm_x, norm_y, t, ev_time
         cdef double imp_ax, imp_ay, imp_bx, imp_by
         cdef vector[uint64_t] * a_keys
         cdef vector[int] * cell_b
@@ -754,7 +754,8 @@ cdef class CollisionManager:
                     if ig_a_sz > 0 and ig_b_sz > 0:
                         for ig_a_i in range(ig_a_sz):
                             for ig_b_i in range(ig_b_sz):
-                                if ea.ignore_collisions[ig_a_i] == eb.ignore_collisions[ig_b_i]:
+                                if ea.ignore_collisions[ig_a_i] == eb.ignore_collisions[
+                                    ig_b_i]:
                                     ignore = True
                                     break
                             if ignore: break
@@ -769,22 +770,27 @@ cdef class CollisionManager:
 
                     if ea.h_type == 0 and eb.h_type == 0:
                         hit = aabb_aabb_swept(
-                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.sx, ea.sy,
-                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
+                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.sx,
+                            ea.sy,
+                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx,
+                            eb.sy,
                             is_active_col, &norm_x, &norm_y, &t)
                     elif ea.h_type == 0 and (eb.h_type == 4 or eb.h_type == 5):
                         hit = aabb_circle_swept(
-                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.sx, ea.sy,
+                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.sx,
+                            ea.sy,
                             eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
                             is_active_col, &norm_x, &norm_y, &t)
                     elif (ea.h_type == 4 or ea.h_type == 5) and eb.h_type == 0:
                         hit = aabb_circle_swept(
-                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
+                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx,
+                            eb.sy,
                             ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
                             is_active_col, &norm_x, &norm_y, &t)
                         norm_x = -norm_x
                         norm_y = -norm_y
-                    elif (ea.h_type == 4 or ea.h_type == 5) and (eb.h_type == 4 or eb.h_type == 5):
+                    elif (ea.h_type == 4 or ea.h_type == 5) and (
+                            eb.h_type == 4 or eb.h_type == 5):
                         hit = circle_circle_swept(
                             ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
                             eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
@@ -796,8 +802,10 @@ cdef class CollisionManager:
                         b_dy = eb.py_n - eb.py_o
                         hit = circle_poly_swept(
                             ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
-                            eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(), eb.vy_n.data(), eb.vx_o.size(),
-                            eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
+                            eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(),
+                            eb.vy_n.data(), eb.vx_o.size(),
+                            eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx,
+                            b_dy,
                             is_active_col, &norm_x, &norm_y, &t
                         )
                     elif ea.h_type < 4 and eb.h_type >= 4:
@@ -807,8 +815,10 @@ cdef class CollisionManager:
                         b_dy = eb.py_n - eb.py_o
                         hit = circle_poly_swept(
                             eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
-                            ea.vx_o.data(), ea.vy_o.data(), ea.vx_n.data(), ea.vy_n.data(), ea.vx_o.size(),
-                            ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx, a_dy,
+                            ea.vx_o.data(), ea.vy_o.data(), ea.vx_n.data(),
+                            ea.vy_n.data(), ea.vx_o.size(),
+                            ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx,
+                            a_dy,
                             is_active_col, &norm_x, &norm_y, &t
                         )
                         norm_x = -norm_x
@@ -820,9 +830,11 @@ cdef class CollisionManager:
                         b_dy = eb.py_n - eb.py_o
                         hit = poly_poly_swept(
                             ea.vx_o.data(), ea.vy_o.data(), ea.vx_o.size(),
-                            ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx, a_dy,
+                            ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx,
+                            a_dy,
                             eb.vx_o.data(), eb.vy_o.data(), eb.vx_o.size(),
-                            eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
+                            eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx,
+                            b_dy,
                             is_active_col, &norm_x, &norm_y, &t
                         )
 
@@ -839,17 +851,28 @@ cdef class CollisionManager:
                             imp_bx = eb.px_o + ((eb.px_n - eb.px_o) * t)
                             imp_by = eb.py_o + ((eb.py_n - eb.py_o) * t)
 
+                            ev_time = t if t > 0.0 else 0.0
+
                             if callbacks[0] is not None:
                                 inst_b = self.group_instances[g_b_id][b_id]
-                                ev = CollisionEvent(col_id, r_id, g_b_id, inst_b, Vec2().from_cartesian(imp_ax, imp_ay),
-                                                    Vec2().from_cartesian(norm_x, norm_y), t)
-                                if ea.id not in events_a_start: events_a_start[ea.id] = []
+                                ev = CollisionEvent(col_id, r_id, g_b_id, inst_b,
+                                                    Vec2().from_cartesian(imp_ax,
+                                                                          imp_ay),
+                                                    Vec2().from_cartesian(norm_x,
+                                                                          norm_y),
+                                                    ev_time)
+                                if ea.id not in events_a_start: events_a_start[
+                                    ea.id] = []
                                 events_a_start[ea.id].append((ev, pair_key))
 
                             if callbacks[2] is not None:
                                 inst_a = self.group_instances[g_a_id][ea.id]
-                                ev = CollisionEvent(col_id, r_id, g_a_id, inst_a, Vec2().from_cartesian(imp_bx, imp_by),
-                                                    Vec2().from_cartesian(-norm_x, -norm_y), t)
+                                ev = CollisionEvent(col_id, r_id, g_a_id, inst_a,
+                                                    Vec2().from_cartesian(imp_bx,
+                                                                          imp_by),
+                                                    Vec2().from_cartesian(-norm_x,
+                                                                          -norm_y),
+                                                    ev_time)
                                 if b_id not in events_b_start: events_b_start[b_id] = []
                                 events_b_start[b_id].append((ev, pair_key))
 
@@ -866,7 +889,9 @@ cdef class CollisionManager:
                     inst_b = self.group_instances[g_b_id][b_id]
                     if inst_a is not None and inst_b is not None:
                         ev = CollisionEvent(col_id, r_id, g_b_id, inst_b,
-                                            Vec2().from_cartesian(ga.entities[a_id].px_n, ga.entities[a_id].py_n),
+                                            Vec2().from_cartesian(
+                                                ga.entities[a_id].px_n,
+                                                ga.entities[a_id].py_n),
                                             Vec2(), 1.0)
                         if a_id not in events_a_end: events_a_end[a_id] = []
                         events_a_end[a_id].append(ev)
@@ -876,7 +901,9 @@ cdef class CollisionManager:
                     inst_a = self.group_instances[g_a_id][a_id]
                     if inst_b is not None and inst_a is not None:
                         ev = CollisionEvent(col_id, r_id, g_a_id, inst_a,
-                                            Vec2().from_cartesian(gb.entities[b_id].px_n, gb.entities[b_id].py_n),
+                                            Vec2().from_cartesian(
+                                                gb.entities[b_id].px_n,
+                                                gb.entities[b_id].py_n),
                                             Vec2(), 1.0)
                         if b_id not in events_b_end: events_b_end[b_id] = []
                         events_b_end[b_id].append(ev)
@@ -920,9 +947,12 @@ cdef class CollisionManager:
             callbacks[3](self.group_instances[g_b_id][ent_id], g_a_id, evs)
             rel = &self.relations[r_id]
 
-    def manual_collision(self, list group_ids, object start_position, object end_position, object size=None,
-                         str hitbox_type="point", bint centered=False, double rotation=0.0,
-                         list start_positions=None, object radius=None, object ignore_collisions=None) -> list:
+    def manual_collision(self, list group_ids, object start_position,
+                         object end_position, object size=None,
+                         str hitbox_type="point", bint centered=False,
+                         double rotation=0.0,
+                         list start_positions=None, object radius=None,
+                         object ignore_collisions=None) -> list:
         cdef EntityData ed
         cdef double cx, cy, cx_o, cy_o, hw, hh, cr, sr, ax, ay, dx, dy, ln
         cdef double pivot_x, pivot_y
@@ -930,7 +960,7 @@ cdef class CollisionManager:
         cdef double min_px, min_py, max_px_o, max_px_n, max_px, max_py_o, max_py_n, max_py
         cdef list events
         cdef int g_id, lvl, min_cx, min_cy, max_cx, max_cy, grid_cx, grid_cy, b_id
-        cdef double c_size, norm_x, norm_y, t, a_dx, a_dy, b_dx, b_dy
+        cdef double c_size, norm_x, norm_y, t, a_dx, a_dy, b_dx, b_dy, ev_time
         cdef uint64_t key
         cdef vector[int] * cell_b
         cdef CollisionGroupStruct * gb
@@ -1143,7 +1173,8 @@ cdef class CollisionManager:
 
                 for grid_cy in range(min_cy, max_cy + 1):
                     for grid_cx in range(min_cx, max_cx + 1):
-                        key = (<uint64_t> grid_cx << 32) | (<uint64_t> grid_cy & 0xFFFFFFFF)
+                        key = (<uint64_t> grid_cx << 32) | (
+                                    <uint64_t> grid_cy & 0xFFFFFFFF)
                         if self.grids[lvl][g_id].count(key) == 0: continue
 
                         cell_b = &self.grids[lvl][g_id][key]
@@ -1164,7 +1195,8 @@ cdef class CollisionManager:
                             if ig_a_sz > 0 and ig_b_sz > 0:
                                 for ig_a_i in range(ig_a_sz):
                                     for ig_b_i in range(ig_b_sz):
-                                        if ed.ignore_collisions[ig_a_i] == eb.ignore_collisions[ig_b_i]:
+                                        if ed.ignore_collisions[ig_a_i] == \
+                                                eb.ignore_collisions[ig_b_i]:
                                             ignore = True
                                             break
                                     if ignore: break
@@ -1173,25 +1205,34 @@ cdef class CollisionManager:
                             hit = False
                             if ed.h_type == 0 and eb.h_type == 0:
                                 hit = aabb_aabb_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.sx, ed.sy,
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
+                                    ed.sx, ed.sy,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
+                                    eb.sx, eb.sy,
                                     False, &norm_x, &norm_y, &t)
                             elif ed.h_type == 0 and (eb.h_type == 4 or eb.h_type == 5):
                                 hit = aabb_circle_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.sx, ed.sy,
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
+                                    ed.sx, ed.sy,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
+                                    eb.radius,
                                     False, &norm_x, &norm_y, &t)
                             elif (ed.h_type == 4 or ed.h_type == 5) and eb.h_type == 0:
                                 hit = aabb_circle_swept(
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.sx, eb.sy,
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.radius,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
+                                    eb.sx, eb.sy,
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
+                                    ed.radius,
                                     False, &norm_x, &norm_y, &t)
                                 norm_x = -norm_x
                                 norm_y = -norm_y
-                            elif (ed.h_type == 4 or ed.h_type == 5) and (eb.h_type == 4 or eb.h_type == 5):
+                            elif (ed.h_type == 4 or ed.h_type == 5) and (
+                                    eb.h_type == 4 or eb.h_type == 5):
                                 hit = circle_circle_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.radius,
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
+                                    ed.radius,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
+                                    eb.radius,
                                     False, &norm_x, &norm_y, &t)
                             elif ed.h_type >= 4 and eb.h_type < 4:
                                 a_dx = ed.px_n - ed.px_o
@@ -1199,9 +1240,12 @@ cdef class CollisionManager:
                                 b_dx = eb.px_n - eb.px_o
                                 b_dy = eb.py_n - eb.py_o
                                 hit = circle_poly_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0], ed.radius,
-                                    eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(), eb.vy_n.data(), eb.vx_o.size(),
-                                    eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
+                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
+                                    ed.radius,
+                                    eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(),
+                                    eb.vy_n.data(), eb.vx_o.size(),
+                                    eb.axes_x.data(), eb.axes_y.data(),
+                                    eb.axes_x.size(), b_dx, b_dy,
                                     False, &norm_x, &norm_y, &t
                                 )
                             elif ed.h_type < 4 and eb.h_type >= 4:
@@ -1210,9 +1254,12 @@ cdef class CollisionManager:
                                 b_dx = eb.px_n - eb.px_o
                                 b_dy = eb.py_n - eb.py_o
                                 hit = circle_poly_swept(
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
-                                    ed.vx_o.data(), ed.vy_o.data(), ed.vx_n.data(), ed.vy_n.data(), ed.vx_o.size(),
-                                    ed.axes_x.data(), ed.axes_y.data(), ed.axes_x.size(), a_dx, a_dy,
+                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
+                                    eb.radius,
+                                    ed.vx_o.data(), ed.vy_o.data(), ed.vx_n.data(),
+                                    ed.vy_n.data(), ed.vx_o.size(),
+                                    ed.axes_x.data(), ed.axes_y.data(),
+                                    ed.axes_x.size(), a_dx, a_dy,
                                     False, &norm_x, &norm_y, &t
                                 )
                                 norm_x = -norm_x
@@ -1224,9 +1271,11 @@ cdef class CollisionManager:
                                 b_dy = eb.py_n - eb.py_o
                                 hit = poly_poly_swept(
                                     ed.vx_o.data(), ed.vy_o.data(), ed.vx_o.size(),
-                                    ed.axes_x.data(), ed.axes_y.data(), ed.axes_x.size(), a_dx, a_dy,
+                                    ed.axes_x.data(), ed.axes_y.data(),
+                                    ed.axes_x.size(), a_dx, a_dy,
                                     eb.vx_o.data(), eb.vy_o.data(), eb.vx_o.size(),
-                                    eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx, b_dy,
+                                    eb.axes_x.data(), eb.axes_y.data(),
+                                    eb.axes_x.size(), b_dx, b_dy,
                                     False, &norm_x, &norm_y, &t
                                 )
 
@@ -1234,9 +1283,14 @@ cdef class CollisionManager:
                                 inst_b = self.group_instances[g_id][b_id]
                                 imp_ax = ed.px_o + ((ed.px_n - ed.px_o) * t)
                                 imp_ay = ed.py_o + ((ed.py_n - ed.py_o) * t)
+                                ev_time = t if t > 0.0 else 0.0
                                 events.append(
-                                    CollisionEvent(-1, -1, g_id, inst_b, Vec2().from_cartesian(imp_ax, imp_ay),
-                                                   Vec2().from_cartesian(norm_x, norm_y), t))
+                                    CollisionEvent(-1, -1, g_id, inst_b,
+                                                   Vec2().from_cartesian(imp_ax,
+                                                                         imp_ay),
+                                                   Vec2().from_cartesian(norm_x,
+                                                                         norm_y),
+                                                   ev_time))
 
         events.sort(key=lambda e: e.time)
         return events

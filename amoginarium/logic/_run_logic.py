@@ -585,9 +585,10 @@ def run_continuous(
             delta = 0
 
         # set debug vars
-        CollisionLogicEntity.debug_draw_hitboxes(
-            pv.global_vars.get_debug_var(num=DebugVarsEnum.DRAW_HITBOXES)
-        )
+        debug_draw_hitboxes: bool = pv.global_vars.get_debug_var(
+            num=DebugVarsEnum.DRAW_HITBOXES)
+        CollisionLogicEntity.debug_draw_hitboxes(debug_draw_hitboxes)
+        Island.debug_draw_hitboxes(debug_draw_hitboxes)
 
         # update entities
         last_update_success = lp.update_entities(delta)

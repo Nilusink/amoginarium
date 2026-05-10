@@ -9,7 +9,8 @@ from libc.math cimport sqrt
 cdef inline double c_max(double a, double b) noexcept: return a if a > b else b
 cdef inline double c_min(double a, double b) noexcept: return a if a < b else b
 
-cdef inline void project_poly(const double * vx, const double * vy, size_t sz, double nx, double ny, double * out_min,
+cdef inline void project_poly(const double * vx, const double * vy, size_t sz,
+                              double nx, double ny, double * out_min,
                               double * out_max) noexcept:
     cdef double min_p, max_p, p0, p1, p2, p3, min1, max1, min2, max2
     cdef size_t i
@@ -49,8 +50,10 @@ cdef inline void project_poly(const double * vx, const double * vy, size_t sz, d
         out_max[0] = max_p
 
 cdef bint aabb_aabb_swept(
-        double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_sx, double a_sy,
-        double b_px_o, double b_py_o, double b_px_n, double b_py_n, double b_sx, double b_sy,
+        double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_sx,
+        double a_sy,
+        double b_px_o, double b_py_o, double b_px_n, double b_py_n, double b_sx,
+        double b_sy,
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept:
@@ -149,11 +152,12 @@ cdef bint aabb_aabb_swept(
 
     if (v_rel_x * out_norm_x[0]) + (v_rel_y * out_norm_y[0]) > 0.0: return False
 
-    out_t[0] = c_max(0.0, ex_t_hit_near)
+    out_t[0] = ex_t_hit_near
     return True
 
 cdef bint aabb_circle_swept(
-        double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_sx, double a_sy,
+        double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_sx,
+        double a_sy,
         double b_px_o, double b_py_o, double b_px_n, double b_py_n, double b_radius,
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
@@ -202,7 +206,8 @@ cdef bint aabb_circle_swept(
         ny = ax_y[curr_axis]
 
         C_A = (a_px_o + a_sx * 0.5) * nx + (a_py_o + a_sy * 0.5) * ny
-        E_A = (a_sx * 0.5) * (nx if nx > 0 else -nx) + (a_sy * 0.5) * (ny if ny > 0 else -ny)
+        E_A = (a_sx * 0.5) * (nx if nx > 0 else -nx) + (a_sy * 0.5) * (
+            ny if ny > 0 else -ny)
         minA_o = C_A - E_A;
         maxA_o = C_A + E_A
 
@@ -292,7 +297,7 @@ cdef bint aabb_circle_swept(
         if mid_overlap <= required_overlap:
             return False
 
-    out_t[0] = c_max(0.0, t_enter)
+    out_t[0] = t_enter
     return True
 
 cdef bint circle_circle_swept(
@@ -420,14 +425,16 @@ cdef bint circle_circle_swept(
         if mid_overlap <= required_overlap:
             return False
 
-    out_t[0] = c_max(0.0, t_enter)
+    out_t[0] = t_enter
     return True
 
 cdef bint poly_poly_swept(
         const double * a_vx_o, const double * a_vy_o, size_t a_sz,
-        const double * a_ax_x, const double * a_ax_y, size_t a_ax_sz, double a_dx, double a_dy,
+        const double * a_ax_x, const double * a_ax_y, size_t a_ax_sz, double a_dx,
+        double a_dy,
         const double * b_vx_o, const double * b_vy_o, size_t b_sz,
-        const double * b_ax_x, const double * b_ax_y, size_t b_ax_sz, double b_dx, double b_dy,
+        const double * b_ax_x, const double * b_ax_y, size_t b_ax_sz, double b_dx,
+        double b_dy,
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept:
@@ -530,13 +537,15 @@ cdef bint poly_poly_swept(
         if mid_overlap <= required_overlap:
             return False
 
-    out_t[0] = c_max(0.0, t_enter)
+    out_t[0] = t_enter
     return True
 
 cdef bint circle_poly_swept(
         double c_px_o, double c_py_o, double c_px_n, double c_py_n, double c_radius,
-        const double * p_vx_o, const double * p_vy_o, const double * p_vx_n, const double * p_vy_n, size_t p_sz,
-        const double * p_ax_x, const double * p_ax_y, size_t p_ax_sz, double p_dx, double p_dy,
+        const double * p_vx_o, const double * p_vy_o, const double * p_vx_n,
+        const double * p_vy_n, size_t p_sz,
+        const double * p_ax_x, const double * p_ax_y, size_t p_ax_sz, double p_dx,
+        double p_dy,
         bint is_active,
         double * out_norm_x, double * out_norm_y, double * out_t
 ) noexcept:
@@ -685,5 +694,5 @@ cdef bint circle_poly_swept(
         if mid_overlap <= required_overlap:
             return False
 
-    out_t[0] = c_max(0.0, t_enter)
+    out_t[0] = t_enter
     return True

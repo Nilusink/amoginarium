@@ -34,12 +34,12 @@ class Island(LogicGameEntity):
     Base class for island entities in the game world.
     Handles collision generation from bitmaps and logic-to-graphics synchronization.
     """
-    __slots__ = ("_size", "_form", "_damage", "_bounce")
+    __slots__ = ("_size", "_form", "_damage", "_bounce", "_debug_entities")
     # region ClassVars
     _block_size: tp.ClassVar[tuple[int, int]] = (64, 64)
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = \
         GameCollisions.collision_group_islands
-    __DEBUG_DRAW_HITBOXES: tp.ClassVar[bool] = False
+    __debug_draw_hitboxes: tp.ClassVar[bool] = False
 
     _BASE_DAMAGE: tp.ClassVar[float] = 0.0
     _BASE_BOUNCE: tp.ClassVar[float] = 0.0
@@ -52,7 +52,9 @@ class Island(LogicGameEntity):
     _size: Vec2
     _form: list[list[int]] | None
     _damage: float
-    _bounce: float  # endregion
+    _bounce: float
+    _debug_entities: list[DebugRectangleEntity] | None
+    _raw_rects: list[tuple[int, int, int, int]]  # endregion
 
     def __init__(
             self,
@@ -96,6 +98,9 @@ class Island(LogicGameEntity):
             position=start,
         )
 
+        self._debug_entities = None
+        self._raw_rects = []
+
         self.add(Walls)
 
         self._create_collision_entities()
@@ -115,6 +120,19 @@ class Island(LogicGameEntity):
             type=BaseCommandType.spawn_island,
             kwargs=kwargs
         ))
+
+    @classmethod
+    def debug_draw_hitboxes(cls, value: bool) -> None:
+        """
+        Enables or disables global debug rendering for hitboxes.
+        :param value: True to enable, False to disable.
+        """
+        old_value = cls.__debug_draw_hitboxes
+        cls.__debug_draw_hitboxes = value
+        if old_value != value:
+            for wall in Walls.entities():
+                if hasattr(wall, "update_collision_debug_hitboxes"):
+                    wall.update_collision_debug_hitboxes()
 
     @classmethod
     def random_between(
@@ -163,6 +181,45 @@ class Island(LogicGameEntity):
             return None
         return self._form.copy()
 
+    # noinspection DuplicatedCode
+    def update_collision_debug_hitboxes(self) -> None:
+        if Island.__debug_draw_hitboxes:
+            if self._debug_entities is None:
+                self._debug_entities = []
+                if self._debug_entities is not None:
+                    if self._form is None:
+                        self._debug_entities.append(
+                            DebugRectangleEntity(
+                                self._runtime_buffer, self.position, self.size)
+                        )
+                    else:
+                        for r1, c1, r2, c2 in self._raw_rects:
+                            # Calculate cell dimensions
+                            width_cells = c2 - c1 + 1
+                            height_cells = r2 - r1 + 1
+
+                            # Translate to Pygame world coordinates
+                            rect_x = self.position.x + c1 * self.__class__._block_size[
+                                0]
+                            rect_y = self.position.y + r1 * self.__class__._block_size[
+                                1]
+                            rect_w = width_cells * self.__class__._block_size[0]
+                            rect_h = height_cells * self.__class__._block_size[1]
+
+                            position = convert_coord((rect_x, rect_y), Vec2)
+                            size = convert_coord((rect_w, rect_h), Vec2)
+
+                            self._debug_entities.append(
+                                DebugRectangleEntity(self._runtime_buffer, position,
+                                                     size)
+                            )
+
+        else:
+            if self._debug_entities is not None:
+                for debug_entity in self._debug_entities:
+                    debug_entity.kill()
+                self._debug_entities = None
+
     def _create_collision_entities(self) -> None:
         """
         Generates collision rectangles for the island.
@@ -174,8 +231,6 @@ class Island(LogicGameEntity):
                 GameCollisions.collision_group_islands, self,
                 self.position, self.size
             )
-            if Island.__DEBUG_DRAW_HITBOXES:
-                DebugRectangleEntity(self._runtime_buffer, self.position, self.size)
             return
 
         # Collision rects
@@ -193,10 +248,10 @@ class Island(LogicGameEntity):
                     # Jagged edge, leave as 0
                     pass
 
-        raw_rects: list[tuple[int, int, int, int]] = \
+        self._raw_rects: list[tuple[int, int, int, int]] = \
             find_minimum_rectangles_dirty(bitmap)
 
-        for r1, c1, r2, c2 in raw_rects:
+        for r1, c1, r2, c2 in self._raw_rects:
             # Calculate cell dimensions
             width_cells = c2 - c1 + 1
             height_cells = r2 - r1 + 1
@@ -214,8 +269,6 @@ class Island(LogicGameEntity):
                 GameCollisions.collision_group_islands, self,
                 position, size
             )
-            if Island.__DEBUG_DRAW_HITBOXES:
-                DebugRectangleEntity(self._runtime_buffer, position, size)
 
     def to_dict(self) -> tp.MutableMapping[str, tp.Any]:
         """

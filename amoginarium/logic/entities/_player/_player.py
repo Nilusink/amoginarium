@@ -360,33 +360,8 @@ class Player(LogicGameEntity):
     def get_initial_root_collision_exception(self) -> CollisionType.ExceptionID:
         return self._bullets_do_not_initially_hit_player
 
+    # noinspection DuplicatedCode
     def _update(self, delta):
-        self._on_ground = False
-
-        if GameCollisions.collision_group_islands in self._active_normals.keys():
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
-                if n.y < -0.5:
-                    self._on_ground = True
-                    if self.acceleration.y > 0:
-                        self.acceleration.y = 0
-                    if self.velocity.y > 0:
-                        self.velocity.y = 0
-                elif n.y > 0.5:
-                    if self.acceleration.y < 0:
-                        self.acceleration.y = 0
-                    if self.velocity.y < 0:
-                        self.velocity.y = 0
-                if n.x < -0.5:
-                    if self.acceleration.x > 0:
-                        self.acceleration.x = 0
-                    if self.velocity.x > 0:
-                        self.velocity.x = 0
-                elif n.x > 0.5:
-                    if self.acceleration.x < 0:
-                        self.acceleration.x = 0
-                    if self.velocity.x < 0:
-                        self.velocity.x = 0
-
         # update reloads
         for hover_slot in self._hotbar:
             if hover_slot.count > 0:
@@ -494,6 +469,48 @@ class Player(LogicGameEntity):
             self._inventory_pressed = False
 
         # ic(self.position, self.velocity.xy, self.acceleration.xy, self._velocity_to_add.xy, self._acceleration_to_add.xy)
+        self._on_ground = False
+
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
+                if n.y < -0.5:
+                    self._on_ground = True
+                    if self.acceleration.y > 0:
+                        self.acceleration.y = 0
+                    if self._acceleration_to_add.y > 0:
+                        self._acceleration_to_add.y = 0
+                    if self.velocity.y > 0:
+                        self.velocity.y = 0
+                    if self._velocity_to_add.y > 0:
+                        self._velocity_to_add.y = 0
+                elif n.y > 0.5:
+                    if self.acceleration.y < 0:
+                        self.acceleration.y = 0
+                    if self._acceleration_to_add.y < 0:
+                        self._acceleration_to_add.y = 0
+                    if self.velocity.y < 0:
+                        self.velocity.y = 0
+                    if self._velocity_to_add.y < 0:
+                        self._velocity_to_add.y = 0
+                if n.x < -0.5:
+                    if self.acceleration.x > 0:
+                        self.acceleration.x = 0
+                    if self._acceleration_to_add.x > 0:
+                        self._acceleration_to_add.x = 0
+                    if self.velocity.x > 0:
+                        self.velocity.x = 0
+                    if self._velocity_to_add.x > 0:
+                        self._velocity_to_add.x = 0
+                elif n.x > 0.5:
+                    if self.acceleration.x < 0:
+                        self.acceleration.x = 0
+                    if self._acceleration_to_add.x < 0:
+                        self._acceleration_to_add.x = 0
+                    if self.velocity.x < 0:
+                        self.velocity.x = 0
+                    if self._velocity_to_add.x < 0:
+                        self._velocity_to_add.x = 0
+
         self.position += self.__add_position
         self.__add_position *= 0
         super()._update(delta)
