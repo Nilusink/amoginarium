@@ -14,7 +14,7 @@ import ctypes
 
 
 # region constants
-MAX_ENTITIES: int = 100_000
+MAX_ENTITIES: int = 32_000
 MAX_CONTROLLERS: int = 8
 MAX_INVENTORIES: int = 64
 MAX_INVENTORY_SLOTS: int = 64
@@ -32,8 +32,7 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
         ("size_y", ctypes.c_uint16),
         ("flags", ctypes.c_uint16),  # (
         # 0=alive, 1=visible, 2=highlight,
-        # 13=(loaded (weapon),)
-        # 14=(active (item), thrust active(missile))
+        # 14=(active (item))
         # 15=(in inventory (player), has parent (item))
         # )
 
@@ -132,4 +131,4 @@ def get_write_lock() -> Lock:
 
 
 if __name__ == "__main__":
-    print(ctypes.sizeof(inventory_t) * MAX_INVENTORIES)
+    print(ctypes.sizeof(base_entity_t) * MAX_ENTITIES)
