@@ -129,7 +129,7 @@ class HeatSeeker(BaseWeaponsSensor):
 
             if rcs > largest_rcs:
                 largest_rcs = rcs
-                self._target_pos = delta
+                self._target_pos = delta * -1
 
         if largest_rcs == 0:
             self._target_pos = None

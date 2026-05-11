@@ -82,15 +82,19 @@ class GuidedMultiStageMissile(MultiStageMissile):
         self._sensor.kill(self)
         return super()._kill(killed_by)
 
-    def __update_guidance(self, _: float) -> None:
-        target_delta = self._sensor.get_target()
-
+    def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
+        """
+        update guidance system
+        :param dt: time delta since last update
+        :param target_delta: delta to target position
+        :return:
+        """
         if target_delta:
             facing = self.velocity.copy().normalize()
             target = target_delta.copy().normalize()
 
             # calculate angular error
-            error = -m.atan2(
+            error = m.atan2(
                 facing.x * target.y - facing.y * target.x,
                 facing.x * target.x + facing.y * target.y,
             )
@@ -116,12 +120,12 @@ class GuidedMultiStageMissile(MultiStageMissile):
         else:
             self._rudder_angle = 0
 
-    def _update(self, delta: float) -> None:
-        super()._update(delta)
+    def _update(self, delta: float, apply_thrust: bool = True) -> None:
+        super()._update(delta, apply_thrust=apply_thrust)
 
         # update sensor
         self._sensor.update()
         
         # update guidance
         if self._lifetime >= self._default_guidance_function_delay:
-            self.__update_guidance(delta)
+            self._update_guidance(delta, self._sensor.get_target())

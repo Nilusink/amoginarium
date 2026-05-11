@@ -88,7 +88,7 @@ class BaseMissile(AerodynamicEntity):
             self._sound.volume = .5
 
         if self._DEBUG:
-            self._dbe = DebugPolygonEntity(runtime_buffer, fill_color=(255, 0, 0, 30))
+            self._dbe = DebugPolygonEntity(runtime_buffer, fill_color=(255, 0, 0, 20))
 
     # region properties
     @property
@@ -123,9 +123,9 @@ class BaseMissile(AerodynamicEntity):
 
         return val
 
-    def _update(self, delta: float) -> None:
+    def _update(self, delta: float, apply_thrust: bool = True) -> None:
         # apply thrust force at rear of missile
-        if self.thrust != 0:
+        if self.thrust != 0 and apply_thrust:
             self.apply_force(
                 Vec2().from_polar(0, self.thrust),
                 Vec2().from_cartesian(-self.size.x / 2, 0),

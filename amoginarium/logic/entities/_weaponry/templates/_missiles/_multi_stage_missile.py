@@ -48,6 +48,10 @@ class MultiStageMissile(BaseMissile):
     _default_motor_inertial: crude_motor_stage_t = (0, 0)
     # endregion
 
+    # region InstanceVars
+    _apply_thrust: bool
+    # endregion
+
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
@@ -80,6 +84,8 @@ class MultiStageMissile(BaseMissile):
             if len(stage) > 2:
                 self.__current_fuel_weight += stage[0] * stage[2]
 
+        self._apply_thrust = True
+
         super().__init__(
             runtime_buffer,
             parent,
@@ -97,6 +103,10 @@ class MultiStageMissile(BaseMissile):
 
     # region properties
     @property
+    def _current_stage(self) -> int:
+        return self.__current_stage
+
+    @property
     def _fuel_mass(self) -> float:
         return self.__current_fuel_weight
 
@@ -113,6 +123,11 @@ class MultiStageMissile(BaseMissile):
 
         # if stage is -1 motor is done
         if self.__current_stage < 0:
+            return
+
+        # only apply thrust if wanted
+        if not self._apply_thrust:
+            self.__current_thrust = 0
             return
 
         # increment stage time
@@ -144,6 +159,6 @@ class MultiStageMissile(BaseMissile):
                 self._stages[self.__current_stage][0] + self.__current_stage_t
             )
 
-    def _update(self, delta: float) -> None:
+    def _update(self, delta: float, apply_thrust: bool = True) -> None:
         self.__update_stage(delta)
-        super()._update(delta)
+        super()._update(delta, apply_thrust=apply_thrust)

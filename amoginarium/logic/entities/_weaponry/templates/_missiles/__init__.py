@@ -1,2 +1,3 @@
 from ._multi_stage_missile import MultiStageMissile
 from ._guided_multi_stage_missile import GuidedMultiStageMissile
+from ._multi_thruster_missile import MultiThrusterMissile

@@ -1,0 +1,60 @@
+[id]
+from = "dummy.missile.multi_thruster"
+cid = "missile.icbm_interceptor"
+
+[visibility]
+size = [64, 16]
+
+[trace]
+color = [[255, 255, 255, 100]]  # either one or two colors
+length = 300
+width_mult = 0.5  # trace width multiplier
+
+[image]
+name = "atgm_missile"
+
+[behaviour]
+hp = 0.5
+ttl = 20
+weight = 3  # knockback
+mass = 3  # aerodynamics
+base_damage = 30
+
+[explosion]
+radius = 128
+damage = 80
+
+[rudder]
+size = 8
+max_angle = 2
+
+[motor]
+start = [0.3, 0]
+launch = [0.2, 50_000, 4]
+accel = [0.4, 8_000, 0.8]
+
+[sound]
+name = "jetbag"
+
+[sensor.0]
+type = "<sensor.weapon.heat>"
+offset = [32, 0]
+function_delay = 0.1
+fov = 1
+max_range = 2500
+
+[guidance]
+max_alpha = 0.3
+function_delay = 0.3
+
+[fuze.0]
+type = "proximity"
+distance = 64
+function_delay = 1
+offset = [31, 0]
+
+#[cluster]  # fun stuff
+#depth = 1
+#amount = 3
+#spread=0.3
+#fuze_ttl_mult = 0.9

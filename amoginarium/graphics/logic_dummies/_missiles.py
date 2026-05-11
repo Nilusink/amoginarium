@@ -97,3 +97,7 @@ class GuidedMultiStageMissileDummy(MultiStageMissileDummy):
             self.facing.angle,
             self.size.x / 2.1 + self._animation_size[0] / 2
         )
+
+
+class MultiThrusterMissileDummy(MultiStageMissileDummy):
+    _CID = MissileCIDs.multi_thruster

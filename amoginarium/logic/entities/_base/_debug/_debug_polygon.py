@@ -86,6 +86,7 @@ class DebugPolygonEntity(PositionedLogicEntity):
         self.p6 = get_default(p6, Vec2())
         self.p7 = get_default(p7, Vec2())
         self.p8 = get_default(p8, Vec2())
+
         if points is not ...:
             self.set_points(points)
 
