@@ -66,7 +66,7 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
         cls._images = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._image_scope, cls._default_size, mirror="x"
+                cls._image_scope, cls._default_size, mirror="x", pixel_perfect=True
             )
         ]
         cls._images_m = [
@@ -74,6 +74,7 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
             for t in textures.get_all_from_scope(
                 cls._image_scope,
                 cls._default_size,
+                pixel_perfect=True
             )
         ]
 

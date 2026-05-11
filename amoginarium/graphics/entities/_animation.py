@@ -36,6 +36,7 @@ class Animation(BaseGraphicsEntity):
         rotation_offset: float | EllipsisType = ...,
         rotate_anchor: Vec2 | EllipsisType = ...,
         loop: bool = False,
+        layer: int = 0,
     ) -> None:
         """
         :param textures: list of texture ids to play as an animation
@@ -81,6 +82,7 @@ class Animation(BaseGraphicsEntity):
         self._rotate_anchor = rotate_anchor
 
         self._playing = False
+        self._layer = layer
 
     @property
     def position(self) -> Vec2:
@@ -172,7 +174,7 @@ class Animation(BaseGraphicsEntity):
             self._size,
             rotate_angle=self.rotation * RTD,
             rotate_anchor=self.rotate_anchor,
-            layer=layer
+            layer=self._layer
         )
 
 
@@ -225,7 +227,8 @@ class ImageAnimation:
             delay,
             size: Vec2,
             position: Vec2 = ...,
-            position_reference: HasPosition = ...
+            position_reference: HasPosition = ...,
+            layer: int = 0
     ) -> None:
         """
         play the recently loaded animation
@@ -241,6 +244,7 @@ class ImageAnimation:
             delay,
             position,
             position_reference,
+            layer=layer
         ).play()
 
 

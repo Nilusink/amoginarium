@@ -54,6 +54,7 @@ class MultiStageMissileDummy(BulletDummy):
             rotation_reference=self,
             rotation_offset=-3.14159265/2,
             loop=True,
+            layer=2
         )
 
     def _flame_position(self) -> Vec2:
@@ -87,3 +88,12 @@ class MultiStageMissileDummy(BulletDummy):
 
 class GuidedMultiStageMissileDummy(MultiStageMissileDummy):
     _CID = MissileCIDs.guided_multi_stage
+
+    _animation_size: tuple[int, int] = (32, 32)
+
+    def _flame_position(self) -> Vec2:
+        """flame position for animation"""
+        return self.pos + Vec2().from_polar(
+            self.facing.angle,
+            self.size.x / 2.1 + self._animation_size[0] / 2
+        )

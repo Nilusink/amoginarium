@@ -10,12 +10,11 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
-from icecream import ic
 import typing as tp
 import numpy as np
 import math as m
 
-from amoginarium.shared.utility import Vec2, M_2_PI, PIDController, normalize_angle_neg
+from amoginarium.shared.utility import Vec2, clamp_angle, PIDController, PI_4
 from amoginarium.shared import MissileCIDs, base_entity_t, Coalitions
 
 from ...._base import LogicGameEntity
@@ -79,15 +78,11 @@ class GuidedMultiStageMissile(MultiStageMissile):
 
         self._sensor = sensor_type(parent=self, **sensor_args)
 
-    @property
-    def alpha(self) -> float:
-        return normalize_angle_neg(self._alpha)
-
     def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
-        super()._kill(killed_by)
         self._sensor.kill(self)
+        return super()._kill(killed_by)
 
-    def __update_guidance(self, delta: float) -> None:
+    def __update_guidance(self, _: float) -> None:
         target_delta = self._sensor.get_target()
 
         if target_delta:
@@ -110,7 +105,11 @@ class GuidedMultiStageMissile(MultiStageMissile):
                 self._rudder_angle = rudder
 
             else:
-                self._rudder_angle = 0
+                self._rudder_angle = np.sign(self.alpha) * (
+                    clamp_angle(
+                        abs(self.alpha) / PI_4, 0, 1
+                    )
+                ) * self._rudder_max_angle
 
             self._target_pos = self.position + target_delta
 

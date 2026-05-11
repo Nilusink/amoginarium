@@ -8,19 +8,17 @@ size = [64, 16]
 [trace]
 color = [[255, 255, 255, 100]]  # either one or two colors
 length = 300
-width_mult = 0.3  # trace width multiplier
-
+width_mult = 0.5  # trace width multiplier
 
 [image]
 name = "atgm_missile"
 
 [behaviour]
 hp = 0.5
-ttl = 6  # rpg fuzes after 4-6 seconds with no target
+ttl = 4
 weight = 5  # knockback
 mass = 5  # aerodynamics
 base_damage = 30
-#invincibility_offset = 0.1
 
 [explosion]
 radius = 128
@@ -32,8 +30,8 @@ max_angle = 2
 
 [motor]
 start = [0.3, 0]
-launch = [0.2, 40_000, 3]
-accel = [0.5, 8_000, 0.8]
+launch = [0.15, 40_000, 3]
+accel = [0.4, 8_000, 0.8]
 
 [sound]
 name = "jetbag"
