@@ -118,7 +118,7 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
                 self._apply_thrust = True
 
         else:
-            desired_velocity = Vec2().from_cartesian(500, 0)
+            desired_velocity = Vec2().from_cartesian(1000, 0)
 
             if self.position.y > 0:
                 desired_velocity.y = -100

@@ -15,7 +15,7 @@ name = "atgm_missile"
 
 [behaviour]
 hp = 0.5
-ttl = 20
+ttl = 50
 weight = 3  # knockback
 mass = 3  # aerodynamics
 base_damage = 30

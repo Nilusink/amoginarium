@@ -104,7 +104,12 @@ class ProximityFuze(BaseFuze):
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
         self._ceid = collision_exception_id
-        self._collision_groups = GameCollisions.all_groups
+        self._collision_groups = [
+            GameCollisions.collision_group_turrets,
+            GameCollisions.collision_group_players,
+            GameCollisions.collision_group_islands,
+            GameCollisions.collision_group_shields
+        ]
         self._distance = distance
 
         if self._dbe:
