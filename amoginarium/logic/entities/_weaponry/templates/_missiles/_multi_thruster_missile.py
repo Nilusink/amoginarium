@@ -9,10 +9,7 @@ Nilusink
 """
 from types import EllipsisType
 from ctypes import Array
-from icecream import ic
-import typing as tp
 import numpy as np
-import math as m
 
 from amoginarium.shared.utility import Vec2, normalize_angle_neg, PI, PI_2
 from amoginarium.shared import MissileCIDs, base_entity_t, Coalitions
@@ -114,7 +111,7 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
 
         if target_delta:
             desired_velocity = Vec2()
-            if abs(angle_delta) <= self._rotational_tolerance:
+            if abs(angle_delta) <= self._rotational_tolerance and velocity.length <= 1:
                 self._apply_thrust = True
 
         else:

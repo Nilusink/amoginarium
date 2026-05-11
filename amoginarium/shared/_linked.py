@@ -88,6 +88,28 @@ class GlobalVars:
         if set:
             self._set_from_current()
 
+        self.__compiled = []
+
+        self.__compile_values()
+
+    def __compile_values(self) -> None:
+        for key, item in self.__values.items():
+            if key.endswith(("_x", "_y")):
+                obj = getattr(self, f"_{key[:-2]}")
+                attr = key[-1]
+
+            else:
+                obj = self
+                attr = f"_{key}"
+
+            self.__compiled.append((item, obj, attr, []))
+
+    def add_callback(self, value: str, callback: tp.Callable[[tp.Any], tp.Any]) -> None:
+        """add a value change callback"""
+        for i, v in enumerate(self.__compiled):
+            if v[1] == value:
+                self.__compiled[i][3].append(callback)
+
     def _set_from_current(self) -> None:
         self.__values["screen_size_x"].value = self._screen_size.x
         self.__values["screen_size_y"].value = self._screen_size.y
@@ -266,24 +288,13 @@ class GlobalVars:
         """
         update from Values
         """
-        self._screen_size.x = self.__values["screen_size_x"].value
-        self._screen_size.y = self.__values["screen_size_y"].value
-        self._screen_size_real.x = self.__values["screen_size_real_x"].value
-        self._screen_size_real.y = self.__values["screen_size_real_y"].value
-        self._screen_size_fac.x = self.__values["screen_size_fac_x"].value
-        self._screen_size_fac.y = self.__values["screen_size_fac_y"].value
-        self._screen_size_offset.x = self.__values["screen_size_offset_x"].value
-        self._screen_size_offset.y = self.__values["screen_size_offset_y"].value
-        self._resolution.x = self.__values["resolution_x"].value
-        self._resolution.y = self.__values["resolution_y"].value
-        self._world_position.x = self.__values["world_position_x"].value
-        self._world_position.y = self.__values["world_position_y"].value
+        for item, obj, attr, callbacks in self.__compiled:
+            new = item.value
+            old = getattr(obj, attr)
 
-        self._acceleration_factor = self.__values["acceleration_factor"].value
-        self._max_fps = self.__values["max_fps"].value
+            if new != old:
+                setattr(obj, attr, new)
 
-        self._background_position = self.__values["background_position"].value
-        self._pixel_per_meter = self.__values["pixel_per_meter"].value
-        self._scaling = self.__values["scaling"].value
-        self._time = self.__values["time"].value
-        self._t_mult = self.__values["t_mult"].value
+                if callbacks:
+                    for cb in callbacks:
+                        cb(new)

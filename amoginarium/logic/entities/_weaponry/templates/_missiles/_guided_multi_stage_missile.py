@@ -100,7 +100,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
             )
 
             # PD-controller
-            rudder = error * 1.5 - (-self.ang_vel * .5)
+            rudder = error * 1.5 - (self.ang_vel * .5)
 
             # clamp rudder
             rudder = min(max(rudder, -self._rudder_max_angle), self._rudder_max_angle)
