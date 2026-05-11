@@ -114,14 +114,14 @@ class ExactoSniper(BaseWeapon):
     _max_range = 3500
 
     def __init__(
-        self,
-        parent: LogicGameEntity,
-        runtime_buffer: Array[base_entity_t],
-        drop_casings: bool = False,
-        parent_position_offset: coord_t = Vec2(),
-        targeting_func: tp.Callable[[], Vec2 | None] | None = None,
-        guidance_delay: float | EllipsisType = ...,
-        **kwargs
+            self,
+            parent: LogicGameEntity,
+            runtime_buffer: Array[base_entity_t],
+            drop_casings: bool = False,
+            parent_position_offset: coord_t = Vec2(),
+            targeting_func: tp.Callable[[], Vec2 | None] | None = None,
+            guidance_delay: float | EllipsisType = ...,
+            **kwargs
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,

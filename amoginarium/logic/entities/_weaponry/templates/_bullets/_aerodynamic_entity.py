@@ -10,6 +10,7 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
+# noinspection P
 from icecream import ic
 import math as m
 

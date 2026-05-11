@@ -8,7 +8,7 @@ Author:
 Nilusink
 """
 from multiprocessing.sharedctypes import Synchronized
-from ctypes import c_double, c_int8, c_int32
+from ctypes import c_double, c_int8, c_int64
 from multiprocessing import Value
 from enum import Enum
 import typing as tp
@@ -38,7 +38,7 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
     "t_mult": c_double,
     "max_fps": c_double,
     "background_position": c_double,
-    "debug_vars": c_int32
+    "debug_vars": c_int64
 }
 
 
