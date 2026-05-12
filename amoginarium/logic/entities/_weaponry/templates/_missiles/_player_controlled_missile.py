@@ -101,6 +101,9 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
 
         self._rudder_angle = 0
 
+        if self._controller.shoot:
+            self.kill(self)
+
         if abs(self.alpha) < self._default_guidance_max_alpha:
             # check for controller
             if not self._controller:

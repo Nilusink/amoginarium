@@ -14,7 +14,7 @@ mag_size = 1
 reload_time = 1
 recoil_time = 0.02
 inaccuracy = 0.01093606
-muzzle_velocity = 700
+muzzle_velocity = 800
 recoil_factor = 0.1
 
 [bullet]

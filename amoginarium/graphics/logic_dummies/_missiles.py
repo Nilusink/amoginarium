@@ -40,8 +40,6 @@ class MultiStageMissileDummy(BulletDummy):
     def load_textures(cls) -> None:
         super().load_textures()
 
-        ic(cls.__name__, cls._image_scope)
-
         if cls.__dict__.get("_animation_textures", ...) is not ...:
             return
 
@@ -52,8 +50,6 @@ class MultiStageMissileDummy(BulletDummy):
                     cls._image_scope, cls._default_size, pixel_perfect=True
                 )
             ]
-
-        ic(cls._image_textures)
 
         cls._animation_textures = [
             t[0]
@@ -114,7 +110,6 @@ class MultiStageMissileDummy(BulletDummy):
                 self._animation.play()
 
         # update trace and bullet
-        # ic(self.texture_id, self.__class__.__name__, self._image_scope)
         super()._gl_draw(delta_cal, layer)
 
 

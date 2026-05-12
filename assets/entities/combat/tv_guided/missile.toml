@@ -37,7 +37,7 @@ accel = [4, 3_000, 0.8]
 name = "jetbag"
 
 [guidance]
-max_alpha = 1
+max_alpha = 1  # limit missile alpha (no loops ...)
 function_delay = 0.3
 
 [fuze.0]
