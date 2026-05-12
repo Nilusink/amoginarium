@@ -525,12 +525,16 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         self._update_collision()
         super()._update(delta)
 
-    def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def _kill(
+            self,
+            killed_by: BaseLogicEntity | EllipsisType = ...,
+            kill_children: bool = True
+    ) -> None:
         """
         Remove from groups and collision manager
         :param killed_by: who killed this entity
         """
         self._delete_collision()
-        super()._kill(killed_by)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     # endregion

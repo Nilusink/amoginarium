@@ -150,9 +150,6 @@ class Shield(Something):
         if self._uses_left <= 0:
             self.kill(hit_by)
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
-        super()._kill(killed_by)
-
     def _update(self, delta: float, **_) -> None:
         if self.parent:
             d = Vec2().from_polar(

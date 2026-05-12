@@ -71,7 +71,6 @@ class Player(LogicGameEntity):
         self._hp = self._max_hp
         self._controller = controller
         self._on_ground = False
-        self._alive = True
 
         self._bullets_do_not_initially_hit_player = GameCollisions.add_exception()
 
@@ -532,8 +531,11 @@ class Player(LogicGameEntity):
         else:
             self.__should_be_killed = 0
 
-    def _kill(self, killed_by=...) -> None:
-        self._alive = False
+    def _kill(
+            self,
+            killed_by: tp.Any | EllipsisType = ...,
+            kill_children: bool = True
+    ) -> None:
         self._death_sound.play()
 
         if hasattr(self.item, "stop_use"):
@@ -541,7 +543,7 @@ class Player(LogicGameEntity):
         elif hasattr(self.item, "stop_shooting"):
             self.item.stop_shooting()
 
-        super()._kill(killed_by)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     def respawn(self, pos: Vec2 = ...) -> None:
         self._alive = True

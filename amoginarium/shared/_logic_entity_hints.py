@@ -92,19 +92,57 @@ class BaseLogicEntityLike(tp.Protocol):
         """
         ...
 
-    def _kill(self, killed_by: BaseLogicEntityLike | EllipsisType = ...) -> None:
+    def _before_kill(
+            self,
+            killed_by: BaseLogicEntityLike | EllipsisType = ...,
+            kill_children: bool = True
+    ) -> bool:
+        """
+        Whether the entity can be killed. Called before _kill
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively
+        :return: Whether the entity kill is accepted.
+        """
+
+    def _kill(
+            self,
+            killed_by: BaseLogicEntityLike | EllipsisType = ...,
+            kill_children: bool = True
+    ) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively
+        """
+
+    def _after_kill(
+            self,
+            killed_by: BaseLogicEntityLike | EllipsisType = ...,
+            kill_children: bool = True,
+            killed: bool = True
+    ) -> None:
+        """
+        Called at the end of kill no matter if the kill was accepted or not
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively
+        :param killed: Whether the entity kill was accepted or not
         """
         ...
 
-    def kill(self, killed_by: BaseLogicEntityLike | EllipsisType = ...) -> None:
+    def kill(
+            self,
+            killed_by: BaseLogicEntityLike | EllipsisType = ...,
+            kill_children: bool = True,
+            force_kill: bool = False
+    ) -> bool | None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well as recursively
+        :param force_kill: whether to kill even if before kill returns False
+        :return: Whether the entity was killed or not. May be denied by _before_kill.
+            None if the entity is already dead.
         """
-        ...
 
     def _update(self, delta: float) -> None:
         """

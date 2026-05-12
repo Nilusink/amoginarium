@@ -20,6 +20,8 @@ from ...._base import GameCollisions, CollisionType
 from ...templates import Bullet
 
 if tp.TYPE_CHECKING:
+    from types import EllipsisType
+
     from ...._base import LogicGameEntity
     from ...._world import Island
     from ...._player import Player
@@ -194,16 +196,6 @@ class Grenade(Bullet):
                     self.velocity.x = 0
 
         super()._update(delta, update_facing)
-
-    def _kill(self, killed_by: tp.Any = ...):
-        if killed_by is not ...:
-            if issubclass(killed_by.__class__, Bullet):
-                self._time_to_life = 0
-
-        if self._time_to_life > 0:
-            return False
-
-        return super()._kill(killed_by)
 
     # noinspection DuplicatedCode
     def add_velocity(self, value: Vec2) -> None:

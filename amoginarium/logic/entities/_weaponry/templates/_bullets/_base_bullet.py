@@ -533,21 +533,32 @@ class Bullet(LogicGameEntity):
         # update velocity
         self._runtime_buffer[self.id].param1 = self.velocity.length
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
+    def _before_kill(
+            self,
+            killed_by: LogicGameEntity | EllipsisType = ...,
+            kill_children: bool = True
+    ) -> bool:
         if killed_by != ... and killed_by != self:
             if killed_by.parent == self.parent:
                 if not self._coll_sibling:
-                    return True
+                    return False
 
         if self._invincibility_offset > 0:
-            return True
+            return False
 
         # check if casing
         if all([self._casing, not Updated.out_of_bounds_x(self)]):
             self.position.y -= self.size.y / 2
             self.remove(Updated, GravityAffected)
-            return True
+            return False
 
+        return True
+
+    def _kill(
+            self,
+            killed_by: LogicGameEntity | EllipsisType = ...,
+            kill_children: bool = True
+    ) -> None:
         # bullet hit knockback
         if all([killed_by != self, not issubclass(killed_by.__class__, Bullet)]):
             if hasattr(killed_by, "_impulse_resistance_factor"):
@@ -561,6 +572,7 @@ class Bullet(LogicGameEntity):
         # cluster
         if self._cluster_depth > 0 and self._cluster_amount > 0:  # and killed_by == self:
             if self._cluster_amount > 1:
+                kill_children = False
                 # cluster step explosion:
                 if self._cluster_step_explosion:
                     self._explosion_radius = self._cluster_step_explosion
@@ -646,9 +658,7 @@ class Bullet(LogicGameEntity):
                 exp.set_volume(0.8, 0.3)
                 exp.play(pos=self.position)
 
-        super()._kill()
-
-        return True
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     # region Static/Class-Methods
     @staticmethod

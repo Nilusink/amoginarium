@@ -12,10 +12,9 @@ from types import EllipsisType
 from ctypes import Array
 import typing as tp
 
-from amoginarium.shared import base_entity_t
+from amoginarium.shared import base_entity_t, BaseLogicEntityLike
 from amoginarium.shared.utility import Vec2
 
-from .._base import LogicGameEntity
 from ._item import Item
 
 
@@ -90,12 +89,21 @@ class Something(Item):
         self.stop_use()
         self._set_bit("flags", 14, False)  # set use to false
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
+    def _before_kill(
+            self,
+            killed_by: BaseLogicEntityLike | EllipsisType = ...,
+            kill_children: bool = True
+    ) -> bool:
+        """
+        If the item is used up but gets reused, it will be reset instead of killed
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively
+        :return: False if the item gets reused
+        """
         if self._used_callback and self._used_callback(1):
-            self._uses_left = self._max_uses
-
-        else:
-            super()._kill()
+            self.reset()
+            return False
+        return True
 
     def reset(self) -> None:
         """reset the item"""
