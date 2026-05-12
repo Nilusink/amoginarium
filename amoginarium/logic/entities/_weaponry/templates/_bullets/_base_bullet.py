@@ -447,9 +447,6 @@ class Bullet(LogicGameEntity):
         :param events: All details regarding the collision
         :return: List of booleans stating whether each collision is accepted.
         """
-        if self._invincibility_offset > 0:
-            return [False for event in events]
-
         if (
                 group_id == GameCollisions.collision_group_grenades
                 or group_id == GameCollisions.collision_group_shields
@@ -508,8 +505,8 @@ class Bullet(LogicGameEntity):
         if any([
             self._time_to_life <= 0
         ]):
-            self.kill()
-            return
+            if self.kill():
+                return
 
         # double gravity (because why not)
         self.acceleration.y *= 2
@@ -585,6 +582,8 @@ class Bullet(LogicGameEntity):
                     else:
                         ttl = self._time_to_life
 
+                sibling_collision_exception: CollisionType.ExceptionID = \
+                    GameCollisions.add_exception()
                 for bi in range(self._cluster_amount):
                     self._cluster_bullet_type(
                         self._runtime_buffer,
@@ -601,7 +600,8 @@ class Bullet(LogicGameEntity):
                         # cluster_spread_angle=self._cluster_spread,
                         target_pos=self._target_pos,
                         size=self.size * self._cluster_size_mult,
-                        collide_siblings=False
+                        collide_siblings=False,
+                        collision_exception_ids=sibling_collision_exception
                     )
                     current_angle += angle_spread
 
