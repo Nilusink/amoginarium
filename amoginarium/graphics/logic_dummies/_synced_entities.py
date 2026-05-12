@@ -240,6 +240,11 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         self._lifetime = 0
         super().__init__(sync_id, parent)
 
+    @property
+    def texture_id(self) -> int:
+        """image texture id"""
+        return self._texture_id
+
     def draw_at(
         self,
         position: coord_t,

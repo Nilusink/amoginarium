@@ -23,7 +23,7 @@ class BaseActor:
     """detonates a bullet"""
 
     # region ClassVars
-    _DEBUG: tp.ClassVar[bool] = True
+    _DEBUG: tp.ClassVar[bool] = False
     # endregion
 
     def __init__(

@@ -278,6 +278,7 @@ class BaseGame:
         textures.load_images("assets/images/platforms")
         self._update_loading_screen(15)
         textures.load_images("assets/images/missiles")
+        textures.load_images("assets/images/missiles/maverick")
         self._update_loading_screen(15)
         textures.load_images("assets/images/weapons/railgun.zip")
         self._update_loading_screen(15)

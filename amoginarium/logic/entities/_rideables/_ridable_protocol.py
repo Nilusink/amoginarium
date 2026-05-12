@@ -25,13 +25,12 @@ class RideablePerks(tp.Protocol):
     @property
     def control_authority(self) -> bool:
         """specifies weather the entity takes controls or not"""
+        return False
 
     @property
     def passenger_visible(self) -> bool:
         """specifies weather the passenger is visible or not"""
-
-    def set_controls(self, controls: Controls) -> None:
-        """set rideable controls"""
+        return True
 
     def get_passenger_position(self) -> None | Vec2:
         """:returns: position of passenger if modified"""
@@ -43,6 +42,8 @@ class RideablePerks(tp.Protocol):
         """:returns cam zoom if modified"""
 
 
-class RideableGameEntity(RideablePerks, LogicGameEntity):
-    """an entity that can be ridden"""
-    pass
+RideableGameEntity = RideablePerks
+
+# class RideableGameEntity(RideablePerks, LogicGameEntity):
+#     """an entity that can be ridden"""
+#     pass

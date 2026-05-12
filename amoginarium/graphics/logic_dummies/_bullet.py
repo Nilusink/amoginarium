@@ -50,7 +50,7 @@ class BulletDummy(SyncedImageEntity):
 
     _kill_next: int | None
 
-    _bullet_image = ...
+    _bullet_image: int = ...
 
     @classmethod
     def load_textures(cls) -> None:
@@ -143,6 +143,11 @@ class BulletDummy(SyncedImageEntity):
 
         super().__init__(sync_id, self._bullet_image, parent)  # type: ignore
 
+    @classmethod
+    def bullet_image(cls) -> int:
+        """bullet texture ID"""
+        return cls._bullet_image
+
     def _kill(self) -> None:
         if len(self._trace) > 0:
             if not self._trace_only:
@@ -191,11 +196,11 @@ class BulletDummy(SyncedImageEntity):
         rotation: float = 0,
     ) -> None:
         """draw an entity at specified position and size"""
-        if cls._bullet_image is ...:
+        if cls.bullet_image() is ...:
             cls.load_textures()
 
         renderer.draw_textured_quad(
-            cls._bullet_image,  # type: ignore
+            cls.bullet_image(),  # type: ignore
             position,
             size,
             rotate_angle=rotation,

@@ -8,7 +8,10 @@ Author:
 Nilusink
 """
 
-import math as m
+from types import EllipsisType
+from icecream import ic
+from time import perf_counter
+import typing as tp
 
 from amoginarium.base._textures import textures
 from amoginarium.shared.utility import Vec2, coord_t
@@ -29,12 +32,28 @@ class MultiStageMissileDummy(BulletDummy):
     _animation_size: tuple[int, int] = (16, 16)
     _animation_textures: list[int] = ...
 
+    _image_animation_delay: float = .05
+    _image_scope: tp.ClassVar[str | None] = None
+    _image_textures: list[int] = ...
+
     @classmethod
     def load_textures(cls) -> None:
         super().load_textures()
 
-        if cls._animation_textures is not ...:
+        ic(cls.__name__, cls._image_scope)
+
+        if cls.__dict__.get("_animation_textures", ...) is not ...:
             return
+
+        if cls._image_scope is not None:
+            cls._image_textures = [
+                t[0]
+                for t in textures.get_all_from_scope(
+                    cls._image_scope, cls._default_size, pixel_perfect=True
+                )
+            ]
+
+        ic(cls._image_textures)
 
         cls._animation_textures = [
             t[0]
@@ -56,6 +75,18 @@ class MultiStageMissileDummy(BulletDummy):
             loop=True,
             layer=2
         )
+        
+    @classmethod
+    def bullet_image(cls) -> int:
+        image_textures = cls._image_textures
+        if not isinstance(image_textures, EllipsisType):
+            n_textures = len(image_textures)
+            return image_textures[
+                int((perf_counter() / cls._image_animation_delay) % n_textures)
+            ]
+        
+        else:
+            return super().bullet_image()
 
     def _flame_position(self) -> Vec2:
         """flame position for animation"""
@@ -83,6 +114,7 @@ class MultiStageMissileDummy(BulletDummy):
                 self._animation.play()
 
         # update trace and bullet
+        # ic(self.texture_id, self.__class__.__name__, self._image_scope)
         super()._gl_draw(delta_cal, layer)
 
 
@@ -101,3 +133,8 @@ class GuidedMultiStageMissileDummy(MultiStageMissileDummy):
 
 class MultiThrusterMissileDummy(MultiStageMissileDummy):
     _CID = MissileCIDs.multi_thruster
+
+
+class PlayerControlledMissileDummy(GuidedMultiStageMissileDummy):
+    _CID = MissileCIDs.player_controlled
+    _animation_size: tuple[int, int] = (48, 48)

@@ -37,11 +37,10 @@ if tp.TYPE_CHECKING:
 
 class Player(Passenger, LogicGameEntity):
     _impulse_resistance_factor: float = 1  # 0 = completely resistant
-    _heal_per_second: float = 2
-    _time_to_heal: float = 5
-    _max_speed: float = 1000
-    _max_hp: int = 80
-    __heading = 1
+    _heal_per_second: float = 2  # hp healing per second
+    _time_to_heal: float = 5  # time without taking damage before healing starts
+    _max_speed: float = 1000  # player maximum velocity
+    _max_hp: int = 80  # player max hp
     _hp: float = 0
 
     on_wall: bool = False
@@ -52,7 +51,6 @@ class Player(Passenger, LogicGameEntity):
 
     __should_be_killed: int
 
-    # noinspection PyArgumentEqualDefault
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -104,7 +102,7 @@ class Player(Passenger, LogicGameEntity):
         self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
-            DYNAMIC_ENTITIES["weapon.atgm"](self, self._runtime_buffer, False),
+            DYNAMIC_ENTITIES["weapon.tv_guided"](self, self._runtime_buffer, False),
             DYNAMIC_ENTITIES["weapon.minigun"](
                 self, self._runtime_buffer, False, parent_position_offset=(0, 10)
             ),
@@ -159,6 +157,7 @@ class Player(Passenger, LogicGameEntity):
         if slot_id == self._hover_slot:
             self._hover_slot = None
 
+    # region properties
     @property
     def max_hp(self) -> int:
         return self._max_hp
@@ -187,9 +186,30 @@ class Player(Passenger, LogicGameEntity):
         else:
             return None
 
+    @property
+    def controller(self) -> Controller:
+        return self._controller
+
+    # endregion
+
     def get_current_view(self) -> CurrentView:
         """get current player viewport"""
-        return CurrentView(self.position, 0)
+        pos = self.position
+        zoom = 0
+
+        e = self.controlled_entity
+
+        if e:
+            cam_pos = e.get_camera_position()
+            cam_zoom = e.get_camera_zoom()
+
+            if cam_pos is not None:
+                pos = cam_pos
+
+            if cam_zoom is not None:
+                zoom = cam_zoom
+
+        return CurrentView(pos, zoom)
 
     def pickup_item(self, item: Item) -> None:
         if self._hotbar.try_add_item(item, 1) > 0:
@@ -342,8 +362,8 @@ class Player(Passenger, LogicGameEntity):
         return None
 
     def _update(self, delta):
-        # update passenger
-        self.update_passenger()
+        # update passenger status
+        self.update_passenger(delta)
 
         self._on_ground = False
 
@@ -368,31 +388,31 @@ class Player(Passenger, LogicGameEntity):
         self.facing.angle = vector.angle
 
         # update movement
-        if not self.is_controlled:
-            if GameCollisions.collision_group_islands in self._active_normals.keys():
-                for n in self._active_normals[GameCollisions.collision_group_islands]:
-                    if n.y < -0.5:
-                        self._on_ground = True
-                        if self.acceleration.y > 0:
-                            self.acceleration.y = 0
-                        if self.velocity.y > 0:
-                            self.velocity.y = 0
-                    elif n.y > 0.5:
-                        if self.acceleration.y < 0:
-                            self.acceleration.y = 0
-                        if self.velocity.y < 0:
-                            self.velocity.y = 0
-                    if n.x < -0.5:
-                        if self.acceleration.x > 0:
-                            self.acceleration.x = 0
-                        if self.velocity.x > 0:
-                            self.velocity.x = 0
-                    elif n.x > 0.5:
-                        if self.acceleration.x < 0:
-                            self.acceleration.x = 0
-                        if self.velocity.x < 0:
-                            self.velocity.x = 0
+        if GameCollisions.collision_group_islands in self._active_normals.keys():
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
+                if n.y < -0.5:
+                    self._on_ground = True
+                    if self.acceleration.y > 0:
+                        self.acceleration.y = 0
+                    if self.velocity.y > 0:
+                        self.velocity.y = 0
+                elif n.y > 0.5:
+                    if self.acceleration.y < 0:
+                        self.acceleration.y = 0
+                    if self.velocity.y < 0:
+                        self.velocity.y = 0
+                if n.x < -0.5:
+                    if self.acceleration.x > 0:
+                        self.acceleration.x = 0
+                    if self.velocity.x > 0:
+                        self.velocity.x = 0
+                elif n.x > 0.5:
+                    if self.acceleration.x < 0:
+                        self.acceleration.x = 0
+                    if self.velocity.x < 0:
+                        self.velocity.x = 0
 
+        if not self.is_controlled:
             # accelerate right
             if self._controller.joy_x > 0:
                 if self.velocity.x < self._max_speed:
@@ -461,6 +481,11 @@ class Player(Passenger, LogicGameEntity):
                     self.position + Vec2().from_cartesian(0, self.size.y / 2),
                     vel
                 )
+
+        # auto reload
+        if isinstance(self.item, BaseWeapon):
+            if self.item.get_mag_state(1)[0] == 0:
+                self.item.reload()
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:

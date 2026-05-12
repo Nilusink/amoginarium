@@ -1,0 +1,49 @@
+[id]
+from = "dummy.missile.player_controlled"
+cid = "missile.tv_guided"
+
+[visibility]
+size = [64, 20]
+
+[trace]
+color = [[255, 255, 255, 100]]  # either one or two colors
+length = 300
+width_mult = 0.5  # trace width multiplier
+
+[image]
+scope = "maverick"
+
+[behaviour]
+hp = 0.5
+ttl = 8
+weight = 5  # knockback
+mass = 5  # aerodynamics
+base_damage = 30
+
+[explosion]
+radius = 128
+damage = 80
+
+[rudder]
+size = 8
+max_angle = 1
+
+[motor]
+start = [0.3, 0]
+launch = [0.15, 40_000, 3]
+accel = [2, 5_000, 0.8]
+
+[sound]
+name = "jetbag"
+
+[fuze.0]
+type = "proximity"
+distance = 64
+function_delay = 1
+offset = [31, 0]
+
+#[cluster]  # fun stuff
+#depth = 1
+#amount = 3
+#spread=0.3
+#fuze_ttl_mult = 0.9

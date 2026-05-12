@@ -58,6 +58,7 @@ class MissileCIDs(Enum):
     multi_stage = "dummy.missile.multi_stage"
     guided_multi_stage = "dummy.missile.guided_multi_stage"
     multi_thruster = "dummy.missile.multi_thruster"
+    player_controlled = "dummy.missile.player_controlled"
 
 
 class WeaponSensorCIDs(Enum):
