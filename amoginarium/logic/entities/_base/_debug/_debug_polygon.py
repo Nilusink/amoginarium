@@ -20,7 +20,7 @@ from amoginarium.shared.utility import (Vec2, MASK16, get_default, normalize_ang
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
-from .._base_entities import PositionedLogicEntity
+from ._debug_entity import DebugEntity
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
@@ -29,7 +29,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import color_t
 
 
-class DebugPolygonEntity(PositionedLogicEntity):
+class DebugPolygonEntity(DebugEntity):
     """
     A debug entity used to render arbitrary polygons
     by packing vertex data into the entity buffer.

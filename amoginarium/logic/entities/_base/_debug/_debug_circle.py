@@ -18,7 +18,7 @@ from amoginarium.shared.utility import convert_color, Vec2
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
-from .._base_entities import PositionedLogicEntity
+from ._debug_entity import DebugEntity
 
 if tp.TYPE_CHECKING:
     from types import EllipsisType
@@ -28,7 +28,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import color_t
 
 
-class DebugCircleEntity(PositionedLogicEntity):
+class DebugCircleEntity(DebugEntity):
     """
     A logic-side debug entity representing a circle.
     Communicates with the graphics engine to render a debug shape.

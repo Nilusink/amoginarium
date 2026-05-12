@@ -18,7 +18,7 @@ from amoginarium.shared.utility import convert_color
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
 
-from .._base_entities import PositionedLogicEntity
+from ._debug_entity import DebugEntity
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
@@ -27,7 +27,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import Vec2, color_t
 
 
-class DebugRectangleEntity(PositionedLogicEntity):
+class DebugRectangleEntity(DebugEntity):
     """Logic entity for rendering debug rectangles via the graphics engine."""
     __slots__ = ()
 
