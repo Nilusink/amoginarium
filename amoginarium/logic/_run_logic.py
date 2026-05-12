@@ -537,6 +537,17 @@ class LogicProcess:
             }, out)
 
 
+def update_debug_vars(values: int) -> None:
+    """
+    Update debug flags based on bitmask values
+    :param values: new bitmask of debug flags
+    """
+    # Hitbox debug
+    draw_hitboxes = bool(values & (1 << DebugVarsEnum.DRAW_HITBOXES.value))
+    CollisionLogicEntity.debug_draw_hitboxes(draw_hitboxes)
+    Island.debug_draw_hitboxes(draw_hitboxes)
+
+
 def run_continuous(
         shm: SharedMemory,
         c_shm: SharedMemory,
@@ -573,6 +584,12 @@ def run_continuous(
 
     ic("logic process start")
 
+    # Debugging callbacks
+    pv.global_vars.add_callback(
+        value="_debug_vars",
+        callback=update_debug_vars
+    )
+
     last_run = perf_counter()
     last_update_success = False
     while lp.running:
@@ -583,12 +600,6 @@ def run_continuous(
 
         else:
             delta = 0
-
-        # set debug vars
-        debug_draw_hitboxes: bool = pv.global_vars.get_debug_var(
-            num=DebugVarsEnum.DRAW_HITBOXES)
-        CollisionLogicEntity.debug_draw_hitboxes(debug_draw_hitboxes)
-        Island.debug_draw_hitboxes(debug_draw_hitboxes)
 
         # update entities
         last_update_success = lp.update_entities(delta)

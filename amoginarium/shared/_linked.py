@@ -111,7 +111,7 @@ class GlobalVars:
     def add_callback(self, value: str, callback: tp.Callable[[tp.Any], tp.Any]) -> None:
         """add a value change callback"""
         for i, v in enumerate(self.__compiled):
-            if v[1] == value:
+            if v[2] == value or v[2] == f"_{value}":
                 self.__compiled[i][3].append(callback)
 
     def _set_from_current(self) -> None:
@@ -316,7 +316,6 @@ class GlobalVars:
                 setattr(obj, attr, new)
 
                 if callbacks:
+                    print("CALLBACKS FOUND", callbacks, new)
                     for cb in callbacks:
                         cb(new)
-
-        self._debug_vars = self.__values["debug_vars"].value
