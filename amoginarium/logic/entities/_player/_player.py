@@ -75,7 +75,7 @@ class Player(LogicGameEntity):
         self._bullets_do_not_initially_hit_player = GameCollisions.add_exception()
 
         if not size:
-            size: Vec2 = Vec2().from_cartesian(64, 64)
+            size: Vec2 = Vec2().from_cartesian(63.9, 63.9)
 
         if not position:
             position: Vec2 = Players.spawn_point
