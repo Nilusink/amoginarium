@@ -6,7 +6,7 @@ cid = "weapon.tv_guided"
 size = [64, 32]
 
 [image]
-name = "atgm"
+name = "maverick_launcher"
 rotate_anchor = [33, 16]
 
 [behaviour]

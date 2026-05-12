@@ -32,7 +32,7 @@ class MultiStageMissileDummy(BulletDummy):
     _animation_size: tuple[int, int] = (16, 16)
     _animation_textures: list[int] = ...
 
-    _image_animation_delay: float = .05
+    _image_animation_delay: float = 1/12
     _image_scope: tp.ClassVar[str | None] = None
     _image_textures: list[int] = ...
 

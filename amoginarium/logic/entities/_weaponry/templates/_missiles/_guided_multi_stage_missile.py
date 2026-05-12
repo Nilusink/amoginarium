@@ -37,7 +37,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
     # endregion
 
     # region InstanceVars
-    _sensor: BaseWeaponsSensor
+    _sensor: BaseWeaponsSensor | None
     # endregion
 
     def __init__(
@@ -70,16 +70,22 @@ class GuidedMultiStageMissile(MultiStageMissile):
         )
         
         # set defaults
-        sensor_args = self._sensors_list[0].copy()
-        sensor_type = sensor_args.pop("type")
+        if self._sensors_list:
+            sensor_args = self._sensors_list[0].copy()
+            sensor_type = sensor_args.pop("type")
+    
+            # create PID controller
+            self._pid = PIDController(4, 0, 1.5)
+    
+            self._sensor = sensor_type(parent=self, **sensor_args)
 
-        # create PID controller
-        self._pid = PIDController(4, 0, 1.5)
-
-        self._sensor = sensor_type(parent=self, **sensor_args)
+        else:
+            self._sensor = None
 
     def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
-        self._sensor.kill(self)
+        if self._sensor:
+            self._sensor.kill(self)
+
         return super()._kill(killed_by)
 
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
@@ -124,8 +130,15 @@ class GuidedMultiStageMissile(MultiStageMissile):
         super()._update(delta, apply_thrust=apply_thrust)
 
         # update sensor
-        self._sensor.update()
+        if self._sensor:
+            self._sensor.update()
         
         # update guidance
         if self._lifetime >= self._default_guidance_function_delay:
-            self._update_guidance(delta, self._sensor.get_target())
+            target = None
+
+            # get target if sensor exists
+            if self._sensor:
+                target = self._sensor.get_target()
+
+            self._update_guidance(delta, target)

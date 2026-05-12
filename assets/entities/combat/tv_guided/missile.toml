@@ -8,7 +8,7 @@ size = [64, 20]
 [trace]
 color = [[255, 255, 255, 100]]  # either one or two colors
 length = 300
-width_mult = 0.5  # trace width multiplier
+width_mult = 0.8  # trace width multiplier
 
 [image]
 scope = "maverick"
@@ -35,6 +35,10 @@ accel = [2, 5_000, 0.8]
 
 [sound]
 name = "jetbag"
+
+[guidance]
+max_alpha = 1
+function_delay = 0.3
 
 [fuze.0]
 type = "proximity"

@@ -11,20 +11,21 @@ Nilusink
 from types import EllipsisType
 from ctypes import Array
 import typing as tp
+import numpy as np
 
 from amoginarium.shared import Coalitions, base_entity_t, MissileCIDs
-from amoginarium.shared.utility import Vec2
+from amoginarium.shared.utility import Vec2, clamp_angle, PI_4
 
 from ...._base import LogicGameEntity, Updated
 from ...._rideables import Passenger, RideablePerks
-from ._multi_stage_missile import MultiStageMissile
+from ._guided_multi_stage_missile import GuidedMultiStageMissile
 
 
 if tp.TYPE_CHECKING:
     from ...._player import Player
 
 
-class PlayerControlledMissile(RideablePerks, MultiStageMissile):
+class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
 
     _CID = MissileCIDs.player_controlled
 
@@ -65,9 +66,8 @@ class PlayerControlledMissile(RideablePerks, MultiStageMissile):
             self.kill(self)
             return
         
-        # set self as ridden entity
-        self._player.set_controlled_entity(self)
-        
+        self._set_as_ridden = False  # should be done once guidance starts
+                
         # get controller
         self._controller = self._player.controller
 
@@ -93,15 +93,28 @@ class PlayerControlledMissile(RideablePerks, MultiStageMissile):
     
     # endregion
     
-    def _update_rudder(self, delta: float) -> None:
+    def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
+        # set self as ridden entity
+        if not self._set_as_ridden:
+            self._set_as_ridden = True
+            self._player.set_controlled_entity(self)
+
         self._rudder_angle = 0
 
-        # check for controller
-        if not self._controller:
-            return
+        if abs(self.alpha) < self._default_guidance_max_alpha:
+            # check for controller
+            if not self._controller:
+                return
 
-        if self._controller.joy_x > .1:
-            self._rudder_angle = self._rudder_max_angle
+            if self._controller.joy_x > .1:
+                self._rudder_angle = self._rudder_max_angle
 
-        elif self._controller.joy_x < -.1:
-            self._rudder_angle = -self._rudder_max_angle
+            elif self._controller.joy_x < -.1:
+                self._rudder_angle = -self._rudder_max_angle
+
+        else:
+            self._rudder_angle = np.sign(self.alpha) * (
+                clamp_angle(
+                    abs(self.alpha) / PI_4, 0, 1
+                )
+            ) * self._rudder_max_angle
