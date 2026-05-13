@@ -58,6 +58,8 @@ class BaseTurretDummy(SyncedGraphicsEntity):
             sync_id: int,
             weapon_id: int
     ) -> None:
+        ic(self._default_layer, self.__class__.__name__)
+
         self._target_pos: Vec2 | None = None
         self._range = (0, 0)
         self._angles = (-1, -1)
@@ -219,37 +221,26 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         ):
             return
 
-        if layer == self._default_layer:
-            if self._highlight:
-                renderer.start_stencil(True)
-
+        if layer == 1:
             if self.facing.x < 0:
                 renderer.draw_textured_quad(
                     self._body_texture,
                     self.world_position - self.size / 2,
                     self.size,
-                    layer=layer
+                    layer=self._default_layer,
+                    # force_draw=self._highlight
                 )
 
             else:
                 # mirror turret
                 renderer.draw_textured_quad(
                     self._body_texture,
-                    self.world_position - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
+                    self.world_position
+                    - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
                     (-self.size.x, self.size.y),
-                    layer=layer
+                    layer=self._default_layer,
+                    # force_draw=self._highlight,
                 )
-
-            if self._highlight:
-                renderer.enable_stencil(True)
-
-                renderer.draw_rect(
-                    self.world_position - self.size,
-                    self.size * 2,
-                    (1, 1, 1, .5)
-                )
-
-                renderer.disable_stencil()
 
         elif layer == 2:
             # draw health bar
@@ -267,6 +258,5 @@ class ExactoSniperTurretDummy(BaseTurretDummy):
     _CID = TurretCIDs.exacto_sniper
 
 
-class AkTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _CID = TurretCIDs.ak47
+class RideableTurret(BaseTurretDummy):
+    _CID = TurretCIDs.rideable_base

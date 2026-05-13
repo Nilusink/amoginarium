@@ -90,6 +90,7 @@ class TurretCIDs(Enum):
     base = "turret.static.base"
     sky_shield = "turret.static.sky_shield"
     exacto_sniper = "turret.static.exacto_sniper"
+    rideable_base = "turret.rideable.base"
 
 
 class WeaponCIDs(Enum):

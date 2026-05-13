@@ -20,7 +20,7 @@ from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
 
-from .._base import GravityAffected, FrictionXAffected, Updated
+from .._base import GravityAffected, FrictionXAffected, Updated, CollisionLogicEntity
 from .._base import Players, GameCollisions, LogicGameEntity
 from .._items import Shield, HealingPotion, JetBag, Inventory
 from .._weaponry import HandThrownGrenade, RailGun, ExactoSniper
@@ -33,6 +33,7 @@ from .._items import Item
 if tp.TYPE_CHECKING:
     from .._weaponry.templates import Bullet
     from .._world import Island
+    from .._weaponry.templates import RideableTurret
 
 
 class Player(Passenger, LogicGameEntity):
@@ -77,6 +78,7 @@ class Player(Passenger, LogicGameEntity):
 
         self._initial_position = position.copy()
         self._death_sound = DeathSound()
+        self._colliding_rideables = []
 
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -139,6 +141,8 @@ class Player(Passenger, LogicGameEntity):
 
         self.__add_position = Vec2()
         self.__should_be_killed = 0
+        
+        self.__ride_pressed = False
 
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
@@ -340,8 +344,22 @@ class Player(Passenger, LogicGameEntity):
             if event.other_entity.item_pickupable():
                 self.pickup_item(event.other_entity)
 
+    def __on_collision_rideable(self, events: list[CollisionEvent["RideableTurret"]]) -> None:
+        for event in events:
+            event.other_entity.highlight()
+            self._colliding_rideables.append(event.other_entity)
+
+    def __on_collision_rideable_end(self, events: list[CollisionEvent["RideableTurret"]]) -> None:
+        for event in events:
+            if event.other_entity in self._colliding_rideables:
+                event.other_entity.stop_highlight()
+                self._colliding_rideables.remove(event.other_entity)
+
     def _collision_start(
-        self, events: list[CollisionEvent[tp.Union["Bullet", "Island", "Item"]]]
+        self,
+        events: list[
+            CollisionEvent[tp.Union["Bullet", "Island", "Item", "RideableTurret"]]
+        ],
     ) -> list[bool] | None:
         if events[0].group_id == GameCollisions.collision_group_islands:
             events: list[CollisionEvent["Island"]]
@@ -359,7 +377,19 @@ class Player(Passenger, LogicGameEntity):
             events: list[CollisionEvent["Item"]]
             self.__on_collision_item(events)
 
+        elif events[0].group_id == GameCollisions.collision_group_rideable_turrets:
+            events: list[CollisionEvent["RideableTurret"]]
+            self.__on_collision_rideable(events)
+
         return None
+
+    def _collision_end(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> None:
+        if events[0].group_id == GameCollisions.collision_group_rideable_turrets:
+            self.__on_collision_rideable_end(events)
+
+    def clear_controlled_entity(self) -> None:
+        self.__ride_pressed = True
+        super().clear_controlled_entity()
 
     def _update(self, delta):
         # update passenger status
@@ -413,6 +443,11 @@ class Player(Passenger, LogicGameEntity):
                         self.velocity.x = 0
 
         if not self.is_controlled:
+            if len(self._colliding_rideables) > 0 and self._controller.ride and not self.__ride_pressed:
+                self._colliding_rideables[0].set_passenger(self)
+
+            self.__ride_pressed = self._controller.ride
+
             # accelerate right
             if self._controller.joy_x > 0:
                 if self.velocity.x < self._max_speed:
@@ -511,13 +546,25 @@ class Player(Passenger, LogicGameEntity):
             ridden_pos = e.get_passenger_position()
             
             if e.passenger_visible:
+                self._collision_active = True
                 self.show()
+                
+                if self.item:
+                    self.item.show()
             
             else:
+                self._collision_active = False
                 self.hide()
+                
+                if self.item:
+                    self.item.hide()
         
         else:
+            self._collision_active = True
             self.show()
+
+            if self.item:
+                self.item.show()
 
         if ridden_pos:
             self.position = ridden_pos

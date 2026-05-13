@@ -63,6 +63,10 @@ class Passenger:
         self._controlled_entity = entity
         return True
 
+    def clear_controlled_entity(self) -> None:
+        """clear currently ridden entity"""
+        self._controlled_entity = None
+
     def update_passenger(self, delta: float) -> None:
         """update"""
         e: LogicGameEntity = self._controlled_entity  # type: ignore

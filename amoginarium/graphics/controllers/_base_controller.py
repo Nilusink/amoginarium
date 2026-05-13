@@ -201,6 +201,10 @@ class Controller:
         return self._keys.joy_btn
 
     @property
+    def ride(self) -> bool:
+        return self._keys.ride
+
+    @property
     def joy_x(self) -> float:
         return self._keys.joy_x
 

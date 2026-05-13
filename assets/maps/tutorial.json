@@ -127,9 +127,8 @@
             "group": 0
         },
                 {
-            "type": "turret.static.ak47",
-            "pos": [25000, 100],
-            "group": 0
+            "type": "turret.rideable.sky_shield",
+            "pos": [4500, 730]
         },
         {
             "type": "static.text",

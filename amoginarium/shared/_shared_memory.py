@@ -55,6 +55,7 @@ class base_controller_t(ctypes.Structure):
         ("drop", ctypes.c_bool),
         ("wpn_f", ctypes.c_bool),
         ("wpn_b", ctypes.c_bool),
+        ("ride", ctypes.c_bool),
         ("joy_btn", ctypes.c_float),
         ("joy_x", ctypes.c_float),
         ("joy_y", ctypes.c_float),
