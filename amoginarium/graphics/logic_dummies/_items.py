@@ -95,6 +95,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
                     self.size,
                     rotate_angle=angle - 180,
                     layer=layer,
+                    force_draw=self._highlight,
                 )
 
             else:
@@ -104,6 +105,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
                     self.size,
                     rotate_angle=angle,
                     layer=layer,
+                    force_draw=self._highlight,
                 )
 
         # draw usage bar

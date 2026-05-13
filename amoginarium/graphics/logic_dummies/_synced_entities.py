@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from icecream import ic
 import math as m
+import time
 
 from amoginarium.shared.utility import Vec2, Color, coord_t
 from amoginarium import pv
@@ -144,6 +145,11 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     def _buff(self):
         """:return: runtime buffer data for this entity"""
         return pv.E_BUFF[self.__id]
+
+    @property
+    def id(self) -> int:
+        """sync ID"""
+        return self.__id
     # endregion
 
     # region buffer control
@@ -221,7 +227,12 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
             renderer.draw_rect(
                 (0, 0),
                 (2000, 2000),
-                Color().from_1(0.6, 0.6, .7, 0.125 + m.sin(self._lifetime) / 8),
+                Color().from_1(
+                    0.6,
+                    0.6,
+                    .7,
+                    0.125 + m.sin(2*time.perf_counter() + self.id) / 8
+                ),
             )
             renderer.disable_stencil()
     # endregion
@@ -237,7 +248,6 @@ class SyncedImageEntity(SyncedGraphicsEntity):
             parent: int | None = None
     ) -> None:
         self._texture_id = texture_id
-        self._lifetime = 0
         super().__init__(sync_id, parent)
 
     @property

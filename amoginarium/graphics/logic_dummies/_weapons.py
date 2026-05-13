@@ -9,6 +9,7 @@ Nilusink
 """
 
 from types import EllipsisType
+from icecream import ic
 import typing as tp
 import math as m
 
@@ -120,6 +121,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
         :param delta_cal: used for the occasional calculation
         """
+        # because no super call
         angle = self.facing.angle * 180/m.pi
         world_pos = pv.global_vars.get_world_position()
 
@@ -162,7 +164,8 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._default_size,
                 rotate_angle=angle - 180,
                 rotate_anchor=anchor,
-                layer=layer
+                layer=layer,
+                force_draw=self._highlight
             )
 
         else:
@@ -179,7 +182,8 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._default_size,
                 rotate_angle=angle,
                 rotate_anchor=anchor,
-                layer=layer
+                layer=layer,
+                force_draw=self._highlight
             )
 
         # draw ammo bar

@@ -576,7 +576,6 @@ class OpenGLRenderer(BaseRenderer):
             *args: A.args,
             **kwargs: A.kwargs
     ) -> None:
-        return
         self.start_stencil(show_stencil)
 
         stencil_func(*args, **kwargs)
@@ -587,7 +586,6 @@ class OpenGLRenderer(BaseRenderer):
         """
         call this, then draw stencil, then draw enable_stencil
         """
-        return
         glEnable(GL_STENCIL_TEST)
         glClear(GL_STENCIL_BUFFER_BIT)
 
@@ -605,7 +603,6 @@ class OpenGLRenderer(BaseRenderer):
         """
         start_stencil must be called first
         """
-        return
         if not show_stencil:
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
 
@@ -613,7 +610,6 @@ class OpenGLRenderer(BaseRenderer):
         glStencilFunc(GL_EQUAL, 1, 0xFF)
 
     def disable_stencil(self) -> None:
-        return
         glDisable(GL_STENCIL_TEST)
         glStencilMask(0xFF)
         glStencilFunc(GL_ALWAYS, 0, 0xFF)
@@ -632,6 +628,7 @@ class OpenGLRenderer(BaseRenderer):
         rotate_angle: float = 0,
         rotate_anchor: coord_t | EllipsisType = ...,
         offscreen_check: bool = True,
+        force_draw: bool = False
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -640,9 +637,10 @@ class OpenGLRenderer(BaseRenderer):
         :param size: Absolute size on window
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param rotate_angle: Angle in degrees to rotate the image at
-        :param rotate_anchor: At what pixel to rotate at. Defaults to center position
+        :param rotate_anchor: What pixel to rotate at. Defaults to center position
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :param layer: Layer number
+        :param force_draw: force the renderer to draw the quad NOW (only use for stencils)
         """
         pos_vec2: Vec2 = convert_coord(pos, Vec2)  # type: ignore
         size_vec2: Vec2 = convert_coord(size, Vec2)  # type: ignore
@@ -673,13 +671,19 @@ class OpenGLRenderer(BaseRenderer):
 
                 rx, ry = anchor.x, anchor.y
 
-        self.__layer_cache[layer].append({
+        draw_info = {
             "texture_id": texture_id,
             "pos": pos_vec2,
             "size": size_vec2,
             "rotate_angle": rotate_angle,
             "rotate_anchor": (rx, ry),
-        })
+        }
+
+        if force_draw:
+            self.__draw_layer([draw_info])
+
+        else:
+            self.__layer_cache[layer].append(draw_info)
 
     def __draw_layer(self, layer: list[dict[str, tp.Any]]) -> None:
         """draw one texture layer"""
@@ -1751,8 +1755,13 @@ class OpenGLRenderer(BaseRenderer):
             thickness = pv.global_vars.translate_scale(thickness)
 
         if offscreen_check:
-            for point in _points:
-                if self._check_out_of_screen(point, (1, 1)):
+            # check if all points are oob
+            if self._check_out_of_screen(_points[0], (_points[0]-_points[1])):
+                for point in _points:
+                    if not self._check_out_of_screen(point, (1, 1)):
+                        break
+
+                else:
                     return
 
         # set color if only one is given or not enough are given
@@ -1771,20 +1780,19 @@ class OpenGLRenderer(BaseRenderer):
             glPushMatrix()
         
         glBegin(GL_TRIANGLE_STRIP)
-        
-        # draw first point
-        direction = (_points[0] - _points[1]).normalize()
-        d = Vec2().from_polar(direction.angle + PI_2, thickness/2)  # create 90° offset
 
-        if color_list:
-            self.__set_color(color[0])
+        # draw points as thick line
+        n_points = len(_points)
+        for i in range(n_points):
+            if i == 0:
+                direction = (_points[0] - _points[1]).normalize()
 
-        glVertex2f(*(_points[0] + d).xy)
-        glVertex2f(*(_points[0] - d).xy)
+            elif i == n_points-1:
+                direction = (_points[-2] - _points[-1]).normalize()
 
-        # draw intermediate points
-        for i in range(1, len(_points)-1):
-            direction = (_points[i-1] - _points[i+1]).normalize()
+            else:
+                # use prev and next points as normal vector
+                direction = (_points[i-1] - _points[i+1]).normalize()
 
             d = Vec2().from_polar(
                 direction.angle + PI_2, thickness / 2
@@ -1795,16 +1803,6 @@ class OpenGLRenderer(BaseRenderer):
 
             glVertex2f(*(_points[i] + d).xy)
             glVertex2f(*(_points[i] - d).xy)
-
-        # draw last point
-        direction = (_points[-2] - _points[-1]).normalize()
-        d = Vec2().from_polar(direction.angle + PI_2, thickness/2)  # create 90° offset
-
-        if color_list:
-            self.__set_color(color[-1])
-
-        glVertex2f(*(_points[-1] + d).xy)
-        glVertex2f(*(_points[-1] - d).xy)
 
         glEnd()
         
