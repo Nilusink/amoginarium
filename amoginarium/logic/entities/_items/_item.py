@@ -16,7 +16,7 @@ import math as m
 from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
-from shared.collision_detection import CollisionEvent
+from amoginarium.shared.collision_detection import CollisionEvent
 
 from .._base import (GravityAffected, Updated, LogicGameEntity, GameCollisions,
                      CollisionType)

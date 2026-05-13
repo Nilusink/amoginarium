@@ -20,7 +20,7 @@ from amoginarium.shared.utility import get_default
 from amoginarium.shared.audio import Sniper as SniperSound
 from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
 from amoginarium.shared import TurretCIDs
-from shared import VisibleGameEntityLike
+from amoginarium.shared import VisibleGameEntityLike
 
 from ...templates import BaseTurret, TargetSolution, BaseWeapon, AerodynamicEntity, RadarSensor
 from ...._base import GameCollisions, LogicGameEntity, CollisionType

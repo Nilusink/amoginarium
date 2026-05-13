@@ -16,7 +16,7 @@ from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
 from amoginarium.shared.audio import RandomizedEffect, SoundEffect, Shotgun, Cannon
 from amoginarium.shared.utility import Vec2, convert_coord, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
-from shared import Coalitions
+from amoginarium.shared import Coalitions
 
 from .._bullets import Bullet
 from ...._base import Updated, LogicGameEntity, CollisionType
