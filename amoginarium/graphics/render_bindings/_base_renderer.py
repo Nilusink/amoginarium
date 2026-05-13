@@ -147,7 +147,6 @@ class BaseRenderer(abc.ABC):
     # endregion
 
     # region Stencil
-    # todo mytodo - stencils work!
     @abc.abstractmethod
     def apply_stencil[**A](
             self,
@@ -334,16 +333,6 @@ class BaseRenderer(abc.ABC):
             convert_global: bool = True,
             offscreen_check: bool = True
     ) -> None:
-        """
-        # todo: MYTODO - comment
-        :param pos:
-        :param size:
-        :param colors:
-        :param progress:
-        :param background_color:
-        :param convert_global:
-        :param offscreen_check:
-        """
         raise NotImplementedError
 
     # endregion

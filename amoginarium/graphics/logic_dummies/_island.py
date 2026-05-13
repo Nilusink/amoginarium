@@ -252,7 +252,6 @@ class Island(SyncedGraphicsEntity):
     _textures: IslandTextures = ...
 
     _image_size: tuple[int, int] = (64, 64)
-    debug = False
 
     def __new__(cls, *args, **kwargs):
         # only load texture once
@@ -591,16 +590,6 @@ class Island(SyncedGraphicsEntity):
                     pos,
                     size
                 )
-
-        if self.debug:
-            debug_surface = self.mask.to_surface()
-            # todo: mytodo - reimplement other way of debug!
-            # renderer.draw_pg_surf((
-            #     self.world_position.x,
-            #     self.world_position.y + self.size.y
-            # ),
-            #     debug_surface
-            # )
 
         if self._highlight:
             renderer.enable_stencil(True)

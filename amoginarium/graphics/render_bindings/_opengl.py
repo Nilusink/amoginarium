@@ -84,7 +84,6 @@ class OpenGLRenderer(BaseRenderer):
     __display_state: tp.Literal["windowed", "windowed_fullscreen", "fullscreen"]
 
     # region Extra internal methods
-    # todo: WHAT?
     def get_font(
             self,
             size: int,
@@ -1130,7 +1129,6 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(start_vec, size_vec)
 
-    # todo mytodo work on this
     def draw_bar(
             self,
             pos: coord_t,
