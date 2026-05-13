@@ -29,7 +29,7 @@ cdef struct EntityData:
     bint alive  # False if entity has been marked for pending deletion
     bint is_active
     bint is_centered
-    int h_type
+    int hitbox_type
 
     vector[int] ignore_collisions
 
@@ -57,7 +57,7 @@ cdef struct EntityData:
 Data of a collision group
 """
 cdef struct CollisionGroupStruct:
-    CollisionGroupIDType id
+    int id  # type: CollisionGroupIDType
     int max_level
     bint is_static
     int hitbox_type
