@@ -25,26 +25,15 @@ from amoginarium.shared import ProcessCommandType, Coalitions, ENTITY_COUNTER
 from amoginarium.shared import BaseCommandType, INVENTORY_COUNTER
 from amoginarium.shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
 from amoginarium.shared.debugging import print_with_prefix, get_fg_color
-from amoginarium.shared.utility import Vec2, calculate_launch_angle
+from amoginarium.shared.utility import Vec2
 from amoginarium import pv
 
-from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL, \
-    AerodynamicEntity
+from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL
 from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, GameCollisions
 from .entities import Updated, Bullets, Players
 from .entities import LogicGameEntity, GrassIsland, SPAWNABLES, Player, Island
-from .entities import GravityAffected, FrictionXAffected, ExactoBullet
+from .entities import GravityAffected, FrictionXAffected
 from .graphics_dummies import Controller
-
-# CollisionDestroyed, WallBouncer
-
-
-# class TestEntity(AerodynamicEntity):
-#     def _update(self, delta: float) -> None:
-#         self.apply_force(
-#             Vec2().from_polar(-3.14159/2, 300), Vec2().from_cartesian(-self.size.x / 2, 0)
-#         )
-#         super()._update(delta)
 
 
 class LogicProcess:
@@ -389,36 +378,6 @@ class LogicProcess:
         self._last_spawn -= delta
         if self._last_spawn < 0:
             self._last_spawn = 3
-        #     ExactoBullet(
-        #         self._runtime_buffer,
-        #         self._dummy_dad,
-        #         Coalitions.neutral,
-        #         Vec2().from_cartesian(500, 700),
-        #         Vec2().from_cartesian(2000, 0),
-        #         lambda: Vec2().from_cartesian(4000, 200)
-        #     )
-        #     AerodynamicEntity(
-        #         self._runtime_buffer,
-        #         self._dummy_dad,
-        #         Coalitions.neutral,
-        #         Vec2().from_cartesian(500, 700),
-        #         initial_velocity=Vec2().from_cartesian(1500, -1000),
-        #         size=Vec2().from_cartesian(100, 10),
-        #         rudder_size=10,
-        #         mass=1,
-        #         collide_siblings=False
-        #     ).rudder_angle = -.5
-        #     TestEntity(
-        #         self._runtime_buffer,
-        #         self._dummy_dad,
-        #         Coalitions.neutral,
-        #         Vec2().from_cartesian(500, 700),
-        #         initial_velocity=Vec2().from_cartesian(0, -800),
-        #         size=Vec2().from_cartesian(200, 10),
-        #         rudder_size=10,
-        #         mass=10,
-        #         collide_siblings=False
-        #     )
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()

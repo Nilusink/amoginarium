@@ -8,6 +8,7 @@ Author:
 Nilusink, LukasKrah
 """
 
+from collections.abc import Sequence
 from types import EllipsisType
 from PIL import Image
 import typing as tp
@@ -550,6 +551,28 @@ class BaseRenderer(abc.ABC):
         :param color: Drawing color
         :param thickness: Thickness of the line
         :param global_position: IDK
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+
+    def draw_lines(
+            self,
+            points: Sequence[coord_t],
+            color: Color | Sequence[Color],
+            *,
+            thickness: float = 1.0,
+            global_position: bool = True,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a simple line
+        :param points: list of line points
+        :param color: one color or color for each point
+
+        :param thickness: line thickness
+        :param global_position: position in global space or relative to previous
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :raises NotImplementedError: If the renderer does not implement this method

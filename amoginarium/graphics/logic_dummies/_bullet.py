@@ -7,12 +7,10 @@ Bullet dummy entity
 Author:
 Nilusink
 """
-from icecream import ic
 from types import EllipsisType
 
 from amoginarium.shared.utility import Vec2, get_default, Color, convert_color, coord_t
 from amoginarium.shared.utility import convert_coord, fade
-from amoginarium.shared.debugging import run_with_debug
 from amoginarium.shared import DummyCIDs
 from amoginarium.base._textures import textures
 from amoginarium import pv
@@ -181,8 +179,10 @@ class BulletDummy(SyncedImageEntity):
             if self._kill_next <= 0:
                 self._kill_next = None
                 self._kill()
+
             else:
                 self._kill_next -= 1
+
         else:
             self._kill_next = 1
 
@@ -290,8 +290,9 @@ class BulletDummy(SyncedImageEntity):
         # draw trace
         if self._show_trace and len(self._trace) > 1:
             if isinstance(self._c_trace_color, tuple):
-                color: Color = fade(
-                    *self._c_trace_color, min(self._lifetime / self._trace_fade_color_time, 1)
+                color: Color = fade(  # type: ignore
+                    *self._c_trace_color,
+                    min(self._lifetime / self._trace_fade_color_time, 1),
                 )
                 trace_mult = color.a1
 
@@ -299,23 +300,26 @@ class BulletDummy(SyncedImageEntity):
                 color: Color = self._c_trace_color.copy()
                 trace_mult = self._original_alpha
 
-            for i in range(len(self._trace)-1):
+            points: list[Vec2] = []
+            colors: list[Color] = []
+            for i in range(len(self._trace)):
                 p1 = self._trace[i]
-                p2 = self._trace[i+1]
 
                 # check if any of the positions is at 0/0
-                if p1.length * p2.length < 1:
+                if p1.length < 1:
                     continue
 
                 if self._fade_trace:
                     color.a1 = trace_mult * (1 - (i / self._trace_len))
 
-                renderer.draw_thick_line(
-                    p1 - world_pos,
-                    p2 - world_pos,
-                    color,  # ignore: type
-                    thickness=(self.size.length / 3) * self._trace_width_mult,
-                )
+                points.append(p1-world_pos)
+                colors.append(color.copy())
+
+            renderer.draw_lines(
+                points,
+                colors,
+                thickness=(self.size.length / 3) * self._trace_width_mult,
+            )
 
         if draw and not self._trace_only and draw_entity:
             self.facing *= -1

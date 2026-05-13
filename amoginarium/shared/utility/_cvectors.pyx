@@ -101,7 +101,16 @@ cdef class Vec2:
         self.set_angle(mirror_by.get_angle() + 2 * ang_d)
         return self
 
-    cpdef object rotate_by(self, object other):
+    cpdef object rotate_by(self, object angle):
+        if isinstance(angle, Vec2):
+            return self.rotate_by_vec2(angle)
+
+        return self.rotate_by_angle(angle)
+
+    cdef object rotate_by_angle(self, double angle):
+        return self.from_polar(self.angle + angle, self.length)
+
+    cdef object rotate_by_vec2(self, object other):
         # normalize directional vector
         o = other.copy()
         o.normalize()

@@ -35,6 +35,7 @@ from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
 
+from collections.abc import Sequence
 from types import EllipsisType
 from icecream import ic
 from PIL import Image
@@ -44,7 +45,8 @@ import numpy as np
 import math as m
 
 from amoginarium.shared.debugging import cum_timer
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t, convert_color
+from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade
+from amoginarium.shared.utility import coord_t, convert_color, PI_2
 
 from ._base_renderer import BaseRenderer, tColor
 from .windows import WindowsMonitorService
@@ -801,7 +803,7 @@ class OpenGLRenderer(BaseRenderer):
     def draw_polygon_line(
             self,
             vertices: tp.Iterable[coord_t],
-            color: Color | tColor,
+            color: Color | tColor | Sequence[Color | tColor],
             *,
             thickness: float = 1.0,
             center: coord_t = None,
@@ -835,9 +837,11 @@ class OpenGLRenderer(BaseRenderer):
                 center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
             glTranslate(center_vec2.x, center_vec2.y, 0)
 
+        # set color if single color is given
         self.__set_color(color)
 
-        # Use TRIANGLE_STRIP to create a thick outline by calculating offsets for each segment
+        # Use TRIANGLE_STRIP to create a thick outline by calculating offsets for 
+        # each segment
         glBegin(GL_TRIANGLE_STRIP)
         num_verts = len(vertices_vec2)
         for i in range(num_verts + 1):
@@ -849,7 +853,8 @@ class OpenGLRenderer(BaseRenderer):
             if length == 0:
                 continue
 
-            off_x, off_y = (-dy / length) * (thickness * 0.5), (dx / length) * (thickness * 0.5)
+            off_x = (-dy / length) * (thickness * 0.5)
+            off_y = (dx / length) * (thickness * 0.5)
 
             glVertex2f(v1.x + off_x, v1.y + off_y)
             glVertex2f(v1.x - off_x, v1.y - off_y)
@@ -1714,6 +1719,97 @@ class OpenGLRenderer(BaseRenderer):
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
+
+    def draw_lines(
+            self,
+            points: Sequence[coord_t],
+            color: Color | Sequence[Color],
+            *,
+            thickness: float = 1.0,
+            global_position: bool = True,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a simple line
+        :param points: list of line points
+        :param color: one color or color for each point
+
+        :param thickness: line thickness
+        :param global_position: position in global space or relative to previous
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        if len(points) <= 1:
+            return
+
+        # convert points to Vec2
+        _points: list[Vec2] = [convert_coord(c, Vec2) for c in points]  # type: ignore
+
+        if convert_global:
+            _points = [pv.global_vars.translate_screen_coord(p) for p in _points]
+            thickness = pv.global_vars.translate_scale(thickness)
+
+        if offscreen_check:
+            for point in _points:
+                if self._check_out_of_screen(point, (1, 1)):
+                    return
+
+        # set color if only one is given or not enough are given
+        color_list: bool = True
+        if not isinstance(color, Sequence):
+            self.__set_color(color)
+            color_list = False
+
+        elif isinstance(color, Sequence) and len(color) < len(points):
+            self.__set_color(color[0])
+            color = color[0]
+            color_list = False
+
+        # create local coordinate system
+        if global_position:
+            glPushMatrix()
+        
+        glBegin(GL_TRIANGLE_STRIP)
+        
+        # draw first point
+        direction = (_points[0] - _points[1]).normalize()
+        d = Vec2().from_polar(direction.angle + PI_2, thickness/2)  # create 90° offset
+
+        if color_list:
+            self.__set_color(color[0])
+
+        glVertex2f(*(_points[0] + d).xy)
+        glVertex2f(*(_points[0] - d).xy)
+
+        # draw intermediate points
+        for i in range(1, len(_points)-1):
+            direction = (_points[i-1] - _points[i+1]).normalize()
+
+            d = Vec2().from_polar(
+                direction.angle + PI_2, thickness / 2
+            )  # create 90° offset
+
+            if color_list:
+                self.__set_color(color[i])
+
+            glVertex2f(*(_points[i] + d).xy)
+            glVertex2f(*(_points[i] - d).xy)
+
+        # draw last point
+        direction = (_points[-2] - _points[-1]).normalize()
+        d = Vec2().from_polar(direction.angle + PI_2, thickness/2)  # create 90° offset
+
+        if color_list:
+            self.__set_color(color[-1])
+
+        glVertex2f(*(_points[-1] + d).xy)
+        glVertex2f(*(_points[-1] - d).xy)
+
+        glEnd()
+        
+        if global_position:
+            glPopMatrix()
 
     # endregion
 

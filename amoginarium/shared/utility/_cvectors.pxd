@@ -25,7 +25,11 @@ cdef class Vec2:
 
     cpdef object mirror(self, object mirror_by)
 
-    cpdef object rotate_by(self, object other)
+    cpdef object rotate_by(self, object angle)
+
+    cdef object rotate_by_angle(self, double angle)
+
+    cdef object rotate_by_vec2(self, object other)
 
     # magic stuff
     cdef object add_vec2(self, object other)

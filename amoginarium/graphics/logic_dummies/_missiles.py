@@ -9,15 +9,13 @@ Nilusink
 """
 
 from types import EllipsisType
-from icecream import ic
 from time import perf_counter
 import typing as tp
 
 from amoginarium.base._textures import textures
-from amoginarium.shared.utility import Vec2, coord_t
+from amoginarium.shared.utility import Vec2
 from amoginarium.shared import MissileCIDs
 
-from ..render_bindings import renderer
 from ..entities import Animation
 from ._bullet import BulletDummy
 

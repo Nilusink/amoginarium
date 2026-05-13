@@ -16,8 +16,8 @@ import numpy as np
 from amoginarium.shared import Coalitions, base_entity_t, MissileCIDs
 from amoginarium.shared.utility import Vec2, clamp_angle, PI_4
 
-from ...._base import LogicGameEntity, Updated
 from ...._rideables import Passenger, RideablePerks
+from ...._base import LogicGameEntity
 from ._guided_multi_stage_missile import GuidedMultiStageMissile
 
 

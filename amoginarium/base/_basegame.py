@@ -306,9 +306,9 @@ class BaseGame:
         #         entity.load_textures()
         # self._update_loading_screen(22)
 
-        for spwanable in GRAPHICS_SPAWNABLES.values():
-            if hasattr(spwanable, "load_textures"):
-                spwanable.load_textures()
+        for spawnable in GRAPHICS_SPAWNABLES.values():
+            if hasattr(spawnable, "load_textures"):
+                spawnable.load_textures()
 
         self._update_loading_screen(23)
 
