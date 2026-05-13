@@ -192,12 +192,12 @@ class _GameCollisions:
                 continue
 
             self.collision_manager.create_relation(
-                group_a_id=group_a,
-                group_b_id=group_b,
-                cb_a_on_start=self.COLLISION_START,
-                cb_b_on_start=self.COLLISION_START,
-                cb_a_on_end=self.COLLISION_END,
-                cb_b_on_end=self.COLLISION_END
+                a_group_id=group_a,
+                b_group_id=group_b,
+                a_collision_start_callback=self.COLLISION_START,
+                b_collision_start_callback=self.COLLISION_START,
+                a_collision_end_callback=self.COLLISION_END,
+                b_collision_end_callback=self.COLLISION_END
             )
             self._registered_relations.add(rel_key)
 
