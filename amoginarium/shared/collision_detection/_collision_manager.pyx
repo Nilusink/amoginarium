@@ -367,70 +367,102 @@ cdef class CollisionManager:
         deletion_request.entity_id = entity_id
         self.pending_deletions.push_back(deletion_request)
 
-    cdef void _cleanup_entity_collisions(self, int group_id, int entity_id):
-        cdef CollisionRelationStruct * rel
+    cdef void _cleanup_entity_collisions(
+            self,
+            int group_id,  # type: CollisionGroupIDType
+            int entity_id  # type: CollisionEntityIDType
+    ):
+        """
+        End all active collisions that this entity is involved in
+        :param group_id: The group ID of the entity
+        :param entity_id: The unique ID of the entity
+        """
+        cdef CollisionRelationStruct * relation
         cdef uint64_t pair_key
-        cdef uint64_t a_id, b_id
-        cdef tuple cbs
-        cdef size_t rel_sz
-        cdef size_t i, k, to_remove_sz
+        cdef uint64_t entity_a_id, entity_b_id
+        cdef tuple callbacks
+        cdef size_t total_relations
+        cdef size_t i, k, to_remove_size
         cdef vector[uint64_t] to_remove
-        cdef int g_a_id, g_b_id, r_id
-        cdef object inst_a, inst_b
+        cdef int group_a_id, group_b_id, relation_id
+        cdef object instance_a, instance_b
 
-        rel_sz = self.relations.size()
-        for i in range(rel_sz):
-            rel = &self.relations[i]
-            r_id = rel.id
-            g_a_id = rel.group_a_id
-            g_b_id = rel.group_b_id
+        total_relations = self.relations.size()
+        for i in range(total_relations):
+            relation = &self.relations[i]
+            relation_id = relation.id
+            group_a_id = relation.group_a_id
+            group_b_id = relation.group_b_id
 
-            if g_a_id == group_id or g_b_id == group_id:
-                cbs = self.relation_callbacks[i]
+            if group_a_id == group_id or group_b_id == group_id:
+                callbacks = self.relation_callbacks[i]
                 to_remove.clear()
 
-                it = rel.active_cols.begin()
-                while it != rel.active_cols.end():
+                it = relation.active_cols.begin()
+                while it != relation.active_cols.end():
                     pair_key = dereference(it).first
                     col_id = dereference(it).second
 
-                    a_id = pair_key >> 32
-                    b_id = pair_key & 0xFFFFFFFF
+                    entity_a_id = pair_key >> 32
+                    entity_b_id = pair_key & 0xFFFFFFFF
 
                     # If either A or B is the entity being deactivated/deleted
-                    if (g_a_id == group_id and a_id == entity_id) or (g_b_id == group_id and b_id == entity_id):
-                        if self.groups[g_a_id].entities.size() > a_id and self.groups[g_b_id].entities.size() > b_id:
-                            if len(self.group_instances[g_a_id]) > a_id and len(self.group_instances[g_b_id]) > b_id:
-                                inst_a = self.group_instances[g_a_id][a_id]
-                                inst_b = self.group_instances[g_b_id][b_id]
+                    if (group_a_id == group_id and entity_a_id == entity_id) or (
+                            group_b_id == group_id and entity_b_id == entity_id):
+                        if self.groups[group_a_id].entities.size() > entity_a_id and \
+                                self.groups[
+                                    group_b_id].entities.size() > entity_b_id:
+                            if len(self.group_instances[
+                                       group_a_id]) > entity_a_id and len(
+                                self.group_instances[group_b_id]) > entity_b_id:
+                                instance_a = self.group_instances[group_a_id][
+                                    entity_a_id]
+                                instance_b = self.group_instances[group_b_id][
+                                    entity_b_id]
 
-                                if inst_a is not None and inst_b is not None:
+                                if instance_a is not None and instance_b is not None:
 
-                                    # Trigger End for A (cbs[1])
-                                    if cbs[1] is not None:
-                                        ev_a = CollisionEvent(col_id, r_id, g_b_id, inst_b,
-                                                              Vec2().from_cartesian(
-                                                                  self.groups[g_a_id].entities[a_id].position_x_new,
-                                                                  self.groups[g_a_id].entities[a_id].position_y_new),
-                                                              Vec2(), 1.0)
-                                        cbs[1](inst_a, g_b_id, [ev_a])
+                                    # Trigger End for A (callbacks[1])
+                                    if callbacks[1] is not None:
+                                        ev_a = CollisionEvent(
+                                            col_id,
+                                            relation_id,
+                                            group_b_id,
+                                            instance_b,
+                                            Vec2().from_cartesian(
+                                                self.groups[group_a_id].entities[
+                                                    entity_a_id].position_x_new,
+                                                self.groups[group_a_id].entities[
+                                                    entity_a_id].position_y_new),
+                                            Vec2(),
+                                            1.0
+                                        )
+                                        callbacks[1](instance_a, group_b_id, [ev_a])
 
-                                    # Trigger End for B (cbs[3])
-                                    if cbs[3] is not None:
-                                        ev_b = CollisionEvent(col_id, r_id, g_a_id, inst_a,
-                                                              Vec2().from_cartesian(
-                                                                  self.groups[g_b_id].entities[b_id].position_x_new,
-                                                                  self.groups[g_b_id].entities[b_id].position_y_new),
-                                                              Vec2(), 1.0)
-                                        cbs[3](inst_b, g_a_id, [ev_b])
+                                    # Trigger End for B (callbacks[3])
+                                    if callbacks[3] is not None:
+                                        ev_b = CollisionEvent(
+                                            col_id,
+                                            relation_id,
+                                            group_a_id,
+                                            instance_a,
+                                            Vec2().from_cartesian(
+                                                self.groups[group_b_id].entities[
+                                                    entity_b_id].position_x_new,
+                                                self.groups[group_b_id].entities[
+                                                    entity_b_id].position_y_new),
+                                            Vec2(),
+                                            1.0
+                                        )
+                                        callbacks[3](instance_b, group_a_id, [ev_b])
 
                         to_remove.push_back(pair_key)
 
                     preincrement(it)
 
-                to_remove_sz = to_remove.size()
-                for k in range(to_remove_sz):
-                    rel.active_cols.erase(to_remove[k])
+                to_remove_size = to_remove.size()
+                for k in range(to_remove_size):
+                    relation.active_cols.erase(to_remove[k])
 
     cdef void _flush_deletions(self):
         cdef size_t i, pd_sz
