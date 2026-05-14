@@ -16,9 +16,10 @@ import numpy as np
 import math as m
 
 from amoginarium.shared.utility import Vec2, clamp_angle, PIDController, PI_4
+from amoginarium.shared.utility import calculate_launch_angle_all_directions
 from amoginarium.shared import MissileCIDs, base_entity_t, Coalitions
 
-from ...._base import LogicGameEntity
+from ...._base import LogicGameEntity, GravityAffected
 from .._weapon_actors.sensors import BaseWeaponsSensor
 from ._multi_stage_missile import MultiStageMissile
 
@@ -98,7 +99,34 @@ class GuidedMultiStageMissile(MultiStageMissile):
         """
         if target_delta:
             facing = self.velocity.copy().normalize()
-            target = target_delta.copy().normalize()
+
+            # try to fly in a ballistic arc if distance > 5000
+            if target_delta.length > 6500:
+                try:
+                    aim_angle, *_ = calculate_launch_angle_all_directions(
+                        target_delta,
+                        Vec2(),
+                        Vec2(),
+                        self.velocity.length,
+                        recalculate=10,
+                        aim_type="low",
+                        g=GravityAffected.gravity * 2
+                    )
+    
+                except ValueError:
+                    # slowly aim up
+                    aim_angle = facing.copy()
+                    aim_angle.angle -= dt
+                    # aim up
+                    aim_angle = Vec2().from_cartesian(
+                        target_delta.x, -abs(target_delta.x) * 0.5
+                    )
+
+            else:
+                aim_angle = target_delta.copy()
+
+            # get target facing
+            target = aim_angle.normalize()
 
             # calculate angular error
             error = m.atan2(

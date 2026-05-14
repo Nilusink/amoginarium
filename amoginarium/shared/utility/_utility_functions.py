@@ -14,7 +14,8 @@ import typing as tp
 import pygame as pg
 import numpy as np
 
-from ._cutility_functions import raycast_mask, infinite_lines_intersect, raycast_size
+from ._ccalculations import calculate_launch_angle
+from ._cutility_functions import raycast_mask, raycast_size
 from ._cvectors import Vec2
 from ._ccolor import Color
 
@@ -180,3 +181,58 @@ def lidar_sphere(
 def get_default[T](param: T | EllipsisType, default: T) -> T:
     """return param if not Ellipsis else default"""
     return default if isinstance(param, EllipsisType) else param
+
+
+def calculate_launch_angle_all_directions(
+    position_delta: Vec2,
+    target_velocity: Vec2,
+    target_acceleration: Vec2,
+    launch_speed: float,
+    recalculate: int = 10,
+    aim_type: str = "low",
+    g: float = 9.81
+) -> tuple[Vec2, float, Vec2]:
+    """
+    removes calculate_launch_angles directional restrictions
+    
+    :param position_delta: the position delta between cannon and target
+    :param target_velocity: the current velocity of the target, pass empty Vec2 if no velocity is known
+    :param target_acceleration: the current acceleration of the target, pass empty Vec2 if no velocity is known
+    :param launch_speed: the projectile muzzle speed
+    :param recalculate: how often the position is being recalculated, basically a precision parameter
+    :param aim_type: either "high" - "h" or "low" - "l". Defines if the lower or higher curve should be aimed for
+    :param g: gravitation inflicted on target
+    :return: where to aim, tof, predicted position
+    """
+    # mirror y because of pygame
+    position_delta.y *= -1
+    target_velocity.y *= -1
+    target_acceleration.y *= -1
+    
+    # mirror x if negative
+    mirror = False
+    if position_delta.x < 0:
+        mirror = True
+        position_delta.x *= -1
+        target_velocity.x *= -1
+        target_acceleration.x *= -1
+
+    aiming_angle, tof, predict = calculate_launch_angle(
+        position_delta,
+        target_velocity,
+        target_acceleration,
+        launch_speed,
+        recalculate,
+        aim_type,
+        g
+    )
+
+    # un-mirror everything
+    aiming_angle.y *= -1
+    predict.y *= -1
+
+    if mirror:
+        aiming_angle.x *= -1
+        predict.x *= -1
+
+    return aiming_angle, tof, predict
