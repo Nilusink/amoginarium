@@ -16,16 +16,15 @@ from libcpp.vector cimport vector
 from libc.stdint cimport uint64_t
 
 from ._collision_types import (
-    CollisionHitboxEnum, CollisionGroupIDType, CollisionEntityIDType,
-    CollisionCallbackType, CollisionRelationIDType,
-    CollisionExceptionIDType
+    CollisionGroupIDType, CollisionEntityIDType,
+    CollisionRelationIDType
 )
 
 """
 Data of a single entity in the collision system
 """
 cdef struct EntityData:
-    int id
+    int id  # type: CollisionEntityIDType
     bint alive  # False if entity has been marked for pending deletion
     bint is_active
     bint is_centered
@@ -62,17 +61,17 @@ cdef struct CollisionGroupStruct:
     bint is_static
     int hitbox_type
     vector[EntityData] entities
-    vector[int] free_ids
+    vector[int] free_ids  # type: vector[CollisionEntityIDType]
 
 """
 Data of a collision relation
 (a relation between two groups)
 """
 cdef struct CollisionRelationStruct:
-    int id
-    int group_a_id
-    int group_b_id
-    unordered_map[uint64_t, int] active_cols  # Ignore the warnings
+    int id  # type: CollisionRelationIDType
+    int group_a_id  # type: CollisionGroupIDType
+    int group_b_id  # type: CollisionGroupIDType
+    unordered_map[uint64_t, int] active_cols  # noqa
     unordered_set[uint64_t] updated_cols
 
 """
@@ -80,8 +79,8 @@ Data of a deferred deletion
 (an entity that will be deleted in the next frame)
 """
 cdef struct DeferredDeletion:
-    int group_id
-    int entity_id
+    int group_id  # type: CollisionGroupIDType
+    int entity_id  # type: CollisionEntityIDType
 
 cdef class CollisionManager:
     """
