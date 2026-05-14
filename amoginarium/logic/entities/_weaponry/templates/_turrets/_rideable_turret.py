@@ -251,7 +251,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     # region collision
     def __on_collision_bullet(self, event: CollisionEvent["Bullet"]) -> None:
         dmg = event.other_entity.damage
-        if dmg > 0 and event.other_entity.root != self:
+        if dmg > 0 and event.other_entity.root != self.root:
             ic(event.other_entity.root, self, self.weapon)
             self.hit(dmg, hit_by=event.other_entity)
 

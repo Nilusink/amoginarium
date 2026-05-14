@@ -15,7 +15,7 @@ scope = "maverick"
 
 [behaviour]
 hp = 0.5
-ttl = 10
+ttl = 5
 weight = 5
 mass = 5
 base_damage = 30
@@ -25,13 +25,13 @@ radius = 128
 damage = 80
 
 [rudder]
-size = 8
+size = 18
 max_angle = 2
 
 [motor]
 start = [0.3, 0]
-launch = [0.15, 40_000, 3]
-accel = [0.4, 8_000, 0.8]
+launch = [0, 40_000, 3]
+accel = [3, 7_000, 0.8]
 
 [sound]
 name = "jetbag"
@@ -42,7 +42,7 @@ offset = [32, 0]
 function_delay = 0.1
 
 [guidance]
-max_alpha = 0.2
+max_alpha = 1
 function_delay = 0.2
 
 [fuze.0]  # proximity to anything
