@@ -15,7 +15,7 @@ import typing as tp
 import numpy as np
 
 from amoginarium.shared.utility import Vec2, get_default, convert_coord, MASK16, MASK32
-from amoginarium.shared.utility import normalize_angle, is_related
+from amoginarium.shared.utility import normalize_angle
 from amoginarium.shared import Coalitions, base_entity_t, TurretCIDs, BaseCommandType
 from amoginarium.shared import ProcessCommand
 from amoginarium.shared.collision_detection import CollisionEvent
@@ -39,8 +39,14 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     _CID = TurretCIDs.rideable_base
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_rideable_turrets
-    
-    __slots__ = ()
+
+    __slots__ = (
+        "_hp",
+        "_weapon",
+        "_passenger_visible",
+        "_passenger_offset",
+        "_turn_speed",
+    )
     
     # region ClassVars
     _default_size: tp.ClassVar[
@@ -76,6 +82,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     _weapon: BaseWeapon
     _passenger_visible: bool
     _passenger_offset: Vec2
+    _turn_speed: float
     # endregion
     
     def __init__(
@@ -100,6 +107,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self._default_passenger_offset,
             Vec2
         )
+        self._turn_speed: float = get_default(self._default_turn_speed, np.inf)
 
         self._valid_angles = ...
         _valid_angles = self._default_engagement_valid_angles
@@ -112,7 +120,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self._valid_angles[0].length = self.max_range  # type: ignore
             self._valid_angles[1].length = self.max_range  # type: ignore
 
-        # weapon
+        # region weapon creation
         if isinstance(self._default_weapon_position_offset, Vec2):
             offset = self._default_weapon_position_offset
 
@@ -136,12 +144,16 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             **weapon_kwargs,
         )
         self.weapon.reload(True)
+        # endregion
 
         # health
         self._hp = self._default_max_hp
 
         # audio
         self._ping = MetalPings().set_volume(0.4, 0.5)
+
+        # targeting
+        self._target_angle = Vec2()
 
         # init parent class
         super().__init__(
@@ -258,13 +270,29 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         if self._hp <= 0:
             self.kill(hit_by)
 
-    def _update(self, delta: float) -> None:
+    def _shoot_at(
+        self,
+        target_angle: Vec2,
+        tof: float | EllipsisType = ...,
+        target_pos: Vec2 | EllipsisType = ...,
+        **bullet_args
+    ) -> None:
+        """checks if shot is inside parameters"""
+        self.weapon.shoot(
+            self.facing,
+            bullet_tof=tof,
+            target_pos=target_pos,
+            **bullet_args
+        )
+
+    def _update(self, delta: float, set_facing: bool = True) -> None:
         # update weapon
         self.weapon.update(delta)
 
         # update keys
         controller = self._controller
         if controller and self._player:
+            self._set_bit("flags", 14, True)  # set ridden
             # update facing
             ppm = pv.global_vars.get_pixel_per_meter()
             ssf = pv.global_vars.get_screen_size_fac()
@@ -278,8 +306,10 @@ class RideableTurret(RideablePerks, LogicGameEntity):
                 Vec2,
             )
             vector -= self.world_position
-            self.facing.angle = vector.angle
-            self.weapon.facing.angle = vector.angle
+            self._target_angle.xy = vector.xy
+
+            if set_facing:
+                self._turn_at(vector.angle, delta)
 
             if controller.ride and not self.__ride_pressed:
                 self._player.clear_controlled_entity()
@@ -287,12 +317,22 @@ class RideableTurret(RideablePerks, LogicGameEntity):
                 self._controller = None
 
             if controller.shoot:
-                self.weapon.shoot(self.facing)
+                self._shoot_at(self._target_angle)
 
             else:
                 self.weapon.stop_shooting()
 
+            if controller.reload:
+                self.weapon.reload()
+
             self.__ride_pressed = controller.ride
+
+        else:
+            self._set_bit("flags", 14, False)  # reset ridden
+
+        # check if reload
+        if self.weapon.get_mag_state(1)[0] == 0:
+            self.weapon.reload()
 
         # HP
         self._runtime_buffer[self.id].param0 = self._hp / self._default_max_hp
@@ -315,3 +355,42 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         self._runtime_buffer[self.id].param4 = param4
 
         super()._update(delta)
+
+    def _turn_at(self, angle: float, dt: float) -> None:
+        """turn towards a target"""
+        diff = angle - self.facing.angle
+
+        if diff > np.pi:
+            diff -= 2 * np.pi
+
+        if diff < -np.pi:
+            diff += 2 * np.pi
+
+        # limit turn speed
+        increment = np.sign(diff) * min(abs(diff), self._turn_speed * dt)
+        new_angle = normalize_angle(self.facing.angle + increment)
+
+        # check for gimbal limit
+        if not isinstance(self._valid_angles, EllipsisType):
+
+            min_a = normalize_angle(self._valid_angles[0].angle)
+            max_a = normalize_angle(self._valid_angles[1].angle)
+
+            # end angle < start angle (0 crossing)
+            if max_a <= min_a:
+                if max_a < new_angle < min_a:
+                    d = min_a - max_a
+
+                    # clamp to corresponding angle
+                    if new_angle + d / 2 > min_a:
+                        new_angle = min_a
+
+                    else:
+                        new_angle = max_a
+
+            else:
+                new_angle = min(max(new_angle, min_a), max_a)
+
+        # apply rotation
+        self.facing.angle = new_angle
+        self.weapon.facing.angle = self.facing.angle

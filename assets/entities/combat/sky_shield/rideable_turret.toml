@@ -1,5 +1,5 @@
 [id]
-from = "turret.rideable.base"
+from = "turret.rideable.calculated"
 cid = "turret.rideable.sky_shield"
 
 [visibility]
@@ -11,7 +11,7 @@ name = "skyshield_base"
 
 [behaviour]
 turn_speed = 1.57
-#airburst_munition = true
+airburst_munition = true
 
 [engagement]
 valid_angles = [2.944, 0.197]

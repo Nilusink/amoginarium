@@ -174,16 +174,17 @@ class BaseRenderer(abc.ABC):
     # region Textured
     @abc.abstractmethod
     def draw_textured_quad(
-            self,
-            texture_id: TextureID,
-            pos: coord_t,
-            size: coord_t,
-            layer,
-            *,
-            convert_global: bool = True,
-            rotate_angle: float = 0,
-            rotate_anchor: coord_t | EllipsisType = ...,
-            offscreen_check: bool = True,
+        self,
+        texture_id: TextureID,
+        pos: coord_t,
+        size: coord_t,
+        layer,
+        *,
+        convert_global: bool = True,
+        rotate_angle: float = 0,
+        rotate_anchor: coord_t | EllipsisType = ...,
+        offscreen_check: bool = True,
+        color: Color | EllipsisType = ...,
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -195,6 +196,7 @@ class BaseRenderer(abc.ABC):
         :param rotate_anchor: At what pixel to rotate at. Defaults to center position
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :param layer: Layer number
+        :param color: overlay color to tint the quad
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError

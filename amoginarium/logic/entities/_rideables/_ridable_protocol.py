@@ -19,6 +19,8 @@ from .._base import LogicGameEntity
 class RideablePerks(tp.Protocol):
     """perks of an entity that can be ridden"""
 
+    __slots__ = []
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 

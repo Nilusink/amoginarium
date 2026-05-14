@@ -35,10 +35,10 @@ if tp.TYPE_CHECKING:
 @dataclass
 class TargetSolution:
     """a solution for pollution"""
-    target: VisibleGameEntityLike
     target_predict: Vec2
     angle: Vec2
     tof: float
+    target: tp.Optional[VisibleGameEntityLike | EllipsisType] = ...
 
 
 class SensorInit(tp.TypedDict):
@@ -502,6 +502,7 @@ class BaseTurret(LogicGameEntity):
     ) -> TargetSolution | None:
         """
         aim at specified target
+
         :param target: target to aim at
         :returns:
         """
@@ -513,12 +514,7 @@ class BaseTurret(LogicGameEntity):
             if target.on_ground:
                 player_acceleration.y -= GravityAffected.gravity
 
-        # if issubclass(Bullet, target.__class__)
-        # if 1:  # target in Bullets.entities():
         target_position = target.position
-
-        # else:
-        #     target_position = target.position_center
 
         position_delta = target_position - (
                 self.position + self.weapon.parent_position_offset
@@ -563,11 +559,6 @@ class BaseTurret(LogicGameEntity):
 
             if predict.length < self.min_range:
                 return
-
-            # tof = min(
-            #     tof,
-            #     1.3 * self.engagement_range / self.weapon.muzzle_velocity
-            # )
 
             return TargetSolution(
                 target_predict=target_predict,

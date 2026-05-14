@@ -128,7 +128,7 @@
         },
                 {
             "type": "turret.rideable.sky_shield",
-            "pos": [4500, 730]
+            "pos": [11500, 730]
         },
         {
             "type": "static.text",

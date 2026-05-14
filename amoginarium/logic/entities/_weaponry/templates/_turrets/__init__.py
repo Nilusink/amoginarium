@@ -7,3 +7,4 @@ Authors: LukasKrah
 """
 from ._base_turret import BaseTurret, TargetSolution
 from ._rideable_turret import RideableTurret
+from ._calculated_rideable_turret import CalculatedRideableTurret

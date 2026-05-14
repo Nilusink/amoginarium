@@ -628,7 +628,8 @@ class OpenGLRenderer(BaseRenderer):
         rotate_angle: float = 0,
         rotate_anchor: coord_t | EllipsisType = ...,
         offscreen_check: bool = True,
-        force_draw: bool = False
+        force_draw: bool = False,
+        color: Color | EllipsisType = ...
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -641,6 +642,7 @@ class OpenGLRenderer(BaseRenderer):
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :param layer: Layer number
         :param force_draw: force the renderer to draw the quad NOW (only use for stencils)
+        :param color: overlay color to tint the quad
         """
         pos_vec2: Vec2 = convert_coord(pos, Vec2)  # type: ignore
         size_vec2: Vec2 = convert_coord(size, Vec2)  # type: ignore
@@ -671,13 +673,16 @@ class OpenGLRenderer(BaseRenderer):
 
                 rx, ry = anchor.x, anchor.y
 
-        draw_info = {
+        draw_info: dict[str, tp.Any] = {
             "texture_id": texture_id,
             "pos": pos_vec2,
             "size": size_vec2,
             "rotate_angle": rotate_angle,
             "rotate_anchor": (rx, ry),
         }
+        
+        if not isinstance(color, EllipsisType):
+            draw_info["color"] = color
 
         if force_draw:
             self.__draw_layer([draw_info])
@@ -703,6 +708,9 @@ class OpenGLRenderer(BaseRenderer):
 
             rotate_angle: float = sprite["rotate_angle"]
             rx, ry = sprite["rotate_anchor"]
+
+            if "color" in sprite:
+                self.__set_color(sprite["color"])
 
             glPushMatrix()
             glTranslate(pos.x, pos.y, 0.0)
@@ -734,6 +742,9 @@ class OpenGLRenderer(BaseRenderer):
             glEnd()
             glDisable(GL_TEXTURE_2D)
             glPopMatrix()
+
+            if "color" in sprite:  # reset color
+                glColor3f(1.0, 1.0, 1.0)
 
             if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
                 self._draw_debug_bounds(pos, size)

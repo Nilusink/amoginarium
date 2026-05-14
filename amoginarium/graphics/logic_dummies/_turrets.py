@@ -7,7 +7,9 @@ turret dummies
 Author:
 Nilusink
 """
+from types import EllipsisType
 from icecream import ic
+import typing as tp
 import ctypes
 
 from amoginarium.base._textures import textures
@@ -260,3 +262,37 @@ class ExactoSniperTurretDummy(BaseTurretDummy):
 
 class RideableTurret(BaseTurretDummy):
     _CID = TurretCIDs.rideable_base
+
+
+class CalculatedRideableTurretDummy(BaseTurretDummy):
+    _CID = TurretCIDs.rideable_calculated
+
+    _reticle_texture: tp.ClassVar[int | EllipsisType] = ...
+    __size = Vec2().from_cartesian(31, 31) * 2
+
+    @classmethod
+    def load_textures(cls) -> None:
+        cls._reticle_texture, _ = textures.get_texture(
+            "reticle",
+            (31, 31),
+            pixel_perfect=True
+        )
+        super().load_textures()
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
+        super()._gl_draw(delta_cal, layer)
+        
+        if layer == 1 and self._get_bit("flags", 14):
+            if self._target_pos.length != 0:
+                pos = pv.global_vars.translate_screen_coord(
+                    self._target_pos
+                    - pv.global_vars.get_world_position(),
+                ) - self.__size / 2
+                renderer.draw_textured_quad(
+                    self._reticle_texture,
+                    pos,
+                    self.__size,
+                    layer=1,
+                    offscreen_check=True,
+                    convert_global=False
+                )
