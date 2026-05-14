@@ -19,24 +19,23 @@ from ._guided_multi_stage_missile import GuidedMultiStageMissile
 
 
 class MultiThrusterMissile(GuidedMultiStageMissile):
-
     _CID = MissileCIDs.multi_thruster
     _DEBUG = True
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        coalition: Coalitions,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        *,
-        initial_facing: float | EllipsisType = ...,
-        rudder_size: float | EllipsisType = ...,
-        rudder_max_angle: float | EllipsisType = ...,
-        base_mass: float | EllipsisType = ...,
-        collision_exception_ids: list[int] | int | None = None,
-        **kwargs,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            *,
+            initial_facing: float | EllipsisType = ...,
+            rudder_size: float | EllipsisType = ...,
+            rudder_max_angle: float | EllipsisType = ...,
+            base_mass: float | EllipsisType = ...,
+            collision_exception_ids: list[int] | int | None = None,
+            **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -95,11 +94,11 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
         if angular_velocity > angular_target_velocity + self._rotational_tolerance:
             self._rotational_thrust_values[0] = self._rotational_thrust_amount
             self._rotational_thrust_values[1] = 0
-        
+
         elif angular_velocity < angular_target_velocity - self._rotational_tolerance:
             self._rotational_thrust_values[1] = self._rotational_thrust_amount
             self._rotational_thrust_values[0] = 0
-        
+
         else:
             self._rotational_thrust_values[0] = 0
             self._rotational_thrust_values[1] = 0
@@ -155,6 +154,7 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
 
     def _update(self, delta: float, apply_thrust: bool = True) -> None:
         # update stuff
+        # noinspection PyArgumentEqualDefault
         super()._update(delta, True)
 
         # ic(self._apply_thrust)
@@ -179,7 +179,8 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
         # apply directional thrust
         for direction in range(4):
             self.apply_force(
-                Vec2().from_polar(PI_2 * direction, self._directional_thrust_values[direction]),
+                Vec2().from_polar(PI_2 * direction,
+                                  self._directional_thrust_values[direction]),
                 Vec2()
             )
 
@@ -187,17 +188,21 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
         if self._DEBUG:
             self._dbe.p1 = self.position + Vec2().from_polar(
                 self.facing.angle + 0,
-                max(200 * (self._directional_thrust_values[0] / self._directional_thrust_amount), 1),
+                max(200 * (self._directional_thrust_values[0]
+                           / self._directional_thrust_amount), 1),
             )
             self._dbe.p2 = self.position + Vec2().from_polar(
                 self.facing.angle + PI_2,
-                max(200 * (self._directional_thrust_values[1] / self._directional_thrust_amount), 1),
+                max(200 * (self._directional_thrust_values[1]
+                           / self._directional_thrust_amount), 1),
             )
             self._dbe.p3 = self.position + Vec2().from_polar(
                 self.facing.angle + PI,
-                max(200 * (self._directional_thrust_values[2] / self._directional_thrust_amount), 1),
+                max(200 * (self._directional_thrust_values[2]
+                           / self._directional_thrust_amount), 1),
             )
             self._dbe.p4 = self.position + Vec2().from_polar(
                 self.facing.angle + PI_2 * 3,
-                max(200 * (self._directional_thrust_values[3] / self._directional_thrust_amount), 1),
+                max(200 * (self._directional_thrust_values[3]
+                           / self._directional_thrust_amount), 1),
             )

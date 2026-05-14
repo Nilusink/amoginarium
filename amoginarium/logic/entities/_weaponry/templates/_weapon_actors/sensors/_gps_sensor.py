@@ -9,7 +9,6 @@ Nilusink
 """
 
 from types import EllipsisType
-from icecream import ic
 
 from amoginarium.shared import WeaponSensorCIDs
 from amoginarium.shared.utility import Vec2

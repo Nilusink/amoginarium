@@ -48,11 +48,11 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         "_passenger_offset",
         "_turn_speed",
     )
-    
+
     # region ClassVars
     _default_size: tp.ClassVar[
         Vec2 | float | tuple[float, float] | list[float]
-    ] = (32, 32)
+        ] = (32, 32)
     _default_max_hp: tp.ClassVar[float] = 50
     _default_turn_speed: tp.ClassVar[float] = np.inf
     _default_facing_angle: tp.ClassVar[float] = 0
@@ -60,43 +60,44 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     _default_engagement_valid_angles: tp.ClassVar[
         tuple[float, float] | EllipsisType
-    ] = ...
+        ] = ...
     _default_engagement_min_range: tp.ClassVar[float] = 0
     _default_engagement_max_range: tp.ClassVar[float] = 300
-    
+
     _default_target_taps: tp.ClassVar[int] = 1  # shots per click
-    
+
     _default_weapon_type: tp.Type[BaseWeapon] | EllipsisType = ...
     _default_weapon_drop_casings: tp.ClassVar[bool] = False
     _default_weapon_position_offset: tp.ClassVar[
         Vec2 | list[float] | tuple[float, float]
-    ] = (0, 0)
+        ] = (0, 0)
     _default_weapon_static_facing: tp.ClassVar[float | EllipsisType] = ...
     _default_engagement_ignore_solution: tp.ClassVar[bool] = False
 
     _default_passenger_visible: tp.ClassVar[bool] = True
     _default_passenger_offset: tp.ClassVar[
         Vec2 | list[float] | tuple[float, float]
-    ] = (0, 0)
+        ] = (0, 0)
     # endregion
-    
+
     # region InstanceVars
     _hp: float
     _weapon: BaseWeapon
     _passenger_visible: bool
     _passenger_offset: Vec2
     _turn_speed: float
+
     # endregion
-    
+
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        coalition: Coalitions,
-        position: Vec2,
-        *,
-        cluster: bool = False,
-        size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
-        weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            coalition: Coalitions,
+            position: Vec2,
+            *,
+            cluster: bool = False,
+            size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
+            weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         # get size and convert to Vec2
         _size: Vec2 = convert_coord(  # type: ignore
@@ -256,7 +257,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self.hit(dmg, hit_by=event.other_entity)
 
     def _collision_start(
-        self, events: list[CollisionEvent[tp.Union["Bullet", "Player"]]]
+            self, events: list[CollisionEvent[tp.Union["Bullet", "Player"]]]
     ) -> None:
         # bullet - 5 turrets - events länge 5
         # turret - events 1 bullet
@@ -264,6 +265,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             if event.group_id == GameCollisions.collision_group_bullets:
                 event: CollisionEvent["Bullet"]
                 self.__on_collision_bullet(event)
+
     # endregion
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
@@ -282,11 +284,11 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self.kill(hit_by)
 
     def _shoot_at(
-        self,
-        target_angle: Vec2,
-        tof: float | EllipsisType = ...,
-        target_pos: Vec2 | EllipsisType = ...,
-        **bullet_args
+            self,
+            target_angle: Vec2,
+            tof: float | EllipsisType = ...,
+            target_pos: Vec2 | EllipsisType = ...,
+            **bullet_args
     ) -> None:
         """checks if shot is inside parameters"""
         self.weapon.shoot(
@@ -354,11 +356,13 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
         if self._valid_angles is not ...:
             param4 |= (
-                int(normalize_angle(self._valid_angles[0].angle) * 10_000) & MASK16
-            ) << 32
+                              int(normalize_angle(
+                                  self._valid_angles[0].angle) * 10_000) & MASK16
+                      ) << 32
             param4 |= (
-                int(normalize_angle(self._valid_angles[1].angle) * 10_000) & MASK16
-            ) << 48
+                              int(normalize_angle(
+                                  self._valid_angles[1].angle) * 10_000) & MASK16
+                      ) << 48
 
         else:
             param4 |= MASK32 << 32

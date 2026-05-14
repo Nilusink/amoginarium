@@ -17,15 +17,16 @@ from amoginarium.shared.utility import Vec2
 
 from .._base_actor import BaseActor
 
+
 # if tp.TYPE_CHECKING:
 #     from ..._bullets import AerodynamicEntity
 
 
 class BaseWeaponsSensor(DynamicEntityParentViable, BaseActor, ABC):
     """sensor for weapons guidance"""
-    
+
     _CID = WeaponSensorCIDs.base
-    
+
     # def __init__(
     #     self,
     #     parent: "AerodynamicEntity",
@@ -39,7 +40,7 @@ class BaseWeaponsSensor(DynamicEntityParentViable, BaseActor, ABC):
     @classmethod
     def has_cid(cls) -> bool:
         return True
-    
+
     @classmethod
     def cid(cls) -> str:
         """component ID"""

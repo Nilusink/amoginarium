@@ -12,9 +12,10 @@ from types import EllipsisType
 import typing as tp
 
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord, normalize_angle, RTD
+from amoginarium.shared.utility import (Vec2, coord_t, convert_coord, normalize_angle,
+                                        RTD)
 from amoginarium.shared import HasPosition, HasFacing
-from amoginarium.base._textures import textures
+from amoginarium.base._textures import textures  # todo - ? what in the holy import
 from amoginarium import pv
 
 from ._graphics_groups import Drawn_0
@@ -25,18 +26,18 @@ class Animation(BaseGraphicsEntity):
     """base animation class"""
 
     def __init__(
-        self,
-        textures: tp.Sequence[int],
-        size: coord_t,
-        delay: float,
-        position: coord_t | EllipsisType = ...,
-        position_reference: HasPosition | tp.Callable[[], Vec2] | EllipsisType = ...,
-        position_offset: coord_t | EllipsisType = ...,
-        rotation_reference: HasFacing | tp.Callable[[], Vec2] | EllipsisType = ...,
-        rotation_offset: float | EllipsisType = ...,
-        rotate_anchor: Vec2 | EllipsisType = ...,
-        loop: bool = False,
-        layer: int = 0,
+            self,
+            textures: tp.Sequence[int],
+            size: coord_t,
+            delay: float,
+            position: coord_t | EllipsisType = ...,
+            position_reference: HasPosition | tp.Callable[[], Vec2] | EllipsisType = ...,
+            position_offset: coord_t | EllipsisType = ...,
+            rotation_reference: HasFacing | tp.Callable[[], Vec2] | EllipsisType = ...,
+            rotation_offset: float | EllipsisType = ...,
+            rotate_anchor: Vec2 | EllipsisType = ...,
+            loop: bool = False,
+            layer: int = 0,
     ) -> None:
         """
         :param textures: list of texture ids to play as an animation

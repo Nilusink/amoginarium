@@ -21,8 +21,8 @@ type Color3 = tuple[float, float, float]
 type Color4 = tuple[float, float, float, float]
 type tColor = Color3 | Color4
 
-# depending on the renderer, TextureID will be a different type
 
+# depending on the renderer, TextureID will be a different type
 
 
 class BaseRenderer(abc.ABC):
@@ -55,11 +55,11 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def load_texture(
-        self,
-        image: Image.Image,
-        size: coord_t | None = None,
-        mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
-        pixel_perfect: bool = False,
+            self,
+            image: Image.Image,
+            size: coord_t | None = None,
+            mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+            pixel_perfect: bool = False,
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         Load an image texture (saves it internally)
@@ -85,7 +85,11 @@ class BaseRenderer(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) -> None:
+    def display_update(
+            self,
+            position: coord_t | None = None,
+            size: coord_t | None = None
+    ) -> None:
         """
         Should be called when the display gets updated
         :param position: Position of the display
@@ -174,17 +178,17 @@ class BaseRenderer(abc.ABC):
     # region Textured
     @abc.abstractmethod
     def draw_textured_quad(
-        self,
-        texture_id: TextureID,
-        pos: coord_t,
-        size: coord_t,
-        layer,
-        *,
-        convert_global: bool = True,
-        rotate_angle: float = 0,
-        rotate_anchor: coord_t | EllipsisType = ...,
-        offscreen_check: bool = True,
-        color: Color | EllipsisType = ...,
+            self,
+            texture_id: TextureID,
+            pos: coord_t,
+            size: coord_t,
+            layer,
+            *,
+            convert_global: bool = True,
+            rotate_angle: float = 0,
+            rotate_anchor: coord_t | EllipsisType = ...,
+            offscreen_check: bool = True,
+            color: Color | EllipsisType = ...,
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -217,6 +221,7 @@ class BaseRenderer(abc.ABC):
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
+
     # endregion
 
     # region Basic shapes

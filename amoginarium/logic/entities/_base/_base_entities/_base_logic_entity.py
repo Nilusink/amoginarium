@@ -58,7 +58,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
     - update
     - visibility
     """
-    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id", "__groups", "__alive")
+    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id",
+                 "__groups", "__alive")
 
     # region InstanceVars
     _parent: BaseLogicEntity | None

@@ -30,7 +30,7 @@ class MultiStageMissileDummy(BulletDummy):
     _animation_size: tuple[int, int] = (16, 16)
     _animation_textures: list[int] = ...
 
-    _image_animation_delay: float = 1/12
+    _image_animation_delay: float = 1 / 12
     _image_scope: tp.ClassVar[str | None] = None
     _image_textures: list[int] = ...
 
@@ -65,11 +65,11 @@ class MultiStageMissileDummy(BulletDummy):
             0.05,
             position_reference=self._flame_position,
             rotation_reference=self,
-            rotation_offset=-3.14159265/2,
+            rotation_offset=-3.14159265 / 2,
             loop=True,
             layer=2
         )
-        
+
     @classmethod
     def bullet_image(cls) -> int:
         image_textures = cls._image_textures
@@ -78,7 +78,7 @@ class MultiStageMissileDummy(BulletDummy):
             return image_textures[
                 int((perf_counter() / cls._image_animation_delay) % n_textures)
             ]
-        
+
         else:
             return super().bullet_image()
 

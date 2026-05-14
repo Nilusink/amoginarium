@@ -8,8 +8,6 @@ Author:
 Nilusink
 """
 from __future__ import annotations
-from types import EllipsisType
-from icecream import ic
 import typing as tp
 
 from .. import LogicGameEntity
@@ -24,15 +22,14 @@ class Passenger:
     # region ClassVars
     _observe_time: tp.ClassVar[float] = 1  # time after rideable death
     # endregion
-    
+
     # region InstanceVars
     _controlled_entity: list["RideableGameEntity"]
-    _current_observe_time: float
-    # endregion
-    
+    _current_observe_time: float  # endregion
+
     def __init__(self, *args, **kwargs) -> None:
         self._controlled_entity = []
-        
+
         # further init MRO chain
         super().__init__(*args, **kwargs)
 
@@ -48,8 +45,8 @@ class Passenger:
         """true if riding and being controlled"""
         ce = self.controlled_entity
         return (
-            ce is not None
-            and ce.control_authority
+                ce is not None
+                and ce.control_authority
         )
 
     @property
@@ -92,7 +89,7 @@ class Passenger:
         for i, e in enumerate(self._controlled_entity):
             e: LogicGameEntity
             if not e.alive:
-                if i == len(self._controlled_entity)-1:
+                if i == len(self._controlled_entity) - 1:
                     if self._current_observe_time == 0:
                         self._current_observe_time = self._observe_time
 

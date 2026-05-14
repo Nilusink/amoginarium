@@ -23,7 +23,7 @@ from ..render_bindings import renderer
 
 class _SyncedEntitiesManager:
     __slots__ = ["_entities"]
-    
+
     def __init__(self) -> None:
         self._entities: dict[int, SyncedGraphicsEntity] = {}
 
@@ -150,6 +150,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     def id(self) -> int:
         """sync ID"""
         return self.__id
+
     # endregion
 
     # region buffer control
@@ -231,7 +232,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                     0.6,
                     0.6,
                     .7,
-                    0.125 + m.sin(2*time.perf_counter() + self.id) / 8
+                    0.125 + m.sin(2 * time.perf_counter() + self.id) / 8
                 ),
             )
             renderer.disable_stencil()
@@ -256,12 +257,12 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         return self._texture_id
 
     def draw_at(
-        self,
-        position: coord_t,
-        size: coord_t,
-        layer: int,
-        *,
-        rotation: float = 0
+            self,
+            position: coord_t,
+            size: coord_t,
+            layer: int,
+            *,
+            rotation: float = 0
     ) -> None:
         """draw an entity at specified position and size"""
         renderer.draw_textured_quad(
@@ -308,7 +309,6 @@ class Iconifyable(ABC):
     """entities that can be represented in an icon"""
 
     def __init__(self, *args, **kwargs) -> None:
-
         # call next class in MRO
         super().__init__(*args, **kwargs)
 

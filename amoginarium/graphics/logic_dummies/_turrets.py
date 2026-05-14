@@ -65,7 +65,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         self._angles = (-1, -1)
         super().__init__(sync_id=sync_id)
         self.add(Drawn_1, Drawn_2)
-        
+
         # defaults
         self.add_child(SE_MANAGER.get_entity(weapon_id))
         self._hp_colors = (
@@ -279,7 +279,7 @@ class CalculatedRideableTurretDummy(BaseTurretDummy):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         super()._gl_draw(delta_cal, layer)
-        
+
         if layer == 1 and self._get_bit("flags", 14):
             if self._target_pos.length != 0:
                 pos = pv.global_vars.translate_screen_coord(

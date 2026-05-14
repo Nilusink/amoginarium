@@ -36,23 +36,24 @@ class BaseMissile(AerodynamicEntity):
     _default_size: tp.ClassVar[tuple[float, float] | list[float]] = [100, 10]
 
     _default_sound_effect: tp.ClassVar[tp.Type[PresetEffect] | EllipsisType] = ...
+
     # endregion
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        coalition: Coalitions,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        *,
-        initial_facing: float | EllipsisType = ...,
-        rudder_size: float | EllipsisType = ...,
-        rudder_max_angle: float | EllipsisType = ...,
-        fuel_mass: float | EllipsisType = ...,
-        base_mass: float | EllipsisType = ...,
-        collision_exception_ids: list[int] | int | None = None,
-        **kwargs,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            *,
+            initial_facing: float | EllipsisType = ...,
+            rudder_size: float | EllipsisType = ...,
+            rudder_max_angle: float | EllipsisType = ...,
+            fuel_mass: float | EllipsisType = ...,
+            base_mass: float | EllipsisType = ...,
+            collision_exception_ids: list[int] | int | None = None,
+            **kwargs,
     ) -> None:
         size: Vec2 | list | tuple = self._default_size
 
@@ -110,6 +111,7 @@ class BaseMissile(AerodynamicEntity):
         return normalize_angle_neg(
             self.velocity.angle - self.facing.angle
         )
+
     # endregion
 
     def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:

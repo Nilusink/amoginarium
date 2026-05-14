@@ -30,7 +30,8 @@ from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
 from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glViewport, glOrtho
 from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
 from OpenGL.GL import GL_QUADS, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
-from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays
+from OpenGL.GL import (glEnableClientState, glDisableClientState, glVertexPointer,
+                       glDrawArrays)
 from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
@@ -618,18 +619,18 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Textured
     def draw_textured_quad(
-        self,
-        texture_id: TextureID,
-        pos: coord_t,
-        size: coord_t,
-        layer: int,
-        *,
-        convert_global: bool = True,
-        rotate_angle: float = 0,
-        rotate_anchor: coord_t | EllipsisType = ...,
-        offscreen_check: bool = True,
-        force_draw: bool = False,
-        color: Color | EllipsisType = ...
+            self,
+            texture_id: TextureID,
+            pos: coord_t,
+            size: coord_t,
+            layer: int,
+            *,
+            convert_global: bool = True,
+            rotate_angle: float = 0,
+            rotate_anchor: coord_t | EllipsisType = ...,
+            offscreen_check: bool = True,
+            force_draw: bool = False,
+            color: Color | EllipsisType = ...
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -680,7 +681,7 @@ class OpenGLRenderer(BaseRenderer):
             "rotate_angle": rotate_angle,
             "rotate_anchor": (rx, ry),
         }
-        
+
         if not isinstance(color, EllipsisType):
             draw_info["color"] = color
 
@@ -763,7 +764,7 @@ class OpenGLRenderer(BaseRenderer):
         # sort cache by texture_id, pixel perfect
         for layer_id in sorted(layers):
             self.__draw_layer(self.__layer_cache.pop(layer_id))
-    
+
     # endregion
 
     # region Basic shapes
@@ -1789,7 +1790,7 @@ class OpenGLRenderer(BaseRenderer):
         # create local coordinate system
         if global_position:
             glPushMatrix()
-        
+
         glBegin(GL_TRIANGLE_STRIP)
 
         # draw points as thick line
@@ -1803,7 +1804,7 @@ class OpenGLRenderer(BaseRenderer):
 
             else:
                 # use prev and next points as normal vector
-                direction = (_points[i-1] - _points[i+1]).normalize()
+                direction = (_points[i - 1] - _points[i + 1]).normalize()
 
             d = Vec2().from_polar(
                 direction.angle + PI_2, thickness / 2
@@ -1816,7 +1817,7 @@ class OpenGLRenderer(BaseRenderer):
             glVertex2f(*(_points[i] - d).xy)
 
         glEnd()
-        
+
         if global_position:
             glPopMatrix()
 

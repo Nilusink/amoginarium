@@ -220,7 +220,7 @@ class HealingPotion(BaseItem):
 
 class JetBag(BaseItem):
     """makes you flyyy (not actually, but it makes it look like you do)"""
-    
+
     __slots__ = ()
 
     _CID = ItemCIDs.jetbag

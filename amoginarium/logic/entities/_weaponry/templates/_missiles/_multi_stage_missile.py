@@ -18,7 +18,6 @@ from amoginarium.shared.utility import Vec2
 from ...._base import LogicGameEntity
 from ._base_missile import BaseMissile
 
-
 # params are: time for stage, thrust, fuel flow in weight / s
 type crude_motor_stage_t = tuple[float, float, tp.Optional[float]]
 
@@ -50,22 +49,23 @@ class MultiStageMissile(BaseMissile):
 
     # region InstanceVars
     _apply_thrust: bool
+
     # endregion
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        coalition: Coalitions,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        *,
-        initial_facing: float | EllipsisType = ...,
-        rudder_size: float | EllipsisType = ...,
-        rudder_max_angle: float | EllipsisType = ...,
-        base_mass: float | EllipsisType = ...,
-        collision_exception_ids: list[int] | int | None = None,
-        **kwargs,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            *,
+            initial_facing: float | EllipsisType = ...,
+            rudder_size: float | EllipsisType = ...,
+            rudder_max_angle: float | EllipsisType = ...,
+            base_mass: float | EllipsisType = ...,
+            collision_exception_ids: list[int] | int | None = None,
+            **kwargs,
     ) -> None:
         # calculate motor params
         self._stages = [
@@ -146,7 +146,7 @@ class MultiStageMissile(BaseMissile):
         # increment stage
         if self.__current_stage_t < 0:
             self.__current_stage += 1
-            
+
             if len(self._stages) <= self.__current_stage:
                 self.__current_fuel_weight = 0
                 self.__current_thrust = 0
@@ -156,7 +156,7 @@ class MultiStageMissile(BaseMissile):
 
             # set next stage time (+ overflow from last stage)
             self.__current_stage_t = (
-                self._stages[self.__current_stage][0] + self.__current_stage_t
+                    self._stages[self.__current_stage][0] + self.__current_stage_t
             )
 
     def _update(self, delta: float, apply_thrust: bool = True) -> None:

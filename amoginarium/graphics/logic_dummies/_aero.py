@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 
+import typing as tp
 from types import EllipsisType
 import math as m
 
@@ -22,13 +23,13 @@ class AeroDummy(SyncedGraphicsEntity):
     _CID = DummyCIDs.aero
 
     def __init__(
-        self,
-        sync_id: int,
-        *,
-        spawn_time: float = 0,
-        visibility_offset: float = 0,
-        target_pos: Vec2 | EllipsisType = ...,
-        **kwargs
+            self,
+            sync_id: int,
+            *,
+            spawn_time: float = 0,
+            visibility_offset: float = 0,
+            target_pos: Vec2 | EllipsisType = ...,
+            **kwargs: tp.Any
     ):
         super().__init__(sync_id)
 

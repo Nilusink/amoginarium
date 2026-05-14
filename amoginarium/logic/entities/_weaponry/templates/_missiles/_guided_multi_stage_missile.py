@@ -10,7 +10,6 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
-from icecream import ic
 import typing as tp
 import numpy as np
 import math as m
@@ -33,29 +32,30 @@ class GuidedMultiStageMissile(MultiStageMissile):
 
     # region ClassVars
     _sensors_list: tp.ClassVar[list[dict[str, tp.Any]]] = []
-    
+
     _default_guidance_max_alpha: tp.ClassVar[float] = np.inf
     _default_guidance_function_delay: tp.ClassVar[float] = 0
     # endregion
 
     # region InstanceVars
     _sensor: BaseWeaponsSensor | None
+
     # endregion
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        coalition: Coalitions,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        *,
-        initial_facing: float | EllipsisType = ...,
-        rudder_size: float | EllipsisType = ...,
-        rudder_max_angle: float | EllipsisType = ...,
-        base_mass: float | EllipsisType = ...,
-        collision_exception_ids: list[int] | int | None = None,
-        **kwargs,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            *,
+            initial_facing: float | EllipsisType = ...,
+            rudder_size: float | EllipsisType = ...,
+            rudder_max_angle: float | EllipsisType = ...,
+            base_mass: float | EllipsisType = ...,
+            collision_exception_ids: list[int] | int | None = None,
+            **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -70,15 +70,15 @@ class GuidedMultiStageMissile(MultiStageMissile):
             collision_exception_ids=collision_exception_ids,
             **kwargs
         )
-        
+
         # set defaults
         if self._sensors_list:
             sensor_args = self._sensors_list[0].copy()
             sensor_type = sensor_args.pop("type")
-    
+
             # create PID controller
             self._pid = PIDController(4, 0, 1.5)
-    
+
             self._sensor = sensor_type(parent=self, **sensor_args)
 
         else:
@@ -103,6 +103,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
             # try to fly in a ballistic arc if distance > 5000
             if target_delta.length > 6500:
                 try:
+                    # noinspection PyArgumentEqualDefault
                     aim_angle, *_ = calculate_launch_angle_all_directions(
                         target_delta,
                         Vec2(),
@@ -112,7 +113,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
                         aim_type="low",
                         g=GravityAffected.gravity * 2
                     )
-    
+
                 except ValueError:
                     # slowly aim up
                     aim_angle = facing.copy()
@@ -159,7 +160,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
         # update sensor
         if self._sensor:
             self._sensor.update()
-        
+
         # update guidance
         if self._lifetime >= self._default_guidance_function_delay:
             target = None

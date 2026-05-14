@@ -21,7 +21,6 @@ from ._base import BaseWeaponsSensor
 if tp.TYPE_CHECKING:
     from ..._bullets import AerodynamicEntity
 
-
 _LASER_POINTERS: dict[int, Vec2] = {}
 
 
@@ -41,7 +40,7 @@ class LaserDesignator:
     def code(self) -> int:
         """designator code"""
         return self.__code
-    
+
     def shine(self, origin: Vec2, direction: Vec2, max_range: float) -> None:
         """shine the laser in a direction"""
         entities: list[CollisionEvent] = (
@@ -65,12 +64,12 @@ class LaserSensor(BaseWeaponsSensor):
     _CID = WeaponSensorCIDs.laser
 
     def __init__(
-        self,
-        parent: "AerodynamicEntity",
-        code: int,
-        *,
-        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-        function_delay: float = 0,
+            self,
+            parent: "AerodynamicEntity",
+            code: int,
+            *,
+            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+            function_delay: float = 0,
     ) -> None:
         """
         homes in on a designated laser

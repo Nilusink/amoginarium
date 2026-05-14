@@ -105,26 +105,26 @@ class BaseTurret(LogicGameEntity):
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        coalition: Coalitions,
-        position: Vec2,
-        *,
-        size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
-        weapon: BaseWeapon | EllipsisType = ...,
-        max_range: float | EllipsisType = ...,
-        min_range: float | EllipsisType = ...,
-        airburst_munition: bool | EllipsisType = ...,
-        intercept_bullets: bool | EllipsisType = ...,
-        intercept_players: bool | EllipsisType = ...,
-        target_taps: int | EllipsisType = ...,
-        sensors: tp.Iterable[BaseSensor] = None,
-        detection_group: DetectionGroup = None,
-        valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
-        turn_speed: float | EllipsisType = ...,
-        allow_static_target: bool | EllipsisType = ...,
-        cluster: bool = False,
-        weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            coalition: Coalitions,
+            position: Vec2,
+            *,
+            size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
+            weapon: BaseWeapon | EllipsisType = ...,
+            max_range: float | EllipsisType = ...,
+            min_range: float | EllipsisType = ...,
+            airburst_munition: bool | EllipsisType = ...,
+            intercept_bullets: bool | EllipsisType = ...,
+            intercept_players: bool | EllipsisType = ...,
+            target_taps: int | EllipsisType = ...,
+            sensors: tp.Iterable[BaseSensor] = None,
+            detection_group: DetectionGroup = None,
+            valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
+            turn_speed: float | EllipsisType = ...,
+            allow_static_target: bool | EllipsisType = ...,
+            cluster: bool = False,
+            weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         size = get_default(size, self._default_size)
         weapon_kwargs: dict = get_default(weapon_kwargs, {})
@@ -189,7 +189,8 @@ class BaseTurret(LogicGameEntity):
         self._aim_type = self._default_engagement_aim_type
 
         self.airburst_munition = (
-            get_default(airburst_munition, self._default_airburst_munition) or cluster
+                get_default(airburst_munition,
+                            self._default_airburst_munition) or cluster
         )
         self.intercept_bullets = get_default(
             intercept_bullets, self._default_target_bullets
@@ -484,8 +485,10 @@ class BaseTurret(LogicGameEntity):
         param4 |= (int(self.max_range) & MASK16) << 16
 
         if self._valid_angles is not ...:
-            param4 |= (int(normalize_angle(self._valid_angles[0].angle) * 10_000) & MASK16) << 32
-            param4 |= (int(normalize_angle(self._valid_angles[1].angle) * 10_000) & MASK16) << 48
+            param4 |= (int(normalize_angle(
+                self._valid_angles[0].angle) * 10_000) & MASK16) << 32
+            param4 |= (int(normalize_angle(
+                self._valid_angles[1].angle) * 10_000) & MASK16) << 48
 
         else:
             param4 |= MASK32 << 32

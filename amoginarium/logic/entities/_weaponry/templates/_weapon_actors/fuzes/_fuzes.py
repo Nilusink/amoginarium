@@ -48,6 +48,7 @@ class TTLFuze(BaseFuze):
 
 class TTLMultFuze(TTLFuze):
     """multiplies the ttl"""
+
     def __init__(
             self,
             parent: "Bullet",
@@ -57,7 +58,8 @@ class TTLMultFuze(TTLFuze):
             offset: Vec2 | EllipsisType = ...,
             function_delay: float = 0,
     ) -> None:
-        super().__init__(parent, ttl=ttl*mult, offset=offset, function_delay=function_delay)
+        super().__init__(parent, ttl=ttl * mult, offset=offset,
+                         function_delay=function_delay)
 
 
 class PositionFuze(BaseFuze):
@@ -138,7 +140,7 @@ class ProximityFuze(BaseFuze):
 
 class AltitudeFuze(BaseFuze):
     """fuzes if height below fuze is less than x (must be above x first to arm)"""
-    
+
     def __init__(
             self,
             parent: "Bullet",

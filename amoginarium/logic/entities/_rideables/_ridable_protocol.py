@@ -11,9 +11,6 @@ Nilusink
 import typing as tp
 
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import Controls
-
-from .._base import LogicGameEntity
 
 
 class RideablePerks(tp.Protocol):

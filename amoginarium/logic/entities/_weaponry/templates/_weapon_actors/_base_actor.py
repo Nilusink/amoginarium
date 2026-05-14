@@ -24,14 +24,15 @@ class BaseActor:
 
     # region ClassVars
     _DEBUG: tp.ClassVar[bool] = False
+
     # endregion
 
     def __init__(
-        self,
-        parent: "Bullet",
-        *,
-        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-        function_delay: float = 0,
+            self,
+            parent: "Bullet",
+            *,
+            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+            function_delay: float = 0,
     ) -> None:
         """
         base weapon actor
@@ -83,7 +84,7 @@ class BaseActor:
 
         # add offset with rotation
         self._position.xy = (
-            self._parent.position + self._offset.rotate_by(self._parent.facing)
+                self._parent.position + self._offset.rotate_by(self._parent.facing)
         ).xy
 
         # update debug entity if set

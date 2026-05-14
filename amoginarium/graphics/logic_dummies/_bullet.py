@@ -48,7 +48,7 @@ class BulletDummy(SyncedImageEntity):
 
     _kill_next: int | None
 
-    _bullet_image: int = ...
+    _bullet_image: int | EllipsisType = ...
 
     @classmethod
     def load_textures(cls) -> None:
@@ -120,7 +120,7 @@ class BulletDummy(SyncedImageEntity):
                 self._c_trace_color: tuple[Color, Color] = (
                     convert_color(c, Color) for c in trace_color
                 )
-            
+
             else:
                 self._c_trace_color: Color = convert_color(trace_color, Color)
                 self._original_alpha = self._c_trace_color.a1
@@ -188,12 +188,12 @@ class BulletDummy(SyncedImageEntity):
 
     @classmethod
     def draw_at(
-        cls,
-        position: coord_t,
-        size: coord_t,
-        layer: int,
-        *,
-        rotation: float = 0,
+            cls,
+            position: coord_t,
+            size: coord_t,
+            layer: int,
+            *,
+            rotation: float = 0,
     ) -> None:
         """draw an entity at specified position and size"""
         if cls.bullet_image() is ...:

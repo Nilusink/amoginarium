@@ -51,8 +51,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     # endregion
 
     # region instance vars
-    _bmp: Vec2
-    # endregion
+    _bmp: Vec2  # endregion
 
     @classmethod
     def load_textures(cls) -> None:
@@ -244,13 +243,13 @@ class ExactoSniper(WeaponDummy):
         # draw laser to target
         if self.param4:
             laser_end = (
-                Vec2().from_polar(self.param3 / 10_000, self.param4)
-                - pv.global_vars.get_world_position()
+                    Vec2().from_polar(self.param3 / 10_000, self.param4)
+                    - pv.global_vars.get_world_position()
             )
             laser_start = (
-                self.world_position
-                + Vec2().from_polar(self.facing.angle, 100)
-                + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
+                    self.world_position
+                    + Vec2().from_polar(self.facing.angle, 100)
+                    + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
             )
             renderer.draw_thick_line(
                 laser_start,

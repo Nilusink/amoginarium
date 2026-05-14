@@ -2,7 +2,7 @@ from ._fuzes import TTLFuze, PositionFuze, ProximityFuze, TTLMultFuze, AltitudeF
 from ._base import BaseFuze
 
 
-FUZES = {
+FUZES: dict[str, type[BaseFuze]] = {
     "ttl": TTLFuze,
     "ttl_mult": TTLMultFuze,
     "distance": PositionFuze,

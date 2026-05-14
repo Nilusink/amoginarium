@@ -10,7 +10,6 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
-from icecream import ic
 import typing as tp
 import numpy as np
 
@@ -21,29 +20,27 @@ from ...._rideables import Passenger, RideablePerks
 from ...._base import LogicGameEntity
 from ._guided_multi_stage_missile import GuidedMultiStageMissile
 
-
 if tp.TYPE_CHECKING:
     from ...._player import Player
 
 
 class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
-
     _CID = MissileCIDs.player_controlled
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        parent: LogicGameEntity,
-        coalition: Coalitions,
-        initial_position: Vec2,
-        initial_velocity: Vec2,
-        *,
-        initial_facing: float | EllipsisType = ...,
-        rudder_size: float | EllipsisType = ...,
-        rudder_max_angle: float | EllipsisType = ...,
-        base_mass: float | EllipsisType = ...,
-        collision_exception_ids: list[int] | int | None = None,
-        **kwargs,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            parent: LogicGameEntity,
+            coalition: Coalitions,
+            initial_position: Vec2,
+            initial_velocity: Vec2,
+            *,
+            initial_facing: float | EllipsisType = ...,
+            rudder_size: float | EllipsisType = ...,
+            rudder_max_angle: float | EllipsisType = ...,
+            base_mass: float | EllipsisType = ...,
+            collision_exception_ids: list[int] | int | None = None,
+            **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -66,9 +63,9 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
         if not isinstance(self._player, Passenger):
             self.kill(self)
             return
-        
+
         self._set_as_ridden = False  # should be done once guidance starts
-                
+
         # get controller
         self._controller = self._player.controller
 
@@ -78,20 +75,20 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
     @property
     def control_authority(self) -> bool:
         return True
-    
+
     @property
     def passenger_visible(self) -> bool:
         return True
-    
+
     def get_passenger_position(self) -> None | Vec2:
         return None
-    
+
     def get_camera_position(self) -> None | Vec2:
         return self.position.copy()
-    
+
     def get_camera_zoom(self) -> None | float:
         return None
-    
+
     # endregion
 
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:

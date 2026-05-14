@@ -112,7 +112,7 @@ class PlayerDummy(SyncedLRImageEntity):
                 (size, size),
                 mirror="x"
             )
-        
+
         # defaults
         self._hp_colors = (
             Color().from_255(255, 0, 0),
@@ -187,7 +187,7 @@ class PlayerDummy(SyncedLRImageEntity):
                     20,
                     convert_global=False
                 )
-            
+
             else:
                 self._hotbar.draw_at(
                     (0.5, 0.95),
