@@ -24,7 +24,7 @@ aabb_aabb_swept, aabb_circle_swept, circle_circle_swept,
 poly_poly_swept, circle_poly_swept)
 from ._collision_event import CollisionEvent
 from ._collision_types import (
-    CollisionHitboxEnum, CollisionGroupIDType, CollisionEntityIDType,
+    CollisionGroupIDType, CollisionEntityIDType,
     CollisionCallbackType, CollisionRelationIDType,
     CollisionExceptionIDType
 )
@@ -80,7 +80,7 @@ cdef class CollisionManager:
             self,
             int max_level,  # type: int
             bint is_static=False,  # bool (bint)
-            str hitbox_type=CollisionHitboxEnum.aabb
+            str hitbox_type="aabb"  # CollisionHitboxType
     ) -> int:  # CollisionGroupIDType
         """
         Add a new entity group
@@ -113,15 +113,15 @@ cdef class CollisionManager:
 
         # Set hitbox_type as integer for speed reasons.
         new_group.hitbox_type = 0
-        if hitbox_type == CollisionHitboxEnum.obb:
+        if hitbox_type == "obb":
             new_group.hitbox_type = 1
-        elif hitbox_type == CollisionHitboxEnum.triangle:
+        elif hitbox_type == "triangle":
             new_group.hitbox_type = 2
-        elif hitbox_type == CollisionHitboxEnum.polygon:
+        elif hitbox_type == "polygon":
             new_group.hitbox_type = 3
-        elif hitbox_type == CollisionHitboxEnum.point:
+        elif hitbox_type == "point":
             new_group.hitbox_type = 4
-        elif hitbox_type == CollisionHitboxEnum.circle:
+        elif hitbox_type == "circle":
             new_group.hitbox_type = 5
 
         self.groups.push_back(new_group)
@@ -259,10 +259,10 @@ cdef class CollisionManager:
                 target_group.entities[entity_id].size_x = 0.0
                 target_group.entities[entity_id].size_y = 0.0
 
-            target_group.entities[entity_id].vx_o.clear()
-            target_group.entities[entity_id].vy_o.clear()
-            target_group.entities[entity_id].vx_n.clear()
-            target_group.entities[entity_id].vy_n.clear()
+            target_group.entities[entity_id].vector_x_old.clear()
+            target_group.entities[entity_id].vector_y_old.clear()
+            target_group.entities[entity_id].vector_x_new.clear()
+            target_group.entities[entity_id].vector_y_new.clear()
             target_group.entities[entity_id].axes_x.clear()
             target_group.entities[entity_id].axes_y.clear()
 
@@ -494,198 +494,249 @@ cdef class CollisionManager:
             Any 2 entities that have the same exception ID will not collide.
         :param is_active: Whether the entity is alive.
             Useful for disabling collisions temporarily.
-        :param shift_history: TODO as I have no idea actually
+        :param shift_history: Whether to shift the current parameters to the
+            parameter history. If update_entity is called multiple times per
+            calculation, normally, this should only be True the first time it is called.
         """
-        if group_id < 0 or group_id >= self.groups.size(): return
-        if entity_id < 0 or entity_id >= self.groups[group_id].entities.size(): return
+        # Check that group and entity exist
+        if group_id < 0 or group_id >= self.groups.size():
+            return
+        if entity_id < 0 or entity_id >= self.groups[group_id].entities.size():
+            return
 
-        cdef EntityData * ed = &self.groups[group_id].entities[entity_id]
-        cdef double old_px_n, old_py_n
-        cdef double cx, cy, hw, hh, cr, sr, ax, ay, dx, dy, ln
+        cdef EntityData * entity_data = &self.groups[group_id].entities[entity_id]
+
+        cdef double previous_position_x_new, previous_position_y_new
+        cdef double coord_x, coord_y
+        cdef double half_width, half_height
+        cdef double cos_rotation, sin_rotation
+        cdef double axis_x, axis_y
+        cdef double delta_x, delta_y
+        cdef double length
         cdef double pivot_x, pivot_y
         cdef size_t i, num_v
-        cdef size_t ax_x_sz, vx_n_sz, vx_n_sz_2, vx_o_sz2, vx_n_sz2, vx_o_sz3, vx_n_sz3
+        cdef size_t axes_x_size
+        cdef size_t vector_x_new_size, vector_x_new_size_2
+        cdef size_t vector_x_old_size2
         cdef bint old_is_active, transitioned_to_active, transitioned_to_inactive
 
-        if not ed.alive: return
+        # If entity is already dead
+        if not entity_data.alive:
+            return
 
-        old_is_active = ed.is_active
+        # Determine if the entity transitioned its state
+        old_is_active = entity_data.is_active
         transitioned_to_active = False
         transitioned_to_inactive = False
 
         if is_active is not None:
-            ed.is_active = is_active
-            if old_is_active and not ed.is_active:
+            entity_data.is_active = is_active
+            if old_is_active and not entity_data.is_active:
                 transitioned_to_inactive = True
-            elif not old_is_active and ed.is_active:
+            elif not old_is_active and entity_data.is_active:
                 transitioned_to_active = True
 
+        # Inactive entities get removed from the grid and all active collisions end
         if transitioned_to_inactive:
             self._cleanup_entity_collisions(group_id, entity_id)
             self._remove_entity_from_grid(group_id, entity_id)
 
+        # If update is called multiple times per frame, only shift the positions once
+        # Preferably, this should be before editing the first position
+        # so on the first call
         if shift_history:
-            ed.position_x_old = ed.position_x_new
-            ed.position_y_old = ed.position_y_new
-            ed.vx_o = ed.vx_n
-            ed.vy_o = ed.vy_n
+            entity_data.position_x_old = entity_data.position_x_new
+            entity_data.position_y_old = entity_data.position_y_new
+            entity_data.vector_x_old = entity_data.vector_x_new
+            entity_data.vector_y_old = entity_data.vector_y_new
 
-        old_px_n = ed.position_x_new
-        old_py_n = ed.position_y_new
+        previous_position_x_new = entity_data.position_x_new
+        previous_position_y_new = entity_data.position_y_new
 
-        if centered is not None: ed.is_centered = centered
-        if size is not None: ed.size_x = size.x; ed.size_y = size.y
-        if rotation is not None: ed.rot = rotation
+        # Update different parameters of the entity
+        if centered is not None:
+            entity_data.is_centered = centered
+        if size is not None:
+            entity_data.size_x = size.x
+            entity_data.size_y = size.y
+        if rotation is not None:
+            entity_data.rot = rotation
         if position is not None:
-            ed.position_x_new = position.x
-            ed.position_y_new = position.y
+            entity_data.position_x_new = position.x
+            entity_data.position_y_new = position.y
 
         if radius is not None:
-            ed.radius = radius
+            entity_data.radius = radius
         elif size is not None:
-            ed.radius = size.x / 2.0
+            entity_data.radius = size.x / 2.0
 
         if ignore_collisions is not None:
-            ed.ignore_collisions.clear()
+            entity_data.ignore_collisions.clear()
             if isinstance(ignore_collisions, list):
                 for ig in ignore_collisions:  # type: ignore
-                    ed.ignore_collisions.push_back(ig)
+                    entity_data.ignore_collisions.push_back(ig)
             else:
-                ed.ignore_collisions.push_back(ignore_collisions)
+                entity_data.ignore_collisions.push_back(ignore_collisions)
 
-        if ed.hitbox_type == 0:
-            if ed.is_centered:
-                cx = ed.position_x_new - (ed.size_x / 2.0)
-                cy = ed.position_y_new - (ed.size_y / 2.0)
+        # aabb
+        if entity_data.hitbox_type == 0:
+            if entity_data.is_centered:
+                coord_x = entity_data.position_x_new - (entity_data.size_x / 2.0)
+                coord_y = entity_data.position_y_new - (entity_data.size_y / 2.0)
             else:
-                cx = ed.position_x_new
-                cy = ed.position_y_new
-            ed.vx_n.clear()
-            ed.vy_n.clear()
-            ed.vx_n.push_back(cx)
-            ed.vy_n.push_back(cy)
-            ed.vx_n.push_back(cx + ed.size_x)
-            ed.vy_n.push_back(cy)
-            ed.vx_n.push_back(cx + ed.size_x)
-            ed.vy_n.push_back(cy + ed.size_y)
-            ed.vx_n.push_back(cx)
-            ed.vy_n.push_back(cy + ed.size_y)
+                coord_x = entity_data.position_x_new
+                coord_y = entity_data.position_y_new
+            entity_data.vector_x_new.clear()
+            entity_data.vector_y_new.clear()
+            entity_data.vector_x_new.push_back(coord_x)
+            entity_data.vector_y_new.push_back(coord_y)
+            entity_data.vector_x_new.push_back(coord_x + entity_data.size_x)
+            entity_data.vector_y_new.push_back(coord_y)
+            entity_data.vector_x_new.push_back(coord_x + entity_data.size_x)
+            entity_data.vector_y_new.push_back(coord_y + entity_data.size_y)
+            entity_data.vector_x_new.push_back(coord_x)
+            entity_data.vector_y_new.push_back(coord_y + entity_data.size_y)
 
-            ax_x_sz = ed.axes_x.size()
-            if ax_x_sz == 0:
-                ed.axes_x.push_back(1.0)
-                ed.axes_y.push_back(0.0)
-                ed.axes_x.push_back(0.0)
-                ed.axes_y.push_back(1.0)
+            axes_x_size = entity_data.axes_x.size()
+            if axes_x_size == 0:
+                entity_data.axes_x.push_back(1.0)
+                entity_data.axes_y.push_back(0.0)
+                entity_data.axes_x.push_back(0.0)
+                entity_data.axes_y.push_back(1.0)
 
-        elif ed.hitbox_type == 1:
-            cr = cos(ed.rot)
-            sr = sin(ed.rot)
-            ed.vx_n.clear()
-            ed.vy_n.clear()
+        # obb
+        elif entity_data.hitbox_type == 1:
+            cos_rotation = cos(entity_data.rot)
+            sin_rotation = sin(entity_data.rot)
+            entity_data.vector_x_new.clear()
+            entity_data.vector_y_new.clear()
 
-            if ed.is_centered:
-                cx = ed.position_x_new
-                cy = ed.position_y_new
-                hw = ed.size_x / 2.0
-                hh = ed.size_y / 2.0
-                ed.vx_n.push_back(cx - hw * cr + hh * sr)
-                ed.vy_n.push_back(cy - hw * sr - hh * cr)
-                ed.vx_n.push_back(cx + hw * cr + hh * sr)
-                ed.vy_n.push_back(cy + hw * sr - hh * cr)
-                ed.vx_n.push_back(cx + hw * cr - hh * sr)
-                ed.vy_n.push_back(cy + hw * sr + hh * cr)
-                ed.vx_n.push_back(cx - hw * cr - hh * sr)
-                ed.vy_n.push_back(cy - hw * sr + hh * cr)
+            if entity_data.is_centered:
+                coord_x = entity_data.position_x_new
+                coord_y = entity_data.position_y_new
+                half_width = entity_data.size_x / 2.0
+                half_height = entity_data.size_y / 2.0
+                entity_data.vector_x_new.push_back(
+                    coord_x - half_width * cos_rotation + half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    coord_y - half_width * sin_rotation - half_height * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    coord_x + half_width * cos_rotation + half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    coord_y + half_width * sin_rotation - half_height * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    coord_x + half_width * cos_rotation - half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    coord_y + half_width * sin_rotation + half_height * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    coord_x - half_width * cos_rotation - half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    coord_y - half_width * sin_rotation + half_height * cos_rotation)
             else:
-                pivot_x = ed.position_x_new
-                pivot_y = ed.position_y_new
-                ed.vx_n.push_back(pivot_x)
-                ed.vy_n.push_back(pivot_y)
-                ed.vx_n.push_back(pivot_x + ed.size_x * cr)
-                ed.vy_n.push_back(pivot_y + ed.size_x * sr)
-                ed.vx_n.push_back(pivot_x + ed.size_x * cr - ed.size_y * sr)
-                ed.vy_n.push_back(pivot_y + ed.size_x * sr + ed.size_y * cr)
-                ed.vx_n.push_back(pivot_x - ed.size_y * sr)
-                ed.vy_n.push_back(pivot_y + ed.size_y * cr)
+                pivot_x = entity_data.position_x_new
+                pivot_y = entity_data.position_y_new
+                entity_data.vector_x_new.push_back(pivot_x)
+                entity_data.vector_y_new.push_back(pivot_y)
+                entity_data.vector_x_new.push_back(
+                    pivot_x + entity_data.size_x * cos_rotation)
+                entity_data.vector_y_new.push_back(
+                    pivot_y + entity_data.size_x * sin_rotation)
+                entity_data.vector_x_new.push_back(
+                    pivot_x + entity_data.size_x * cos_rotation
+                    - entity_data.size_y * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    pivot_y + entity_data.size_x * sin_rotation
+                    + entity_data.size_y * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    pivot_x - entity_data.size_y * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    pivot_y + entity_data.size_y * cos_rotation)
 
-            ed.axes_x.clear()
-            ed.axes_y.clear()
-            ed.axes_x.push_back(cr)
-            ed.axes_y.push_back(sr)
-            ed.axes_x.push_back(-sr)
-            ed.axes_y.push_back(cr)
+            entity_data.axes_x.clear()
+            entity_data.axes_y.clear()
+            entity_data.axes_x.push_back(cos_rotation)
+            entity_data.axes_y.push_back(sin_rotation)
+            entity_data.axes_x.push_back(-sin_rotation)
+            entity_data.axes_y.push_back(cos_rotation)
 
-        elif ed.hitbox_type == 2 or ed.hitbox_type == 3:
+        # triangle / polygon
+        elif entity_data.hitbox_type == 2 or entity_data.hitbox_type == 3:
             if positions is not None:
-                ed.vx_n.clear()
-                ed.vy_n.clear()
-                ax = 0
-                ay = 0
-                for p in positions:  # type: ignore
-                    ed.vx_n.push_back(p.x)
-                    ed.vy_n.push_back(p.y)
-                    ax += p.x
-                    ay += p.y
-                ed.position_x_new = ax / len(positions)
-                ed.position_y_new = ay / len(positions)
+                entity_data.vector_x_new.clear()
+                entity_data.vector_y_new.clear()
+                axis_x = 0
+                axis_y = 0
+                for position in positions:  # type: ignore
+                    entity_data.vector_x_new.push_back(position.x)
+                    entity_data.vector_y_new.push_back(position.y)
+                    axis_x += position.x
+                    axis_y += position.y
+                entity_data.position_x_new = axis_x / len(positions)
+                entity_data.position_y_new = axis_y / len(positions)
 
-                dx = ed.position_x_new - old_px_n
-                dy = ed.position_y_new - old_py_n
-                ed.vx_o.clear()
-                ed.vy_o.clear()
-                vx_n_sz = ed.vx_n.size()
-                for i in range(vx_n_sz):
-                    ed.vx_o.push_back(ed.vx_n[i] - dx)
-                    ed.vy_o.push_back(ed.vy_n[i] - dy)
+                delta_x = entity_data.position_x_new - previous_position_x_new
+                delta_y = entity_data.position_y_new - previous_position_y_new
+                entity_data.vector_x_old.clear()
+                entity_data.vector_y_old.clear()
+                vector_x_new_size = entity_data.vector_x_new.size()
+                for i in range(vector_x_new_size):
+                    entity_data.vector_x_old.push_back(entity_data.vector_x_new[i]
+                                                       - delta_x)
+                    entity_data.vector_y_old.push_back(entity_data.vector_y_new[i]
+                                                       - delta_y)
 
-                ed.axes_x.clear()
-                ed.axes_y.clear()
-                num_v = ed.vx_n.size()
+                entity_data.axes_x.clear()
+                entity_data.axes_y.clear()
+                num_v = entity_data.vector_x_new.size()
                 for i in range(num_v):
-                    dx = ed.vx_n[(i + 1) % num_v] - ed.vx_n[i]
-                    dy = ed.vy_n[(i + 1) % num_v] - ed.vy_n[i]
-                    ln = sqrt(dx * dx + dy * dy)
-                    if ln > 0.0001:
-                        ed.axes_x.push_back(-dy / ln)
-                        ed.axes_y.push_back(dx / ln)
+                    delta_x = (entity_data.vector_x_new[(i + 1) % num_v]
+                               - entity_data.vector_x_new[i])
+                    delta_y = (entity_data.vector_y_new[(i + 1) % num_v]
+                               - entity_data.vector_y_new[i])
+                    length = sqrt(delta_x * delta_x + delta_y * delta_y)
+                    if length > 0.0001:
+                        entity_data.axes_x.push_back(-delta_y / length)
+                        entity_data.axes_y.push_back(delta_x / length)
             elif position is not None:
-                dx = ed.position_x_new - old_px_n
-                dy = ed.position_y_new - old_py_n
-                vx_n_sz_2 = ed.vx_n.size()
-                for i in range(vx_n_sz_2):
-                    ed.vx_n[i] += dx
-                    ed.vy_n[i] += dy
+                delta_x = entity_data.position_x_new - previous_position_x_new
+                delta_y = entity_data.position_y_new - previous_position_y_new
+                vector_x_new_size_2 = entity_data.vector_x_new.size()
+                for i in range(vector_x_new_size_2):
+                    entity_data.vector_x_new[i] += delta_x
+                    entity_data.vector_y_new[i] += delta_y
 
-        elif ed.hitbox_type == 4:
-            ed.size_x = 0.0
-            ed.size_y = 0.0
-            ed.vx_n.clear()
-            ed.vy_n.clear()
-            ed.vx_n.push_back(ed.position_x_new)
-            ed.vy_n.push_back(ed.position_y_new)
+        # point
+        elif entity_data.hitbox_type == 4:
+            entity_data.size_x = 0.0
+            entity_data.size_y = 0.0
+            entity_data.vector_x_new.clear()
+            entity_data.vector_y_new.clear()
+            entity_data.vector_x_new.push_back(entity_data.position_x_new)
+            entity_data.vector_y_new.push_back(entity_data.position_y_new)
 
-        elif ed.hitbox_type == 5:
-            if ed.is_centered:
-                cx = ed.position_x_new;
-                cy = ed.position_y_new
+        # circle
+        elif entity_data.hitbox_type == 5:
+            if entity_data.is_centered:
+                coord_x = entity_data.position_x_new
+                coord_y = entity_data.position_y_new
             else:
-                cx = ed.position_x_new + ed.radius;
-                cy = ed.position_y_new + ed.radius
-            ed.vx_n.clear()
-            ed.vy_n.clear()
-            ed.vx_n.push_back(cx)
-            ed.vy_n.push_back(cy)
+                coord_x = entity_data.position_x_new + entity_data.radius
+                coord_y = entity_data.position_y_new + entity_data.radius
+            entity_data.vector_x_new.clear()
+            entity_data.vector_y_new.clear()
+            entity_data.vector_x_new.push_back(coord_x)
+            entity_data.vector_y_new.push_back(coord_y)
 
-        vx_o_sz2 = ed.vx_o.size()
-        if vx_o_sz2 == 0 or transitioned_to_active or not ed.is_active:
-            ed.vx_o = ed.vx_n
-            ed.vy_o = ed.vy_n
-            ed.position_x_old = ed.position_x_new
-            ed.position_y_old = ed.position_y_new
+        vector_x_old_size2 = entity_data.vector_x_old.size()
+        if (vector_x_old_size2 == 0 or transitioned_to_active
+                or not entity_data.is_active):
+            entity_data.vector_x_old = entity_data.vector_x_new
+            entity_data.vector_y_old = entity_data.vector_y_new
+            entity_data.position_x_old = entity_data.position_x_new
+            entity_data.position_y_old = entity_data.position_y_new
 
         if not self.groups[group_id].is_static:
-            if ed.is_active:
+            if entity_data.is_active:
                 self._update_entity_grid(group_id, entity_id)
 
     cdef void _update_entity_grid(self, int group_id, int entity_id):
@@ -703,44 +754,44 @@ cdef class CollisionManager:
         cdef size_t i, j, keys_sz, new_keys_sz, vx_o_sz, vx_n_sz
 
         if ed.hitbox_type == 0 or ed.hitbox_type == 4:
-            min_px = ed.vx_o[0] if ed.vx_o[0] < ed.vx_n[0] else ed.vx_n[0]
-            min_py = ed.vy_o[0] if ed.vy_o[0] < ed.vy_n[0] else ed.vy_n[0]
-            max_px_o = ed.vx_o[0] + ed.size_x
-            max_px_n = ed.vx_n[0] + ed.size_x
+            min_px = ed.vector_x_old[0] if ed.vector_x_old[0] < ed.vector_x_new[0] else ed.vector_x_new[0]
+            min_py = ed.vector_y_old[0] if ed.vector_y_old[0] < ed.vector_y_new[0] else ed.vector_y_new[0]
+            max_px_o = ed.vector_x_old[0] + ed.size_x
+            max_px_n = ed.vector_x_new[0] + ed.size_x
             max_px = max_px_o if max_px_o > max_px_n else max_px_n
-            max_py_o = ed.vy_o[0] + ed.size_y
-            max_py_n = ed.vy_n[0] + ed.size_y
+            max_py_o = ed.vector_y_old[0] + ed.size_y
+            max_py_n = ed.vector_y_new[0] + ed.size_y
             max_py = max_py_o if max_py_o > max_py_n else max_py_n
         elif ed.hitbox_type == 5:
-            min_px = (ed.vx_o[0] if ed.vx_o[0] < ed.vx_n[0] else ed.vx_n[0]) - ed.radius
-            min_py = (ed.vy_o[0] if ed.vy_o[0] < ed.vy_n[0] else ed.vy_n[0]) - ed.radius
-            max_px = (ed.vx_o[0] if ed.vx_o[0] > ed.vx_n[0] else ed.vx_n[0]) + ed.radius
-            max_py = (ed.vy_o[0] if ed.vy_o[0] > ed.vy_n[0] else ed.vy_n[0]) + ed.radius
+            min_px = (ed.vector_x_old[0] if ed.vector_x_old[0] < ed.vector_x_new[0] else ed.vector_x_new[0]) - ed.radius
+            min_py = (ed.vector_y_old[0] if ed.vector_y_old[0] < ed.vector_y_new[0] else ed.vector_y_new[0]) - ed.radius
+            max_px = (ed.vector_x_old[0] if ed.vector_x_old[0] > ed.vector_x_new[0] else ed.vector_x_new[0]) + ed.radius
+            max_py = (ed.vector_y_old[0] if ed.vector_y_old[0] > ed.vector_y_new[0] else ed.vector_y_new[0]) + ed.radius
         else:
-            min_px = ed.vx_o[0]
-            max_px = ed.vx_o[0]
-            min_py = ed.vy_o[0]
-            max_py = ed.vy_o[0]
-            vx_o_sz = ed.vx_o.size()
+            min_px = ed.vector_x_old[0]
+            max_px = ed.vector_x_old[0]
+            min_py = ed.vector_y_old[0]
+            max_py = ed.vector_y_old[0]
+            vx_o_sz = ed.vector_x_old.size()
             for j in range(1, vx_o_sz):
-                if ed.vx_o[j] < min_px:
-                    min_px = ed.vx_o[j]
-                elif ed.vx_o[j] > max_px:
-                    max_px = ed.vx_o[j]
-                if ed.vy_o[j] < min_py:
-                    min_py = ed.vy_o[j]
-                elif ed.vy_o[j] > max_py:
-                    max_py = ed.vy_o[j]
-            vx_n_sz = ed.vx_n.size()
+                if ed.vector_x_old[j] < min_px:
+                    min_px = ed.vector_x_old[j]
+                elif ed.vector_x_old[j] > max_px:
+                    max_px = ed.vector_x_old[j]
+                if ed.vector_y_old[j] < min_py:
+                    min_py = ed.vector_y_old[j]
+                elif ed.vector_y_old[j] > max_py:
+                    max_py = ed.vector_y_old[j]
+            vx_n_sz = ed.vector_x_new.size()
             for j in range(vx_n_sz):
-                if ed.vx_n[j] < min_px:
-                    min_px = ed.vx_n[j]
-                elif ed.vx_n[j] > max_px:
-                    max_px = ed.vx_n[j]
-                if ed.vy_n[j] < min_py:
-                    min_py = ed.vy_n[j]
-                elif ed.vy_n[j] > max_py:
-                    max_py = ed.vy_n[j]
+                if ed.vector_x_new[j] < min_px:
+                    min_px = ed.vector_x_new[j]
+                elif ed.vector_x_new[j] > max_px:
+                    max_px = ed.vector_x_new[j]
+                if ed.vector_y_new[j] < min_py:
+                    min_py = ed.vector_y_new[j]
+                elif ed.vector_y_new[j] > max_py:
+                    max_py = ed.vector_y_new[j]
 
         for lvl in range(group.max_level + 1):
             c_size = self.cell_sizes[lvl]
@@ -817,8 +868,15 @@ cdef class CollisionManager:
         if cell[0].size() == 0:
             self.grids[lvl][group_id].erase(key)
 
-    def create_relation(self, int group_a_id, int group_b_id, object cb_a_on_start=None, object cb_a_on_end=None,
-                        object cb_b_on_start=None, object cb_b_on_end=None) -> int:
+    def create_relation(
+            self,
+            int a_group_id,  # CollisionGroupIDType
+            int b_group_id,  # CollisionGroupIDType
+            object a_collision_start_callback=None,  # CollisionCallbackType | None
+            object a_collision_end_callback=None,  # CollisionCallbackType | None
+            object b_collision_start_callback=None,  # CollisionCallbackType | None
+            object b_collision_end_callback=None  # CollisionCallbackType | None
+    ) -> int:
         """
         Create a new collision relation between two groups.
         :param a_group_id: ID of the first group involved in the relation
@@ -833,27 +891,34 @@ cdef class CollisionManager:
             will get called on a collision end.
         :return: The unique ID of this new relation
         """
-        cdef int r_id
-        cdef CollisionRelationStruct rel
+        cdef int relation_id
+        cdef CollisionRelationStruct relation
 
-        r_id = <int> self.relations.size()
-        rel.id = r_id
-        rel.group_a_id = group_a_id
-        rel.group_b_id = group_b_id
-        self.relations.push_back(rel)
-        self.relation_callbacks.append((cb_a_on_start, cb_a_on_end, cb_b_on_start, cb_b_on_end))
-        return r_id
+        relation_id = <int> self.relations.size()
+        relation.id = relation_id
+        relation.group_a_id = a_group_id
+        relation.group_b_id = b_group_id
+        self.relations.push_back(relation)
+        self.relation_callbacks.append(
+            (
+                a_collision_start_callback,
+                a_collision_end_callback,
+                b_collision_start_callback,
+                b_collision_end_callback
+            )
+        )
+        return relation_id
 
     def calculate_all_collisions(self):
         """
         Starts the collision calculation process.
         Should only be called once per frame.
         """
-        cdef size_t i, rel_sz
+        cdef size_t i, total_relations
 
         self._flush_deletions()
-        rel_sz = self.relations.size()
-        for i in range(rel_sz):
+        total_relations = self.relations.size()
+        for i in range(total_relations):
             self._calc_relation(&self.relations[i], self.relation_callbacks[i])
 
     def calculate_collisions(self, list relation_ids):
@@ -861,14 +926,15 @@ cdef class CollisionManager:
         Start calculation of specific relations.
         :param relation_ids: List of relation IDs to calculate.
         """
-        cdef int r_id
-        cdef size_t rel_sz
+        cdef int relation_id
+        cdef size_t total_relations
 
         self._flush_deletions()
-        rel_sz = self.relations.size()
-        for r_id in relation_ids:
-            if 0 <= r_id < <int> rel_sz:
-                self._calc_relation(&self.relations[r_id], self.relation_callbacks[r_id])
+        total_relations = self.relations.size()
+        for relation_id in relation_ids:  # type: ignore
+            if 0 <= relation_id < <int> total_relations:
+                self._calc_relation(&self.relations[relation_id],
+                                    self.relation_callbacks[relation_id])
 
     cdef void _calc_relation(self, CollisionRelationStruct * rel, tuple callbacks):
         cdef int r_id, g_a_id, g_b_id
@@ -965,30 +1031,30 @@ cdef class CollisionManager:
 
                     if ea.hitbox_type == 0 and eb.hitbox_type == 0:
                         hit = aabb_aabb_swept(
-                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.size_x,
+                            ea.vector_x_old[0], ea.vector_y_old[0], ea.vector_x_new[0], ea.vector_y_new[0], ea.size_x,
                             ea.size_y,
-                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.size_x,
+                            eb.vector_x_old[0], eb.vector_y_old[0], eb.vector_x_new[0], eb.vector_y_new[0], eb.size_x,
                             eb.size_y,
                             is_active_col, &norm_x, &norm_y, &t)
                     elif ea.hitbox_type == 0 and (eb.hitbox_type == 4 or eb.hitbox_type == 5):
                         hit = aabb_circle_swept(
-                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.size_x,
+                            ea.vector_x_old[0], ea.vector_y_old[0], ea.vector_x_new[0], ea.vector_y_new[0], ea.size_x,
                             ea.size_y,
-                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                            eb.vector_x_old[0], eb.vector_y_old[0], eb.vector_x_new[0], eb.vector_y_new[0], eb.radius,
                             is_active_col, &norm_x, &norm_y, &t)
                     elif (ea.hitbox_type == 4 or ea.hitbox_type == 5) and eb.hitbox_type == 0:
                         hit = aabb_circle_swept(
-                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.size_x,
+                            eb.vector_x_old[0], eb.vector_y_old[0], eb.vector_x_new[0], eb.vector_y_new[0], eb.size_x,
                             eb.size_y,
-                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
+                            ea.vector_x_old[0], ea.vector_y_old[0], ea.vector_x_new[0], ea.vector_y_new[0], ea.radius,
                             is_active_col, &norm_x, &norm_y, &t)
                         norm_x = -norm_x
                         norm_y = -norm_y
                     elif (ea.hitbox_type == 4 or ea.hitbox_type == 5) and (
                             eb.hitbox_type == 4 or eb.hitbox_type == 5):
                         hit = circle_circle_swept(
-                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
-                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
+                            ea.vector_x_old[0], ea.vector_y_old[0], ea.vector_x_new[0], ea.vector_y_new[0], ea.radius,
+                            eb.vector_x_old[0], eb.vector_y_old[0], eb.vector_x_new[0], eb.vector_y_new[0], eb.radius,
                             is_active_col, &norm_x, &norm_y, &t)
                     elif ea.hitbox_type >= 4 and eb.hitbox_type < 4:
                         a_dx = ea.position_x_new - ea.position_x_old
@@ -996,9 +1062,9 @@ cdef class CollisionManager:
                         b_dx = eb.position_x_new - eb.position_x_old
                         b_dy = eb.position_y_new - eb.position_y_old
                         hit = circle_poly_swept(
-                            ea.vx_o[0], ea.vy_o[0], ea.vx_n[0], ea.vy_n[0], ea.radius,
-                            eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(),
-                            eb.vy_n.data(), eb.vx_o.size(),
+                            ea.vector_x_old[0], ea.vector_y_old[0], ea.vector_x_new[0], ea.vector_y_new[0], ea.radius,
+                            eb.vector_x_old.data(), eb.vector_y_old.data(), eb.vector_x_new.data(),
+                            eb.vector_y_new.data(), eb.vector_x_old.size(),
                             eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx,
                             b_dy,
                             is_active_col, &norm_x, &norm_y, &t
@@ -1009,9 +1075,9 @@ cdef class CollisionManager:
                         b_dx = eb.position_x_new - eb.position_x_old
                         b_dy = eb.position_y_new - eb.position_y_old
                         hit = circle_poly_swept(
-                            eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0], eb.radius,
-                            ea.vx_o.data(), ea.vy_o.data(), ea.vx_n.data(),
-                            ea.vy_n.data(), ea.vx_o.size(),
+                            eb.vector_x_old[0], eb.vector_y_old[0], eb.vector_x_new[0], eb.vector_y_new[0], eb.radius,
+                            ea.vector_x_old.data(), ea.vector_y_old.data(), ea.vector_x_new.data(),
+                            ea.vector_y_new.data(), ea.vector_x_old.size(),
                             ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx,
                             a_dy,
                             is_active_col, &norm_x, &norm_y, &t
@@ -1024,10 +1090,10 @@ cdef class CollisionManager:
                         b_dx = eb.position_x_new - eb.position_x_old
                         b_dy = eb.position_y_new - eb.position_y_old
                         hit = poly_poly_swept(
-                            ea.vx_o.data(), ea.vy_o.data(), ea.vx_o.size(),
+                            ea.vector_x_old.data(), ea.vector_y_old.data(), ea.vector_x_old.size(),
                             ea.axes_x.data(), ea.axes_y.data(), ea.axes_x.size(), a_dx,
                             a_dy,
-                            eb.vx_o.data(), eb.vy_o.data(), eb.vx_o.size(),
+                            eb.vector_x_old.data(), eb.vector_y_old.data(), eb.vector_x_old.size(),
                             eb.axes_x.data(), eb.axes_y.data(), eb.axes_x.size(), b_dx,
                             b_dy,
                             is_active_col, &norm_x, &norm_y, &t
@@ -1142,12 +1208,19 @@ cdef class CollisionManager:
             callbacks[3](self.group_instances[g_b_id][ent_id], g_a_id, evs)
             rel = &self.relations[r_id]
 
-    def manual_collision(self, list group_ids, object start_position,
-                         object end_position, object size=None,
-                         str hitbox_type="point", bint centered=False,
-                         double rotation=0.0,
-                         list start_positions=None, object radius=None,
-                         object ignore_collisions=None) -> list:
+    def manual_collision(
+            self,
+            list group_ids,  # list[CollisionGroupIDType]
+            object start_position,  # type: Vec2
+            object end_position,  # type: Vec2
+            object size=None,  # Vec2 | None
+            str hitbox_type="point",  # CollisionHitboxType
+            bint centered=False,  # bool (bint)
+            double rotation=0.0,  # float
+            list start_positions=None,  # list[Vec2 | None
+            object radius=None,  # float (double) | None
+            object ignore_collisions=None  # int | list[int] | None
+    ) -> list:  # list[CollisionEvent]
         """
         Run a manual collision without registering an entity or notifying
         other entities about it.
@@ -1174,349 +1247,566 @@ cdef class CollisionManager:
             Any 2 entities that have the same exception ID will not collide.
         :return: List of CollisionEvents
         """
-        cdef EntityData ed
-        cdef double cx, cy, cx_o, cy_o, hw, hh, cr, sr, ax, ay, dx, dy, ln
+        cdef EntityData entity_data
+        cdef double coord_x, coord_y
+        cdef double half_width, half_height
+        cdef double cos_rotation, sin_rotation
+        cdef double axis_x, axis_y
+        cdef double delta_x, delta_y
+        cdef double length
         cdef double pivot_x, pivot_y
-        cdef size_t i, num_v
-        cdef double min_px, min_py, max_px_o, max_px_n, max_px, max_py_o, max_py_n, max_py
+        cdef size_t i, num_vector
+        cdef double min_px, min_py
+        cdef double max_px_o, max_px_n
+        cdef double max_px, max_py_o
+        cdef double max_py_n, max_py
         cdef list events
-        cdef int g_id, lvl, min_cx, min_cy, max_cx, max_cy, grid_cx, grid_cy, b_id
-        cdef double c_size, norm_x, norm_y, t, a_dx, a_dy, b_dx, b_dy, ev_time
+        cdef int group_id
+        cdef int grid_level
+        cdef int min_cell_x, min_cell_y
+        cdef int max_cell_x, max_cell_y
+        cdef int grid_cell_x, grid_cell_y
+        cdef int b_entity_id
+        cdef double cell_size
+        cdef double norm_x, norm_y
+        cdef double t
+        cdef double a_delta_x, a_delta_y
+        cdef double b_delta_x, b_delta_y
+        cdef double event_time
         cdef uint64_t key
         cdef vector[int] * cell_b
-        cdef CollisionGroupStruct * gb
-        cdef EntityData * eb
+        cdef CollisionGroupStruct * collision_group
+        cdef EntityData * entity_data_b
         cdef unordered_set[int] checked
-        cdef size_t cell_b_sz, vx_o_sz, vx_n_sz, vx_o_sz2, vx_n_sz2, vx_o_sz3, vx_n_sz3, grp_sz
-        cdef double _rad
+        cdef size_t cell_b_size
+        cdef size_t vector_x_old_size_1
+        cdef size_t vector_x_old_size_2, vector_x_new_size_2
+        cdef size_t vector_x_old_size_3, vector_x_new_size3
+        cdef size_t groups_size
+        cdef double _radius
         cdef object inst_b
         cdef bint ignore
-        cdef size_t ig_a_sz, ig_b_sz, ig_a_i, ig_b_i
+        cdef size_t ignore_a_size, ignore_b_size
+        cdef size_t ignore_a_index, ignore_b_index
 
         events = []
-        ed.hitbox_type = 4
+        entity_data.hitbox_type = 4
         if hitbox_type == "aabb":
-            ed.hitbox_type = 0
+            entity_data.hitbox_type = 0
         elif hitbox_type == "obb":
-            ed.hitbox_type = 1
+            entity_data.hitbox_type = 1
         elif hitbox_type == "triangle":
-            ed.hitbox_type = 2
+            entity_data.hitbox_type = 2
         elif hitbox_type == "polygon":
-            ed.hitbox_type = 3
+            entity_data.hitbox_type = 3
         elif hitbox_type == "circle":
-            ed.hitbox_type = 5
+            entity_data.hitbox_type = 5
 
-        _rad = 0.0
+        _radius = 0.0
         if radius is not None:
-            _rad = radius
+            _radius = radius
         elif size is not None:
-            _rad = size.x / 2.0
-        ed.radius = _rad
+            _radius = size.x / 2.0
+        entity_data.radius = _radius
 
-        ed.ignore_collisions.clear()
+        entity_data.ignore_collisions.clear()
         if ignore_collisions is not None:
             if isinstance(ignore_collisions, list):
                 for ig in ignore_collisions:
-                    ed.ignore_collisions.push_back(ig)
+                    entity_data.ignore_collisions.push_back(ig)
             else:
-                ed.ignore_collisions.push_back(ignore_collisions)
+                entity_data.ignore_collisions.push_back(ignore_collisions)
 
-        ed.is_centered = centered
-        ed.rot = rotation
-        ed.position_x_old = start_position.x
-        ed.position_y_old = start_position.y
-        ed.position_x_new = end_position.x
-        ed.position_y_new = end_position.y
+        entity_data.is_centered = centered
+        entity_data.rot = rotation
+        entity_data.position_x_old = start_position.x
+        entity_data.position_y_old = start_position.y
+        entity_data.position_x_new = end_position.x
+        entity_data.position_y_new = end_position.y
 
         if size is not None:
-            ed.size_x = size.x
-            ed.size_y = size.y
+            entity_data.size_x = size.x
+            entity_data.size_y = size.y
         else:
-            ed.size_x = 0.0
-            ed.size_y = 0.0
+            entity_data.size_x = 0.0
+            entity_data.size_y = 0.0
 
-        if ed.hitbox_type == 0:
-            if ed.is_centered:
-                cx = ed.position_x_new - (ed.size_x / 2.0);
-                cy = ed.position_y_new - (ed.size_y / 2.0)
+        # aabb
+        if entity_data.hitbox_type == 0:
+            if entity_data.is_centered:
+                coord_x = entity_data.position_x_new - (entity_data.size_x / 2.0)
+                coord_y = entity_data.position_y_new - (entity_data.size_y / 2.0)
             else:
-                cx = ed.position_x_new;
-                cy = ed.position_y_new
-            ed.vx_n.push_back(cx);
-            ed.vy_n.push_back(cy)
-            ed.vx_n.push_back(cx + ed.size_x);
-            ed.vy_n.push_back(cy)
-            ed.vx_n.push_back(cx + ed.size_x);
-            ed.vy_n.push_back(cy + ed.size_y)
-            ed.vx_n.push_back(cx);
-            ed.vy_n.push_back(cy + ed.size_y)
-            ed.axes_x.push_back(1.0);
-            ed.axes_y.push_back(0.0)
-            ed.axes_x.push_back(0.0);
-            ed.axes_y.push_back(1.0)
+                coord_x = entity_data.position_x_new
+                coord_y = entity_data.position_y_new
+            entity_data.vector_x_new.push_back(coord_x)
+            entity_data.vector_y_new.push_back(coord_y)
+            entity_data.vector_x_new.push_back(coord_x + entity_data.size_x)
+            entity_data.vector_y_new.push_back(coord_y)
+            entity_data.vector_x_new.push_back(coord_x + entity_data.size_x)
+            entity_data.vector_y_new.push_back(coord_y + entity_data.size_y)
+            entity_data.vector_x_new.push_back(coord_x)
+            entity_data.vector_y_new.push_back(coord_y + entity_data.size_y)
+            entity_data.axes_x.push_back(1.0)
+            entity_data.axes_y.push_back(0.0)
+            entity_data.axes_x.push_back(0.0)
+            entity_data.axes_y.push_back(1.0)
 
-        elif ed.hitbox_type == 1:
-            cr = cos(ed.rot);
-            sr = sin(ed.rot)
-            if ed.is_centered:
-                hw = ed.size_x / 2.0;
-                hh = ed.size_y / 2.0
-                ed.vx_n.push_back(ed.position_x_new - hw * cr + hh * sr);
-                ed.vy_n.push_back(ed.position_y_new - hw * sr - hh * cr)
-                ed.vx_n.push_back(ed.position_x_new + hw * cr + hh * sr);
-                ed.vy_n.push_back(ed.position_y_new + hw * sr - hh * cr)
-                ed.vx_n.push_back(ed.position_x_new + hw * cr - hh * sr);
-                ed.vy_n.push_back(ed.position_y_new + hw * sr + hh * cr)
-                ed.vx_n.push_back(ed.position_x_new - hw * cr - hh * sr);
-                ed.vy_n.push_back(ed.position_y_new - hw * sr + hh * cr)
+        # obb
+        elif entity_data.hitbox_type == 1:
+            cos_rotation = cos(entity_data.rot)
+            sin_rotation = sin(entity_data.rot)
+            if entity_data.is_centered:
+                half_width = entity_data.size_x / 2.0
+                half_height = entity_data.size_y / 2.0
+                entity_data.vector_x_new.push_back(
+                    entity_data.position_x_new - half_width * cos_rotation
+                    + half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    entity_data.position_y_new - half_width * sin_rotation
+                    - half_height * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    entity_data.position_x_new + half_width * cos_rotation
+                    + half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    entity_data.position_y_new + half_width * sin_rotation
+                    - half_height * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    entity_data.position_x_new + half_width * cos_rotation
+                    - half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    entity_data.position_y_new + half_width * sin_rotation
+                    + half_height * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    entity_data.position_x_new - half_width * cos_rotation
+                    - half_height * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    entity_data.position_y_new - half_width * sin_rotation
+                    + half_height * cos_rotation)
             else:
-                ed.vx_n.push_back(ed.position_x_new);
-                ed.vy_n.push_back(ed.position_y_new)
-                ed.vx_n.push_back(ed.position_x_new + ed.size_x * cr);
-                ed.vy_n.push_back(ed.position_y_new + ed.size_x * sr)
-                ed.vx_n.push_back(ed.position_x_new + ed.size_x * cr - ed.size_y * sr);
-                ed.vy_n.push_back(ed.position_y_new + ed.size_x * sr + ed.size_y * cr)
-                ed.vx_n.push_back(ed.position_x_new - ed.size_y * sr);
-                ed.vy_n.push_back(ed.position_y_new + ed.size_y * cr)
-            ed.axes_x.push_back(cr);
-            ed.axes_y.push_back(sr)
-            ed.axes_x.push_back(-sr);
-            ed.axes_y.push_back(cr)
+                entity_data.vector_x_new.push_back(entity_data.position_x_new)
+                entity_data.vector_y_new.push_back(entity_data.position_y_new)
+                entity_data.vector_x_new.push_back(
+                    entity_data.position_x_new + entity_data.size_x * cos_rotation)
+                entity_data.vector_y_new.push_back(
+                    entity_data.position_y_new + entity_data.size_x * sin_rotation)
+                entity_data.vector_x_new.push_back(
+                    entity_data.position_x_new + entity_data.size_x * cos_rotation
+                    - entity_data.size_y * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    entity_data.position_y_new + entity_data.size_x * sin_rotation
+                    + entity_data.size_y * cos_rotation)
+                entity_data.vector_x_new.push_back(
+                    entity_data.position_x_new - entity_data.size_y * sin_rotation)
+                entity_data.vector_y_new.push_back(
+                    entity_data.position_y_new + entity_data.size_y * cos_rotation)
+            entity_data.axes_x.push_back(cos_rotation)
+            entity_data.axes_y.push_back(sin_rotation)
+            entity_data.axes_x.push_back(-sin_rotation)
+            entity_data.axes_y.push_back(cos_rotation)
 
-        elif ed.hitbox_type == 2 or ed.hitbox_type == 3:
+        # triangle / polygon
+        elif entity_data.hitbox_type == 2 or entity_data.hitbox_type == 3:
             if start_positions is not None:
-                ax = 0;
-                ay = 0
-                for p in start_positions:
-                    ed.vx_o.push_back(p.x);
-                    ed.vy_o.push_back(p.y)
-                    ax += p.x;
-                    ay += p.y
-                ed.position_x_old = ax / len(start_positions)
-                ed.position_y_old = ay / len(start_positions)
+                axis_x = 0
+                axis_y = 0
+                for start_pos in start_positions:  # type: ignore
+                    entity_data.vector_x_old.push_back(start_pos.x)
+                    entity_data.vector_y_old.push_back(start_pos.y)
+                    axis_x += start_pos.x
+                    axis_y += start_pos.y
+                entity_data.position_x_old = axis_x / len(start_positions)
+                entity_data.position_y_old = axis_y / len(start_positions)
 
-                dx = ed.position_x_new - ed.position_x_old
-                dy = ed.position_y_new - ed.position_y_old
+                delta_x = entity_data.position_x_new - entity_data.position_x_old
+                delta_y = entity_data.position_y_new - entity_data.position_y_old
 
-                vx_o_sz = ed.vx_o.size()
-                for i in range(vx_o_sz):
-                    ed.vx_n.push_back(ed.vx_o[i] + dx)
-                    ed.vy_n.push_back(ed.vy_o[i] + dy)
+                vector_x_old_size_1 = entity_data.vector_x_old.size()
+                for i in range(vector_x_old_size_1):
+                    entity_data.vector_x_new.push_back(entity_data.vector_x_old[i]
+                                                       + delta_x)
+                    entity_data.vector_y_new.push_back(entity_data.vector_y_old[i]
+                                                       + delta_y)
 
-                num_v = ed.vx_n.size()
-                for i in range(num_v):
-                    dx = ed.vx_n[(i + 1) % num_v] - ed.vx_n[i]
-                    dy = ed.vy_n[(i + 1) % num_v] - ed.vy_n[i]
-                    ln = sqrt(dx * dx + dy * dy)
-                    if ln > 0.0001:
-                        ed.axes_x.push_back(-dy / ln)
-                        ed.axes_y.push_back(dx / ln)
+                num_vector = entity_data.vector_x_new.size()
+                for i in range(num_vector):
+                    delta_x = (entity_data.vector_x_new[(i + 1) % num_vector]
+                               - entity_data.vector_x_new[i])
+                    delta_y = (entity_data.vector_y_new[(i + 1) % num_vector]
+                               - entity_data.vector_y_new[i])
+                    length = sqrt(delta_x * delta_x + delta_y * delta_y)
+                    if length > 0.0001:
+                        entity_data.axes_x.push_back(-delta_y / length)
+                        entity_data.axes_y.push_back(delta_x / length)
 
-        elif ed.hitbox_type == 4:
-            ed.size_x = 0.0;
-            ed.size_y = 0.0
-            ed.vx_n.push_back(ed.position_x_new);
-            ed.vy_n.push_back(ed.position_y_new)
-            ed.vx_o.push_back(ed.position_x_old);
-            ed.vy_o.push_back(ed.position_y_old)
+        # point
+        elif entity_data.hitbox_type == 4:
+            entity_data.size_x = 0.0
+            entity_data.size_y = 0.0
+            entity_data.vector_x_new.push_back(entity_data.position_x_new)
+            entity_data.vector_y_new.push_back(entity_data.position_y_new)
+            entity_data.vector_x_old.push_back(entity_data.position_x_old)
+            entity_data.vector_y_old.push_back(entity_data.position_y_old)
 
-        elif ed.hitbox_type == 5:
-            if ed.is_centered:
-                cx = ed.position_x_new;
-                cy = ed.position_y_new
+        # circle
+        elif entity_data.hitbox_type == 5:
+            if entity_data.is_centered:
+                coord_x = entity_data.position_x_new
+                coord_y = entity_data.position_y_new
             else:
-                cx = ed.position_x_new + ed.radius;
-                cy = ed.position_y_new + ed.radius
-            ed.vx_n.push_back(cx);
-            ed.vy_n.push_back(cy)
+                coord_x = entity_data.position_x_new + entity_data.radius
+                coord_y = entity_data.position_y_new + entity_data.radius
+            entity_data.vector_x_new.push_back(coord_x)
+            entity_data.vector_y_new.push_back(coord_y)
 
-        vx_o_sz2 = ed.vx_o.size()
-        vx_n_sz2 = ed.vx_n.size()
-        if vx_o_sz2 == 0 and vx_n_sz2 > 0:
-            dx = ed.position_x_new - ed.position_x_old
-            dy = ed.position_y_new - ed.position_y_old
-            for i in range(vx_n_sz2):
-                ed.vx_o.push_back(ed.vx_n[i] - dx)
-                ed.vy_o.push_back(ed.vy_n[i] - dy)
+        vector_x_old_size_2 = entity_data.vector_x_old.size()
+        vector_x_new_size_2 = entity_data.vector_x_new.size()
+        if vector_x_old_size_2 == 0 and vector_x_new_size_2 > 0:
+            delta_x = entity_data.position_x_new - entity_data.position_x_old
+            delta_y = entity_data.position_y_new - entity_data.position_y_old
+            for i in range(vector_x_new_size_2):
+                entity_data.vector_x_old.push_back(entity_data.vector_x_new[i]
+                                                   - delta_x)
+                entity_data.vector_y_old.push_back(entity_data.vector_y_new[i]
+                                                   - delta_y)
 
-        if ed.hitbox_type == 0 or ed.hitbox_type == 4:
-            min_px = ed.vx_o[0] if ed.vx_o[0] < ed.vx_n[0] else ed.vx_n[0]
-            min_py = ed.vy_o[0] if ed.vy_o[0] < ed.vy_n[0] else ed.vy_n[0]
-            max_px_o = ed.vx_o[0] + ed.size_x;
-            max_px_n = ed.vx_n[0] + ed.size_x
+        # aabb / point
+        if entity_data.hitbox_type == 0 or entity_data.hitbox_type == 4:
+            min_px = entity_data.vector_x_old[0] if entity_data.vector_x_old[0] < \
+                                                    entity_data.vector_x_new[0] else \
+                entity_data.vector_x_new[0]
+            min_py = entity_data.vector_y_old[0] if entity_data.vector_y_old[0] < \
+                                                    entity_data.vector_y_new[0] else \
+                entity_data.vector_y_new[0]
+            max_px_o = entity_data.vector_x_old[0] + entity_data.size_x
+            max_px_n = entity_data.vector_x_new[0] + entity_data.size_x
             max_px = max_px_o if max_px_o > max_px_n else max_px_n
-            max_py_o = ed.vy_o[0] + ed.size_y;
-            max_py_n = ed.vy_n[0] + ed.size_y
+            max_py_o = entity_data.vector_y_old[0] + entity_data.size_y
+            max_py_n = entity_data.vector_y_new[0] + entity_data.size_y
             max_py = max_py_o if max_py_o > max_py_n else max_py_n
-        elif ed.hitbox_type == 5:
-            min_px = (ed.vx_o[0] if ed.vx_o[0] < ed.vx_n[0] else ed.vx_n[0]) - ed.radius
-            min_py = (ed.vy_o[0] if ed.vy_o[0] < ed.vy_n[0] else ed.vy_n[0]) - ed.radius
-            max_px = (ed.vx_o[0] if ed.vx_o[0] > ed.vx_n[0] else ed.vx_n[0]) + ed.radius
-            max_py = (ed.vy_o[0] if ed.vy_o[0] > ed.vy_n[0] else ed.vy_n[0]) + ed.radius
+        # circle
+        elif entity_data.hitbox_type == 5:
+            min_px = (entity_data.vector_x_old[0] if entity_data.vector_x_old[0] <
+                                                     entity_data.vector_x_new[0] else
+                      entity_data.vector_x_new[0]) - entity_data.radius
+            min_py = (entity_data.vector_y_old[0] if entity_data.vector_y_old[0] <
+                                                     entity_data.vector_y_new[0] else
+                      entity_data.vector_y_new[0]) - entity_data.radius
+            max_px = (entity_data.vector_x_old[0] if entity_data.vector_x_old[0] >
+                                                     entity_data.vector_x_new[0] else
+                      entity_data.vector_x_new[0]) + entity_data.radius
+            max_py = (entity_data.vector_y_old[0] if entity_data.vector_y_old[0] >
+                                                     entity_data.vector_y_new[0] else
+                      entity_data.vector_y_new[0]) + entity_data.radius
+        # obb / triangle / polygon
         else:
-            min_px = ed.vx_o[0];
-            max_px = ed.vx_o[0]
-            min_py = ed.vy_o[0];
-            max_py = ed.vy_o[0]
-            vx_o_sz3 = ed.vx_o.size()
-            for j in range(1, vx_o_sz3):
-                if ed.vx_o[j] < min_px:
-                    min_px = ed.vx_o[j]
-                elif ed.vx_o[j] > max_px:
-                    max_px = ed.vx_o[j]
-                if ed.vy_o[j] < min_py:
-                    min_py = ed.vy_o[j]
-                elif ed.vy_o[j] > max_py:
-                    max_py = ed.vy_o[j]
-            vx_n_sz3 = ed.vx_n.size()
-            for j in range(vx_n_sz3):
-                if ed.vx_n[j] < min_px:
-                    min_px = ed.vx_n[j]
-                elif ed.vx_n[j] > max_px:
-                    max_px = ed.vx_n[j]
-                if ed.vy_n[j] < min_py:
-                    min_py = ed.vy_n[j]
-                elif ed.vy_n[j] > max_py:
-                    max_py = ed.vy_n[j]
+            min_px = entity_data.vector_x_old[0]
+            max_px = entity_data.vector_x_old[0]
+            min_py = entity_data.vector_y_old[0]
+            max_py = entity_data.vector_y_old[0]
+            vector_x_old_size_3 = entity_data.vector_x_old.size()
+            for j in range(1, vector_x_old_size_3):
+                if entity_data.vector_x_old[j] < min_px:
+                    min_px = entity_data.vector_x_old[j]
+                elif entity_data.vector_x_old[j] > max_px:
+                    max_px = entity_data.vector_x_old[j]
+                if entity_data.vector_y_old[j] < min_py:
+                    min_py = entity_data.vector_y_old[j]
+                elif entity_data.vector_y_old[j] > max_py:
+                    max_py = entity_data.vector_y_old[j]
+            vector_x_new_size3 = entity_data.vector_x_new.size()
+            for j in range(vector_x_new_size3):
+                if entity_data.vector_x_new[j] < min_px:
+                    min_px = entity_data.vector_x_new[j]
+                elif entity_data.vector_x_new[j] > max_px:
+                    max_px = entity_data.vector_x_new[j]
+                if entity_data.vector_y_new[j] < min_py:
+                    min_py = entity_data.vector_y_new[j]
+                elif entity_data.vector_y_new[j] > max_py:
+                    max_py = entity_data.vector_y_new[j]
 
-        grp_sz = self.groups.size()
-        for g_id in group_ids:
-            if g_id < 0 or g_id >= <int> grp_sz: continue
-            gb = &self.groups[g_id]
+        groups_size = self.groups.size()
+        for group_id in group_ids:
+            if group_id < 0 or group_id >= <int> groups_size:
+                continue
+            collision_group = &self.groups[group_id]
             checked.clear()
 
-            for lvl in range(gb.max_level + 1):
-                c_size = self.cell_sizes[lvl]
-                min_cx = <int> floor(min_px / c_size)
-                min_cy = <int> floor(min_py / c_size)
-                max_cx = <int> floor(max_px / c_size)
-                max_cy = <int> floor(max_py / c_size)
+            for grid_level in range(collision_group.max_level + 1):
+                cell_size = self.cell_sizes[grid_level]
+                min_cell_x = <int> floor(min_px / cell_size)
+                min_cell_y = <int> floor(min_py / cell_size)
+                max_cell_x = <int> floor(max_px / cell_size)
+                max_cell_y = <int> floor(max_py / cell_size)
 
-                for grid_cy in range(min_cy, max_cy + 1):
-                    for grid_cx in range(min_cx, max_cx + 1):
-                        key = (<uint64_t> grid_cx << 32) | (
-                                    <uint64_t> grid_cy & 0xFFFFFFFF)
-                        if self.grids[lvl][g_id].count(key) == 0: continue
+                for grid_cell_y in range(min_cell_y, max_cell_y + 1):
+                    for grid_cell_x in range(min_cell_x, max_cell_x + 1):
+                        key = (<uint64_t> grid_cell_x << 32) | (
+                                <uint64_t> grid_cell_y & 0xFFFFFFFF)
+                        if self.grids[grid_level][group_id].count(key) == 0:
+                            continue
 
-                        cell_b = &self.grids[lvl][g_id][key]
-                        cell_b_sz = cell_b[0].size()
-                        for j in range(cell_b_sz):
-                            b_id = cell_b[0][j]
-                            if checked.count(b_id): continue
-                            checked.insert(b_id)
+                        cell_b = &self.grids[grid_level][group_id][key]
+                        cell_b_size = cell_b[0].size()
+                        for j in range(cell_b_size):
+                            b_entity_id = cell_b[0][j]
+                            if checked.count(b_entity_id):
+                                continue
+                            checked.insert(b_entity_id)
 
-                            eb = &gb.entities[b_id]
-                            if not eb.alive: continue
-                            if not eb.is_active: continue
+                            entity_data_b = &collision_group.entities[b_entity_id]
+                            if not entity_data_b.alive:
+                                continue
+                            if not entity_data_b.is_active:
+                                continue
 
                             ignore = False
-                            ig_a_sz = ed.ignore_collisions.size()
-                            ig_b_sz = eb.ignore_collisions.size()
+                            ignore_a_size = entity_data.ignore_collisions.size()
+                            ignore_b_size = entity_data_b.ignore_collisions.size()
 
-                            if ig_a_sz > 0 and ig_b_sz > 0:
-                                for ig_a_i in range(ig_a_sz):
-                                    for ig_b_i in range(ig_b_sz):
-                                        if ed.ignore_collisions[ig_a_i] == \
-                                                eb.ignore_collisions[ig_b_i]:
+                            if ignore_a_size > 0 and ignore_b_size > 0:
+                                for ignore_a_index in range(ignore_a_size):
+                                    for ignore_b_index in range(ignore_b_size):
+                                        if entity_data.ignore_collisions[
+                                            ignore_a_index] == \
+                                                entity_data_b.ignore_collisions[
+                                                    ignore_b_index]:
                                             ignore = True
                                             break
                                     if ignore: break
                             if ignore: continue
 
                             hit = False
-                            if ed.hitbox_type == 0 and eb.hitbox_type == 0:
+                            # aabb vs. aabb
+                            if (
+                                    entity_data.hitbox_type == 0
+                                    and entity_data_b.hitbox_type == 0
+                            ):
                                 hit = aabb_aabb_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
-                                    ed.size_x, ed.size_y,
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
-                                    eb.size_x, eb.size_y,
-                                    False, &norm_x, &norm_y, &t)
-                            elif ed.hitbox_type == 0 and (eb.hitbox_type == 4 or eb.hitbox_type == 5):
+                                    entity_data.vector_x_old[0],
+                                    entity_data.vector_y_old[0],
+                                    entity_data.vector_x_new[0],
+                                    entity_data.vector_y_new[0],
+                                    entity_data.size_x,
+                                    entity_data.size_y,
+                                    entity_data_b.vector_x_old[0],
+                                    entity_data_b.vector_y_old[0],
+                                    entity_data_b.vector_x_new[0],
+                                    entity_data_b.vector_y_new[0],
+                                    entity_data_b.size_x,
+                                    entity_data_b.size_y,
+                                    False,
+                                    &norm_x,
+                                    &norm_y,
+                                    &t
+                                )
+                            # aabb vs. point/circle
+                            elif entity_data.hitbox_type == 0 and (
+                                    entity_data_b.hitbox_type == 4
+                                    or entity_data_b.hitbox_type == 5
+                            ):
                                 hit = aabb_circle_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
-                                    ed.size_x, ed.size_y,
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
-                                    eb.radius,
-                                    False, &norm_x, &norm_y, &t)
-                            elif (ed.hitbox_type == 4 or ed.hitbox_type == 5) and eb.hitbox_type == 0:
+                                    entity_data.vector_x_old[0],
+                                    entity_data.vector_y_old[0],
+                                    entity_data.vector_x_new[0],
+                                    entity_data.vector_y_new[0],
+                                    entity_data.size_x,
+                                    entity_data.size_y,
+                                    entity_data_b.vector_x_old[0],
+                                    entity_data_b.vector_y_old[0],
+                                    entity_data_b.vector_x_new[0],
+                                    entity_data_b.vector_y_new[0],
+                                    entity_data_b.radius,
+                                    False,
+                                    &norm_x,
+                                    &norm_y,
+                                    &t
+                                )
+                            # point/circle vs. aabb
+                            elif (
+                                    (
+                                            entity_data.hitbox_type == 4
+                                            or entity_data.hitbox_type == 5
+                                    )
+                                    and entity_data_b.hitbox_type == 0
+                            ):
                                 hit = aabb_circle_swept(
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
-                                    eb.size_x, eb.size_y,
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
-                                    ed.radius,
-                                    False, &norm_x, &norm_y, &t)
+                                    entity_data_b.vector_x_old[0],
+                                    entity_data_b.vector_y_old[0],
+                                    entity_data_b.vector_x_new[0],
+                                    entity_data_b.vector_y_new[0],
+                                    entity_data_b.size_x, entity_data_b.size_y,
+                                    entity_data.vector_x_old[0],
+                                    entity_data.vector_y_old[0],
+                                    entity_data.vector_x_new[0],
+                                    entity_data.vector_y_new[0],
+                                    entity_data.radius,
+                                    False,
+                                    &norm_x,
+                                    &norm_y,
+                                    &t
+                                )
                                 norm_x = -norm_x
                                 norm_y = -norm_y
-                            elif (ed.hitbox_type == 4 or ed.hitbox_type == 5) and (
-                                    eb.hitbox_type == 4 or eb.hitbox_type == 5):
+                            # point/circle vs. point/circle
+                            elif (
+                                    entity_data.hitbox_type == 4
+                                    or entity_data.hitbox_type == 5
+                            ) and (
+                                    entity_data_b.hitbox_type == 4
+                                    or entity_data_b.hitbox_type == 5
+                            ):
                                 hit = circle_circle_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
-                                    ed.radius,
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
-                                    eb.radius,
-                                    False, &norm_x, &norm_y, &t)
-                            elif ed.hitbox_type >= 4 and eb.hitbox_type < 4:
-                                a_dx = ed.position_x_new - ed.position_x_old
-                                a_dy = ed.position_y_new - ed.position_y_old
-                                b_dx = eb.position_x_new - eb.position_x_old
-                                b_dy = eb.position_y_new - eb.position_y_old
+                                    entity_data.vector_x_old[0],
+                                    entity_data.vector_y_old[0],
+                                    entity_data.vector_x_new[0],
+                                    entity_data.vector_y_new[0],
+                                    entity_data.radius,
+                                    entity_data_b.vector_x_old[0],
+                                    entity_data_b.vector_y_old[0],
+                                    entity_data_b.vector_x_new[0],
+                                    entity_data_b.vector_y_new[0],
+                                    entity_data_b.radius,
+                                    False,
+                                    &norm_x,
+                                    &norm_y,
+                                    &t)
+                            # point/circle vs. aabb/obb/triangle/polygon
+                            elif (entity_data.hitbox_type >= 4
+                                  and entity_data_b.hitbox_type < 4
+                            ):
+                                a_delta_x = (entity_data.position_x_new
+                                             - entity_data.position_x_old)
+                                a_delta_y = (entity_data.position_y_new
+                                             - entity_data.position_y_old)
+                                b_delta_x = (entity_data_b.position_x_new
+                                             - entity_data_b.position_x_old)
+                                b_delta_y = (entity_data_b.position_y_new
+                                             - entity_data_b.position_y_old)
                                 hit = circle_poly_swept(
-                                    ed.vx_o[0], ed.vy_o[0], ed.vx_n[0], ed.vy_n[0],
-                                    ed.radius,
-                                    eb.vx_o.data(), eb.vy_o.data(), eb.vx_n.data(),
-                                    eb.vy_n.data(), eb.vx_o.size(),
-                                    eb.axes_x.data(), eb.axes_y.data(),
-                                    eb.axes_x.size(), b_dx, b_dy,
-                                    False, &norm_x, &norm_y, &t
+                                    entity_data.vector_x_old[0],
+                                    entity_data.vector_y_old[0],
+                                    entity_data.vector_x_new[0],
+                                    entity_data.vector_y_new[0],
+                                    entity_data.radius,
+                                    entity_data_b.vector_x_old.data(),
+                                    entity_data_b.vector_y_old.data(),
+                                    entity_data_b.vector_x_new.data(),
+                                    entity_data_b.vector_y_new.data(),
+                                    entity_data_b.vector_x_old.size(),
+                                    entity_data_b.axes_x.data(),
+                                    entity_data_b.axes_y.data(),
+                                    entity_data_b.axes_x.size(),
+                                    b_delta_x,
+                                    b_delta_y,
+                                    False,
+                                    &norm_x,
+                                    &norm_y,
+                                    &t
                                 )
-                            elif ed.hitbox_type < 4 and eb.hitbox_type >= 4:
-                                a_dx = ed.position_x_new - ed.position_x_old
-                                a_dy = ed.position_y_new - ed.position_y_old
-                                b_dx = eb.position_x_new - eb.position_x_old
-                                b_dy = eb.position_y_new - eb.position_y_old
+                            # aabb/obb/triangle/polygon vs. point/circle
+                            elif (entity_data.hitbox_type < 4
+                                  and entity_data_b.hitbox_type >= 4):
+                                a_delta_x = (entity_data.position_x_new
+                                             - entity_data.position_x_old)
+                                a_delta_y = (entity_data.position_y_new
+                                             - entity_data.position_y_old)
+                                b_delta_x = (entity_data_b.position_x_new
+                                             - entity_data_b.position_x_old)
+                                b_delta_y = (entity_data_b.position_y_new
+                                             - entity_data_b.position_y_old)
                                 hit = circle_poly_swept(
-                                    eb.vx_o[0], eb.vy_o[0], eb.vx_n[0], eb.vy_n[0],
-                                    eb.radius,
-                                    ed.vx_o.data(), ed.vy_o.data(), ed.vx_n.data(),
-                                    ed.vy_n.data(), ed.vx_o.size(),
-                                    ed.axes_x.data(), ed.axes_y.data(),
-                                    ed.axes_x.size(), a_dx, a_dy,
-                                    False, &norm_x, &norm_y, &t
+                                    entity_data_b.vector_x_old[0],
+                                    entity_data_b.vector_y_old[0],
+                                    entity_data_b.vector_x_new[0],
+                                    entity_data_b.vector_y_new[0],
+                                    entity_data_b.radius,
+                                    entity_data.vector_x_old.data(),
+                                    entity_data.vector_y_old.data(),
+                                    entity_data.vector_x_new.data(),
+                                    entity_data.vector_y_new.data(),
+                                    entity_data.vector_x_old.size(),
+                                    entity_data.axes_x.data(),
+                                    entity_data.axes_y.data(),
+                                    entity_data.axes_x.size(),
+                                    a_delta_x,
+                                    a_delta_y,
+                                    False,
+                                    &norm_x,
+                                    &norm_y,
+                                    &t
                                 )
                                 norm_x = -norm_x
                                 norm_y = -norm_y
                             else:
-                                a_dx = ed.position_x_new - ed.position_x_old
-                                a_dy = ed.position_y_new - ed.position_y_old
-                                b_dx = eb.position_x_new - eb.position_x_old
-                                b_dy = eb.position_y_new - eb.position_y_old
+                                a_delta_x = (entity_data.position_x_new
+                                             - entity_data.position_x_old)
+                                a_delta_y = (entity_data.position_y_new
+                                             - entity_data.position_y_old)
+                                b_delta_x = (entity_data_b.position_x_new
+                                             - entity_data_b.position_x_old)
+                                b_delta_y = (entity_data_b.position_y_new
+                                             - entity_data_b.position_y_old)
                                 hit = poly_poly_swept(
-                                    ed.vx_o.data(), ed.vy_o.data(), ed.vx_o.size(),
-                                    ed.axes_x.data(), ed.axes_y.data(),
-                                    ed.axes_x.size(), a_dx, a_dy,
-                                    eb.vx_o.data(), eb.vy_o.data(), eb.vx_o.size(),
-                                    eb.axes_x.data(), eb.axes_y.data(),
-                                    eb.axes_x.size(), b_dx, b_dy,
-                                    False, &norm_x, &norm_y, &t
+                                    entity_data.vector_x_old.data(),
+                                    entity_data.vector_y_old.data(),
+                                    entity_data.vector_x_old.size(),
+                                    entity_data.axes_x.data(),
+                                    entity_data.axes_y.data(),
+                                    entity_data.axes_x.size(),
+                                    a_delta_x,
+                                    a_delta_y,
+                                    entity_data_b.vector_x_old.data(),
+                                    entity_data_b.vector_y_old.data(),
+                                    entity_data_b.vector_x_old.size(),
+                                    entity_data_b.axes_x.data(),
+                                    entity_data_b.axes_y.data(),
+                                    entity_data_b.axes_x.size(),
+                                    b_delta_x,
+                                    b_delta_y,
+                                    False,
+                                    &norm_x,
+                                    &norm_y,
+                                    &t
                                 )
 
                             if hit:
-                                inst_b = self.group_instances[g_id][b_id]
-                                imp_ax = ed.position_x_old + ((ed.position_x_new - ed.position_x_old) * t)
-                                imp_ay = ed.position_y_old + ((ed.position_y_new - ed.position_y_old) * t)
-                                ev_time = t if t > 0.0 else 0.0
+                                inst_b = self.group_instances[group_id][b_entity_id]
+                                imp_ax = (
+                                        entity_data.position_x_old
+                                        + (
+                                                (
+                                                        entity_data.position_x_new
+                                                        - entity_data.position_x_old
+                                                ) * t
+                                        )
+                                )
+                                imp_ay = (
+                                        entity_data.position_y_old
+                                        + (
+                                                (
+                                                        entity_data.position_y_new
+                                                        - entity_data.position_y_old
+                                                ) * t
+                                        )
+                                )
+                                event_time = t if t > 0.0 else 0.0
                                 events.append(
-                                    CollisionEvent(-1, -1, g_id, inst_b,
+                                    CollisionEvent(-1, -1, group_id, inst_b,
                                                    Vec2().from_cartesian(imp_ax,
                                                                          imp_ay),
                                                    Vec2().from_cartesian(norm_x,
                                                                          norm_y),
-                                                   ev_time))
+                                                   event_time))
 
         events.sort(key=lambda e: e.time)
         return events
 
-    def get_points(self, int group_id, int entity_id) -> list:
+    def get_points(
+            self,
+            int group_id,  # type: CollisionGroupIDType
+            int entity_id  # type: CollisionEntityIDType
+    ) -> list:  # list[Vec2]
         """
         Debug-method to get the points of a hitbox.
         :param group_id: The group ID of the entity
@@ -1525,45 +1815,56 @@ cdef class CollisionManager:
             For circles only 8 points are returned.
             I recommend using get_position and get_radius for them instead!
         """
-        if group_id < 0 or group_id >= self.groups.size(): return []
+        # if groups does not exist
+        if group_id < 0 or group_id >= self.groups.size():
+            return []
         cdef CollisionGroupStruct * group = &self.groups[group_id]
-        cdef size_t ent_sz
-        cdef EntityData * ed
-        cdef list points
-        cdef size_t i, vx_n_sz
+        cdef size_t total_entities
+        cdef EntityData * entity_data
+        cdef list points  # list[Vec2]
+        cdef size_t i, vector_x_new_size
 
-        ent_sz = group.entities.size()
-        if entity_id < 0 or entity_id >= <int> ent_sz:
+        total_entities = group.entities.size()
+        # if entity does not exist
+        if entity_id < 0 or entity_id >= <int> total_entities:
             return []
 
-        ed = &group.entities[entity_id]
-        if not ed.alive:
+        entity_data = &group.entities[entity_id]
+        if not entity_data.alive:
             return []
 
         points = []
 
-        if ed.hitbox_type == 5:
+        if entity_data.hitbox_type == 5:
             for i in range(8):
                 points.append(Vec2().from_cartesian(
-                    ed.vx_n[0] + ed.radius * cos(i * 3.14159 / 4.0),
-                    ed.vy_n[0] + ed.radius * sin(i * 3.14159 / 4.0)
+                    entity_data.vector_x_new[0]
+                    + entity_data.radius * cos(i * 3.14159 / 4.0),
+                    entity_data.vector_y_new[0]
+                    + entity_data.radius * sin(i * 3.14159 / 4.0)
                 ))
             return points
 
-        vx_n_sz = ed.vx_n.size()
-        for i in range(vx_n_sz):
-            points.append(Vec2().from_cartesian(ed.vx_n[i], ed.vy_n[i]))
+        vector_x_new_size = entity_data.vector_x_new.size()
+        for i in range(vector_x_new_size):
+            points.append(Vec2().from_cartesian(
+                entity_data.vector_x_new[i],
+                entity_data.vector_y_new[i])
+            )
 
         return points
 
-    def get_hitbox(self, int group_id) -> str:
+    def get_hitbox(
+            self,
+            int group_id  # type: CollisionGroupIDType
+    ) -> object:  # CollisionHitboxType
         """
         Debug-Method to get the hitbox type of any group.
         :param group_id: The group ID.
         :return: The hitbox type of the group
         """
         if group_id < 0 or group_id >= self.groups.size():
-            return ""
+            return None
 
         cdef int h_type = self.groups.data()[group_id].hitbox_type
 
@@ -1580,7 +1881,11 @@ cdef class CollisionManager:
 
         return "aabb"
 
-    def get_position(self, int group_id, int entity_id):
+    def get_position(
+            self,
+            int group_id,  # type: CollisionGroupIDType
+            int entity_id  # type: CollisionEntityIDType
+    ) -> object:  # Vec2 | None
         """
         Debug-method to get the position of an entity.
         :param group_id: The group ID of the entity
@@ -1598,17 +1903,21 @@ cdef class CollisionManager:
         if not ed.alive:
             return None
 
-        cdef double px = ed.position_x_new
-        cdef double py = ed.position_y_new
+        cdef double position_x = ed.position_x_new
+        cdef double position_y = ed.position_y_new
 
         # Force top-left translation if it was registered as centered
         if ed.is_centered:
-            px -= (ed.size_x / 2.0)
-            py -= (ed.size_y / 2.0)
+            position_x -= (ed.size_x / 2.0)
+            position_y -= (ed.size_y / 2.0)
 
-        return Vec2().from_cartesian(px, py)
+        return Vec2().from_cartesian(position_x, position_y)
 
-    def get_size(self, int group_id, int entity_id):
+    def get_size(
+            self,
+            int group_id,  # type: CollisionGroupIDType
+            int entity_id  # type: CollisionEntityIDType
+    ) -> object:  # Vec2 | None
         """
         Debug-method to get the size of an entity.
         :param group_id: The group ID of the entity
@@ -1628,7 +1937,11 @@ cdef class CollisionManager:
 
         return Vec2().from_cartesian(ed.size_x, ed.size_y)
 
-    def get_radius(self, int group_id, int entity_id) -> float:
+    def get_radius(
+            self,
+            int group_id,  # type: CollisionGroupIDType
+            int entity_id  # type: CollisionEntityIDType
+    ) -> double:  # float
         """
         Debug-method to get the radius of an entity.
         :param group_id: The group ID of the entity

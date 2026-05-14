@@ -37,14 +37,13 @@ cdef struct EntityData:
     double rot
     double radius
 
-    vector[double] vx_o
-    vector[double] vy_o
-    vector[double] vx_n
-    vector[double] vy_n
+    vector[double] vector_x_old
+    vector[double] vector_y_old
+    vector[double] vector_x_new
+    vector[double] vector_y_new
     vector[double] axes_x
     vector[double] axes_y
 
-    # todo: WHAT IS THIS?
     vector[int] bound_min_x
     vector[int] bound_min_y
     vector[int] bound_max_x

@@ -11,7 +11,7 @@ import typing as tp
 from amoginarium.shared.utility import Vec2
 
 from ._collision_types import (
-    CollisionHitboxEnum, CollisionGroupIDType, CollisionEntityIDType,
+    CollisionHitboxType, CollisionGroupIDType, CollisionEntityIDType,
     CollisionCallbackType, CollisionRelationIDType,
     CollisionExceptionIDType
 )
@@ -45,8 +45,8 @@ class CollisionManager:
             self,
             max_level: int,
             is_static: bool = False,
-            hitbox_type: CollisionHitboxEnum \
-                    = CollisionHitboxEnum.aabb,
+            hitbox_type: CollisionHitboxType \
+                    = CollisionHitboxType.aabb,
     ) -> CollisionGroupIDType:
         """
         Add a new entity group
@@ -145,7 +145,9 @@ class CollisionManager:
             Any 2 entities that have the same exception ID will not collide.
         :param is_active: Whether the entity is alive.
             Useful for disabling collisions temporarily.
-        :param shift_history: TODO as I have no idea actually
+        :param shift_history: Whether to shift the current parameters to the
+            parameter history. If update_entity is called multiple times per
+            calculation, normally, this should only be True the first time it is called.
         """
 
     def create_relation(
@@ -196,7 +198,8 @@ class CollisionManager:
             hitbox_type: str = "point",
             centered: bool = False,
             rotation: float = 0.0,
-            start_positions: list[Vec2] | None = None, radius: float | None = None,
+            start_positions: list[Vec2] | None = None,
+            radius: float | None = None,
             ignore_collisions: int | list[int] | None = None
     ) -> list[CollisionEvent]:
         """
@@ -229,11 +232,11 @@ class CollisionManager:
     def get_hitbox(
             self,
             group_id: CollisionGroupIDType
-    ) -> CollisionHitboxEnum:
+    ) -> CollisionHitboxType | None:
         """
         Debug-Method to get the hitbox type of any group.
         :param group_id: The group ID.
-        :return: The hitbox type of the group
+        :return: The hitbox type of the group or None if group does not exist
         """
 
     def get_points(

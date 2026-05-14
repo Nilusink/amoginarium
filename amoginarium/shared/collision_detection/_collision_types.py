@@ -21,16 +21,11 @@ CollisionRelationIDType: tp.TypeAlias = int
 CollisionExceptionIDType: tp.TypeAlias = int
 
 
-class CollisionHitboxEnum(StrEnum):
-    """
-    Enumeration of supported geometric primitive types for collision detection.
-    """
-    point = "point"
-    aabb = "aabb"
-    circle = "circle"
-    obb = "obb"
-    polygon = "polygon"
-    triangle = "triangle"
+CollisionHitboxType: tp.TypeAlias = tp.Literal[
+    "point", "aabb", "circle",
+    "obb", "polygon", "triangle"
+]
+
 
 
 type CollisionCallbackType = tp.Callable[
@@ -52,7 +47,7 @@ class CollisionTypes:
     CollisionRelationIDType = CollisionRelationIDType
     CollisionExceptionIDType = CollisionExceptionIDType
 
-    CollisionHitboxEnum = CollisionHitboxEnum
+    CollisionHitboxEnum = CollisionHitboxType
 
     CollisionEvent = CollisionEvent
     CollisionCallback = CollisionCallbackType
@@ -63,7 +58,7 @@ __all__ = [
     "CollisionGroupIDType",
     "CollisionRelationIDType",
     "CollisionExceptionIDType",
-    "CollisionHitboxEnum",
+    "CollisionHitboxType",
     "CollisionCallbackType",
     "CollisionTypes",
     "CollisionEvent"
