@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 from __future__ import annotations
+from types import EllipsisType
 from icecream import ic
 import typing as tp
 
@@ -24,8 +25,13 @@ class Passenger:
     _observe_time: tp.ClassVar[float] = 1  # time after rideable death
     # endregion
     
+    # region InstanceVars
+    _controlled_entity: list["RideableGameEntity"]
+    _current_observe_time: float
+    # endregion
+    
     def __init__(self, *args, **kwargs) -> None:
-        self._controlled_entity: tp.Union["RideableGameEntity", None] = None
+        self._controlled_entity = []
         
         # further init MRO chain
         super().__init__(*args, **kwargs)
@@ -35,20 +41,24 @@ class Passenger:
     @property
     def is_passenger(self) -> bool:
         """true if currently riding something"""
-        return self._controlled_entity is not None
+        return len(self._controlled_entity) > 0
 
     @property
     def is_controlled(self) -> bool:
         """true if riding and being controlled"""
+        ce = self.controlled_entity
         return (
-            self._controlled_entity is not None
-            and self._controlled_entity.control_authority
+            ce is not None
+            and ce.control_authority
         )
 
     @property
     def controlled_entity(self) -> tp.Union["RideableGameEntity", None]:
         """get currently ridden entity"""
-        return self._controlled_entity
+        if len(self._controlled_entity) > 0:
+            return self._controlled_entity[-1]
+
+        return None
 
     def set_controlled_entity(self, entity: RideableGameEntity) -> bool:
         """
@@ -57,28 +67,41 @@ class Passenger:
         :param entity: must be "RideablePerks"
         :return: true if success
         """
-        if self._controlled_entity:
-            return False
+        # if self._controlled_entity:
+        #     return False
 
-        self._controlled_entity = entity
+        self._controlled_entity.append(entity)
         return True
 
-    def clear_controlled_entity(self) -> None:
-        """clear currently ridden entity"""
-        self._controlled_entity = None
+    def clear_controlled_entity(self, to_clear: RideableGameEntity) -> bool:
+        """
+        clear currently ridden entity
+
+        :param to_clear: entity to clear from stack
+        :returns: true if success
+        """
+
+        if to_clear in self._controlled_entity:
+            self._controlled_entity.remove(to_clear)
+            return True
+
+        return False
 
     def update_passenger(self, delta: float) -> None:
         """update"""
-        e: LogicGameEntity = self._controlled_entity  # type: ignore
-
-        if e is not None:
+        for i, e in enumerate(self._controlled_entity):
+            e: LogicGameEntity
             if not e.alive:
-                if self._current_observe_time == 0:
-                    self._current_observe_time = self._observe_time
+                if i == len(self._controlled_entity)-1:
+                    if self._current_observe_time == 0:
+                        self._current_observe_time = self._observe_time
 
-                elif self._current_observe_time > 0:
-                    self._current_observe_time -= delta
+                    elif self._current_observe_time > 0:
+                        self._current_observe_time -= delta
 
-                elif self._current_observe_time < 0:
-                    self._current_observe_time = 0
-                    self._controlled_entity = None
+                    elif self._current_observe_time < 0:
+                        self._current_observe_time = 0
+                        self.clear_controlled_entity(e)
+
+                else:
+                    self.clear_controlled_entity(e)

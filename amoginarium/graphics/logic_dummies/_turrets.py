@@ -60,8 +60,6 @@ class BaseTurretDummy(SyncedGraphicsEntity):
             sync_id: int,
             weapon_id: int
     ) -> None:
-        ic(self._default_layer, self.__class__.__name__)
-
         self._target_pos: Vec2 | None = None
         self._range = (0, 0)
         self._angles = (-1, -1)

@@ -30,7 +30,7 @@ class BaseMissile(AerodynamicEntity):
 
     # region ClassVars
     _CIDs = MissileCIDs.base
-    _DEBUG: tp.ClassVar[bool] = False
+    _DEBUG: tp.ClassVar[bool] = True
 
     _default_fuel_mass: tp.ClassVar[float] = 0
     _default_size: tp.ClassVar[tuple[float, float] | list[float]] = [100, 10]

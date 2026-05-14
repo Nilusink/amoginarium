@@ -6,9 +6,9 @@ cid = "missile.tv_guided"
 size = [64, 20]
 
 [trace]
-color = [[255, 255, 255, 100]]  # either one or two colors
+color = [[255, 255, 255, 100]]
 length = 300
-width_mult = 0.8  # trace width multiplier
+width_mult = 0.8
 
 [image]
 scope = "maverick"

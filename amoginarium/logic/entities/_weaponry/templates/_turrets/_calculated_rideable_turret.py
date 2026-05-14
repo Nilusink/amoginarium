@@ -58,6 +58,14 @@ class CalculatedRideableTurret(RideableTurret):
             weapon_kwargs=weapon_kwargs
         )
 
+        self._weapon_static = not isinstance(
+            self._default_weapon_static_facing,
+            EllipsisType
+        )
+
+        if self._weapon_static:
+            self.weapon.facing.angle = self._default_weapon_static_facing
+
         # params
         self._max_error = get_default(self._default_max_error, self.weapon._inaccuracy)
         self._target_solution = None
@@ -129,6 +137,18 @@ class CalculatedRideableTurret(RideableTurret):
         target_pos: Vec2 | EllipsisType = ...,
         **bullet_args,
     ) -> None:
+        # check if static facing
+        if self._weapon_static or self._default_engagement_ignore_solution:
+            # check if there is a target
+            if not self._target_solution:
+                return
+
+            super()._shoot_at(
+                target_angle=self.weapon.facing,
+                target_pos=self._target_solution.target_predict,
+            )
+            return
+
         # check if solution is valid
         if not self._target_solution:
             return
@@ -154,11 +174,24 @@ class CalculatedRideableTurret(RideableTurret):
                 self.position - target_delta,
                 recalc=20
             )
-            
-            if self._target_solution:
+
+            target: None | Vec2 = None
+            if (
+                self._weapon_static and target_delta
+                or self._default_engagement_ignore_solution
+            ):
+                target: Vec2 = self.position + target_delta
+                self._target_solution = TargetSolution(target, Vec2(), -1)
+
+                if not self._weapon_static:
+                    self._turn_at(target_delta.angle, delta)
+
+            elif self._target_solution:
                 self._turn_at(self._target_solution.angle.angle, delta)
 
                 target = self._target_solution.target_predict
+
+            if target:
                 x32 = ctypes.c_int32(int(target.x)).value
                 y32 = ctypes.c_int32(int(target.y)).value
                 self._runtime_buffer[self.id].param3 = ctypes.c_uint64(

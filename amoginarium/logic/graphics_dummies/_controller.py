@@ -69,6 +69,10 @@ class Controller:
         return self._keys.ride
 
     @property
+    def m_right(self) -> bool:
+        return self._keys.m_right
+
+    @property
     def joy_x(self) -> float:
         return self._keys.joy_x
 

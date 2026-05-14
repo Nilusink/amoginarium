@@ -10,6 +10,7 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import numpy as np
 
@@ -92,7 +93,7 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
         return None
     
     # endregion
-    
+
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         # set self as ridden entity
         if not self._set_as_ridden:
@@ -101,7 +102,7 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
 
         self._rudder_angle = 0
 
-        if self._controller.shoot:
+        if self._controller.m_right:
             self.kill(self)
 
         if abs(self.alpha) < self._default_guidance_max_alpha:

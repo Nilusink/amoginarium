@@ -398,7 +398,8 @@ class LogicProcess:
         # _, max_player_pos = Players.get_position_extremes()
         players = Players.entities()
         if len(players) > 0:
-            max_player_pos = players[0].get_current_view().pos
+            curr_view = players[0].get_current_view()
+            max_player_pos = curr_view.pos
             pv.audio_observer_pos.xy = max_player_pos.xy
             world_position = pv.global_vars.get_world_position()
 
@@ -406,21 +407,28 @@ class LogicProcess:
                 pv.global_vars.get_screen_size() / pv.global_vars.get_pixel_per_meter()
             ) / 2
 
-            if max_player_pos.x > world_position.x + screen_pixels.x:
-                x = max_player_pos.x - screen_pixels.x
-                Updated.world_position.x = x
+            if curr_view.centered:
+                Updated.world_position.xy = (
+                    max_player_pos.x - screen_pixels.x,
+                    max_player_pos.y - screen_pixels.y,
+                )
 
-            elif max_player_pos.x < world_position.x + screen_pixels.x * .6:
-                x = max_player_pos.x - screen_pixels.x * .6
-                Updated.world_position.x = x
+            else:
+                if max_player_pos.x > world_position.x + screen_pixels.x:
+                    x = max_player_pos.x - screen_pixels.x
+                    Updated.world_position.x = x
 
-            if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
-                y = max_player_pos.y - screen_pixels.y * 1.4
-                Updated.world_position.y = y
+                elif max_player_pos.x < world_position.x + screen_pixels.x * .6:
+                    x = max_player_pos.x - screen_pixels.x * .6
+                    Updated.world_position.x = x
 
-            elif max_player_pos.y < world_position.y + screen_pixels.y * .6:
-                y = max_player_pos.y - screen_pixels.y * .6
-                Updated.world_position.y = y
+                if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
+                    y = max_player_pos.y - screen_pixels.y * 1.4
+                    Updated.world_position.y = y
+
+                elif max_player_pos.y < world_position.y + screen_pixels.y * .6:
+                    y = max_player_pos.y - screen_pixels.y * .6
+                    Updated.world_position.y = y
 
             self._global_vars.set_world_position(Updated.world_position)
 

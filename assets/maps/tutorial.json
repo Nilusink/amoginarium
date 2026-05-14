@@ -127,8 +127,8 @@
             "group": 0
         },
                 {
-            "type": "turret.rideable.sky_shield",
-            "pos": [11500, 730]
+            "type": "turret.rideable.gps_guided",
+            "pos": [1500, 730]
         },
         {
             "type": "static.text",

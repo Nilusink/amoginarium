@@ -40,8 +40,10 @@ class KeyboardController(Controller):
         mouse_buttons = pg.mouse.get_pressed(5)
         pos = pg.mouse.get_pos()
         screen_size_offset = pv.global_vars.get_screen_size_offset()
-        pos = ((pos[0] - screen_size_offset.x),
-               (pos[1] - screen_size_offset.y))
+        pos = (
+            (pos[0] - screen_size_offset.x),
+            (pos[1] - screen_size_offset.y)
+        )
 
         # read controls
         up = pressed_keys[self._controls.up]
@@ -59,6 +61,7 @@ class KeyboardController(Controller):
         self._keys.wpn_b = False
 
         self._keys.ride = pressed_keys[pg.K_f]
+        self._keys.m_right = mouse_buttons[2]
 
         # set joystick position (using wasd keys)
         self._keys.joy_x = -left + right

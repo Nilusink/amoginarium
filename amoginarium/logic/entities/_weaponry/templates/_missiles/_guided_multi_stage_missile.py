@@ -10,6 +10,7 @@ Nilusink
 
 from types import EllipsisType
 from ctypes import Array
+from icecream import ic
 import typing as tp
 import numpy as np
 import math as m
@@ -120,8 +121,6 @@ class GuidedMultiStageMissile(MultiStageMissile):
                         abs(self.alpha) / PI_4, 0, 1
                     )
                 ) * self._rudder_max_angle
-
-            self._target_pos = self.position + target_delta
 
         else:
             self._rudder_angle = 0

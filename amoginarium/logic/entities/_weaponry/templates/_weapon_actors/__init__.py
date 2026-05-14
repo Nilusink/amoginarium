@@ -1,1 +1,1 @@
-from .sensors import BaseWeaponsSensor, LaserSensor, HeatSeeker
+from .sensors import *

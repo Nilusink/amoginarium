@@ -21,6 +21,7 @@ from amoginarium.shared import ProcessCommand
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
+from logic.entities import BaseLogicEntity
 
 from .....graphics_dummies import Controller
 from ...._rideables import Passenger, RideablePerks
@@ -70,6 +71,8 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     _default_weapon_position_offset: tp.ClassVar[
         Vec2 | list[float] | tuple[float, float]
     ] = (0, 0)
+    _default_weapon_static_facing: tp.ClassVar[float | EllipsisType] = ...
+    _default_engagement_ignore_solution: tp.ClassVar[bool] = False
 
     _default_passenger_visible: tp.ClassVar[bool] = True
     _default_passenger_offset: tp.ClassVar[
@@ -193,6 +196,14 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         """max engagement range"""
         return self._default_engagement_max_range
 
+    @property
+    def root(self) -> BaseLogicEntity:
+        # return player if ridden
+        if self._player:
+            return self._player
+
+        return super().root
+
     # endregion
 
     # region rideable interface
@@ -279,7 +290,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     ) -> None:
         """checks if shot is inside parameters"""
         self.weapon.shoot(
-            self.facing,
+            self.weapon.facing,
             bullet_tof=tof,
             target_pos=target_pos,
             **bullet_args
@@ -312,7 +323,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
                 self._turn_at(vector.angle, delta)
 
             if controller.ride and not self.__ride_pressed:
-                self._player.clear_controlled_entity()
+                self._player.clear_controlled_entity(self)
                 self._player = None
                 self._controller = None
 
@@ -358,6 +369,10 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     def _turn_at(self, angle: float, dt: float) -> None:
         """turn towards a target"""
+        if not isinstance(self._default_weapon_static_facing, EllipsisType):
+            self.weapon.facing.angle = self._default_weapon_static_facing
+            return
+
         diff = angle - self.facing.angle
 
         if diff > np.pi:

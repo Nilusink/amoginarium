@@ -38,6 +38,7 @@ class CurrentView:
     """current player view"""
     pos: "Vec2"
     zoom: float
+    centered: bool = False
 
 
 class DummyCIDs(Enum):
@@ -66,6 +67,7 @@ class WeaponSensorCIDs(Enum):
     base = "sensor.weapon.base"
     laser = "sensor.weapon.laser"
     heat = "sensor.weapon.heat"
+    gps = "sensor.weapon.gps"
 
 
 class IslandCIDs(Enum):

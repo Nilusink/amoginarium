@@ -44,6 +44,7 @@ class Controls:
             self._shm[self._shm_id].wpn_b = False
             self._shm[self._shm_id].joy_btn = False
             self._shm[self._shm_id].ride = False
+            self._shm[self._shm_id].m_right = False
             self._shm[self._shm_id].joy_x = 0
             self._shm[self._shm_id].joy_y = 0
             self._shm[self._shm_id].mouse_x = 0
@@ -121,6 +122,14 @@ class Controls:
     @ride.setter
     def ride(self, value: bool) -> None:
         self._shm[self._shm_id].ride = value
+
+    @property
+    def m_right(self) -> bool:
+        return self._shm[self._shm_id].m_right
+
+    @m_right.setter
+    def m_right(self, value: bool) -> None:
+        self._shm[self._shm_id].m_right = value
 
     @property
     def joy_x(self) -> float:

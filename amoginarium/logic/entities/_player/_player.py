@@ -104,7 +104,7 @@ class Player(Passenger, LogicGameEntity):
         self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
-            DYNAMIC_ENTITIES["weapon.tv_guided"](self, self._runtime_buffer, False),
+            DYNAMIC_ENTITIES["weapon.atgm"](self, self._runtime_buffer, False),
             DYNAMIC_ENTITIES["weapon.minigun"](
                 self, self._runtime_buffer, False, parent_position_offset=(0, 10)
             ),
@@ -202,6 +202,7 @@ class Player(Passenger, LogicGameEntity):
         zoom = 0
 
         e = self.controlled_entity
+        centered = False
 
         if e:
             cam_pos = e.get_camera_position()
@@ -209,11 +210,12 @@ class Player(Passenger, LogicGameEntity):
 
             if cam_pos is not None:
                 pos = cam_pos
+                centered = True
 
             if cam_zoom is not None:
                 zoom = cam_zoom
 
-        return CurrentView(pos, zoom)
+        return CurrentView(pos, zoom, centered=centered)
 
     def pickup_item(self, item: Item) -> None:
         if self._hotbar.try_add_item(item, 1) > 0:
@@ -387,9 +389,9 @@ class Player(Passenger, LogicGameEntity):
         if events[0].group_id == GameCollisions.collision_group_rideable_turrets:
             self.__on_collision_rideable_end(events)
 
-    def clear_controlled_entity(self) -> None:
+    def clear_controlled_entity(self, to_clear) -> bool:
         self.__ride_pressed = True
-        super().clear_controlled_entity()
+        super().clear_controlled_entity(to_clear)
 
     def _update(self, delta):
         # update passenger status
