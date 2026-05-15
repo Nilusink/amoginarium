@@ -14,10 +14,10 @@ from enum import Enum
 import typing as tp
 import tomllib
 
-from amoginarium.shared.utility import Vec2
 from amoginarium.shared.audio import SoundEffect, RandomizedEffect, PRESETS
 from amoginarium.shared.audio import ScopedRandomizedEffect, PresetEffect
 from amoginarium.shared.audio import ContinuousSoundEffect
+from amoginarium.shared.utility import Vec2
 
 
 BASE_DIR = "./assets/entities/"
