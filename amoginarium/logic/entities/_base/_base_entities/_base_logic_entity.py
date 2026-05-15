@@ -63,13 +63,13 @@ class BaseLogicEntity(BaseLogicEntityLike):
     """
 
     __slots__ = [
-        "_children",
-        "_runtime_buffer",
-        "_lifetime",
         "_parent",
+        "_children",
+        "_lifetime",
+        "_runtime_buffer",
         "__id",
         "__groups",
-        "__alive",
+        "_alive",
     ]
 
     # region InstanceVars
