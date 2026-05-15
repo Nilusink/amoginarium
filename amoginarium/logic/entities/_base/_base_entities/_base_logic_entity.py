@@ -1,9 +1,10 @@
 """
-amoginarium/logic/entities/_base/_base_entities/_base_logic_entity.py
+Defines BaseLogicEntity.
 
 Defines the most basic logic entity structure.
 Includes hierarchy management, lifecycle hooks, and bitwise buffer access.
 
+Path: amoginarium/logic/entities/_base/_base_entities/_base_logic_entity.py
 Project: amoginarium
 Created: 28.03.2026
 Authors: Nilusink, LukasKrah
@@ -13,14 +14,14 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import ENTITY_COUNTER, BaseLogicEntityLike
 from amoginarium import pv
+from amoginarium.shared import ENTITY_COUNTER, BaseLogicEntityLike
 
 from .._groups import Updated
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
 
@@ -29,12 +30,13 @@ if tp.TYPE_CHECKING:
 
 class EntityChildViable(tp.Protocol):
     """
-    Minimum requirements for an object to be assigned as a child of a logic entity.
+    Minimum requirements for an object to be assigned as the child of a logic entity.
     """
 
     def update(self, delta: float) -> None:
         """
-        Update function
+        Update function.
+
         :param delta: Tme since the last update
         """
 
@@ -43,23 +45,32 @@ class EntityChildViable(tp.Protocol):
 
 
 class MurderViable(tp.Protocol):
-    """can kill someone"""
+    """Can kill someone."""
 
     @property
-    def parent(self) -> tp.Any:
-        """parent"""
+    def parent(self) -> tp.Any:  # noqa: ANN401
+        """Parent."""
 
 
 class BaseLogicEntity(BaseLogicEntityLike):
     """
     Most basic type of logic entity.
+
     - Parent/Children relations
-    - groups
-    - update
-    - visibility
+    - Groups
+    - Update
+    - Visibility
     """
-    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id",
-                 "__groups", "__alive")
+
+    __slots__ = [
+        "_children",
+        "_runtime_buffer",
+        "_lifetime",
+        "_parent",
+        "__id",
+        "__groups",
+        "__alive",
+    ]
 
     # region InstanceVars
     _parent: BaseLogicEntity | None
@@ -74,13 +85,14 @@ class BaseLogicEntity(BaseLogicEntityLike):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            *,
-            parent: BaseLogicEntity | None = None,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        *,
+        parent: BaseLogicEntity | None = None,
     ) -> None:
         """
-        most basic type of logics entity
+        Most basic type of logic entity.
+
         :param runtime_buffer: Logic runtime buffer
         :param parent: Optional parent entity
         """
@@ -94,8 +106,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.__id = ENTITY_COUNTER.get_id()
         self._runtime_buffer = runtime_buffer
 
-        self._set_bit("flags", 0, True)  # set alive
-        self._set_bit("flags", 1, True)  # set visible
+        self._set_bit("flags", 0, True)  # set alive # noqa: FBT003
+        self._set_bit("flags", 1, True)  # set visible # noqa: FBT003
 
         # directly write to RAM to make sure the graphics entity has correct data
         pv.E_BUFF[self.__id] = self._runtime_buffer[self.__id]
@@ -105,7 +117,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     # region Properties
     @property
     def alive(self) -> bool:
-        """is entity alive?"""
+        """Whether the entity is alive."""
         return self._alive
 
     @property
@@ -115,7 +127,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     @property
     def parent(self) -> BaseLogicEntity | None:
-        """:return: entities parent if present"""
+        """:return: Entity parent if present"""
         return self._parent
 
     @property
@@ -137,30 +149,36 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     @property
     def lifetime(self) -> float:
-        """time since entity spawn"""
+        """Time since entity spawn."""
         return self._lifetime
 
     @property
     def runtime_buffer(self) -> Array[base_entity_t]:
-        """entity runtime buffer"""
+        """Entity runtime buffer."""
         return self._runtime_buffer
 
     # endregion
 
     # region Methods: bitwise fun
-    def _set_bit(self, param: str, bit_index: int, value: bool) -> None:
+    def _set_bit(
+        self,
+        param: str,
+        bit_index: int,
+        value: bool,  # noqa: FBT001
+    ) -> None:
         """
-        set (or reset) on a specified bit
-        :param param: what parameter to set the bit at
-        :param bit_index: bit to set
-        :param value: what to set the bit to
+        Set (or reset) on a specified bit.
+
+        :param param: What parameter to set the bit at
+        :param bit_index: Bit to set
+        :param value: What to set the bit to
         """
         # get value from the buffer
         attribute = getattr(self._runtime_buffer[self.id], param)
 
         # set bit (bitwise or)
         if value:
-            attribute |= (1 << bit_index)
+            attribute |= 1 << bit_index
 
         # reset bit (bitwise and with inverted mask)
         else:
@@ -174,8 +192,9 @@ class BaseLogicEntity(BaseLogicEntityLike):
     # region Methods: Groups + Kill
     def add(self, *groups: LogicGroup) -> None:
         """
-        add entity to one or more logic groups
-        :param groups: to add entity to
+        Add entity to one or more logic groups.
+
+        :param groups: To add entity to
         """
         has = self.__groups.__contains__
 
@@ -186,8 +205,9 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     def remove(self, *groups: LogicGroup) -> None:
         """
-        remove entity from one or more logic groups
-        :param groups: to remove entity from
+        Remove entity from one or more logic groups.
+
+        :param groups: To remove entity from
         """
         has = self.__groups.__contains__
 
@@ -196,10 +216,15 @@ class BaseLogicEntity(BaseLogicEntityLike):
                 group.remove(self)
                 self.__groups.remove(group)
 
-    def _kill(self, killed_by: MurderViable | EllipsisType = ...) -> None:
+    # noinspection PyUnusedLocal
+    def _kill(
+        self,
+        killed_by: MurderViable | EllipsisType = ...,  # noqa: ARG002
+    ) -> None:
         """
-        Kill entity and all its children
-        :param killed_by: who killed this entity
+        Kill the entity and all its children.
+
+        :param killed_by: Who killed this entity
         """
         # kill children first
         for child in self._children:
@@ -208,7 +233,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         for group in self.__groups:
             group.remove(self)
 
-        self._set_bit("flags", 0, False)  # set alive
+        self._set_bit("flags", 0, False)  # set alive # noqa: FBT003
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__groups.clear()
@@ -216,8 +241,9 @@ class BaseLogicEntity(BaseLogicEntityLike):
     @tp.final
     def kill(self, killed_by: MurderViable | EllipsisType = ...) -> None:
         """
-        Kill entity and all its children
-        :param killed_by: who killed this entity
+        Kill the entity and all its children.
+
+        :param killed_by: Who killed this entity
         """
         if self._alive:
             self._alive = False
@@ -228,16 +254,18 @@ class BaseLogicEntity(BaseLogicEntityLike):
     # region Methods: update
     def _update(self, delta: float) -> None:
         """
-        Update function for the entity
-        :param delta: time since the last update
+        Update function for the entity.
+
+        :param delta: Time since the last update
         """
         self._lifetime += delta
 
     @tp.final
-    def update(self, delta: float, recursive: bool = True) -> None:
+    def update(self, delta: float, *, recursive: bool = True) -> None:
         """
-        Update entity and their children
-        :param delta: time since the last update
+        Update entity and their children.
+
+        :param delta: Time since the last update
         :param recursive: Whether to update children recursively
         """
         self._update(delta)
@@ -250,19 +278,19 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     # region Methods: visibility
     def show(self) -> None:
-        """Set visibility to 1"""
-        self._set_bit("flags", 1, True)
+        """Set visibility to 1."""
+        self._set_bit("flags", 1, True)  # noqa: FBT003
 
     def hide(self) -> None:
-        """Set visibility to 0"""
-        self._set_bit("flags", 1, False)
+        """Set visibility to 0."""
+        self._set_bit("flags", 1, False)  # noqa: FBT003
 
     def highlight(self) -> None:
-        """highlight the graphics entity"""
-        self._set_bit("flags", 2, True)
+        """Highlight the graphics entity."""
+        self._set_bit("flags", 2, True)  # noqa: FBT003
 
     def stop_highlight(self) -> None:
-        """stop highlighting the graphics entity"""
-        self._set_bit("flags", 2, False)
+        """Stop highlighting the graphics entity."""
+        self._set_bit("flags", 2, False)  # noqa: FBT003
 
     # endregion
