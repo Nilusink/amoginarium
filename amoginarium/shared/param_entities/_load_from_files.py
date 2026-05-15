@@ -26,6 +26,7 @@ _SHARED_KEYS = ("bullet",)
 
 
 class ProcessType(Enum):
+    """defines logic or base / render process"""
     base = 0
     logic = 1
 
@@ -111,7 +112,11 @@ def load_entities_from_files(
             if data["id"]["from"] not in entity_index:
                 lazy_inherit = True
 
-            class_name = f"File{"".join([p.capitalize() for p in data["id"]["cid"].split(".")])}"
+            class_name = f"File{"".join([
+                p.capitalize()
+                for s in data["id"]["cid"].split(".")
+                for p in s.split("_")
+            ])}"
 
             __dict: dict[str, tp.Any] = {
                 "_CID": cid,

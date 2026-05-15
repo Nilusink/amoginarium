@@ -12,10 +12,10 @@ from types import EllipsisType
 from amoginarium.shared.utility import Vec2, get_default, Color, convert_color, coord_t
 from amoginarium.shared.utility import convert_coord, fade
 from amoginarium.shared import DummyCIDs
-from amoginarium.base._textures import textures
 from amoginarium import pv
 
-from ..entities._animation import explosion
+from ..entities import explosion
+from ..textures import textures
 from ..render_bindings import renderer
 from ._synced_entities import SyncedImageEntity, BaseGraphicsEntity
 

@@ -10,7 +10,7 @@ Nilusink
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from contextlib import suppress
-from icecream import ic
+from icecream import ic  # noqa: F401
 import math as m
 import time
 
@@ -33,7 +33,10 @@ class _SyncedEntitiesManager:
         """
         # delete old entity if it already exists
         if sync_id in self._entities:
-            self.get_entity(sync_id).kill()
+            e = self.get_entity(sync_id)
+            if e:
+                e.kill()
+
             self.del_entity(sync_id)  # in case entitie ``kill`` has been overwritten
 
         #     raise RuntimeError(f"entity with id {sync_id} already in manager")
@@ -160,7 +163,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         :param param: param to get bit from
         :param bit_index: which bit to get
-        :return: bit value
+        :return: value of bit
         """
         value = getattr(pv.E_BUFF[self.__id], param)
 
@@ -201,6 +204,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
         if recursive:
             for child in self._children:
+                child: SyncedGraphicsEntity
                 with suppress(AttributeError):
                     child.update_from_buffer()
 

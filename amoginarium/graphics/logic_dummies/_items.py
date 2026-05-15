@@ -12,11 +12,11 @@ import typing as tp
 import math as m
 
 from amoginarium.shared.utility import Vec2, Color, normalize_angle
-from amoginarium.base._textures import textures
 from amoginarium.shared import ItemCIDs
 
 from ..entities import Drawn_1, Drawn_0, Animation
 from ..render_bindings import renderer
+from ..textures import textures
 from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
 
@@ -110,9 +110,10 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
         # draw usage bar
         if self._get_bit("flags", 15):
-            if self.parent:
-                pos = self.parent.world_position
-                size = self.parent.size
+            parent = self.parent
+            if parent:
+                pos = parent.world_position
+                size = parent.size
 
             else:
                 pos = self.world_position
@@ -168,7 +169,9 @@ class HealingPotion(BaseItem):
 
         super().load_textures()
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
+    def _gl_draw(
+        self, delta_cal: float, layer: int = 0, draw_item: bool = True
+    ) -> None:
         angle = normalize_angle(self.facing.angle) * (180/m.pi)
         own_pos = self.world_position
 
@@ -219,7 +222,7 @@ class HealingPotion(BaseItem):
 
 
 class JetBag(BaseItem):
-    """makes you flyyy (not actually, but it makes it look like you do)"""
+    """makes you fly (not actually, but it makes it look like you do)"""
 
     __slots__ = ()
 
@@ -262,7 +265,9 @@ class JetBag(BaseItem):
             self.size.y / 2 + 36
         )
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
+    def _gl_draw(
+        self, delta_cal: float, layer: int = 0, draw_item: bool = True
+    ) -> None:
         angle = normalize_angle(self.facing.angle) * (180 / m.pi)
         own_pos = self.world_position
 

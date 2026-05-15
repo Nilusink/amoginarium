@@ -10,10 +10,10 @@ Nilusink
 from types import EllipsisType
 
 from amoginarium.shared.utility import Vec2, Color
-from amoginarium.base._textures import textures
 from amoginarium.shared import WeaponCIDs
 
 from ..render_bindings import renderer
+from ..textures import textures
 from ._weapons import WeaponDummy
 
 

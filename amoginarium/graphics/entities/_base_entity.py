@@ -10,16 +10,17 @@ Nilusink
 from __future__ import annotations
 import typing as tp
 
-from shared.debugging import run_with_debug
+from amoginarium.shared import CIDType
 
 
 class BaseGraphicsEntity:
+    """base for all graphics entities"""
     __slots__ = [
         "__g", "_children", "_parent", "_root_visibility", "_highlight",
         "_visible", "_lifetime", "_draw_children"
     ]
 
-    _CID: tp.ClassVar[str] = ...
+    _CID: tp.ClassVar[CIDType] = ...
 
     _visible: bool
     _parent: BaseGraphicsEntity | None
@@ -104,6 +105,7 @@ class BaseGraphicsEntity:
     # region class methods
     @classmethod
     def cid(cls) -> str:
+        """Component-ID"""
         if cls._CID is ...:
             raise ValueError("__cid is not defined for " + cls.__name__)
 

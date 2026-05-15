@@ -2,26 +2,26 @@
 _scrolling_background.py
 27. January 2024
 
-A parralax-scrolling background
+A parallax-scrolling background
 
 Author:
 Nilusink
 """
-from icecream import ic
 
+from types import EllipsisType
+from icecream import ic
 import pygame as pg
 
-from ..graphics.render_bindings import renderer
-from ..base._textures import textures
-from .. import pv
-from ..shared.debugging import run_with_debug
+from amoginarium.graphics.render_bindings import renderer
+from amoginarium.graphics.textures import textures
+from amoginarium import pv
 
 
 class ScrollingBackground:
+    """scrolling background"""
     def __init__(
             self,
             background_file: str,
-            scrolling_part_file: str,
             screen_width: int,
             screen_height: int,
     ) -> None:
@@ -40,27 +40,27 @@ class ScrollingBackground:
         """
         self._position -= value
 
-    def draw(self, surface: pg.surface.Surface) -> None:
+    def draw(self, _surface: pg.surface.Surface) -> None:
         """
         draw background to surface
         """
         renderer.draw_textured_quad(
             self._texture_id,
             (0, 0),
-            self._texture_size
+            self._texture_size,
+            layer=-1
         )
 
 
-class ParalaxBackground:
+class ParallaxBackground:
+    """background using scrolling and parallax effect"""
     _animation_counter: float
 
     def __init__(
             self,
             background_scope: str,
-            screen_width: int,
-            screen_height: int,
             parallax_multiplier: float = 1.2,
-            animated_layers: list[int] = ...,
+            animated_layers: list[int] | EllipsisType = ...,
             load: bool = False
     ) -> None:
         self._scope = background_scope
@@ -123,6 +123,7 @@ class ParalaxBackground:
         # pv.global_vars.background_position = self.position
 
     def reset_scroll(self) -> None:
+        """reset scroll position"""
         self._animation_counter = 0
         self._position = 0
 
@@ -142,7 +143,8 @@ class ParalaxBackground:
         n_layers = len(self._textures) - 1
         if n_layers == -1:
             self.load_textures()
-            return self.draw(delta)
+            self.draw(delta)
+            return
 
         for layer in range(n_layers, -1, -1):
             image_pos = self._position + 10 % screen_size.x

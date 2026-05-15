@@ -12,11 +12,11 @@ from types import EllipsisType
 from time import perf_counter
 import typing as tp
 
-from amoginarium.base._textures import textures
 from amoginarium.shared.utility import Vec2
 from amoginarium.shared import MissileCIDs
 
 from ..entities import Animation
+from ..textures import textures
 from ._bullet import BulletDummy
 
 
