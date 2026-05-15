@@ -6,13 +6,14 @@ Created: 11.04.2026
 Authors: LukasKrah
 """
 
+from icecream import ic  # noqa: F401
 import typing as tp
-from icecream import ic
-from amoginarium.shared import GraphicsCIDs
-from amoginarium.shared.utility import Color
 
-from ._synced_entities import SyncedGraphicsEntity
+from amoginarium.shared.utility import Color
+from amoginarium.shared import GraphicsCIDs
+
 from ..render_bindings import renderer
+from ._synced_entities import SyncedGraphicsEntity
 
 
 class TextEntity(SyncedGraphicsEntity):

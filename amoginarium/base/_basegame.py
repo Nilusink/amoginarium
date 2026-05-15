@@ -20,24 +20,24 @@ import typing as tp
 import pygame as pg  # Will be removed after controller/keybind refactoring
 import json
 
-# from ..shared.controllers import Controllers, Controller, GameController
-from .. import pv
-from ..shared.debugging import run_with_debug, print_ic_style, cum_timer
-from ..shared.debugging import print_with_prefix, CC, get_fg_color
-from ..shared.utility import Vec2, convert_coord, Color
-from ..shared import ProcessCommand, ProcessCommandType, BaseCommandType
-from ..shared.settings import Settings
-from ..graphics.render_bindings import renderer
-from ..graphics.ui import UICursor
-from ..graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities, Drawn_2
-from ..graphics.controllers import Controller, Controllers, KeyboardController
-from ..graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
-from ..logic import run_continuous
-from ._scrolling_background import ParalaxBackground
+from amoginarium.shared import ProcessCommand, ProcessCommandType, BaseCommandType
+from amoginarium.shared.debugging import run_with_debug, print_ic_style, cum_timer
+from amoginarium.shared.debugging import print_with_prefix, CC, get_fg_color
+from amoginarium.shared.settings import Settings
+from amoginarium.graphics.controllers import Controller, Controllers, KeyboardController
+from amoginarium.graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
+from amoginarium.graphics.entities import UIEntities, Drawn_0, Drawn_1, SyncedEntities
+from amoginarium.graphics.entities import Drawn_2
+from amoginarium.graphics.render_bindings import renderer
+from amoginarium.graphics.textures import textures
+from amoginarium.graphics.ui import UICursor
+from amoginarium.logic import run_continuous
+from amoginarium import pv
+
+from ._scrolling_background import ParallaxBackground
 from ._settings_menu import SettingsMenu
 from ._pausemenu import PauseMenu
 from ._startmenu import StartMenu
-from ._textures import textures
 
 
 class BoundFunction[**A, R]:
@@ -160,7 +160,7 @@ class BaseGame:
         self._loading_screen_info = "Window init"
 
         # initialize background
-        self._background: ParalaxBackground | EllipsisType = ...
+        self._background: ParallaxBackground | EllipsisType = ...
         self._bg_color = (0, 0, 0)
         self._ended = False
 
@@ -188,24 +188,20 @@ class BaseGame:
             )
 
         self._backgrounds = [
-            ParalaxBackground(
+            ParallaxBackground(
                 "bg1",
-                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             ),
-            ParalaxBackground(
+            ParallaxBackground(
                 "bg2",
-                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             ),
-            ParalaxBackground(
+            ParallaxBackground(
                 "bg3",
-                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             ),
-            ParalaxBackground(
+            ParallaxBackground(
                 "bg4",
-                *self.global_vars.get_screen_size().xy,
                 parallax_multiplier=1.6,
             )
         ]
@@ -350,26 +346,27 @@ class BaseGame:
 
         # set background
         if 0 <= data["background"] - 1 <= len(self._backgrounds):
-            self._background = self._backgrounds[data["background"] - 1]
+            background: ParallaxBackground = self._backgrounds[data["background"] - 1]
 
         else:
-            self._background = self._backgrounds[0]
+            background: ParallaxBackground = self._backgrounds[0]
 
         # check if background has been assigned
-        if not self._background.loaded:
-            self._background.load_textures()
+        if not background.loaded:
+            background.load_textures()
 
+        self._background = background
         self._last_loaded = map_path
 
     def time_since_start(self) -> str:
         """
-        styleized time since game start
+        stylized time since game start
         gamestart being time since `mainloop` was called
         """
         if hasattr(self, "_game_start"):
             t_ms = round(perf_counter() - self._game_start, 4)
 
-        # if game hasn't started yet (bassegame init), set time to -1
+        # if game hasn't started yet (base-game init), set time to -1
         else:
             t_ms = -1.0
 
@@ -438,7 +435,9 @@ class BaseGame:
             nonlocal active_scene
             active_scene = "Game"
 
-            self._background.reset_scroll()
+            if not isinstance(self._background, EllipsisType):
+                self._background.reset_scroll()
+    
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.reset))
             SE_MANAGER.reset()
 
@@ -607,7 +606,10 @@ class BaseGame:
             # TEMP SOLUTION - fix with controller rework
             display_updated = False
             for event in pg.event.get():
-                if event.type in [pg.WINDOWRESIZED, pg.WINDOWMOVED, pg.VIDEORESIZE] and not display_updated:
+                if (
+                    event.type in [pg.WINDOWRESIZED, pg.WINDOWMOVED, pg.VIDEORESIZE]
+                    and not display_updated
+                ):
                     renderer.display_update()
                     display_updated = True
                 elif event.type == pg.MOUSEWHEEL:
@@ -647,8 +649,10 @@ class BaseGame:
                 "PauseSettings",
             ]:
                 # update background music
-                self._background.set_position(world_pos.x)
-                self._background.draw(delta)
+                if not isinstance(self._background, EllipsisType):
+                    self._background.set_position(world_pos.x)
+                    self._background.draw(delta)
+
                 renderer.flush()
 
                 if active_scene in ["PauseMenu", "PauseSettings"]:
@@ -676,8 +680,10 @@ class BaseGame:
                 Controllers.update()
 
                 # draw background
-                self._background.set_position(world_pos.x)
-                self._background.draw(delta)
+                if not isinstance(self._background, EllipsisType):
+                    self._background.set_position(world_pos.x)
+                    self._background.draw(delta)
+
                 renderer.flush()
 
                 # handle groups
@@ -719,7 +725,9 @@ class BaseGame:
         """
         renderer.clear_display()
 
-        self._background.draw(0)
+        if not isinstance(self._background, EllipsisType):
+            self._background.draw(0)
+    
         SyncedEntities.update_from_buffer()
         Drawn_0.gl_draw(0)
         Drawn_1.gl_draw(0)
@@ -771,13 +779,15 @@ class BaseGame:
         ic("writing debug data")
 
         makedirs("debug", exist_ok=True)
-        with open(f"debug/graphic_debug_{self._git_branch}_{int(self._game_start)}.json",
-                  "w") as out:
+        with open(
+            f"debug/graphic_debug_{self._git_branch}_{int(self._game_start)}.json", "w"
+        ) as out:
             json.dump({
                 "pygame": self._pygame_loop_times,
                 "total": self._total_loop_times
             }, out)
-        with open(f"graphic_debug.json",
+
+        with open("graphic_debug.json",
                   "w") as out:
             json.dump({
                 "pygame": self._pygame_loop_times,

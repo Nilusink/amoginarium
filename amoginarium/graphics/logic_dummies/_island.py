@@ -9,16 +9,17 @@ Nilusink
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from icecream import ic
+from icecream import ic  # noqa: F401
 import pygame as pg
 import typing as tp
 import math as m
 
-from amoginarium.base._textures import textures
 from amoginarium.shared.utility import Vec2, coord_t, convert_coord, WtfError
 from amoginarium.shared import IslandCIDs
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium import pv
+
+from ..textures import textures
 from ._synced_entities import SyncedGraphicsEntity
 
 

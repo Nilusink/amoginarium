@@ -7,16 +7,16 @@ graphics dummy for player
 Author:
 Nilusink
 """
-from icecream import ic
+from icecream import ic  # noqa: F401
 import pygame as pg
 
-from amoginarium.base._textures import textures
 from amoginarium.shared.utility import Color
 from amoginarium.shared import DummyCIDs
 from amoginarium import pv
 
 from ..entities import Drawn_1, Drawn_2
 from ..render_bindings import renderer
+from ..textures import textures
 from ._synced_entities import SyncedLRImageEntity, SE_MANAGER
 from ._inventory import Inventory
 

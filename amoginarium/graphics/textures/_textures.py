@@ -7,13 +7,15 @@ globals
 Author:
 Nilusink
 """
-from amoginarium.shared.debugging import print_ic_style, get_fg_color
-from amoginarium.shared.utility import coord_t, convert_coord
-from amoginarium.graphics.render_bindings import renderer
+
 from PIL import Image
 import typing as tp
 import zipfile
 import os
+
+from amoginarium.shared.debugging import print_ic_style, get_fg_color
+from amoginarium.shared.utility import coord_t, convert_coord
+from amoginarium.graphics.render_bindings import renderer
 
 
 type mirror_t = tp.Literal["x", "y", "xy", "yx", ""]
