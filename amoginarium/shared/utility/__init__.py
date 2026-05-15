@@ -1,10 +1,10 @@
 from ._utility_classes import BetterDict, SimpleLock, WDTimer
 from ._utility_functions import is_parent, classname, \
-    coord_t, lidar_sphere, convert_color, color_t
+    coord_t, lidar_sphere, convert_color, color_t, calculate_launch_angle_all_directions
 from ._calculations import calculate_launch_angle_iterative, rk4_update
-from ._cvectors import Vec2, normalize_angle
+from ._cvectors import Vec2, normalize_angle, normalize_angle_neg, clamp_angle, max_angle, min_angle
 from ._ccolor import Color, fade, c_255_to_1
-from ._constants import SQ2, MASK16, MASK32, MASK64
+from ._constants import *  # noqa: F403
 from ._tuplemath import TupleMath
 
 from ._cutility_functions import point_in_triangle, raycast_mask, convert_coord
@@ -14,7 +14,7 @@ from ._minrect_algorithm import find_minimum_rectangles_dirty, find_minimum_rect
 from ._ccalculations import calculate_launch_angle
 from ._utility_functions import multi_raycast_mask, get_default
 from ._error_types import WtfError
-
+from ._pid_controller import PIDController
 
 # from ._cutility_functions import point_in_triangle as _pit, raycast_mask as _rm, convert_coord as _cc, is_related as _ir
 # from ._ccalculations import calculate_launch_angle as _cla

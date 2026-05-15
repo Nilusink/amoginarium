@@ -16,7 +16,7 @@ import zipfile
 import os
 
 
-type mirror_t = tp.Literal["x", "y", "xy", "yx"]
+type mirror_t = tp.Literal["x", "y", "xy", "yx", ""]
 
 
 class Texture(tp.TypedDict):
@@ -109,7 +109,8 @@ class _Textures:
             name: str,
             mirror: str,
             size: tuple | None,
-            scope: str | None = None
+            scope: str | None = None,
+            pixel_perfect: bool = False
     ) -> Texture | None:
         """
         returns a texture if it already exists
@@ -131,7 +132,8 @@ class _Textures:
                 if all([
                     texture["name"] == name,
                     set(texture["mirror"]) == set(mirror),
-                    is_same_size
+                    is_same_size,
+                    texture["pixel_perfect"] == pixel_perfect
                 ]):
                     return texture
 
@@ -142,7 +144,9 @@ class _Textures:
             name: str,
             size: coord_t | None = None,
             mirror: mirror_t = "",
-            scope: str | None = None
+            scope: str | None = None,
+            *,
+            pixel_perfect: bool = False,
     ) -> tuple[int, tuple[int, int]]:
         """
         get the ID of a texture, prevents double loading
@@ -180,7 +184,8 @@ class _Textures:
         texture, size = renderer.load_texture(
             image=self._raw_images[scope][name]["image"],
             size=size,
-            mirror=mirror
+            mirror=mirror,
+            pixel_perfect=pixel_perfect
         )
 
         if scope not in self._textures:
@@ -190,7 +195,8 @@ class _Textures:
             "id": texture,
             "mirror": mirror,
             "name": name,
-            "size": size
+            "size": size,
+            "pixel_perfect": pixel_perfect
         })
 
         return texture, size
@@ -199,7 +205,8 @@ class _Textures:
             self,
             scope: str,
             size: coord_t | None = None,
-            mirror: str = "",
+            mirror: mirror_t = "",
+            pixel_perfect: bool = False
     ) -> list[tuple[int, tuple[int, int]]]:
         """
         get all textures from a scope
@@ -223,7 +230,8 @@ class _Textures:
                 image["name"],
                 size,
                 mirror,
-                scope=scope
+                scope=scope,
+                pixel_perfect=pixel_perfect
             ))
 
         return out

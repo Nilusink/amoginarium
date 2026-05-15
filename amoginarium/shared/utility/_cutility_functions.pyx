@@ -13,11 +13,16 @@ cpdef object convert_coord(object coord, object convert_to = tuple):
     elif convert_to is tuple:
         if isinstance(coord, tuple):
             return coord
+
+        elif isinstance(coord, list):
+            return coord[0], coord[1]
+
         return (<Vec2>coord).xy
 
     elif convert_to is int:
         if isinstance(coord, Vec2):
             coord = (<Vec2>coord).xy
+
         return int(coord[0]), int(coord[1])
 
     else:

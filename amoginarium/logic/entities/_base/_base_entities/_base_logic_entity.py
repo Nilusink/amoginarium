@@ -28,7 +28,9 @@ if tp.TYPE_CHECKING:
 
 
 class EntityChildViable(tp.Protocol):
-    """Minimum requirements for an object to be assigned as a child of a logic entity."""
+    """
+    Minimum requirements for an object to be assigned as a child of a logic entity.
+    """
 
     def update(self, delta: float) -> None:
         """
@@ -40,6 +42,14 @@ class EntityChildViable(tp.Protocol):
         """Clean up and terminate the child."""
 
 
+class MurderViable(tp.Protocol):
+    """can kill someone"""
+
+    @property
+    def parent(self) -> tp.Any:
+        """parent"""
+
+
 class BaseLogicEntity(BaseLogicEntityLike):
     """
     Most basic type of logic entity.
@@ -48,7 +58,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
     - update
     - visibility
     """
-    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id", "__groups", "__alive")
+    __slots__ = ("_parent", "_children", "_lifetime", "_runtime_buffer", "__id",
+                 "__groups", "__alive")
 
     # region InstanceVars
     _parent: BaseLogicEntity | None
@@ -58,7 +69,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     __id: int
     __groups: list[LogicGroup]
 
-    __alive: bool
+    _alive: bool
 
     # endregion
 
@@ -77,7 +88,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self._children = []
         self._lifetime = 0
         self.__groups = []
-        self.__alive = True
+        self._alive = True
 
         # data block
         self.__id = ENTITY_COUNTER.get_id()
@@ -95,7 +106,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     @property
     def alive(self) -> bool:
         """is entity alive?"""
-        return self.__alive
+        return self._alive
 
     @property
     def id(self) -> int:
@@ -123,6 +134,16 @@ class BaseLogicEntity(BaseLogicEntityLike):
     def _buffer(self) -> base_entity_t:
         """:return: runtime buffer data for this entity"""
         return self._runtime_buffer[self.__id]
+
+    @property
+    def lifetime(self) -> float:
+        """time since entity spawn"""
+        return self._lifetime
+
+    @property
+    def runtime_buffer(self) -> Array[base_entity_t]:
+        """entity runtime buffer"""
+        return self._runtime_buffer
 
     # endregion
 
@@ -175,7 +196,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
                 group.remove(self)
                 self.__groups.remove(group)
 
-    def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def _kill(self, killed_by: MurderViable | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
@@ -193,13 +214,13 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.__groups.clear()
 
     @tp.final
-    def kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
+    def kill(self, killed_by: MurderViable | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
         """
-        if self.__alive:
-            self.__alive = False
+        if self._alive:
+            self._alive = False
             self._kill(killed_by)
 
     # endregion

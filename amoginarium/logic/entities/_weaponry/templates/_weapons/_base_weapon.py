@@ -13,13 +13,13 @@ from icecream import ic
 import typing as tp
 
 from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
-from amoginarium.shared.audio import RandomizedEffect, SoundEffect, Shotgun, Cannon
+from amoginarium.shared.audio import RandomizedEffect, SoundEffect
 from amoginarium.shared.utility import Vec2, convert_coord, get_default
 from amoginarium.shared import base_entity_t, WeaponCIDs
-from shared import Coalitions
+from amoginarium.shared import Coalitions
 
 from .._bullets import Bullet
-from ...._base import Updated, LogicGameEntity
+from ...._base import Updated, LogicGameEntity, GameCollisions
 from ...._items import Item
 
 
@@ -44,6 +44,7 @@ class BaseWeapon(Item):
     ] = ...
 
     _default_bullet_type: tp.Type[Bullet] = Bullet
+    _default_bullet_mount_point: tuple[int, int] | EllipsisType = ...
     _default_cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...
 
     def __init__(
@@ -66,10 +67,17 @@ class BaseWeapon(Item):
         spawn_args: dict[str, tp.Any] | EllipsisType = ...,
         **bullet_kwargs,
     ) -> None:
+
         if weapon_size is ...:
             weapon_size: Vec2 = Vec2().from_cartesian(20, 20)
 
-        super().__init__(runtime_buffer=runtime_buffer, size=weapon_size, spawn_args=spawn_args)
+        super().__init__(
+            runtime_buffer=runtime_buffer,
+            size=weapon_size,
+            spawn_args=spawn_args
+        )
+
+        self._e_id = GameCollisions.add_exception()
 
         # unless you want the sniper to kill its own bullet
         self.remove(Updated)  # CollisionDestroyed
@@ -116,6 +124,12 @@ class BaseWeapon(Item):
 
         self._runtime_buffer[self.id].param0 = 1
 
+        if isinstance(self._default_bullet_mount_point, EllipsisType):
+            self._bullet_offset: Vec2 = Vec2()
+
+        else:
+            self._bullet_offset: Vec2 = convert_coord(self._default_bullet_mount_point, Vec2)  # ignore: type
+
     # region properties
     @property
     def coalition(self) -> Coalitions:
@@ -153,6 +167,11 @@ class BaseWeapon(Item):
     def muzzle_velocity(self) -> float:
         """the weapons muzzle velocity"""
         return self._muzzle_velocity
+
+    @property
+    def inaccuracy(self) -> float:
+        """weapon inaccuracy in rad"""
+        return self._inaccuracy
 
     # endregion
 
@@ -212,6 +231,7 @@ class BaseWeapon(Item):
 
         super()._update(delta, keep_position=True)
         self._runtime_buffer[self.id].param1, _ = self.get_mag_state(1)
+        self._set_bit("flags", 13, self._mag_state > 0)
 
     def stop_shooting(self):
         """
@@ -289,6 +309,17 @@ class BaseWeapon(Item):
         if not isinstance(bullet_tof, EllipsisType):
             kwargs["time_to_life"] = bullet_tof
 
+        direction.normalize()
+        bof = self._bullet_offset.copy()
+
+        if direction.x < 0:
+            bof.y *= -1
+
+        bullet_offset = Vec2().from_polar(
+            bof.angle + direction.angle,
+            bof.length
+        )
+
         self._bullet_type(
             runtime_buffer=self._runtime_buffer,
             parent=self.parent,
@@ -296,12 +327,14 @@ class BaseWeapon(Item):
             initial_position=(
                 self.parent.position
                 + self._parent_position_offset
-                + direction.normalize()
+                + bullet_offset
             ),
             initial_velocity=Vec2().from_polar(
                 direction.angle, self.muzzle_velocity
             )
             + self.parent.velocity,
+            weapon_collision_exception_id=self._e_id,
+            initial_facing=direction.angle,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,
             **kwargs

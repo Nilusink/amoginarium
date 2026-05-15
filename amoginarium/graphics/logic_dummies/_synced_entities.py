@@ -12,8 +12,9 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from icecream import ic
 import math as m
+import time
 
-from amoginarium.shared.utility import Vec2, Color
+from amoginarium.shared.utility import Vec2, Color, coord_t
 from amoginarium import pv
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
@@ -22,7 +23,7 @@ from ..render_bindings import renderer
 
 class _SyncedEntitiesManager:
     __slots__ = ["_entities"]
-    
+
     def __init__(self) -> None:
         self._entities: dict[int, SyncedGraphicsEntity] = {}
 
@@ -144,6 +145,12 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     def _buff(self):
         """:return: runtime buffer data for this entity"""
         return pv.E_BUFF[self.__id]
+
+    @property
+    def id(self) -> int:
+        """sync ID"""
+        return self.__id
+
     # endregion
 
     # region buffer control
@@ -221,7 +228,12 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
             renderer.draw_rect(
                 (0, 0),
                 (2000, 2000),
-                Color().from_1(0.6, 0.6, .7, 0.125 + m.sin(self._lifetime) / 8),
+                Color().from_1(
+                    0.6,
+                    0.6,
+                    .7,
+                    0.125 + m.sin(2 * time.perf_counter() + self.id) / 8
+                ),
             )
             renderer.disable_stencil()
     # endregion
@@ -237,24 +249,43 @@ class SyncedImageEntity(SyncedGraphicsEntity):
             parent: int | None = None
     ) -> None:
         self._texture_id = texture_id
-        self._lifetime = 0
         super().__init__(sync_id, parent)
+
+    @property
+    def texture_id(self) -> int:
+        """image texture id"""
+        return self._texture_id
+
+    def draw_at(
+            self,
+            position: coord_t,
+            size: coord_t,
+            layer: int,
+            *,
+            rotation: float = 0
+    ) -> None:
+        """draw an entity at specified position and size"""
+        renderer.draw_textured_quad(
+            self._texture_id,
+            position,
+            size,
+            rotate_angle=rotation,
+            layer=layer,
+        )
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
         self._lifetime += delta_cal
 
         world_position = pv.global_vars.get_world_position()
-        renderer.draw_textured_quad(
-            self._texture_id,
+
+        self.draw_at(
             (
                 self.pos.x - world_position.x - self.size.x / 2,
-                self.pos.y - world_position.y - self.size.y / 2
+                self.pos.y - world_position.y - self.size.y / 2,
             ),
-            (
-                self.size.x,
-                self.size.y
-            ),
-            rotate_angle=self.facing.angle * (180 / m.pi)
+            (self.size.x, self.size.y),
+            layer=layer,
+            rotation=self.facing.angle * (180 / m.pi),
         )
 
 
@@ -270,6 +301,7 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
             self.world_position - self.size / 2,
             self.size,
+            layer=layer
         )
 
 
@@ -277,7 +309,6 @@ class Iconifyable(ABC):
     """entities that can be represented in an icon"""
 
     def __init__(self, *args, **kwargs) -> None:
-
         # call next class in MRO
         super().__init__(*args, **kwargs)
 

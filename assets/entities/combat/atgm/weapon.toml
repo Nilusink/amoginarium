@@ -1,0 +1,27 @@
+[id]
+from = "weapon.base"
+cid = "weapon.atgm"
+
+[visibility]
+size = [64, 32]
+
+[image]
+name = "atgm"
+rotate_anchor = [33, 16]
+
+[behaviour]
+mag_size = 1
+reload_time = 1
+recoil_time = 0.02
+inaccuracy = 0.01093606
+muzzle_velocity = 700
+recoil_factor = 0.1
+
+[bullet]
+type = "<missile.atgm>"
+visible = false
+mount_point = [4, 0]  # slightly forward to not explode when against wall
+
+[sound]
+name = "explosion_small"
+volume = 0.4

@@ -15,6 +15,10 @@ import typing as tp
 from ._entity_hints import ItemLike
 
 
+if tp.TYPE_CHECKING:
+    from .utility import Vec2
+
+
 type item_t = ItemLike | None  # ItemLike | WeaponLike | None
 
 
@@ -29,6 +33,14 @@ class ItemSlot:
     id: int
 
 
+@dataclass
+class CurrentView:
+    """current player view"""
+    pos: "Vec2"
+    zoom: float
+    centered: bool = False
+
+
 class DummyCIDs(Enum):
     """
     Component IDs for Graphics dummies
@@ -39,6 +51,23 @@ class DummyCIDs(Enum):
     grenade = "dummy.bullet.grenade"  # -- "" --
     cram = "dummy.bullet.cram"
     aero = "dummy.bullet.aero"
+
+
+class MissileCIDs(Enum):
+    """Component IDs for missiles"""
+    base = "dummy.missile.base"
+    multi_stage = "dummy.missile.multi_stage"
+    guided_multi_stage = "dummy.missile.guided_multi_stage"
+    multi_thruster = "dummy.missile.multi_thruster"
+    player_controlled = "dummy.missile.player_controlled"
+
+
+class WeaponSensorCIDs(Enum):
+    """Component IDs for weapon sensors"""
+    base = "sensor.weapon.base"
+    laser = "sensor.weapon.laser"
+    heat = "sensor.weapon.heat"
+    gps = "sensor.weapon.gps"
 
 
 class IslandCIDs(Enum):
@@ -63,6 +92,8 @@ class TurretCIDs(Enum):
     base = "turret.static.base"
     sky_shield = "turret.static.sky_shield"
     exacto_sniper = "turret.static.exacto_sniper"
+    rideable_base = "turret.rideable.base"
+    rideable_calculated = "turret.rideable.calculated"
 
 
 class WeaponCIDs(Enum):
@@ -140,8 +171,11 @@ class _CIDRegister:
         return 0
 
 
-CID_REGISTER = _CIDRegister(WeaponCIDs)  #, TurretCIDs, IslandCIDs, DummyCIDs)
-type CIDType = DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs | GraphicsCIDs
+CID_REGISTER = _CIDRegister(WeaponCIDs)
+type CIDType = (
+    DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs | GraphicsCIDs | MissileCIDs
+    | WeaponSensorCIDs
+)
 
 
 class ProcessCommandType(Enum):

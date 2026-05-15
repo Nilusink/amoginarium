@@ -8,6 +8,7 @@ Author:
 Nilusink
 """
 
+import typing as tp
 from types import EllipsisType
 import math as m
 
@@ -22,12 +23,13 @@ class AeroDummy(SyncedGraphicsEntity):
     _CID = DummyCIDs.aero
 
     def __init__(
-        self,
-        sync_id: int,
-        *,
-        spawn_time: float = 0,
-        visibility_offset: float = 0,
-        target_pos: Vec2 | EllipsisType = ...,
+            self,
+            sync_id: int,
+            *,
+            spawn_time: float = 0,
+            visibility_offset: float = 0,
+            target_pos: Vec2 | EllipsisType = ...,
+            **kwargs: tp.Any
     ):
         super().__init__(sync_id)
 
@@ -52,7 +54,7 @@ class AeroDummy(SyncedGraphicsEntity):
         # draw velocity vec
         renderer.draw_thick_line(
             self.world_position,
-            self.world_position + Vec2().from_polar(self.param0, self.param1 / 10),
+            self.world_position + Vec2().from_polar(self.param2, self.param1 / 10),
             Color().from_1(0, 1, 0),
             thickness=2
         )

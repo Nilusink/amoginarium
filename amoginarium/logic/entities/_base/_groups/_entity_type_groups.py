@@ -17,6 +17,9 @@ from amoginarium.shared import PositionedLogicEntityLike
 from ._base_group import BaseGroup
 from ._updated import Updated
 
+if tp.TYPE_CHECKING:
+    from ..._player import Player
+
 
 class _Bullets(BaseGroup[PositionedLogicEntityLike]):
     """Group containing all active bullet entities."""
@@ -28,7 +31,7 @@ class _Walls(BaseGroup[PositionedLogicEntityLike]):
     __slots__ = ()
 
 
-class _Players(BaseGroup[PositionedLogicEntityLike]):
+class _Players(BaseGroup["Player"]):
     """Group containing all player entities and spawn logic."""
     __slots__ = ()
 

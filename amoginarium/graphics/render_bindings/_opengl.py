@@ -30,13 +30,13 @@ from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
 from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glViewport, glOrtho
 from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
 from OpenGL.GL import GL_QUADS, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
-from OpenGL.GL import glEnableClientState, glDisableClientState, glVertexPointer, glDrawArrays
+from OpenGL.GL import (glEnableClientState, glDisableClientState, glVertexPointer,
+                       glDrawArrays)
 from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
 
-from pygame.locals import DOUBLEBUF, OPENGL
-from pygame._sdl2.video import Window
+from collections.abc import Sequence
 from types import EllipsisType
 from icecream import ic
 from PIL import Image
@@ -46,7 +46,8 @@ import numpy as np
 import math as m
 
 from amoginarium.shared.debugging import cum_timer
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade, coord_t, convert_color
+from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade
+from amoginarium.shared.utility import coord_t, convert_color, PI_2
 
 from ._base_renderer import BaseRenderer, tColor
 from .windows import WindowsMonitorService
@@ -82,6 +83,10 @@ class OpenGLRenderer(BaseRenderer):
     __previous_window_position: tp.Final[Vec2]
     __previous_window_size: tp.Final[Vec2]
     __display_state: tp.Literal["windowed", "windowed_fullscreen", "fullscreen"]
+
+    def __init__(self) -> None:
+        self.__layer_cache = {}
+        super().__init__()
 
     # region Extra internal methods
     # todo: WHAT?
@@ -337,13 +342,15 @@ class OpenGLRenderer(BaseRenderer):
             self,
             image: Image.Image,
             size: coord_t | None = None,
-            mirror: tp.Literal["x", "y", "xy", "yx", ""] = ""
+            mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+            pixel_perfect: bool = False,
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         Load an image texture (saves it internally)
         :param image: Image to load
         :param size: Size of image or None
         :param mirror: Axes to mirror the image on
+        :param pixel_perfect: set texture scaling behavior
         :returns: integer texture id, (width, height)
         """
         if size is not None:
@@ -367,10 +374,19 @@ class OpenGLRenderer(BaseRenderer):
         # noinspection PyArgumentList
         texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_id)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        # set scaling behavior
+        if pixel_perfect:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+        else:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGBA, width, height,
             0, GL_RGBA, GL_UNSIGNED_BYTE, img_data
@@ -607,12 +623,14 @@ class OpenGLRenderer(BaseRenderer):
             texture_id: TextureID,
             pos: coord_t,
             size: coord_t,
+            layer: int,
             *,
             convert_global: bool = True,
             rotate_angle: float = 0,
             rotate_anchor: coord_t | EllipsisType = ...,
-            pixel_perfect: bool = False,
-            offscreen_check: bool = True
+            offscreen_check: bool = True,
+            force_draw: bool = False,
+            color: Color | EllipsisType = ...
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -621,12 +639,14 @@ class OpenGLRenderer(BaseRenderer):
         :param size: Absolute size on window
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param rotate_angle: Angle in degrees to rotate the image at
-        :param rotate_anchor: At what pixel to rotate at. Defaults to center position
-        :param pixel_perfect: Whether to draw pixel perfect
+        :param rotate_anchor: What pixel to rotate at. Defaults to center position
         :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param layer: Layer number
+        :param force_draw: force the renderer to draw the quad NOW (only use for stencils)
+        :param color: overlay color to tint the quad
         """
-        pos_vec2: Vec2 = convert_coord(pos, Vec2)
-        size_vec2: Vec2 = convert_coord(size, Vec2)
+        pos_vec2: Vec2 = convert_coord(pos, Vec2)  # type: ignore
+        size_vec2: Vec2 = convert_coord(size, Vec2)  # type: ignore
 
         if convert_global:
             pos_vec2 = pv.global_vars.translate_screen_coord(pos_vec2)
@@ -635,55 +655,115 @@ class OpenGLRenderer(BaseRenderer):
         if offscreen_check and self._check_out_of_screen(pos_vec2, size_vec2):
             return
 
-        # reset color
-        glColor3f(1.0, 1.0, 1.0)
-
-        glPushMatrix()
-        glTranslate(pos_vec2.x, pos_vec2.y, 0.0)
-
-        glEnable(GL_TEXTURE_2D)
-        glBindTexture(GL_TEXTURE_2D, texture_id)
-
-        if pixel_perfect:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-
-        else:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        if layer not in self.__layer_cache:
+            self.__layer_cache[layer] = []
 
         # rotate
+        rx = 0
+        ry = 0
         if rotate_angle != 0.0:
             if isinstance(rotate_anchor, EllipsisType):
                 rx, ry = size_vec2.x / 2.0, size_vec2.y / 2.0
             else:
-                anchor: Vec2 = convert_coord(rotate_anchor, Vec2)
+                anchor: Vec2 = convert_coord(  # type: ignore
+                    rotate_anchor, Vec2
+                )
+
                 if convert_global:
                     anchor = pv.global_vars.translate_scale(anchor)
+
                 rx, ry = anchor.x, anchor.y
 
-            glTranslated(rx, ry, 0.0)
-            glRotated(rotate_angle, 0.0, 0.0, 1.0)
-            glTranslated(-rx, -ry, 0.0)
+        draw_info: dict[str, tp.Any] = {
+            "texture_id": texture_id,
+            "pos": pos_vec2,
+            "size": size_vec2,
+            "rotate_angle": rotate_angle,
+            "rotate_anchor": (rx, ry),
+        }
 
-        glBegin(GL_QUADS)
+        if not isinstance(color, EllipsisType):
+            draw_info["color"] = color
 
-        # draw rectangle and texture
-        glTexCoord2f(1.0, 0.0)
-        glVertex2f(0.0, 0.0)
-        glTexCoord2f(0.0, 0.0)
-        glVertex2f(size_vec2.x, 0.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex2f(size_vec2.x, size_vec2.y)
-        glTexCoord2f(1.0, 1.0)
-        glVertex2f(0.0, size_vec2.y)
+        if force_draw:
+            self.__draw_layer([draw_info])
 
-        glEnd()
-        glDisable(GL_TEXTURE_2D)
-        glPopMatrix()
+        else:
+            self.__layer_cache[layer].append(draw_info)
 
-        if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
-            self._draw_debug_bounds(pos_vec2, size_vec2)
+    def __draw_layer(self, layer: list[dict[str, tp.Any]]) -> None:
+        """draw one texture layer"""
+        layer = sorted(
+            layer, key=lambda x: x["texture_id"]
+        )
+
+        # reset color
+        glColor3f(1.0, 1.0, 1.0)
+
+        current_texture = -1
+        for sprite in layer:
+            pos: Vec2 = sprite["pos"]
+            size: Vec2 = sprite["size"]
+
+            texture_id: int = sprite["texture_id"]
+
+            rotate_angle: float = sprite["rotate_angle"]
+            rx, ry = sprite["rotate_anchor"]
+
+            if "color" in sprite:
+                self.__set_color(sprite["color"])
+
+            glPushMatrix()
+            glTranslate(pos.x, pos.y, 0.0)
+
+            # only re-bind texture on sprite type change
+            if texture_id != current_texture:
+                glBindTexture(GL_TEXTURE_2D, texture_id)
+                current_texture = texture_id
+
+            glEnable(GL_TEXTURE_2D)
+
+            if rotate_angle != 0.0:
+                glTranslated(rx, ry, 0.0)
+                glRotated(rotate_angle, 0.0, 0.0, 1.0)
+                glTranslated(-rx, -ry, 0.0)
+
+            glBegin(GL_QUADS)
+
+            # draw rectangle and texture
+            glTexCoord2f(1.0, 0.0)
+            glVertex2f(0.0, 0.0)
+            glTexCoord2f(0.0, 0.0)
+            glVertex2f(size.x, 0.0)
+            glTexCoord2f(0.0, 1.0)
+            glVertex2f(size.x, size.y)
+            glTexCoord2f(1.0, 1.0)
+            glVertex2f(0.0, size.y)
+
+            glEnd()
+            glDisable(GL_TEXTURE_2D)
+            glPopMatrix()
+
+            if "color" in sprite:  # reset color
+                glColor3f(1.0, 1.0, 1.0)
+
+            if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
+                self._draw_debug_bounds(pos, size)
+
+    def flush_layer(self, layer: int) -> None:
+        # get layer from cache and delete
+        sprites = self.__layer_cache.pop(layer, [])
+
+        # draw layer
+        self.__draw_layer(sprites)
+
+    def flush(self) -> None:
+        layers = self.__layer_cache.copy().keys()
+        layers = sorted(layers)
+
+        # sort cache by texture_id, pixel perfect
+        for layer_id in sorted(layers):
+            self.__draw_layer(self.__layer_cache.pop(layer_id))
 
     # endregion
 
@@ -739,7 +819,7 @@ class OpenGLRenderer(BaseRenderer):
     def draw_polygon_line(
             self,
             vertices: tp.Iterable[coord_t],
-            color: Color | tColor,
+            color: Color | tColor | Sequence[Color | tColor],
             *,
             thickness: float = 1.0,
             center: coord_t = None,
@@ -773,9 +853,11 @@ class OpenGLRenderer(BaseRenderer):
                 center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
             glTranslate(center_vec2.x, center_vec2.y, 0)
 
+        # set color if single color is given
         self.__set_color(color)
 
-        # Use TRIANGLE_STRIP to create a thick outline by calculating offsets for each segment
+        # Use TRIANGLE_STRIP to create a thick outline by calculating offsets for 
+        # each segment
         glBegin(GL_TRIANGLE_STRIP)
         num_verts = len(vertices_vec2)
         for i in range(num_verts + 1):
@@ -787,7 +869,8 @@ class OpenGLRenderer(BaseRenderer):
             if length == 0:
                 continue
 
-            off_x, off_y = (-dy / length) * (thickness * 0.5), (dx / length) * (thickness * 0.5)
+            off_x = (-dy / length) * (thickness * 0.5)
+            off_y = (dx / length) * (thickness * 0.5)
 
             glVertex2f(v1.x + off_x, v1.y + off_y)
             glVertex2f(v1.x - off_x, v1.y - off_y)
@@ -1652,6 +1735,91 @@ class OpenGLRenderer(BaseRenderer):
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
+
+    def draw_lines(
+            self,
+            points: Sequence[coord_t],
+            color: Color | Sequence[Color],
+            *,
+            thickness: float = 1.0,
+            global_position: bool = True,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a simple line
+        :param points: list of line points
+        :param color: one color or color for each point
+
+        :param thickness: line thickness
+        :param global_position: position in global space or relative to previous
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        """
+        if len(points) <= 1:
+            return
+
+        # convert points to Vec2
+        _points: list[Vec2] = [convert_coord(c, Vec2) for c in points]  # type: ignore
+
+        if convert_global:
+            _points = [pv.global_vars.translate_screen_coord(p) for p in _points]
+            thickness = pv.global_vars.translate_scale(thickness)
+
+        if offscreen_check:
+            # check if all points are oob
+            if self._check_out_of_screen(_points[0], (_points[0]-_points[1])):
+                for point in _points:
+                    if not self._check_out_of_screen(point, (1, 1)):
+                        break
+
+                else:
+                    return
+
+        # set color if only one is given or not enough are given
+        color_list: bool = True
+        if not isinstance(color, Sequence):
+            self.__set_color(color)
+            color_list = False
+
+        elif isinstance(color, Sequence) and len(color) < len(points):
+            self.__set_color(color[0])
+            color = color[0]
+            color_list = False
+
+        # create local coordinate system
+        if global_position:
+            glPushMatrix()
+
+        glBegin(GL_TRIANGLE_STRIP)
+
+        # draw points as thick line
+        n_points = len(_points)
+        for i in range(n_points):
+            if i == 0:
+                direction = (_points[0] - _points[1]).normalize()
+
+            elif i == n_points-1:
+                direction = (_points[-2] - _points[-1]).normalize()
+
+            else:
+                # use prev and next points as normal vector
+                direction = (_points[i - 1] - _points[i + 1]).normalize()
+
+            d = Vec2().from_polar(
+                direction.angle + PI_2, thickness / 2
+            )  # create 90° offset
+
+            if color_list:
+                self.__set_color(color[i])
+
+            glVertex2f(*(_points[i] + d).xy)
+            glVertex2f(*(_points[i] - d).xy)
+
+        glEnd()
+
+        if global_position:
+            glPopMatrix()
 
     # endregion
 

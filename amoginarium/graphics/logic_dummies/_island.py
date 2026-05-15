@@ -589,7 +589,8 @@ class Island(SyncedGraphicsEntity):
                 renderer.draw_textured_quad(
                     texture,
                     pos,
-                    size
+                    size,
+                    layer=layer
                 )
 
         if self.debug:

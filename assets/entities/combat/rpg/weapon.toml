@@ -1,0 +1,26 @@
+[id]
+from = "weapon.base"
+cid = "weapon.rpg"
+
+[visibility]
+size = [96, 32]
+
+[image]
+name = "rpg"
+rotate_anchor = [74, 18]
+
+[behaviour]
+mag_size = 1
+reload_time = 1
+recoil_time = 0.02
+inaccuracy = 0.01093606
+muzzle_velocity = 800
+recoil_factor = 0.1
+
+[bullet]
+type = "<missile.rpg>"
+visible = true  # missile visible while in weapon
+mount_point = [27, -2]
+
+#[sound]
+#name = "explosion_small"

@@ -22,6 +22,7 @@ from amoginarium.shared.audio import ContinuousSoundEffect
 
 BASE_DIR = "./assets/entities/"
 _GRAPHICS_KEYS = ("image", "trace")
+_SHARED_KEYS = ("bullet",)
 
 
 class ProcessType(Enum):
@@ -182,6 +183,9 @@ def load_entities_from_files(
                             effect = PRESETS[preset]
                     
                     if effect:
+                        if "volume" in data["sound"]:
+                            effect.volume = data["sound"]["volume"]
+
                         __dict["_default_sound_effect"] = effect
 
             for subsection in data:
@@ -197,8 +201,19 @@ def load_entities_from_files(
                         __dict["_sensors_list"] = list(data[subsection].values())
                         continue
 
+                    # check if list
+                    k0: str = list(data[subsection].keys())[0]
+
+                    if k0.isnumeric() and isinstance(data[subsection][k0], dict):
+
+                        # if is list, append to values and continue
+                        __dict[f"_default_{subsection}"] = list(
+                            data[subsection].values()
+                        )
+                        continue
+
                 elif process_type == ProcessType.base:
-                    if subsection not in _GRAPHICS_KEYS:
+                    if subsection not in (_GRAPHICS_KEYS + _SHARED_KEYS):
                         continue
 
                 for key, value in data[subsection].items():
@@ -229,7 +244,7 @@ def load_entities_from_files(
     for _ in range(len(to_inherit)):
         for cid, params in to_inherit.copy().items():
             if params[1] not in new_entities and params[1] not in to_inherit:
-                ic(cid, "failed: inherit", params[1])
+                ic(process_type, cid, "failed: inherit", params[1])
                 to_inherit.pop(cid)
                 continue
 
@@ -246,11 +261,9 @@ def load_entities_from_files(
             break
 
     else:
-        raise RuntimeError(f"Circular dependancy detected: {list(to_inherit.keys())}")
+        raise RuntimeError(f"Circular dependency detected: {list(to_inherit.keys())}")
 
     entity_index.update(new_entities)
-
-    names = [c.__name__ for c in entity_index.values()]
 
     # resolve stuff
     for entity in new_entities.values():
@@ -273,7 +286,7 @@ def load_entities_from_files(
                         sensors.append(sensor)
 
                     except KeyError:
-                        ic(entity, sensor)
+                        ic(entity, sensor, entity_index)
 
                 setattr(entity, key, sensors)
 

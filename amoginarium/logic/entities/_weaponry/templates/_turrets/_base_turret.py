@@ -17,12 +17,12 @@ import ctypes
 
 from amoginarium.shared import Coalitions, VisibleGameEntityLike, base_entity_t
 from amoginarium.shared import ProcessCommand, BaseCommandType, TurretCIDs
-from amoginarium.shared.utility import normalize_angle, MASK32
 from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
+from amoginarium.shared.utility import normalize_angle, MASK32
 from amoginarium.shared.utility import MASK64, get_default
+from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.audio import MetalPings
 from amoginarium import pv
-from amoginarium.shared.collision_detection import CollisionEvent
 
 from ...._base import Players, Bullets, GravityAffected, LogicGameEntity, GameCollisions
 from .._sensors import BaseSensor, DetectionGroup
@@ -35,10 +35,10 @@ if tp.TYPE_CHECKING:
 @dataclass
 class TargetSolution:
     """a solution for pollution"""
-    target: VisibleGameEntityLike
     target_predict: Vec2
     angle: Vec2
     tof: float
+    target: tp.Optional[VisibleGameEntityLike | EllipsisType] = ...
 
 
 class SensorInit(tp.TypedDict):
@@ -110,8 +110,8 @@ class BaseTurret(LogicGameEntity):
             coalition: Coalitions,
             position: Vec2,
             *,
-        size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
-            weapon: BaseWeapon| EllipsisType = ...,
+            size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
+            weapon: BaseWeapon | EllipsisType = ...,
             max_range: float | EllipsisType = ...,
             min_range: float | EllipsisType = ...,
             airburst_munition: bool | EllipsisType = ...,
@@ -123,8 +123,8 @@ class BaseTurret(LogicGameEntity):
             valid_angles: tuple[Vec2, Vec2] | EllipsisType = ...,
             turn_speed: float | EllipsisType = ...,
             allow_static_target: bool | EllipsisType = ...,
-        cluster: bool = False,
-        weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...
+            cluster: bool = False,
+            weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         size = get_default(size, self._default_size)
         weapon_kwargs: dict = get_default(weapon_kwargs, {})
@@ -147,11 +147,11 @@ class BaseTurret(LogicGameEntity):
             size=size,
             position=position,
             coalition=coalition,
-            centered=True
+            centered=True,
         )
 
         # audio
-        self._ping = MetalPings().set_volume(.4, .5)
+        self._ping = MetalPings().set_volume(0.4, 0.5)
 
         # params
         if not isinstance(weapon, EllipsisType):
@@ -164,7 +164,7 @@ class BaseTurret(LogicGameEntity):
             else:
                 offset = Vec2().from_cartesian(
                     self._default_weapon_position_offset[0],
-                    self._default_weapon_position_offset[1]
+                    self._default_weapon_position_offset[1],
                 )
 
             if isinstance(self._default_weapon_type, EllipsisType):
@@ -178,7 +178,7 @@ class BaseTurret(LogicGameEntity):
                 runtime_buffer=runtime_buffer,
                 drop_casings=self._default_weapon_drop_casings,
                 parent_position_offset=offset,
-                **weapon_kwargs
+                **weapon_kwargs,
             )
             self.weapon.reload(True)
 
@@ -188,9 +188,10 @@ class BaseTurret(LogicGameEntity):
         self.min_range = get_default(min_range, self._default_engagement_min_range)
         self._aim_type = self._default_engagement_aim_type
 
-        self.airburst_munition = get_default(
-            airburst_munition, self._default_airburst_munition
-        ) or cluster
+        self.airburst_munition = (
+                get_default(airburst_munition,
+                            self._default_airburst_munition) or cluster
+        )
         self.intercept_bullets = get_default(
             intercept_bullets, self._default_target_bullets
         )
@@ -250,11 +251,11 @@ class BaseTurret(LogicGameEntity):
                 for sensor in self._sensors_list:
                     sensor_args = sensor.copy()
                     sensor_type: tp.Type[BaseSensor] = sensor_args.pop("type")
-                    sensors.append(sensor_type(
-                        runtime_buffer=runtime_buffer,
-                        parent=self,
-                        **sensor_args
-                    ))
+                    sensors.append(
+                        sensor_type(
+                            runtime_buffer=runtime_buffer, parent=self, **sensor_args
+                        )
+                    )
 
         if sensors is not None:
             for sensor in sensors:
@@ -263,10 +264,12 @@ class BaseTurret(LogicGameEntity):
 
         # spawn logic dummy
         self._runtime_buffer[self.id].param3 = MASK64
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs={"id": self.id, "cid": self.cid(), "weapon_id": self.weapon.id}
-        ))
+        pv.COQ.put(
+            ProcessCommand(
+                type=BaseCommandType.spawn_dummy,
+                kwargs={"id": self.id, "cid": self.cid(), "weapon_id": self.weapon.id},
+            )
+        )
 
     @property
     def max_hp(self) -> int:
@@ -482,8 +485,10 @@ class BaseTurret(LogicGameEntity):
         param4 |= (int(self.max_range) & MASK16) << 16
 
         if self._valid_angles is not ...:
-            param4 |= (int(normalize_angle(self._valid_angles[0].angle) * 10_000) & MASK16) << 32
-            param4 |= (int(normalize_angle(self._valid_angles[1].angle) * 10_000) & MASK16) << 48
+            param4 |= (int(normalize_angle(
+                self._valid_angles[0].angle) * 10_000) & MASK16) << 32
+            param4 |= (int(normalize_angle(
+                self._valid_angles[1].angle) * 10_000) & MASK16) << 48
 
         else:
             param4 |= MASK32 << 32
@@ -500,6 +505,7 @@ class BaseTurret(LogicGameEntity):
     ) -> TargetSolution | None:
         """
         aim at specified target
+
         :param target: target to aim at
         :returns:
         """
@@ -511,12 +517,7 @@ class BaseTurret(LogicGameEntity):
             if target.on_ground:
                 player_acceleration.y -= GravityAffected.gravity
 
-        # if issubclass(Bullet, target.__class__)
-        # if 1:  # target in Bullets.entities():
         target_position = target.position
-
-        # else:
-        #     target_position = target.position_center
 
         position_delta = target_position - (
                 self.position + self.weapon.parent_position_offset
@@ -562,11 +563,6 @@ class BaseTurret(LogicGameEntity):
             if predict.length < self.min_range:
                 return
 
-            # tof = min(
-            #     tof,
-            #     1.3 * self.engagement_range / self.weapon.muzzle_velocity
-            # )
-
             return TargetSolution(
                 target_predict=target_predict,
                 angle=aiming_angle,
@@ -595,7 +591,7 @@ class BaseTurret(LogicGameEntity):
         :param max_error: max facing offset to target solution
         """
         if isinstance(max_error, EllipsisType):
-            max_error = self.weapon._inaccuracy
+            max_error = self.weapon.inaccuracy
 
         if normalize_angle(self.facing.angle - solution.angle.angle) > max_error:
             return

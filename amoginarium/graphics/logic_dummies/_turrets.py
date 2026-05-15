@@ -7,7 +7,9 @@ turret dummies
 Author:
 Nilusink
 """
+from types import EllipsisType
 from icecream import ic
+import typing as tp
 import ctypes
 
 from amoginarium.base._textures import textures
@@ -47,7 +49,10 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     @classmethod
     def load_textures(cls) -> None:
         cls._body_texture, _ = textures.get_texture(
-            cls._image_name, cls._default_size, cls._image_mirror
+            cls._image_name,
+            cls._default_size,
+            cls._image_mirror,
+            pixel_perfect=True
         )
 
     def __init__(
@@ -60,7 +65,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         self._angles = (-1, -1)
         super().__init__(sync_id=sync_id)
         self.add(Drawn_1, Drawn_2)
-        
+
         # defaults
         self.add_child(SE_MANAGER.get_entity(weapon_id))
         self._hp_colors = (
@@ -216,37 +221,26 @@ class BaseTurretDummy(SyncedGraphicsEntity):
         ):
             return
 
-        if layer == self._default_layer:
-            if self._highlight:
-                renderer.start_stencil(True)
-
+        if layer == 1:
             if self.facing.x < 0:
                 renderer.draw_textured_quad(
                     self._body_texture,
                     self.world_position - self.size / 2,
                     self.size,
-                    pixel_perfect=True
+                    layer=self._default_layer,
+                    # force_draw=self._highlight
                 )
 
             else:
                 # mirror turret
                 renderer.draw_textured_quad(
                     self._body_texture,
-                    self.world_position - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
+                    self.world_position
+                    - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
                     (-self.size.x, self.size.y),
-                    pixel_perfect=True
+                    layer=self._default_layer,
+                    # force_draw=self._highlight,
                 )
-
-            if self._highlight:
-                renderer.enable_stencil(True)
-
-                renderer.draw_rect(
-                    self.world_position - self.size,
-                    self.size * 2,
-                    (1, 1, 1, .5)
-                )
-
-                renderer.disable_stencil()
 
         elif layer == 2:
             # draw health bar
@@ -264,6 +258,39 @@ class ExactoSniperTurretDummy(BaseTurretDummy):
     _CID = TurretCIDs.exacto_sniper
 
 
-class AkTurretDummy(BaseTurretDummy):
-    __slots__ = []
-    _CID = TurretCIDs.ak47
+class RideableTurret(BaseTurretDummy):
+    _CID = TurretCIDs.rideable_base
+
+
+class CalculatedRideableTurretDummy(BaseTurretDummy):
+    _CID = TurretCIDs.rideable_calculated
+
+    _reticle_texture: tp.ClassVar[int | EllipsisType] = ...
+    __size = Vec2().from_cartesian(31, 31) * 2
+
+    @classmethod
+    def load_textures(cls) -> None:
+        cls._reticle_texture, _ = textures.get_texture(
+            "reticle",
+            (31, 31),
+            pixel_perfect=True
+        )
+        super().load_textures()
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0):
+        super()._gl_draw(delta_cal, layer)
+
+        if layer == 1 and self._get_bit("flags", 14):
+            if self._target_pos.length != 0:
+                pos = pv.global_vars.translate_screen_coord(
+                    self._target_pos
+                    - pv.global_vars.get_world_position(),
+                ) - self.__size / 2
+                renderer.draw_textured_quad(
+                    self._reticle_texture,
+                    pos,
+                    self.__size,
+                    layer=1,
+                    offscreen_check=True,
+                    convert_global=False
+                )

@@ -1,0 +1,29 @@
+[id]
+from = "turret.rideable.base"
+cid = "turret.rideable.atgm"
+
+[visibility]
+size = [64, 128]
+
+[image]
+name = "CRAM_base"
+
+[behaviour]
+max_hp = 40
+turn_speed = 2
+
+[engagement]
+max_range = 2400
+
+[weapon]
+type = "<weapon.minigun>"
+position_offset = [0, -13]
+
+[sensors.0]
+type = "<sensor.radar>"
+detection_range = 2500
+sphere_accuracy = 256
+
+[passenger]
+visible = false
+offset = [0, 0]

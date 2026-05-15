@@ -12,38 +12,36 @@ from time import perf_counter
 from ctypes import Array
 from icecream import ic
 import typing as tp
-from types import EllipsisType
 
+from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
+from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs, CurrentView
 from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
-from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
 from amoginarium import pv
 
-from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
-from .._weaponry.templates import BaseWeapon
-from .._weaponry import HandThrownGrenade, RailGun
-from .._base import GravityAffected, FrictionXAffected, Updated
-from .._base import Players, GameCollisions
+from .._base import GravityAffected, FrictionXAffected, Updated, CollisionLogicEntity
+from .._base import Players, GameCollisions, LogicGameEntity
 from .._items import Shield, HealingPotion, JetBag, Inventory
-from .._weaponry import ExactoSniper
-from .._base import LogicGameEntity
-from ...graphics_dummies import Controller
+from .._weaponry import HandThrownGrenade, RailGun, ExactoSniper
+from .._weaponry.templates import BaseWeapon
 from .._dynamic_entities import DYNAMIC_ENTITIES
+from ...graphics_dummies import Controller
+from .._rideables import Passenger
 from .._items import Item
 
 if tp.TYPE_CHECKING:
-    from .._weaponry import Bullet
+    from .._weaponry.templates import Bullet
     from .._world import Island
+    from .._weaponry.templates import RideableTurret
 
 
-class Player(LogicGameEntity):
+class Player(Passenger, LogicGameEntity):
     _impulse_resistance_factor: float = 1  # 0 = completely resistant
-    _heal_per_second: float = 2
-    _time_to_heal: float = 5
-    _max_speed: float = 1000
-    _max_hp: int = 80
-    __heading = 1
+    _heal_per_second: float = 2  # hp healing per second
+    _time_to_heal: float = 5  # time without taking damage before healing starts
+    _max_speed: float = 1000  # player maximum velocity
+    _max_hp: int = 80  # player max hp
     _hp: float = 0
 
     on_wall: bool = False
@@ -54,7 +52,6 @@ class Player(LogicGameEntity):
 
     __should_be_killed: int
 
-    # noinspection PyArgumentEqualDefault
     def __init__(
             self,
             runtime_buffer: Array[base_entity_t],
@@ -81,6 +78,7 @@ class Player(LogicGameEntity):
 
         self._initial_position = position.copy()
         self._death_sound = DeathSound()
+        self._colliding_rideables = []
 
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -106,8 +104,10 @@ class Player(LogicGameEntity):
         self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
-            DYNAMIC_ENTITIES["weapon.ak47"](self, self._runtime_buffer, False),
-            DYNAMIC_ENTITIES["weapon.minigun"](self, self._runtime_buffer, False, parent_position_offset=(0, 10)),
+            DYNAMIC_ENTITIES["weapon.atgm"](self, self._runtime_buffer, False),
+            DYNAMIC_ENTITIES["weapon.minigun"](
+                self, self._runtime_buffer, False, parent_position_offset=(0, 10)
+            ),
             DYNAMIC_ENTITIES["weapon.sniper"](self, self._runtime_buffer, False),
             ExactoSniper(self, self._runtime_buffer, False),
             HandThrownGrenade(self, self._runtime_buffer, False),
@@ -115,6 +115,7 @@ class Player(LogicGameEntity):
             HealingPotion(self._runtime_buffer, Vec2().from_cartesian(0, 5)),
             JetBag(self._runtime_buffer, Vec2().from_cartesian(-24, 0)),
             RailGun(self, self._runtime_buffer, False, parent_position_offset=(0, 0)),
+            DYNAMIC_ENTITIES["weapon.rpg"](self, self._runtime_buffer, False),
         ]
         for item in items:
             self._hotbar.add_item(
@@ -140,6 +141,8 @@ class Player(LogicGameEntity):
 
         self.__add_position = Vec2()
         self.__should_be_killed = 0
+        
+        self.__ride_pressed = False
 
         pv.COQ.put(ProcessCommand(
             type=BaseCommandType.spawn_dummy,
@@ -158,6 +161,7 @@ class Player(LogicGameEntity):
         if slot_id == self._hover_slot:
             self._hover_slot = None
 
+    # region properties
     @property
     def max_hp(self) -> int:
         return self._max_hp
@@ -185,6 +189,33 @@ class Player(LogicGameEntity):
             return self._hotbar.get_item(self._current_weapon)
         else:
             return None
+
+    @property
+    def controller(self) -> Controller:
+        return self._controller
+
+    # endregion
+
+    def get_current_view(self) -> CurrentView:
+        """get current player viewport"""
+        pos = self.position
+        zoom = 0
+
+        e = self.controlled_entity
+        centered = False
+
+        if e:
+            cam_pos = e.get_camera_position()
+            cam_zoom = e.get_camera_zoom()
+
+            if cam_pos is not None:
+                pos = cam_pos
+                centered = True
+
+            if cam_zoom is not None:
+                zoom = cam_zoom
+
+        return CurrentView(pos, zoom, centered=centered)
 
     def pickup_item(self, item: Item) -> None:
         if self._hotbar.try_add_item(item, 1) > 0:
@@ -315,20 +346,80 @@ class Player(LogicGameEntity):
             if event.other_entity.item_pickupable():
                 self.pickup_item(event.other_entity)
 
-    def _collision_start(self, events: list[CollisionEvent[tp.Union["Bullet", "Island"]]]) -> list[bool] | None:
+    def __on_collision_rideable(self, events: list[CollisionEvent["RideableTurret"]]) -> None:
+        for event in events:
+            event.other_entity.highlight()
+            self._colliding_rideables.append(event.other_entity)
+
+    def __on_collision_rideable_end(self, events: list[CollisionEvent["RideableTurret"]]) -> None:
+        for event in events:
+            if event.other_entity in self._colliding_rideables:
+                event.other_entity.stop_highlight()
+                self._colliding_rideables.remove(event.other_entity)
+
+    def _collision_start(
+        self,
+        events: list[
+            CollisionEvent[tp.Union["Bullet", "Island", "Item", "RideableTurret"]]
+        ],
+    ) -> list[bool] | None:
         if events[0].group_id == GameCollisions.collision_group_islands:
+            events: list[CollisionEvent["Island"]]
             return self.__on_collision_island(events)
-        if events[0].group_id == GameCollisions.collision_group_bullets:
-            return self.__on_collision_bullet(events)
-        if events[0].group_id == GameCollisions.collision_group_items:
-            return self.__on_collision_item(events)
-        if events[0].group_id == GameCollisions.collision_group_shields:
-            return self.__on_collision_item(events)
+    
+        elif events[0].group_id == GameCollisions.collision_group_bullets:
+            events: list[CollisionEvent["Bullet"]]
+            self.__on_collision_bullet(events)
+
+        elif events[0].group_id == GameCollisions.collision_group_items:
+            events: list[CollisionEvent["Item"]]
+            self.__on_collision_item(events)
+
+        elif events[0].group_id == GameCollisions.collision_group_shields:
+            events: list[CollisionEvent["Item"]]
+            self.__on_collision_item(events)
+
+        elif events[0].group_id == GameCollisions.collision_group_rideable_turrets:
+            events: list[CollisionEvent["RideableTurret"]]
+            self.__on_collision_rideable(events)
+
         return None
 
+    def _collision_end(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> None:
+        if events[0].group_id == GameCollisions.collision_group_rideable_turrets:
+            self.__on_collision_rideable_end(events)
+
+    def clear_controlled_entity(self, to_clear) -> bool:
+        self.__ride_pressed = True
+        super().clear_controlled_entity(to_clear)
+
     def _update(self, delta):
+        # update passenger status
+        self.update_passenger(delta)
+
         self._on_ground = False
 
+        # update reloads
+        for hover_slot in self._hotbar:
+            if hover_slot.count > 0:
+                hover_slot.item.update(delta)
+
+        acc_fac = pv.global_vars.get_acceleration_factor()
+        ppm = pv.global_vars.get_pixel_per_meter()
+        ssf = pv.global_vars.get_screen_size_fac()
+
+        mouse_pos = self._controller.mouse_x, self._controller.mouse_y
+        vector = convert_coord(
+            (
+                (mouse_pos[0] / ppm) * ssf.x,
+                (mouse_pos[1] / ppm) * ssf.y,
+            ),
+            Vec2,
+        )
+        vector -= self.world_position
+        self.facing.angle = vector.angle
+
+        # update movement
         if GameCollisions.collision_group_islands in self._active_normals.keys():
             for n in self._active_normals[GameCollisions.collision_group_islands]:
                 if n.y < -0.5:
@@ -353,94 +444,85 @@ class Player(LogicGameEntity):
                     if self.velocity.x < 0:
                         self.velocity.x = 0
 
-        # update reloads
-        for hover_slot in self._hotbar:
-            if hover_slot.count > 0:
-                hover_slot.item.update(delta)
+        if not self.is_controlled:
+            if len(self._colliding_rideables) > 0 and self._controller.ride and not self.__ride_pressed:
+                self._colliding_rideables[0].set_passenger(self)
 
-        # ic(collision_manager.get_points(self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id))
+            self.__ride_pressed = self._controller.ride
 
-        acc_fac = pv.global_vars.get_acceleration_factor()
-        ppm = pv.global_vars.get_pixel_per_meter()
-        ssf = pv.global_vars.get_screen_size_fac()
-
-        # accelerate right
-        if self._controller.joy_x > 0:
-            if self.velocity.x < self._max_speed:
-                self.velocity.x += self._impulse_resistance_factor * delta * acc_fac * 12
-
-        # accelerate left
-        elif self._controller.joy_x < 0:
-            if self.velocity.x > -self._max_speed:
-                self.velocity.x -= self._impulse_resistance_factor * delta * acc_fac * 12
-
-        # jump
-        if self._controller.jump and self.on_ground:
-            self.velocity.y = -400
-
-        # reload
-        if self._controller.reload:
-            if isinstance(self.item, BaseWeapon):
-                self.item.reload()
-
-        # switch weapon
-        if self._controller.wpn_f:
-            if not self._weapon_change_pressed:
-                self._weapon_change_pressed = True
-                self.next_weapon()
-        elif self._controller.wpn_b:
-            if not self._weapon_change_pressed:
-                self._weapon_change_pressed = True
-                self.previous_weapon()
-        else:
-            self._weapon_change_pressed = False
-
-        mouse_pos = self._controller.mouse_x, self._controller.mouse_y
-        vector = convert_coord(
-            (
-                (mouse_pos[0] / ppm) * ssf.x,
-                (mouse_pos[1] / ppm) * ssf.y,
-            ),
-            Vec2,
-        )
-        vector -= self.world_position
-        self.facing.angle = vector.angle
-
-        # directional stuff
-        if not self._in_inventory:
-            if self._controller.shoot:
+            # accelerate right
+            if self._controller.joy_x > 0:
+                if self.velocity.x < self._max_speed:
+                    self.velocity.x += self._impulse_resistance_factor * delta * acc_fac * 12
+    
+            # accelerate left
+            elif self._controller.joy_x < 0:
+                if self.velocity.x > -self._max_speed:
+                    self.velocity.x -= self._impulse_resistance_factor * delta * acc_fac * 12
+    
+            # jump
+            if self._controller.jump and self.on_ground:
+                self.velocity.y = -400
+    
+            # reload
+            if self._controller.reload:
                 if isinstance(self.item, BaseWeapon):
-                    if hasattr(self.item, "charge"):
-                        self.item.charge()
-                    elif self.item.shoot(self.facing):
-                        self._controller.feedback_shoot()
-                elif self.item:
-                    self.item.use()
+                    self.item.reload()
+
+            # switch weapon
+            if self._controller.wpn_f:
+                if not self._weapon_change_pressed:
+                    self._weapon_change_pressed = True
+                    self.next_weapon()
+    
+            elif self._controller.wpn_b:
+                if not self._weapon_change_pressed:
+                    self._weapon_change_pressed = True
+                    self.previous_weapon()
+    
             else:
-                if isinstance(self.item, BaseWeapon):
-                    if hasattr(self.item, "charge"):
-                        item: ... = self.item
-                        if item.charged > 0:
-                            if self.item.shoot(self.facing):
-                                self._controller.feedback_shoot()
+                self._weapon_change_pressed = False
+
+            # directional stuff
+            if not self._in_inventory:
+                if self._controller.shoot:
+                    if isinstance(self.item, BaseWeapon):
+                        if hasattr(self.item, "charge"):
+                            self.item.charge()
+                        elif self.item.shoot(self.facing):
+                            self._controller.feedback_shoot()
+                    elif self.item:
+                        self.item.use()
+                else:
+                    if isinstance(self.item, BaseWeapon):
+                        if hasattr(self.item, "charge"):
+                            item: ... = self.item
+                            if item.charged > 0:
+                                if self.item.shoot(self.facing):
+                                    self._controller.feedback_shoot()
+                            else:
+                                self.item.stop_shooting()
                         else:
                             self.item.stop_shooting()
-                    else:
-                        self.item.stop_shooting()
-                elif self.item:
-                    self.item.stop_use()
+                    elif self.item:
+                        self.item.stop_use()
 
-        # drop item
-        if self._controller.drop:
-            vel = self.velocity + Vec2().from_polar(
-                self.facing.angle,
-                300
-            )
-            self._hotbar.drop_item(
-                self._current_weapon,
-                self.position + Vec2().from_cartesian(0, self.size.y / 2),
-                vel
-            )
+            # drop item
+            if self._controller.drop:
+                vel = self.velocity + Vec2().from_polar(
+                    self.facing.angle,
+                    300
+                )
+                self._hotbar.drop_item(
+                    self._current_weapon,
+                    self.position + Vec2().from_cartesian(0, self.size.y / 2),
+                    vel
+                )
+
+        # auto reload
+        if isinstance(self.item, BaseWeapon):
+            if self.item.get_mag_state(1)[0] == 0:
+                self.item.reload()
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:
@@ -459,12 +541,42 @@ class Player(LogicGameEntity):
         else:
             self._inventory_pressed = False
 
-        # ic(self.position, self.velocity.xy, self.acceleration.xy, self._velocity_to_add.xy, self._acceleration_to_add.xy)
-        self.position += self.__add_position
-        self.__add_position *= 0
-        super()._update(delta)
-        # ic(self.position)
+        # set ridden entity properties
+        ridden_pos = None
+        e = self.controlled_entity
+        if e:
+            ridden_pos = e.get_passenger_position()
+            
+            if e.passenger_visible:
+                self._collision_active = True
+                self.show()
+                
+                if self.item:
+                    self.item.show()
+            
+            else:
+                self._collision_active = False
+                self.hide()
+                
+                if self.item:
+                    self.item.hide()
+        
+        else:
+            self._collision_active = True
+            self.show()
 
+            if self.item:
+                self.item.show()
+
+        if ridden_pos:
+            self.position = ridden_pos
+        
+        else:
+            self.position += self.__add_position
+            self.__add_position *= 0
+        
+        super()._update(delta)
+        
         if self.item:
             self.item.facing.angle = self.facing.angle
 

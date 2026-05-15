@@ -7,12 +7,10 @@ Bullet dummy entity
 Author:
 Nilusink
 """
-from icecream import ic
 from types import EllipsisType
 
 from amoginarium.shared.utility import Vec2, get_default, Color, convert_color, coord_t
 from amoginarium.shared.utility import convert_coord, fade
-from amoginarium.shared.debugging import run_with_debug
 from amoginarium.shared import DummyCIDs
 from amoginarium.base._textures import textures
 from amoginarium import pv
@@ -29,6 +27,7 @@ class BulletDummy(SyncedImageEntity):
     """
     ``param0`` explosion size
     ``param1`` velocity (length)
+    ``param2`` velocity (angle)
     """
     __slots__ = [
         "_spawn_time", "_visibility_offset", "_last_pos", "_target_pos", "_trace",
@@ -45,8 +44,31 @@ class BulletDummy(SyncedImageEntity):
     _trace_fade_color_time: float = 1.5  # only applies if two colors are specified
     _trace_show: bool = True
     _trace_fade: bool = True
+    _trace_width_mult: float = 1
 
     _kill_next: int | None
+
+    _bullet_image: int | EllipsisType = ...
+
+    @classmethod
+    def load_textures(cls) -> None:
+        """load all required textures ONCE per class"""
+        if cls.__dict__.get("_bullet_image", ...) is ...:
+            if isinstance(cls._default_size, (int, float)):
+                cls._default_size = Vec2().from_cartesian(cls._default_size, cls._default_size)
+
+            cls._bullet_image, _ = textures.get_texture(
+                cls._image_name,
+                cls._default_size,
+                cls._image_mirror,
+                pixel_perfect=True,
+            )
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        # make sure subclasses initialize their own bullet textures
+        cls._bullet_image = ...
 
     def __init__(
         self,
@@ -66,13 +88,6 @@ class BulletDummy(SyncedImageEntity):
 
         if not isinstance(size, Vec2):
             size: Vec2 = Vec2().from_cartesian(size, size)  # type: ignore
-
-        isize = size.xy
-        _bullet_image, _ = textures.get_texture(
-            self._image_name,
-            isize,
-            self._image_mirror
-        )
 
         self._trace_only = False
         self._trace_len = 1
@@ -106,7 +121,7 @@ class BulletDummy(SyncedImageEntity):
                 self._c_trace_color: tuple[Color, Color] = (
                     convert_color(c, Color) for c in trace_color
                 )
-            
+
             else:
                 self._c_trace_color: Color = convert_color(trace_color, Color)
                 self._original_alpha = self._c_trace_color.a1
@@ -125,7 +140,12 @@ class BulletDummy(SyncedImageEntity):
             self._c_trace_color: Color = self._c_trace_color[0]
             self._original_alpha = self._c_trace_color.a1
 
-        super().__init__(sync_id, _bullet_image, parent)
+        super().__init__(sync_id, self._bullet_image, parent)  # type: ignore
+
+    @classmethod
+    def bullet_image(cls) -> int:
+        """bullet texture ID"""
+        return cls._bullet_image
 
     def _kill(self) -> None:
         if len(self._trace) > 0:
@@ -160,12 +180,35 @@ class BulletDummy(SyncedImageEntity):
             if self._kill_next <= 0:
                 self._kill_next = None
                 self._kill()
+
             else:
                 self._kill_next -= 1
+
         else:
             self._kill_next = 1
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    @classmethod
+    def draw_at(
+            cls,
+            position: coord_t,
+            size: coord_t,
+            layer: int,
+            *,
+            rotation: float = 0,
+    ) -> None:
+        """draw an entity at specified position and size"""
+        if cls.bullet_image() is ...:
+            cls.load_textures()
+
+        renderer.draw_textured_quad(
+            cls.bullet_image(),  # type: ignore
+            position,
+            size,
+            rotate_angle=rotation,
+            layer=layer,
+        )
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0, draw_entity: bool = True):
         if self._visibility_offset > self._lifetime:
             self._last_pos.length = 0
             self._lifetime += delta_cal
@@ -248,8 +291,9 @@ class BulletDummy(SyncedImageEntity):
         # draw trace
         if self._show_trace and len(self._trace) > 1:
             if isinstance(self._c_trace_color, tuple):
-                color: Color = fade(
-                    *self._c_trace_color, min(self._lifetime / self._trace_fade_color_time, 1)
+                color: Color = fade(  # type: ignore
+                    *self._c_trace_color,
+                    min(self._lifetime / self._trace_fade_color_time, 1),
                 )
                 trace_mult = color.a1
 
@@ -257,28 +301,34 @@ class BulletDummy(SyncedImageEntity):
                 color: Color = self._c_trace_color.copy()
                 trace_mult = self._original_alpha
 
-            for i in range(len(self._trace)-1):
+            points: list[Vec2] = []
+            colors: list[Color] = []
+            for i in range(len(self._trace)):
                 p1 = self._trace[i]
-                p2 = self._trace[i+1]
 
                 # check if any of the positions is at 0/0
-                if p1.length * p2.length < 1:
+                if p1.length < 1:
                     continue
 
                 if self._fade_trace:
                     color.a1 = trace_mult * (1 - (i / self._trace_len))
 
-                renderer.draw_thick_line(
-                    p1 - world_pos,
-                    p2 - world_pos,
-                    color,  # ignore: type
-                    thickness=self.size.length / 3,
-                )
+                points.append(p1-world_pos)
+                colors.append(color.copy())
 
-        if draw and not self._trace_only:
+            renderer.draw_lines(
+                points,
+                colors,
+                thickness=(self.size.length / 3) * self._trace_width_mult,
+            )
+
+        if draw and not self._trace_only and draw_entity:
             self.facing *= -1
             super()._gl_draw(delta_cal)
             self._last_pos.xy = self.pos.xy
+
+        else:
+            self._lifetime += delta_cal
 
 
 class Grenade(BulletDummy):

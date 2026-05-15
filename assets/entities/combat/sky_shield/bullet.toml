@@ -23,3 +23,7 @@ step_size_mult = 0.3
 step_explosion_size = 10
 last_step_ttl = 0.7
 
+[fuze.0]
+type = "proximity"
+distance = 64
+function_delay = 0.5

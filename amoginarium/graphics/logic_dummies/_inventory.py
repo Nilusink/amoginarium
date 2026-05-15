@@ -7,7 +7,6 @@ Inventory dummy (+UI) for logic
 Author:
 Nilusink
 """
-from icecream import ic
 
 from amoginarium.shared.utility import Vec2
 from amoginarium import pv
@@ -61,7 +60,7 @@ class Inventory(BaseGraphicsEntity):
                     on_enter_callbacks=[lambda x=i: self.__slot_hover(x)],
                     on_leave_callbacks=[lambda x=i: self.__slot_unhover(x)]
                 ) for i in range(self.buff.size)
-                ]
+            ]
         }
 
         # add to parent
@@ -77,6 +76,7 @@ class Inventory(BaseGraphicsEntity):
     def size(self) -> int:
         """inventory slot size"""
         return self.buff.size
+
     # endregion
 
     # region internal methods
@@ -98,11 +98,12 @@ class Inventory(BaseGraphicsEntity):
 
     # region drawing
     def draw_at(
-        self,
-        position: tuple[float, float],
-        slots_per_row: int,
-        width: float,
-        delta_cal: float,
+            self,
+            position: tuple[float, float],
+            slots_per_row: int,
+            width: float,
+            delta_cal: float,
+            layer: int
     ) -> None:
         """draw inventory at center of screen"""
         self._ui["root"].position.relative_global = position
@@ -184,6 +185,7 @@ class Inventory(BaseGraphicsEntity):
                         pos,
                         (size[0] * factor, size[1] * factor),
                         convert_global=False,
+                        layer=layer
                     )
 
     # endregion

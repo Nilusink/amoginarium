@@ -8,6 +8,7 @@ Author:
 Nilusink, LukasKrah
 """
 
+from collections.abc import Sequence
 from types import EllipsisType
 from PIL import Image
 import typing as tp
@@ -20,8 +21,8 @@ type Color3 = tuple[float, float, float]
 type Color4 = tuple[float, float, float, float]
 type tColor = Color3 | Color4
 
-# depending on the renderer, TextureID will be a different type
 
+# depending on the renderer, TextureID will be a different type
 
 
 class BaseRenderer(abc.ABC):
@@ -58,12 +59,14 @@ class BaseRenderer(abc.ABC):
             image: Image.Image,
             size: coord_t | None = None,
             mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+            pixel_perfect: bool = False,
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         Load an image texture (saves it internally)
         :param image: Image to load
         :param size: Size of image or None
         :param mirror: Axes to mirror the image on
+        :param pixel_perfect: set texture scaling behavior
         :returns: texture_id, (width, height)
         :raises NotImplementedError: If the renderer does not implement this method
         """
@@ -82,7 +85,11 @@ class BaseRenderer(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) -> None:
+    def display_update(
+            self,
+            position: coord_t | None = None,
+            size: coord_t | None = None
+    ) -> None:
         """
         Should be called when the display gets updated
         :param position: Position of the display
@@ -175,11 +182,13 @@ class BaseRenderer(abc.ABC):
             texture_id: TextureID,
             pos: coord_t,
             size: coord_t,
+            layer,
+            *,
             convert_global: bool = True,
             rotate_angle: float = 0,
             rotate_anchor: coord_t | EllipsisType = ...,
-            pixel_perfect: bool = False,
-            offscreen_check: bool = True
+            offscreen_check: bool = True,
+            color: Color | EllipsisType = ...,
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -190,7 +199,25 @@ class BaseRenderer(abc.ABC):
         :param rotate_angle: Angle in degrees to rotate the image at
         :param rotate_anchor: At what pixel to rotate at. Defaults to center position
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :param pixel_perfect: Whether to draw pixel perfect
+        :param layer: Layer number
+        :param color: overlay color to tint the quad
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    def flush(self) -> None:
+        """
+        flush all texture layers
+
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+        raise NotImplementedError
+
+    def flush_layer(self, layer: int) -> None:
+        """
+        flush one texture layer
+
+        :param layer: layer to flush
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
@@ -531,6 +558,28 @@ class BaseRenderer(abc.ABC):
         :param color: Drawing color
         :param thickness: Thickness of the line
         :param global_position: IDK
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :raises NotImplementedError: If the renderer does not implement this method
+        """
+
+    def draw_lines(
+            self,
+            points: Sequence[coord_t],
+            color: Color | Sequence[Color],
+            *,
+            thickness: float = 1.0,
+            global_position: bool = True,
+            convert_global: bool = True,
+            offscreen_check: bool = True
+    ) -> None:
+        """
+        Draw a simple line
+        :param points: list of line points
+        :param color: one color or color for each point
+
+        :param thickness: line thickness
+        :param global_position: position in global space or relative to previous
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :raises NotImplementedError: If the renderer does not implement this method

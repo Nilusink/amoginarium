@@ -39,6 +39,9 @@ class Vec2:
     def mirror(self, mirror_by: Vec2) -> Vec2:
         ...
 
+    def rotate_by(self, angle: Vec2 | float) -> Vec2:
+        """rotate vector by an angle or another vector"""
+
     def __add__(self, other: Vec2 | float) -> Vec2:
         ...
 
@@ -68,3 +71,19 @@ class Vec2:
 
 def normalize_angle(value: float) -> float:
     ...
+
+
+def normalize_angle_neg(value: float) -> float:
+    """normalize angle +/- pi"""
+
+
+def clamp_angle(angle: float, center: float, max_delta: float) -> float:
+    """clamp angle +/- max_delta around center"""
+
+
+def max_angle(center: float, *angles) -> float:
+    """max angle compared to center"""
+
+
+def min_angle(center: float, *angles) -> float:
+    """min angle compared to center"""
