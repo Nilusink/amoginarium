@@ -9,18 +9,18 @@ Nilusink
 """
 
 from types import EllipsisType
-from icecream import ic
+from icecream import ic  # noqa: F401
 import typing as tp
 import math as m
 
 from amoginarium.shared.utility import Vec2, Color, WtfError, convert_coord, RTD, PI
-from amoginarium.base._textures import textures
 from amoginarium.shared import WeaponCIDs
 from amoginarium import pv
 
-from ._synced_entities import SyncedLRImageEntity, Iconifyable
 from ..entities import Drawn_1, Drawn_0, Drawn_2
 from ..render_bindings import renderer
+from ..textures import textures
+from ._synced_entities import SyncedLRImageEntity, Iconifyable
 from ._bullet import BulletDummy
 
 
@@ -38,7 +38,6 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     _CID = WeaponCIDs.base
     _image_name: tp.ClassVar[str] = "minigun"
     _image_mirror: tp.ClassVar[str] = ""
-    _default_size: tp.ClassVar[tuple[int, int] | Vec2] = (128, 64)
     _image_rotate_anchor: tp.ClassVar[Vec2] = Vec2().from_cartesian(35, 30)
     _bar_colors: tp.ClassVar = (Color().from_1(.55, .55, 1),)
     _texture_id_l: tp.ClassVar[int | EllipsisType] = ...
@@ -47,10 +46,11 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     # visible bullet params
     _bullet_type: tp.ClassVar[tp.Type[BulletDummy]] = BulletDummy
     _bullet_visible: tp.ClassVar[bool] = False
-    _bullet_mount_point: tp.ClassVar[tuple[int, int] |  EllipsisType] = ...
+    _bullet_mount_point: tp.ClassVar[tuple[int, int] | EllipsisType] = ...
     # endregion
 
     # region instance vars
+    _default_size: tuple[int, int] | Vec2 = (128, 64)
     _bmp: Vec2  # endregion
 
     @classmethod
@@ -86,7 +86,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         if cls._texture_id_r is ...:
             cls.load_textures()
 
-        return super().__new__(cls)
+        return super().__new__(cls)  # type: ignore
 
     def __init__(self, sync_id: int, ) -> None:
         super().__init__(
@@ -120,6 +120,12 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
         :param delta_cal: used for the occasional calculation
         """
+        if isinstance(self._texture_id_l, EllipsisType) or isinstance(
+            self._texture_id_r, EllipsisType
+        ):
+            super()._gl_draw(delta_cal, layer)
+            return
+
         # because no super call
         angle = self.facing.angle * 180/m.pi
         world_pos = pv.global_vars.get_world_position()
@@ -186,10 +192,12 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             )
 
         # draw ammo bar
+        # noinspection DuplicatedCode
         if self._get_bit("flags", 15):  # has parent
-            if self.parent:
-                pos = self.parent.world_position
-                size = self.parent.size
+            parent = self.parent
+            if parent:
+                pos = parent.world_position
+                size = parent.size
 
             else:
                 pos = self.world_position
@@ -213,22 +221,25 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         else:
             raise WtfError("?")
 
+        if isinstance(cls._texture_id_r, EllipsisType):
+            return -1, (-1, -1)
+
         return cls._texture_id_r, size
 
 
 class HandThrownGrenade(WeaponDummy):
     _CID = WeaponCIDs.h_grenade
-    _image_name: str = "grenade"
+    _image_name = "grenade"
     _image_mirror = "x"
     _default_size: tuple[int, int] = (32, 32)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(16, 16)
+    _image_rotate_anchor = Vec2().from_cartesian(16, 16)
 
 
 class ExactoSniper(WeaponDummy):
     _CID = WeaponCIDs.exacto_sniper
-    _image_name: str = "exacto_sniper"
+    _image_name = "exacto_sniper"
     _default_size: tuple[int, int] = (120, 60)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
+    _image_rotate_anchor = Vec2().from_cartesian(25, 33)
 
     def __init__(self, max_range: float, **kwargs):
         super().__init__(**kwargs)

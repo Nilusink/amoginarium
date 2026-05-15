@@ -15,11 +15,11 @@ from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared.utility import Vec2, coord_t, convert_coord
 from amoginarium.shared.utility import normalize_angle, RTD
 from amoginarium.shared import HasPosition, HasFacing
-from amoginarium.base._textures import textures  # todo - ? what in the holy import
 from amoginarium import pv
 
-from ._graphics_groups import Drawn_0
+from ..textures import textures
 from ._base_entity import BaseGraphicsEntity
+from ._graphics_groups import Drawn_0
 
 
 class Animation(BaseGraphicsEntity):

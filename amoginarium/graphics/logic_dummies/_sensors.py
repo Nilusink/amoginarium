@@ -9,9 +9,9 @@ Nilusink
 """
 
 from types import EllipsisType
-from icecream import ic
+from icecream import ic  # noqa: F401
 
-from amoginarium.shared.utility import Vec2, Color, unpack_int, MASK16
+from amoginarium.shared.utility import Vec2, Color, unpack_int
 from amoginarium.shared import SensorCIDs
 from amoginarium import pv
 
@@ -93,26 +93,26 @@ class RadarSensorHUD(SensorHUD):
         super()._gl_draw(delta_cal, layer)
         return
 
-        t_pos = Vec2().from_cartesian(self.param1, self.param2)
-
-        if t_pos.length != 0:
-            world_pos = pv.global_vars.get_world_position()
-
-            direction = t_pos - self.pos
-
-            dir_1 = direction.copy()
-            dir_1.angle += self._min_rcs / 2
-            dir2 = direction.copy()
-            dir2.angle -= self._min_rcs / 2
-
-            renderer.draw_polygon(
-                (
-                    self.world_position,
-                    (self.pos + dir_1) - world_pos,
-                    (self.pos + dir2) - world_pos,
-                ),
-                color=Color().from_1(.2, .2, 1, .5)
-            )
+        # t_pos = Vec2().from_cartesian(self.param1, self.param2)
+        #
+        # if t_pos.length != 0:
+        #     world_pos = pv.global_vars.get_world_position()
+        #
+        #     direction = t_pos - self.pos
+        #
+        #     dir_1 = direction.copy()
+        #     dir_1.angle += self._min_rcs / 2
+        #     dir2 = direction.copy()
+        #     dir2.angle -= self._min_rcs / 2
+        #
+        #     renderer.draw_polygon(
+        #         (
+        #             self.world_position,
+        #             (self.pos + dir_1) - world_pos,
+        #             (self.pos + dir2) - world_pos,
+        #         ),
+        #         color=Color().from_1(.2, .2, 1, .5)
+        #     )
 
 
 class VisualSensorHUD(SensorHUD):

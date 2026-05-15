@@ -7,11 +7,12 @@ dummy for playing a sound effect, sends command instead of creating a sound
 Author:
 Nilusink
 """
-from ...shared import ProcessCommandType, ProcessCommand
-from ... import pv
+from amoginarium.shared import ProcessCommandType, ProcessCommand
+from amoginarium import pv
 
 
 class GraphicsSoundEffect:
+    """graphics sound effect dummy"""
     volume: float = 1
 
     def __init__(self, sound: str | tuple[str, str]) -> None:
@@ -23,6 +24,7 @@ class GraphicsSoundEffect:
             maxtime: int = 0,
             fade_ms: int = 0,
     ) -> None:
+        """send command to play sound"""
         pv.COQ.put(ProcessCommand(
             type=ProcessCommandType.play_sound,
             kwargs={
@@ -39,4 +41,3 @@ class PresetGraphicsSoundEffect(GraphicsSoundEffect):
 
     def __init__(self):
         super().__init__(self._sound_name)
-
