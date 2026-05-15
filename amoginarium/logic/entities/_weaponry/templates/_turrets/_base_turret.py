@@ -591,7 +591,7 @@ class BaseTurret(LogicGameEntity):
         :param max_error: max facing offset to target solution
         """
         if isinstance(max_error, EllipsisType):
-            max_error = self.weapon._inaccuracy
+            max_error = self.weapon.inaccuracy
 
         if normalize_angle(self.facing.angle - solution.angle.angle) > max_error:
             return

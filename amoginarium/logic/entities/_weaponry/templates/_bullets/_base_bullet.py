@@ -428,6 +428,13 @@ class Bullet(LogicGameEntity):
         """:returns: time left to life"""
         return self._time_to_life
 
+    @property
+    def target_pos(self) -> Vec2 | None:
+        if not isinstance(self._target_pos, EllipsisType):
+            return self._target_pos.copy()
+
+        return None
+
     # endregion
 
     def hit(self, _damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:

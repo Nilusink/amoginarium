@@ -22,9 +22,9 @@ class GPSSensor(BaseWeaponsSensor):
     _CID = WeaponSensorCIDs.gps
 
     def get_target(self) -> Vec2 | None:
-        t_pos = self._parent._target_pos
+        t_pos = self._parent.target_pos
 
-        if not isinstance(t_pos, EllipsisType):
+        if t_pos:
             return (self._parent.position - t_pos) * -1
 
         return None

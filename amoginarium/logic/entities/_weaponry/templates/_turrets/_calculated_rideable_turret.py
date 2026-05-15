@@ -66,7 +66,7 @@ class CalculatedRideableTurret(RideableTurret):
             self.weapon.facing.angle = self._default_weapon_static_facing
 
         # params
-        self._max_error = get_default(self._default_max_error, self.weapon._inaccuracy)
+        self._max_error = get_default(self._default_max_error, self.weapon.inaccuracy)
         self._target_solution = None
 
     @property

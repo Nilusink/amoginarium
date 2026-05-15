@@ -168,6 +168,11 @@ class BaseWeapon(Item):
         """the weapons muzzle velocity"""
         return self._muzzle_velocity
 
+    @property
+    def inaccuracy(self) -> float:
+        """weapon inaccuracy in rad"""
+        return self._inaccuracy
+
     # endregion
 
     def get_mag_state(

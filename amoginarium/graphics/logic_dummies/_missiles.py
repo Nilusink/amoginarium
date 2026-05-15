@@ -67,7 +67,7 @@ class MultiStageMissileDummy(BulletDummy):
             rotation_reference=self,
             rotation_offset=-3.14159265 / 2,
             loop=True,
-            layer=2
+            layer=2,
         )
 
     @classmethod
