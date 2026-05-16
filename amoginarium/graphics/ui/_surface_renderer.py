@@ -6,10 +6,11 @@ Created: 15.03.2026
 Authors: LukasKrah
 """
 
-import pygame as pg
 import typing as tp
 
-from amoginarium.shared.utility import convert_coord, coord_t, color_t
+import pygame as pg
+
+from amoginarium.shared.utility import color_t, convert_coord, coord_t
 
 
 class PygameSurfaceRenderer:
@@ -17,17 +18,17 @@ class PygameSurfaceRenderer:
 
     @staticmethod
     def draw_rect(
-            surface: pg.Surface,
-            top_left: coord_t,
-            size: coord_t,
-            *_args: tp.Any,
-            color: color_t = (255, 255, 255, 255),
-            width: int = 0,
-            border_radius: int | float = -1,
-            border_top_left_radius: int | float = -1,
-            border_top_right_radius: int | float = -1,
-            border_bottom_left_radius: int | float = -1,
-            border_bottom_right_radius: int | float = -1,
+        surface: pg.Surface,
+        top_left: coord_t,
+        size: coord_t,
+        *_args: tp.Any,
+        color: color_t = (255, 255, 255, 255),
+        width: int = 0,
+        border_radius: float = -1,
+        border_top_left_radius: float = -1,
+        border_top_right_radius: float = -1,
+        border_bottom_left_radius: float = -1,
+        border_bottom_right_radius: float = -1,
     ) -> pg.Rect:
         """
         Draws a rectangle on the given surface.
@@ -66,7 +67,7 @@ class PygameSurfaceRenderer:
             border_top_left_radius=int(border_top_left_radius),
             border_top_right_radius=int(border_top_right_radius),
             border_bottom_left_radius=int(border_bottom_left_radius),
-            border_bottom_right_radius=int(border_bottom_right_radius)
+            border_bottom_right_radius=int(border_bottom_right_radius),
         )
 
     draw_rounded_rect = draw_rect

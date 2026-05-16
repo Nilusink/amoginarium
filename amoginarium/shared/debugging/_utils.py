@@ -7,18 +7,16 @@ generally useful functions
 Author:
 Nilusink
 """
-from icecream import ic, stderrPrint, colorize, supportTerminalColorsInWindows
+
 import inspect
 
-from ._console_colors import get_fg_color, CC
+from icecream import colorize, ic, stderrPrint, supportTerminalColorsInWindows
+
+from ._console_colors import CC, get_fg_color
 
 
-def print_with_prefix(
-        content: str,
-        prefix: str = "",
-        color: bool = True
-) -> None:
-    """stderrPrint with prefix and togglable colorization"""
+def print_with_prefix(content: str, prefix: str = "", color: bool = True) -> None:
+    """StderrPrint with prefix and togglable colorization"""
     if color:
         content = colorize(content)
 
@@ -28,7 +26,7 @@ def print_with_prefix(
 
 def get_caller_name(extended: bool = False) -> str | dict:
     """
-    get the name of the function that called this context
+    Get the name of the function that called this context
     """
     curframe = inspect.currentframe()
     calframe = inspect.getouterframes(curframe, 2)
@@ -50,7 +48,7 @@ def print_ic_style(
     error: bool = False,
     warning: bool = False,
 ) -> None:
-    """print like ic but without colors"""
+    """Print like ic but without colors"""
     if not ic.enabled:
         return
 
@@ -62,7 +60,7 @@ def print_ic_style(
         vals.append(v)
 
     value = sep.join(vals)
-    
+
     if error:
         value = CC.fg.RED + value
 

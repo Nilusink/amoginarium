@@ -6,9 +6,8 @@ Project: amoginarium
 
 from __future__ import annotations
 
-from json import load, dump
 import typing as tp
-
+from json import dump, load
 
 ##################################################
 #                     Code                       #
@@ -42,7 +41,7 @@ class _Settings:
                 "master_volume": 1.0,
                 "gun_volume": 1.0,
                 "music_volume": 1.0,
-                "scaling": 0
+                "scaling": 0,
             }
             for key, value in self.__data.items():
                 self.__setattr__(key, value)

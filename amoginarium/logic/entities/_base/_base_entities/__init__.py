@@ -1,4 +1,6 @@
 """
+abc.
+
 amoginarium/logic/entities/_base/_base_entities/__init__.py
 
 Initialization for base entity classes.

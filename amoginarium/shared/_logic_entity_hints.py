@@ -15,7 +15,7 @@ import typing as tp
 if tp.TYPE_CHECKING:
     from types import EllipsisType
 
-    from . import base_entity_t, CIDType, Coalitions
+    from . import CIDType, Coalitions, base_entity_t
     from .collision_detection import CollisionEvent
     from .utility import Vec2
 
@@ -71,7 +71,7 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def _set_bit(self, param: str, bit_index: int, value: bool) -> None:
         """
-        set (or reset) on a specified bit
+        Set (or reset) on a specified bit
         :param param: what parameter to set the bit at
         :param bit_index: bit to set
         :param value: what to set the bit to
@@ -80,14 +80,14 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def add(self, *groups: tp.Any) -> None:
         """
-        add entity to one or more logic groups
+        Add entity to one or more logic groups
         :param groups: to add entity to
         """
         ...
 
     def remove(self, *groups: tp.Any) -> None:
         """
-        remove entity from one or more logic groups
+        Remove entity from one or more logic groups
         :param groups: to remove entity from
         """
         ...
@@ -113,7 +113,7 @@ class BaseLogicEntityLike(tp.Protocol):
         """
         ...
 
-    def update(self, delta: float, recursive: bool = True) -> None:
+    def update(self, delta: float, *, recursive: bool = True) -> None:
         """
         Update entity and their children
         :param delta: time since the last update
@@ -130,16 +130,17 @@ class BaseLogicEntityLike(tp.Protocol):
         ...
 
     def highlight(self) -> None:
-        """highlight the graphics entity"""
+        """Highlight the graphics entity"""
         ...
 
     def stop_highlight(self) -> None:
-        """stop highlighting the graphics entity"""
+        """Stop highlighting the graphics entity"""
         ...
 
 
 class PositionedLogicEntityLike(BaseLogicEntityLike, tp.Protocol):
     """Protocol for a logic entity with position and size."""
+
     position: Vec2
     size: Vec2
 
@@ -200,7 +201,9 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         """Calculates root collision exceptions rules"""
         ...
 
-    def _collision_start(self, event: list[CollisionEvent[CollisionLogicEntityLike]]) -> list[bool] | None:
+    def _collision_start(
+        self, event: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> list[bool] | None:
         """
         Called on collision start
         :param event: All details regarding the collisions
@@ -208,7 +211,9 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         """
         ...
 
-    def collision_start(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> list[bool] | None:
+    def collision_start(
+        self, events: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> list[bool] | None:
         """
         Callback for collision start, called by the collision manager
         :param events: All details regarding the collisions
@@ -216,14 +221,18 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         """
         ...
 
-    def _collision_end(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> None:
+    def _collision_end(
+        self, events: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> None:
         """
         Called on collision end
         :param events: All details regarding the collisions
         """
         ...
 
-    def collision_end(self, events: list[CollisionEvent[CollisionLogicEntityLike]]) -> None:
+    def collision_end(
+        self, events: list[CollisionEvent[CollisionLogicEntityLike]]
+    ) -> None:
         """
         Callback on COLLISION_END, called by the collision manager
         :param events: All details regarding the collisions
@@ -231,15 +240,15 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         ...
 
     def _create_collision(
-            self,
-            *,
-            position: Vec2 | EllipsisType = ...,
-            size: Vec2 | EllipsisType = ...,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...,
-            radius: float | None = None,
-            collision_active: bool | EllipsisType = ...,
+        self,
+        *,
+        position: Vec2 | EllipsisType = ...,
+        size: Vec2 | EllipsisType = ...,
+        rotation: float = 0.0,
+        positions: list[Vec2] | None = None,
+        centered: bool | EllipsisType = ...,
+        radius: float | None = None,
+        collision_active: bool | EllipsisType = ...,
     ) -> None:
         """
         Registers this entity with the collision manager.
@@ -254,16 +263,16 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         ...
 
     def _update_collision(
-            self,
-            *,
-            position: Vec2 | EllipsisType = ...,
-            size: Vec2 | EllipsisType = ...,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...,
-            radius: float | None = None,
-            collision_active: bool | EllipsisType = ...,
-            shift_history: bool = True
+        self,
+        *,
+        position: Vec2 | EllipsisType = ...,
+        size: Vec2 | EllipsisType = ...,
+        rotation: float = 0.0,
+        positions: list[Vec2] | None = None,
+        centered: bool | EllipsisType = ...,
+        radius: float | None = None,
+        collision_active: bool | EllipsisType = ...,
+        shift_history: bool = True,
     ) -> None:
         """
         Updates the entity's hitbox parameters in the collision manager.
@@ -297,6 +306,7 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
     - Optional Collision Detection
     - Coalitions
     """
+
     facing: Vec2
     velocity: Vec2
     acceleration: Vec2
@@ -327,14 +337,14 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         ...
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         ...

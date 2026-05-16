@@ -197,8 +197,7 @@ class Player(Passenger, LogicGameEntity):
 
         if self._hotbar.get_count(self._current_weapon) > 0:
             return self._hotbar.get_item(self._current_weapon)
-        else:
-            return None
+        return None
 
     @property
     def controller(self) -> Controller:
@@ -207,7 +206,7 @@ class Player(Passenger, LogicGameEntity):
     # endregion
 
     def get_current_view(self) -> CurrentView:
-        """get current player viewport"""
+        """Get current player viewport"""
         pos = self.position
         zoom = 0
 
@@ -287,9 +286,8 @@ class Player(Passenger, LogicGameEntity):
         new = self._hp + heal
         if new > self._max_hp:
             return False
-        else:
-            self._hp = new
-            return True
+        self._hp = new
+        return True
 
     def __on_collision_island(
         self, events: list[CollisionEvent["Island"]]
@@ -389,19 +387,18 @@ class Player(Passenger, LogicGameEntity):
         ],
     ) -> list[bool] | None:
         if events[0].group_id == GameCollisions.collision_group_islands:
-            events: list[CollisionEvent["Island"]]
+            events: list[CollisionEvent[Island]]
             return self.__on_collision_island(events)
 
         elif events[0].group_id == GameCollisions.collision_group_bullets:
             events: list[CollisionEvent["Bullet"]]
             self.__on_collision_bullet(events)
 
-        elif events[0].group_id == GameCollisions.collision_group_items:
-            events: list[CollisionEvent["Item"]]
-            self.__on_collision_item(events)
-
-        elif events[0].group_id == GameCollisions.collision_group_shields:
-            events: list[CollisionEvent["Item"]]
+        elif (
+            events[0].group_id == GameCollisions.collision_group_items
+            or events[0].group_id == GameCollisions.collision_group_shields
+        ):
+            events: list[CollisionEvent[Item]]
             self.__on_collision_item(events)
 
         elif events[0].group_id == GameCollisions.collision_group_rideable_turrets:
@@ -528,19 +525,18 @@ class Player(Passenger, LogicGameEntity):
                             self._controller.feedback_shoot()
                     elif self.item:
                         self.item.use()
-                else:
-                    if isinstance(self.item, BaseWeapon):
-                        if hasattr(self.item, "charge"):
-                            item: ... = self.item
-                            if item.charged > 0:
-                                if self.item.shoot(self.facing):
-                                    self._controller.feedback_shoot()
-                            else:
-                                self.item.stop_shooting()
+                elif isinstance(self.item, BaseWeapon):
+                    if hasattr(self.item, "charge"):
+                        item: ... = self.item
+                        if item.charged > 0:
+                            if self.item.shoot(self.facing):
+                                self._controller.feedback_shoot()
                         else:
                             self.item.stop_shooting()
-                    elif self.item:
-                        self.item.stop_use()
+                    else:
+                        self.item.stop_shooting()
+                elif self.item:
+                    self.item.stop_use()
 
             # drop item
             if self._controller.drop:
@@ -660,7 +656,7 @@ class Player(Passenger, LogicGameEntity):
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         x = value.x
@@ -678,7 +674,7 @@ class Player(Passenger, LogicGameEntity):
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         x = value.x

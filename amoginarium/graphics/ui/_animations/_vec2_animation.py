@@ -10,12 +10,18 @@ from types import EllipsisType
 
 from amoginarium.shared.utility import Vec2
 
-from ._animation_types import AnimatedVec2Values, anim_vec2_values_t, anim_vec2_t, anim_input_t
+from ._animation_types import (
+    AnimatedVec2Values,
+    anim_input_t,
+    anim_vec2_t,
+    anim_vec2_values_t,
+)
 from ._multi_animation import MultiAnimation
 
 
 class Vec2Animation(MultiAnimation):
     """Double float animation for Vec2"""
+
     __vec2: Vec2
     __delta_vec2: Vec2
 
@@ -30,12 +36,18 @@ class Vec2Animation(MultiAnimation):
             start_values=self.__convert_up_to_coord(parsed_value.start_vec),
             end_values=self.__convert_up_to_coord(parsed_value.end_vec),
             extend_durations=self.__convert_up_to_coord(parsed_value.extend_duration),
-            collapse_durations=self.__convert_up_to_coord(parsed_value.collapse_duration),
-            extend_debounce_duration=self.__convert_up_to_coord(parsed_value.extend_debounce_duration),
-            collapse_debounce_duration=self.__convert_up_to_coord(parsed_value.collapse_debounce_duration),
+            collapse_durations=self.__convert_up_to_coord(
+                parsed_value.collapse_duration
+            ),
+            extend_debounce_duration=self.__convert_up_to_coord(
+                parsed_value.extend_debounce_duration
+            ),
+            collapse_debounce_duration=self.__convert_up_to_coord(
+                parsed_value.collapse_debounce_duration
+            ),
             extend_curve=parsed_value.extend_curve,
             collapse_curve=parsed_value.collapse_curve,
-            count=2
+            count=2,
         )
 
         self.__vec2 = Vec2()
@@ -43,7 +55,7 @@ class Vec2Animation(MultiAnimation):
 
         # Pull current values from MultiAnimation to initialize the vector
         current = super().current_value
-        self.__vec2.xy = current if current else (0.0, 0.0)
+        self.__vec2.xy = current or (0.0, 0.0)
 
     def update(self, delta: float) -> Vec2:
         """
@@ -65,7 +77,9 @@ class Vec2Animation(MultiAnimation):
         return self.__vec2
 
     @staticmethod
-    def __convert_up_to_coord(val: anim_vec2_t | anim_input_t | EllipsisType) -> anim_input_t | EllipsisType:
+    def __convert_up_to_coord(
+        val: anim_vec2_t | anim_input_t | EllipsisType,
+    ) -> anim_input_t | EllipsisType:
         """
         Converts a Vec2 or a coordinate tuple to a tuple of floats.
         Passes single scalars, sequences, and Ellipsis (...) through.
@@ -102,7 +116,9 @@ class Vec2Animation(MultiAnimation):
         return False
 
     @classmethod
-    def __convert_anim_vec2_values(cls, values: anim_vec2_values_t) -> AnimatedVec2Values:
+    def __convert_anim_vec2_values(
+        cls, values: anim_vec2_values_t
+    ) -> AnimatedVec2Values:
         """
         Parses union types into the AnimatedVec2Values dataclass.
         Relies on default '...' values handling in down-stream logic.
@@ -127,7 +143,7 @@ class Vec2Animation(MultiAnimation):
                     extend_debounce_duration=values[4] if length > 4 else ...,
                     collapse_debounce_duration=values[5] if length > 5 else ...,
                     extend_curve=values[6] if length > 6 else ...,
-                    collapse_curve=values[7] if length > 7 else ...
+                    collapse_curve=values[7] if length > 7 else ...,
                 )
 
         raise ValueError(f"Unsupported conversion format: {values}")

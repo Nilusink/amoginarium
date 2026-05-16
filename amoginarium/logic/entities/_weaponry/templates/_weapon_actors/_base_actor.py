@@ -8,10 +8,10 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, convert_coord
+from amoginarium.shared.utility import Vec2, convert_coord, get_default
 
 from ...._base import DebugCircleEntity
 
@@ -28,14 +28,14 @@ class BaseActor:
     # endregion
 
     def __init__(
-            self,
-            parent: "Bullet",
-            *,
-            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: "Bullet",
+        *,
+        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         """
-        base weapon actor
+        Base weapon actor
 
         :param parent: parent bullet
         :param offset: offset relative to bullet
@@ -54,10 +54,7 @@ class BaseActor:
         # calculate position with offset
         if self._DEBUG:
             self._dbe = DebugCircleEntity(
-                self.parent.runtime_buffer,
-                self._position,
-                4,
-                centered=True
+                self.parent.runtime_buffer, self._position, 4, centered=True
             )
 
         else:
@@ -70,21 +67,21 @@ class BaseActor:
 
     @property
     def parent(self) -> "Bullet":
-        """bullets parent"""
+        """Bullets parent"""
         return self._parent
 
     def kill(self, killed_by) -> None:
-        """kills actor"""
+        """Kills actor"""
         if self._dbe is not None:
             self._dbe.kill(killed_by)
 
     def _update_position(self) -> None:
-        """update fuze position"""
+        """Update fuze position"""
         self._last_pos.xy = self._position.xy
 
         # add offset with rotation
         self._position.xy = (
-                self._parent.position + self._offset.rotate_by(self._parent.facing)
+            self._parent.position + self._offset.rotate_by(self._parent.facing)
         ).xy
 
         # update debug entity if set
@@ -92,11 +89,11 @@ class BaseActor:
             self._dbe.position = self._position.copy()
 
     def _update(self) -> None:
-        """updates the fuze"""
+        """Updates the fuze"""
 
     @tp.final
     def update(self) -> None:
-        """updates the fuze"""
+        """Updates the fuze"""
         self._update_position()
 
         if self._parent.lifetime >= self._arm_delay:

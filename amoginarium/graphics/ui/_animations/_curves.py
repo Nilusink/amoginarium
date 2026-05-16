@@ -6,8 +6,10 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
+
 class PeakedSCurve:
     """Peaked S-Curve"""
+
     JUMP_VAL = 0.10
     JUMP_END_TIME = 0.05
 
@@ -34,16 +36,15 @@ class PeakedSCurve:
             # Normalize x from [JUMP_END_TIME, PEAK_TIME] to [0.0, 1.0]
             t = (x - cls.JUMP_END_TIME) / (cls.PEAK_TIME - cls.JUMP_END_TIME)
             # Smoothstep (Cubic Hermite)
-            smooth = t ** 2 * (3 - 2 * t)
+            smooth = t**2 * (3 - 2 * t)
             return cls.JUMP_VAL + (cls.PEAK_VAL - cls.JUMP_VAL) * smooth
 
         # 3. Settling from Peak to End
-        else:
-            # Normalize x from [PEAK_TIME, 1.0] to [0.0, 1.0]
-            t = (x - cls.PEAK_TIME) / (1.0 - cls.PEAK_TIME)
-            # Smoothstep
-            smooth = t ** 2 * (3 - 2 * t)
-            return cls.PEAK_VAL - (cls.PEAK_VAL - cls.END_VAL) * smooth
+        # Normalize x from [PEAK_TIME, 1.0] to [0.0, 1.0]
+        t = (x - cls.PEAK_TIME) / (1.0 - cls.PEAK_TIME)
+        # Smoothstep
+        smooth = t**2 * (3 - 2 * t)
+        return cls.PEAK_VAL - (cls.PEAK_VAL - cls.END_VAL) * smooth
 
 
 peaked_s_curve = PeakedSCurve.peaked_s_curve

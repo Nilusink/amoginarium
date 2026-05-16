@@ -7,7 +7,9 @@ Graphics base entity
 Author:
 Nilusink
 """
+
 from __future__ import annotations
+
 import typing as tp
 
 from amoginarium.shared import CIDType
@@ -15,9 +17,16 @@ from amoginarium.shared import CIDType
 
 class BaseGraphicsEntity:
     """base for all graphics entities"""
+
     __slots__ = [
-        "__g", "_children", "_parent", "_root_visibility", "_highlight",
-        "_visible", "_lifetime", "_draw_children"
+        "__g",
+        "_children",
+        "_parent",
+        "_root_visibility",
+        "_highlight",
+        "_visible",
+        "_lifetime",
+        "_draw_children",
     ]
 
     _CID: tp.ClassVar[CIDType] = ...
@@ -47,18 +56,18 @@ class BaseGraphicsEntity:
     @property
     def visible(self) -> bool:
         """
-        returns current visibility state
+        Returns current visibility state
         """
         return self._visible
 
     @property
     def parent(self) -> BaseGraphicsEntity | None:
-        """parent"""
+        """Parent"""
         return self._parent
 
     @parent.setter
     def parent(self, parent: BaseGraphicsEntity) -> None:
-        """parent"""
+        """Parent"""
         self._parent = parent
 
     # endregion
@@ -66,7 +75,7 @@ class BaseGraphicsEntity:
     # region Methods: pygame
     def add(self, *groups) -> None:
         """
-        add entity to one or more groups
+        Add entity to one or more groups
         """
         has = self.__g.__contains__
 
@@ -77,7 +86,7 @@ class BaseGraphicsEntity:
 
     def remove(self, *groups) -> None:
         """
-        remove entity from one or more groups
+        Remove entity from one or more groups
         """
         has = self.__g.__contains__
 
@@ -88,7 +97,7 @@ class BaseGraphicsEntity:
 
     def kill(self) -> None:
         """
-        remove entity from all groups
+        Remove entity from all groups
         """
         # kill children first
         for child in self._children:
@@ -148,11 +157,11 @@ class BaseGraphicsEntity:
 
     @tp.final
     def gl_draw(
-            self,
-            delta_cal: float,
-            recursive: bool = True,
-            force_draw: bool = False,
-            layer: int = 0,
+        self,
+        delta_cal: float,
+        recursive: bool = True,
+        force_draw: bool = False,
+        layer: int = 0,
     ) -> None:
         """
         Draw this UI-entity.

@@ -8,18 +8,18 @@ Author:
 Nilusink
 """
 
-from contextlib import suppress
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
 import ctypes
+import typing as tp
+from contextlib import suppress
+from ctypes import Array
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, calculate_launch_angle, MASK32
-from amoginarium.shared import Coalitions, base_entity_t, TurretCIDs
+from amoginarium.shared import Coalitions, TurretCIDs, base_entity_t
+from amoginarium.shared.utility import MASK32, Vec2, calculate_launch_angle, get_default
 
 from ...._base import GravityAffected
-from ._rideable_turret import RideableTurret
 from ._base_turret import TargetSolution
+from ._rideable_turret import RideableTurret
 
 
 class CalculatedRideableTurret(RideableTurret):
@@ -39,14 +39,14 @@ class CalculatedRideableTurret(RideableTurret):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            *,
-            cluster: bool = False,
-            size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
-            weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        coalition: Coalitions,
+        position: Vec2,
+        *,
+        cluster: bool = False,
+        size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
+        weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -54,12 +54,11 @@ class CalculatedRideableTurret(RideableTurret):
             position=position,
             cluster=cluster,
             size=size,
-            weapon_kwargs=weapon_kwargs
+            weapon_kwargs=weapon_kwargs,
         )
 
         self._weapon_static = not isinstance(
-            self._default_weapon_static_facing,
-            EllipsisType
+            self._default_weapon_static_facing, EllipsisType
         )
 
         if self._weapon_static:
@@ -71,18 +70,18 @@ class CalculatedRideableTurret(RideableTurret):
 
     @property
     def weapon_pos(self) -> Vec2:
-        """position of weapon"""
+        """Position of weapon"""
         return self.position + self.weapon.parent_position_offset
 
     def _get_firing_solution(
-            self,
-            target_pos: Vec2,
-            *,
-            velocity: Vec2 | EllipsisType = ...,
-            acceleration: Vec2 | EllipsisType = ...,
-            recalc: int = 5,
+        self,
+        target_pos: Vec2,
+        *,
+        velocity: Vec2 | EllipsisType = ...,
+        acceleration: Vec2 | EllipsisType = ...,
+        recalc: int = 5,
     ) -> TargetSolution | None:
-        """try to get a firing solution for target pos"""
+        """Try to get a firing solution for target pos"""
         position_delta = self.weapon_pos - target_pos
         vel = get_default(velocity, Vec2())
         acc = get_default(acceleration, Vec2())
@@ -108,7 +107,7 @@ class CalculatedRideableTurret(RideableTurret):
                 self.weapon.muzzle_velocity,
                 recalc,
                 self._default_engagement_aim_type,
-                g=GravityAffected.gravity * 2
+                g=GravityAffected.gravity * 2,
             )
 
             # mirror back y-axis
@@ -122,19 +121,17 @@ class CalculatedRideableTurret(RideableTurret):
             target_predict = self.weapon_pos + predict
 
             return TargetSolution(
-                target_predict=target_predict,
-                angle=aiming_angle,
-                tof=tof
+                target_predict=target_predict, angle=aiming_angle, tof=tof
             )
 
         return None
 
     def _shoot_at(
-            self,
-            target_angle: Vec2,
-            tof: float | EllipsisType = ...,
-            target_pos: Vec2 | EllipsisType = ...,
-            **bullet_args,
+        self,
+        target_angle: Vec2,
+        tof: float | EllipsisType = ...,
+        target_pos: Vec2 | EllipsisType = ...,
+        **bullet_args,
     ) -> None:
         # check if static facing
         if self._weapon_static or self._default_engagement_ignore_solution:
@@ -154,8 +151,8 @@ class CalculatedRideableTurret(RideableTurret):
 
         # check if position is inside error
         if (
-                abs(self._target_solution.angle.angle - self.facing.angle)
-                <= self._max_error
+            abs(self._target_solution.angle.angle - self.facing.angle)
+            <= self._max_error
         ):
             super()._shoot_at(
                 target_angle,
@@ -170,15 +167,13 @@ class CalculatedRideableTurret(RideableTurret):
         if self._target_angle.length != 0:
             target_delta = self._target_angle.copy()
             self._target_solution = self._get_firing_solution(
-                self.position - target_delta,
-                recalc=20
+                self.position - target_delta, recalc=20
             )
 
-            target: None | Vec2 = None
+            target: Vec2 | None = None
             if (
-                    self._weapon_static and target_delta
-                    or self._default_engagement_ignore_solution
-            ):
+                self._weapon_static and target_delta
+            ) or self._default_engagement_ignore_solution:
                 target: Vec2 = self.position + target_delta
                 self._target_solution = TargetSolution(target, Vec2(), -1)
 

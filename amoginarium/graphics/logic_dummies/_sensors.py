@@ -9,14 +9,15 @@ Nilusink
 """
 
 from types import EllipsisType
+
 from icecream import ic  # noqa: F401
 
-from amoginarium.shared.utility import Vec2, Color, unpack_int
-from amoginarium.shared import SensorCIDs
 from amoginarium import pv
+from amoginarium.shared import SensorCIDs
+from amoginarium.shared.utility import Color, Vec2, unpack_int
 
-from ._synced_entities import SyncedGraphicsEntity
 from ..render_bindings import renderer
+from ._synced_entities import SyncedGraphicsEntity
 
 
 class SensorHUD(SyncedGraphicsEntity):
@@ -91,7 +92,6 @@ class RadarSensorHUD(SensorHUD):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
-        return
 
         # t_pos = Vec2().from_cartesian(self.param1, self.param2)
         #

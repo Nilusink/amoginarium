@@ -17,7 +17,7 @@ from amoginarium.shared import Coalitions, DummyCIDs, base_entity_t
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
 
-from ...._base import GameCollisions, GravityAffected, LogicGameEntity
+from ...._base import GameCollisions, LogicGameEntity
 from ...templates import Bullet
 
 if tp.TYPE_CHECKING:
@@ -180,9 +180,8 @@ class Grenade(Bullet):
         super()._update(delta)
 
     def _kill(self, killed_by: tp.Any = ...):
-        if killed_by is not ...:
-            if issubclass(killed_by.__class__, Bullet):
-                self._time_to_life = 0
+        if killed_by is not ... and issubclass(killed_by.__class__, Bullet):
+            self._time_to_life = 0
 
         if self._time_to_life > 0:
             return False
@@ -191,7 +190,7 @@ class Grenade(Bullet):
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         x = value.x
@@ -209,7 +208,7 @@ class Grenade(Bullet):
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         x = value.x

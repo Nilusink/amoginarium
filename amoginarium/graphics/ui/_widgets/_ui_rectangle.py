@@ -8,19 +8,26 @@ Authors: LukasKrah
 
 import typing as tp
 
+from ....shared.utility import coord_t
 from ...logic_dummies import GraphicsSoundEffect
 from ...render_bindings import renderer
-from ....shared.utility import coord_t
-
-from .._animations import FloatAnimation, Vec2Animation, anim_vec2_values_t, create_float_animation, \
-    anim_float_values_t, anim_color_values_t, ColorAnimation
+from .._animations import (
+    ColorAnimation,
+    FloatAnimation,
+    Vec2Animation,
+    anim_color_values_t,
+    anim_float_values_t,
+    anim_vec2_values_t,
+    create_float_animation,
+)
+from .._base import UIEntity, UIEventElement
 from .._surface_renderer import PygameSurfaceRenderer
-from .._base import UIEventElement, UIEntity
 from .._types import Anchor, Positions
 
 
 class UIRectangle(UIEventElement):
     """UI rectangle with basic sounds and animations"""
+
     __bg_color_animation: ColorAnimation
     __border_color_animation: ColorAnimation
     __border_width_animation: FloatAnimation
@@ -32,31 +39,29 @@ class UIRectangle(UIEventElement):
     __on_click_sound: GraphicsSoundEffect | None
 
     def __init__(
-            self,
-            position: coord_t,
-            size: coord_t,
-            *,
-            parent: UIEntity | None = None,
-            placement_anchor: Anchor = Anchor.CENTER,
-            absolute_values: bool = False,
-            positon_is_relative_to_parent: bool = True,
-            size_is_relative_to_parent: bool = True,
-            parent_reference_position: Positions = Positions.TOP_LEFT,
-
-            collision_buffer: int = 1,
-            use_collision_mask: bool = True,
-            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-
-            bg_color: anim_color_values_t = (70, 70, 70),
-            border_color: anim_color_values_t = (70, 70, 70),
-            border_width: anim_float_values_t = 5,
-            radius: anim_float_values_t = 20,
-            size_extend: anim_vec2_values_t = 0,
-            on_enter_sound: GraphicsSoundEffect | None = None,
-            on_leave_sound: GraphicsSoundEffect | None = None,
-            on_click_sound: GraphicsSoundEffect | None = None,
+        self,
+        position: coord_t,
+        size: coord_t,
+        *,
+        parent: UIEntity | None = None,
+        placement_anchor: Anchor = Anchor.CENTER,
+        absolute_values: bool = False,
+        positon_is_relative_to_parent: bool = True,
+        size_is_relative_to_parent: bool = True,
+        parent_reference_position: Positions = Positions.TOP_LEFT,
+        collision_buffer: int = 1,
+        use_collision_mask: bool = True,
+        on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        bg_color: anim_color_values_t = (70, 70, 70),
+        border_color: anim_color_values_t = (70, 70, 70),
+        border_width: anim_float_values_t = 5,
+        radius: anim_float_values_t = 20,
+        size_extend: anim_vec2_values_t = 0,
+        on_enter_sound: GraphicsSoundEffect | None = None,
+        on_leave_sound: GraphicsSoundEffect | None = None,
+        on_click_sound: GraphicsSoundEffect | None = None,
     ) -> None:
         """
         Create a new UI rectangle
@@ -111,7 +116,13 @@ class UIRectangle(UIEventElement):
         self.add_enter_callback(self.__on_cursor_enter)
         self.add_buffer_callback(self.__on_cursor_in_buffer)
         self.add_leave_callback(self.__on_cursor_leave)
-        self.add_click_callback(lambda: self.__on_click_sound.play() if self.__on_click_sound is not None else None)
+        self.add_click_callback(
+            lambda: (
+                self.__on_click_sound.play()
+                if self.__on_click_sound is not None
+                else None
+            )
+        )
 
     @property
     def bg_color(self) -> ColorAnimation:
@@ -159,13 +170,15 @@ class UIRectangle(UIEventElement):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         if self.use_collision_mask and not self._ui_changed:
-            self._ui_changed = any([
-                self.__border_width_animation.is_changing(),
-                self.__border_color_animation.is_changing(),
-                self.__bg_color_animation.is_changing(),
-                self.__radius_animation.is_changing(),
-                self.__extend_animation.is_changing(),
-            ])
+            self._ui_changed = any(
+                [
+                    self.__border_width_animation.is_changing(),
+                    self.__border_color_animation.is_changing(),
+                    self.__bg_color_animation.is_changing(),
+                    self.__radius_animation.is_changing(),
+                    self.__extend_animation.is_changing(),
+                ]
+            )
 
         self.__border_width_animation.update(delta_cal)
         self.__border_color_animation.update(delta_cal)
@@ -190,7 +203,7 @@ class UIRectangle(UIEventElement):
                     color=border_color,
                     radius=radius,
                     thickness=border_width,
-                    convert_global=False
+                    convert_global=False,
                 )
 
             inner_radius = radius - border_width
@@ -199,7 +212,7 @@ class UIRectangle(UIEventElement):
                 self.size.absolute - 2 * border_width,
                 color=bg_color,
                 radius=inner_radius if inner_radius > 0 else 0,
-                convert_global=False
+                convert_global=False,
             )
 
         else:
@@ -210,14 +223,14 @@ class UIRectangle(UIEventElement):
                     self.size.absolute,
                     color=border_color,
                     thickness=border_width,
-                    convert_global=False
+                    convert_global=False,
                 )
 
             renderer.draw_rect(
                 self.top_left.absolute_global + border_width,
                 self.size.absolute - 2 * border_width,
                 color=bg_color,
-                convert_global=False
+                convert_global=False,
             )
 
         if self._ui_changed and self.use_collision_mask:
@@ -225,7 +238,7 @@ class UIRectangle(UIEventElement):
                 self._collision_surface,
                 (0, 0),
                 self.size.absolute,
-                border_radius=radius
+                border_radius=radius,
             )
 
     def _reset(self) -> None:

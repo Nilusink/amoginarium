@@ -16,6 +16,7 @@ class CollisionType:
     """
     Defines type aliases for collision-related identifiers to improve code clarity
     """
+
     __slots__ = ()
 
     type CollisionID = int
@@ -29,6 +30,7 @@ class HitboxTypes(StrEnum):
     """
     Enumeration of supported geometric primitive types for collision detection.
     """
+
     point = "point"
     aabb = "aabb"
     circle = "circle"
