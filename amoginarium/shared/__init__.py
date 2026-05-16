@@ -4,51 +4,7 @@ amoginarium/shared/__init__.py
 Project: amoginarium
 """
 
-from ._controlls import Controls
-from ._data_types import (
-    CID_REGISTER,
-    BaseCommandType,
-    CIDType,
-    CurrentView,
-    DummyCIDs,
-    GraphicsCIDs,
-    IslandCIDs,
-    ItemCIDs,
-    ItemSlot,
-    MissileCIDs,
-    ProcessCommand,
-    ProcessCommandType,
-    SensorCIDs,
-    TurretCIDs,
-    WeaponCIDs,
-    WeaponSensorCIDs,
-    item_t,
-)
-from ._entity_counter import ENTITY_COUNTER, INVENTORY_COUNTER
-from ._entity_hints import (
-    BaseEntityLike,
-    DynamicEntityParentViable,
-    GameEntityLike,
-    HasFacing,
-    HasPosition,
-    IslandLike,
-    ItemLike,
-    PlayerLike,
-    VisibleGameEntityLike,
-    WeaponLike,
-)
-from ._linked import Coalitions, GlobalVars, generate_global_vars
-from ._logic_entity_hints import (
-    BaseLogicEntityLike,
-    CollisionLogicEntityLike,
-    LogicGameEntityLike,
-    PositionedLogicEntityLike,
-)
 from ._shared_memory import (
-    MAX_CONTROLLERS,
-    MAX_ENTITIES,
-    MAX_INVENTORIES,
-    MAX_INVENTORY_SLOTS,
     base_controller_t,
     base_entity_t,
     get_controller_memory,
@@ -57,4 +13,48 @@ from ._shared_memory import (
     get_write_lock,
     inventory_t,
     item_slot_t,
+    MAX_CONTROLLERS,
+    MAX_ENTITIES,
+    MAX_INVENTORIES,
+    MAX_INVENTORY_SLOTS,
 )
+from ._data_types import (
+    BaseCommandType,
+    CID_REGISTER,
+    CIDType,
+    DummyCIDs,
+    GraphicsCIDs,
+    IslandCIDs,
+    item_t,
+    ItemCIDs,
+    ItemSlot,
+    ProcessCommand,
+    ProcessCommandType,
+    SensorCIDs,
+    TurretCIDs,
+    WeaponCIDs,
+    CurrentView,
+    MissileCIDs,
+    WeaponSensorCIDs
+)
+from ._entity_hints import (
+    BaseEntityLike,
+    GameEntityLike,
+    HasPosition,
+    IslandLike,
+    ItemLike,
+    PlayerLike,
+    VisibleGameEntityLike,
+    WeaponLike,
+    HasFacing,
+    DynamicEntityParentViable
+)
+from ._logic_entity_hints import (
+    BaseLogicEntityLike,
+    CollisionLogicEntityLike,
+    LogicGameEntityLike,
+    PositionedLogicEntityLike,
+)
+from ._linked import Coalitions, generate_global_vars, GlobalVars
+from ._entity_counter import ENTITY_COUNTER, INVENTORY_COUNTER
+from ._controlls import Controls

@@ -10,18 +10,19 @@ from ._base import (
     Updated,
     Walls,
 )
-from ._player import Player
-from ._spawnables import SPAWNABLES
-from ._weaponry import ExactoBullet, Grenade
+from ._weaponry import Grenade, ExactoBullet
 from ._weaponry.templates import (
+    BaseSensor,
     DETECTION_GLOBAL_BLUE,
     DETECTION_GLOBAL_NEUTRAL,
     DETECTION_GLOBAL_RED,
     DETECTION_GROUP_MANAGER,
-    AerodynamicEntity,
-    BaseSensor,
-    Bullet,
     DetectionGroup,
     MagicSensor,
+    AerodynamicEntity,
+    Bullet,
 )
 from ._world import GrassIsland, Island
+from ._spawnables import SPAWNABLES
+from ._player import Player
+

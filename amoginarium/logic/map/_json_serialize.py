@@ -7,7 +7,6 @@ convert everything ingame to a str
 Author:
 Nilusink
 """
-
 import json
 import re
 
@@ -33,7 +32,7 @@ def preprocess(obj):
     return obj
 
 
-def float_to_str(value: float) -> str:
+def float_to_str(value: float | int) -> str:
     if value.is_integer():
         return str(int(value))
 
@@ -45,15 +44,19 @@ class Encoder(json.JSONEncoder):
         if isinstance(obj, Inline):
             return f"@@{', '.join(map(float_to_str, obj.data))}@@"
 
-        if isinstance(obj, Vec2):
+        elif isinstance(obj, Vec2):
             return f"@@{', '.join(map(float_to_str, obj.xy))}@@"
 
-        if isinstance(obj, GameEntity):
+        elif isinstance(obj, GameEntity):
             return preprocess(obj.to_dict())
 
         return super().default(obj)
 
 
 def to_str(game_state: dict | list) -> str:
-    out = json.dumps(preprocess(game_state), indent=4, cls=Encoder)
-    return re.sub(r'"@@(.*?)@@"', r"[\1]", out)
+    out = json.dumps(
+        preprocess(game_state),
+        indent=4,
+        cls=Encoder
+    )
+    return re.sub(r'"@@(.*?)@@"', r'[\1]', out)

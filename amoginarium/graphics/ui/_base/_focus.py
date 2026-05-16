@@ -6,14 +6,16 @@ Created: 03.04.2026
 Authors: LukasKrah
 """
 
-import abc
 import typing as tp
+import abc
+
 
 if tp.TYPE_CHECKING:
     from ._ui_event_element import UIEventElement
 
 
-class _SharedFocusStructure(abc.ABC): ...
+class _SharedFocusStructure(abc.ABC):
+    ...
 
 
 class Focus(_SharedFocusStructure):

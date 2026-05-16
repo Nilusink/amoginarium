@@ -71,7 +71,7 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def _set_bit(self, param: str, bit_index: int, value: bool) -> None:
         """
-        Set (or reset) on a specified bit
+        set (or reset) on a specified bit
         :param param: what parameter to set the bit at
         :param bit_index: bit to set
         :param value: what to set the bit to
@@ -80,14 +80,14 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def add(self, *groups: tp.Any) -> None:
         """
-        Add entity to one or more logic groups
+        add entity to one or more logic groups
         :param groups: to add entity to
         """
         ...
 
     def remove(self, *groups: tp.Any) -> None:
         """
-        Remove entity from one or more logic groups
+        remove entity from one or more logic groups
         :param groups: to remove entity from
         """
         ...
@@ -130,11 +130,11 @@ class BaseLogicEntityLike(tp.Protocol):
         ...
 
     def highlight(self) -> None:
-        """Highlight the graphics entity"""
+        """highlight the graphics entity"""
         ...
 
     def stop_highlight(self) -> None:
-        """Stop highlighting the graphics entity"""
+        """stop highlighting the graphics entity"""
         ...
 
 
@@ -337,14 +337,14 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        Add velocity to the entity and guarantee that it will be valid (for short bursts)
+        add velocity to the entity and guarantee that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         ...
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         ...

@@ -7,18 +7,18 @@ edit maps
 Author:
 Nilusink
 """
-
 from contextlib import suppress
 
-import pygame as pg
 from icecream import ic
+import pygame as pg
 
 from amoginarium.base import BaseGame
+from amoginarium.logic.entities import Updated, CollisionDestroyed
 from amoginarium.graphics.ui import EventHandler
-from amoginarium.logic.entities import CollisionDestroyed, Updated
+from amoginarium.shared import pv, VisibleGameEntityLike, \
+    GameEntityLike
+from amoginarium.shared.utility import convert_coord, Vec2
 from amoginarium.logic.map import save_map
-from amoginarium.shared import GameEntityLike, VisibleGameEntityLike
-from amoginarium.shared.utility import Vec2, convert_coord
 
 
 def main() -> None:
@@ -57,15 +57,10 @@ def main() -> None:
         nonlocal last_mouse_pos, selected, selected_offset
 
         mouse_pos = event.pos
-        x = convert_coord(
-            (
-                (mouse_pos[0] / global_vars.pixel_per_meter)
-                * global_vars.screen_size_fac_x,
-                (mouse_pos[1] / global_vars.pixel_per_meter)
-                * global_vars.screen_size_fac_y,
-            ),
-            Vec2,
-        )
+        x = convert_coord((
+            (mouse_pos[0] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_x,
+            (mouse_pos[1] / global_vars.pixel_per_meter) * global_vars.screen_size_fac_y,
+        ), Vec2)
 
         # moving
         if pg.mouse.get_pressed()[0]:
@@ -92,29 +87,27 @@ def main() -> None:
         # entity highlight
         mouse_pos = x + Updated.world_position
 
-        if any(
-            [
-                not selected,
-                selected
-                and not CollisionDestroyed.point_in_sprite(selected, mouse_pos.xy),
-            ]
-        ):
+        if any([
+            not selected,
+            selected and not CollisionDestroyed.point_in_sprite(selected, mouse_pos.xy)
+        ]):
             for entity in Updated.entities():
                 entity: VisibleGameEntityLike
 
                 if hasattr(entity, "highlight"):
                     if CollisionDestroyed.point_in_sprite(entity, mouse_pos.xy):
                         if hasattr(entity, "mask"):
-                            top_left = convert_coord(entity.rect.topleft, Vec2)
+                            top_left = convert_coord(
+                                entity.rect.topleft,
+                                Vec2
+                            )
                             delta = mouse_pos - top_left
 
                             with suppress(IndexError):
                                 if entity.mask.get_at(delta.xy):
                                     entity.highlight()
                                     selected = entity
-                                    selected_offset = delta + (
-                                        entity.position - top_left
-                                    )
+                                    selected_offset = delta + (entity.position - top_left)
                                     break
 
                     entity.stop_highlight()
@@ -129,8 +122,8 @@ def main() -> None:
     EventHandler.add_event(pg.MOUSEMOTION, callback=handle_mouse)
 
     Updated.world_position.y = -(
-        (global_vars.screen_size.y / global_vars.pixel_per_meter)
-        - global_vars.screen_size.y
+            (global_vars.screen_size.y / global_vars.pixel_per_meter)
+            - global_vars.screen_size.y
     )
     global_vars.world_position.y = Updated.world_position.y
     while True:

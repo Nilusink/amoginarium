@@ -6,6 +6,5 @@ __init__.py
 Author:
 Nilusink
 """
-
-from ._charged_weapons import RailGun
 from ._weapons import HandThrownGrenade
+from ._charged_weapons import RailGun

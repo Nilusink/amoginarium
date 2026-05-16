@@ -11,28 +11,28 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
-from amoginarium.shared import PositionedLogicEntityLike
 from amoginarium.shared.utility import Vec2
+from amoginarium.shared import PositionedLogicEntityLike
 
 from ._base_group import BaseGroup
 from ._updated import Updated
 
+if tp.TYPE_CHECKING:
+    from ..._player import Player
+
 
 class _Bullets(BaseGroup[PositionedLogicEntityLike]):
     """Group containing all active bullet entities."""
-
     __slots__ = ()
 
 
 class _Walls(BaseGroup[PositionedLogicEntityLike]):
     """Group containing all static wall/collision entities."""
-
     __slots__ = ()
 
 
 class _Players(BaseGroup["Player"]):
     """Group containing all player entities and spawn logic."""
-
     __slots__ = ()
 
     _spawn_point: tp.ClassVar[Vec2 | None] = None
@@ -62,7 +62,7 @@ class _Players(BaseGroup["Player"]):
         :return: Vec2 representing the position of the rightmost player.
         """
         max_sprite = None
-        max_x = -float("inf")
+        max_x = -float('inf')
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -78,7 +78,7 @@ class _Players(BaseGroup["Player"]):
         :return: Vec2 representing the position of the leftmost player.
         """
         min_sprite = None
-        min_x = float("inf")
+        min_x = float('inf')
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -86,11 +86,7 @@ class _Players(BaseGroup["Player"]):
                 min_x = px
                 min_sprite = sprite
 
-        return (
-            min_sprite.position.copy()
-            if min_sprite
-            else Vec2().from_cartesian(float("inf"), float("inf"))
-        )
+        return min_sprite.position.copy() if min_sprite else Vec2().from_cartesian(float('inf'), float('inf'))
 
     def get_position_extremes(self) -> tuple[Vec2, Vec2]:
         """
@@ -99,8 +95,8 @@ class _Players(BaseGroup["Player"]):
         """
         max_sprite = None
         min_sprite = None
-        max_x = -float("inf")
-        min_x = float("inf")
+        max_x = -float('inf')
+        min_x = float('inf')
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -112,10 +108,8 @@ class _Players(BaseGroup["Player"]):
                 min_sprite = sprite
 
         return (
-            min_sprite.position.copy()
-            if min_sprite
-            else Vec2().from_cartesian(float("inf"), float("inf")),
-            max_sprite.position.copy() if max_sprite else Vec2(),
+            min_sprite.position.copy() if min_sprite else Vec2().from_cartesian(float('inf'), float('inf')),
+            max_sprite.position.copy() if max_sprite else Vec2()
         )
 
 

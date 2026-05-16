@@ -7,15 +7,14 @@ Defines the core game
 Author:
 Nilusink
 """
-
-import typing as tp
-from time import perf_counter_ns
 from traceback import format_exc
-
+from time import perf_counter_ns
 from icecream import ic
+import typing as tp
 
+
+from ._utils import get_caller_name, print_with_prefix
 from ._console_colors import CC, get_fg_color
-from ._utils import get_caller_name
 
 
 def run_with_debug(
@@ -23,12 +22,11 @@ def run_with_debug(
     show_finish: bool = False,
     show_args: bool = False,
     on_fail: tp.Callable[[Exception], tp.Any] = ...,
-    reraise_errors: bool = False,
+    reraise_errors: bool = False
 ):
     """
-    Run a function with debugging and exception printing
+    run a function with debugging and exception printing
     """
-
     def decorator[**A, R](func: tp.Callable[A, R]):
         def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
             # get caller name
@@ -51,12 +49,12 @@ def run_with_debug(
                     f"{get_fg_color(247)}{prefix_arrow}{CC.fg.GREEN}"
                     f"running {CC.fg.MAGENTA}{func_name}"
                     f"{get_fg_color(36)}, called by {CC.fg.MAGENTA}"
-                    f'{context["function"]}{get_fg_color(247)} in File "'
-                    f'{context["file"]}", line {CC.fg.MAGENTA}{context["line"]}'
-                    f"{get_fg_color(36)}"
-                    + (f" with {args, kwargs}" if show_args else "")
-                    + f"{CC.ctrl.ENDC}",
-                    color=False,
+                    f"{context["function"]}{get_fg_color(247)} in File \""
+                    f"{context["file"]}\", line {CC.fg.MAGENTA}{context["line"]}"
+                    f"{get_fg_color(36)}" +
+                    (f" with {args, kwargs}" if show_args else "") +
+                    f"{CC.ctrl.ENDC}",
+                    color=False
                 )
 
             # execute function
@@ -69,7 +67,7 @@ def run_with_debug(
                         f"{get_fg_color(247)}{prefix_arrow}{CC.fg.GREEN}"
                         f"finished {CC.fg.MAGENTA}{func_name}"
                         f"{CC.ctrl.ENDC}",
-                        color=False,
+                        color=False
                     )
 
                 return val
@@ -81,7 +79,7 @@ def run_with_debug(
                         f"{get_fg_color(36)}{prefix_time}"
                         f"{get_fg_color(247)}{prefix_arrow}{CC.fg.RED}"
                         f"{'':#>5} exception in {CC.fg.YELLOW}"
-                        f'"{func.__name__}"{CC.fg.RED} {"":#<5}\n'
+                        f"\"{func.__name__}\"{CC.fg.RED} {'':#<5}\n"
                         f"{format_exc()}{CC.ctrl.ENDC}"
                     )
 
@@ -92,15 +90,16 @@ def run_with_debug(
                     raise e
 
         return wrapper
-
     return decorator
 
 
-def timeit(times_run: int):
+def timeit(
+        times_run: int
+):
     def decorator[**A, R](func: tp.Callable[A, R]):
         def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
             start = perf_counter_ns()
-            for _ in range(times_run - 1):
+            for _ in range(times_run-1):
                 func(*args, **kwargs)
 
             result = func(*args, **kwargs)
@@ -120,9 +119,7 @@ def timeit(times_run: int):
             )
 
             return result
-
         return wrapper
-
     return decorator
 
 
@@ -130,7 +127,6 @@ class _CumTimer:
     """
     cumulative timing for all functions over one frame
     """
-
     def __init__(self) -> None:
         self._func_times: dict[str, list[float | int]] = {}
 
@@ -142,19 +138,18 @@ class _CumTimer:
             time_taken = (end - start) / 1000
 
             fname = func.__name__
-            if fname not in self._func_times:
+            if not fname in self._func_times:
                 self._func_times[fname] = [time_taken, 1]
                 return res
 
             self._func_times[fname][0] += time_taken
             self._func_times[fname][1] += 1
             return res
-
         return wrapper
 
     def get_times(self) -> dict[str, list[float | int]]:
         """
-        Get all cumulated times and reset
+        get all cumulated times and reset
         """
         out = {}
         for key in self._func_times:

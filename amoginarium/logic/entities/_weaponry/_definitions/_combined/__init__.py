@@ -7,5 +7,4 @@ grouped definitions for bullet+weapon+turret
 Author:
 Nilusink
 """
-
 from ._exacto import ExactoBullet, ExactoSniper, ExactoTurret

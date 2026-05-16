@@ -7,26 +7,18 @@ all controller types should inherit from this
 Author:
 Nilusink
 """
-
+from icecream import ic
 import typing as tp
 
-from icecream import ic
-
-from amoginarium import pv
-from amoginarium.shared import (
-    MAX_CONTROLLERS,
-    Controls,
-    ProcessCommand,
-    ProcessCommandType,
-)
+from amoginarium.shared import MAX_CONTROLLERS, Controls, ProcessCommandType, ProcessCommand
 from amoginarium.shared.utility import Vec2
+from amoginarium import pv
 
 
 class _Controllers:
     """
     a collection of all controllers
     """
-
     _controllers: list["Controller"]
     _callbacks: dict[int, tp.Callable]
 
@@ -41,13 +33,13 @@ class _Controllers:
 
     def exists(self, cid: str) -> bool:
         """
-        Checks if a controller already exists
+        checks if a controller already exists
         """
         return cid in [c.id for c in self._controllers]
 
     def get_by_id(self, cid: str) -> tp.Union["Controller", None]:
         if not self.exists(cid):
-            raise ValueError(f'No controller with id "{cid}" exists!')
+            raise ValueError(f"No controller with id \"{cid}\" exists!")
 
         for controller in self._controllers:
             if controller.id == cid:
@@ -61,40 +53,47 @@ class _Controllers:
                 self._used_ids.add(i)
                 return i
 
-        raise RuntimeError("controller limit reached")
+        else:
+            raise RuntimeError("controller limit reached")
 
     def append(self, controller: "Controller") -> None:
         """
-        Add a new controller to the group
+        add a new controller to the group
         """
         self._controllers.append(controller)
         self._on_new_controller(controller)
 
         # set shm_id of controller
         cid = self.__get_id()
-        controller.controls.init(cid, pv.C_BUFF, True)
-
-        pv.COQ.put(
-            ProcessCommand(
-                type=ProcessCommandType.spawn_player, kwargs={"controller_id": cid}
-            )
+        controller.controls.init(
+            cid,
+            pv.C_BUFF,
+            True
         )
 
+        pv.COQ.put(ProcessCommand(
+            type=ProcessCommandType.spawn_player,
+            kwargs={"controller_id": cid}
+        ))
+
     def update(self) -> None:
-        """Update all controllers"""
+        """update all controllers"""
         for controller in self._controllers:
             controller.update(0)
 
     def _on_new_controller(self, controller: "Controller") -> None:
         """
-        Actual callback method
+        actual callback method
         """
         for callback in self._callbacks.values():
             callback(controller)
 
-    def on_new_controller(self, callback: tp.Callable[["Controller"], tp.Any]) -> int:
+    def on_new_controller(
+        self,
+        callback: tp.Callable[["Controller"], tp.Any]
+    ) -> int:
         """
-        Add a callback for adding new controllers
+        add a callback for adding new controllers
         """
         if len(self._callbacks) == 0:
             new_id = 0
@@ -108,7 +107,7 @@ class _Controllers:
 
     def remove_callback(self, cid: int) -> None:
         """
-        Remove a callback with it's callback-id
+        remove a callback with it's callback-id
         """
         if cid in self._callbacks:
             self._callbacks.pop(cid)
@@ -117,7 +116,7 @@ class _Controllers:
         raise ValueError(f"Invalid cid: {cid}")
 
     def reset(self) -> None:
-        """Reset all controllers"""
+        """reset all controllers"""
         self._controllers.clear()
         self._used_ids.clear()
 
@@ -129,7 +128,7 @@ class Controller:
     _keys: Controls
 
     def __new__(cls, *args, **kwargs):
-        return super().__new__(cls)
+        return super(Controller, cls).__new__(cls)
 
     @classmethod
     def get(cls, cid: str, *args, **kwargs) -> "Controller":
@@ -137,11 +136,9 @@ class Controller:
         ic("called base cls.get with id ", cid)
         if Controllers.exists(cid):
             ic("re-linking already existing controller", cid)
-            pv.COQ.put(
-                ProcessCommand(
-                    type=ProcessCommandType.spawn_player, kwargs={"controller_id": cid}
-                )
-            )
+            pv.COQ.put(ProcessCommand(
+                type=ProcessCommandType.spawn_player, kwargs={"controller_id": cid}
+            ))
             return Controllers.get_by_id(cid)
 
         ic("create instance in cls.get()")
@@ -167,7 +164,7 @@ class Controller:
     @property
     def id(self) -> str:
         """
-        Unique id
+        unique id
         """
         return self._id
 
@@ -243,10 +240,10 @@ class Controller:
         y_deadzone: float = 0,
         x_saturation: float = 1,
         y_saturation: float = 1,
-        curve: float = 0,  # TODO: curve
+        curve: float = 0  # TODO: curve
     ) -> float:
         """
-        Apply a specific curve for joystick values (rangin from -1 to 1)
+        apply a specific curve for joystick values (rangin from -1 to 1)
 
         :param value: value to process
         :param x_deadzone: percentage of how much input shuold be ignore
@@ -275,7 +272,10 @@ class Controller:
 
         # look, I just tried putting the variables in random orders and somehow
         # it workd, I never even knew why
-        value = max(0, abs(value) - x_deadzone) * (
+        value = max(
+            0,
+            abs(value) - x_deadzone
+        ) * (
             (1 - y_deadzone) / (x_saturation - x_deadzone)
         )
 
@@ -291,13 +291,18 @@ class Controller:
 
     def update(self, delta: float) -> None:
         """
-        Update the control inputs
+        update the control inputs
         """
         raise NotImplementedError("tried to call base-controller update")
 
-    def rumble(self, low_frequency, high_frequency, duration) -> None:
+    def rumble(
+        self,
+        low_frequency,
+        high_frequency,
+        duration
+    ) -> None:
         """
-        Start joystick vibration
+        start joystick vibration
 
         :param low_frequency:
         :param high_frequency:
@@ -308,33 +313,33 @@ class Controller:
 
     def stop_rumble(self) -> None:
         """
-        Stop joystick vibration
+        stop joystick vibration
         """
         if self.on_stop_rumble is not ...:
             self.on_stop_rumble()
 
     def feedback_collide(self) -> None:
         """
-        When the player hits a wall
+        when the player hits a wall
         """
 
     def feedback_shoot(self) -> None:
         """
-        Controller input on shoot
+        controller input on shoot
         """
         if self.on_feedback_shoot is not ...:
             self.on_feedback_shoot()
 
     def feedback_hit(self) -> None:
         """
-        Controller input on hit
+        controller input on hit
         """
         if self.on_feedback_hit is not ...:
             self.on_feedback_hit()
 
     def feedback_heal_start(self) -> None:
         """
-        Controller input on heal start
+        controller input on heal start
         """
         if self._heal_running:
             return
@@ -346,7 +351,7 @@ class Controller:
 
     def feedback_heal_stop(self) -> None:
         """
-        Controller input on heal stop
+        controller input on heal stop 
         """
         if not self._heal_running:
             return
@@ -357,7 +362,7 @@ class Controller:
             self.on_feedback_heal_stop()
 
     def __str__(self) -> str:
-        return f'<{self.__class__.__name__}, id="{self.id}">'
+        return f"<{self.__class__.__name__}, id=\"{self.id}\">"
 
     def __repr__(self) -> str:
         return self.__str__()
