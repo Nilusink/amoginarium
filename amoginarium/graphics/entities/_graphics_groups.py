@@ -8,8 +8,9 @@ Author:
 Nilusink
 """
 
-import pygame as pg
 import typing as tp
+
+import pygame as pg
 
 
 class BaseGroup(pg.sprite.Group):

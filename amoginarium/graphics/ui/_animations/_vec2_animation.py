@@ -12,9 +12,9 @@ from amoginarium.shared.utility import Vec2
 
 from ._animation_types import (
     AnimatedVec2Values,
-    anim_vec2_values_t,
-    anim_vec2_t,
     anim_input_t,
+    anim_vec2_t,
+    anim_vec2_values_t,
 )
 from ._multi_animation import MultiAnimation
 
@@ -55,7 +55,7 @@ class Vec2Animation(MultiAnimation):
 
         # Pull current values from MultiAnimation to initialize the vector
         current = super().current_value
-        self.__vec2.xy = current if current else (0.0, 0.0)
+        self.__vec2.xy = current or (0.0, 0.0)
 
     def update(self, delta: float) -> Vec2:
         """

@@ -8,20 +8,21 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from icecream import ic  # noqa: F401
-import typing as tp
 import math as m
+import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, Color, WtfError, convert_coord, RTD, PI
-from amoginarium.shared import WeaponCIDs
+from icecream import ic  # noqa: F401
+
 from amoginarium import pv
+from amoginarium.shared import WeaponCIDs
+from amoginarium.shared.utility import PI, RTD, Color, Vec2, WtfError, convert_coord
 
-from ..entities import Drawn_1, Drawn_0, Drawn_2
+from ..entities import Drawn_0, Drawn_1, Drawn_2
 from ..render_bindings import renderer
 from ..textures import textures
-from ._synced_entities import SyncedLRImageEntity, Iconifyable
 from ._bullet import BulletDummy
+from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
 
 class WeaponDummy(Iconifyable, SyncedLRImageEntity):
@@ -44,7 +45,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     _texture_id_r: tp.ClassVar[int | EllipsisType] = ...
 
     # visible bullet params
-    _bullet_type: tp.ClassVar[tp.Type[BulletDummy]] = BulletDummy
+    _bullet_type: tp.ClassVar[type[BulletDummy]] = BulletDummy
     _bullet_visible: tp.ClassVar[bool] = False
     _bullet_mount_point: tp.ClassVar[tuple[int, int] | EllipsisType] = ...
     # endregion
@@ -56,7 +57,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     @classmethod
     def load_textures(cls) -> None:
         """
-        load weapon textures
+        Load weapon textures
 
         .. note:: only execute once!
         """

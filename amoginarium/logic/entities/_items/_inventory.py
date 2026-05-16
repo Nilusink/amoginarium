@@ -10,13 +10,12 @@ Nilusink
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2
-from amoginarium.shared import ItemSlot, INVENTORY_COUNTER
 from amoginarium import pv
+from amoginarium.shared import INVENTORY_COUNTER, ItemSlot
+from amoginarium.shared.utility import Vec2
 
 from .._base import LogicGameEntity
 from ._item import Item
-
 
 type item_t = Item | None
 
@@ -67,7 +66,7 @@ class Inventory:
     # region flag access
     def _set_flag(self, flag_id: int, value: bool) -> None:
         """
-        set (or reset) a specified flag
+        Set (or reset) a specified flag
 
         :param flag_id: the flag to set
         :param value: what to set the flag to
@@ -85,7 +84,7 @@ class Inventory:
     # region slot hover
     def _slot_hover(self, slot_id: int) -> None:
         """
-        called when a slot is hovered
+        Called when a slot is hovered
         """
         if self._callbacks["select"] is not ...:
             self._callbacks["select"](self.get_slot(slot_id))
@@ -118,7 +117,7 @@ class Inventory:
     # region logic interface
     def add_item(self, item: item_t, count: int = 1) -> int:
         """
-        add an item to the inventory.
+        Add an item to the inventory.
         :returns: -1 if fail else item id
         """
         if self.slots_used < self._num_slots:
@@ -126,12 +125,11 @@ class Inventory:
             self.set_slot(item_id, item, count)
             return item_id
 
-        else:
-            return -1
+        return -1
 
     def try_add_item(self, item: item_t, count: int = 1) -> int:
         """
-        tries to add the item to the inventory. returns -1 if fail
+        Tries to add the item to the inventory. returns -1 if fail
         """
         if self.slots_used < self._num_slots:
             for i, slot in enumerate(self._slots):
@@ -162,7 +160,7 @@ class Inventory:
 
     def set_slot(self, slot_id: int, item: item_t, count: int = 1) -> None:
         """
-        clear said slot and set it to the new item
+        Clear said slot and set it to the new item
         """
         self.clear_slot(slot_id)
 
@@ -196,7 +194,7 @@ class Inventory:
 
     def clear_slot(self, slot_id: int) -> None:
         """
-        remove item from slot
+        Remove item from slot
         """
         if not self._slots[slot_id].item:
             return
@@ -223,19 +221,19 @@ class Inventory:
 
     # region graphics interface
     def show(self) -> None:
-        """show the inventory"""
+        """Show the inventory"""
         self._set_flag(1, True)
 
     def hide(self) -> None:
-        """hide the inventory"""
+        """Hide the inventory"""
         self._set_flag(1, False)
 
     def set_highlight(self, slot: int) -> None:
-        """set one slot to be highlighted"""
+        """Set one slot to be highlighted"""
         self._buff.selected = slot
 
     def kill(self) -> None:
-        """kill the inventory"""
+        """Kill the inventory"""
         self._set_flag(0, False)
 
     # endregion

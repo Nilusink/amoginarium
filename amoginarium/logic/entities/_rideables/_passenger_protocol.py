@@ -9,6 +9,7 @@ Nilusink
 """
 
 from __future__ import annotations
+
 import typing as tp
 
 from .. import LogicGameEntity
@@ -25,7 +26,7 @@ class Passenger:
     # endregion
 
     # region InstanceVars
-    _controlled_entity: list["RideableGameEntity"]
+    _controlled_entity: list[RideableGameEntity]
     _current_observe_time: float  # endregion
 
     def __init__(self, *args, **kwargs) -> None:
@@ -38,18 +39,18 @@ class Passenger:
 
     @property
     def is_passenger(self) -> bool:
-        """true if currently riding something"""
+        """True if currently riding something"""
         return len(self._controlled_entity) > 0
 
     @property
     def is_controlled(self) -> bool:
-        """true if riding and being controlled"""
+        """True if riding and being controlled"""
         ce = self.controlled_entity
         return ce is not None and ce.control_authority
 
     @property
-    def controlled_entity(self) -> tp.Union["RideableGameEntity", None]:
-        """get currently ridden entity"""
+    def controlled_entity(self) -> RideableGameEntity | None:
+        """Get currently ridden entity"""
         if len(self._controlled_entity) > 0:
             return self._controlled_entity[-1]
 
@@ -57,7 +58,7 @@ class Passenger:
 
     def set_controlled_entity(self, entity: RideableGameEntity) -> bool:
         """
-        set currently ridden entity
+        Set currently ridden entity
 
         :param entity: must be "RideablePerks"
         :return: true if success
@@ -70,12 +71,11 @@ class Passenger:
 
     def clear_controlled_entity(self, to_clear: RideableGameEntity) -> bool:
         """
-        clear currently ridden entity
+        Clear currently ridden entity
 
         :param to_clear: entity to clear from stack
         :returns: true if success
         """
-
         if to_clear in self._controlled_entity:
             self._controlled_entity.remove(to_clear)
             return True
@@ -83,7 +83,7 @@ class Passenger:
         return False
 
     def update_passenger(self, delta: float) -> None:
-        """update"""
+        """Update"""
         for i, e in enumerate(self._controlled_entity):
             e: LogicGameEntity
             if not e.alive:

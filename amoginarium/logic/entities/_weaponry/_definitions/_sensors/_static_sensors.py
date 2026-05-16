@@ -8,18 +8,23 @@ Author:
 Nilusink
 """
 
-from ctypes import Array
 import typing as tp
+from ctypes import Array
 
-from amoginarium.shared import SensorCIDs, base_entity_t, ProcessCommand
-from amoginarium.shared import BaseCommandType, Coalitions, DummyCIDs
+from amoginarium import pv
+from amoginarium.shared import (
+    BaseCommandType,
+    Coalitions,
+    DummyCIDs,
+    ProcessCommand,
+    SensorCIDs,
+    base_entity_t,
+)
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
-from amoginarium import pv
 
-from ...._base import LogicGameEntity, GameCollisions
-from ...templates import DetectionGroup, BaseSensor
-from ...templates import MagicSensor, RadarSensor
+from ...._base import GameCollisions, LogicGameEntity
+from ...templates import BaseSensor, DetectionGroup, MagicSensor, RadarSensor
 
 if tp.TYPE_CHECKING:
     from ...templates import Bullet
@@ -29,7 +34,7 @@ class VisualSensor(LogicGameEntity):
     __slots__ = ("detection_group", "coalition", "_hp")
 
     _CID = SensorCIDs.magic
-    _sensor_type: tp.Type[BaseSensor] = MagicSensor
+    _sensor_type: type[BaseSensor] = MagicSensor
     _size: tuple[float, float] = (64, 64)
     _max_hp = 40
 

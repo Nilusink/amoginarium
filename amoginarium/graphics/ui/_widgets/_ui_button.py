@@ -10,21 +10,21 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import convert_color, coord_t, Color, color_t
+from amoginarium.shared.utility import Color, color_t, convert_color, coord_t
 
-from ...render_bindings import renderer
 from ...logic_dummies import PresetGraphicsSoundEffect
+from ...render_bindings import renderer
 from .._animations import (
-    anim_color_values_t,
-    anim_float_values_t,
     AnimatedColorValues,
     AnimatedFloatValues,
-    peaked_s_curve,
-    anim_vec2_values_t,
     AnimatedVec2Values,
+    anim_color_values_t,
+    anim_float_values_t,
+    anim_vec2_values_t,
+    peaked_s_curve,
 )
-from .._types import Anchor, Positions
 from .._base import UIEntity
+from .._types import Anchor, Positions
 from ._ui_rectangle import UIRectangle
 
 
@@ -118,7 +118,7 @@ class UIButton(UIRectangle):
         on_click_sound: PresetGraphicsSoundEffect | None = ButtonClickSound,
     ) -> None:
         """
-        a button, what did you expect?
+        A button, what did you expect?
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
         :param parent: Optional parent UI-Entity

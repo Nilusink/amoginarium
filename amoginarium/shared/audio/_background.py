@@ -9,6 +9,7 @@ Nilusink
 """
 
 from random import randint
+
 import pygame as pg
 
 from ._sounds import sounds
@@ -22,7 +23,7 @@ class BackgroundPlayer:
 
     def assign_scope(self, scope: str) -> None:
         """
-        select a scope to play background songs from
+        Select a scope to play background songs from
         """
         for sound in sounds.get_all_from_scope(scope):
             self._sound_files.append(sound)
@@ -42,7 +43,7 @@ class BackgroundPlayer:
 
     def update(self) -> None:
         """
-        checks if the sound is done and plays another one
+        Checks if the sound is done and plays another one
         """
         if self._playing is ... or not self._playing.get_busy():
             self.start()

@@ -10,8 +10,7 @@ import typing as tp
 
 from amoginarium.shared import SensorCIDs
 
-from ...._base import LogicGameEntity
-from ...._base import Players, Bullets
+from ...._base import Bullets, LogicGameEntity, Players
 from ._base_sensor import BaseSensor
 
 

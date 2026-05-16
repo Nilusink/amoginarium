@@ -8,13 +8,13 @@ Authors: LukasKrah
 
 from ctypes import Array
 
-from amoginarium.shared.utility import Vec2
-from amoginarium.shared import base_entity_t, ItemCIDs
 from amoginarium import pv
-
+from amoginarium.shared import ItemCIDs, base_entity_t
 from amoginarium.shared.audio import RocketSound
-from ._something import Something
+from amoginarium.shared.utility import Vec2
+
 from .._base import GameCollisions
+from ._something import Something
 
 
 class JetBag(Something):

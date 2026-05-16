@@ -7,23 +7,23 @@ Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
-from ctypes import Array
+
 import typing as tp
+from ctypes import Array
+
 import numpy as np
 
+from amoginarium.shared import Coalitions, DummyCIDs, base_entity_t
 from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import DummyCIDs
 
-from ...._base import GravityAffected, GameCollisions
-from ...._base import LogicGameEntity
+from ...._base import GameCollisions, LogicGameEntity
 from ...templates import Bullet
 
 if tp.TYPE_CHECKING:
-    from ...._world import Island
-    from ...._player import Player
     from ...._items import Shield
+    from ...._player import Player
+    from ...._world import Island
 
 
 class _GrenadeShrapnel(Bullet):
@@ -90,7 +90,7 @@ class Grenade(Bullet):
             **kwargs,
         )
 
-    def __on_collision_island(self, event: CollisionEvent["Island"]) -> None:
+    def __on_collision_island(self, event: CollisionEvent[Island]) -> None:
         self.position.x = event.position.x
         self.position.y = event.position.y
 
@@ -114,12 +114,12 @@ class Grenade(Bullet):
     def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
         self.hit(event.other_entity.damage, event.other_entity)
 
-    def __on_collision_player(self, event: CollisionEvent["Player"]) -> None:
+    def __on_collision_player(self, event: CollisionEvent[Player]) -> None:
         if self._lifetime > 0.5:
             self.add_velocity(event.other_entity.velocity)
             self.add_velocity(Vec2().from_cartesian(0, -200))
 
-    def __on_collision_shield(self, event: CollisionEvent["Shield"]) -> None:
+    def __on_collision_shield(self, event: CollisionEvent[Shield]) -> None:
         self.position.x = event.position.x
         self.position.y = event.position.y
 
@@ -180,9 +180,8 @@ class Grenade(Bullet):
         super()._update(delta)
 
     def _kill(self, killed_by: tp.Any = ...):
-        if killed_by is not ...:
-            if issubclass(killed_by.__class__, Bullet):
-                self._time_to_life = 0
+        if killed_by is not ... and issubclass(killed_by.__class__, Bullet):
+            self._time_to_life = 0
 
         if self._time_to_life > 0:
             return False
@@ -191,7 +190,7 @@ class Grenade(Bullet):
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         x = value.x
@@ -209,7 +208,7 @@ class Grenade(Bullet):
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         x = value.x

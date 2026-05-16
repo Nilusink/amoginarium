@@ -6,11 +6,10 @@ Created: 13.04.2026
 Authors: LukasKrah
 """
 
-import typing as tp
 import ctypes
+import typing as tp
 
 from amoginarium.shared.utility import Vec2
-
 
 MONITOR_DEFAULTTONEAREST = 2
 

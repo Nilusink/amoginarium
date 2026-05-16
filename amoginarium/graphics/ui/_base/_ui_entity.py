@@ -8,8 +8,8 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
 from ...entities import BaseGraphicsEntity
 
@@ -27,7 +27,7 @@ class UIEntity(BaseGraphicsEntity):
     _root_visibility: bool
     __visibility_change_root: bool
 
-    __next_ui_element_parent: UIElement | None | EllipsisType
+    __next_ui_element_parent: UIElement | EllipsisType | None
 
     def __init__(self, *, parent: UIEntity | None = None) -> None:
         """
@@ -112,13 +112,12 @@ class UIEntity(BaseGraphicsEntity):
         if not recursive:
             if not self._root_visibility:
                 self.__check_root_visibility()
+        elif attach_to_parent:
+            if not self._root_visibility:
+                self._set_visibility_recursive(None, is_caller=True)
+                self._root_visibility = True
         else:
-            if attach_to_parent:
-                if not self._root_visibility:
-                    self._set_visibility_recursive(None, is_caller=True)
-                    self._root_visibility = True
-            else:
-                self._set_visibility_recursive(value, is_caller=True)
+            self._set_visibility_recursive(value, is_caller=True)
 
     def hide(
         self, recursive: bool = False, attach_to_parent: bool = True, reset: bool = True
@@ -234,8 +233,7 @@ class UIEntity(BaseGraphicsEntity):
         """:return: Next UI-Element in the parent chain or None if there is none"""
         if self._parent is not None:
             return self._parent._next_ui_element_parent_recursion()
-        else:
-            return None
+        return None
 
     @property
     def _next_ui_element_parent(self) -> UIElement | None:

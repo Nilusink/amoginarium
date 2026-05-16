@@ -10,7 +10,6 @@ Nilusink
 
 import os
 import typing as tp
-from icecream import ic
 
 
 class BetterDict:

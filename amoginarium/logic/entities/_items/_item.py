@@ -8,23 +8,23 @@ Author:
 Nilusink, LukasKrah
 """
 
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
 import math as m
+import typing as tp
+from ctypes import Array
+from types import EllipsisType
 
-from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType
-from amoginarium.shared.utility import Vec2
-from amoginarium import pv
 from shared.collision_detection import CollisionEvent
 
+from amoginarium import pv
+from amoginarium.shared import BaseCommandType, ProcessCommand, base_entity_t
+from amoginarium.shared.utility import Vec2
+
 from .._base import (
-    GravityAffected,
-    Updated,
-    LogicGameEntity,
-    GameCollisions,
     CollisionType,
-    CollisionLogicEntity,
+    GameCollisions,
+    GravityAffected,
+    LogicGameEntity,
+    Updated,
 )
 
 if tp.TYPE_CHECKING:
@@ -86,7 +86,7 @@ class Item(LogicGameEntity):
         return self._current_timeout <= 0
 
     def set_parent(self, parent: LogicGameEntity) -> None:
-        """assign parent to item and remove own physics"""
+        """Assign parent to item and remove own physics"""
         self._change_parent(parent)
         self._set_bit("flags", 15, True)
         self.remove(GravityAffected, Updated)
@@ -103,7 +103,7 @@ class Item(LogicGameEntity):
         return None
 
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
-        """remove parent from item and run own physics"""
+        """Remove parent from item and run own physics"""
         self._change_parent(None)
         self._set_bit("flags", 15, False)
         self.acceleration *= 0

@@ -8,14 +8,14 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared.utility import Vec2, PI_2, clamp_angle
 from amoginarium.shared import WeaponSensorCIDs
+from amoginarium.shared.collision_detection import CollisionEvent
+from amoginarium.shared.utility import PI_2, Vec2, clamp_angle
 
-from ....._base import GameCollisions, DebugPolygonEntity
+from ....._base import DebugPolygonEntity, GameCollisions
 from ._base import BaseWeaponsSensor
 
 if tp.TYPE_CHECKING:
@@ -37,7 +37,7 @@ class HeatSeeker(BaseWeaponsSensor):
         function_delay: float = 0,
     ) -> None:
         """
-        homes in on a designated laser
+        Homes in on a designated laser
 
         :param parent: parent bullet
         :param offset: offset from parent

@@ -9,12 +9,12 @@ Nilusink
 """
 
 from __future__ import annotations
+
+import typing as tp
 from dataclasses import dataclass
 from time import perf_counter
-import typing as tp
 
 from ...._base import Bullets, Players
-
 from ._base_sensor import BaseSensor
 
 if tp.TYPE_CHECKING:
@@ -61,7 +61,7 @@ class _DetectionGroupManager:
 
     def update_detection(self) -> None:
         """
-        ask all sensors to get their targeting information
+        Ask all sensors to get their targeting information
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
@@ -73,7 +73,7 @@ class _DetectionGroupManager:
 
     def reset(self) -> None:
         """
-        reset all target groups each loop so targets won't
+        Reset all target groups each loop so targets won't
         be visible forever
         """
         for group in self._detection_groups:
@@ -127,7 +127,7 @@ class DetectionGroup:
         detector: PositionedLogicEntity,
     ) -> None:
         """
-        add target to detection scope
+        Add target to detection scope
         """
         if isinstance(target, tp.Iterable):
             for t in target:
@@ -144,14 +144,14 @@ class DetectionGroup:
 
     def add_sensor(self, sensor: BaseSensor) -> None:
         """
-        adds a sensor to detection scope
+        Adds a sensor to detection scope
         """
         self._sensors.append(sensor)
         sensor.group_add(self)
 
     def remove_sensor(self, sensor: BaseSensor) -> None:
         """
-        remove a sensor
+        Remove a sensor
         """
         if sensor in self._sensors:
             self._sensors.remove(sensor)
@@ -163,7 +163,7 @@ class DetectionGroup:
         self, from_entities: tp.Iterable[PositionedLogicEntity] = None
     ) -> None:
         """
-        ask all sensors to get their targeting information
+        Ask all sensors to get their targeting information
         """
         for sensor in self._sensors:
             self.add_target(sensor.get_targets(from_entities), sensor.parent)

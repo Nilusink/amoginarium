@@ -8,8 +8,9 @@ Author:
 Nilusink
 """
 
-import matplotlib.pyplot as plt
 import json
+
+import matplotlib.pyplot as plt
 
 red = "tab:red"
 data = json.load(open("graphic_debug.json", "r"))

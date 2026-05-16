@@ -8,11 +8,10 @@ Author:
 Nilusink
 """
 
-from multiprocessing.shared_memory import SharedMemory
-from multiprocessing import shared_memory, Lock
-import typing as tp
 import ctypes
-
+import typing as tp
+from multiprocessing import Lock, shared_memory
+from multiprocessing.shared_memory import SharedMemory
 
 # region constants
 MAX_ENTITIES: int = 32_000

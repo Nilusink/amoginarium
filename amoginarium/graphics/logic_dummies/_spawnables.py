@@ -9,32 +9,37 @@ Nilusink
 """
 
 from icecream import ic  # noqa: F401
-import typing as tp
 
-from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
+from amoginarium.shared.param_entities import ProcessType, load_entities_from_files
 
-from ._synced_entities import SyncedGraphicsEntity
-from ._player import PlayerDummy
-from ._bullet import BulletDummy, Grenade
-from ._turrets import BaseTurretDummy, ExactoSniperTurretDummy, RideableTurret
-from ._turrets import CalculatedRideableTurretDummy
-from ._weapons import HandThrownGrenade, ExactoSniper, WeaponDummy
-from ._sensors import SensorHUD, RadarSensorHUD, MagicSensorHUD, VisualSensorHUD
-from ._items import Shield, HealingPotion, JetBag
-from ._debug_rendering import DebugRectangleEntity, DebugPolygonEntity
-from ._debug_rendering import DebugCircleEntity
-from ._charged_weapons import RailGunDummy
-from ._text_entity import TextEntity
 from ._aero import AeroDummy
+from ._bullet import BulletDummy, Grenade
+from ._charged_weapons import RailGunDummy
+from ._debug_rendering import (
+    DebugCircleEntity,
+    DebugPolygonEntity,
+    DebugRectangleEntity,
+)
+from ._items import HealingPotion, JetBag, Shield
 from ._missiles import (
-    MultiStageMissileDummy,
     GuidedMultiStageMissileDummy,
+    MultiStageMissileDummy,
     MultiThrusterMissileDummy,
     PlayerControlledMissileDummy,
 )
+from ._player import PlayerDummy
+from ._sensors import MagicSensorHUD, RadarSensorHUD, SensorHUD, VisualSensorHUD
+from ._synced_entities import SyncedGraphicsEntity
+from ._text_entity import TextEntity
+from ._turrets import (
+    BaseTurretDummy,
+    CalculatedRideableTurretDummy,
+    ExactoSniperTurretDummy,
+    RideableTurret,
+)
+from ._weapons import ExactoSniper, HandThrownGrenade, WeaponDummy
 
-
-GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
+GRAPHICS_SPAWNABLES: dict[str, type[SyncedGraphicsEntity]] = {
     e.cid(): e
     for e in [
         WeaponDummy,

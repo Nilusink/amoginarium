@@ -6,8 +6,8 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
 from ._animation_types import AnimationPhase, anim_curve_t
 from ._simple_animation import SimpleAnimation
@@ -92,8 +92,7 @@ class ComplexAnimation(SimpleAnimation):
         """
         if self._start_value == self._end_value:
             return 1.0
-        else:
-            return value_progress / (self._end_value - self._start_value)
+        return value_progress / (self._end_value - self._start_value)
 
     def extend(self) -> None:
         """Start extending from current to end value"""

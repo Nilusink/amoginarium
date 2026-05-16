@@ -8,13 +8,13 @@ Author:
 Nilusink
 """
 
-import typing as tp
 import math as m
+import typing as tp
 
-from amoginarium.shared.utility import Vec2, Color, normalize_angle
 from amoginarium.shared import ItemCIDs
+from amoginarium.shared.utility import Color, Vec2, normalize_angle
 
-from ..entities import Drawn_1, Drawn_0, Animation
+from ..entities import Animation, Drawn_0, Drawn_1
 from ..render_bindings import renderer
 from ..textures import textures
 from ._synced_entities import Iconifyable, SyncedLRImageEntity
@@ -36,7 +36,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        """load textures for class"""
+        """Load textures for class"""
         if cls._texture_id_r is not ...:
             return
 

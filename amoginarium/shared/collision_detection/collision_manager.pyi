@@ -1,5 +1,7 @@
 import typing as tp
+
 from amoginarium.shared.utility import Vec2
+
 from .collision_event import CollisionCallback, CollisionEvent
 
 class CollisionManager:

@@ -8,11 +8,11 @@ Authors: LukasKrah
 
 import typing as tp
 
-from amoginarium.shared.utility import coord_t, color_t
+from amoginarium.shared.utility import color_t, coord_t
 
-from .._base import UIEntity, UIEventElement
 from ...render_bindings import renderer
-from .._types import Positions, Anchor
+from .._base import UIEntity, UIEventElement
+from .._types import Anchor, Positions
 
 
 class UIStaticText(UIEventElement):

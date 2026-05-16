@@ -8,35 +8,41 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
-from time import perf_counter
-from icecream import ic
-import typing as tp
-import numpy as np
 import inspect
+import typing as tp
+from time import perf_counter
+from types import EllipsisType
 
-from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs
-from amoginarium.shared.audio import LargeExplosion, DistantPop
-from amoginarium.shared.utility import Vec2, get_default
-from amoginarium.shared.debugging import print_ic_style
+import numpy as np
+
 from amoginarium import pv
+from amoginarium.shared import BaseCommandType, DummyCIDs, ProcessCommand
+from amoginarium.shared.audio import DistantPop, LargeExplosion
+from amoginarium.shared.debugging import print_ic_style
+from amoginarium.shared.utility import Vec2, get_default
 
-from .._weapon_actors.fuzes import BaseFuze, TTLFuze, PositionFuze, ProximityFuze, FUZES
-from ...._base import Bullets, Updated, GravityAffected, BaseGroup
-from ...._base import LogicGameEntity, GameCollisions
+from ...._base import (
+    BaseGroup,
+    Bullets,
+    GameCollisions,
+    GravityAffected,
+    LogicGameEntity,
+    Updated,
+)
+from .._weapon_actors.fuzes import FUZES, BaseFuze
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
+    from amoginarium.shared import CIDType, Coalitions, base_entity_t
     from amoginarium.shared.collision_detection import CollisionEvent
-    from amoginarium.shared import base_entity_t, Coalitions, CIDType
 
     from ...._base import CollisionType
-    from .._turrets import BaseTurret
-    from ..._definitions import Grenade
+    from ...._items import Shield
     from ...._player import Player
     from ...._world import Island
-    from ...._items import Shield
+    from ..._definitions import Grenade
+    from .._turrets import BaseTurret
 
 
 SQR2: tp.Final[np.float64] = np.sqrt(2)
@@ -69,7 +75,7 @@ class Bullet(LogicGameEntity):
     _default_cluster_step_explosion: tp.ClassVar[float] = 10
     _default_cluster_size_mult: tp.ClassVar[float] = 1
     _default_cluster_last_step_ttl: tp.ClassVar[float] = -1
-    _default_cluster_bullet_type: tp.ClassVar[tp.Type[Bullet] | EllipsisType] = ...
+    _default_cluster_bullet_type: tp.ClassVar[type[Bullet] | EllipsisType] = ...
     _default_cluster_step_inertia: tp.ClassVar[float] = 0
     _default_size: tp.ClassVar[Vec2 | int] = 10
     _default_visibility_offset: tp.ClassVar[float] = 0
@@ -126,7 +132,7 @@ class Bullet(LogicGameEntity):
     _cluster_step_explosion: float
     _cluster_size_mult: float
     _cluster_last_step_ttl: float
-    _cluster_bullet_type: tp.Type[Bullet]
+    _cluster_bullet_type: type[Bullet]
     _cluster_step_inertia: float
     _visibility_offset: float
     _invincibility_offset: float
@@ -170,7 +176,7 @@ class Bullet(LogicGameEntity):
         cluster_step_explosion: float | EllipsisType = ...,
         cluster_size_mult: float | EllipsisType = ...,
         cluster_last_step_ttl: float | EllipsisType = ...,
-        cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...,
+        cluster_bullet_type: type[Bullet] | EllipsisType = ...,
         cluster_step_inertia: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
         size: Vec2 | int | EllipsisType = ...,
@@ -254,7 +260,7 @@ class Bullet(LogicGameEntity):
             cluster_last_step_ttl, self._default_cluster_last_step_ttl
         )
         bullet_default = get_default(self._default_cluster_bullet_type, self.__class__)
-        self._cluster_bullet_type: tp.Type[Bullet] = get_default(
+        self._cluster_bullet_type: type[Bullet] = get_default(
             cluster_bullet_type, bullet_default
         )
         self._cluster_step_inertia = get_default(
@@ -403,7 +409,7 @@ class Bullet(LogicGameEntity):
         kwargs.update(
             {
                 "id": self.id,
-                "cid": spawn_cid if spawn_cid else self.cid(),
+                "cid": spawn_cid or self.cid(),
                 "spawn_time": self._start_time,
                 "visibility_offset": self._visibility_offset,
                 "position": self.position.xy,
@@ -463,7 +469,7 @@ class Bullet(LogicGameEntity):
     # endregion
 
     def hit(self, _damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
-        """bullet was hit by someone"""
+        """Bullet was hit by someone"""
         if self._hp <= 0 or not issubclass(hit_by.__class__, Bullet):
             self.kill(killed_by=hit_by)
 
@@ -473,11 +479,11 @@ class Bullet(LogicGameEntity):
                 self.kill(killed_by=hit_by)
 
     def hit_someone(self, target_hp: float) -> None:
-        """bullet has hit someone else"""
+        """Bullet has hit someone else"""
         self.kill()
 
     def __on_collision_general(
-        self, event: CollisionEvent[tp.Union["Island", "Player", "Grenade"]]
+        self, event: CollisionEvent[Island | Player | Grenade]
     ) -> None:
         if event.other_entity == self.parent:
             return
@@ -493,7 +499,7 @@ class Bullet(LogicGameEntity):
 
         self.hit(event.other_entity.damage, event.other_entity)
 
-    def __on_collision_shield(self, event: CollisionEvent["Shield"]) -> None:
+    def __on_collision_shield(self, event: CollisionEvent[Shield]) -> None:
         if event.other_entity == self.parent:
             return
 
@@ -506,9 +512,7 @@ class Bullet(LogicGameEntity):
     def _collision_start(
         self,
         events: list[
-            CollisionEvent[
-                tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]
-            ]
+            CollisionEvent[Island | Bullet | Player | BaseTurret | Grenade | Shield]
         ],
     ) -> None:
         for event in events:
@@ -516,11 +520,11 @@ class Bullet(LogicGameEntity):
                 self.__on_collision_general(event)
             elif event.group_id == GameCollisions.collision_group_bullets:
                 self.__on_collision_bullet(event)
-            elif event.group_id == GameCollisions.collision_group_players:
-                self.__on_collision_general(event)
-            elif event.group_id == GameCollisions.collision_group_turrets:
-                self.__on_collision_general(event)
-            elif event.group_id == GameCollisions.collision_group_grenades:
+            elif (
+                event.group_id == GameCollisions.collision_group_players
+                or event.group_id == GameCollisions.collision_group_turrets
+                or event.group_id == GameCollisions.collision_group_grenades
+            ):
                 self.__on_collision_general(event)
             elif event.group_id == GameCollisions.collision_group_shields:
                 self.__on_collision_shield(event)
@@ -553,9 +557,8 @@ class Bullet(LogicGameEntity):
 
     def _kill(self, killed_by: LogicGameEntity | BaseFuze | EllipsisType = ...) -> bool:
         if killed_by != ... and killed_by != self:
-            if killed_by.parent == self.parent:
-                if not self._coll_sibling:
-                    return True
+            if killed_by.parent == self.parent and not self._coll_sibling:
+                return True
 
         if self._invincibility_offset > 0:
             return True
@@ -597,12 +600,11 @@ class Bullet(LogicGameEntity):
                 if self._cluster_depth > 1:
                     ttl = self._time_to_life
 
-                else:
-                    if self._default_cluster_last_step_ttl >= 0:
-                        ttl = self._default_cluster_last_step_ttl
+                elif self._default_cluster_last_step_ttl >= 0:
+                    ttl = self._default_cluster_last_step_ttl
 
-                    else:
-                        ttl = self._time_to_life
+                else:
+                    ttl = self._time_to_life
 
                 for bi in range(self._cluster_amount):
                     self._cluster_bullet_type(

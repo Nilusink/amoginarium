@@ -8,18 +8,28 @@ Author:
 Nilusink
 """
 
-from multiprocessing.shared_memory import SharedMemory
+from ctypes import Array, addressof, memset, sizeof
+from multiprocessing import Lock, Pipe, Queue
 from multiprocessing.connection import Connection
-from multiprocessing import Queue, Lock, Pipe
-from ctypes import Array, memset, sizeof, addressof
+from multiprocessing.shared_memory import SharedMemory
 from queue import Empty
+
 from icecream import ic
 
-from .shared import MAX_CONTROLLERS, get_controller_memory, get_inventory_memory
-from .shared import GlobalVars, base_entity_t, MAX_ENTITIES, base_controller_t
-from .shared import generate_global_vars, get_write_lock, get_entity_memory
-from .shared import MAX_INVENTORIES
-from .shared import inventory_t
+from .shared import (
+    MAX_CONTROLLERS,
+    MAX_ENTITIES,
+    MAX_INVENTORIES,
+    GlobalVars,
+    base_controller_t,
+    base_entity_t,
+    generate_global_vars,
+    get_controller_memory,
+    get_entity_memory,
+    get_inventory_memory,
+    get_write_lock,
+    inventory_t,
+)
 from .shared.utility import Vec2
 
 
@@ -93,7 +103,7 @@ class _ProcessValues:
         self.PROCESS_COMM = process_comm
 
     def reset(self) -> None:
-        """reset everything"""
+        """Reset everything"""
         # initialize shared memories to all 0s
         memset(addressof(self.E_BUFF), 0, sizeof(self.E_BUFF))
         memset(addressof(self.C_BUFF), 0, sizeof(self.C_BUFF))

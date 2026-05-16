@@ -8,13 +8,14 @@ Authors: LukasKrah
 
 import functools
 import typing as tp
-from amoginarium.shared.utility import TupleMath
+
 from amoginarium.graphics.render_bindings import renderer
+from amoginarium.shared.utility import TupleMath
 
 # Assuming renderer is imported in this file
 # import renderer
 
-T = tp.TypeVar("T", bound=tp.Type)
+T = tp.TypeVar("T", bound=type)
 
 
 def draw_debug_bounds(cls: T) -> T:

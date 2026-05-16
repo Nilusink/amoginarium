@@ -8,17 +8,18 @@ interactive native legends, dynamic space reclamation, and batch toggles.
 Author: Nilusink (Rewritten for Live GUI with CustomTkinter)
 """
 
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import customtkinter as ctk
-import tkinter as tk
-from tkinter import messagebox
+import datetime
+import glob
 import json
 import os
-import glob
-import typing as tp
-import datetime
 import threading
+import tkinter as tk
+import typing as tp
+from tkinter import messagebox
+
+import customtkinter as ctk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 os.makedirs("debug", exist_ok=True)
 
@@ -180,7 +181,7 @@ class GraphWidget(ctk.CTkFrame):
         self.toolbar.pack(side="bottom", fill="x")
 
         self.linedict = {}
-        self.fig.canvas.mpl_connect("pick_event", self.on_pick)  # noqa
+        self.fig.canvas.mpl_connect("pick_event", self.on_pick)
 
     def toggle_minimize(self) -> None:
         """
@@ -234,7 +235,7 @@ class GraphWidget(ctk.CTkFrame):
         self.linedict = {}
         for leg_obj, text_obj in zip(leg.legend_handles, leg.texts):
             leg_obj.set_picker(True)  # type: ignore
-            leg_obj.set_pickradius(5)  # noqa
+            leg_obj.set_pickradius(5)
             text_obj.set_picker(True)  # type: ignore
 
             label = text_obj.get_text()
@@ -891,9 +892,8 @@ class DebugAnalyzerApp:
             if self.selected_identifiers:
                 self.sync_listbox_selection()
                 return
-            else:
-                self.listbox.selection_set(0)
-                indices = (0,)
+            self.listbox.selection_set(0)
+            indices = (0,)
 
         self.selected_identifiers = [
             self.known_files[i][0] for i in indices if i < len(self.known_files)
@@ -1024,8 +1024,7 @@ class DebugAnalyzerApp:
             self.graphs_container.grid_rowconfigure(0, weight=1)
             self.graphs_container.grid_rowconfigure(1, weight=1)
             return
-        else:
-            self.placeholder_frame.grid_forget()
+        self.placeholder_frame.grid_forget()
 
         if self.fullscreen_widget:
             self.graphs_container.grid_columnconfigure(0, weight=1, uniform="colGroup")

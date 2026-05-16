@@ -8,17 +8,15 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from ctypes import Array
 import typing as tp
+from ctypes import Array
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, normalize_angle_neg
-from amoginarium.shared import Coalitions, base_entity_t
-
+from amoginarium.shared import Coalitions, MissileCIDs, base_entity_t
 from amoginarium.shared.audio import PresetEffect
-from amoginarium.shared import MissileCIDs
+from amoginarium.shared.utility import Vec2, get_default, normalize_angle_neg
 
-from ...._base import LogicGameEntity, DebugPolygonEntity
+from ...._base import DebugPolygonEntity, LogicGameEntity
 from .._bullets import AerodynamicEntity
 
 
@@ -34,7 +32,7 @@ class BaseMissile(AerodynamicEntity):
     _default_fuel_mass: tp.ClassVar[float] = 0
     _default_size: tp.ClassVar[tuple[float, float] | list[float]] = [100, 10]
 
-    _default_sound_effect: tp.ClassVar[tp.Type[PresetEffect] | EllipsisType] = ...
+    _default_sound_effect: tp.ClassVar[type[PresetEffect] | EllipsisType] = ...
 
     # endregion
 
@@ -91,12 +89,12 @@ class BaseMissile(AerodynamicEntity):
     # region properties
     @property
     def _fuel_mass(self) -> float:
-        """current fuel mass"""
+        """Current fuel mass"""
         return self.__fuel_mass
 
     @property
     def thrust(self) -> float:
-        """currently produced thrust"""
+        """Currently produced thrust"""
         return 0
 
     @property

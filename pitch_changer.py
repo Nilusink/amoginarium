@@ -9,6 +9,7 @@ Nilusink
 """
 
 import os
+
 import librosa
 import soundfile as sf
 
@@ -27,8 +28,8 @@ def generate_pitch_variants(
 
     Returns:
         List of output file paths
-    """
 
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     # --- Load audio ---

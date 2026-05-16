@@ -8,6 +8,7 @@ Authors: LukasKrah
 
 import os
 import typing as tp
+
 from OpenGL.GL import *
 from OpenGL.GL import shaders
 
@@ -39,7 +40,6 @@ class BaseShader:
 
     def _init_uniforms(self):
         """Override this in subclasses to cache specific uniform locations."""
-        pass
 
     def use(self):
         """Convenience method to activate the shader."""

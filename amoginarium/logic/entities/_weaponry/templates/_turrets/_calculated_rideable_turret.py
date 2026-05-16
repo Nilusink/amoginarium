@@ -8,18 +8,18 @@ Author:
 Nilusink
 """
 
-from contextlib import suppress
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
 import ctypes
+import typing as tp
+from contextlib import suppress
+from ctypes import Array
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, calculate_launch_angle, MASK32
-from amoginarium.shared import Coalitions, base_entity_t, TurretCIDs
+from amoginarium.shared import Coalitions, TurretCIDs, base_entity_t
+from amoginarium.shared.utility import MASK32, Vec2, calculate_launch_angle, get_default
 
 from ...._base import GravityAffected
-from ._rideable_turret import RideableTurret
 from ._base_turret import TargetSolution
+from ._rideable_turret import RideableTurret
 
 
 class CalculatedRideableTurret(RideableTurret):
@@ -70,7 +70,7 @@ class CalculatedRideableTurret(RideableTurret):
 
     @property
     def weapon_pos(self) -> Vec2:
-        """position of weapon"""
+        """Position of weapon"""
         return self.position + self.weapon.parent_position_offset
 
     def _get_firing_solution(
@@ -81,7 +81,7 @@ class CalculatedRideableTurret(RideableTurret):
         acceleration: Vec2 | EllipsisType = ...,
         recalc: int = 5,
     ) -> TargetSolution | None:
-        """try to get a firing solution for target pos"""
+        """Try to get a firing solution for target pos"""
         position_delta = self.weapon_pos - target_pos
         vel = get_default(velocity, Vec2())
         acc = get_default(acceleration, Vec2())
@@ -170,12 +170,10 @@ class CalculatedRideableTurret(RideableTurret):
                 self.position - target_delta, recalc=20
             )
 
-            target: None | Vec2 = None
+            target: Vec2 | None = None
             if (
-                self._weapon_static
-                and target_delta
-                or self._default_engagement_ignore_solution
-            ):
+                self._weapon_static and target_delta
+            ) or self._default_engagement_ignore_solution:
                 target: Vec2 = self.position + target_delta
                 self._target_solution = TargetSolution(target, Vec2(), -1)
 

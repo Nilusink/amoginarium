@@ -8,11 +8,10 @@ import json
 import os
 import typing as tp
 
+import pygame as pg
 from icecream import ic
 
 from amoginarium.shared.utility import Vec2
-import pygame as pg
-
 
 ##################################################
 #                     Code                       #
@@ -26,7 +25,7 @@ class Maps:
 
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
-        load a map from a json file
+        Load a map from a json file
         """
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path

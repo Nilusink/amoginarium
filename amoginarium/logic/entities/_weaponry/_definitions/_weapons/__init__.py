@@ -7,5 +7,5 @@ Author:
 Nilusink
 """
 
-from ._weapons import HandThrownGrenade
 from ._charged_weapons import RailGun
+from ._weapons import HandThrownGrenade

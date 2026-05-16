@@ -8,19 +8,20 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-# noinspection PyPackageRequirements
-import pygame as pg
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord
+# noinspection PyPackageRequirements
+import pygame as pg
 
-from ...entities import UIEntities, Cursor
+from amoginarium.shared.utility import Vec2, convert_coord, coord_t
+
+from ...entities import Cursor, UIEntities
 from .._types import Anchor, Positions
 from ._ui_element import UIElement
 
 if tp.TYPE_CHECKING:
-    from ._ui_entity import UIEntity
     from .._widgets import UICursor
+    from ._ui_entity import UIEntity
 
 
 class UIEventElement(UIElement):
@@ -273,34 +274,33 @@ class UIEventElement(UIElement):
 
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         super()._after_gl_draw(drawn, layer)
-        if drawn:
-            if (
-                self.__on_enter_callbacks
-                or self.__on_leave_callbacks
-                or self.__on_buffer_callbacks
+        if drawn and (
+            self.__on_enter_callbacks
+            or self.__on_leave_callbacks
+            or self.__on_buffer_callbacks
+        ):
+            hovered_inner = self.__hovered_inner()
+            hovered_outer = self.__hovered_outer()
+
+            if hovered_inner is None or hovered_outer is None:
+                return
+
+            if hovered_inner and not self.__is_hovered_inner_last:
+                self.__is_hovered = True
+                for callback in self.__on_enter_callbacks:
+                    callback()
+            elif self.__is_hovered_outer_last and not hovered_outer:
+                self.__is_hovered = False
+                for callback in self.__on_leave_callbacks:
+                    callback()
+            elif (
+                self.__is_hovered_inner_last
+                and not hovered_inner
+                and hovered_outer
+                and self.__is_hovered_outer_last
             ):
-                hovered_inner = self.__hovered_inner()
-                hovered_outer = self.__hovered_outer()
-
-                if hovered_inner is None or hovered_outer is None:
-                    return
-
-                if hovered_inner and not self.__is_hovered_inner_last:
-                    self.__is_hovered = True
-                    for callback in self.__on_enter_callbacks:
-                        callback()
-                elif self.__is_hovered_outer_last and not hovered_outer:
-                    self.__is_hovered = False
-                    for callback in self.__on_leave_callbacks:
-                        callback()
-                elif (
-                    self.__is_hovered_inner_last
-                    and not hovered_inner
-                    and hovered_outer
-                    and self.__is_hovered_outer_last
-                ):
-                    for callback in self.__on_buffer_callbacks:
-                        callback()
+                for callback in self.__on_buffer_callbacks:
+                    callback()
 
     def _reset(self) -> None:
         super()._reset()

@@ -8,8 +8,9 @@ Author:
 Nilusink
 """
 
-from dataclasses import dataclass
 import typing as tp
+from dataclasses import dataclass
+
 import pygame as pg
 
 from amoginarium import pv

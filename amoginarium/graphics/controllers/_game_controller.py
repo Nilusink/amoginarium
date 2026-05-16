@@ -8,11 +8,12 @@ Author:
 Nilusink
 """
 
-from dataclasses import dataclass
 from contextlib import suppress
-import pygame as pg
-# from icecream import ic
+from dataclasses import dataclass
 
+import pygame as pg
+
+# from icecream import ic
 from ._base_controller import Controller
 
 
@@ -73,7 +74,7 @@ class GameController(Controller):
 
     def btn(self, n_button: int) -> bool:
         """
-        get a joystick button
+        Get a joystick button
         """
         return self._joystick.get_button(n_button)
 
@@ -107,19 +108,19 @@ class GameController(Controller):
 
     def feedback_collide(self) -> None:
         """
-        when the player hits a wall
+        When the player hits a wall
         """
         self.rumble(1000, 2000, 150)
 
     def feedback_shoot(self) -> None:
         """
-        controller input on shoot
+        Controller input on shoot
         """
         self.rumble(2000, 3000, 100)
 
     def feedback_hit(self) -> None:
         """
-        controller input on hit
+        Controller input on hit
         """
         self.rumble(300, 2200, 300)
 

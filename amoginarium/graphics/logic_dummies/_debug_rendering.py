@@ -10,10 +10,11 @@ import typing as tp
 
 from amoginarium import pv
 from amoginarium.shared import CIDType, GraphicsCIDs
-from amoginarium.shared.utility import Color, MASK16, Vec2
-from ._synced_entities import SyncedGraphicsEntity
+from amoginarium.shared.utility import MASK16, Vec2
+
 from ..entities import Drawn_0, Drawn_2
 from ..render_bindings import renderer
+from ._synced_entities import SyncedGraphicsEntity
 
 
 class DebugRectangleEntity(SyncedGraphicsEntity):

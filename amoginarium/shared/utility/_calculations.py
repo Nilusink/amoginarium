@@ -8,10 +8,12 @@ Author:
 Nilusink
 """
 
-from ._cvectors import Vec2
-import typing as tp
-from icecream import ic
 import math as m
+import typing as tp
+
+from icecream import ic
+
+from ._cvectors import Vec2
 
 
 def calculate_launch_angle_iterative(
@@ -32,6 +34,7 @@ def calculate_launch_angle_iterative(
         sol: unit vector to aim turret
         a_time: time-of-flight until intercept
         a_pos: predicted intercept position
+
     """
     # initial guess: straight-line travel time ignoring gravity
     a_time = position_delta.length / launch_speed if launch_speed > 0 else 0.1
@@ -98,7 +101,6 @@ def rk4_update(
     :param dt: timestep in seconds
     :return: (new_position, new_velocity)
     """
-
     # k1
     k1_v = acceleration_func(position, velocity) * dt
     k1_x = velocity * dt

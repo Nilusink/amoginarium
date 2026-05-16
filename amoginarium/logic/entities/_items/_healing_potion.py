@@ -6,14 +6,14 @@ Created: 18.04.2026
 Authors: LukasKrah
 """
 
-from ctypes import Array
-import typing as tp
 import math as m
+import typing as tp
+from ctypes import Array
 
+from amoginarium.shared import ItemCIDs, base_entity_t
+from amoginarium.shared.audio import ContinuousSoundEffect, PotionDrink
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import base_entity_t, ItemCIDs
 
-from amoginarium.shared.audio import PotionDrink, ContinuousSoundEffect
 from ._something import Something
 
 

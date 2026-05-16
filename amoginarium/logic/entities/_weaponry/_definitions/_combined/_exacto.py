@@ -10,26 +10,31 @@ Nilusink
 
 from __future__ import annotations
 
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
 import math as m
+import typing as tp
+from ctypes import Array
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, coord_t, normalize_angle
-from amoginarium.shared.utility import get_default
-from amoginarium.shared.audio import Sniper as SniperSound
-from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs, DummyCIDs
-from amoginarium.shared import TurretCIDs
 from shared import VisibleGameEntityLike
 
-from ...templates import (
-    BaseTurret,
-    TargetSolution,
-    BaseWeapon,
-    AerodynamicEntity,
-    RadarSensor,
+from amoginarium.shared import (
+    Coalitions,
+    DummyCIDs,
+    TurretCIDs,
+    WeaponCIDs,
+    base_entity_t,
 )
-from ...._base import GameCollisions, LogicGameEntity, CollisionType
+from amoginarium.shared.audio import Sniper as SniperSound
+from amoginarium.shared.utility import Vec2, coord_t, get_default, normalize_angle
+
+from ...._base import CollisionType, GameCollisions, LogicGameEntity
+from ...templates import (
+    AerodynamicEntity,
+    BaseTurret,
+    BaseWeapon,
+    RadarSensor,
+    TargetSolution,
+)
 
 
 class ExactoBullet(AerodynamicEntity):
@@ -227,7 +232,7 @@ class ExactoTurret(BaseTurret):
         self._current_target = None
 
     def __get_target(self) -> Vec2 | None:
-        """return current target for exacto"""
+        """Return current target for exacto"""
         if self._current_target:
             if self._current_target in self.available_targets:
                 # raycast towards target

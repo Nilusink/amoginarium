@@ -11,22 +11,21 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from icecream import ic
 import typing as tp
 
 from amoginarium.shared import CollisionLogicEntityLike
 from amoginarium.shared.utility import get_default
 
-from .._debug import DebugPolygonEntity, DebugRectangleEntity, DebugCircleEntity
 from .._base_entities import PositionedLogicEntity
 from .._collision import GameCollisions, HitboxTypes
+from .._debug import DebugCircleEntity, DebugPolygonEntity, DebugRectangleEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared import base_entity_t
+    from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared.utility import Vec2
 
     from .._base_entities import BaseLogicEntity
@@ -263,9 +262,8 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
         # Save accepted collisions in self._active_collisions
         for i in range(len(events)):
-            if collisions_result is not None:
-                if not collisions_result[i]:
-                    continue
+            if collisions_result is not None and not collisions_result[i]:
+                continue
             self._active_collisions[events[i].collision_id] = events[i]
 
         self.__calculate_active_normals()
@@ -455,10 +453,9 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
                         )
                     )
 
-        else:
-            if self.__debug_entity is not None:
-                self.__debug_entity.kill()
-                self.__debug_entity = None
+        elif self.__debug_entity is not None:
+            self.__debug_entity.kill()
+            self.__debug_entity = None
 
     @tp.final
     def _delete_collision(self) -> None:

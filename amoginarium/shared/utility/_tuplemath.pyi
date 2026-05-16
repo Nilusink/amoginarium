@@ -6,7 +6,7 @@ Created: 03.04.2026
 Authors: LukasKrah
 """
 
-from typing import TypeVar, Any
+from typing import Any, TypeVar
 
 T = TypeVar("T", bound=tuple[Any, ...])
 

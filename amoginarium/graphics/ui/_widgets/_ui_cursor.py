@@ -6,14 +6,13 @@ Created: 11.03.2026
 Authors: LukasKrah
 """
 
-from .._base import UIEventElement
-
 import pygame as pg
 
-from amoginarium.shared.utility import convert_coord, Vec2
-from ...entities import Cursor
-from .... import pv
+from amoginarium.shared.utility import Vec2, convert_coord
 
+from .... import pv
+from ...entities import Cursor
+from .._base import UIEventElement
 
 ##################################################
 #                     Code                       #

@@ -8,10 +8,10 @@ Author:
 Nilusink, melektron
 """
 
-from time import perf_counter
-import typing as tp
 import asyncio
 import inspect
+import typing as tp
+from time import perf_counter
 
 
 class BetterDict:
@@ -55,7 +55,7 @@ class SimpleLock:
 
     def release(self) -> None:
         """
-        release a lock (only works from same function)
+        Release a lock (only works from same function)
         """
         curframe = inspect.currentframe()
         called_by = inspect.getouterframes(curframe, 2)[1][3]
@@ -68,7 +68,7 @@ class SimpleLock:
 
 class _BaseTimer:
     @staticmethod
-    def _run_callback(cb: tp.Union[tp.Callable, None]):
+    def _run_callback(cb: tp.Callable | None):
         if cb is not None:
             asyncio.create_task(cb())
 
@@ -88,8 +88,8 @@ class WDTimer(_BaseTimer):
         """
         self._timeout: float = timeout
         self._timer_task: asyncio.Task | None = None
-        self._on_timeout_cb: tp.Union[tp.Callable, None] = None
-        self._on_restart_cb: tp.Union[tp.Callable, None] = None
+        self._on_timeout_cb: tp.Callable | None = None
+        self._on_restart_cb: tp.Callable | None = None
 
     def on_timeout(self, cb: tp.Callable):
         """
@@ -124,14 +124,8 @@ class WDTimer(_BaseTimer):
         This causes restart callback to run if the timer isn't running
         at the time of calling.
         """
-
         # first start
-        if self._timer_task is None:
-            self._run_callback(self._on_restart_cb)
-            self._timer_task = asyncio.create_task(self._timer_fn())
-
-        # after timeout
-        elif self._timer_task.done():
+        if self._timer_task is None or self._timer_task.done():
             self._run_callback(self._on_restart_cb)
             self._timer_task = asyncio.create_task(self._timer_fn())
 
@@ -144,7 +138,7 @@ class WDTimer(_BaseTimer):
 
     def cancel(self) -> None:
         """
-        cancel the timer
+        Cancel the timer
         """
         if self._timer_task is not None:
             self._timer_task.cancel()

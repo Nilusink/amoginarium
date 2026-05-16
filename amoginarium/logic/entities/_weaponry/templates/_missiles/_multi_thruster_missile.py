@@ -8,12 +8,13 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
 from ctypes import Array
+from types import EllipsisType
+
 import numpy as np
 
-from amoginarium.shared.utility import Vec2, normalize_angle_neg, PI, PI_2
-from amoginarium.shared import MissileCIDs, base_entity_t, Coalitions
+from amoginarium.shared import Coalitions, MissileCIDs, base_entity_t
+from amoginarium.shared.utility import PI, PI_2, Vec2, normalize_angle_neg
 
 from ...._base import LogicGameEntity
 from ._guided_multi_stage_missile import GuidedMultiStageMissile

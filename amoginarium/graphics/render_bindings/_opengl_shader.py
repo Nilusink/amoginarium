@@ -6,57 +6,38 @@ Created: 07.04.2026
 Authors: LukasKrah
 """
 
-from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
-from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
-from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
-from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
-from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
-from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
-from OpenGL.GL import glDisable, glBegin, glClearColor, GL_TRIANGLE_FAN
-from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST, glUseProgram
-from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA, glUniform1f
-from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
-from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
-from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glUniform4f
-from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
-from OpenGL.GL import GL_QUADS
 from OpenGL.GL import (
-    glEnableClientState,
+    GL_FLOAT,
+    GL_QUADS,
+    GL_TRIANGLE_FAN,
+    GL_VERTEX_ARRAY,
+    glBegin,
     glDisableClientState,
-    glVertexPointer,
     glDrawArrays,
+    glEnableClientState,
+    glEnd,
+    glPopMatrix,
+    glPushMatrix,
+    glTranslate,
+    glUniform1f,
+    glUniform4f,
+    glUseProgram,
+    glVertex2f,
+    glVertexPointer,
 )
-from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT
-from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
-from OpenGL.GLU import gluOrtho2D
-
-from pygame.locals import DOUBLEBUF, OPENGL
-from types import EllipsisType
-from icecream import ic
-from PIL import Image
-import pygame as pg
-import typing as tp
-import numpy as np
-import math as m
 
 from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import (
-    Vec2,
     Color,
+    Vec2,
     convert_coord,
-    normalize_angle,
-    fade,
     coord_t,
-    convert_color,
 )
 
+from ... import pv
+from ._base_renderer import tColor
 from ._opengl import OpenGLRenderer
 from .opengl_shaders import Shaders
-from ._base_renderer import tColor
-from .opengl_fonts import GLFont
-from ... import pv
 
 # define types
 

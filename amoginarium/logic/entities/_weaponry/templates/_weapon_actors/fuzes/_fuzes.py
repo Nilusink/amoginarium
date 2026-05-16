@@ -8,9 +8,10 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from icecream import ic
 import typing as tp
+from types import EllipsisType
+
+from icecream import ic
 
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
@@ -181,6 +182,5 @@ class AltitudeFuze(BaseFuze):
                 if diff.y > 0:
                     self._parent.kill(self)
 
-        else:
-            if not entities:
-                self._armed = True
+        elif not entities:
+            self._armed = True

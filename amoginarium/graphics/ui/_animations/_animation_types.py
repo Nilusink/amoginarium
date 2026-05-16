@@ -6,11 +6,11 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
+import typing as tp
 from dataclasses import dataclass
 from enum import StrEnum
-import typing as tp
 
-from amoginarium.shared.utility import coord_t, color_t
+from amoginarium.shared.utility import color_t, coord_t
 
 
 # region Single/MultiAnimation
@@ -24,10 +24,10 @@ class AnimationPhase(StrEnum):
     AT_END = "AT_END"
 
 
-type anim_input_t = tp.Union[None, float, int, tp.Sequence[tp.Union[float, int]]]
+type anim_input_t = None | float | int | tp.Sequence[float | int]
 
 type anim_curve_t = tp.Callable[[float], float]
-type anim_curve_input_t = tp.Union[None, anim_curve_t, tp.Sequence[anim_curve_t]]
+type anim_curve_input_t = None | anim_curve_t | tp.Sequence[anim_curve_t]
 
 # endregion
 
@@ -36,7 +36,7 @@ type anim_curve_input_t = tp.Union[None, anim_curve_t, tp.Sequence[anim_curve_t]
 type anim_vec2_t = coord_t | float | int
 
 
-@dataclass  # noqa
+@dataclass
 class AnimatedVec2Values:
     """Animated color value"""
 
@@ -50,15 +50,15 @@ class AnimatedVec2Values:
     collapse_curve: anim_curve_t = ...
 
 
-type anim_vec2_values_t = tp.Union[AnimatedVec2Values, anim_vec2_t]
+type anim_vec2_values_t = AnimatedVec2Values | anim_vec2_t
 
 # endregion
 
 # region FloatAnimation
-type anim_float_t = tp.Union[float, int]
+type anim_float_t = float | int
 
 
-@dataclass  # noqa
+@dataclass
 class AnimatedFloatValues:
     """Animated float value"""
 
@@ -73,7 +73,7 @@ class AnimatedFloatValues:
 
 
 # noinspection DuplicatedCode
-type anim_float_values_t = tp.Union[AnimatedFloatValues, anim_float_t]
+type anim_float_values_t = AnimatedFloatValues | anim_float_t
 
 # endregion
 
@@ -81,11 +81,11 @@ type anim_float_values_t = tp.Union[AnimatedFloatValues, anim_float_t]
 type anim_color_t = color_t
 # noinspection DuplicatedCode
 type anim_color_time_t = (
-    tp.Tuple[float, float, float, float] | tp.Tuple[int, int, int, int] | float | int
+    tuple[float, float, float, float] | tuple[int, int, int, int] | float | int
 )
 
 
-@dataclass  # noqa
+@dataclass
 class AnimatedColorValues:
     """Animated float value"""
 
@@ -100,6 +100,6 @@ class AnimatedColorValues:
 
 
 # noinspection DuplicatedCode
-type anim_color_values_t = tp.Union[AnimatedColorValues, anim_color_t]
+type anim_color_values_t = AnimatedColorValues | anim_color_t
 
 # endregion

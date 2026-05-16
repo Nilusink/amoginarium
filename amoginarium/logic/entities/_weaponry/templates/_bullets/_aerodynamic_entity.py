@@ -8,15 +8,15 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
 import math as m
+import typing as tp
+from ctypes import Array
+from types import EllipsisType
 
+from amoginarium.shared import Coalitions, DummyCIDs, base_entity_t
 from amoginarium.shared.utility import Vec2, get_default, normalize_angle
-from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
 
-from ...._base import GravityAffected, LogicGameEntity, GameCollisions, CollisionType
+from ...._base import CollisionType, GameCollisions, GravityAffected, LogicGameEntity
 from ._base_bullet import Bullet
 
 
@@ -92,12 +92,12 @@ class AerodynamicEntity(Bullet):
     # region properties
     @property
     def mass(self) -> float:
-        """current entity mass"""
+        """Current entity mass"""
         return self._mass
 
     @property
     def rudder_angle(self) -> float:
-        """current rudder angle"""
+        """Current rudder angle"""
         return self._rudder_angle
 
     @rudder_angle.setter
@@ -106,18 +106,18 @@ class AerodynamicEntity(Bullet):
 
     @property
     def alpha(self) -> float:
-        """slip angle (facing vs. velocity)"""
+        """Slip angle (facing vs. velocity)"""
         return self._alpha
 
     # endregion
 
     # def velocity interface
     def apply_force(self, relative_force: Vec2, relative_position: Vec2) -> None:
-        """add a force to the entity resulting in acceleration + turning"""
+        """Add a force to the entity resulting in acceleration + turning"""
         self._forces_to_add.append((relative_force, relative_position))
 
     def _update_rudder(self, delta: float) -> None:
-        """update rudder position"""
+        """Update rudder position"""
 
     def _update(self, delta: float) -> None:
         forward_force = Vec2()

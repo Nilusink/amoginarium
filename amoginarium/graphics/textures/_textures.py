@@ -8,15 +8,15 @@ Author:
 Nilusink
 """
 
-from PIL import Image
+import os
 import typing as tp
 import zipfile
-import os
 
-from amoginarium.shared.debugging import print_ic_style, get_fg_color
-from amoginarium.shared.utility import coord_t, convert_coord
+from PIL import Image
+
 from amoginarium.graphics.render_bindings import renderer
-
+from amoginarium.shared.debugging import get_fg_color, print_ic_style
+from amoginarium.shared.utility import convert_coord, coord_t
 
 type mirror_t = tp.Literal["x", "y", "xy", "yx", ""]
 
@@ -28,7 +28,7 @@ class Texture(tp.TypedDict):
     name: str
     mirror: mirror_t
     size: tuple[int, int]
-    pixel_perfect: tp.Optional[bool]
+    pixel_perfect: bool | None
 
 
 class FileImage(tp.TypedDict):
@@ -49,7 +49,7 @@ class _Textures:
 
     def load_images(self, path: str) -> None:
         """
-        load all textures from a zip file or a directory
+        Load all textures from a zip file or a directory
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"{path} doesn't exist!")
@@ -115,7 +115,7 @@ class _Textures:
         pixel_perfect: bool = False,
     ) -> Texture | None:
         """
-        returns a texture if it already exists
+        Returns a texture if it already exists
         """
         if scope not in self._textures:
             return None
@@ -160,7 +160,7 @@ class _Textures:
         pixel_perfect: bool = False,
     ) -> tuple[int, tuple[int, int]]:
         """
-        get the ID of a texture, prevents double loading
+        Get the ID of a texture, prevents double loading
         """
         if size is not None:
             size: tuple[float, float] = convert_coord(size)
@@ -224,7 +224,7 @@ class _Textures:
         pixel_perfect: bool = False,
     ) -> list[tuple[int, tuple[int, int]]]:
         """
-        get all textures from a scope
+        Get all textures from a scope
         """
         if scope not in self._raw_images:
             raise ValueError(f'scope "{scope}" not found')
@@ -253,7 +253,7 @@ class _Textures:
 
     def get_raw_from_scope(self, scope: str) -> list[str]:
         """
-        return all texture names from a scope
+        Return all texture names from a scope
         """
         if scope not in self._raw_images:
             raise ValueError(f'scope "{scope}" not found')

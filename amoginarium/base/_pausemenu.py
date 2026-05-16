@@ -8,10 +8,9 @@ Project: amoginarium
 #                    Imports                     #
 ##################################################
 
-from typing import Callable
+from collections.abc import Callable
 
 from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
-
 
 ##################################################
 #                     Code                       #

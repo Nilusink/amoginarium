@@ -14,18 +14,20 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, normalize_angle, get_default
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import Coalitions, LogicGameEntityLike
-from amoginarium.shared import DynamicEntityParentViable
-
 from amoginarium import pv
+from amoginarium.shared import (
+    Coalitions,
+    DynamicEntityParentViable,
+    LogicGameEntityLike,
+)
+from amoginarium.shared.debugging import CC, print_ic_style
+from amoginarium.shared.utility import Vec2, get_default, normalize_angle
 
 from ._collision_logic_entity import CollisionLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
 
@@ -138,7 +140,7 @@ class LogicGameEntity(
 
         self._tags = {}
         if tags is not None:
-            self._tags.update({tag: None for tag in tags})
+            self._tags.update(dict.fromkeys(tags))
         # endregion
 
     # region Properties
@@ -172,14 +174,14 @@ class LogicGameEntity(
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         self._velocity_to_add += value
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         self._acceleration_to_add += value

@@ -9,12 +9,12 @@ Authors: LukasKrah
 import typing as tp
 
 from ._animation_types import (
-    anim_input_t,
     AnimationPhase,
     anim_curve_input_t,
     anim_curve_t,
+    anim_input_t,
 )
-from ._complex_animation import create_animation, Animation
+from ._complex_animation import Animation, create_animation
 
 
 class MultiAnimation[A]:
@@ -127,7 +127,7 @@ class MultiAnimation[A]:
             else:
                 self.__count = count if count is not None else 1
 
-            def _normalize(val, is_numeric: bool = True) -> tp.Tuple:
+            def _normalize(val, is_numeric: bool = True) -> tuple:
                 # Map None to Ellipsis (...) so default kwargs in create_animation trigger correctly
                 if val in (None, ...):
                     return (...,) * self.__count

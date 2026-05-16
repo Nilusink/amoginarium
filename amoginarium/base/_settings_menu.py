@@ -4,11 +4,11 @@ amoginarium/base/_settings.py
 Project: amoginarium
 """
 
-from typing import Literal, Callable
+from collections.abc import Callable
 
-from amoginarium.graphics.ui import UIRectangle, UIButton, UIEntity
-from amoginarium.graphics.render_bindings import renderer
 from amoginarium import pv
+from amoginarium.graphics.render_bindings import renderer
+from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
 
 ##################################################
 #                     Code                       #

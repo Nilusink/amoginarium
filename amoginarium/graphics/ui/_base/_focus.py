@@ -6,9 +6,8 @@ Created: 03.04.2026
 Authors: LukasKrah
 """
 
-import typing as tp
 import abc
-
+import typing as tp
 
 if tp.TYPE_CHECKING:
     from ._ui_event_element import UIEventElement

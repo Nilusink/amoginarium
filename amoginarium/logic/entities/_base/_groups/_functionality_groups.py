@@ -11,8 +11,8 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
-from amoginarium.shared import LogicGameEntityLike
 from amoginarium import pv
+from amoginarium.shared import LogicGameEntityLike
 
 from ._base_group import BaseGroup
 

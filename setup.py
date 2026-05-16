@@ -6,10 +6,11 @@
 #     ext_modules=cythonize("_ccalculations.pyx", compiler_directives={"boundscheck": False, "wraparound": False}),
 #     zip_safe=False,
 # )
-from setuptools import setup, Extension
-from Cython.Build import cythonize
 import os
 import sys
+
+from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 # 1. Determine OS-specific compiler flags for OpenMP and Maximum Speed
 c_args = []

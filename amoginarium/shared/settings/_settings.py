@@ -6,9 +6,8 @@ Project: amoginarium
 
 from __future__ import annotations
 
-from json import load, dump
 import typing as tp
-
+from json import dump, load
 
 ##################################################
 #                     Code                       #

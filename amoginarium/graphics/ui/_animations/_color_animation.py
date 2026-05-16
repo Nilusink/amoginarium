@@ -11,9 +11,9 @@ from types import EllipsisType
 from amoginarium.shared.utility import Color, convert_color
 
 from ._animation_types import (
+    AnimatedColorValues,
     anim_color_t,
     anim_color_time_t,
-    AnimatedColorValues,
     anim_color_values_t,
     anim_input_t,
 )
@@ -50,9 +50,7 @@ class ColorAnimation(MultiAnimation):
 
         # Initialize the stored Color object using the current values calculated by MultiAnimation
         current = super().current_value
-        self.__color = convert_color(
-            current if current else (0.0, 0.0, 0.0, 0.0), convert_to=Color
-        )
+        self.__color = convert_color(current or (0.0, 0.0, 0.0, 0.0), convert_to=Color)
 
     def update(self, delta: float) -> Color:
         """

@@ -8,21 +8,20 @@ Authors: LukasKrah
 
 import typing as tp
 
+from ....shared.utility import coord_t
 from ...logic_dummies import GraphicsSoundEffect
 from ...render_bindings import renderer
-from ....shared.utility import coord_t
-
 from .._animations import (
+    ColorAnimation,
     FloatAnimation,
     Vec2Animation,
+    anim_color_values_t,
+    anim_float_values_t,
     anim_vec2_values_t,
     create_float_animation,
-    anim_float_values_t,
-    anim_color_values_t,
-    ColorAnimation,
 )
+from .._base import UIEntity, UIEventElement
 from .._surface_renderer import PygameSurfaceRenderer
-from .._base import UIEventElement, UIEntity
 from .._types import Anchor, Positions
 
 

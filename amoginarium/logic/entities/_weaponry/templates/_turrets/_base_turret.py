@@ -6,25 +6,38 @@ Created: 18.04.2026
 Authors: LukasKrah
 """
 
-from types import EllipsisType, NoneType
-from dataclasses import dataclass
-from contextlib import suppress
-from time import perf_counter
-from ctypes import Array
-import typing as tp
-import numpy as np
 import ctypes
+import typing as tp
+from contextlib import suppress
+from ctypes import Array
+from dataclasses import dataclass
+from time import perf_counter
+from types import EllipsisType, NoneType
 
-from amoginarium.shared import Coalitions, VisibleGameEntityLike, base_entity_t
-from amoginarium.shared import ProcessCommand, BaseCommandType, TurretCIDs
-from amoginarium.shared.utility import Vec2, calculate_launch_angle, MASK16
-from amoginarium.shared.utility import normalize_angle, MASK32
-from amoginarium.shared.utility import MASK64, get_default
-from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared.audio import MetalPings
+import numpy as np
+
 from amoginarium import pv
+from amoginarium.shared import (
+    BaseCommandType,
+    Coalitions,
+    ProcessCommand,
+    TurretCIDs,
+    VisibleGameEntityLike,
+    base_entity_t,
+)
+from amoginarium.shared.audio import MetalPings
+from amoginarium.shared.collision_detection import CollisionEvent
+from amoginarium.shared.utility import (
+    MASK16,
+    MASK32,
+    MASK64,
+    Vec2,
+    calculate_launch_angle,
+    get_default,
+    normalize_angle,
+)
 
-from ...._base import Players, Bullets, GravityAffected, LogicGameEntity, GameCollisions
+from ...._base import Bullets, GameCollisions, GravityAffected, LogicGameEntity, Players
 from .._sensors import BaseSensor, DetectionGroup
 from .._weapons import BaseWeapon
 
@@ -39,20 +52,20 @@ class TargetSolution:
     target_predict: Vec2
     angle: Vec2
     tof: float
-    target: tp.Optional[VisibleGameEntityLike | EllipsisType] = ...
+    target: VisibleGameEntityLike | EllipsisType | None = ...
 
 
 class SensorInit(tp.TypedDict):
     """values needed for sensor to init"""
 
-    type: tp.Type[BaseSensor]
-    detection_range: tp.Optional[float]
-    sphere_accuracy: tp.Optional[float]
-    min_rcs: tp.Optional[float]
+    type: type[BaseSensor]
+    detection_range: float | None
+    sphere_accuracy: float | None
+    min_rcs: float | None
 
 
 def check_target(target: LogicGameEntity, self: LogicGameEntity) -> bool:
-    """checks if a target should be fired on"""
+    """Checks if a target should be fired on"""
     if target.parent == self:
         return False
 
@@ -76,7 +89,7 @@ class BaseTurret(LogicGameEntity):
     weapon: BaseWeapon
     _default_max_hp: int = 80
     _hp: int = 0
-    _target: LogicGameEntity | tp.Type[...] = ...
+    _target: LogicGameEntity | type[...] = ...
     _target_predict: list[Vec2] = ...
     available_targets: dict = ...
     _high_tof_multiplier: float = 1.1
@@ -98,7 +111,7 @@ class BaseTurret(LogicGameEntity):
     _default_target_players: bool = True
     _default_target_taps: int = -1
 
-    _default_weapon_type: tp.Type[BaseWeapon] | EllipsisType = ...
+    _default_weapon_type: type[BaseWeapon] | EllipsisType = ...
     _default_weapon_drop_casings: bool = False
     _default_weapon_position_offset: Vec2 | list[float] | tuple[float, float] = (0, 0)
 
@@ -246,17 +259,16 @@ class BaseTurret(LogicGameEntity):
 
         # create detection sensor
         self._sphere = []
-        if sensors is None:
-            if self._sensors_list:
-                sensors: list[BaseSensor] = []
-                for sensor in self._sensors_list:
-                    sensor_args = sensor.copy()
-                    sensor_type: tp.Type[BaseSensor] = sensor_args.pop("type")
-                    sensors.append(
-                        sensor_type(
-                            runtime_buffer=runtime_buffer, parent=self, **sensor_args
-                        )
+        if sensors is None and self._sensors_list:
+            sensors: list[BaseSensor] = []
+            for sensor in self._sensors_list:
+                sensor_args = sensor.copy()
+                sensor_type: type[BaseSensor] = sensor_args.pop("type")
+                sensors.append(
+                    sensor_type(
+                        runtime_buffer=runtime_buffer, parent=self, **sensor_args
                     )
+                )
 
         if sensors is not None:
             for sensor in sensors:
@@ -282,14 +294,13 @@ class BaseTurret(LogicGameEntity):
 
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
-        deal damage to the turret
+        Deal damage to the turret
         """
         self._hp -= damage
 
         # ping on bullet hit
-        if hit_by is not ...:
-            if hit_by._tags.__contains__("bullet"):
-                self._ping.play(pos=self.position)
+        if hit_by is not ... and hit_by._tags.__contains__("bullet"):
+            self._ping.play(pos=self.position)
 
         # check for turret death
         if self._hp <= 0:
@@ -302,7 +313,7 @@ class BaseTurret(LogicGameEntity):
 
     def get_next_target(self, include_all: bool = False) -> target_solution_t:
         """
-        returns the next best target to shoot at
+        Returns the next best target to shoot at
         """
         targets = list(self.available_targets.keys())
         for target in sorted(
@@ -408,11 +419,7 @@ class BaseTurret(LogicGameEntity):
                     self.available_targets[target]["solution"] = sol
 
                     # if aim type is high, allow no-movement targets
-                    if self._allow_static_target:
-                        self.available_targets[target]["distance"] = np.inf
-                        continue
-
-                    elif not sol:
+                    if self._allow_static_target or not sol:
                         self.available_targets[target]["distance"] = np.inf
                         continue
 
@@ -471,10 +478,10 @@ class BaseTurret(LogicGameEntity):
         super()._update(delta)
 
         # update parameters
-        ## bars
+        # bars
         self._runtime_buffer[self.id].param0 = self._hp / self._default_max_hp
 
-        ## target
+        # target
         if self._target_predict:
             target = self._target_predict[0]
             x32 = ctypes.c_int32(int(target.x)).value
@@ -483,7 +490,7 @@ class BaseTurret(LogicGameEntity):
                 x32 & MASK32
             ).value | (ctypes.c_uint64(y32 & MASK32).value << 32)
 
-        ## range
+        # range
         param4 = int(self.min_range) & MASK16
         param4 |= (int(self.max_range) & MASK16) << 16
 
@@ -509,7 +516,7 @@ class BaseTurret(LogicGameEntity):
         ignore_acceleration: bool = False,
     ) -> TargetSolution | None:
         """
-        aim at specified target
+        Aim at specified target
 
         :param target: target to aim at
         :returns:
@@ -518,9 +525,8 @@ class BaseTurret(LogicGameEntity):
         player_acceleration = target.acceleration.copy()
 
         # if target is on ground, subtract gravitational acceleration
-        if hasattr(target, "on_ground"):
-            if target.on_ground:
-                player_acceleration.y -= GravityAffected.gravity
+        if hasattr(target, "on_ground") and target.on_ground:
+            player_acceleration.y -= GravityAffected.gravity
 
         target_position = target.position
 
@@ -568,7 +574,7 @@ class BaseTurret(LogicGameEntity):
             )
 
             if predict.length < self.min_range:
-                return
+                return None
 
             return TargetSolution(
                 target_predict=target_predict,
@@ -590,7 +596,7 @@ class BaseTurret(LogicGameEntity):
         self, solution: TargetSolution, *, max_error: float | EllipsisType = ...
     ) -> None:
         """
-        shoot at specified target
+        Shoot at specified target
         :param solution: where to shoot to
         :param max_error: max facing offset to target solution
         """
@@ -627,7 +633,7 @@ class BaseTurret(LogicGameEntity):
                 self.available_targets[solution.target]["shot_at"] = solution.tof
 
     def _turn_at(self, solution: TargetSolution, delta: float) -> None:
-        """turn towards a target"""
+        """Turn towards a target"""
         diff = solution.angle.angle - self.facing.angle
 
         if diff > np.pi:

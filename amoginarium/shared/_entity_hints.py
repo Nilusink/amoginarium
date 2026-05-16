@@ -9,12 +9,14 @@ Nilusink
 """
 
 from __future__ import annotations
-from typing import Protocol
-import pygame as pg
-from abc import ABC, abstractmethod
 
-from .utility import Vec2
+from abc import ABC, abstractmethod
+from typing import Protocol
+
+import pygame as pg
+
 from ._linked import Coalitions
+from .utility import Vec2
 
 
 class HasPosition(Protocol):
@@ -31,12 +33,12 @@ class DynamicEntityParentViable(ABC):
     @classmethod
     @abstractmethod
     def has_cid(cls) -> bool:
-        """entity has component ID?"""
+        """Entity has component ID?"""
 
     @classmethod
     @abstractmethod
     def cid(cls) -> str:
-        """component ID"""
+        """Component ID"""
 
 
 class BaseEntityLike(Protocol):
@@ -156,7 +158,6 @@ class PlayerLike(VisibleGameEntityLike, Protocol):
 
 
 class BaseItemLike(Protocol):
-    ...
     _position: Vec2
     _size: Vec2
 

@@ -8,8 +8,8 @@ Author:
 Nilusink
 """
 
-from amoginarium.shared import ProcessCommandType, ProcessCommand
 from amoginarium import pv
+from amoginarium.shared import ProcessCommand, ProcessCommandType
 
 
 class GraphicsSoundEffect:
@@ -26,7 +26,7 @@ class GraphicsSoundEffect:
         maxtime: int = 0,
         fade_ms: int = 0,
     ) -> None:
-        """send command to play sound"""
+        """Send command to play sound"""
         pv.COQ.put(
             ProcessCommand(
                 type=ProcessCommandType.play_sound,

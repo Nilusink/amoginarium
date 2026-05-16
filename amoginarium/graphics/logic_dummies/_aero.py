@@ -8,12 +8,12 @@ Author:
 Nilusink
 """
 
+import math as m
 import typing as tp
 from types import EllipsisType
-import math as m
 
-from amoginarium.shared.utility import Color, Vec2
 from amoginarium.shared import DummyCIDs
+from amoginarium.shared.utility import Color, Vec2
 
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity

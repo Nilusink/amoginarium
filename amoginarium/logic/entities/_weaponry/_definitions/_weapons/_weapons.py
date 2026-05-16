@@ -10,7 +10,7 @@ Nilusink
 
 from ctypes import Array
 
-from amoginarium.shared import base_entity_t, WeaponCIDs
+from amoginarium.shared import WeaponCIDs, base_entity_t
 from amoginarium.shared.audio import SoundEffect
 from amoginarium.shared.utility import Vec2
 

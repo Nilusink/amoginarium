@@ -1,5 +1,3 @@
-import typing as tp
-
 class Color:
     rgb1: tuple[float, float, float]
     rgb255: tuple[int, int, int]

@@ -8,33 +8,32 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-import typing as tp
 import random
+import typing as tp
 
+from amoginarium import pv
+from amoginarium.shared import BaseCommandType, CIDType, ProcessCommand
+from amoginarium.shared.debugging import CC, print_ic_style
 from amoginarium.shared.utility import (
     Vec2,
     convert_coord,
     find_minimum_rectangles_dirty,
 )
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import BaseCommandType, CIDType
-from amoginarium.shared import ProcessCommand
-from amoginarium import pv
 
 from .._base import (
+    CollisionType,
+    DebugRectangleEntity,
+    GameCollisions,
     LogicGameEntity,
     Walls,
-    GameCollisions,
-    DebugRectangleEntity,
-    CollisionType,
 )
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared.utility import coord_t
     from amoginarium.shared import base_entity_t
+    from amoginarium.shared.utility import coord_t
 
 
 class Island(LogicGameEntity):
@@ -51,8 +50,8 @@ class Island(LogicGameEntity):
     )
     __DEBUG_DRAW_HITBOXES: tp.ClassVar[bool] = False
 
-    ISLANDS: tp.ClassVar[dict[CIDType, tp.Type[Island]]] = {}
-    ISLANDS_REVERSE: tp.ClassVar[dict[tp.Type[Island], CIDType]] = {}
+    ISLANDS: tp.ClassVar[dict[CIDType, type[Island]]] = {}
+    ISLANDS_REVERSE: tp.ClassVar[dict[type[Island], CIDType]] = {}
 
     # endregion
     # region InstanceVars

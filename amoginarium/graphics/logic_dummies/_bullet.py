@@ -10,16 +10,22 @@ Nilusink
 
 from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, Color, convert_color, coord_t
-from amoginarium.shared.utility import convert_coord, fade
-from amoginarium.shared import DummyCIDs
 from amoginarium import pv
+from amoginarium.shared import DummyCIDs
+from amoginarium.shared.utility import (
+    Color,
+    Vec2,
+    convert_color,
+    convert_coord,
+    coord_t,
+    fade,
+    get_default,
+)
 
 from ..entities import explosion
-from ..textures import textures
 from ..render_bindings import renderer
-from ._synced_entities import SyncedImageEntity, BaseGraphicsEntity
-
+from ..textures import textures
+from ._synced_entities import BaseGraphicsEntity, SyncedImageEntity
 
 BULLET_PATH = "bullet"
 
@@ -65,7 +71,7 @@ class BulletDummy(SyncedImageEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        """load all required textures ONCE per class"""
+        """Load all required textures ONCE per class"""
         if cls.__dict__.get("_bullet_image", ...) is ...:
             if isinstance(cls._default_size, (int, float)):
                 cls._default_size = Vec2().from_cartesian(
@@ -137,15 +143,14 @@ class BulletDummy(SyncedImageEntity):
                 self._c_trace_color: Color = convert_color(trace_color, Color)
                 self._original_alpha = self._c_trace_color.a1
 
-        else:
-            if isinstance(self._trace_color, (tuple, list)):
-                self._c_trace_color: tuple[Color, Color] = tuple(
-                    convert_color(c, Color) for c in self._trace_color
-                )
+        elif isinstance(self._trace_color, (tuple, list)):
+            self._c_trace_color: tuple[Color, Color] = tuple(
+                convert_color(c, Color) for c in self._trace_color
+            )
 
-            else:
-                self._c_trace_color: Color = self._trace_color.copy()
-                self._original_alpha = self._c_trace_color.a1
+        else:
+            self._c_trace_color: Color = self._trace_color.copy()
+            self._original_alpha = self._c_trace_color.a1
 
         if isinstance(self._trace_color, (list, tuple)) and len(self._trace_color) == 1:
             self._c_trace_color: Color = self._c_trace_color[0]
@@ -155,7 +160,7 @@ class BulletDummy(SyncedImageEntity):
 
     @classmethod
     def bullet_image(cls) -> int:
-        """bullet texture ID"""
+        """Bullet texture ID"""
         return cls._bullet_image
 
     def _kill(self) -> None:
@@ -173,13 +178,12 @@ class BulletDummy(SyncedImageEntity):
 
             return
 
-        if not self._trace_only:
-            if self.param0 > 0:
-                explosion.draw(
-                    delay=0.05,  # min(.01, .05 * (self.param0 / 96)),
-                    size=Vec2().from_cartesian(self.param0 * 2, self.param0 * 2),
-                    position=self.pos.copy(),
-                )
+        if not self._trace_only and self.param0 > 0:
+            explosion.draw(
+                delay=0.05,  # min(.01, .05 * (self.param0 / 96)),
+                size=Vec2().from_cartesian(self.param0 * 2, self.param0 * 2),
+                position=self.pos.copy(),
+            )
 
         super().kill()
 
@@ -204,7 +208,7 @@ class BulletDummy(SyncedImageEntity):
         *,
         rotation: float = 0,
     ) -> None:
-        """draw an entity at specified position and size"""
+        """Draw an entity at specified position and size"""
         if cls.bullet_image() is ...:
             cls.load_textures()
 

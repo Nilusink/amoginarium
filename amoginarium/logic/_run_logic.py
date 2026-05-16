@@ -8,38 +8,65 @@ Author:
 Nilusink
 """
 
-from multiprocessing.shared_memory import SharedMemory
-from multiprocessing.sharedctypes import Synchronized
-from multiprocessing.connection import Connection
-from time import perf_counter, sleep, perf_counter_ns
-from multiprocessing import Queue, synchronize
-from icecream import ic, colorize
-from queue import Empty
-import pygame as pg
 import ctypes
 import json
 import os
+from multiprocessing import Queue, synchronize
+from multiprocessing.connection import Connection
+from multiprocessing.shared_memory import SharedMemory
+from multiprocessing.sharedctypes import Synchronized
+from queue import Empty
+from time import perf_counter, perf_counter_ns, sleep
 
-from amoginarium.shared.audio import (
-    sound_effects,
-    BackgroundPlayer,
-    sounds,
-    SoundEffect,
-    LargeExplosion,
-)
-from amoginarium.shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
-from amoginarium.shared import ProcessCommandType, Coalitions, ENTITY_COUNTER
-from amoginarium.shared import BaseCommandType, INVENTORY_COUNTER
-from amoginarium.shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
-from amoginarium.shared.debugging import print_with_prefix, get_fg_color
-from amoginarium.shared.utility import Vec2
+import pygame as pg
+from icecream import colorize, ic
+
 from amoginarium import pv
+from amoginarium.shared import (
+    ENTITY_COUNTER,
+    INVENTORY_COUNTER,
+    MAX_ENTITIES,
+    BaseCommandType,
+    Coalitions,
+    GlobalVars,
+    ProcessCommand,
+    ProcessCommandType,
+    base_entity_t,
+)
+from amoginarium.shared.audio import (
+    BackgroundPlayer,
+    SoundEffect,
+    sound_effects,
+    sounds,
+)
+from amoginarium.shared.debugging import (
+    CC,
+    cum_timer,
+    get_fg_color,
+    print_ic_style,
+    print_with_prefix,
+    run_with_debug,
+)
+from amoginarium.shared.utility import Vec2
 
-from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, GameCollisions
-from .entities import Updated, Bullets, Players
-from .entities import LogicGameEntity, GrassIsland, SPAWNABLES, Player, Island
-from .entities import GravityAffected, FrictionXAffected
+from .entities import (
+    DETECTION_GLOBAL_BLUE,
+    DETECTION_GLOBAL_NEUTRAL,
+    DETECTION_GLOBAL_RED,
+    DETECTION_GROUP_MANAGER,
+    SPAWNABLES,
+    Bullets,
+    DetectionGroup,
+    FrictionXAffected,
+    GameCollisions,
+    GrassIsland,
+    GravityAffected,
+    Island,
+    LogicGameEntity,
+    Player,
+    Players,
+    Updated,
+)
 from .graphics_dummies import Controller
 
 
@@ -158,7 +185,7 @@ class LogicProcess:
     @run_with_debug(reraise_errors=True, show_finish=True)
     def preload(self) -> None:
         """
-        preloads sound effects
+        Preloads sound effects
         """
         start = perf_counter_ns()
         # load sounds
@@ -185,7 +212,7 @@ class LogicProcess:
         ic(load_time)
 
     def get_ic_prefix(self) -> str:
-        """get terminal prefix for icecream"""
+        """Get terminal prefix for icecream"""
         t = round(perf_counter() - self._start, 4)
 
         t1, t2 = str(t).split(".")
@@ -196,7 +223,7 @@ class LogicProcess:
         )
 
     def load_map(self, map_path: str) -> None:
-        """load a map from a json file"""
+        """Load a map from a json file"""
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
@@ -208,7 +235,7 @@ class LogicProcess:
         self._last_map_path = map_path
 
         # load map data
-        data = json.load(open(map_path, "r"))
+        data = json.load(open(map_path))
         self._last_loaded = map_path
 
         pg.display.set_caption(f"amoginarium - {data['name']}")
@@ -218,9 +245,8 @@ class LogicProcess:
         # load islands
         for island in data["platforms"]:
             island_type = GrassIsland
-            if "type" in island:
-                if island["type"] in Island.ISLANDS:
-                    island_type = Island.ISLANDS[island["type"]]
+            if "type" in island and island["type"] in Island.ISLANDS:
+                island_type = Island.ISLANDS[island["type"]]
 
             if "args" in island:
                 i = island_type(self._runtime_buffer, **island["args"])
@@ -294,7 +320,7 @@ class LogicProcess:
     @cum_timer.time_this
     def update_entities(self, delta: float) -> bool:
         """
-        update all entities
+        Update all entities
 
         :returns: True if update, false if paused
         """
@@ -318,7 +344,7 @@ class LogicProcess:
                 self.end()
                 return False
 
-            elif item.type == ProcessCommandType.reset:
+            if item.type == ProcessCommandType.reset:
                 self.reset_game()
                 self._paused = True
                 ic("logic reset complete")
@@ -327,7 +353,7 @@ class LogicProcess:
                 )
                 return False
 
-            elif item.type == ProcessCommandType.pause:
+            if item.type == ProcessCommandType.pause:
                 self._paused = True
 
             elif item.type == ProcessCommandType.unpause:
@@ -436,7 +462,7 @@ class LogicProcess:
     @cum_timer.time_this
     def update_memory(self) -> None:
         """
-        copy runtime buffer to memory buffer
+        Copy runtime buffer to memory buffer
         """
         self._write_lock.acquire()
         ctypes.memmove(
@@ -447,7 +473,7 @@ class LogicProcess:
         self._write_lock.release()
 
     def reset_game(self) -> None:
-        """reset game state"""
+        """Reset game state"""
         # kill all entities
         for e in Updated.entities() + Bullets.entities():
             e.kill()
@@ -467,7 +493,7 @@ class LogicProcess:
         ENTITY_COUNTER.reset()
 
     def end(self) -> None:
-        """close the logic thread"""
+        """Close the logic thread"""
         # print entity stats
         entities = Updated.entities() + Bullets.entities()
         entities = [e.__class__.__name__ for e in entities]
@@ -495,7 +521,7 @@ class LogicProcess:
             json.dump(
                 {"logic": self._logic_loop_times, "bullets": self._n_bullets_times}, out
             )
-        with open(f"logic_debug.json", "w") as out:
+        with open("logic_debug.json", "w") as out:
             json.dump(
                 {"logic": self._logic_loop_times, "bullets": self._n_bullets_times}, out
             )
@@ -516,7 +542,7 @@ def run_continuous(
     run_name: str,
 ) -> None:
     """
-    run the logic process continuously
+    Run the logic process continuously
     """
     global_vars = GlobalVars(global_vars_values, False)
     global_vars.update()

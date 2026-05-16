@@ -8,12 +8,11 @@ Author:
 Nilusink
 """
 
+import typing as tp
 from dataclasses import dataclass, field
 from enum import Enum
-import typing as tp
 
 from ._entity_hints import ItemLike
-
 
 if tp.TYPE_CHECKING:
     from .utility import Vec2
@@ -164,13 +163,13 @@ class _CIDRegister:
 
         i = 1  # start with 1 because 0 is no item
         for enum in enums:
-            for name in getattr(enum, "_value2member_map_").keys():
+            for name in enum._value2member_map_.keys():
                 self._cids[name] = i
                 i += 1
 
     def get_id(self, cid: str | tp.Any) -> int:
         """
-        get the corresponding ID from n CID
+        Get the corresponding ID from n CID
 
         :param cid: original CID
         :returns: corresponding ID, 0 if not found

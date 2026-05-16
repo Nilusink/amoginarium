@@ -8,14 +8,14 @@ Author:
 Nilusink
 """
 
-from traceback import format_exc
-from time import perf_counter_ns
-from icecream import ic
 import typing as tp
+from time import perf_counter_ns
+from traceback import format_exc
 
+from icecream import ic
 
-from ._utils import get_caller_name, print_with_prefix
 from ._console_colors import CC, get_fg_color
+from ._utils import get_caller_name
 
 
 def run_with_debug(
@@ -26,7 +26,7 @@ def run_with_debug(
     reraise_errors: bool = False,
 ):
     """
-    run a function with debugging and exception printing
+    Run a function with debugging and exception printing
     """
 
     def decorator[**A, R](func: tp.Callable[A, R]):
@@ -142,7 +142,7 @@ class _CumTimer:
             time_taken = (end - start) / 1000
 
             fname = func.__name__
-            if not fname in self._func_times:
+            if fname not in self._func_times:
                 self._func_times[fname] = [time_taken, 1]
                 return res
 
@@ -154,7 +154,7 @@ class _CumTimer:
 
     def get_times(self) -> dict[str, list[float | int]]:
         """
-        get all cumulated times and reset
+        Get all cumulated times and reset
         """
         out = {}
         for key in self._func_times:

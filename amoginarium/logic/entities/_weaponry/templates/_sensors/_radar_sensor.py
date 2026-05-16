@@ -8,16 +8,15 @@ Author:
 Nilusink
 """
 
-from ctypes import Array
-from icecream import ic
 import typing as tp
+from ctypes import Array
+
 import numpy as np
 
-from amoginarium.shared.utility import coord_t, Vec2, point_in_triangle, normalize_angle
-from amoginarium.shared import base_entity_t, SensorCIDs
+from amoginarium.shared import SensorCIDs, base_entity_t
+from amoginarium.shared.utility import Vec2, coord_t, normalize_angle, point_in_triangle
 
-from ...._base import LogicGameEntity
-from ...._base import Players, Bullets
+from ...._base import Bullets, LogicGameEntity, Players
 from ._base_sensor import BaseSensor
 
 
@@ -59,7 +58,7 @@ class RadarSensor(BaseSensor):
         self, targets: tp.Iterable[LogicGameEntity]
     ) -> list[LogicGameEntity]:
         """
-        check if a target is inside the calculated sphere
+        Check if a target is inside the calculated sphere
         """
         out = []
         center: Vec2 = self.parent.position + self._position_offset

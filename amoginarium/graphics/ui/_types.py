@@ -7,7 +7,6 @@ Authors: LukasKrah
 """
 
 from enum import StrEnum
-import typing as tp
 
 
 class Anchor(StrEnum):

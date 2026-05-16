@@ -6,8 +6,8 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from ._animation_types import anim_float_values_t, AnimatedFloatValues
-from ._complex_animation import create_animation, Animation
+from ._animation_types import AnimatedFloatValues, anim_float_values_t
+from ._complex_animation import Animation, create_animation
 
 
 class _FloatAnimationHelper:

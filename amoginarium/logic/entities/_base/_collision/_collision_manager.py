@@ -11,7 +11,7 @@ Authors: LukasKrah
 
 import typing as tp
 
-from amoginarium.shared.collision_detection import CollisionManager, CollisionCallback
+from amoginarium.shared.collision_detection import CollisionCallback, CollisionManager
 
 from ._collision_types import CollisionType, HitboxTypes
 

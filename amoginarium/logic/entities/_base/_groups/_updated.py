@@ -11,9 +11,9 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
+from amoginarium import pv
 from amoginarium.shared import PositionedLogicEntityLike
 from amoginarium.shared.utility import Vec2
-from amoginarium import pv
 
 from ._base_group import BaseGroup
 

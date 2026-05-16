@@ -8,19 +8,18 @@ Author:
 Nilusink
 """
 
-from icecream import ic  # noqa: F401
 import pygame as pg
+from icecream import ic  # noqa: F401
 
-from amoginarium.shared.utility import Color
-from amoginarium.shared import DummyCIDs
 from amoginarium import pv
+from amoginarium.shared import DummyCIDs
+from amoginarium.shared.utility import Color
 
 from ..entities import Drawn_1, Drawn_2
 from ..render_bindings import renderer
 from ..textures import textures
-from ._synced_entities import SyncedLRImageEntity, SE_MANAGER
 from ._inventory import Inventory
-
+from ._synced_entities import SE_MANAGER, SyncedLRImageEntity
 
 PLAYER_LEFT_64_PATH = "amogus64left"
 PLAYER_RIGHT_64_PATH = "amogus64right"
@@ -52,7 +51,7 @@ class PlayerDummy(SyncedLRImageEntity):
         if cls._player_left_64_texture is ...:
             cls.load_textures()
 
-        return super(PlayerDummy, cls).__new__(cls)
+        return super().__new__(cls)
 
     @classmethod
     def load_textures(cls) -> None:

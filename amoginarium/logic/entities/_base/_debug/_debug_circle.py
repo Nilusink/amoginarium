@@ -13,18 +13,17 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import GraphicsCIDs, Coalitions
-from amoginarium.shared.utility import convert_color, Vec2
-from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
+from amoginarium.shared import BaseCommandType, Coalitions, GraphicsCIDs, ProcessCommand
+from amoginarium.shared.utility import Vec2, convert_color
 
 from .._base_entities import PositionedLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, CIDType
+    from amoginarium.shared import CIDType, base_entity_t
     from amoginarium.shared.utility import color_t
 
 

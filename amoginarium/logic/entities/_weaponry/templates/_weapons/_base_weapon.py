@@ -6,21 +6,23 @@ Created: 18.04.2026
 Authors: LukasKrah
 """
 
-from types import EllipsisType
-from random import random
-from ctypes import Array
-from icecream import ic
 import typing as tp
+from ctypes import Array
+from random import random
+from types import EllipsisType
 
-from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
-from amoginarium.shared.audio import RandomizedEffect, SoundEffect
+from amoginarium.shared import Coalitions, WeaponCIDs, base_entity_t
+from amoginarium.shared.audio import (
+    ContinuousSoundEffect,
+    RandomizedEffect,
+    ReloadGeneric,
+    SoundEffect,
+)
 from amoginarium.shared.utility import Vec2, convert_coord, get_default
-from amoginarium.shared import base_entity_t, WeaponCIDs
-from amoginarium.shared import Coalitions
 
-from .._bullets import Bullet
-from ...._base import Updated, LogicGameEntity, GameCollisions
+from ...._base import GameCollisions, LogicGameEntity, Updated
 from ...._items import Item
+from .._bullets import Bullet
 
 
 class BaseWeapon(Item):
@@ -40,13 +42,13 @@ class BaseWeapon(Item):
     _default_inaccuracy: float = 1
     _default_muzzle_velocity: float = 1
     _default_recoil_factor: float = 1
-    _default_sound_effect: tp.Type[
+    _default_sound_effect: type[
         ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType
     ] = ...
 
-    _default_bullet_type: tp.Type[Bullet] = Bullet
+    _default_bullet_type: type[Bullet] = Bullet
     _default_bullet_mount_point: tuple[int, int] | EllipsisType = ...
-    _default_cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...
+    _default_cluster_bullet_type: type[Bullet] | EllipsisType = ...
 
     def __init__(
         self,
@@ -64,7 +66,7 @@ class BaseWeapon(Item):
         | SoundEffect
         | RandomizedEffect
         | EllipsisType = ...,
-        bullet_type: tp.Type[Bullet] | EllipsisType = ...,
+        bullet_type: type[Bullet] | EllipsisType = ...,
         weapon_size: Vec2 | EllipsisType = ...,
         drop_casings: bool = False,
         cluster: bool = False,
@@ -147,39 +149,39 @@ class BaseWeapon(Item):
     @property
     def mag_size(self) -> int:
         """
-        max mag size
+        Max mag size
         """
         return self.mag_size
 
     @property
     def recoil_factor(self) -> float:
         """
-        recoil modifier
+        Recoil modifier
         """
         return self._recoil_factor
 
     @property
     def parent_position_offset(self) -> Vec2:
         """
-        offset to parent center
+        Offset to parent center
         """
         return self._parent_position_offset.copy()
 
     @property
     def muzzle_velocity(self) -> float:
-        """the weapons muzzle velocity"""
+        """The weapons muzzle velocity"""
         return self._muzzle_velocity
 
     @property
     def inaccuracy(self) -> float:
-        """weapon inaccuracy in rad"""
+        """Weapon inaccuracy in rad"""
         return self._inaccuracy
 
     # endregion
 
     def get_mag_state(self, max_out: float) -> tuple[float, int] | tuple[float, float]:
         """
-        returns the current mag size (rising when reloading)
+        Returns the current mag size (rising when reloading)
         :param max_out: output size
         :returns: x out of max_out, value of current state
         """
@@ -194,7 +196,7 @@ class BaseWeapon(Item):
 
     def _update(self, delta: float) -> None:
         """
-        update weapon state (like reloading, ...)
+        Update weapon state (like reloading, ...)
         """
         # reload time
         if self._current_reload_time > 0:
@@ -229,11 +231,10 @@ class BaseWeapon(Item):
 
     def stop_shooting(self):
         """
-        stop shooting the weapon (sound)
+        Stop shooting the weapon (sound)
         """
-        if hasattr(self._sound_effect, "done"):
-            if self._sound_effect.playing:
-                self._sound_effect.done()
+        if hasattr(self._sound_effect, "done") and self._sound_effect.playing:
+            self._sound_effect.done()
 
     def shoot(
         self,
@@ -243,7 +244,7 @@ class BaseWeapon(Item):
         **bullet_args,
     ) -> bool:
         """
-        shoot a bullet and check for recoil and reload
+        Shoot a bullet and check for recoil and reload
 
         :returns: true if shot
         """
@@ -263,10 +264,9 @@ class BaseWeapon(Item):
             return False
 
         if self._sound_effect is not ...:
-            if not self._sound_effect.playing:
-                self._sound_effect.play(pos=self.position)
-
-            elif not hasattr(self._sound_effect, "stage_one_done"):
+            if not self._sound_effect.playing or not hasattr(
+                self._sound_effect, "stage_one_done"
+            ):
                 self._sound_effect.play(pos=self.position)
 
             if hasattr(self._sound_effect, "stage_one_done"):
@@ -337,7 +337,7 @@ class BaseWeapon(Item):
 
     def reload(self, instant: bool = False) -> None:
         """
-        reload the weapon
+        Reload the weapon
         """
         if hasattr(self._sound_effect, "done"):
             if 0 < self._sound_effect.playing < 3:
@@ -357,7 +357,7 @@ class BaseWeapon(Item):
 
     def stop(self) -> None:
         """
-        stop all running effects
+        Stop all running effects
         """
         if self._sound_effect is not ...:
             if hasattr(self._sound_effect, "stage_one_done"):

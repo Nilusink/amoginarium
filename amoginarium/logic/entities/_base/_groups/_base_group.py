@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import normalize_angle
 from amoginarium.shared import PositionedLogicEntityLike
+from amoginarium.shared.utility import normalize_angle
 
 from ._logic_group import LogicGroup
 
@@ -95,7 +95,7 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
         self, center: Vec2, radius: float
     ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
-        get all entities of this group inside a circle, sorted by distance (closest first)
+        Get all entities of this group inside a circle, sorted by distance (closest first)
         :param center: center of the circle
         :param radius: radius of the circle
         :return: list of tuples (distance, entity) of entities in the circle

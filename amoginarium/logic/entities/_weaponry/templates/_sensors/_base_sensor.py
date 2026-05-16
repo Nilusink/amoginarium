@@ -6,18 +6,21 @@ Created: 18.04.2026
 Authors: Nilusink, LukasKrah
 """
 
-from ctypes import Array
 import typing as tp
+from ctypes import Array
+
 import numpy as np
 
-from amoginarium.shared import base_entity_t, SensorCIDs, ProcessCommand
-from amoginarium.shared.utility import coord_t, convert_coord, Vec2
-from amoginarium.shared.utility import pack_int, MASK16
-from amoginarium.shared import BaseCommandType
 from amoginarium import pv
+from amoginarium.shared import (
+    BaseCommandType,
+    ProcessCommand,
+    SensorCIDs,
+    base_entity_t,
+)
+from amoginarium.shared.utility import MASK16, Vec2, convert_coord, coord_t, pack_int
 
-from ...._base import PositionedLogicEntity, LogicGameEntity
-from ...._base import Updated
+from ...._base import LogicGameEntity, PositionedLogicEntity, Updated
 
 
 class BaseSensor(PositionedLogicEntity):
@@ -90,7 +93,7 @@ class BaseSensor(PositionedLogicEntity):
 
     def _calculate_sphere(self) -> list[Vec2]:
         """
-        calculate detection sphere
+        Calculate detection sphere
         """
         angle_step = (np.pi * 2) / self._sphere_accuracy
 

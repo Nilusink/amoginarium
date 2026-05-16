@@ -10,8 +10,8 @@ Nilusink
 
 from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, Color
 from amoginarium.shared import WeaponCIDs
+from amoginarium.shared.utility import Color, Vec2
 
 from ..render_bindings import renderer
 from ..textures import textures
@@ -84,12 +84,12 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
 
     @property
     def _texture_id_r(self) -> int:
-        """texture id right"""
+        """Texture id right"""
         return self._images[round(self.param2 * (len(self._images) - 1))]
 
     @property
     def _texture_id_l(self) -> int:
-        """texture id left"""
+        """Texture id left"""
         return self._images_m[round(self.param2 * (len(self._images) - 1))]
 
 

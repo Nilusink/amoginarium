@@ -10,15 +10,15 @@ Nilusink
 
 from contextlib import suppress
 
-from icecream import ic
 import pygame as pg
+from icecream import ic
 
 from amoginarium.base import BaseGame
-from amoginarium.logic.entities import Updated, CollisionDestroyed
 from amoginarium.graphics.ui import EventHandler
-from amoginarium.shared import pv, VisibleGameEntityLike, GameEntityLike
-from amoginarium.shared.utility import convert_coord, Vec2
+from amoginarium.logic.entities import CollisionDestroyed, Updated
 from amoginarium.logic.map import save_map
+from amoginarium.shared import GameEntityLike, VisibleGameEntityLike
+from amoginarium.shared.utility import Vec2, convert_coord
 
 
 def main() -> None:

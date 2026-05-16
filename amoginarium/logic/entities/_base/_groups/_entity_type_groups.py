@@ -11,14 +11,11 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2
 from amoginarium.shared import PositionedLogicEntityLike
+from amoginarium.shared.utility import Vec2
 
 from ._base_group import BaseGroup
 from ._updated import Updated
-
-if tp.TYPE_CHECKING:
-    from ..._player import Player
 
 
 class _Bullets(BaseGroup[PositionedLogicEntityLike]):

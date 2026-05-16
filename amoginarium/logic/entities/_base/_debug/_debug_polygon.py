@@ -13,22 +13,21 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import GraphicsCIDs
+from amoginarium import pv
+from amoginarium.shared import BaseCommandType, GraphicsCIDs, ProcessCommand
 from amoginarium.shared.utility import (
-    Vec2,
     MASK16,
+    Vec2,
+    convert_color,
     get_default,
     normalize_angle,
-    convert_color,
 )
-from amoginarium.shared import BaseCommandType, ProcessCommand
-from amoginarium import pv
 
 from .._base_entities import PositionedLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.utility import color_t

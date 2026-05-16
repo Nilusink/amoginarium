@@ -15,51 +15,102 @@ os.environ["SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS"] = "0"
 # Stop Windows DPI scaling from slightly altering the window size and triggering a loop
 os.environ["SDL_VIDEO_HIGHDPI_DISABLED"] = "1"
 
-from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
-from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
-from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
-from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
-from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
-from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
-from OpenGL.GL import glDisable, glBegin, glClearColor, glGetIntegerv
-from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST, GL_VIEWPORT
-from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA
-from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
-from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
-from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glViewport, glOrtho
-from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
-from OpenGL.GL import GL_QUADS, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
-from OpenGL.GL import (
-    glEnableClientState,
-    glDisableClientState,
-    glVertexPointer,
-    glDrawArrays,
-)
-from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
-from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
-from OpenGL.GLU import gluOrtho2D
-
+import math as m
+import typing as tp
 from collections.abc import Sequence
 from types import EllipsisType
-from icecream import ic
-from PIL import Image
-import pygame as pg
-import typing as tp
+
 import numpy as np
-import math as m
-
-from amoginarium.shared.debugging import cum_timer
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade
-from amoginarium.shared.utility import coord_t, convert_color, PI_2
-
-from ._base_renderer import BaseRenderer, tColor
-from .windows import WindowsMonitorService
-from .opengl_fonts import GLFont
+import pygame as pg
+from icecream import ic
+from OpenGL.GL import (
+    GL_ALPHA_TEST,
+    GL_ALWAYS,
+    GL_BLEND,
+    GL_CLAMP_TO_EDGE,
+    GL_COLOR_BUFFER_BIT,
+    GL_DEPTH_BUFFER_BIT,
+    GL_EQUAL,
+    GL_FALSE,
+    GL_FLOAT,
+    GL_GREATER,
+    GL_KEEP,
+    GL_LINEAR,
+    GL_LINES,
+    GL_MODELVIEW,
+    GL_NEAREST,
+    GL_ONE_MINUS_SRC_ALPHA,
+    GL_POLYGON,
+    GL_PROJECTION,
+    GL_QUADS,
+    GL_REPLACE,
+    GL_RGBA,
+    GL_SRC_ALPHA,
+    GL_STENCIL_BUFFER_BIT,
+    GL_STENCIL_TEST,
+    GL_TEXTURE_2D,
+    GL_TEXTURE_MAG_FILTER,
+    GL_TEXTURE_MIN_FILTER,
+    GL_TEXTURE_WRAP_S,
+    GL_TEXTURE_WRAP_T,
+    GL_TRIANGLE_STRIP,
+    GL_TRUE,
+    GL_UNSIGNED_BYTE,
+    GL_VERTEX_ARRAY,
+    glAlphaFunc,
+    glBegin,
+    glBindTexture,
+    glBlendFunc,
+    glClear,
+    glClearColor,
+    glColor3f,
+    glColor4f,
+    glColorMask,
+    glDisable,
+    glDisableClientState,
+    glDrawArrays,
+    glEnable,
+    glEnableClientState,
+    glEnd,
+    glGenTextures,
+    glLoadIdentity,
+    glMatrixMode,
+    glOrtho,
+    glPopMatrix,
+    glPushMatrix,
+    glRotated,
+    glStencilFunc,
+    glStencilMask,
+    glStencilOp,
+    glTexCoord2f,
+    glTexImage2D,
+    glTexParameteri,
+    glTranslate,
+    glTranslated,
+    glTranslatef,
+    glVertex2f,
+    glVertexPointer,
+    glViewport,
+)
+from OpenGL.GLU import gluOrtho2D
+from PIL import Image
 
 from amoginarium import pv
+from amoginarium.shared.debugging import cum_timer
+from amoginarium.shared.utility import (
+    PI_2,
+    Color,
+    Vec2,
+    convert_color,
+    convert_coord,
+    coord_t,
+    fade,
+    normalize_angle,
+)
 
+from ._base_renderer import BaseRenderer, tColor
+from .opengl_fonts import GLFont
+from .windows import WindowsMonitorService
 
 # define types
 
@@ -100,7 +151,7 @@ class OpenGLRenderer(BaseRenderer):
         super().__init__()
 
     # region Extra internal methods
-    # todo: WHAT?
+    # TODO: WHAT?
     def get_font(
         self, size: int, family: str, bold: bool = False, italic: bool = False
     ) -> pg.font.Font:
@@ -132,7 +183,7 @@ class OpenGLRenderer(BaseRenderer):
             glColor4f(*color.rgba1)
 
             return color
-        elif isinstance(color, tuple):
+        if isinstance(color, tuple):
             if len(color) == 3:
                 glColor3f(*color)
             elif len(color) == 4:
@@ -592,7 +643,7 @@ class OpenGLRenderer(BaseRenderer):
 
     def start_stencil(self, show_stencil=False):
         """
-        call this, then draw stencil, then draw enable_stencil
+        Call this, then draw stencil, then draw enable_stencil
         """
         glEnable(GL_STENCIL_TEST)
         glClear(GL_STENCIL_BUFFER_BIT)
@@ -699,7 +750,7 @@ class OpenGLRenderer(BaseRenderer):
             self.__layer_cache[layer].append(draw_info)
 
     def __draw_layer(self, layer: list[dict[str, tp.Any]]) -> None:
-        """draw one texture layer"""
+        """Draw one texture layer"""
         layer = sorted(layer, key=lambda x: x["texture_id"])
 
         # reset color
@@ -1253,7 +1304,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(start_vec, size_vec)
 
-    # todo mytodo work on this
+    # TODO mytodo work on this
     def draw_bar(
         self,
         pos: coord_t,
@@ -1266,7 +1317,7 @@ class OpenGLRenderer(BaseRenderer):
         offscreen_check: bool = True,
     ) -> None:
         """
-        draw a progress? bar at the specified location (using specified color gradient
+        Draw a progress? bar at the specified location (using specified color gradient
         """
         pos: Vec2 = convert_coord(pos, Vec2)  # ignore: type
         size: Vec2 = convert_coord(size, Vec2)  # ignore: type
@@ -1362,7 +1413,7 @@ class OpenGLRenderer(BaseRenderer):
 
         glBegin(GL_POLYGON)
 
-        step = 6.283185307179586 / num_segments
+        step = m.tau / num_segments
         [
             glVertex2f(radius * m.cos(i * step), radius * m.sin(i * step))
             for i in range(num_segments)
@@ -1417,7 +1468,7 @@ class OpenGLRenderer(BaseRenderer):
 
         glBegin(GL_TRIANGLE_STRIP)
 
-        step: float = 6.283185307179586 / num_segments
+        step: float = m.tau / num_segments
         [
             (glVertex2f(outer * c, outer * s), glVertex2f(radius * c, radius * s))
             for i in range(num_segments + 1)
@@ -1550,7 +1601,7 @@ class OpenGLRenderer(BaseRenderer):
         if num_to_draw == 0:
             return
 
-        step = 6.283185307179586 / num_segments
+        step = m.tau / num_segments
 
         angles1 = active_indices * step
         angles2 = angles1 + step

@@ -7,4 +7,4 @@ Author:
 Nilusink
 """
 
-from ._static_sensors import VisualSensor, VisualRadarSensor
+from ._static_sensors import VisualRadarSensor, VisualSensor

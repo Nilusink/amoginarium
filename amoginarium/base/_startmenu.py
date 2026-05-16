@@ -9,11 +9,9 @@ Project: amoginarium
 ##################################################
 
 import typing as tp
-from turtledemo.planet_and_moon import Star
 
-from amoginarium.graphics.ui import UIButton, UIRectangle, UIStaticText
 from amoginarium.graphics.logic_dummies import PresetGraphicsSoundEffect
-
+from amoginarium.graphics.ui import UIButton, UIRectangle, UIStaticText
 
 ##################################################
 #                     Code                       #

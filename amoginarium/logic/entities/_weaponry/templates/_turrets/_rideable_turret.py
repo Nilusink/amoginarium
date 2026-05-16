@@ -8,24 +8,36 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from ctypes import Array
-from icecream import ic
 import typing as tp
-import numpy as np
+from ctypes import Array
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, convert_coord, MASK16, MASK32
-from amoginarium.shared.utility import normalize_angle
-from amoginarium.shared import Coalitions, base_entity_t, TurretCIDs, BaseCommandType
-from amoginarium.shared import ProcessCommand
-from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared.audio import MetalPings
-from amoginarium import pv
+import numpy as np
+from icecream import ic
 from logic.entities import BaseLogicEntity
 
+from amoginarium import pv
+from amoginarium.shared import (
+    BaseCommandType,
+    Coalitions,
+    ProcessCommand,
+    TurretCIDs,
+    base_entity_t,
+)
+from amoginarium.shared.audio import MetalPings
+from amoginarium.shared.collision_detection import CollisionEvent
+from amoginarium.shared.utility import (
+    MASK16,
+    MASK32,
+    Vec2,
+    convert_coord,
+    get_default,
+    normalize_angle,
+)
+
 from .....graphics_dummies import Controller
+from ...._base import GameCollisions, LogicGameEntity
 from ...._rideables import Passenger, RideablePerks
-from ...._base import LogicGameEntity, GameCollisions
 from .._weapons import BaseWeapon
 
 if tp.TYPE_CHECKING:
@@ -67,7 +79,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     _default_target_taps: tp.ClassVar[int] = 1  # shots per click
 
-    _default_weapon_type: tp.Type[BaseWeapon] | EllipsisType = ...
+    _default_weapon_type: type[BaseWeapon] | EllipsisType = ...
     _default_weapon_drop_casings: tp.ClassVar[bool] = False
     _default_weapon_position_offset: tp.ClassVar[
         Vec2 | list[float] | tuple[float, float]
@@ -175,8 +187,8 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         self._create_collision()
 
         # player variables
-        self._player: tp.Union["Player", None] = None
-        self._controller: tp.Union[Controller, None] = None
+        self._player: Player | None = None
+        self._controller: Controller | None = None
         self.__ride_pressed = False
 
         # spawn logic dummy
@@ -190,12 +202,12 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     # region properties
     @property
     def min_range(self) -> float:
-        """min engagement range"""
+        """Min engagement range"""
         return self._default_engagement_min_range
 
     @property
     def max_range(self) -> float:
-        """max engagement range"""
+        """Max engagement range"""
         return self._default_engagement_max_range
 
     @property
@@ -228,7 +240,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     def set_passenger(self, passenger: "Player") -> bool:
         """
-        assign passenger to turret
+        Assign passenger to turret
 
         :returns: True if successful
         """
@@ -264,14 +276,14 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         # turret - events 1 bullet
         for event in events:
             if event.group_id == GameCollisions.collision_group_bullets:
-                event: CollisionEvent["Bullet"]
+                event: CollisionEvent[Bullet]
                 self.__on_collision_bullet(event)
 
     # endregion
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         """
-        deal damage to the turret
+        Deal damage to the turret
         """
         self._hp -= damage
 
@@ -291,7 +303,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         target_pos: Vec2 | EllipsisType = ...,
         **bullet_args,
     ) -> None:
-        """checks if shot is inside parameters"""
+        """Checks if shot is inside parameters"""
         self.weapon.shoot(
             self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
@@ -368,7 +380,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         super()._update(delta)
 
     def _turn_at(self, angle: float, dt: float) -> None:
-        """turn towards a target"""
+        """Turn towards a target"""
         if not isinstance(self._default_weapon_static_facing, EllipsisType):
             self.weapon.facing.angle = self._default_weapon_static_facing
             return

@@ -10,20 +10,18 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord, TupleMath
 from amoginarium import pv
+from amoginarium.shared.utility import TupleMath, Vec2, convert_coord, coord_t
 
 from ..._types import Anchor, Positions
 from .._ui_entity import UIEntity
 from ._ui_element_values import (
-    UIElementValueVec2,
-    UIElementValueFloatOneAbsolute,
-    UIElementValueVec2OneAbsolute,
-)
-from ._ui_element_values import (
     UIElementData,
+    UIElementValueFloatOneAbsolute,
     UIElementValueNamesEnum,
     UIElementValueTypesEnum,
+    UIElementValueVec2,
+    UIElementValueVec2OneAbsolute,
 )
 
 
@@ -164,8 +162,7 @@ class UIElement(UIEntity):
             convert_coord(relative_value),
             convert_coord(
                 reference
-                if reference
-                else (
+                or (
                     self.__data.reference_size.absolute
                     if (calc_for == "size" and self.__data.size_is_relative_to_parent)
                     else (
@@ -197,8 +194,7 @@ class UIElement(UIEntity):
             convert_coord(absolute_value),
             convert_coord(
                 reference
-                if reference
-                else (
+                or (
                     self.__data.reference_size.absolute
                     if (calc_for == "size" and self.__data.size_is_relative_to_parent)
                     else (
@@ -397,9 +393,8 @@ class UIElement(UIEntity):
     def __calc_values(self, pass_check: bool = False) -> None:
         self._update_relative_values()
 
-        if not pass_check:
-            if not self.__check_modifications():
-                return
+        if not pass_check and not self.__check_modifications():
+            return
 
         # position relative to parent and size relative to parent are always true already
 

@@ -8,13 +8,14 @@ Author:
 Nilusink, LukasKrah
 """
 
+import abc
+import typing as tp
 from collections.abc import Sequence
 from types import EllipsisType
-from PIL import Image
-import typing as tp
-import abc
 
-from amoginarium.shared.utility import Color, coord_t, Vec2
+from PIL import Image
+
+from amoginarium.shared.utility import Color, Vec2, coord_t
 
 # define types
 type Color3 = tuple[float, float, float]
@@ -152,7 +153,7 @@ class BaseRenderer(abc.ABC):
     # endregion
 
     # region Stencil
-    # todo mytodo - stencils work!
+    # TODO mytodo - stencils work!
     @abc.abstractmethod
     def apply_stencil[**A](
         self,
@@ -205,7 +206,7 @@ class BaseRenderer(abc.ABC):
 
     def flush(self) -> None:
         """
-        flush all texture layers
+        Flush all texture layers
 
         :raises NotImplementedError: If the renderer does not implement this method
         """
@@ -213,7 +214,7 @@ class BaseRenderer(abc.ABC):
 
     def flush_layer(self, layer: int) -> None:
         """
-        flush one texture layer
+        Flush one texture layer
 
         :param layer: layer to flush
         :raises NotImplementedError: If the renderer does not implement this method

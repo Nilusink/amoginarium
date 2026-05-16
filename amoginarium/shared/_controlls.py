@@ -9,7 +9,6 @@ Nilusink
 """
 
 from ctypes import Array
-from icecream import ic
 
 from ._shared_memory import base_controller_t
 
@@ -23,7 +22,7 @@ class Controls:
         self, id: int, c_shm: Array[base_controller_t], initialize: bool = False
     ) -> None:
         """
-        setup controller
+        Setup controller
 
         :param id: controller id (for shm)
         :param c_shm: controller shared memory buffer

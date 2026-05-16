@@ -8,13 +8,12 @@ Author:
 Nilusink
 """
 
-from icecream import ic
-import json
-
-from ._json_serialize import to_str
-from ..base._groups import Updated
 from amoginarium.logic.entities import Island
 from amoginarium.shared import GameEntityLike
+
+from ..base._groups import Updated
+from ._json_serialize import to_str
+
 # from ..entities._
 
 

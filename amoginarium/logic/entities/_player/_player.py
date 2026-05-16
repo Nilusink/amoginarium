@@ -8,33 +8,47 @@ Author:
 Nilusink
 """
 
-from contextlib import suppress
-from time import perf_counter
-from ctypes import Array
-from icecream import ic
 import typing as tp
+from contextlib import suppress
+from ctypes import Array
+from time import perf_counter
 
-from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
-from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs, CurrentView
-from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
+from icecream import ic
+
+from amoginarium import pv
+from amoginarium.shared import (
+    BaseCommandType,
+    Coalitions,
+    CurrentView,
+    DummyCIDs,
+    ItemLike,
+    ItemSlot,
+    ProcessCommand,
+    base_entity_t,
+)
+from amoginarium.shared.audio import DeathSound, OnHoverButtonSound, SoundEffect
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
-from amoginarium import pv
 
-from .._base import GravityAffected, FrictionXAffected, Updated, CollisionLogicEntity
-from .._base import Players, GameCollisions, LogicGameEntity
-from .._items import Shield, HealingPotion, JetBag, Inventory
-from .._weaponry import HandThrownGrenade, RailGun, ExactoSniper
-from .._weaponry.templates import BaseWeapon
-from .._dynamic_entities import DYNAMIC_ENTITIES
 from ...graphics_dummies import Controller
+from .._base import (
+    CollisionLogicEntity,
+    FrictionXAffected,
+    GameCollisions,
+    GravityAffected,
+    LogicGameEntity,
+    Players,
+    Updated,
+)
+from .._dynamic_entities import DYNAMIC_ENTITIES
+from .._items import HealingPotion, Inventory, Item, JetBag, Shield
 from .._rideables import Passenger
-from .._items import Item
+from .._weaponry import ExactoSniper, HandThrownGrenade, RailGun
+from .._weaponry.templates import BaseWeapon
 
 if tp.TYPE_CHECKING:
-    from .._weaponry.templates import Bullet
+    from .._weaponry.templates import Bullet, RideableTurret
     from .._world import Island
-    from .._weaponry.templates import RideableTurret
 
 
 class Player(Passenger, LogicGameEntity):
@@ -183,8 +197,7 @@ class Player(Passenger, LogicGameEntity):
 
         if self._hotbar.get_count(self._current_weapon) > 0:
             return self._hotbar.get_item(self._current_weapon)
-        else:
-            return None
+        return None
 
     @property
     def controller(self) -> Controller:
@@ -193,7 +206,7 @@ class Player(Passenger, LogicGameEntity):
     # endregion
 
     def get_current_view(self) -> CurrentView:
-        """get current player viewport"""
+        """Get current player viewport"""
         pos = self.position
         zoom = 0
 
@@ -273,9 +286,8 @@ class Player(Passenger, LogicGameEntity):
         new = self._hp + heal
         if new > self._max_hp:
             return False
-        else:
-            self._hp = new
-            return True
+        self._hp = new
+        return True
 
     def __on_collision_island(
         self, events: list[CollisionEvent["Island"]]
@@ -375,23 +387,22 @@ class Player(Passenger, LogicGameEntity):
         ],
     ) -> list[bool] | None:
         if events[0].group_id == GameCollisions.collision_group_islands:
-            events: list[CollisionEvent["Island"]]
+            events: list[CollisionEvent[Island]]
             return self.__on_collision_island(events)
 
-        elif events[0].group_id == GameCollisions.collision_group_bullets:
-            events: list[CollisionEvent["Bullet"]]
+        if events[0].group_id == GameCollisions.collision_group_bullets:
+            events: list[CollisionEvent[Bullet]]
             self.__on_collision_bullet(events)
 
-        elif events[0].group_id == GameCollisions.collision_group_items:
-            events: list[CollisionEvent["Item"]]
-            self.__on_collision_item(events)
-
-        elif events[0].group_id == GameCollisions.collision_group_shields:
-            events: list[CollisionEvent["Item"]]
+        elif (
+            events[0].group_id == GameCollisions.collision_group_items
+            or events[0].group_id == GameCollisions.collision_group_shields
+        ):
+            events: list[CollisionEvent[Item]]
             self.__on_collision_item(events)
 
         elif events[0].group_id == GameCollisions.collision_group_rideable_turrets:
-            events: list[CollisionEvent["RideableTurret"]]
+            events: list[CollisionEvent[RideableTurret]]
             self.__on_collision_rideable(events)
 
         return None
@@ -514,19 +525,18 @@ class Player(Passenger, LogicGameEntity):
                             self._controller.feedback_shoot()
                     elif self.item:
                         self.item.use()
-                else:
-                    if isinstance(self.item, BaseWeapon):
-                        if hasattr(self.item, "charge"):
-                            item: ... = self.item
-                            if item.charged > 0:
-                                if self.item.shoot(self.facing):
-                                    self._controller.feedback_shoot()
-                            else:
-                                self.item.stop_shooting()
+                elif isinstance(self.item, BaseWeapon):
+                    if hasattr(self.item, "charge"):
+                        item: ... = self.item
+                        if item.charged > 0:
+                            if self.item.shoot(self.facing):
+                                self._controller.feedback_shoot()
                         else:
                             self.item.stop_shooting()
-                    elif self.item:
-                        self.item.stop_use()
+                    else:
+                        self.item.stop_shooting()
+                elif self.item:
+                    self.item.stop_use()
 
             # drop item
             if self._controller.drop:
@@ -646,7 +656,7 @@ class Player(Passenger, LogicGameEntity):
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
         :param value: 2D velocity to add
         """
         x = value.x
@@ -664,7 +674,7 @@ class Player(Passenger, LogicGameEntity):
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
         :param value: 2D acceleration to add
         """
         x = value.x

@@ -8,20 +8,28 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from icecream import ic  # noqa: F401
-import typing as tp
 import ctypes
+import math
+import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, Color, normalize_angle, MASK32
-from amoginarium.shared.utility import MASK16, MASK64
-from amoginarium.shared import TurretCIDs
+from icecream import ic  # noqa: F401
+
 from amoginarium import pv
+from amoginarium.shared import TurretCIDs
+from amoginarium.shared.utility import (
+    MASK16,
+    MASK32,
+    MASK64,
+    Color,
+    Vec2,
+    normalize_angle,
+)
 
 from ..entities import Drawn_1, Drawn_2
 from ..render_bindings import renderer
 from ..textures import textures
-from ._synced_entities import SyncedGraphicsEntity, SE_MANAGER
+from ._synced_entities import SE_MANAGER, SyncedGraphicsEntity
 
 
 class BaseTurretDummy(SyncedGraphicsEntity):
@@ -70,7 +78,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
 
     def _before_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
-        update targeting pos before drawing
+        Update targeting pos before drawing
         """
         super()._before_gl_draw(drawn)
 
@@ -131,7 +139,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                 )
 
                 angle_delta = abs(normalize_angle(self._angles[1] - self._angles[0]))
-                segments = int(64 * (angle_delta / (2 * 3.1415926)))
+                segments = int(64 * (angle_delta / (2 * math.pi)))
 
                 renderer.draw_partial_dashed_circle(
                     engage_center,

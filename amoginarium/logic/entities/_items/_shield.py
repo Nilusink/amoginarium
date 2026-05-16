@@ -6,23 +6,23 @@ Created: 18.04.2026
 Authors: LukasKrah
 """
 
-from types import EllipsisType
-from ctypes import Array
 import typing as tp
+from ctypes import Array
+from types import EllipsisType
 
+from amoginarium.shared import ItemCIDs, base_entity_t
+from amoginarium.shared.audio import MetalPings, RandomizedEffect
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import base_entity_t, ItemCIDs
-from .. import Updated
 
-from amoginarium.shared.audio import MetalPings, RandomizedEffect
-from .._base import LogicGameEntity, GameCollisions, CollisionType
+from .. import Updated
+from .._base import CollisionType, GameCollisions, LogicGameEntity
 from ._something import Something
 
 if tp.TYPE_CHECKING:
-    from .._weaponry.templates import Bullet
-    from .._weaponry import Grenade
     from .._player import Player
+    from .._weaponry import Grenade
+    from .._weaponry.templates import Bullet
     from .._world import Island
 
 
@@ -59,7 +59,7 @@ class Shield(Something):
 
     @property
     def hp(self) -> float:
-        """hit points"""
+        """Hit points"""
         return self._uses_left
 
     @property
@@ -68,7 +68,7 @@ class Shield(Something):
 
     def use(self) -> None:
         """
-        start using the item
+        Start using the item
         """
         if not self._in_use:
             self._collision_active = True
@@ -78,7 +78,7 @@ class Shield(Something):
 
     def stop_use(self) -> None:
         """
-        stop using the item
+        Stop using the item
         """
         if self._in_use:
             self._collision_active = False
@@ -141,9 +141,8 @@ class Shield(Something):
         if not self._in_use:
             return
 
-        if hit_by is not ...:
-            if hit_by._tags.__contains__("bullet"):
-                self._sound.play(pos=self.position)
+        if hit_by is not ... and hit_by._tags.__contains__("bullet"):
+            self._sound.play(pos=self.position)
 
         self._uses_left -= damage
 
@@ -174,7 +173,6 @@ class Shield(Something):
             super()._update(delta, keep_position=True)
             return
 
-        else:
-            self.size.xy = self._image_size
+        self.size.xy = self._image_size
 
         super()._update(delta)

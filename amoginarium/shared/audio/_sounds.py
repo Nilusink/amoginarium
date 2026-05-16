@@ -8,13 +8,14 @@ Author:
 Nilusink
 """
 
-from amoginarium.shared.debugging import print_ic_style, get_fg_color, CC
-import pygame as pg
-import typing as tp
-import zipfile
 import json
 import os
+import typing as tp
+import zipfile
 
+import pygame as pg
+
+from amoginarium.shared.debugging import CC, get_fg_color, print_ic_style
 
 type sound_name_t = str | tuple[str, str]
 
@@ -39,7 +40,7 @@ class _Sounds:
 
     def load_sounds(self, path: str) -> None:
         """
-        load all sounds from a zip file or a directory
+        Load all sounds from a zip file or a directory
         """
         if not os.path.exists(path):
             raise FileNotFoundError(f"{path} doesn't exist!")
@@ -122,7 +123,7 @@ class _Sounds:
 
     def get_sound(self, name: str, scope: str | None = None) -> pg.mixer.Sound | None:
         """
-        returns a sound if it exists
+        Returns a sound if it exists
         """
         if scope is not None and scope not in self._sounds:
             raise ValueError(f'scope "{scope}" not found')
@@ -139,28 +140,27 @@ class _Sounds:
 
                     return self._sounds[n_scope][sound]["sound"]
 
-        else:
-            if self.debug >= 3:
-                if scope is None:
-                    print_ic_style(
-                        f'{get_fg_color(36)}"{name}"{get_fg_color(247)} '
-                        f'not found in scope {get_fg_color(36)}"{scope}"'
-                    )
+        if self.debug >= 3:
+            if scope is None:
+                print_ic_style(
+                    f'{get_fg_color(36)}"{name}"{get_fg_color(247)} '
+                    f'not found in scope {get_fg_color(36)}"{scope}"'
+                )
 
-                else:
-                    print_ic_style(
-                        f'{get_fg_color(36)}"{name}"{get_fg_color(247)} '
-                        f"not found in any loaded scope"
-                    )
+            else:
+                print_ic_style(
+                    f'{get_fg_color(36)}"{name}"{get_fg_color(247)} '
+                    f"not found in any loaded scope"
+                )
 
-            return None
+        return None
 
     def get_all_from_scope(
         self,
         scope: str,
     ) -> list[pg.mixer.Sound]:
         """
-        get all textures from a scope
+        Get all textures from a scope
         """
         if scope not in self._sounds:
             raise ValueError(f'scope "{scope}" not found')
@@ -179,7 +179,7 @@ class _Sounds:
 
     def get_scope_info(self, scope: str) -> dict[str, dict]:
         """
-        get info dicts from loaded scope
+        Get info dicts from loaded scope
 
         :returns: info dict (empty if not loaded)
         """

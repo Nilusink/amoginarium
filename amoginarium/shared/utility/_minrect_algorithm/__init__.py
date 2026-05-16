@@ -6,5 +6,5 @@ Created: 13.04.2026
 Authors: LukasKrah
 """
 
-from ._minrect_dirty import find_minimum_rectangles_dirty
 from ._minrect import find_minimum_rectangles
+from ._minrect_dirty import find_minimum_rectangles_dirty

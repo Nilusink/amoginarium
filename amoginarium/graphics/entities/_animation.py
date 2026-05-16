@@ -8,14 +8,19 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
-from amoginarium.graphics.render_bindings import renderer
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord
-from amoginarium.shared.utility import normalize_angle, RTD
-from amoginarium.shared import HasPosition, HasFacing
 from amoginarium import pv
+from amoginarium.graphics.render_bindings import renderer
+from amoginarium.shared import HasFacing, HasPosition
+from amoginarium.shared.utility import (
+    RTD,
+    Vec2,
+    convert_coord,
+    coord_t,
+    normalize_angle,
+)
 
 from ..textures import textures
 from ._base_entity import BaseGraphicsEntity
@@ -104,7 +109,7 @@ class Animation(BaseGraphicsEntity):
 
     @property
     def rotation(self) -> float:
-        """rotation"""
+        """Rotation"""
         rot = 0
 
         # get rotation reference
@@ -123,7 +128,7 @@ class Animation(BaseGraphicsEntity):
 
     @property
     def rotate_anchor(self) -> Vec2:
-        """image rotation anchor"""
+        """Image rotation anchor"""
         if isinstance(self._rotate_anchor, EllipsisType):
             return self._size / 2
 
@@ -188,7 +193,7 @@ def play_animation(
     delay=0.2,
 ) -> None:
     """
-    play an animation based on textures
+    Play an animation based on textures
     """
     Animation(
         textures, sizes[0], delay, position, position_reference, position_offset
@@ -211,7 +216,7 @@ class ImageAnimation:
 
     def load_textures(self, size: Vec2 = None) -> None:
         """
-        load all textures required for the animation
+        Load all textures required for the animation
         """
         self._textures = []
         self._sizes = []
@@ -228,7 +233,7 @@ class ImageAnimation:
         layer: int = 0,
     ) -> None:
         """
-        play the recently loaded animation
+        Play the recently loaded animation
 
         either position or position_reference have to be given
         """

@@ -8,11 +8,11 @@ Authors: LukasKrah
 
 import typing as tp
 
-from amoginarium.shared.utility import coord_t, color_t, Color, convert_color
+from amoginarium.shared.utility import Color, color_t, convert_color, coord_t
 
-from .._base import UIEntity, UIEventElement
 from ...render_bindings import renderer
-from .._types import Positions, Anchor
+from .._base import UIEntity, UIEventElement
+from .._types import Anchor, Positions
 
 
 class UIDynamicText(UIEventElement):
