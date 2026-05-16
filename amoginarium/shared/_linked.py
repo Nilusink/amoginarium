@@ -7,6 +7,7 @@ globals
 Author:
 Nilusink
 """
+
 from multiprocessing.sharedctypes import Synchronized
 from ctypes import c_double, c_int8
 from multiprocessing import Value
@@ -36,7 +37,7 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
     "time": c_double,
     "t_mult": c_double,
     "max_fps": c_double,
-    "background_position": c_double
+    "background_position": c_double,
 }
 
 

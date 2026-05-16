@@ -25,6 +25,7 @@ if tp.TYPE_CHECKING:
 
 class UIEventElement(UIElement):
     """UI component that handles mouse events, hovering, and collision masks."""
+
     __collision_surface: pg.Surface | None = None
     __collision_mask: pg.Mask | None
     __collision_buffer: int
@@ -44,22 +45,21 @@ class UIEventElement(UIElement):
     __on_click_callbacks: list[tp.Callable[[], tp.Any]]
 
     def __init__(
-            self,
-            position: coord_t,
-            size: coord_t,
-            *,
-            parent: UIEntity | None = None,
-            placement_anchor: Anchor = Anchor.CENTER,
-            absolute_values: bool = False,
-            positon_is_relative_to_parent: bool = True,
-            size_is_relative_to_parent: bool = True,
-            parent_reference_position: Positions = Positions.TOP_LEFT,
-
-            collision_buffer: int = 1,
-            use_collision_mask: bool = True,
-            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        self,
+        position: coord_t,
+        size: coord_t,
+        *,
+        parent: UIEntity | None = None,
+        placement_anchor: Anchor = Anchor.CENTER,
+        absolute_values: bool = False,
+        positon_is_relative_to_parent: bool = True,
+        size_is_relative_to_parent: bool = True,
+        parent_reference_position: Positions = Positions.TOP_LEFT,
+        collision_buffer: int = 1,
+        use_collision_mask: bool = True,
+        on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
     ) -> None:
         """
         Create a new UI component
@@ -85,7 +85,7 @@ class UIEventElement(UIElement):
             absolute_values=absolute_values,
             positon_is_relative_to_parent=positon_is_relative_to_parent,
             size_is_relative_to_parent=size_is_relative_to_parent,
-            parent_reference_position=parent_reference_position
+            parent_reference_position=parent_reference_position,
         )
 
         self.__collision_buffer = collision_buffer
@@ -164,7 +164,9 @@ class UIEventElement(UIElement):
         if self.__collision_recreation or self.__collision_surface is None:
             self.__collision_recreation = False
             self.__collision_mask = None
-            self.__collision_surface = pg.Surface(self.size.absolute.xy, pg.SRCALPHA, 32)
+            self.__collision_surface = pg.Surface(
+                self.size.absolute.xy, pg.SRCALPHA, 32
+            )
         return self.__collision_surface
 
     @property
@@ -191,7 +193,9 @@ class UIEventElement(UIElement):
             self.__is_hovered_inner = False
             cursor: UICursor
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor.position.absolute_global, buffer=self.__collision_buffer):
+                if self.__is_hovered_by(
+                    cursor.position.absolute_global, buffer=self.__collision_buffer
+                ):
                     self.__is_hovered_inner = True
 
         return self.__is_hovered_inner
@@ -202,7 +206,9 @@ class UIEventElement(UIElement):
             self.__is_hovered_outer = False
             cursor: UICursor
             for cursor in Cursor.sprites():
-                if self.__is_hovered_by(cursor.position.absolute_global, buffer=-self.__collision_buffer):
+                if self.__is_hovered_by(
+                    cursor.position.absolute_global, buffer=-self.__collision_buffer
+                ):
                     self.__is_hovered_outer = True
                     break
 
@@ -215,17 +221,27 @@ class UIEventElement(UIElement):
         :param buffer: Buffer around the coordinates
         :return: Whether coords are over the component
         """
-        if all([
-            (self.top_left.absolute_global.x + buffer) <= coords.x <= (self.bottom_right.absolute_global.x - buffer),
-            (self.top_left.absolute_global.y + buffer) <= coords.y <= (self.bottom_right.absolute_global.y - buffer)
-        ]):
+        if all(
+            [
+                (self.top_left.absolute_global.x + buffer)
+                <= coords.x
+                <= (self.bottom_right.absolute_global.x - buffer),
+                (self.top_left.absolute_global.y + buffer)
+                <= coords.y
+                <= (self.bottom_right.absolute_global.y - buffer),
+            ]
+        ):
             if not self.__use_collision_mask:
                 return True
 
-            rel_coords = (coords - self.top_left.absolute_global)
+            rel_coords = coords - self.top_left.absolute_global
 
-            rel_coords.x += -buffer if coords.x < self.center.absolute_global.x else buffer
-            rel_coords.y += -buffer if coords.y < self.center.absolute_global.y else buffer
+            rel_coords.x += (
+                -buffer if coords.x < self.center.absolute_global.x else buffer
+            )
+            rel_coords.y += (
+                -buffer if coords.y < self.center.absolute_global.y else buffer
+            )
 
             coords_new = convert_coord(rel_coords.xy, Vec2)
 
@@ -258,7 +274,11 @@ class UIEventElement(UIElement):
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         super()._after_gl_draw(drawn, layer)
         if drawn:
-            if self.__on_enter_callbacks or self.__on_leave_callbacks or self.__on_buffer_callbacks:
+            if (
+                self.__on_enter_callbacks
+                or self.__on_leave_callbacks
+                or self.__on_buffer_callbacks
+            ):
                 hovered_inner = self.__hovered_inner()
                 hovered_outer = self.__hovered_outer()
 
@@ -273,8 +293,12 @@ class UIEventElement(UIElement):
                     self.__is_hovered = False
                     for callback in self.__on_leave_callbacks:
                         callback()
-                elif (self.__is_hovered_inner_last and not hovered_inner
-                      and hovered_outer and self.__is_hovered_outer_last):
+                elif (
+                    self.__is_hovered_inner_last
+                    and not hovered_inner
+                    and hovered_outer
+                    and self.__is_hovered_outer_last
+                ):
                     for callback in self.__on_buffer_callbacks:
                         callback()
 

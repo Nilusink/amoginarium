@@ -7,6 +7,7 @@ defines a few useful classes
 Author:
 Nilusink, melektron
 """
+
 from time import perf_counter
 import typing as tp
 import asyncio
@@ -36,10 +37,7 @@ class SimpleLock:
     def __init__(self) -> None:
         self.__locked_by: str = ...
 
-    def aquire(
-            self,
-            timeout: float = 0
-    ) -> bool:
+    def aquire(self, timeout: float = 0) -> bool:
         """
         :param timeout: timeout in seconds
         """

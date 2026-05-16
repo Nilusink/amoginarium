@@ -7,6 +7,7 @@ controller synced to graphics controls
 Author:
 Nilusink
 """
+
 from types import EllipsisType
 import typing as tp
 
@@ -19,8 +20,8 @@ class Controller:
     _keys: Controls
 
     def __init__(
-            self,
-            controller_id: int,
+        self,
+        controller_id: int,
     ) -> None:
         self._keys = Controls()
         self._keys.init(controller_id, pv.C_BUFF)
@@ -104,7 +105,7 @@ class Controller:
         y_deadzone: float = 0,
         x_saturation: float = 1,
         y_saturation: float = 1,
-        curve: float = 0  # TODO: curve
+        curve: float = 0,  # TODO: curve
     ) -> float:
         """
         apply a specific curve for joystick values (rangin from -1 to 1)
@@ -136,10 +137,7 @@ class Controller:
 
         # look, I just tried putting the variables in random orders and somehow
         # it workd, I never even knew why
-        value = max(
-            0,
-            abs(value) - x_deadzone
-        ) * (
+        value = max(0, abs(value) - x_deadzone) * (
             (1 - y_deadzone) / (x_saturation - x_deadzone)
         )
 
@@ -153,12 +151,7 @@ class Controller:
         # apply y saturation
         return value * y_saturation
 
-    def rumble(
-        self,
-        low_frequency,
-        high_frequency,
-        duration
-    ) -> None:
+    def rumble(self, low_frequency, high_frequency, duration) -> None:
         """
         start joystick vibration
 
@@ -220,8 +213,7 @@ class Controller:
             self.on_feedback_heal_stop()
 
     def __str__(self) -> str:
-        return f"<{self.__class__.__name__}, id=\"{self.controls._shm_id}\">"
+        return f'<{self.__class__.__name__}, id="{self.controls._shm_id}">'
 
     def __repr__(self) -> str:
         return self.__str__()
-

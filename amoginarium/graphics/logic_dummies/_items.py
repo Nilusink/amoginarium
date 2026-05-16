@@ -87,7 +87,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0, draw_item: bool = True):
         if draw_item:
-            angle = self.facing.angle * (180/m.pi)
+            angle = self.facing.angle * (180 / m.pi)
             if self.facing.x < 0:
                 renderer.draw_textured_quad(
                     self._texture_id_l,
@@ -133,6 +133,7 @@ class Shield(BaseItem):
 
     ``param1``: usage
     """
+
     __slots__ = ()
 
     _CID = ItemCIDs.shield
@@ -162,9 +163,7 @@ class HealingPotion(BaseItem):
             return
 
         cls._mask_texture, _ = textures.get_texture(
-            cls._empty_mask[1],
-            cls._image_size,
-            scope=cls._empty_mask[0]
+            cls._empty_mask[1], cls._image_size, scope=cls._empty_mask[0]
         )
 
         super().load_textures()
@@ -172,7 +171,7 @@ class HealingPotion(BaseItem):
     def _gl_draw(
         self, delta_cal: float, layer: int = 0, draw_item: bool = True
     ) -> None:
-        angle = normalize_angle(self.facing.angle) * (180/m.pi)
+        angle = normalize_angle(self.facing.angle) * (180 / m.pi)
         own_pos = self.world_position
 
         # noinspection PyTypeChecker
@@ -183,36 +182,24 @@ class HealingPotion(BaseItem):
             own_pos + self._internal_offset,
             self._image_size,
             rotate_angle=angle - (180 if 90 < angle < 270 else 0),
-            layer=layer
+            layer=layer,
         )
 
         fill_line = 5 + (self.size.y - 10) * (1 - self.param1)
         renderer.draw_polygon(
             [
-                own_pos + Vec2().from_cartesian(
-                    -self.size.x,
-                    self.size.y
-                ),
-                own_pos + Vec2().from_cartesian(
-                    2 * self.size.x,
-                    self.size.y
-                ),
-                own_pos + Vec2().from_cartesian(
-                    self.size.x / 2, fill_line
-                ) + Vec2().from_polar(
-                    (angle + self.param0) * m.pi / 180,
-                    self.size.x) + Vec2().from_cartesian(
-                    0, 5
-                ),
-                own_pos + Vec2().from_cartesian(
-                    self.size.x / 2, fill_line
-                ) - Vec2().from_polar(
-                    (angle + self.param0) * m.pi / 180,
-                    self.size.x) + Vec2().from_cartesian(
-                    0, 5
-                ),
+                own_pos + Vec2().from_cartesian(-self.size.x, self.size.y),
+                own_pos + Vec2().from_cartesian(2 * self.size.x, self.size.y),
+                own_pos
+                + Vec2().from_cartesian(self.size.x / 2, fill_line)
+                + Vec2().from_polar((angle + self.param0) * m.pi / 180, self.size.x)
+                + Vec2().from_cartesian(0, 5),
+                own_pos
+                + Vec2().from_cartesian(self.size.x / 2, fill_line)
+                - Vec2().from_polar((angle + self.param0) * m.pi / 180, self.size.x)
+                + Vec2().from_cartesian(0, 5),
             ],
-            (0, .8, 0),
+            (0, 0.8, 0),
         )
 
         if not self._highlight:
@@ -260,9 +247,7 @@ class JetBag(BaseItem):
 
     def _flame_position(self) -> Vec2:
         return self.pos + Vec2().from_cartesian(
-            self.size.x / 2
-            * (1 if self.facing else -1),
-            self.size.y / 2 + 36
+            self.size.x / 2 * (1 if self.facing else -1), self.size.y / 2 + 36
         )
 
     def _gl_draw(
@@ -279,25 +264,13 @@ class JetBag(BaseItem):
 
         if 90 < angle < 270:
             renderer.draw_textured_quad(
-                self._texture_id_l,
-                own_pos,
-                (
-                    self.size.x,
-                    self.size.y
-                ),
-                layer=layer
+                self._texture_id_l, own_pos, (self.size.x, self.size.y), layer=layer
             )
             self._facing = False
 
         else:
             renderer.draw_textured_quad(
-                self._texture_id_r,
-                own_pos,
-                (
-                    self.size.x,
-                    self.size.y
-                ),
-                layer=layer
+                self._texture_id_r, own_pos, (self.size.x, self.size.y), layer=layer
             )
             self._facing = True
 

@@ -7,17 +7,14 @@ generally useful functions
 Author:
 Nilusink
 """
+
 from icecream import ic, stderrPrint, colorize, supportTerminalColorsInWindows
 import inspect
 
 from ._console_colors import get_fg_color, CC
 
 
-def print_with_prefix(
-        content: str,
-        prefix: str = "",
-        color: bool = True
-) -> None:
+def print_with_prefix(content: str, prefix: str = "", color: bool = True) -> None:
     """stderrPrint with prefix and togglable colorization"""
     if color:
         content = colorize(content)
@@ -62,7 +59,7 @@ def print_ic_style(
         vals.append(v)
 
     value = sep.join(vals)
-    
+
     if error:
         value = CC.fg.RED + value
 

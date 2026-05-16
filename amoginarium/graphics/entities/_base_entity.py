@@ -7,6 +7,7 @@ Graphics base entity
 Author:
 Nilusink
 """
+
 from __future__ import annotations
 import typing as tp
 
@@ -15,9 +16,16 @@ from amoginarium.shared import CIDType
 
 class BaseGraphicsEntity:
     """base for all graphics entities"""
+
     __slots__ = [
-        "__g", "_children", "_parent", "_root_visibility", "_highlight",
-        "_visible", "_lifetime", "_draw_children"
+        "__g",
+        "_children",
+        "_parent",
+        "_root_visibility",
+        "_highlight",
+        "_visible",
+        "_lifetime",
+        "_draw_children",
     ]
 
     _CID: tp.ClassVar[CIDType] = ...
@@ -148,11 +156,11 @@ class BaseGraphicsEntity:
 
     @tp.final
     def gl_draw(
-            self,
-            delta_cal: float,
-            recursive: bool = True,
-            force_draw: bool = False,
-            layer: int = 0,
+        self,
+        delta_cal: float,
+        recursive: bool = True,
+        force_draw: bool = False,
+        layer: int = 0,
     ) -> None:
         """
         Draw this UI-entity.

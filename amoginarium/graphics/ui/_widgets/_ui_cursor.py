@@ -19,6 +19,7 @@ from .... import pv
 #                     Code                       #
 ##################################################
 
+
 class UICursor(UIEventElement):
     __velocity: Vec2
 
@@ -34,8 +35,10 @@ class UICursor(UIEventElement):
         mouse_pos = pg.mouse.get_pos()
         screen_size_offset = pv.global_vars.get_screen_size_offset()
         screen_size_fac = pv.global_vars.get_screen_size_fac()
-        mouse_pos = ((mouse_pos[0] - screen_size_offset.x) * screen_size_fac.x,
-                     (mouse_pos[1] - screen_size_offset.y) * screen_size_fac.y)
+        mouse_pos = (
+            (mouse_pos[0] - screen_size_offset.x) * screen_size_fac.x,
+            (mouse_pos[1] - screen_size_offset.y) * screen_size_fac.y,
+        )
         new_pos = convert_coord(mouse_pos, Vec2)
 
         self.__velocity.xy = (new_pos - self.position.absolute_global).xy

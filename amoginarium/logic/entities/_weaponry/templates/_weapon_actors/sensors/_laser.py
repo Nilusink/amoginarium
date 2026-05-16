@@ -47,7 +47,7 @@ class LaserDesignator:
             GameCollisions.collision_manager.manual_collision(
                 self._collision_groups,
                 origin,
-                origin + Vec2().from_polar(direction.angle, max_range)
+                origin + Vec2().from_polar(direction.angle, max_range),
             )
         )
 
@@ -64,12 +64,12 @@ class LaserSensor(BaseWeaponsSensor):
     _CID = WeaponSensorCIDs.laser
 
     def __init__(
-            self,
-            parent: "AerodynamicEntity",
-            code: int,
-            *,
-            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: "AerodynamicEntity",
+        code: int,
+        *,
+        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         """
         homes in on a designated laser

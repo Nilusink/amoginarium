@@ -7,6 +7,7 @@ graphics dummy for player
 Author:
 Nilusink
 """
+
 from icecream import ic  # noqa: F401
 import pygame as pg
 
@@ -34,6 +35,7 @@ class PlayerDummy(SyncedLRImageEntity):
     """
     `param0` health (0-1)
     """
+
     __slots__ = ["_hp_colors", "_hotbar", "_inventory"]
 
     _CID = DummyCIDs.player
@@ -58,8 +60,7 @@ class PlayerDummy(SyncedLRImageEntity):
         Load the textures for player
         """
         cls._player_right_64_texture, _ = textures.get_texture(
-            PLAYER_RIGHT_64_PATH,
-            (64, 64)
+            PLAYER_RIGHT_64_PATH, (64, 64)
         )
         cls._player_left_64_texture, _ = textures.get_texture(
             PLAYER_LEFT_64_PATH,
@@ -67,14 +68,10 @@ class PlayerDummy(SyncedLRImageEntity):
         )
 
         cls._player_oob_right_1_texture, _ = textures.get_texture(
-            PLAYER_OOB_RIGHT_64_PATH,
-            (64, 64),
-            mirror="x"
+            PLAYER_OOB_RIGHT_64_PATH, (64, 64), mirror="x"
         )
         cls._player_oob_right_2_texture, _ = textures.get_texture(
-            PLAYER_OOB_LEFT_64_PATH,
-            (64, 64),
-            mirror="x"
+            PLAYER_OOB_LEFT_64_PATH, (64, 64), mirror="x"
         )
         cls._player_oob_left_1_texture, _ = textures.get_texture(
             PLAYER_OOB_RIGHT_64_PATH,
@@ -86,12 +83,12 @@ class PlayerDummy(SyncedLRImageEntity):
         )
 
     def __init__(
-            self,
-            sync_id: int,
-            i_id: int,
-            h_id: int,
-            size: int = 64,
-            parent: int | None = None
+        self,
+        sync_id: int,
+        i_id: int,
+        h_id: int,
+        size: int = 64,
+        parent: int | None = None,
     ) -> None:
         super().__init__(sync_id, parent)
         self._draw_children = False
@@ -104,20 +101,17 @@ class PlayerDummy(SyncedLRImageEntity):
 
         else:
             self._texture_id_r, _ = textures.get_texture(
-                PLAYER_RIGHT_64_PATH,
-                (size, size)
+                PLAYER_RIGHT_64_PATH, (size, size)
             )
             self._texture_id_l, _ = textures.get_texture(
-                PLAYER_RIGHT_64_PATH,
-                (size, size),
-                mirror="x"
+                PLAYER_RIGHT_64_PATH, (size, size), mirror="x"
             )
 
         # defaults
         self._hp_colors = (
             Color().from_255(255, 0, 0),
             Color().from_255(180, 90, 20),
-            Color().from_255(0, 255, 0)
+            Color().from_255(0, 255, 0),
         )
 
         # inventories
@@ -164,20 +158,8 @@ class PlayerDummy(SyncedLRImageEntity):
                 )
 
                 # slots
-                self._inventory.draw_at(
-                    (0.5, 0.65),
-                    10,
-                    0.5,
-                    delta_cal,
-                    layer=layer
-                )
-                self._hotbar.draw_at(
-                    (0.5, 0.85),
-                    10,
-                    0.5,
-                    delta_cal,
-                    layer=layer
-                )
+                self._inventory.draw_at((0.5, 0.65), 10, 0.5, delta_cal, layer=layer)
+                self._hotbar.draw_at((0.5, 0.85), 10, 0.5, delta_cal, layer=layer)
 
                 # character display
                 renderer.draw_rounded_rect(
@@ -185,14 +167,8 @@ class PlayerDummy(SyncedLRImageEntity):
                     (self.size.x * 3, self.size.y * 4),
                     Color().from_255(50, 50, 50),
                     20,
-                    convert_global=False
+                    convert_global=False,
                 )
 
             else:
-                self._hotbar.draw_at(
-                    (0.5, 0.95),
-                    10,
-                    0.4,
-                    delta_cal,
-                    layer=layer
-                )
+                self._hotbar.draw_at((0.5, 0.95), 10, 0.4, delta_cal, layer=layer)

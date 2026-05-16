@@ -33,6 +33,7 @@ class DebugCircleEntity(PositionedLogicEntity):
     A logic-side debug entity representing a circle.
     Communicates with the graphics engine to render a debug shape.
     """
+
     __slots__ = ()
 
     # region ClassVars
@@ -41,20 +42,20 @@ class DebugCircleEntity(PositionedLogicEntity):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            position: Vec2,
-            radius: float,
-            *,
-            point_color: color_t = (255, 255, 255),
-            point_radius: int = 3,
-            point_num_segments: int = 32,
-            outline_color: color_t = (255, 255, 255),
-            outline_thickness: int = 1,
-            fill_color: color_t = (255, 0, 0, 128),
-            convert_global: bool = True,
-            centered: bool = False,
-            **kwargs: tp.Any
+        self,
+        runtime_buffer: Array[base_entity_t],
+        position: Vec2,
+        radius: float,
+        *,
+        point_color: color_t = (255, 255, 255),
+        point_radius: int = 3,
+        point_num_segments: int = 32,
+        outline_color: color_t = (255, 255, 255),
+        outline_thickness: int = 1,
+        fill_color: color_t = (255, 0, 0, 128),
+        convert_global: bool = True,
+        centered: bool = False,
+        **kwargs: tp.Any,
     ) -> None:
         """
         Initializes the DebugCircleEntity and sends a spawn command to the graphics process.
@@ -70,7 +71,9 @@ class DebugCircleEntity(PositionedLogicEntity):
         :param convert_global: Whether to convert coordinates to global space.
         :param centered: Whether the shape should be rendered centered on position.
         """
-        super().__init__(runtime_buffer, size=Vec2().from_cartesian(radius, 0), position=position)
+        super().__init__(
+            runtime_buffer, size=Vec2().from_cartesian(radius, 0), position=position
+        )
         kwargs["id"] = self.id
         kwargs["coalition"] = Coalitions.neutral
         kwargs["cid"] = self.cid()
@@ -83,10 +86,7 @@ class DebugCircleEntity(PositionedLogicEntity):
         kwargs["convert_global"] = convert_global
         kwargs["centered"] = centered
 
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs=kwargs
-        ))
+        pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs))
 
     @property
     def radius(self) -> float:

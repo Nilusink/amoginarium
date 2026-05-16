@@ -7,6 +7,7 @@ Shared memory synced graphics entities
 Author:
 Nilusink
 """
+
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from contextlib import suppress
@@ -82,8 +83,17 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     """
 
     __slots__ = [
-        "pos", "facing", "size", "alive", "param0", "param1", "param2",
-        "param3", "__id", "param4", "_logic_visibility"
+        "pos",
+        "facing",
+        "size",
+        "alive",
+        "param0",
+        "param1",
+        "param2",
+        "param3",
+        "__id",
+        "param4",
+        "_logic_visibility",
     ]
     pos: Vec2
     facing: Vec2
@@ -233,13 +243,11 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                 (0, 0),
                 (2000, 2000),
                 Color().from_1(
-                    0.6,
-                    0.6,
-                    .7,
-                    0.125 + m.sin(2 * time.perf_counter() + self.id) / 8
+                    0.6, 0.6, 0.7, 0.125 + m.sin(2 * time.perf_counter() + self.id) / 8
                 ),
             )
             renderer.disable_stencil()
+
     # endregion
 
 
@@ -247,10 +255,7 @@ class SyncedImageEntity(SyncedGraphicsEntity):
     __slots__ = ["_texture_id", "_lifetime"]
 
     def __init__(
-            self,
-            sync_id: int,
-            texture_id: int,
-            parent: int | None = None
+        self, sync_id: int, texture_id: int, parent: int | None = None
     ) -> None:
         self._texture_id = texture_id
         super().__init__(sync_id, parent)
@@ -261,12 +266,7 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         return self._texture_id
 
     def draw_at(
-            self,
-            position: coord_t,
-            size: coord_t,
-            layer: int,
-            *,
-            rotation: float = 0
+        self, position: coord_t, size: coord_t, layer: int, *, rotation: float = 0
     ) -> None:
         """draw an entity at specified position and size"""
         renderer.draw_textured_quad(
@@ -305,7 +305,7 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
             self.world_position - self.size / 2,
             self.size,
-            layer=layer
+            layer=layer,
         )
 
 

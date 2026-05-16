@@ -50,9 +50,10 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     )
 
     # region ClassVars
-    _default_size: tp.ClassVar[
-        Vec2 | float | tuple[float, float] | list[float]
-        ] = (32, 32)
+    _default_size: tp.ClassVar[Vec2 | float | tuple[float, float] | list[float]] = (
+        32,
+        32,
+    )
     _default_max_hp: tp.ClassVar[float] = 50
     _default_turn_speed: tp.ClassVar[float] = np.inf
     _default_facing_angle: tp.ClassVar[float] = 0
@@ -60,7 +61,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     _default_engagement_valid_angles: tp.ClassVar[
         tuple[float, float] | EllipsisType
-        ] = ...
+    ] = ...
     _default_engagement_min_range: tp.ClassVar[float] = 0
     _default_engagement_max_range: tp.ClassVar[float] = 300
 
@@ -70,14 +71,15 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     _default_weapon_drop_casings: tp.ClassVar[bool] = False
     _default_weapon_position_offset: tp.ClassVar[
         Vec2 | list[float] | tuple[float, float]
-        ] = (0, 0)
+    ] = (0, 0)
     _default_weapon_static_facing: tp.ClassVar[float | EllipsisType] = ...
     _default_engagement_ignore_solution: tp.ClassVar[bool] = False
 
     _default_passenger_visible: tp.ClassVar[bool] = True
-    _default_passenger_offset: tp.ClassVar[
-        Vec2 | list[float] | tuple[float, float]
-        ] = (0, 0)
+    _default_passenger_offset: tp.ClassVar[Vec2 | list[float] | tuple[float, float]] = (
+        0,
+        0,
+    )
     # endregion
 
     # region InstanceVars
@@ -90,14 +92,14 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            coalition: Coalitions,
-            position: Vec2,
-            *,
-            cluster: bool = False,
-            size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
-            weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        coalition: Coalitions,
+        position: Vec2,
+        *,
+        cluster: bool = False,
+        size: Vec2 | float | tuple[float, float] | list[float] | EllipsisType = ...,
+        weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         # get size and convert to Vec2
         _size: Vec2 = convert_coord(  # type: ignore
@@ -108,8 +110,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         # get defaults
         self._passenger_visible = self._default_passenger_visible
         self._passenger_offset: Vec2 = convert_coord(  # type: ignore
-            self._default_passenger_offset,
-            Vec2
+            self._default_passenger_offset, Vec2
         )
         self._turn_speed: float = get_default(self._default_turn_speed, np.inf)
 
@@ -165,7 +166,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             size=_size,
             position=position,
             coalition=Coalitions.blue,
-            centered=True
+            centered=True,
         )
         self.weapon.set_parent(self)
         self.weapon.show()
@@ -257,7 +258,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self.hit(dmg, hit_by=event.other_entity)
 
     def _collision_start(
-            self, events: list[CollisionEvent[tp.Union["Bullet", "Player"]]]
+        self, events: list[CollisionEvent[tp.Union["Bullet", "Player"]]]
     ) -> None:
         # bullet - 5 turrets - events länge 5
         # turret - events 1 bullet
@@ -284,18 +285,15 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self.kill(hit_by)
 
     def _shoot_at(
-            self,
-            target_angle: Vec2,
-            tof: float | EllipsisType = ...,
-            target_pos: Vec2 | EllipsisType = ...,
-            **bullet_args
+        self,
+        target_angle: Vec2,
+        tof: float | EllipsisType = ...,
+        target_pos: Vec2 | EllipsisType = ...,
+        **bullet_args,
     ) -> None:
         """checks if shot is inside parameters"""
         self.weapon.shoot(
-            self.weapon.facing,
-            bullet_tof=tof,
-            target_pos=target_pos,
-            **bullet_args
+            self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
 
     def _update(self, delta: float, set_facing: bool = True) -> None:
@@ -356,13 +354,11 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
         if self._valid_angles is not ...:
             param4 |= (
-                              int(normalize_angle(
-                                  self._valid_angles[0].angle) * 10_000) & MASK16
-                      ) << 32
+                int(normalize_angle(self._valid_angles[0].angle) * 10_000) & MASK16
+            ) << 32
             param4 |= (
-                              int(normalize_angle(
-                                  self._valid_angles[1].angle) * 10_000) & MASK16
-                      ) << 48
+                int(normalize_angle(self._valid_angles[1].angle) * 10_000) & MASK16
+            ) << 48
 
         else:
             param4 |= MASK32 << 32
@@ -391,7 +387,6 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
         # check for gimbal limit
         if not isinstance(self._valid_angles, EllipsisType):
-
             min_a = normalize_angle(self._valid_angles[0].angle)
             max_a = normalize_angle(self._valid_angles[1].angle)
 

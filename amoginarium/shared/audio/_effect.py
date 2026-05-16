@@ -103,6 +103,7 @@ sound_effects = _SoundEffects()
 
 class SoundEffect:
     """sound effect"""
+
     volume: float = 1
 
     def __new__(cls, *args, **kwargs):
@@ -111,9 +112,9 @@ class SoundEffect:
         return instance
 
     def __init__(
-            self,
-            sound: sound_name_t | pg.mixer.Sound,
-            on_finish_playing: tp.Callable[[], tp.Any] | EllipsisType = ...
+        self,
+        sound: sound_name_t | pg.mixer.Sound,
+        on_finish_playing: tp.Callable[[], tp.Any] | EllipsisType = ...,
     ) -> None:
         self._sound_name = sound
         self._on_finish = on_finish_playing
@@ -134,11 +135,11 @@ class SoundEffect:
         return self
 
     def play(
-            self,
-            loops: int = 0,
-            maxtime: int = 0,
-            fade_ms: int = 0,
-            pos: Vec2 | EllipsisType = ...
+        self,
+        loops: int = 0,
+        maxtime: int = 0,
+        fade_ms: int = 0,
+        pos: Vec2 | EllipsisType = ...,
     ) -> None:
         """
         play the sound effect
@@ -151,16 +152,8 @@ class SoundEffect:
 
         self._update_volume()
         if self._has_played and not self._loop:
-            SoundEffect(
-                self._sound_name,
-                self._on_finish
-            ).set_volume(
-                self.volume
-            ).play(
-                loops,
-                maxtime,
-                fade_ms,
-                pos
+            SoundEffect(self._sound_name, self._on_finish).set_volume(self.volume).play(
+                loops, maxtime, fade_ms, pos
             )
             return
 
@@ -228,11 +221,13 @@ class SoundEffect:
 
         self._update_volume()
 
-        done_playing = all([
-            self._has_played,
-            not self._loop,
-            not self._channel.get_busy(),
-        ])
+        done_playing = all(
+            [
+                self._has_played,
+                not self._loop,
+                not self._channel.get_busy(),
+            ]
+        )
         if done_playing:
             self._channel = ...
             if self._on_finish is not ...:
@@ -243,6 +238,7 @@ class SoundEffect:
 
 class PresetEffect(SoundEffect):
     """preset sound effect"""
+
     _sound_name: str | tuple[str, str]
 
     def __init__(self):
@@ -273,7 +269,7 @@ class Sniper(PresetEffect):
 
 
 class ReloadGeneric(PresetEffect):
-    volume = .4
+    volume = 0.4
     _sound_name = "reload_generic"
 
 
@@ -310,22 +306,13 @@ class ContinuousSoundEffect:
         self._pos = ...
 
         if self._stage_one_name is not ...:
-            self._stage_one = SoundEffect(
-                self._stage_one_name,
-                self._play_2
-            )
+            self._stage_one = SoundEffect(self._stage_one_name, self._play_2)
 
         if self._stage_two_name is not ...:
-            self._stage_two = SoundEffect(
-                self._stage_two_name,
-                self._play_3
-            )
+            self._stage_two = SoundEffect(self._stage_two_name, self._play_3)
 
         if self._stage_three_name is not ...:
-            self._stage_three = SoundEffect(
-                self._stage_three_name,
-                self._stop
-            )
+            self._stage_three = SoundEffect(self._stage_three_name, self._stop)
 
         self.volume = volume
         self._playing = 0
@@ -362,7 +349,7 @@ class ContinuousSoundEffect:
         self._pos = pos
 
         if self._playing:
-            info = CC.fg.RED+"tried to double-play CSE"+CC.ctrl.ENDC
+            info = CC.fg.RED + "tried to double-play CSE" + CC.ctrl.ENDC
             ic(info)
             return
 
@@ -423,14 +410,14 @@ class Minigun(ContinuousSoundEffect):
     _stage_one_name = ("minigun", "spool_up")
     _stage_two_name = ("minigun", "burst")
     _stage_three_name = ("minigun", "spool_down")
-    volume: float = .1
+    volume: float = 0.1
 
 
 class CRAM(ContinuousSoundEffect):
     # _stage_one_name = ("minigun", "spool_up_short")
     _stage_two_name = ("minigun", "burst")
     _stage_three_name = ("minigun", "spool_down")
-    volume: float = .1
+    volume: float = 0.1
 
 
 class PotionDrink(ContinuousSoundEffect):
@@ -440,14 +427,15 @@ class PotionDrink(ContinuousSoundEffect):
 
 class RandomizedEffect:
     """sound effect but random"""
+
     _default_weights: tuple[float, ...] | EllipsisType = ...
     _default_volumes: tuple[float, ...] | EllipsisType = ...
 
     def __init__(
-            self,
-            effects: tp.Sequence[SoundEffect],
-            weights: tuple[float, ...] | None = None,
-            volumes: tuple[float, ...] | None = None
+        self,
+        effects: tp.Sequence[SoundEffect],
+        weights: tuple[float, ...] | None = None,
+        volumes: tuple[float, ...] | None = None,
     ) -> None:
         self._effects = effects
         self._playing = None
@@ -461,7 +449,7 @@ class RandomizedEffect:
         else:
             if isinstance(self._default_weights, EllipsisType):
                 self._weights = (1,) * len(effects)
-            
+
             else:
                 self._weights = self._default_weights
 
@@ -489,7 +477,7 @@ class RandomizedEffect:
     @volume.setter
     def volume(self, volume: float) -> None:
         self._max_volume = volume * 1.1
-        self._min_volume = volume * .9
+        self._min_volume = volume * 0.9
 
     def set_volume(self, max_volume: float, min_volume: float) -> tp.Self:
         """set volume range"""
@@ -499,11 +487,11 @@ class RandomizedEffect:
         return self
 
     def play(
-            self,
-            loops: int = 0,
-            maxtime: int = 0,
-            fade_ms: int = 0,
-            pos: Vec2 | EllipsisType = ...,
+        self,
+        loops: int = 0,
+        maxtime: int = 0,
+        fade_ms: int = 0,
+        pos: Vec2 | EllipsisType = ...,
     ) -> None:
         """
         play the sound effect
@@ -518,12 +506,7 @@ class RandomizedEffect:
         volume_fac = self._volumes[self._effects.index(self._playing)]
         self._playing.volume = uniform(self._min_volume, self._max_volume) * volume_fac
 
-        self._playing.play(
-            loops,
-            maxtime,
-            fade_ms,
-            pos
-        )
+        self._playing.play(loops, maxtime, fade_ms, pos)
 
     def stop(self) -> None:
         """
@@ -545,9 +528,9 @@ class ScopedRandomizedEffect(RandomizedEffect):
     _scope: str | None = None
 
     def __init__(
-            self,
-            sound_scope: str | None = None,
-            callback: tp.Callable[[], tp.Any] | None = None
+        self,
+        sound_scope: str | None = None,
+        callback: tp.Callable[[], tp.Any] | None = None,
     ) -> None:
         if sound_scope is None:
             sound_scope = self._scope

@@ -7,6 +7,7 @@ pygame groups for drawn entities
 Author:
 Nilusink
 """
+
 import pygame as pg
 import typing as tp
 
@@ -20,8 +21,7 @@ class BaseGroup(pg.sprite.Group):
             sprite.gl_draw(delta_cal)
 
 
-class _UIEntities(BaseGroup):
-    ...
+class _UIEntities(BaseGroup): ...
 
 
 class _Drawn(BaseGroup):
@@ -34,8 +34,7 @@ class _Drawn(BaseGroup):
             sprite.gl_draw(delta_cal, layer=self._layer)
 
 
-class _Cursor(BaseGroup):
-    ...
+class _Cursor(BaseGroup): ...
 
 
 class _SyncedEntities(BaseGroup):

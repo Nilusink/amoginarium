@@ -16,14 +16,19 @@ c_args = []
 l_args = []
 
 if sys.platform.startswith("win"):
-    c_args = ['/O2', '/openmp', '/fp:fast']
-    l_args = ['/openmp']
+    c_args = ["/O2", "/openmp", "/fp:fast"]
+    l_args = ["/openmp"]
 
 # 2. Dynamic File Discovery
 extensions = []
 
 base_package = "amoginarium"
-cpp_files = ["_minrect.pyx", "_minrect_dirty.pyx", "collision_manager.pyx", "collision_methods.pyx"]
+cpp_files = [
+    "_minrect.pyx",
+    "_minrect_dirty.pyx",
+    "collision_manager.pyx",
+    "collision_methods.pyx",
+]
 
 for root, _, files in os.walk(base_package):
     for file in files:
@@ -52,8 +57,8 @@ setup(
         compiler_directives={
             "boundscheck": False,
             "wraparound": False,
-            "cdivision": True
-        }
+            "cdivision": True,
+        },
     )
 )
 

@@ -24,14 +24,15 @@ if tp.TYPE_CHECKING:
 
 class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
     """Basic group for logic entities"""
+
     __slots__ = ()
 
     @staticmethod
     def entities_in_circle(
-            entities: list[PositionedLogicEntityLike],
-            center: Vec2,
-            radius: float,
-            min_radius: float = 0
+        entities: list[PositionedLogicEntityLike],
+        center: Vec2,
+        radius: float,
+        min_radius: float = 0,
     ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
         Check which of the given entities are in the circle
@@ -53,12 +54,12 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
 
     @staticmethod
     def entities_in_partial_circle(
-            entities: list[PositionedLogicEntityLike],
-            center: Vec2,
-            radius: float,
-            angle_start: Vec2,
-            angle_end: Vec2,
-            min_radius: float = 0
+        entities: list[PositionedLogicEntityLike],
+        center: Vec2,
+        radius: float,
+        angle_start: Vec2,
+        angle_end: Vec2,
+        min_radius: float = 0,
     ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
         Check which of the given entities are in the partial circle
@@ -71,10 +72,7 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
         :return: list of tuples (distance, entity) of entities in the circle
         """
         out = []
-        angle_delta = normalize_angle(
-            angle_end.angle
-            - angle_start.angle
-        )
+        angle_delta = normalize_angle(angle_end.angle - angle_start.angle)
         start2 = angle_start.angle + angle_delta
         end2 = angle_end.angle - angle_delta
 
@@ -83,18 +81,18 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
 
             if min_radius <= delta.length <= radius:
                 delta.angle = normalize_angle(delta.angle)
-                if any([
-                    angle_start.angle < delta.angle < start2,
-                    angle_end.angle > delta.angle > end2,
-                ]):
+                if any(
+                    [
+                        angle_start.angle < delta.angle < start2,
+                        angle_end.angle > delta.angle > end2,
+                    ]
+                ):
                     out.append((delta.length, sprite))
 
         return sorted(out, key=lambda r: r[0])
 
     def get_entities_in_circle(
-            self,
-            center: Vec2,
-            radius: float
+        self, center: Vec2, radius: float
     ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
         get all entities of this group inside a circle, sorted by distance (closest first)

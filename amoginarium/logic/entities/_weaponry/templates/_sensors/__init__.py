@@ -16,4 +16,3 @@ from ._detection_group import (
 from ._base_sensor import BaseSensor
 from ._magic_sensor import MagicSensor
 from ._radar_sensor import RadarSensor
-

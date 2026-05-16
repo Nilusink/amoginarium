@@ -22,11 +22,11 @@ class MagicSensor(BaseSensor):
 
     ``param0`` detection range
     """
+
     _CID = SensorCIDs.sensor_magic
 
     def get_targets(
-            self,
-            from_entities: tp.Iterable[LogicGameEntity] = None
+        self, from_entities: tp.Iterable[LogicGameEntity] = None
     ) -> list[LogicGameEntity]:
         if from_entities is None:
             targets = [p for p in Players.entities() if p.alive]
@@ -35,10 +35,13 @@ class MagicSensor(BaseSensor):
         else:
             targets = from_entities
 
-        self._targets = [e[1] for e in Players.entities_in_circle(
-            targets,
-            self.parent.position + self._position_offset,
-            self.detection_range,
-        )]
+        self._targets = [
+            e[1]
+            for e in Players.entities_in_circle(
+                targets,
+                self.parent.position + self._position_offset,
+                self.detection_range,
+            )
+        ]
 
         return self._targets.copy()

@@ -7,6 +7,7 @@ synced controller controls
 Author:
 Nilusink
 """
+
 from ctypes import Array
 from icecream import ic
 
@@ -19,11 +20,8 @@ class Controls:
         self._shm: Array[base_controller_t] = ...
 
     def init(
-            self,
-            id: int,
-            c_shm: Array[base_controller_t],
-            initialize: bool = False
-     ) -> None:
+        self, id: int, c_shm: Array[base_controller_t], initialize: bool = False
+    ) -> None:
         """
         setup controller
 
@@ -162,4 +160,5 @@ class Controls:
     @mouse_y.setter
     def mouse_y(self, value: float) -> None:
         self._shm[self._shm_id].mouse_y = value
+
     # endregion

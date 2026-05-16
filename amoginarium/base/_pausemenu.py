@@ -17,16 +17,23 @@ from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
 #                     Code                       #
 ##################################################
 
+
 class PauseMenu(UIEntity):
     def __init__(
-            self,
-            continue_callback: Callable[[], None],
-            restart_callback: Callable[[], None],
-            open_settings_callback: Callable[[], None],
-            end_game_callback: Callable[[], None],
+        self,
+        continue_callback: Callable[[], None],
+        restart_callback: Callable[[], None],
+        open_settings_callback: Callable[[], None],
+        end_game_callback: Callable[[], None],
     ) -> None:
         super().__init__()
-        current_parent = UIRectangle((0.5, 0.5), (0.2, 0.5), parent=self, bg_color=(70, 70, 70, 150), border_width=0)
+        current_parent = UIRectangle(
+            (0.5, 0.5),
+            (0.2, 0.5),
+            parent=self,
+            bg_color=(70, 70, 70, 150),
+            border_width=0,
+        )
 
         padding = 0.06
         but_width = 1 - padding * 2
@@ -38,7 +45,7 @@ class PauseMenu(UIEntity):
             (but_width, but_height),
             "Continue",
             parent=current_parent,
-            command=continue_callback
+            command=continue_callback,
         )
 
         UIButton(
@@ -46,7 +53,7 @@ class PauseMenu(UIEntity):
             (but_width, but_height),
             "Restart",
             parent=current_parent,
-            command=restart_callback
+            command=restart_callback,
         )
 
         UIButton(
@@ -54,7 +61,7 @@ class PauseMenu(UIEntity):
             (but_width, but_height),
             "Settings",
             parent=current_parent,
-            command=open_settings_callback
+            command=open_settings_callback,
         )
 
         UIButton(

@@ -7,6 +7,7 @@ visual representation of an island
 Author:
 Nilusink
 """
+
 from __future__ import annotations
 from dataclasses import dataclass
 from icecream import ic  # noqa: F401
@@ -25,6 +26,7 @@ from ._synced_entities import SyncedGraphicsEntity
 
 class _PolyMatcher:
     """Helper class for matching polygon edges."""
+
     __slots__ = ("top", "bottom", "left", "right")
     top: bool
     bottom: bool
@@ -90,96 +92,55 @@ class _IslandTextureManager:
         out_tex: tp.MutableMapping[str, int] = {}
 
         out_tex["island_single_texture"], _ = textures.get_texture(
-            "single",
-            size,
-            scope=scope
+            "single", size, scope=scope
         )
 
         out_tex["island_middle_texture"], _ = textures.get_texture(
-            "top",
-            size,
-            mirror="x",
-            scope=scope
+            "top", size, mirror="x", scope=scope
         )
         out_tex["island_left_texture"], _ = textures.get_texture(
-            "top_left",
-            size,
-            mirror="x",
-            scope=scope
+            "top_left", size, mirror="x", scope=scope
         )
         out_tex["island_wall_left_texture"], _ = textures.get_texture(
-            "left",
-            size,
-            mirror="",
-            scope=scope
+            "left", size, mirror="", scope=scope
         )
         out_tex["island_left_inv_texture"], _ = textures.get_texture(
-            "bottom_left",
-            size,
-            mirror="x",
-            scope=scope
+            "bottom_left", size, mirror="x", scope=scope
         )
         out_tex["island_middle_inv_texture"], _ = textures.get_texture(
-            "bottom",
-            size,
-            mirror="x",
-            scope=scope
+            "bottom", size, mirror="x", scope=scope
         )
         out_tex["island_right_inv_texture"], _ = textures.get_texture(
-            "bottom_right",
-            size,
-            mirror="x",
-            scope=scope
+            "bottom_right", size, mirror="x", scope=scope
         )
         out_tex["island_wall_right_texture"], _ = textures.get_texture(
-            "right",
-            size,
-            mirror="",
-            scope=scope
+            "right", size, mirror="", scope=scope
         )
         out_tex["island_right_texture"], _ = textures.get_texture(
-            "top_right",
-            size,
-            mirror="x",
-            scope=scope
+            "top_right", size, mirror="x", scope=scope
         )
         out_tex["dirt_texture"], _ = textures.get_texture(
-            "center",
-            size,
-            mirror="x",
-            scope=scope
+            "center", size, mirror="x", scope=scope
         )
 
         if "special" in available:
             out_tex["dirt_hole_texture"], _ = textures.get_texture(
-                "special",
-                size,
-                mirror="",
-                scope=scope
+                "special", size, mirror="", scope=scope
             )
 
         else:
             out_tex["dirt_hole_texture"] = out_tex["dirt_texture"]
 
         out_tex["island_top_bottom_texture"], _ = textures.get_texture(
-            "top_bottom",
-            size,
-            mirror="",
-            scope=scope
+            "top_bottom", size, mirror="", scope=scope
         )
         out_tex["island_left_right_texture"], _ = textures.get_texture(
-            "left_right",
-            size,
-            mirror="",
-            scope=scope
+            "left_right", size, mirror="", scope=scope
         )
 
         if "single_right" in available:
             out_tex["island_single_right_texture"], _ = textures.get_texture(
-                "single_right",
-                size,
-                mirror="",
-                scope=scope
+                "single_right", size, mirror="", scope=scope
             )
 
         else:
@@ -187,10 +148,7 @@ class _IslandTextureManager:
 
         if "single_left" in available:
             out_tex["island_single_left_texture"], _ = textures.get_texture(
-                "single_left",
-                size,
-                mirror="",
-                scope=scope
+                "single_left", size, mirror="", scope=scope
             )
 
         else:
@@ -198,10 +156,7 @@ class _IslandTextureManager:
 
         if "single_top" in available:
             out_tex["island_single_top_texture"], _ = textures.get_texture(
-                "single_top",
-                size,
-                mirror="",
-                scope=scope
+                "single_top", size, mirror="", scope=scope
             )
 
         else:
@@ -209,10 +164,7 @@ class _IslandTextureManager:
 
         if "single_bottom" in available:
             out_tex["island_single_bottom_texture"], _ = textures.get_texture(
-                "single_bottom",
-                size,
-                mirror="",
-                scope=scope
+                "single_bottom", size, mirror="", scope=scope
             )
 
         else:
@@ -220,22 +172,21 @@ class _IslandTextureManager:
 
         return IslandTextures(**out_tex)
 
-    def get_textures(self, island: tp.Type[Island], texture_size: int) -> IslandTextures:
+    def get_textures(
+        self, island: tp.Type[Island], texture_size: int
+    ) -> IslandTextures:
         if island in self._textures:
             if texture_size in self._textures[island]:
                 ic("return existing")
                 return self._textures[island][texture_size]
-        
+
         else:
             self._textures[island] = {}
 
         # load textures
         t: IslandTextures
         try:
-            t = self._load_from_scope(
-                island.get_scope(),
-                (texture_size, texture_size)
-            )
+            t = self._load_from_scope(island.get_scope(), (texture_size, texture_size))
 
         except KeyError:
             ic.outputFunction("Failed getting textures from ", island)
@@ -264,20 +215,17 @@ class Island(SyncedGraphicsEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        cls._textures = ISLAND_TEXTURE_MANAGER.get_textures(
-            cls,
-            cls._image_size[0]
-        )
+        cls._textures = ISLAND_TEXTURE_MANAGER.get_textures(cls, cls._image_size[0])
 
     @classmethod
     def get_scope(cls) -> str:
         return cls._scope
 
     def __init__(
-            self,
-            sync_id: int,
-            size: coord_t = ...,
-            form: list[list[int]] = ...,
+        self,
+        sync_id: int,
+        size: coord_t = ...,
+        form: list[list[int]] = ...,
     ) -> None:
         if size is ... and form is ...:
             raise ValueError("either size or form have to be given!")
@@ -289,12 +237,10 @@ class Island(SyncedGraphicsEntity):
         if form is not ...:
             self._size = Vec2().from_cartesian(
                 self._image_size[0] * max(len(r) for r in form),
-                self._image_size[1] * len(form)
+                self._image_size[1] * len(form),
             )
 
-        super().__init__(
-            sync_id=sync_id
-        )
+        super().__init__(sync_id=sync_id)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         start_pos = self.world_position
@@ -303,10 +249,10 @@ class Island(SyncedGraphicsEntity):
 
         # check if island is on screen
         if (
-                self.pos.x + self.size.x < world_position.x or
-                self.pos.x > world_position.x + resolution.x or
-                self.pos.y + self.size.y < world_position.y or
-                self.pos.y > world_position.y + resolution.y
+            self.pos.x + self.size.x < world_position.x
+            or self.pos.x > world_position.x + resolution.x
+            or self.pos.y + self.size.y < world_position.y
+            or self.pos.y > world_position.y + resolution.y
         ):
             return
 
@@ -382,7 +328,7 @@ class Island(SyncedGraphicsEntity):
                     top=block_top in (1, 2),
                     bottom=block_bottom in (1, 2),
                     left=block_left in (1, 2),
-                    right=block_right in (1, 2)
+                    right=block_right in (1, 2),
                 )
 
                 # empty
@@ -397,202 +343,129 @@ class Island(SyncedGraphicsEntity):
                     match poly:
                         # single
                         case _PolyMatcher(
-                            top=False,
-                            bottom=False,
-                            left=False,
-                            right=False
+                            top=False, bottom=False, left=False, right=False
                         ):
                             texture = self._textures.island_single_texture
 
                         # dirt
-                        case _PolyMatcher(
-                            top=True,
-                            bottom=True,
-                            left=True,
-                            right=True
-                        ):
+                        case _PolyMatcher(top=True, bottom=True, left=True, right=True):
                             texture = self._textures.dirt_texture
 
                         # grass top
                         case _PolyMatcher(
-                            top=False,
-                            bottom=True,
-                            left=True,
-                            right=True
+                            top=False, bottom=True, left=True, right=True
                         ):
                             texture = self._textures.island_middle_texture
 
                         # grass bottom
                         case _PolyMatcher(
-                            top=True,
-                            bottom=False,
-                            left=True,
-                            right=True
+                            top=True, bottom=False, left=True, right=True
                         ):
                             texture = self._textures.island_middle_inv_texture
 
                         # left wall
                         case _PolyMatcher(
-                            top=True,
-                            bottom=True,
-                            left=False,
-                            right=True
+                            top=True, bottom=True, left=False, right=True
                         ):
                             texture = self._textures.island_wall_right_texture
 
                         # right wall
                         case _PolyMatcher(
-                            top=True,
-                            bottom=True,
-                            left=True,
-                            right=False
+                            top=True, bottom=True, left=True, right=False
                         ):
                             texture = self._textures.island_wall_left_texture
 
                         # top and bottom
                         case _PolyMatcher(
-                            top=True,
-                            bottom=True,
-                            left=False,
-                            right=False
+                            top=True, bottom=True, left=False, right=False
                         ):
                             texture = self._textures.island_top_bottom_texture
 
                         # left and right
                         case _PolyMatcher(
-                            top=False,
-                            bottom=False,
-                            left=True,
-                            right=True
+                            top=False, bottom=False, left=True, right=True
                         ):
                             texture = self._textures.island_left_right_texture
 
                         # bottom empty
                         case _PolyMatcher(
-                            top=True,
-                            bottom=False,
-                            left=True,
-                            right=True
+                            top=True, bottom=False, left=True, right=True
                         ):
                             texture = self._textures.island_middle_inv_texture
 
                         # top empty
                         case _PolyMatcher(
-                            top=False,
-                            bottom=True,
-                            left=True,
-                            right=True
+                            top=False, bottom=True, left=True, right=True
                         ):
                             texture = self._textures.island_middle_texture
 
                         # left empty
                         case _PolyMatcher(
-                            top=True,
-                            bottom=True,
-                            left=False,
-                            right=True
+                            top=True, bottom=True, left=False, right=True
                         ):
                             texture = self._textures.island_wall_left_texture
 
                         # right empty
                         case _PolyMatcher(
-                            top=True,
-                            bottom=True,
-                            left=True,
-                            right=False
+                            top=True, bottom=True, left=True, right=False
                         ):
                             texture = self._textures.island_wall_right_texture
 
                         # right top corner
                         case _PolyMatcher(
-                            top=False,
-                            bottom=True,
-                            left=True,
-                            right=False
+                            top=False, bottom=True, left=True, right=False
                         ):
                             texture = self._textures.island_right_texture
 
                         # left top corner
                         case _PolyMatcher(
-                            top=False,
-                            bottom=True,
-                            left=False,
-                            right=True
+                            top=False, bottom=True, left=False, right=True
                         ):
                             texture = self._textures.island_left_texture
 
                         # right bottom corner
                         case _PolyMatcher(
-                            top=True,
-                            bottom=False,
-                            left=True,
-                            right=False
+                            top=True, bottom=False, left=True, right=False
                         ):
                             texture = self._textures.island_right_inv_texture
 
                         # left bottom corner
                         case _PolyMatcher(
-                            top=True,
-                            bottom=False,
-                            left=False,
-                            right=True
+                            top=True, bottom=False, left=False, right=True
                         ):
                             texture = self._textures.island_left_inv_texture
 
                         # top connected
                         case _PolyMatcher(
-                            top=True,
-                            bottom=False,
-                            left=False,
-                            right=False
+                            top=True, bottom=False, left=False, right=False
                         ):
                             texture = self._textures.island_single_bottom_texture
 
                         # bottom connected
                         case _PolyMatcher(
-                            top=False,
-                            bottom=True,
-                            left=False,
-                            right=False
+                            top=False, bottom=True, left=False, right=False
                         ):
                             texture = self._textures.island_single_top_texture
 
                         # left connected
                         case _PolyMatcher(
-                            top=False,
-                            bottom=False,
-                            left=True,
-                            right=False
+                            top=False, bottom=False, left=True, right=False
                         ):
                             texture = self._textures.island_single_left_texture
 
                         # right connected
                         case _PolyMatcher(
-                            top=False,
-                            bottom=False,
-                            left=False,
-                            right=True
+                            top=False, bottom=False, left=False, right=True
                         ):
                             texture = self._textures.island_single_right_texture
 
                         case _:
-                            raise WtfError(
-                                "idek how you got here",
-                                poly
-                            )
+                            raise WtfError("idek how you got here", poly)
 
                 column_offset = self._image_size[0] * column
-                pos = start_pos + Vec2().from_cartesian(
-                    column_offset,
-                    row_offset
-                )
+                pos = start_pos + Vec2().from_cartesian(column_offset, row_offset)
                 size = self._image_size
-                renderer.draw_textured_quad(
-                    texture,
-                    pos,
-                    size,
-                    layer=layer
-                )
+                renderer.draw_textured_quad(texture, pos, size, layer=layer)
 
         if self.debug:
             debug_surface = self.mask.to_surface()
@@ -608,9 +481,7 @@ class Island(SyncedGraphicsEntity):
             renderer.enable_stencil(True)
 
             renderer.draw_rect(
-                self.world_position - self.size / 2,
-                self.size * 2,
-                (1, 1, 1, .5)
+                self.world_position - self.size / 2, self.size * 2, (1, 1, 1, 0.5)
             )
 
             renderer.disable_stencil()
@@ -634,9 +505,7 @@ class GreenBrickIsland(Island):
 __islands: tp.Iterable[tp.Type[Island]] = [
     GrassIsland,
     GrayBrickIsland,
-    GreenBrickIsland
+    GreenBrickIsland,
 ]
 
-ISLANDS: tp.Mapping[str, tp.Type[Island]] = {
-    c.cid(): c for c in __islands
-}
+ISLANDS: tp.Mapping[str, tp.Type[Island]] = {c.cid(): c for c in __islands}

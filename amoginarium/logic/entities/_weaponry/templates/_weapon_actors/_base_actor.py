@@ -28,11 +28,11 @@ class BaseActor:
     # endregion
 
     def __init__(
-            self,
-            parent: "Bullet",
-            *,
-            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: "Bullet",
+        *,
+        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         """
         base weapon actor
@@ -54,10 +54,7 @@ class BaseActor:
         # calculate position with offset
         if self._DEBUG:
             self._dbe = DebugCircleEntity(
-                self.parent.runtime_buffer,
-                self._position,
-                4,
-                centered=True
+                self.parent.runtime_buffer, self._position, 4, centered=True
             )
 
         else:
@@ -84,7 +81,7 @@ class BaseActor:
 
         # add offset with rotation
         self._position.xy = (
-                self._parent.position + self._offset.rotate_by(self._parent.facing)
+            self._parent.position + self._offset.rotate_by(self._parent.facing)
         ).xy
 
         # update debug entity if set

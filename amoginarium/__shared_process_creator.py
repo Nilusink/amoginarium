@@ -7,6 +7,7 @@ creates all data used for process sharing.
 Author:
 Nilusink
 """
+
 from multiprocessing.shared_memory import SharedMemory
 from multiprocessing.connection import Connection
 from multiprocessing import Queue, Lock, Pipe
@@ -26,7 +27,7 @@ class _ProcessValues:
     global_vars: GlobalVars = ...
     SHM: SharedMemory = ...  # entity memory
     C_SHM: SharedMemory = ...  # controller memory
-    I_SHM: SharedMemory = ... # inventory memory
+    I_SHM: SharedMemory = ...  # inventory memory
     WRITE_LOCK: Lock = ...
     COQ: Queue = ...
     CIQ: Queue = ...
@@ -52,21 +53,9 @@ class _ProcessValues:
         self.I_BUFF = (inventory_t * MAX_INVENTORIES).from_buffer(self.I_SHM.buf)
 
         # initialize shared memories to all 0s
-        memset(
-            addressof(self.E_BUFF),
-            0,
-            sizeof(self.E_BUFF)
-        )
-        memset(
-            addressof(self.C_BUFF),
-            0,
-            sizeof(self.C_BUFF)
-        )
-        memset(
-            addressof(self.I_BUFF),
-            0,
-            sizeof(self.I_BUFF)
-        )
+        memset(addressof(self.E_BUFF), 0, sizeof(self.E_BUFF))
+        memset(addressof(self.C_BUFF), 0, sizeof(self.C_BUFF))
+        memset(addressof(self.I_BUFF), 0, sizeof(self.I_BUFF))
 
         self.WRITE_LOCK = get_write_lock()
         self.CIQ = Queue()
@@ -74,16 +63,16 @@ class _ProcessValues:
         self.BASE_COMM, self.PROCESS_COMM = Pipe()
 
     def set_shared_process_values(
-            self,
-            g_vars: GlobalVars,
-            command_in_queue: Queue,
-            command_out_queue: Queue,
-            shared_memory: SharedMemory,
-            controller_memory: SharedMemory,
-            inventory_memory: SharedMemory,
-            write_lock: Lock,
-            base_comm: Connection,
-            process_comm: Connection
+        self,
+        g_vars: GlobalVars,
+        command_in_queue: Queue,
+        command_out_queue: Queue,
+        shared_memory: SharedMemory,
+        controller_memory: SharedMemory,
+        inventory_memory: SharedMemory,
+        write_lock: Lock,
+        base_comm: Connection,
+        process_comm: Connection,
     ) -> None:
         if self.global_vars is not ...:
             raise RuntimeError("set_shared_process_values called twice!")
@@ -115,14 +104,16 @@ class _ProcessValues:
         self.global_vars.update()
 
         # reset comms
-        while self.BASE_COMM.poll(0): self.BASE_COMM.recv()
-        while self.PROCESS_COMM.poll(0): self.PROCESS_COMM.recv()
+        while self.BASE_COMM.poll(0):
+            self.BASE_COMM.recv()
+        while self.PROCESS_COMM.poll(0):
+            self.PROCESS_COMM.recv()
 
         # reset command queues
         while True:
             try:
                 self.COQ.get_nowait()
-            
+
             except Empty:
                 break
 

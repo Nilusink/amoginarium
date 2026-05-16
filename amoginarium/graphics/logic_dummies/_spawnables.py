@@ -7,6 +7,7 @@ collects every spawn-able entity
 Author:
 Nilusink
 """
+
 from icecream import ic  # noqa: F401
 import typing as tp
 
@@ -25,8 +26,12 @@ from ._debug_rendering import DebugCircleEntity
 from ._charged_weapons import RailGunDummy
 from ._text_entity import TextEntity
 from ._aero import AeroDummy
-from ._missiles import (MultiStageMissileDummy, GuidedMultiStageMissileDummy,
-                        MultiThrusterMissileDummy, PlayerControlledMissileDummy)
+from ._missiles import (
+    MultiStageMissileDummy,
+    GuidedMultiStageMissileDummy,
+    MultiThrusterMissileDummy,
+    PlayerControlledMissileDummy,
+)
 
 
 GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
@@ -58,7 +63,7 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         MultiThrusterMissileDummy,
         PlayerControlledMissileDummy,
         RideableTurret,
-        CalculatedRideableTurretDummy
+        CalculatedRideableTurretDummy,
     ]
 }
 

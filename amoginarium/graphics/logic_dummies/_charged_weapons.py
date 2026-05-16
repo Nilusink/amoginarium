@@ -7,6 +7,7 @@ charged weapon dummies
 Author:
 Nilusink
 """
+
 from types import EllipsisType
 
 from amoginarium.shared.utility import Vec2, Color
@@ -20,9 +21,10 @@ from ._weapons import WeaponDummy
 class ChargedWeaponDummy(WeaponDummy):
     """
     weapon with charging bar
-    
+
     ``param2``: charge state
     """
+
     _c_bar_colors: tuple[Color] = (Color().from_255(143, 0, 124),)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0):
@@ -72,9 +74,7 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
         cls._images_m = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._image_scope,
-                cls._default_size,
-                pixel_perfect=True
+                cls._image_scope, cls._default_size, pixel_perfect=True
             )
         ]
 
@@ -85,12 +85,12 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
     @property
     def _texture_id_r(self) -> int:
         """texture id right"""
-        return self._images[round(self.param2 * (len(self._images)-1))]
+        return self._images[round(self.param2 * (len(self._images) - 1))]
 
     @property
     def _texture_id_l(self) -> int:
         """texture id left"""
-        return self._images_m[round(self.param2 * (len(self._images)-1))]
+        return self._images_m[round(self.param2 * (len(self._images) - 1))]
 
 
 class RailGunDummy(ChargedDynamicWeaponDummy):

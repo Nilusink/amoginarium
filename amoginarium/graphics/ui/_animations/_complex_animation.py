@@ -15,6 +15,7 @@ from ._simple_animation import SimpleAnimation
 
 class ComplexAnimation(SimpleAnimation):
     """Animation with extended functionality"""
+
     _extend_duration: float
     _extend_debounce_duration: float
     _collapse_duration: float
@@ -31,16 +32,16 @@ class ComplexAnimation(SimpleAnimation):
     _debounce_timer: float
 
     def __init__(
-            self,
-            start_value: float | EllipsisType,
-            end_value: float | EllipsisType = ...,
-            *_args: tp.Any,
-            extend_duration: float | EllipsisType = 0.0,
-            collapse_duration: float | EllipsisType = ...,
-            extend_debounce_duration: float | EllipsisType = 0.0,
-            collapse_debounce_duration: float | EllipsisType = ...,
-            extend_curve: anim_curve_t | EllipsisType = lambda a: a,
-            collapse_curve: anim_curve_t | EllipsisType = ...,
+        self,
+        start_value: float | EllipsisType,
+        end_value: float | EllipsisType = ...,
+        *_args: tp.Any,
+        extend_duration: float | EllipsisType = 0.0,
+        collapse_duration: float | EllipsisType = ...,
+        extend_debounce_duration: float | EllipsisType = 0.0,
+        collapse_debounce_duration: float | EllipsisType = ...,
+        extend_curve: anim_curve_t | EllipsisType = lambda a: a,
+        collapse_curve: anim_curve_t | EllipsisType = ...,
     ) -> None:
         """
         Create a basic float value animation
@@ -57,14 +58,25 @@ class ComplexAnimation(SimpleAnimation):
         super().__init__(start_value, end_value)
 
         self._extend_duration = extend_duration if extend_duration != ... else 0.0
-        self._collapse_duration = collapse_duration if collapse_duration != ... else self._extend_duration
+        self._collapse_duration = (
+            collapse_duration if collapse_duration != ... else self._extend_duration
+        )
 
-        self._extend_debounce_duration = extend_debounce_duration if extend_debounce_duration != ... else 0.0
-        self._collapse_debounce_duration = collapse_debounce_duration \
-            if collapse_debounce_duration != ... else self._extend_debounce_duration
+        self._extend_debounce_duration = (
+            extend_debounce_duration if extend_debounce_duration != ... else 0.0
+        )
+        self._collapse_debounce_duration = (
+            collapse_debounce_duration
+            if collapse_debounce_duration != ...
+            else self._extend_debounce_duration
+        )
 
         self._extend_curve = extend_curve if extend_curve != ... else lambda a: a
-        self._collapse_curve = collapse_curve if collapse_curve != ... else lambda a: 1 - self._extend_curve(1 - a)
+        self._collapse_curve = (
+            collapse_curve
+            if collapse_curve != ...
+            else lambda a: 1 - self._extend_curve(1 - a)
+        )
 
         self._current_time = 0.0
         self._linear_progress = 0.0
@@ -128,7 +140,11 @@ class ComplexAnimation(SimpleAnimation):
         :param delta: Time since the last update in seconds
         """
         self._last_value = self._current_value
-        if self._phase in (AnimationPhase.AT_START, AnimationPhase.AT_END, AnimationPhase.STOPPED):
+        if self._phase in (
+            AnimationPhase.AT_START,
+            AnimationPhase.AT_END,
+            AnimationPhase.STOPPED,
+        ):
             return
 
         if self._debounce_timer >= 0.0:
@@ -156,11 +172,17 @@ class ComplexAnimation(SimpleAnimation):
                 self._linear_progress = 1.0
                 return
 
-            current_relative = self._current_time / self._run_duration if self._run_duration > 0 else 1.0
+            current_relative = (
+                self._current_time / self._run_duration
+                if self._run_duration > 0
+                else 1.0
+            )
 
             # Map the curve over the remaining distance dynamically
             dist = self._end_value - self._run_start_value
-            self._current_value = self._run_start_value + (dist * self._extend_curve(current_relative))
+            self._current_value = self._run_start_value + (
+                dist * self._extend_curve(current_relative)
+            )
 
         elif self._phase == AnimationPhase.COLLAPSING:
             # Update absolute logical time progress (1.0 down to 0.0)
@@ -177,11 +199,17 @@ class ComplexAnimation(SimpleAnimation):
                 self._linear_progress = 0.0
                 return
 
-            current_relative = self._current_time / self._run_duration if self._run_duration > 0 else 1.0
+            current_relative = (
+                self._current_time / self._run_duration
+                if self._run_duration > 0
+                else 1.0
+            )
 
             # Map the curve over the remaining distance dynamically
             dist = self._start_value - self._run_start_value
-            self._current_value = self._run_start_value + (dist * self._collapse_curve(current_relative))
+            self._current_value = self._run_start_value + (
+                dist * self._collapse_curve(current_relative)
+            )
 
     def reset(self) -> None:
         super().reset()
@@ -231,6 +259,7 @@ class ComplexAnimation(SimpleAnimation):
     def current_time(self) -> float:
         """:return: Current time of the animation"""
         return self._current_time
+
     # endregion
 
 
@@ -238,15 +267,15 @@ Animation = SimpleAnimation | ComplexAnimation
 
 
 def create_animation(
-        start_value: float | EllipsisType,
-        end_value: float | EllipsisType = ...,
-        *_args: tp.Any,
-        extend_duration: float | EllipsisType = ...,
-        collapse_duration: float | EllipsisType = ...,
-        extend_debounce_duration: float | EllipsisType = ...,
-        collapse_debounce_duration: float | EllipsisType = ...,
-        extend_curve: anim_curve_t | EllipsisType = ...,
-        collapse_curve: anim_curve_t | EllipsisType = ...,
+    start_value: float | EllipsisType,
+    end_value: float | EllipsisType = ...,
+    *_args: tp.Any,
+    extend_duration: float | EllipsisType = ...,
+    collapse_duration: float | EllipsisType = ...,
+    extend_debounce_duration: float | EllipsisType = ...,
+    collapse_debounce_duration: float | EllipsisType = ...,
+    extend_curve: anim_curve_t | EllipsisType = ...,
+    collapse_curve: anim_curve_t | EllipsisType = ...,
 ) -> Animation:
     """
     Creates either a SimpleAnimation or a ComplexAnimation based on the input values.
@@ -259,11 +288,12 @@ def create_animation(
         return SimpleAnimation(start_value=s_val, end_value=e_val)
 
     if (
-            (extend_duration != ... and extend_duration > 0.0)
-            or (collapse_duration != ... and collapse_duration > 0.0)
-            or (extend_debounce_duration != ... and extend_debounce_duration > 0.0)
-            or (collapse_debounce_duration != ... and collapse_debounce_duration > 0.0)
-            or extend_curve != ... or collapse_curve != ...
+        (extend_duration != ... and extend_duration > 0.0)
+        or (collapse_duration != ... and collapse_duration > 0.0)
+        or (extend_debounce_duration != ... and extend_debounce_duration > 0.0)
+        or (collapse_debounce_duration != ... and collapse_debounce_duration > 0.0)
+        or extend_curve != ...
+        or collapse_curve != ...
     ):
         return ComplexAnimation(
             start_value=s_val,
@@ -273,7 +303,7 @@ def create_animation(
             extend_debounce_duration=extend_debounce_duration,
             collapse_debounce_duration=collapse_debounce_duration,
             extend_curve=extend_curve,
-            collapse_curve=collapse_curve
+            collapse_curve=collapse_curve,
         )
 
     return SimpleAnimation(start_value=s_val, end_value=e_val)

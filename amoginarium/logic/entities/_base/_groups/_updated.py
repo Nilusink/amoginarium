@@ -22,6 +22,7 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
     """
     A specialized group for entities that require regular logic updates.
     """
+
     __slots__ = ("world_position",)
     world_position: Vec2
 
@@ -33,17 +34,22 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
         self.world_position = Vec2()
         super().__init__(*args)
 
-    def out_of_bounds_x(self, sprite: PositionedLogicEntityLike, margin: float = 0) -> bool:
+    def out_of_bounds_x(
+        self, sprite: PositionedLogicEntityLike, margin: float = 0
+    ) -> bool:
         """
         Checks if a sprite is outside the horizontal bounds
         :param sprite: The entity to check.
         :param margin: Additional padding for the boundary check.
         :return: True if the sprite is out of bounds, False otherwise.
         """
-        return any([
-            self.world_position.x + margin > sprite.position.x,
-            sprite.position.x + margin > self.world_position.x + pv.global_vars.get_screen_size().x
-        ])
+        return any(
+            [
+                self.world_position.x + margin > sprite.position.x,
+                sprite.position.x + margin
+                > self.world_position.x + pv.global_vars.get_screen_size().x,
+            ]
+        )
 
     def load_textures(self) -> None:
         """

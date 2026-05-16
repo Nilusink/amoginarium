@@ -50,11 +50,9 @@ class GreenBrickIsland(Island):
 __islands: tp.Iterable[tp.Type[Island]] = [
     GrassIsland,
     GrayBrickIsland,
-    GreenBrickIsland
+    GreenBrickIsland,
 ]
 
-Island.ISLANDS: dict[CIDType, tp.Type[Island]] = {
-    c.cid(): c for c in __islands
-}
+Island.ISLANDS: dict[CIDType, tp.Type[Island]] = {c.cid(): c for c in __islands}
 
 Island._islands_reverse = {v: k for k, v in Island.ISLANDS.items()}

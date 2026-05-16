@@ -7,6 +7,7 @@ keeps track of all entity ids
 Author:
 Nilusink
 """
+
 from __future__ import annotations
 from icecream import ic
 

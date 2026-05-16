@@ -6,4 +6,5 @@ __init__.py
 Author:
 Nilusink
 """
+
 from ._static_sensors import VisualSensor, VisualRadarSensor

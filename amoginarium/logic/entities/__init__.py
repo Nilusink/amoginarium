@@ -25,4 +25,3 @@ from ._weaponry.templates import (
 from ._world import GrassIsland, Island
 from ._spawnables import SPAWNABLES
 from ._player import Player
-

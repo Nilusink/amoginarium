@@ -7,6 +7,7 @@ load and save maps
 Author:
 Nilusink
 """
+
 from icecream import ic
 import json
 
@@ -23,7 +24,7 @@ def save_map(filepaht: str) -> None:
         "background": 2,
         "spawn_pos": [100, 600],
         "platforms": [],
-        "entities": []
+        "entities": [],
     }
     for entity in Updated.entities():
         entity: GameEntityLike

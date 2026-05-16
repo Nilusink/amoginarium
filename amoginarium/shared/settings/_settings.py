@@ -42,7 +42,7 @@ class _Settings:
                 "master_volume": 1.0,
                 "gun_volume": 1.0,
                 "music_volume": 1.0,
-                "scaling": 0
+                "scaling": 0,
             }
             for key, value in self.__data.items():
                 self.__setattr__(key, value)

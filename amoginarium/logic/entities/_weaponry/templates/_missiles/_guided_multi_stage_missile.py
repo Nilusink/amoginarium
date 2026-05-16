@@ -43,19 +43,19 @@ class GuidedMultiStageMissile(MultiStageMissile):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            *,
-            initial_facing: float | EllipsisType = ...,
-            rudder_size: float | EllipsisType = ...,
-            rudder_max_angle: float | EllipsisType = ...,
-            base_mass: float | EllipsisType = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            **kwargs,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        *,
+        initial_facing: float | EllipsisType = ...,
+        rudder_size: float | EllipsisType = ...,
+        rudder_max_angle: float | EllipsisType = ...,
+        base_mass: float | EllipsisType = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -68,7 +68,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
             rudder_max_angle=rudder_max_angle,
             base_mass=base_mass,
             collision_exception_ids=collision_exception_ids,
-            **kwargs
+            **kwargs,
         )
 
         # set defaults
@@ -111,7 +111,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
                         self.velocity.length,
                         recalculate=10,
                         aim_type="low",
-                        g=GravityAffected.gravity * 2
+                        g=GravityAffected.gravity * 2,
                     )
 
                 except ValueError:
@@ -136,7 +136,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
             )
 
             # PD-controller
-            rudder = error * 1.5 - (self.ang_vel * .5)
+            rudder = error * 1.5 - (self.ang_vel * 0.5)
 
             # clamp rudder
             rudder = min(max(rudder, -self._rudder_max_angle), self._rudder_max_angle)
@@ -145,11 +145,11 @@ class GuidedMultiStageMissile(MultiStageMissile):
                 self._rudder_angle = rudder
 
             else:
-                self._rudder_angle = np.sign(self.alpha) * (
-                    clamp_angle(
-                        abs(self.alpha) / PI_4, 0, 1
-                    )
-                ) * self._rudder_max_angle
+                self._rudder_angle = (
+                    np.sign(self.alpha)
+                    * (clamp_angle(abs(self.alpha) / PI_4, 0, 1))
+                    * self._rudder_max_angle
+                )
 
         else:
             self._rudder_angle = 0

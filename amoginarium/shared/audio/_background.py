@@ -7,6 +7,7 @@ background music
 Author:
 Nilusink
 """
+
 from random import randint
 import pygame as pg
 
@@ -35,9 +36,7 @@ class BackgroundPlayer:
         self._playing = sound.play(loops=-1, fade_ms=5000)
 
     def start(self) -> None:
-        sound = self._sound_files[
-            randint(0, len(self._sound_files) - 1)
-        ]
+        sound = self._sound_files[randint(0, len(self._sound_files) - 1)]
         sound.set_volume(self.volume)
         self._playing = sound.play(loops=-1, fade_ms=5000)
 

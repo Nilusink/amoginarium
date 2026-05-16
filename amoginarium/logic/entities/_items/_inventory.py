@@ -24,14 +24,7 @@ type item_t = Item | None
 class Inventory:
     """inventory"""
 
-    __slots__ = (
-        "_slots",
-        "_num_slots",
-        "_used_slots",
-        "_callbacks",
-        "__id",
-        "_parent"
-    )
+    __slots__ = ("_slots", "_num_slots", "_used_slots", "_callbacks", "__id", "_parent")
 
     _slots: list[ItemSlot]
     _num_slots: int
@@ -41,20 +34,18 @@ class Inventory:
     _parent: LogicGameEntity
 
     def __init__(
-            self,
-            parent: LogicGameEntity,
-            slots: int,
-            select_slot_callback: tp.Callable[[ItemSlot], None] = ...,
-            unselect_slot_callback: tp.Callable[[ItemSlot], None] = ...,
+        self,
+        parent: LogicGameEntity,
+        slots: int,
+        select_slot_callback: tp.Callable[[ItemSlot], None] = ...,
+        unselect_slot_callback: tp.Callable[[ItemSlot], None] = ...,
     ) -> None:
         self.__id = INVENTORY_COUNTER.get_id()
         self._parent = parent
 
         self._num_slots = slots
         self._used_slots = 0
-        self._slots = [
-            ItemSlot(None, 0, self, i) for i in range(slots)
-        ]
+        self._slots = [ItemSlot(None, 0, self, i) for i in range(slots)]
 
         # init SHM
         self._buff.size = self._num_slots
@@ -70,7 +61,7 @@ class Inventory:
 
         self._callbacks = {
             "select": select_slot_callback,
-            "unselect": unselect_slot_callback
+            "unselect": unselect_slot_callback,
         }
 
     # region flag access
@@ -186,9 +177,7 @@ class Inventory:
         self._buff.slots[slot_id].count = count
 
         if hasattr(item, "add_used_callback"):
-            item.add_used_callback(
-                lambda c: self.use_item(slot_id, c)
-            )
+            item.add_used_callback(lambda c: self.use_item(slot_id, c))
 
         item.set_parent(self._parent)
 
@@ -198,12 +187,14 @@ class Inventory:
 
         # drop item
         item = self._slots[item_id].item
-        item.remove_parent(pos - Vec2().from_cartesian(item.size.x / 2, item.size.y), vel)
+        item.remove_parent(
+            pos - Vec2().from_cartesian(item.size.x / 2, item.size.y), vel
+        )
 
         # reset slot
         self.clear_slot(item_id)
 
-    def clear_slot(self,  slot_id: int) -> None:
+    def clear_slot(self, slot_id: int) -> None:
         """
         remove item from slot
         """

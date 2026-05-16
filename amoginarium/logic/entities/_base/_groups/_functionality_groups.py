@@ -19,6 +19,7 @@ from ._base_group import BaseGroup
 
 class _GravityAffected(BaseGroup[LogicGameEntityLike]):
     """Logic group handling gravity calculations for entities."""
+
     __slots__ = ()
 
     @property
@@ -41,6 +42,7 @@ class _GravityAffected(BaseGroup[LogicGameEntityLike]):
 
 class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
     """Logic group handling horizontal friction calculations for entities."""
+
     __slots__ = ()
 
     @property
@@ -58,7 +60,9 @@ class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
         """
         friction = self.friction
         for sprite in self.entities():
-            sprite.acceleration.x = (sprite.acceleration.x - (sprite.velocity.x * 0.01)) * friction
+            sprite.acceleration.x = (
+                sprite.acceleration.x - (sprite.velocity.x * 0.01)
+            ) * friction
 
 
 GravityAffected: tp.Final[_GravityAffected] = _GravityAffected()

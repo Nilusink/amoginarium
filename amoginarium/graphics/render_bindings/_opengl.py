@@ -7,12 +7,13 @@ a few functions for rendering
 Author:
 Nilusink
 """
+
 import os
 
 # Stop Windows from minimizing/re-initializing the window if it thinks it lost focus
-os.environ['SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS'] = '0'
+os.environ["SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS"] = "0"
 # Stop Windows DPI scaling from slightly altering the window size and triggering a loop
-os.environ['SDL_VIDEO_HIGHDPI_DISABLED'] = '1'
+os.environ["SDL_VIDEO_HIGHDPI_DISABLED"] = "1"
 
 from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
 from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
@@ -30,8 +31,12 @@ from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
 from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glViewport, glOrtho
 from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
 from OpenGL.GL import GL_QUADS, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
-from OpenGL.GL import (glEnableClientState, glDisableClientState, glVertexPointer,
-                       glDrawArrays)
+from OpenGL.GL import (
+    glEnableClientState,
+    glDisableClientState,
+    glVertexPointer,
+    glDrawArrays,
+)
 from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
 from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
 from OpenGL.GLU import gluOrtho2D
@@ -62,8 +67,14 @@ from amoginarium import pv
 # noinspection DuplicatedCode
 class OpenGLRenderer(BaseRenderer):
     __slots__ = (
-        "__dynamic_text_fonts", "__static_text_graphics", "__static_text_id_counter", "__static_text_fonts",
-        "__clock", "__window", "__previous_window_position", "__previous_window_size"
+        "__dynamic_text_fonts",
+        "__static_text_graphics",
+        "__static_text_id_counter",
+        "__static_text_fonts",
+        "__clock",
+        "__window",
+        "__previous_window_position",
+        "__previous_window_size",
     )
 
     type TextureID = int
@@ -91,20 +102,12 @@ class OpenGLRenderer(BaseRenderer):
     # region Extra internal methods
     # todo: WHAT?
     def get_font(
-            self,
-            size: int,
-            family: str,
-            bold: bool = False,
-            italic: bool = False
+        self, size: int, family: str, bold: bool = False, italic: bool = False
     ) -> pg.font.Font:
         # check if font exists
         if size in self.__static_text_fonts:
             for font in self.__static_text_fonts[size]:
-                if all([
-                    font.name == family,
-                    font.bold == bold,
-                    font.italic == italic
-                ]):
+                if all([font.name == family, font.bold == bold, font.italic == italic]):
                     return font
 
         else:
@@ -135,15 +138,19 @@ class OpenGLRenderer(BaseRenderer):
             elif len(color) == 4:
                 glColor4f(*color)
             else:
-                raise ValueError(f"Invalid color tuple length (expected 3 or 4, got {len(color)}): {color}")
+                raise ValueError(
+                    f"Invalid color tuple length (expected 3 or 4, got {len(color)}): {color}"
+                )
             return Color().from_1(*color)
-        raise TypeError(f"Expected a Color object or a tuple, but got {type(color).__name__}: {color!r}")
+        raise TypeError(
+            f"Expected a Color object or a tuple, but got {type(color).__name__}: {color!r}"
+        )
 
     @staticmethod
     @cum_timer.time_this
     def _check_out_of_screen(
-            top_left: coord_t,
-            size: coord_t,
+        top_left: coord_t,
+        size: coord_t,
     ) -> bool:
         """
         Check if a rect is out of the screen
@@ -164,19 +171,14 @@ class OpenGLRenderer(BaseRenderer):
             y1, y2 = y2, y1
 
         res = pv.global_vars.get_resolution()
-        return (
-                x2 < 0
-                or x1 > res.x
-                or y2 < 0
-                or y1 > res.y
-        )
+        return x2 < 0 or x1 > res.x or y2 < 0 or y1 > res.y
 
     def _draw_debug_bounds(
-            self,
-            pos: coord_t,
-            size: coord_t,
-            color: Color | tColor = (255, 0, 0, 127),
-            centered: bool = False
+        self,
+        pos: coord_t,
+        size: coord_t,
+        color: Color | tColor = (255, 0, 0, 127),
+        centered: bool = False,
     ) -> None:
         pos_vec: Vec2 = convert_coord(pos, Vec2)
         size_vec: Vec2 = convert_coord(size, Vec2)
@@ -227,7 +229,9 @@ class OpenGLRenderer(BaseRenderer):
         glPopMatrix()
 
     @staticmethod
-    def __scaling_restricted_ratio(size: Vec2, ratio: float) -> tuple[int, int, int, int]:
+    def __scaling_restricted_ratio(
+        size: Vec2, ratio: float
+    ) -> tuple[int, int, int, int]:
         window_ratio = size.x / size.y
 
         if window_ratio > ratio:
@@ -267,24 +271,22 @@ class OpenGLRenderer(BaseRenderer):
         self.__previous_window_position = Vec2()
 
         self.__static_text_fonts = {
-            32: [
-                pg.font.SysFont('arial', 32)
-            ],
-            64: [
-                pg.font.SysFont('arial', 64)
-            ]
+            32: [pg.font.SysFont("arial", 32)],
+            64: [pg.font.SysFont("arial", 64)],
         }
 
         # get screen size
         screen_info = pg.display.Info()
-        window_size = 1920, 1080  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
+        window_size = (
+            1920,
+            1080,
+        )  # (screen_info.current_w, screen_info.current_h)  # TODO: sizing
 
         # set global screen size and ppm
         pv.global_vars.set_screen_size(Vec2().from_cartesian(*window_size))
-        pv.global_vars.set_screen_size_real(Vec2().from_cartesian(
-            screen_info.current_w,
-            screen_info.current_h
-        ))
+        pv.global_vars.set_screen_size_real(
+            Vec2().from_cartesian(screen_info.current_w, screen_info.current_h)
+        )
         pv.global_vars.set_resolution(Vec2().from_cartesian(*window_size))
 
         screen_fac = Vec2().from_cartesian(1, 1)
@@ -295,9 +297,7 @@ class OpenGLRenderer(BaseRenderer):
         pv.global_vars.set_pixel_per_meter(1)
 
         # set max fps to monitor refresh rate
-        pv.global_vars.set_max_fps(
-            max(pg.display.get_desktop_refresh_rates())
-        )
+        pv.global_vars.set_max_fps(max(pg.display.get_desktop_refresh_rates()))
 
         # pg.display.gl_set_attribute(pg.GL_SWAP_CONTROL, 1)
         pg.display.gl_set_attribute(pg.GL_RED_SIZE, 8)
@@ -313,9 +313,9 @@ class OpenGLRenderer(BaseRenderer):
             size=(screen_size.x / 2, screen_size.y / 2),
             opengl=True,
             resizable=True,
-            hidden=True
+            hidden=True,
         )
-        self.__window.minimum_size = (screen_size.x / 8, screen_size.y / 8),
+        self.__window.minimum_size = ((screen_size.x / 8, screen_size.y / 8),)
         WindowsMonitorService.set_window(title)
 
         # initialize OpenGL stuff
@@ -339,11 +339,11 @@ class OpenGLRenderer(BaseRenderer):
         pg.quit()
 
     def load_texture(
-            self,
-            image: Image.Image,
-            size: coord_t | None = None,
-            mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
-            pixel_perfect: bool = False,
+        self,
+        image: Image.Image,
+        size: coord_t | None = None,
+        mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+        pixel_perfect: bool = False,
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         Load an image texture (saves it internally)
@@ -388,8 +388,15 @@ class OpenGLRenderer(BaseRenderer):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 
         glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RGBA, width, height,
-            0, GL_RGBA, GL_UNSIGNED_BYTE, img_data
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            width,
+            height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            img_data,
         )
 
         return texture_id, (width, height)
@@ -398,7 +405,9 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Display
     @property
-    def display_state(self) -> tp.Literal["windowed", "fullscreen", "windowed_fullscreen"]:
+    def display_state(
+        self,
+    ) -> tp.Literal["windowed", "fullscreen", "windowed_fullscreen"]:
         return self.__display_state
 
     def clear_display(self, color: Color | tColor = (0, 0, 0, 0)) -> None:
@@ -410,7 +419,9 @@ class OpenGLRenderer(BaseRenderer):
         glClearColor(*conv_color.rgba1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-    def display_update(self, position: coord_t | None = None, size: coord_t | None = None) -> None:
+    def display_update(
+        self, position: coord_t | None = None, size: coord_t | None = None
+    ) -> None:
         """
         Should be called when the display gets updated
         :param position: Position of the display
@@ -445,16 +456,12 @@ class OpenGLRenderer(BaseRenderer):
             # 2. Update viewport
             glViewport(vp_x, vp_y, vp_w, vp_h)
 
-            pv.global_vars.set_screen_size_real(
-                convert_coord(size_vec, Vec2)
-            )
+            pv.global_vars.set_screen_size_real(convert_coord(size_vec, Vec2))
 
-            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
-                res_x / vp_w, res_y / vp_h
-            ))
-            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
-                vp_x, vp_y
-            ))
+            pv.global_vars.set_screen_size_fac(
+                Vec2().from_cartesian(res_x / vp_w, res_y / vp_h)
+            )
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(vp_x, vp_y))
 
         elif scaling == 1:
             self.__window.size = (vp_w, vp_h)
@@ -463,12 +470,10 @@ class OpenGLRenderer(BaseRenderer):
             s_size_real = convert_coord((vp_w, vp_h), Vec2)
             pv.global_vars.set_screen_size_real(s_size_real)
 
-            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
-                res_x / s_size_real.x, res_y / s_size_real.y
-            ))
-            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
-                0, 0
-            ))
+            pv.global_vars.set_screen_size_fac(
+                Vec2().from_cartesian(res_x / s_size_real.x, res_y / s_size_real.y)
+            )
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(0, 0))
 
         else:
             self.__window.size = (int(size_vec.x), int(size_vec.y))
@@ -476,12 +481,10 @@ class OpenGLRenderer(BaseRenderer):
 
             pv.global_vars.set_screen_size_real(size_vec)
 
-            pv.global_vars.set_screen_size_fac(Vec2().from_cartesian(
-                res_x / size_vec.x, res_y / size_vec.y
-            ))
-            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(
-                0, 0
-            ))
+            pv.global_vars.set_screen_size_fac(
+                Vec2().from_cartesian(res_x / size_vec.x, res_y / size_vec.y)
+            )
+            pv.global_vars.set_screen_size_offset(Vec2().from_cartesian(0, 0))
 
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -501,7 +504,7 @@ class OpenGLRenderer(BaseRenderer):
 
         return (
             Vec2().from_cartesian(pos_x, pos_y),
-            Vec2().from_cartesian(size_w, size_h)
+            Vec2().from_cartesian(size_w, size_h),
         )
 
     def display_set_geometry(self, position: coord_t, size: coord_t) -> None:
@@ -549,8 +552,12 @@ class OpenGLRenderer(BaseRenderer):
         self.__display_state = "windowed"
         self.__window.set_windowed()
         self.__window.borderless = False
-        self.display_set_geometry(self.__previous_window_position, self.__previous_window_size)
-        self.display_update(self.__previous_window_position.xy, self.__previous_window_size.xy)
+        self.display_set_geometry(
+            self.__previous_window_position, self.__previous_window_size
+        )
+        self.display_update(
+            self.__previous_window_position.xy, self.__previous_window_size.xy
+        )
 
     def display_set_title(self, title: str, icon: str | None = None) -> None:
         """
@@ -571,11 +578,11 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Stencil
     def apply_stencil[**A](
-            self,
-            stencil_func: tp.Callable[A, tp.Any],
-            show_stencil=False,
-            *args: A.args,
-            **kwargs: A.kwargs
+        self,
+        stencil_func: tp.Callable[A, tp.Any],
+        show_stencil=False,
+        *args: A.args,
+        **kwargs: A.kwargs,
     ) -> None:
         self.start_stencil(show_stencil)
 
@@ -619,18 +626,18 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Textured
     def draw_textured_quad(
-            self,
-            texture_id: TextureID,
-            pos: coord_t,
-            size: coord_t,
-            layer: int,
-            *,
-            convert_global: bool = True,
-            rotate_angle: float = 0,
-            rotate_anchor: coord_t | EllipsisType = ...,
-            offscreen_check: bool = True,
-            force_draw: bool = False,
-            color: Color | EllipsisType = ...
+        self,
+        texture_id: TextureID,
+        pos: coord_t,
+        size: coord_t,
+        layer: int,
+        *,
+        convert_global: bool = True,
+        rotate_angle: float = 0,
+        rotate_anchor: coord_t | EllipsisType = ...,
+        offscreen_check: bool = True,
+        force_draw: bool = False,
+        color: Color | EllipsisType = ...,
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -693,9 +700,7 @@ class OpenGLRenderer(BaseRenderer):
 
     def __draw_layer(self, layer: list[dict[str, tp.Any]]) -> None:
         """draw one texture layer"""
-        layer = sorted(
-            layer, key=lambda x: x["texture_id"]
-        )
+        layer = sorted(layer, key=lambda x: x["texture_id"])
 
         # reset color
         glColor3f(1.0, 1.0, 1.0)
@@ -769,13 +774,13 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Basic shapes
     def draw_polygon(
-            self,
-            vertices: tp.Iterable[coord_t],
-            color: Color | tColor,
-            *,
-            center: coord_t = None,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        vertices: tp.Iterable[coord_t],
+        color: Color | tColor,
+        *,
+        center: coord_t = None,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a polygon with fill
@@ -817,14 +822,14 @@ class OpenGLRenderer(BaseRenderer):
         glPopMatrix()
 
     def draw_polygon_line(
-            self,
-            vertices: tp.Iterable[coord_t],
-            color: Color | tColor | Sequence[Color | tColor],
-            *,
-            thickness: float = 1.0,
-            center: coord_t = None,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        vertices: tp.Iterable[coord_t],
+        color: Color | tColor | Sequence[Color | tColor],
+        *,
+        thickness: float = 1.0,
+        center: coord_t = None,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a polygon outline without fill
@@ -842,9 +847,13 @@ class OpenGLRenderer(BaseRenderer):
         if convert_global:
             thickness = pv.global_vars.translate_scale(thickness)
             if center:
-                vertices_vec2 = [pv.global_vars.translate_scale(v) for v in vertices_vec2]
+                vertices_vec2 = [
+                    pv.global_vars.translate_scale(v) for v in vertices_vec2
+                ]
             else:
-                vertices_vec2 = [pv.global_vars.translate_screen_coord(v) for v in vertices_vec2]
+                vertices_vec2 = [
+                    pv.global_vars.translate_screen_coord(v) for v in vertices_vec2
+                ]
 
         glPushMatrix()
         if center is not None:
@@ -856,7 +865,7 @@ class OpenGLRenderer(BaseRenderer):
         # set color if single color is given
         self.__set_color(color)
 
-        # Use TRIANGLE_STRIP to create a thick outline by calculating offsets for 
+        # Use TRIANGLE_STRIP to create a thick outline by calculating offsets for
         # each segment
         glBegin(GL_TRIANGLE_STRIP)
         num_verts = len(vertices_vec2)
@@ -879,13 +888,13 @@ class OpenGLRenderer(BaseRenderer):
         glPopMatrix()
 
     def draw_rect(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            *,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        *,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rectangle with fill
@@ -923,18 +932,18 @@ class OpenGLRenderer(BaseRenderer):
 
     @cum_timer.time_this
     def draw_rounded_rect(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            radius: float,
-            *,
-            top_left_radius: float | None = None,
-            top_right_radius: float | None = None,
-            bottom_left_radius: float | None = None,
-            bottom_right_radius: float | None = None,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        radius: float,
+        *,
+        top_left_radius: float | None = None,
+        top_right_radius: float | None = None,
+        bottom_left_radius: float | None = None,
+        bottom_right_radius: float | None = None,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rect with rounded corners with fill
@@ -961,7 +970,9 @@ class OpenGLRenderer(BaseRenderer):
             if top_right_radius is not None:
                 top_right_radius = pv.global_vars.translate_scale(top_right_radius)
             if bottom_right_radius is not None:
-                bottom_right_radius = pv.global_vars.translate_scale(bottom_right_radius)
+                bottom_right_radius = pv.global_vars.translate_scale(
+                    bottom_right_radius
+                )
             if bottom_left_radius is not None:
                 bottom_left_radius = pv.global_vars.translate_scale(bottom_left_radius)
 
@@ -992,7 +1003,10 @@ class OpenGLRenderer(BaseRenderer):
             rad = r_tl
             segments = max(4, int(rad / 2.0))
             step = 1.5707963267948966 / segments
-            base_arc = [(m.cos(i * step) * rad, m.sin(i * step) * rad) for i in range(segments + 1)]
+            base_arc = [
+                (m.cos(i * step) * rad, m.sin(i * step) * rad)
+                for i in range(segments + 1)
+            ]
 
             [v2f(rad - x, rad - y) for x, y in base_arc]
             [v2f(sx - rad + y, rad - x) for x, y in base_arc]
@@ -1002,22 +1016,34 @@ class OpenGLRenderer(BaseRenderer):
         else:
             s_tl = max(4, int(r_tl / 2.0))
             st_tl = 1.5707963267948966 / s_tl
-            arc_tl = [(m.cos(i * st_tl) * r_tl, m.sin(i * st_tl) * r_tl) for i in range(s_tl + 1)]
+            arc_tl = [
+                (m.cos(i * st_tl) * r_tl, m.sin(i * st_tl) * r_tl)
+                for i in range(s_tl + 1)
+            ]
             [v2f(r_tl - x, r_tl - y) for x, y in arc_tl]
 
             s_tr = max(4, int(r_tr / 2.0))
             st_tr = 1.5707963267948966 / s_tr
-            arc_tr = [(m.cos(i * st_tr) * r_tr, m.sin(i * st_tr) * r_tr) for i in range(s_tr + 1)]
+            arc_tr = [
+                (m.cos(i * st_tr) * r_tr, m.sin(i * st_tr) * r_tr)
+                for i in range(s_tr + 1)
+            ]
             [v2f(sx - r_tr + y, r_tr - x) for x, y in arc_tr]
 
             s_br = max(4, int(r_br / 2.0))
             st_br = 1.5707963267948966 / s_br
-            arc_br = [(m.cos(i * st_br) * r_br, m.sin(i * st_br) * r_br) for i in range(s_br + 1)]
+            arc_br = [
+                (m.cos(i * st_br) * r_br, m.sin(i * st_br) * r_br)
+                for i in range(s_br + 1)
+            ]
             [v2f(sx - r_br + x, sy - r_br + y) for x, y in arc_br]
 
             s_bl = max(4, int(r_bl / 2.0))
             st_bl = 1.5707963267948966 / s_bl
-            arc_bl = [(m.cos(i * st_bl) * r_bl, m.sin(i * st_bl) * r_bl) for i in range(s_bl + 1)]
+            arc_bl = [
+                (m.cos(i * st_bl) * r_bl, m.sin(i * st_bl) * r_bl)
+                for i in range(s_bl + 1)
+            ]
             [v2f(r_bl - y, sy - r_bl + x) for x, y in arc_bl]
 
         glEnd()
@@ -1027,14 +1053,14 @@ class OpenGLRenderer(BaseRenderer):
             self._draw_debug_bounds(start_vec, size_vec)
 
     def draw_rect_line(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            *,
-            thickness: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        *,
+        thickness: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rectangle outline without fill
@@ -1090,19 +1116,19 @@ class OpenGLRenderer(BaseRenderer):
             self._draw_debug_bounds(start_vec, size_vec)
 
     def draw_rounded_rect_line(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            radius: float,
-            *,
-            top_left_radius: float | None = None,
-            top_right_radius: float | None = None,
-            bottom_left_radius: float | None = None,
-            bottom_right_radius: float | None = None,
-            thickness: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        radius: float,
+        *,
+        top_left_radius: float | None = None,
+        top_right_radius: float | None = None,
+        bottom_left_radius: float | None = None,
+        bottom_right_radius: float | None = None,
+        thickness: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rounded rectangle outline without fill
@@ -1133,7 +1159,9 @@ class OpenGLRenderer(BaseRenderer):
             if bottom_left_radius is not None:
                 bottom_left_radius = pv.global_vars.translate_scale(bottom_left_radius)
             if bottom_right_radius is not None:
-                bottom_right_radius = pv.global_vars.translate_scale(bottom_right_radius)
+                bottom_right_radius = pv.global_vars.translate_scale(
+                    bottom_right_radius
+                )
 
         sx = size_vec.x
         sy = size_vec.y
@@ -1141,10 +1169,22 @@ class OpenGLRenderer(BaseRenderer):
         if offscreen_check and self._check_out_of_screen(start_vec, size_vec):
             return
 
-        r_tl = min(radius if top_left_radius is None else top_left_radius, sx / 2.0, sy / 2.0)
-        r_tr = min(radius if top_right_radius is None else top_right_radius, sx / 2.0, sy / 2.0)
-        r_bl = min(radius if bottom_left_radius is None else bottom_left_radius, sx / 2.0, sy / 2.0)
-        r_br = min(radius if bottom_right_radius is None else bottom_right_radius, sx / 2.0, sy / 2.0)
+        r_tl = min(
+            radius if top_left_radius is None else top_left_radius, sx / 2.0, sy / 2.0
+        )
+        r_tr = min(
+            radius if top_right_radius is None else top_right_radius, sx / 2.0, sy / 2.0
+        )
+        r_bl = min(
+            radius if bottom_left_radius is None else bottom_left_radius,
+            sx / 2.0,
+            sy / 2.0,
+        )
+        r_br = min(
+            radius if bottom_right_radius is None else bottom_right_radius,
+            sx / 2.0,
+            sy / 2.0,
+        )
 
         glPushMatrix()
         glTranslate(start_vec.x, start_vec.y, 0.0)
@@ -1162,40 +1202,40 @@ class OpenGLRenderer(BaseRenderer):
         c_tl = np.cos(a_tl)
         s_tl_a = np.sin(a_tl)
         in_tl = max(0.0, r_tl - thickness)
-        verts[idx:idx + len(a_tl) * 2:2, 0] = r_tl + c_tl * r_tl
-        verts[idx:idx + len(a_tl) * 2:2, 1] = r_tl + s_tl_a * r_tl
-        verts[idx + 1:idx + len(a_tl) * 2:2, 0] = r_tl + c_tl * in_tl
-        verts[idx + 1:idx + len(a_tl) * 2:2, 1] = r_tl + s_tl_a * in_tl
+        verts[idx : idx + len(a_tl) * 2 : 2, 0] = r_tl + c_tl * r_tl
+        verts[idx : idx + len(a_tl) * 2 : 2, 1] = r_tl + s_tl_a * r_tl
+        verts[idx + 1 : idx + len(a_tl) * 2 : 2, 0] = r_tl + c_tl * in_tl
+        verts[idx + 1 : idx + len(a_tl) * 2 : 2, 1] = r_tl + s_tl_a * in_tl
         idx += len(a_tl) * 2
 
         a_tr = np.linspace(1.5 * np.pi, 2.0 * np.pi, s_tr + 1)
         c_tr = np.cos(a_tr)
         s_tr_a = np.sin(a_tr)
         in_tr = max(0.0, r_tr - thickness)
-        verts[idx:idx + len(a_tr) * 2:2, 0] = sx - r_tr + c_tr * r_tr
-        verts[idx:idx + len(a_tr) * 2:2, 1] = r_tr + s_tr_a * r_tr
-        verts[idx + 1:idx + len(a_tr) * 2:2, 0] = sx - r_tr + c_tr * in_tr
-        verts[idx + 1:idx + len(a_tr) * 2:2, 1] = r_tr + s_tr_a * in_tr
+        verts[idx : idx + len(a_tr) * 2 : 2, 0] = sx - r_tr + c_tr * r_tr
+        verts[idx : idx + len(a_tr) * 2 : 2, 1] = r_tr + s_tr_a * r_tr
+        verts[idx + 1 : idx + len(a_tr) * 2 : 2, 0] = sx - r_tr + c_tr * in_tr
+        verts[idx + 1 : idx + len(a_tr) * 2 : 2, 1] = r_tr + s_tr_a * in_tr
         idx += len(a_tr) * 2
 
         a_br = np.linspace(0.0, 0.5 * np.pi, s_br + 1)
         c_br = np.cos(a_br)
         s_br_a = np.sin(a_br)
         in_br = max(0.0, r_br - thickness)
-        verts[idx:idx + len(a_br) * 2:2, 0] = sx - r_br + c_br * r_br
-        verts[idx:idx + len(a_br) * 2:2, 1] = sy - r_br + s_br_a * r_br
-        verts[idx + 1:idx + len(a_br) * 2:2, 0] = sx - r_br + c_br * in_br
-        verts[idx + 1:idx + len(a_br) * 2:2, 1] = sy - r_br + s_br_a * in_br
+        verts[idx : idx + len(a_br) * 2 : 2, 0] = sx - r_br + c_br * r_br
+        verts[idx : idx + len(a_br) * 2 : 2, 1] = sy - r_br + s_br_a * r_br
+        verts[idx + 1 : idx + len(a_br) * 2 : 2, 0] = sx - r_br + c_br * in_br
+        verts[idx + 1 : idx + len(a_br) * 2 : 2, 1] = sy - r_br + s_br_a * in_br
         idx += len(a_br) * 2
 
         a_bl = np.linspace(0.5 * np.pi, np.pi, s_bl + 1)
         c_bl = np.cos(a_bl)
         s_bl_a = np.sin(a_bl)
         in_bl = max(0.0, r_bl - thickness)
-        verts[idx:idx + len(a_bl) * 2:2, 0] = r_bl + c_bl * r_bl
-        verts[idx:idx + len(a_bl) * 2:2, 1] = sy - r_bl + s_bl_a * r_bl
-        verts[idx + 1:idx + len(a_bl) * 2:2, 0] = r_bl + c_bl * in_bl
-        verts[idx + 1:idx + len(a_bl) * 2:2, 1] = sy - r_bl + s_bl_a * in_bl
+        verts[idx : idx + len(a_bl) * 2 : 2, 0] = r_bl + c_bl * r_bl
+        verts[idx : idx + len(a_bl) * 2 : 2, 1] = sy - r_bl + s_bl_a * r_bl
+        verts[idx + 1 : idx + len(a_bl) * 2 : 2, 0] = r_bl + c_bl * in_bl
+        verts[idx + 1 : idx + len(a_bl) * 2 : 2, 1] = sy - r_bl + s_bl_a * in_bl
         idx += len(a_bl) * 2
 
         verts[idx, 0] = 0.0
@@ -1215,15 +1255,15 @@ class OpenGLRenderer(BaseRenderer):
 
     # todo mytodo work on this
     def draw_bar(
-            self,
-            pos: coord_t,
-            size: coord_t,
-            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
-            progress: float,
-            *,
-            background_color: Color | EllipsisType = ...,
-            convert_global: bool = True,
-            offscreen_check: bool = True,
+        self,
+        pos: coord_t,
+        size: coord_t,
+        colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
+        progress: float,
+        *,
+        background_color: Color | EllipsisType = ...,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         draw a progress? bar at the specified location (using specified color gradient
@@ -1245,10 +1285,10 @@ class OpenGLRenderer(BaseRenderer):
             )  # ignore: type
 
         else:
-            raise RuntimeError(f"Invalid colors for \"draw_bar\": {colors}")
+            raise RuntimeError(f'Invalid colors for "draw_bar": {colors}')
 
         if isinstance(background_color, EllipsisType):
-            background_color: Color = Color().from_1(0, 0, 0, .5)
+            background_color: Color = Color().from_1(0, 0, 0, 0.5)
 
         if convert_global:
             pos = pv.global_vars.translate_screen_coord(pos)
@@ -1286,14 +1326,14 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Circles
     def draw_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a circle with fil
@@ -1310,8 +1350,9 @@ class OpenGLRenderer(BaseRenderer):
             center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
             radius = pv.global_vars.translate_scale(radius)
 
-        if offscreen_check and self._check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
-                                                         (radius * 2, radius * 2)):
+        if offscreen_check and self._check_out_of_screen(
+            (center_vec2.x - radius, center_vec2.y - radius), (radius * 2, radius * 2)
+        ):
             return
 
         glPushMatrix()
@@ -1322,24 +1363,29 @@ class OpenGLRenderer(BaseRenderer):
         glBegin(GL_POLYGON)
 
         step = 6.283185307179586 / num_segments
-        [glVertex2f(radius * m.cos(i * step), radius * m.sin(i * step)) for i in range(num_segments)]
+        [
+            glVertex2f(radius * m.cos(i * step), radius * m.sin(i * step))
+            for i in range(num_segments)
+        ]
 
         glEnd()
         glPopMatrix()
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
-            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+            self._draw_debug_bounds(
+                center_vec2, (radius * 2, radius * 2), centered=True
+            )
 
     def draw_line_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            thickness: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        thickness: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a circle outline
@@ -1359,8 +1405,9 @@ class OpenGLRenderer(BaseRenderer):
             thickness = pv.global_vars.translate_scale(thickness)
 
         outer: float = radius + thickness
-        if offscreen_check and self._check_out_of_screen((center_vec2.x - outer, center_vec2.y - outer),
-                                                         (outer * 2, outer * 2)):
+        if offscreen_check and self._check_out_of_screen(
+            (center_vec2.x - outer, center_vec2.y - outer), (outer * 2, outer * 2)
+        ):
             return
 
         glPushMatrix()
@@ -1382,19 +1429,21 @@ class OpenGLRenderer(BaseRenderer):
         glPopMatrix()
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
-            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+            self._draw_debug_bounds(
+                center_vec2, (radius * 2, radius * 2), centered=True
+            )
 
     def draw_partial_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            angle_start: coord_t,
-            angle_end: coord_t,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            convert_global=True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        angle_start: coord_t,
+        angle_end: coord_t,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        convert_global=True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a partial circle with fill
@@ -1415,11 +1464,14 @@ class OpenGLRenderer(BaseRenderer):
             center_vec2 = pv.global_vars.translate_screen_coord(center_vec2)
             radius = pv.global_vars.translate_scale(radius)
 
-        if offscreen_check and self._check_out_of_screen((center_vec2.x - radius, center_vec2.y - radius),
-                                                         (radius * 2, radius * 2)):
+        if offscreen_check and self._check_out_of_screen(
+            (center_vec2.x - radius, center_vec2.y - radius), (radius * 2, radius * 2)
+        ):
             return
 
-        angle_delta: float = normalize_angle(angle_end_vec2.angle) - normalize_angle(angle_start_vec2.angle)
+        angle_delta: float = normalize_angle(angle_end_vec2.angle) - normalize_angle(
+            angle_start_vec2.angle
+        )
 
         glPushMatrix()
         glTranslate(center_vec2.x, center_vec2.y, 0.0)
@@ -1432,28 +1484,35 @@ class OpenGLRenderer(BaseRenderer):
         start_ang = angle_start_vec2.angle
         step = angle_delta / num_segments
 
-        [glVertex2f(radius * m.cos(start_ang + i * step), radius * m.sin(start_ang + i * step)) for i in
-         range(num_segments + 1)]
+        [
+            glVertex2f(
+                radius * m.cos(start_ang + i * step),
+                radius * m.sin(start_ang + i * step),
+            )
+            for i in range(num_segments + 1)
+        ]
 
         glEnd()
         glPopMatrix()
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
-            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+            self._draw_debug_bounds(
+                center_vec2, (radius * 2, radius * 2), centered=True
+            )
 
     @cum_timer.time_this
     def draw_dashed_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            draw_len: int = 1,
-            gap_len: int = 1,
-            thickness: int = 1,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        draw_len: int = 1,
+        gap_len: int = 1,
+        thickness: int = 1,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a dashed circle line with point_num_segments segments
@@ -1477,8 +1536,7 @@ class OpenGLRenderer(BaseRenderer):
         outer: float = radius + thickness
 
         if offscreen_check and self._check_out_of_screen(
-                (center_vec2.x - outer, center_vec2.y - outer),
-                (outer * 2, outer * 2)
+            (center_vec2.x - outer, center_vec2.y - outer), (outer * 2, outer * 2)
         ):
             return
 
@@ -1520,22 +1578,24 @@ class OpenGLRenderer(BaseRenderer):
         glPopMatrix()
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
-            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+            self._draw_debug_bounds(
+                center_vec2, (radius * 2, radius * 2), centered=True
+            )
 
     def draw_partial_dashed_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            angle_start: coord_t,
-            angle_end: coord_t,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            draw_len: int = 1,
-            gap_len: int = 1,
-            thickness: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        angle_start: coord_t,
+        angle_end: coord_t,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        draw_len: int = 1,
+        gap_len: int = 1,
+        thickness: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a partial dashed circle line with point_num_segments segments
@@ -1563,8 +1623,7 @@ class OpenGLRenderer(BaseRenderer):
         outer = radius + thickness
 
         if offscreen_check and self._check_out_of_screen(
-                (center_vec2.x - outer, center_vec2.y - outer),
-                (outer * 2, outer * 2)
+            (center_vec2.x - outer, center_vec2.y - outer), (outer * 2, outer * 2)
         ):
             return
 
@@ -1619,20 +1678,22 @@ class OpenGLRenderer(BaseRenderer):
         glPopMatrix()
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
-            self._draw_debug_bounds(center_vec2, (radius * 2, radius * 2), centered=True)
+            self._draw_debug_bounds(
+                center_vec2, (radius * 2, radius * 2), centered=True
+            )
 
     # endregion
 
     # region Lines
     def draw_line(
-            self,
-            start: coord_t,
-            end: coord_t,
-            color: Color | tColor,
-            *,
-            global_position: bool = True,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        end: coord_t,
+        color: Color | tColor,
+        *,
+        global_position: bool = True,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a simple line
@@ -1651,7 +1712,9 @@ class OpenGLRenderer(BaseRenderer):
             end_vec2 = pv.global_vars.translate_screen_coord(end_vec2)
 
         # only draw if on screen
-        if offscreen_check and self._check_out_of_screen(start_vec2, end_vec2 - start_vec2):
+        if offscreen_check and self._check_out_of_screen(
+            start_vec2, end_vec2 - start_vec2
+        ):
             return
 
         if global_position:
@@ -1671,15 +1734,15 @@ class OpenGLRenderer(BaseRenderer):
             self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
 
     def draw_thick_line(
-            self,
-            start: coord_t,
-            end: coord_t,
-            color: Color | tColor,
-            *,
-            thickness: float = 1.0,
-            global_position: bool = True,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        end: coord_t,
+        color: Color | tColor,
+        *,
+        thickness: float = 1.0,
+        global_position: bool = True,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a line with thickness
@@ -1737,14 +1800,14 @@ class OpenGLRenderer(BaseRenderer):
             self._draw_debug_bounds(start_vec2, end_vec2 - start_vec2)
 
     def draw_lines(
-            self,
-            points: Sequence[coord_t],
-            color: Color | Sequence[Color],
-            *,
-            thickness: float = 1.0,
-            global_position: bool = True,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        points: Sequence[coord_t],
+        color: Color | Sequence[Color],
+        *,
+        thickness: float = 1.0,
+        global_position: bool = True,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a simple line
@@ -1768,7 +1831,7 @@ class OpenGLRenderer(BaseRenderer):
 
         if offscreen_check:
             # check if all points are oob
-            if self._check_out_of_screen(_points[0], (_points[0]-_points[1])):
+            if self._check_out_of_screen(_points[0], (_points[0] - _points[1])):
                 for point in _points:
                     if not self._check_out_of_screen(point, (1, 1)):
                         break
@@ -1799,7 +1862,7 @@ class OpenGLRenderer(BaseRenderer):
             if i == 0:
                 direction = (_points[0] - _points[1]).normalize()
 
-            elif i == n_points-1:
+            elif i == n_points - 1:
                 direction = (_points[-2] - _points[-1]).normalize()
 
             else:
@@ -1825,20 +1888,20 @@ class OpenGLRenderer(BaseRenderer):
 
     # region Texts and surfaces
     def draw_dynamic_text(
-            self,
-            pos: coord_t,
-            text: str,
-            *,
-            color: Color | tColor = (255, 255, 255, 255),
-            bg_color: Color | tColor = (0, 0, 0, 0),
-            centered: bool = False,
-            font_size: int = 64,
-            font_family: str = "arial",
-            bold: bool = False,
-            italic: bool = False,
-            text_id: DynamicTextID | None = None,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        pos: coord_t,
+        text: str,
+        *,
+        color: Color | tColor = (255, 255, 255, 255),
+        bg_color: Color | tColor = (0, 0, 0, 0),
+        centered: bool = False,
+        font_size: int = 64,
+        font_family: str = "arial",
+        bold: bool = False,
+        italic: bool = False,
+        text_id: DynamicTextID | None = None,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> DynamicTextID:
         """
         Draw a text to the given position
@@ -1871,7 +1934,9 @@ class OpenGLRenderer(BaseRenderer):
         font_key = (font_family, font_size, bold, italic)
 
         if font_key not in self.__dynamic_text_fonts:
-            self.__dynamic_text_fonts[font_key] = GLFont(font_family, font_size, bold, italic)
+            self.__dynamic_text_fonts[font_key] = GLFont(
+                font_family, font_size, bold, italic
+            )
 
         font = self.__dynamic_text_fonts[font_key]
 
@@ -1881,11 +1946,18 @@ class OpenGLRenderer(BaseRenderer):
             pos.x -= text_width / 2
             pos.y -= text_height / 2
 
-        if offscreen_check and self._check_out_of_screen((pos.x, pos.y), (text_width, text_height)):
+        if offscreen_check and self._check_out_of_screen(
+            (pos.x, pos.y), (text_width, text_height)
+        ):
             return -1
 
         if bg_color.a255 > 0:
-            self.draw_rect(pos.xy, (text_width, text_height), bg_color, convert_global=convert_global)
+            self.draw_rect(
+                pos.xy,
+                (text_width, text_height),
+                bg_color,
+                convert_global=convert_global,
+            )
 
         glPushMatrix()
         font.draw(text, pos.x, pos.y, scale, color.rgba255)
@@ -1897,15 +1969,15 @@ class OpenGLRenderer(BaseRenderer):
         return -1
 
     def generate_static_text(
-            self,
-            text: str,
-            color: Color | tColor,
-            bg_color: Color | tColor | None = None,
-            *,
-            font_size: int = 64,
-            font_family: str = "arial",
-            bold: bool = False,
-            italic: bool = False
+        self,
+        text: str,
+        color: Color | tColor,
+        bg_color: Color | tColor | None = None,
+        *,
+        font_size: int = 64,
+        font_family: str = "arial",
+        bold: bool = False,
+        italic: bool = False,
     ) -> StaticTextID:
         """
         Generate a static text
@@ -1918,15 +1990,8 @@ class OpenGLRenderer(BaseRenderer):
         :param italic: Whether the text is italic
         :return: StaticTextID integer
         """
-        surface = self.get_font(
-            font_size,
-            font_family,
-            bold,
-            italic
-        ).render(
-            text,
-            True,
-            convert_color(color, Color).rgba255
+        surface = self.get_font(font_size, font_family, bold, italic).render(
+            text, True, convert_color(color, Color).rgba255
         )
         w, h = surface.get_size()
 
@@ -1941,21 +2006,23 @@ class OpenGLRenderer(BaseRenderer):
         glBindTexture(GL_TEXTURE_2D, tex_id)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, text_data
+        )
 
         self.__static_text_id_counter += 1
 
         return current_id
 
     def draw_static_text(
-            self,
-            pos: coord_t,
-            text_id: StaticTextID,
-            *,
-            centered: bool = False,
-            scale: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        pos: coord_t,
+        text_id: StaticTextID,
+        *,
+        centered: bool = False,
+        scale: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a surface

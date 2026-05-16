@@ -25,8 +25,7 @@ from .._bullets import AerodynamicEntity
 class BaseMissile(AerodynamicEntity):
     """aerodynamic entity with thrust"""
 
-    __slots__ = (
-    )
+    __slots__ = ()
 
     # region ClassVars
     _CIDs = MissileCIDs.base
@@ -40,27 +39,25 @@ class BaseMissile(AerodynamicEntity):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            *,
-            initial_facing: float | EllipsisType = ...,
-            rudder_size: float | EllipsisType = ...,
-            rudder_max_angle: float | EllipsisType = ...,
-            fuel_mass: float | EllipsisType = ...,
-            base_mass: float | EllipsisType = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            **kwargs,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        *,
+        initial_facing: float | EllipsisType = ...,
+        rudder_size: float | EllipsisType = ...,
+        rudder_max_angle: float | EllipsisType = ...,
+        fuel_mass: float | EllipsisType = ...,
+        base_mass: float | EllipsisType = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        **kwargs,
     ) -> None:
         size: Vec2 | list | tuple = self._default_size
 
         if isinstance(self._default_size, (list, tuple)):
-            size: Vec2 = Vec2().from_polar(
-                self._default_size[0], self._default_size[1]
-            )
+            size: Vec2 = Vec2().from_polar(self._default_size[0], self._default_size[1])
 
         size: Vec2
 
@@ -86,7 +83,7 @@ class BaseMissile(AerodynamicEntity):
 
         else:
             self._sound = self._default_sound_effect()
-            self._sound.volume = .5
+            self._sound.volume = 0.5
 
         if self._DEBUG:
             self._dbe = DebugPolygonEntity(runtime_buffer, fill_color=(255, 0, 0, 20))
@@ -108,9 +105,7 @@ class BaseMissile(AerodynamicEntity):
 
     @property
     def alpha(self) -> float:
-        return normalize_angle_neg(
-            self.velocity.angle - self.facing.angle
-        )
+        return normalize_angle_neg(self.velocity.angle - self.facing.angle)
 
     # endregion
 

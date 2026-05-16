@@ -1,8 +1,22 @@
 from ._utility_classes import BetterDict, SimpleLock, WDTimer
-from ._utility_functions import is_parent, classname, \
-    coord_t, lidar_sphere, convert_color, color_t, calculate_launch_angle_all_directions
+from ._utility_functions import (
+    is_parent,
+    classname,
+    coord_t,
+    lidar_sphere,
+    convert_color,
+    color_t,
+    calculate_launch_angle_all_directions,
+)
 from ._calculations import calculate_launch_angle_iterative, rk4_update
-from ._cvectors import Vec2, normalize_angle, normalize_angle_neg, clamp_angle, max_angle, min_angle
+from ._cvectors import (
+    Vec2,
+    normalize_angle,
+    normalize_angle_neg,
+    clamp_angle,
+    max_angle,
+    min_angle,
+)
 from ._ccolor import Color, fade, c_255_to_1
 from ._constants import *  # noqa: F403
 from ._tuplemath import TupleMath

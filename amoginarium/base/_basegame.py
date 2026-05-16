@@ -7,6 +7,7 @@ Defines the core game
 Author:
 Nilusink
 """
+
 import subprocess
 from time import perf_counter, strftime, time, perf_counter_ns
 from multiprocessing import Process
@@ -42,6 +43,7 @@ from ._startmenu import StartMenu
 
 class BoundFunction[**A, R]:
     """a function with pre-determined arguments"""
+
     func: tp.Callable[A, R]
     args: A.args
     kwargs: A.kwargs
@@ -83,18 +85,16 @@ class BaseGame:
         return new
 
     def __init__(
-            self,
-            debug: bool = False,
-            show_targets: bool = False,
-            time_multiplier: float = 1
+        self,
+        debug: bool = False,
+        show_targets: bool = False,
+        time_multiplier: float = 1,
     ) -> None:
         self._game_start = perf_counter()
         ic.configureOutput(
             prefix="",
             outputFunction=lambda s, **kwargs: print_with_prefix(
-                s,
-                prefix=self.time_since_start(),
-                **kwargs
+                s, prefix=self.time_since_start(), **kwargs
             ),
         )
 
@@ -124,8 +124,8 @@ class BaseGame:
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start,
                 "time_multiplier": time_multiplier,
-                "run_name": self._git_branch
-            }
+                "run_name": self._git_branch,
+            },
         )
         self._logic_process.start()
 
@@ -181,10 +181,9 @@ class BaseGame:
             setattr(
                 self,
                 func,
-                run_with_debug(
-                    on_fail=lambda *_: self.end(),
-                    reraise_errors=False
-                )(getattr(self, func))
+                run_with_debug(on_fail=lambda *_: self.end(), reraise_errors=False)(
+                    getattr(self, func)
+                ),
             )
 
         self._backgrounds = [
@@ -203,7 +202,7 @@ class BaseGame:
             ParallaxBackground(
                 "bg4",
                 parallax_multiplier=1.6,
-            )
+            ),
         ]
 
         self._update_loading_screen(2, "loading sounds")
@@ -234,20 +233,12 @@ class BaseGame:
         # draw loading bar
         bar_start = (100, 900)
         bar_size = (1720, 30)
+        renderer.draw_rect(bar_start, bar_size, (0.3, 0.3, 0.3), convert_global=False)
         renderer.draw_rect(
             bar_start,
-            bar_size,
-            (.3, .3, .3),
-            convert_global=False
-        )
-        renderer.draw_rect(
-            bar_start,
-            (
-                bar_size[0] * (step / self._loading_screen_steps),
-                bar_size[1]
-            ),
+            (bar_size[0] * (step / self._loading_screen_steps), bar_size[1]),
             (1, 1, 1),
-            convert_global=False
+            convert_global=False,
         )
 
         renderer.display_draw_frame()
@@ -335,14 +326,15 @@ class BaseGame:
         load a map from a JSON file
         """
         # issue load command
-        pv.COQ.put(ProcessCommand(
-            type=ProcessCommandType.load_map,
-            kwargs={"map_path": map_path}
-        ))
+        pv.COQ.put(
+            ProcessCommand(
+                type=ProcessCommandType.load_map, kwargs={"map_path": map_path}
+            )
+        )
 
         # stuff
         data = json.load(open(map_path, "r"))
-        renderer.display_set_title(f"amoginarium - {data["name"]}")
+        renderer.display_set_title(f"amoginarium - {data['name']}")
 
         # set background
         if 0 <= data["background"] - 1 <= len(self._backgrounds):
@@ -400,6 +392,7 @@ class BaseGame:
         @dataclass(frozen=True)
         class UIVisiblity:
             """this is a docstring"""
+
             start_menu: bool
             pause_menu: bool
             settings: bool
@@ -437,7 +430,7 @@ class BaseGame:
 
             if not isinstance(self._background, EllipsisType):
                 self._background.reset_scroll()
-    
+
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.reset))
             SE_MANAGER.reset()
 
@@ -504,17 +497,11 @@ class BaseGame:
                 self.global_vars.get_pixel_per_meter() * (1 + e.y / 30)
             )
 
-        start_menu = StartMenu(
-            start_game, open_settings, self.__clean_end
-        )
+        start_menu = StartMenu(start_game, open_settings, self.__clean_end)
 
-        pause_menu = PauseMenu(
-            start_game, reset_game, open_settings, back_to_menu
-        )
+        pause_menu = PauseMenu(start_game, reset_game, open_settings, back_to_menu)
 
-        settings = SettingsMenu(
-            close_settings
-        )
+        settings = SettingsMenu(close_settings)
 
         start_menu.show()
 
@@ -532,8 +519,8 @@ class BaseGame:
             pv.WRITE_LOCK.release()
 
             if pg.key.get_pressed()[pg.K_DOWN]:
-                pv.global_vars.set_time_mult(.01)
-                t_mult = .01
+                pv.global_vars.set_time_mult(0.01)
+                t_mult = 0.01
 
             else:
                 pv.global_vars.set_time_mult(self.time_multiplier)
@@ -570,10 +557,7 @@ class BaseGame:
 
                     if cid in GRAPHICS_SPAWNABLES:
                         sync_id = item.kwargs.pop("id")
-                        GRAPHICS_SPAWNABLES[cid](
-                            sync_id=sync_id,
-                            **item.kwargs
-                        )
+                        GRAPHICS_SPAWNABLES[cid](sync_id=sync_id, **item.kwargs)
 
                     else:
                         print_ic_style(
@@ -587,10 +571,7 @@ class BaseGame:
 
                     if cid in ISLANDS:
                         sync_id = item.kwargs.pop("id")
-                        ISLANDS[cid](
-                            sync_id=sync_id,
-                            **item.kwargs
-                        )
+                        ISLANDS[cid](sync_id=sync_id, **item.kwargs)
 
             renderer.clear_display()
 
@@ -672,7 +653,7 @@ class BaseGame:
 
             elif active_scene == "Game":
                 # only update fps every 200ms (for readability)
-                if now - last_fps_print > .2:
+                if now - last_fps_print > 0.2:
                     self._pygame_fps = int(1 / delta)
                     last_fps_print = now
 
@@ -699,9 +680,7 @@ class BaseGame:
             # update global vars
             self.global_vars.update()
 
-            self._total_loop_times.append(
-                (now - self._game_start, delta)
-            )
+            self._total_loop_times.append((now - self._game_start, delta))
             self._pygame_loop_times.append(
                 (now - self._game_start, perf_counter() - now)
             )
@@ -727,7 +706,7 @@ class BaseGame:
 
         if not isinstance(self._background, EllipsisType):
             self._background.draw(0)
-    
+
         SyncedEntities.update_from_buffer()
         Drawn_0.gl_draw(0)
         Drawn_1.gl_draw(0)
@@ -755,9 +734,7 @@ class BaseGame:
         stop everything
         """
         # send end to process
-        pv.COQ.put(ProcessCommand(
-            type=ProcessCommandType.quit
-        ))
+        pv.COQ.put(ProcessCommand(type=ProcessCommandType.quit))
 
         # check if end has already been called
         if self._ended:
@@ -782,17 +759,16 @@ class BaseGame:
         with open(
             f"debug/graphic_debug_{self._git_branch}_{int(self._game_start)}.json", "w"
         ) as out:
-            json.dump({
-                "pygame": self._pygame_loop_times,
-                "total": self._total_loop_times
-            }, out)
+            json.dump(
+                {"pygame": self._pygame_loop_times, "total": self._total_loop_times},
+                out,
+            )
 
-        with open("graphic_debug.json",
-                  "w") as out:
-            json.dump({
-                "pygame": self._pygame_loop_times,
-                "total": self._total_loop_times
-            }, out)
+        with open("graphic_debug.json", "w") as out:
+            json.dump(
+                {"pygame": self._pygame_loop_times, "total": self._total_loop_times},
+                out,
+            )
 
         ic("done writing debug data")
 

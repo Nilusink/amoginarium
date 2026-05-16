@@ -36,12 +36,12 @@ class VisualSensor(LogicGameEntity):
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            position: Vec2,
-            coalition: Coalitions,
-            detection_group: DetectionGroup = None,
-            **sensor_args,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        position: Vec2,
+        coalition: Coalitions,
+        detection_group: DetectionGroup = None,
+        **sensor_args,
     ) -> None:
         self.coalition = coalition
         self._hp = self._max_hp
@@ -50,7 +50,7 @@ class VisualSensor(LogicGameEntity):
             runtime_buffer=runtime_buffer,
             position=position,
             size=Vec2().from_cartesian(*self._size),
-            centered=True
+            centered=True,
         )
         self._create_collision()
         # self.add(CollisionDestroyed)
@@ -69,7 +69,12 @@ class VisualSensor(LogicGameEntity):
         pv.COQ.put(
             ProcessCommand(
                 type=BaseCommandType.spawn_dummy,
-                kwargs={"id": self.id, "cid": DummyCIDs.base_bullet.value, "spawn_time": 0, "position": position.xy},
+                kwargs={
+                    "id": self.id,
+                    "cid": DummyCIDs.base_bullet.value,
+                    "spawn_time": 0,
+                    "position": position.xy,
+                },
             )
         )
 

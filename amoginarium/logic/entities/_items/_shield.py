@@ -41,9 +41,7 @@ class Shield(Something):
     _sound: RandomizedEffect
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent_position_offset: Vec2
+        self, runtime_buffer: Array[base_entity_t], parent_position_offset: Vec2
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -53,7 +51,7 @@ class Shield(Something):
         self._create_collision()
         # self._generate_collision_mask()
 
-        self._sound = MetalPings().set_volume(.4, .5)
+        self._sound = MetalPings().set_volume(0.4, 0.5)
         self._in_use = False
         # self._update_mask()
 
@@ -89,9 +87,18 @@ class Shield(Something):
             # self.remove(CollisionDestroyed)
 
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
-        super().remove_parent(at_pos - Vec2().from_cartesian(self._image_size[0] * .45, self._image_size[1] * .7), velocity)
+        super().remove_parent(
+            at_pos
+            - Vec2().from_cartesian(
+                self._image_size[0] * 0.45, self._image_size[1] * 0.7
+            ),
+            velocity,
+        )
 
-    def _collision_start(self, events: list[CollisionEvent[tp.Union["Island", "Bullet", "Grenade", "Player"]]]) -> None:
+    def _collision_start(
+        self,
+        events: list[CollisionEvent[tp.Union["Island", "Bullet", "Grenade", "Player"]]],
+    ) -> None:
         """
         Reaction to collision
         :param events: Event details
@@ -99,19 +106,22 @@ class Shield(Something):
         group_id: CollisionType.GroupID = events[0].group_id
         if group_id == GameCollisions.collision_group_islands:
             self.position = events[0].position - self.size / 2
-        elif group_id in (GameCollisions.collision_group_bullets, GameCollisions.collision_group_grenades):
+        elif group_id in (
+            GameCollisions.collision_group_bullets,
+            GameCollisions.collision_group_grenades,
+        ):
             for event in events:
                 self.hit_by_bullet(event.other_entity.damage, event.other_entity)
 
     def _update_collision(
-            self,
-            *,
-            position: Vec2 | EllipsisType = ...,
-            size: Vec2 | EllipsisType = ...,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...,
-            shift_history: bool = True
+        self,
+        *,
+        position: Vec2 | EllipsisType = ...,
+        size: Vec2 | EllipsisType = ...,
+        rotation: float = 0.0,
+        positions: list[Vec2] | None = None,
+        centered: bool | EllipsisType = ...,
+        shift_history: bool = True,
     ) -> None:
         super()._update_collision(
             position=self.position + self.size / 2,
@@ -119,13 +129,15 @@ class Shield(Something):
             rotation=self.facing.angle,
             positions=positions,
             centered=True,
-            shift_history=shift_history
+            shift_history=shift_history,
         )
 
     def item_pickupable(self) -> bool:
         return self._parent is None and super().item_pickupable()
 
-    def hit_by_bullet(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
+    def hit_by_bullet(
+        self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...
+    ) -> None:
         if not self._in_use:
             return
 
@@ -151,7 +163,7 @@ class Shield(Something):
                 self.position = self.parent.position + d - self.size / 2
 
             else:
-                self.size.xy = self._image_size[0] * .1, self._image_size[1] * .3
+                self.size.xy = self._image_size[0] * 0.1, self._image_size[1] * 0.3
                 self.position = self.parent.position
 
             self.velocity *= 0

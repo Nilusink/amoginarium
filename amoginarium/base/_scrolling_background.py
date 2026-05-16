@@ -19,15 +19,14 @@ from amoginarium import pv
 
 class ScrollingBackground:
     """scrolling background"""
+
     def __init__(
-            self,
-            background_file: str,
-            screen_width: int,
-            screen_height: int,
+        self,
+        background_file: str,
+        screen_width: int,
+        screen_height: int,
     ) -> None:
-        self._texture_id, self._texture_size = textures.get_texture(
-            background_file
-        )
+        self._texture_id, self._texture_size = textures.get_texture(background_file)
         ic(self._texture_id)
         self._position = 0
 
@@ -45,23 +44,21 @@ class ScrollingBackground:
         draw background to surface
         """
         renderer.draw_textured_quad(
-            self._texture_id,
-            (0, 0),
-            self._texture_size,
-            layer=-1
+            self._texture_id, (0, 0), self._texture_size, layer=-1
         )
 
 
 class ParallaxBackground:
     """background using scrolling and parallax effect"""
+
     _animation_counter: float
 
     def __init__(
-            self,
-            background_scope: str,
-            parallax_multiplier: float = 1.2,
-            animated_layers: list[int] | EllipsisType = ...,
-            load: bool = False
+        self,
+        background_scope: str,
+        parallax_multiplier: float = 1.2,
+        animated_layers: list[int] | EllipsisType = ...,
+        load: bool = False,
     ) -> None:
         self._scope = background_scope
         self._multiplier = parallax_multiplier
@@ -83,9 +80,7 @@ class ParallaxBackground:
         load all textures
         """
         screen_size = pv.global_vars.get_screen_size()
-        for texture, _ in textures.get_all_from_scope(
-                self._scope, size=screen_size
-        ):
+        for texture, _ in textures.get_all_from_scope(self._scope, size=screen_size):
             self._textures.append(texture)
             self._sizes.append(screen_size.xy)
 
@@ -162,12 +157,12 @@ class ParallaxBackground:
                 (image_pos, 0),
                 self._sizes[layer],
                 convert_global=False,
-                layer=-layer
+                layer=-layer,
             )
             renderer.draw_textured_quad(
                 self._textures[layer],
                 (image_pos + screen_size.x, 0),
                 self._sizes[layer],
                 convert_global=False,
-                layer=-layer
+                layer=-layer,
             )

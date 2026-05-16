@@ -5,4 +5,5 @@ Project: amoginarium
 Created: 27.04.2026
 Authors: LukasKrah
 """
+
 from ._definitions import *

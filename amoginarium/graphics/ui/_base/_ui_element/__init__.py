@@ -7,7 +7,12 @@ Authors: LukasKrah
 """
 
 from ._ui_element_values import (
-    UIElementValueNamesEnum, UIElementValueTypesEnum, UIElementValueFloat, UIElementValueFloatOneAbsolute,
-    UIElementValueVec2, UIElementValueVec2OneAbsolute, UIElementData
+    UIElementValueNamesEnum,
+    UIElementValueTypesEnum,
+    UIElementValueFloat,
+    UIElementValueFloatOneAbsolute,
+    UIElementValueVec2,
+    UIElementValueVec2OneAbsolute,
+    UIElementData,
 )
 from ._ui_element import UIElement
