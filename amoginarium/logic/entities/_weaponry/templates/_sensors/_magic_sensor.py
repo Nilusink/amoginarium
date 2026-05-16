@@ -10,8 +10,7 @@ import typing as tp
 
 from amoginarium.shared import SensorCIDs
 
-from ...._base import LogicGameEntity
-from ...._base import Players, Bullets
+from ...._base import Bullets, LogicGameEntity, Players
 from ._base_sensor import BaseSensor
 
 
@@ -22,11 +21,11 @@ class MagicSensor(BaseSensor):
 
     ``param0`` detection range
     """
+
     _CID = SensorCIDs.sensor_magic
 
     def get_targets(
-            self,
-            from_entities: tp.Iterable[LogicGameEntity] = None
+        self, from_entities: tp.Iterable[LogicGameEntity] = None
     ) -> list[LogicGameEntity]:
         if from_entities is None:
             targets = [p for p in Players.entities() if p.alive]
@@ -35,10 +34,13 @@ class MagicSensor(BaseSensor):
         else:
             targets = from_entities
 
-        self._targets = [e[1] for e in Players.entities_in_circle(
-            targets,
-            self.parent.position + self._position_offset,
-            self.detection_range,
-        )]
+        self._targets = [
+            e[1]
+            for e in Players.entities_in_circle(
+                targets,
+                self.parent.position + self._position_offset,
+                self.detection_range,
+            )
+        ]
 
         return self._targets.copy()

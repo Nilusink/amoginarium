@@ -7,11 +7,13 @@ uses the keyboard as a controller
 Author:
 Nilusink
 """
-from dataclasses import dataclass
-from contextlib  import suppress
-import pygame as pg
-# from icecream import ic
 
+from contextlib import suppress
+from dataclasses import dataclass
+
+import pygame as pg
+
+# from icecream import ic
 from ._base_controller import Controller
 
 
@@ -53,14 +55,10 @@ class ControllerKeybmap:
 
 
 class GameController(Controller):
-    x_dead_zone: float = .1
-    y_dead_zone: float = .1
+    x_dead_zone: float = 0.1
+    y_dead_zone: float = 0.1
 
-    def __init__(
-            self,
-            id: str,
-            pygame_joystick: pg.joystick.JoystickType
-    ) -> None:
+    def __init__(self, id: str, pygame_joystick: pg.joystick.JoystickType) -> None:
         if not pygame_joystick.get_init():
             pygame_joystick.init()
 
@@ -76,17 +74,20 @@ class GameController(Controller):
 
     def btn(self, n_button: int) -> bool:
         """
-        get a joystick button
+        Get a joystick button
         """
         return self._joystick.get_button(n_button)
 
     def update(self, delta):
         # read controls
-        self._keys.shoot = self.btn(ControllerKeybmap.r2) or self.btn(ControllerKeybmap.r1)
+        self._keys.shoot = self.btn(ControllerKeybmap.r2) or self.btn(
+            ControllerKeybmap.r1
+        )
         with suppress(pg.error):
-            self._keys.shoot = self._keys.shoot or self._joystick.get_axis(
-                ControllerKeybmap.r2_axis
-            ) > 0
+            self._keys.shoot = (
+                self._keys.shoot
+                or self._joystick.get_axis(ControllerKeybmap.r2_axis) > 0
+            )
 
         self._keys.reload = self.btn(ControllerKeybmap.b)
         self._keys.jump = self.btn(ControllerKeybmap.a)
@@ -94,39 +95,32 @@ class GameController(Controller):
 
         # set joystick position
         self._keys.joy_x = self.joy_curve(
-            self._joystick.get_axis(0),
-            x_deadzone=self.x_dead_zone
+            self._joystick.get_axis(0), x_deadzone=self.x_dead_zone
         )
         self._keys.joy_y = self.joy_curve(
-            self._joystick.get_axis(1),
-            x_deadzone=self.y_dead_zone
+            self._joystick.get_axis(1), x_deadzone=self.y_dead_zone
         )
 
         self._keys.joy_btn = self.btn(ControllerKeybmap.ljoy)
 
-    def rumble(
-            self,
-            low_frequency,
-            high_frequency,
-            duration
-    ) -> None:
+    def rumble(self, low_frequency, high_frequency, duration) -> None:
         self._joystick.rumble(low_frequency, high_frequency, duration)
 
     def feedback_collide(self) -> None:
         """
-        when the player hits a wall
+        When the player hits a wall
         """
         self.rumble(1000, 2000, 150)
 
     def feedback_shoot(self) -> None:
         """
-        controller input on shoot
+        Controller input on shoot
         """
         self.rumble(2000, 3000, 100)
 
     def feedback_hit(self) -> None:
         """
-        controller input on hit
+        Controller input on hit
         """
         self.rumble(300, 2200, 300)
 

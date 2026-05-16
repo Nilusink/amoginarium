@@ -1,8 +1,8 @@
 #! venv/bin/python
 # from amoginarium.shared.controllers import KeyboardController
-from amoginarium.base import BaseGame
-
 import sys
+
+from amoginarium.base import BaseGame
 
 sys.setrecursionlimit(10000)
 

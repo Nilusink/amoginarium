@@ -10,20 +10,27 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import convert_color, coord_t, Color, color_t
+from amoginarium.shared.utility import Color, color_t, convert_color, coord_t
 
-from ...render_bindings import renderer
 from ...logic_dummies import PresetGraphicsSoundEffect
-from .._animations import anim_color_values_t, anim_float_values_t, AnimatedColorValues, AnimatedFloatValues, \
-    peaked_s_curve, anim_vec2_values_t, AnimatedVec2Values
-from .._types import Anchor, Positions
+from ...render_bindings import renderer
+from .._animations import (
+    AnimatedColorValues,
+    AnimatedFloatValues,
+    AnimatedVec2Values,
+    anim_color_values_t,
+    anim_float_values_t,
+    anim_vec2_values_t,
+    peaked_s_curve,
+)
 from .._base import UIEntity
+from .._types import Anchor, Positions
 from ._ui_rectangle import UIRectangle
 
 
 # region SoundsEffects
 class _OnHoverButtonSound(PresetGraphicsSoundEffect):
-    volume = .5
+    volume = 0.5
     _sound_name = "button_hover"
 
 
@@ -33,7 +40,7 @@ class _ButtonClickSound(PresetGraphicsSoundEffect):
 
 
 class _OnButtonLeaveSound(PresetGraphicsSoundEffect):
-    volume = .5
+    volume = 0.5
     _sound_name = "button_leave"
 
 
@@ -43,13 +50,14 @@ ButtonClickSound = _ButtonClickSound()
 
 # endregion
 
-ANIM_TIME: float = .2
+ANIM_TIME: float = 0.2
 
 
 class UIButton(UIRectangle):
     """
     a button, what did you expect?
     """
+
     __command: tp.Callable[[], None] | None
 
     __text_id: renderer.DynamicTextID | renderer.StaticTextID | None
@@ -63,50 +71,54 @@ class UIButton(UIRectangle):
     __italic: bool
 
     def __init__(
-            self,
-            position: coord_t,
-            size: coord_t,
-            text: str,
-            *,
-            parent: UIEntity | None = None,
-
-            command: tp.Callable[[], None] | None = None,
-            text_color: color_t = (0, 0, 0),
-            font_size: int = 64,
-            font_family: str = "Arial",
-            bold: bool = False,
-            italic: bool = False,
-            dynamic_text: bool = False,
-
-            bg_color: anim_color_values_t = AnimatedColorValues((56, 254, 255), (140, 255, 255),
-                                                                extend_duration=ANIM_TIME),
-            border_color: anim_color_values_t = AnimatedColorValues((33, 133, 163), (255, 255, 255),
-                                                                    extend_duration=ANIM_TIME),
-            border_width: anim_float_values_t = AnimatedFloatValues(5, 10,
-                                                                    extend_duration=ANIM_TIME),
-            radius: anim_float_values_t = AnimatedFloatValues(10, 30,
-                                                              extend_duration=ANIM_TIME),
-            size_extend: anim_vec2_values_t = AnimatedVec2Values(0, 10,
-                                                                 extend_duration=ANIM_TIME,
-                                                                 extend_curve=peaked_s_curve,
-                                                                 collapse_curve=lambda a: a),
-
-            placement_anchor: Anchor = Anchor.CENTER,
-            absolute_values: bool = False,
-            positon_is_relative_to_parent: bool = True,
-            size_is_relative_to_parent: bool = True,
-            parent_reference_position: Positions = Positions.TOP_LEFT,
-            collision_buffer: int = 1,
-            use_collision_mask: bool = True,
-            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_enter_sound: PresetGraphicsSoundEffect | None = OnHoverButtonSound,
-            on_leave_sound: PresetGraphicsSoundEffect | None = OnButtonLeaveSound,
-            on_click_sound: PresetGraphicsSoundEffect | None = ButtonClickSound
+        self,
+        position: coord_t,
+        size: coord_t,
+        text: str,
+        *,
+        parent: UIEntity | None = None,
+        command: tp.Callable[[], None] | None = None,
+        text_color: color_t = (0, 0, 0),
+        font_size: int = 64,
+        font_family: str = "Arial",
+        bold: bool = False,
+        italic: bool = False,
+        dynamic_text: bool = False,
+        bg_color: anim_color_values_t = AnimatedColorValues(
+            (56, 254, 255), (140, 255, 255), extend_duration=ANIM_TIME
+        ),
+        border_color: anim_color_values_t = AnimatedColorValues(
+            (33, 133, 163), (255, 255, 255), extend_duration=ANIM_TIME
+        ),
+        border_width: anim_float_values_t = AnimatedFloatValues(
+            5, 10, extend_duration=ANIM_TIME
+        ),
+        radius: anim_float_values_t = AnimatedFloatValues(
+            10, 30, extend_duration=ANIM_TIME
+        ),
+        size_extend: anim_vec2_values_t = AnimatedVec2Values(
+            0,
+            10,
+            extend_duration=ANIM_TIME,
+            extend_curve=peaked_s_curve,
+            collapse_curve=lambda a: a,
+        ),
+        placement_anchor: Anchor = Anchor.CENTER,
+        absolute_values: bool = False,
+        positon_is_relative_to_parent: bool = True,
+        size_is_relative_to_parent: bool = True,
+        parent_reference_position: Positions = Positions.TOP_LEFT,
+        collision_buffer: int = 1,
+        use_collision_mask: bool = True,
+        on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_enter_sound: PresetGraphicsSoundEffect | None = OnHoverButtonSound,
+        on_leave_sound: PresetGraphicsSoundEffect | None = OnButtonLeaveSound,
+        on_click_sound: PresetGraphicsSoundEffect | None = ButtonClickSound,
     ) -> None:
         """
-        a button, what did you expect?
+        A button, what did you expect?
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
         :param parent: Optional parent UI-Entity
@@ -200,14 +212,14 @@ class UIButton(UIRectangle):
                 bold=self.__bold,
                 italic=self.__italic,
                 text_id=self.__text_id,
-                convert_global=False
+                convert_global=False,
             )
         else:
             renderer.draw_static_text(
                 self.center.absolute_global,
                 self.__text_id,
                 centered=True,
-                convert_global=False
+                convert_global=False,
             )
 
     # region Properties
@@ -246,7 +258,9 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError("Cannot change text. dynamic_text is set to false")
+            raise NotImplementedError(
+                "Cannot change text. dynamic_text is set to false"
+            )
         self.__text = value
 
     @property
@@ -261,7 +275,9 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError("Cannot change text. dynamic_text is set to false")
+            raise NotImplementedError(
+                "Cannot change text. dynamic_text is set to false"
+            )
         self.__text_color = convert_color(value, Color)
 
     @property
@@ -276,7 +292,9 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError("Cannot change text. dynamic_text is set to false")
+            raise NotImplementedError(
+                "Cannot change text. dynamic_text is set to false"
+            )
         self.__font_size = value
 
     @property
@@ -291,7 +309,9 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError("Cannot change text. dynamic_text is set to false")
+            raise NotImplementedError(
+                "Cannot change text. dynamic_text is set to false"
+            )
         self.__font_family = value
 
     @property
@@ -306,7 +326,9 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError("Cannot change text. dynamic_text is set to false")
+            raise NotImplementedError(
+                "Cannot change text. dynamic_text is set to false"
+            )
         self.__bold = value
 
     @property
@@ -321,7 +343,9 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError("Cannot change text. dynamic_text is set to false")
+            raise NotImplementedError(
+                "Cannot change text. dynamic_text is set to false"
+            )
         self.__italic = value
 
     # endregion

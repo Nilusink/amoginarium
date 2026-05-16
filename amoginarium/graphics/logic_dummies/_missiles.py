@@ -8,12 +8,13 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from time import perf_counter
+import math
 import typing as tp
+from time import perf_counter
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2
 from amoginarium.shared import MissileCIDs
+from amoginarium.shared.utility import Vec2
 
 from ..entities import Animation
 from ..textures import textures
@@ -24,6 +25,7 @@ class MultiStageMissileDummy(BulletDummy):
     """
     ``flags[14]``: thrust active
     """
+
     _CID = MissileCIDs.multi_stage
 
     _animation_scope: str = "flame"
@@ -65,7 +67,7 @@ class MultiStageMissileDummy(BulletDummy):
             0.05,
             position_reference=self._flame_position,
             rotation_reference=self,
-            rotation_offset=-3.14159265 / 2,
+            rotation_offset=-math.pi / 2,
             loop=True,
             layer=2,
         )
@@ -79,15 +81,11 @@ class MultiStageMissileDummy(BulletDummy):
                 int((perf_counter() / cls._image_animation_delay) % n_textures)
             ]
 
-        else:
-            return super().bullet_image()
+        return super().bullet_image()
 
     def _flame_position(self) -> Vec2:
-        """flame position for animation"""
-        return self.pos + Vec2().from_polar(
-            self.facing.angle,
-            self.size.x / 5
-        )
+        """Flame position for animation"""
+        return self.pos + Vec2().from_polar(self.facing.angle, self.size.x / 5)
 
     def _kill(self) -> None:
         self._animation.stop()
@@ -117,10 +115,9 @@ class GuidedMultiStageMissileDummy(MultiStageMissileDummy):
     _animation_size: tuple[int, int] = (32, 32)
 
     def _flame_position(self) -> Vec2:
-        """flame position for animation"""
+        """Flame position for animation"""
         return self.pos + Vec2().from_polar(
-            self.facing.angle,
-            self.size.x / 2.1 + self._animation_size[0] / 2
+            self.facing.angle, self.size.x / 2.1 + self._animation_size[0] / 2
         )
 
 

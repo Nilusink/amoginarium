@@ -12,37 +12,38 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import GraphicsCIDs, BaseCommandType, ProcessCommand, Coalitions
-from amoginarium.shared.utility import Vec2
 from amoginarium import pv
+from amoginarium.shared import BaseCommandType, Coalitions, GraphicsCIDs, ProcessCommand
+from amoginarium.shared.utility import Vec2
 
 from .._base import LogicGameEntity, Updated
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
-    from amoginarium.shared import base_entity_t, CIDType
+    from amoginarium.shared import CIDType, base_entity_t
 
 
 class TextEntity(LogicGameEntity):
     """
     Static text logic game entity
     """
+
     __slots__ = ()
     _CID: tp.ClassVar[CIDType] = GraphicsCIDs.static_text
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            position: Vec2,
-            text: str,
-            color: tuple[int, int, int] | tuple[int, int, int, int] = (0, 0, 0),
-            bg_color: tuple[int, int, int] | tuple[int, int, int, int] = (0, 0, 0, 0),
-            size: int = 64,
-            family: str = "arial",
-            bold: bool = False,
-            italic: bool = False,
-            **kwargs: tp.Any
+        self,
+        runtime_buffer: Array[base_entity_t],
+        position: Vec2,
+        text: str,
+        color: tuple[int, int, int] | tuple[int, int, int, int] = (0, 0, 0),
+        bg_color: tuple[int, int, int] | tuple[int, int, int, int] = (0, 0, 0, 0),
+        size: int = 64,
+        family: str = "arial",
+        bold: bool = False,
+        italic: bool = False,
+        **kwargs: tp.Any,
     ) -> None:
         """
         Create a static text entity
@@ -72,7 +73,4 @@ class TextEntity(LogicGameEntity):
         kwargs["bold"] = bold
         kwargs["italic"] = italic
 
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs=kwargs
-        ))
+        pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs))

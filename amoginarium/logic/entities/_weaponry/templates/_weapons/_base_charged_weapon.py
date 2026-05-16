@@ -8,16 +8,16 @@ Created: 14.03.2026
 Authors: Nilusink, LukasKrah
 """
 
-from types import EllipsisType
 from ctypes import Array
-import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect, SmallExplosion
 from amoginarium.shared import base_entity_t
+from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect
 from amoginarium.shared.utility import Vec2
 
-from ._base_weapon import BaseWeapon
 from .._bullets import Bullet
+from ._base_weapon import BaseWeapon
+
 
 class BaseChargedWeapon(BaseWeapon):
     """
@@ -27,24 +27,24 @@ class BaseChargedWeapon(BaseWeapon):
     """
 
     def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            reload_time: float,
-            recoil_time: float,
-            weapon_recoil_factor: tuple[float, float],
-            charge_time: float,
-            mag_size: int,
-            inaccuracy: float,
-            bullet_speed: tuple[float, float],  # range
-            parent_position_offset: Vec2 | tuple[float, float],
-            bullet_damage: tuple[float, float] = (1, 1),
-            bullet_explosion_radius: tuple[float, float] = (-1, -1),
-            bullet_explosion_damage: tuple[float, float] = (0, 0),
-            drop_casings: bool = False,
-            sound_effect: ContinuousSoundEffect | PresetEffect | EllipsisType = ...,
-            bullet_type: tp.Type[Bullet] = Bullet,
-            **bullet_kwargs
+        self,
+        parent,
+        runtime_buffer: Array[base_entity_t],
+        reload_time: float,
+        recoil_time: float,
+        weapon_recoil_factor: tuple[float, float],
+        charge_time: float,
+        mag_size: int,
+        inaccuracy: float,
+        bullet_speed: tuple[float, float],  # range
+        parent_position_offset: Vec2 | tuple[float, float],
+        bullet_damage: tuple[float, float] = (1, 1),
+        bullet_explosion_radius: tuple[float, float] = (-1, -1),
+        bullet_explosion_damage: tuple[float, float] = (0, 0),
+        drop_casings: bool = False,
+        sound_effect: ContinuousSoundEffect | PresetEffect | EllipsisType = ...,
+        bullet_type: type[Bullet] = Bullet,
+        **bullet_kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -58,7 +58,7 @@ class BaseChargedWeapon(BaseWeapon):
             drop_casings=drop_casings,
             sound_effect=sound_effect,
             bullet_type=bullet_type,
-            **bullet_kwargs
+            **bullet_kwargs,
         )
         self._bullet_speed_range = bullet_speed
         self._bullet_damage_range = bullet_damage
@@ -104,7 +104,7 @@ class BaseChargedWeapon(BaseWeapon):
     @property
     def charged(self) -> float:
         """
-        amount charged
+        Amount charged
         """
         return self._charged
 
@@ -117,41 +117,41 @@ class BaseChargedWeapon(BaseWeapon):
     @property
     def recoil_factor(self) -> float:
         return self._recoil_range[0] + (
-                self._recoil_range[1] - self._recoil_range[0]
+            self._recoil_range[1] - self._recoil_range[0]
         ) * self._recoil_curve(self._charged)
 
     @property
     def bullet_explosion_radius(self) -> float:
         return self._explosion_radius_range[0] + (
-                self._explosion_radius_range[1] - self._explosion_radius_range[0]
+            self._explosion_radius_range[1] - self._explosion_radius_range[0]
         ) * self._recoil_curve(self._charged)
 
     @property
     def bullet_explosion_damage(self) -> float:
         return self._explosion_damage_range[0] + (
-                self._explosion_damage_range[1] - self._explosion_damage_range[0]
+            self._explosion_damage_range[1] - self._explosion_damage_range[0]
         ) * self._recoil_curve(self._charged)
 
     @property
     def bullet_damage(self) -> float:
         return self._bullet_damage_range[0] + (
-                self._bullet_damage_range[1] - self._bullet_damage_range[0]
+            self._bullet_damage_range[1] - self._bullet_damage_range[0]
         ) * self._recoil_curve(self._charged)
 
     def _update_kwargs(self) -> None:
-        """update weapon params"""
+        """Update weapon params"""
         self._bullet_kwargs["explosion_radius"] = self.bullet_explosion_radius
         self._bullet_kwargs["explosion_damage"] = self.bullet_explosion_damage
 
     def charge(self) -> None:
         """
-        start charging
+        Start charging
         """
         self._charging = True
 
     def stop(self) -> None:
         """
-        stop charging (reset to 0)
+        Stop charging (reset to 0)
         """
         self._charging = False
         self._charged = 0
@@ -168,10 +168,10 @@ class BaseChargedWeapon(BaseWeapon):
         self._runtime_buffer[self.id].param2 = self._charged
 
     def shoot(
-            self,
-            direction: Vec2,
-            bullet_tof: float | EllipsisType = ...,
-            target_pos: Vec2 | EllipsisType = ...
+        self,
+        direction: Vec2,
+        bullet_tof: float | EllipsisType = ...,
+        target_pos: Vec2 | EllipsisType = ...,
     ) -> bool:
         self._update_kwargs()
         res = super().shoot(direction, bullet_tof, target_pos)

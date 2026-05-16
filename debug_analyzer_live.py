@@ -7,17 +7,19 @@ interactive native legends, dynamic space reclamation, and batch toggles.
 
 Author: Nilusink (Rewritten for Live GUI with CustomTkinter)
 """
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import customtkinter as ctk
-import tkinter as tk
-from tkinter import messagebox
+
+import datetime
+import glob
 import json
 import os
-import glob
-import typing as tp
-import datetime
 import threading
+import tkinter as tk
+import typing as tp
+from tkinter import messagebox
+
+import customtkinter as ctk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 os.makedirs("debug", exist_ok=True)
 
@@ -32,9 +34,12 @@ DEFAULT_SETTINGS = {
     "sash_position": 300,
     "sidebar_collapsed": False,
     "batch_rules": {
-        "pygame": "-", "logic": "-", "entities": "-",
-        "top": "-", "bot": "-"
-    }
+        "pygame": "-",
+        "logic": "-",
+        "entities": "-",
+        "top": "-",
+        "bot": "-",
+    },
 }
 
 
@@ -72,15 +77,34 @@ class GraphWidget(ctk.CTkFrame):
 
     A custom frame containing a Matplotlib figure, toolbar, and interactive controls.
     """
+
     __slots__ = (
-        "graph_id", "app", "is_minimized", "is_fullscreen", "header",
-        "title_label", "btn_full", "btn_min", "content_frame",
-        "loading_label", "fig", "ax", "ax_twin", "canvas", "toolbar", "linedict"
+        "graph_id",
+        "app",
+        "is_minimized",
+        "is_fullscreen",
+        "header",
+        "title_label",
+        "btn_full",
+        "btn_min",
+        "content_frame",
+        "loading_label",
+        "fig",
+        "ax",
+        "ax_twin",
+        "canvas",
+        "toolbar",
+        "linedict",
     )
 
-    def __init__(self, master: tk.Widget, graph_id: str, title_text: str,
-                 app: 'DebugAnalyzerApp',
-                 **kwargs: tp.Any) -> None:
+    def __init__(
+        self,
+        master: tk.Widget,
+        graph_id: str,
+        title_text: str,
+        app: "DebugAnalyzerApp",
+        **kwargs: tp.Any,
+    ) -> None:
         """
         Initializes the graph widget.
 
@@ -100,20 +124,31 @@ class GraphWidget(ctk.CTkFrame):
         self.header.pack(fill="x", padx=1, pady=(1, 0))
         self.header.pack_propagate(False)
 
-        self.title_label = ctk.CTkLabel(self.header, text=title_text,
-                                        font=("Arial", 12, "bold"))
+        self.title_label = ctk.CTkLabel(
+            self.header, text=title_text, font=("Arial", 12, "bold")
+        )
         self.title_label.pack(side="left", padx=10)
 
-        self.btn_full = ctk.CTkButton(self.header, text="⛶", width=30, height=25,
-                                      command=self.toggle_fullscreen,
-                                      fg_color="transparent",
-                                      hover_color=("gray75", "gray40"))
+        self.btn_full = ctk.CTkButton(
+            self.header,
+            text="⛶",
+            width=30,
+            height=25,
+            command=self.toggle_fullscreen,
+            fg_color="transparent",
+            hover_color=("gray75", "gray40"),
+        )
         self.btn_full.pack(side=tk.RIGHT, padx=2)
 
-        self.btn_min = ctk.CTkButton(self.header, text="▼", width=30, height=25,
-                                     command=self.toggle_minimize,
-                                     fg_color="transparent",
-                                     hover_color=("gray75", "gray40"))
+        self.btn_min = ctk.CTkButton(
+            self.header,
+            text="▼",
+            width=30,
+            height=25,
+            command=self.toggle_minimize,
+            fg_color="transparent",
+            hover_color=("gray75", "gray40"),
+        )
         self.btn_min.pack(side=tk.RIGHT, padx=2)
 
         # 2. Content Frame (Native tk.Frame prevents CTk resize jittering)
@@ -121,9 +156,12 @@ class GraphWidget(ctk.CTkFrame):
         self.content_frame.pack(fill="both", expand=True, padx=1, pady=1)
 
         # Loading Overlay
-        self.loading_label = ctk.CTkLabel(self, text="Processing Data...",
-                                          font=("Arial", 16, "bold"),
-                                          fg_color=app.graph_bg)
+        self.loading_label = ctk.CTkLabel(
+            self,
+            text="Processing Data...",
+            font=("Arial", 16, "bold"),
+            fg_color=app.graph_bg,
+        )
 
         # 3. Matplotlib Layout
         self.fig = plt.Figure(figsize=(4, 3), dpi=100, layout="constrained")
@@ -131,8 +169,9 @@ class GraphWidget(ctk.CTkFrame):
         self.ax_twin = None
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.content_frame)
-        self.toolbar = NavigationToolbar2Tk(self.canvas, self.content_frame,
-                                            pack_toolbar=False)
+        self.toolbar = NavigationToolbar2Tk(
+            self.canvas, self.content_frame, pack_toolbar=False
+        )
 
         # Kill the white focus border natively present on tk Canvas
         self.canvas.get_tk_widget().configure(highlightthickness=0, bd=0)
@@ -142,13 +181,14 @@ class GraphWidget(ctk.CTkFrame):
         self.toolbar.pack(side="bottom", fill="x")
 
         self.linedict = {}
-        self.fig.canvas.mpl_connect('pick_event', self.on_pick)  # noqa
+        self.fig.canvas.mpl_connect("pick_event", self.on_pick)
 
     def toggle_minimize(self) -> None:
         """
         Toggles the minimized state of the graph to reclaim vertical space.
         """
-        if self.is_fullscreen: return
+        if self.is_fullscreen:
+            return
 
         # Break the rule since the user manually clicked it
         is_top = self.graph_id.startswith("merged_r") or self.graph_id.startswith("r_")
@@ -164,29 +204,38 @@ class GraphWidget(ctk.CTkFrame):
         """
         self.is_fullscreen = not self.is_fullscreen
         self.btn_full.configure(text="🗗" if self.is_fullscreen else "⛶")
-        self.app.root.after(10, lambda: self.app.set_fullscreen_widget(
-            self if self.is_fullscreen else None))
+        self.app.root.after(
+            10,
+            lambda: self.app.set_fullscreen_widget(
+                self if self.is_fullscreen else None
+            ),
+        )
 
     def setup_interactive_legend(self) -> None:
         """
         Sets up pickers on legend elements to allow toggling line visibility.
         """
-        target_ax = self.ax_twin if self.ax_twin and self.ax_twin.get_legend() else self.ax
+        target_ax = (
+            self.ax_twin if self.ax_twin and self.ax_twin.get_legend() else self.ax
+        )
         leg = target_ax.get_legend()
-        if not leg: return
+        if not leg:
+            return
 
         orig_handles = {}
         h1, l1 = self.ax.get_legend_handles_labels()
-        for h, l in zip(h1, l1): orig_handles[l] = h
+        for h, l in zip(h1, l1):
+            orig_handles[l] = h
 
         if self.ax_twin:
             h2, l2 = self.ax_twin.get_legend_handles_labels()
-            for h, l in zip(h2, l2): orig_handles[l] = h
+            for h, l in zip(h2, l2):
+                orig_handles[l] = h
 
         self.linedict = {}
         for leg_obj, text_obj in zip(leg.legend_handles, leg.texts):
             leg_obj.set_picker(True)  # type: ignore
-            leg_obj.set_pickradius(5)  # noqa
+            leg_obj.set_pickradius(5)
             text_obj.set_picker(True)  # type: ignore
 
             label = text_obj.get_text()
@@ -203,7 +252,8 @@ class GraphWidget(ctk.CTkFrame):
         """
         artist = event.artist
         origline = self.linedict.get(artist)
-        if origline is None: return
+        if origline is None:
+            return
 
         vis = not origline.get_visible()
         origline.set_visible(vis)
@@ -216,7 +266,8 @@ class GraphWidget(ctk.CTkFrame):
                 break
 
         for k in ["pygame", "logic", "entities"]:
-            if k in lbl_text: self.app.override_rule(k)
+            if k in lbl_text:
+                self.app.override_rule(k)
 
         self.sync_legend_alphas()
         self.rescale_y_axes()
@@ -226,9 +277,12 @@ class GraphWidget(ctk.CTkFrame):
         """
         Synchronizes the alpha transparency of legend text with line visibility.
         """
-        target_ax = self.ax_twin if self.ax_twin and self.ax_twin.get_legend() else self.ax
+        target_ax = (
+            self.ax_twin if self.ax_twin and self.ax_twin.get_legend() else self.ax
+        )
         leg = target_ax.get_legend()
-        if not leg: return
+        if not leg:
+            return
 
         for l_h, l_t in zip(leg.legend_handles, leg.texts):
             origline = self.linedict.get(l_h)
@@ -242,9 +296,10 @@ class GraphWidget(ctk.CTkFrame):
         Dynamically rescales the Y-axis based on currently visible lines.
         """
         for axis in [self.ax, self.ax_twin]:
-            if not axis: continue
+            if not axis:
+                continue
 
-            y_min, y_max = float('inf'), float('-inf')
+            y_min, y_max = float("inf"), float("-inf")
             has_visible = False
 
             # Check standard plots
@@ -271,12 +326,14 @@ class GraphWidget(ctk.CTkFrame):
 
             if has_visible:
                 margin = (y_max - y_min) * 0.05
-                if margin == 0: margin = abs(y_max) * 0.05 if y_max != 0 else 0.1
+                if margin == 0:
+                    margin = abs(y_max) * 0.05 if y_max != 0 else 0.1
                 bottom = y_min - margin
                 top = y_max + margin
 
                 # Visual anchor: Keep bottom pinned to 0 if data naturally starts there
-                if y_min >= 0 and bottom < 0: bottom = 0
+                if y_min >= 0 and bottom < 0:
+                    bottom = 0
                 axis.set_ylim(bottom, top)
 
 
@@ -287,15 +344,43 @@ class DebugAnalyzerApp:
 
     Main application class for the live debug analyzer dashboard.
     """
+
     __slots__ = (
-        "root", "settings", "debug_dir", "known_files", "selected_identifiers",
-        "data_cache", "graphs", "rule_segs", "fullscreen_widget", "_is_plotting",
-        "_is_saving_settings", "_is_updating_list", "pw_bg", "left_bg",
-        "listbox_bg", "listbox_fg", "listbox_sel", "graph_bg", "header_bg",
-        "mpl_bg", "mpl_fg", "collapsed_sidebar", "btn_expand", "paned_window",
-        "left_frame", "theme_seg", "comp_mode_seg", "auto_switch_var",
-        "auto_mode_seg", "max_files_entry", "listbox_frame", "listbox",
-        "graphs_container", "placeholder_frame", "btn_collapse"
+        "root",
+        "settings",
+        "debug_dir",
+        "known_files",
+        "selected_identifiers",
+        "data_cache",
+        "graphs",
+        "rule_segs",
+        "fullscreen_widget",
+        "_is_plotting",
+        "_is_saving_settings",
+        "_is_updating_list",
+        "pw_bg",
+        "left_bg",
+        "listbox_bg",
+        "listbox_fg",
+        "listbox_sel",
+        "graph_bg",
+        "header_bg",
+        "mpl_bg",
+        "mpl_fg",
+        "collapsed_sidebar",
+        "btn_expand",
+        "paned_window",
+        "left_frame",
+        "theme_seg",
+        "comp_mode_seg",
+        "auto_switch_var",
+        "auto_mode_seg",
+        "max_files_entry",
+        "listbox_frame",
+        "listbox",
+        "graphs_container",
+        "placeholder_frame",
+        "btn_collapse",
     )
 
     def __init__(self, root: ctk.CTk) -> None:
@@ -359,7 +444,7 @@ class DebugAnalyzerApp:
         ctk.set_default_color_theme("blue")
 
         if self.settings["theme"] == "Dark":
-            plt.style.use('dark_background')
+            plt.style.use("dark_background")
             self.pw_bg = "#0a0a0a"
             self.left_bg = "#171717"
             self.listbox_bg = "#171717"
@@ -370,7 +455,7 @@ class DebugAnalyzerApp:
             self.mpl_bg = "#1e1e1e"
             self.mpl_fg = "#ffffff"
         else:
-            plt.style.use('default')
+            plt.style.use("default")
             self.pw_bg = "#d0d0d0"
             self.left_bg = "#f3f3f3"
             self.listbox_bg = "#f3f3f3"
@@ -382,24 +467,32 @@ class DebugAnalyzerApp:
             self.mpl_fg = "#000000"
 
         self.root.configure(bg=self.pw_bg)
-        plt.rcParams.update({
-            "figure.facecolor": self.mpl_bg, "axes.facecolor": self.mpl_bg,
-            "axes.edgecolor": self.mpl_fg, "axes.labelcolor": self.mpl_fg,
-            "text.color": self.mpl_fg, "xtick.color": self.mpl_fg,
-            "ytick.color": self.mpl_fg,
-        })
+        plt.rcParams.update(
+            {
+                "figure.facecolor": self.mpl_bg,
+                "axes.facecolor": self.mpl_bg,
+                "axes.edgecolor": self.mpl_fg,
+                "axes.labelcolor": self.mpl_fg,
+                "text.color": self.mpl_fg,
+                "xtick.color": self.mpl_fg,
+                "ytick.color": self.mpl_fg,
+            }
+        )
 
     def sync_theme_to_widgets(self) -> None:
         """
         Updates existing widget colors to match the current theme.
         """
-        if hasattr(self, 'paned_window'):
+        if hasattr(self, "paned_window"):
             self.paned_window.configure(bg=self.pw_bg)
             self.left_frame.configure(fg_color=self.left_bg)
-            self.listbox.configure(bg=self.listbox_bg, fg=self.listbox_fg,
-                                   selectbackground=self.listbox_sel)
+            self.listbox.configure(
+                bg=self.listbox_bg,
+                fg=self.listbox_fg,
+                selectbackground=self.listbox_sel,
+            )
 
-        if hasattr(self, 'collapsed_sidebar'):
+        if hasattr(self, "collapsed_sidebar"):
             self.collapsed_sidebar.configure(fg_color=self.left_bg)
             self.btn_expand.configure(text_color=self.mpl_fg)
             self.btn_collapse.configure(text_color=self.mpl_fg)
@@ -424,12 +517,14 @@ class DebugAnalyzerApp:
         gw.fig.patch.set_facecolor(self.mpl_bg)
         gw.ax.set_facecolor(self.mpl_bg)
         gw.ax.tick_params(colors=self.mpl_fg)
-        for spine in gw.ax.spines.values(): spine.set_color(self.mpl_fg)
+        for spine in gw.ax.spines.values():
+            spine.set_color(self.mpl_fg)
 
         if gw.ax_twin:
             gw.ax_twin.set_facecolor(self.mpl_bg)
             gw.ax_twin.tick_params(colors=self.mpl_fg)
-            for spine in gw.ax_twin.spines.values(): spine.set_color(self.mpl_fg)
+            for spine in gw.ax_twin.spines.values():
+                spine.set_color(self.mpl_fg)
 
         # Clean native unicode toolbar styling
         toolbar_bg = self.header_bg if self.settings["theme"] == "Dark" else "#e5e5e5"
@@ -443,11 +538,15 @@ class DebugAnalyzerApp:
                     if isinstance(child, tk.Label):
                         child.config(foreground=self.mpl_fg)
                     elif isinstance(child, tk.Button):
-                        child.config(activebackground=self.pw_bg, bd=0,
-                                     foreground=self.mpl_fg)
+                        child.config(
+                            activebackground=self.pw_bg, bd=0, foreground=self.mpl_fg
+                        )
                         if icon_idx < len(icons):
-                            child.config(image="", text=icons[icon_idx],
-                                         font=("Segoe UI Symbol", 14))
+                            child.config(
+                                image="",
+                                text=icons[icon_idx],
+                                font=("Segoe UI Symbol", 14),
+                            )
                             icon_idx += 1
                 except (Exception,):
                     pass
@@ -458,75 +557,101 @@ class DebugAnalyzerApp:
         """
         Constructs the initial UI layout.
         """
-        self.collapsed_sidebar = ctk.CTkFrame(self.root, width=40, corner_radius=0,
-                                              fg_color=self.left_bg)
-        self.btn_expand = ctk.CTkButton(self.collapsed_sidebar, text="▶", width=30,
-                                        height=30,
-                                        command=self.expand_sidebar,
-                                        fg_color="transparent")
+        self.collapsed_sidebar = ctk.CTkFrame(
+            self.root, width=40, corner_radius=0, fg_color=self.left_bg
+        )
+        self.btn_expand = ctk.CTkButton(
+            self.collapsed_sidebar,
+            text="▶",
+            width=30,
+            height=30,
+            command=self.expand_sidebar,
+            fg_color="transparent",
+        )
         self.btn_expand.pack(pady=15, padx=5)
 
-        self.paned_window = tk.PanedWindow(self.root, bd=0, sashwidth=6, bg=self.pw_bg,
-                                           opaqueresize=False)
+        self.paned_window = tk.PanedWindow(
+            self.root, bd=0, sashwidth=6, bg=self.pw_bg, opaqueresize=False
+        )
         self.paned_window.pack(side="left", fill="both", expand=True)
-        self.paned_window.bind("<ButtonRelease-1>",
-                               lambda e: self.root.after(50, self.save_current_settings))
+        self.paned_window.bind(
+            "<ButtonRelease-1>",
+            lambda e: self.root.after(50, self.save_current_settings),
+        )
 
         # --- LEFT PANEL ---
-        self.left_frame = ctk.CTkFrame(self.paned_window, corner_radius=0,
-                                       fg_color=self.left_bg)
+        self.left_frame = ctk.CTkFrame(
+            self.paned_window, corner_radius=0, fg_color=self.left_bg
+        )
 
         left_header = ctk.CTkFrame(self.left_frame, fg_color="transparent")
         left_header.pack(fill="x", padx=15, pady=(15, 5))
         ctk.CTkLabel(left_header, text="Debug Runs", font=("Arial", 16, "bold")).pack(
-            side="left")
-        self.btn_collapse = ctk.CTkButton(left_header, text="◀", width=30, height=25,
-                                          command=self.collapse_sidebar,
-                                          fg_color="transparent")
+            side="left"
+        )
+        self.btn_collapse = ctk.CTkButton(
+            left_header,
+            text="◀",
+            width=30,
+            height=25,
+            command=self.collapse_sidebar,
+            fg_color="transparent",
+        )
         self.btn_collapse.pack(side=tk.RIGHT)
 
         # 1. Settings Area (Packed Bottom)
-        settings_frame = ctk.CTkFrame(self.left_frame, corner_radius=8,
-                                      fg_color=("gray85", "#222222"))
+        settings_frame = ctk.CTkFrame(
+            self.left_frame, corner_radius=8, fg_color=("gray85", "#222222")
+        )
         settings_frame.pack(fill="x", side="bottom", padx=10, pady=(10, 15))
 
         inner_settings = ctk.CTkFrame(settings_frame, fg_color="transparent")
         inner_settings.pack(fill="x", padx=15, pady=15)
 
         ctk.CTkLabel(inner_settings, text="Settings", font=("Arial", 14, "bold")).pack(
-            anchor="w", pady=(0, 10))
+            anchor="w", pady=(0, 10)
+        )
 
-        self.theme_seg = ctk.CTkSegmentedButton(inner_settings,
-                                                values=["Dark", "Light"],
-                                                command=self.on_theme_change)
+        self.theme_seg = ctk.CTkSegmentedButton(
+            inner_settings, values=["Dark", "Light"], command=self.on_theme_change
+        )
         self.theme_seg.set(self.settings["theme"])
         self.theme_seg.pack(fill="x", pady=5)
 
         ctk.CTkLabel(inner_settings, text="Comparison Mode:", font=("Arial", 11)).pack(
-            anchor="w", pady=(5, 0))
-        self.comp_mode_seg = ctk.CTkSegmentedButton(inner_settings,
-                                                    values=["Merged", "Side-by-Side"],
-                                                    command=self.on_mode_change)
+            anchor="w", pady=(5, 0)
+        )
+        self.comp_mode_seg = ctk.CTkSegmentedButton(
+            inner_settings,
+            values=["Merged", "Side-by-Side"],
+            command=self.on_mode_change,
+        )
         self.comp_mode_seg.set(self.settings["comparison_mode"])
         self.comp_mode_seg.pack(fill="x", pady=(0, 5))
 
         sw_frame = ctk.CTkFrame(inner_settings, fg_color="transparent")
         sw_frame.pack(fill="x", pady=5)
         self.auto_switch_var = tk.BooleanVar(value=self.settings["auto_switch_new"])
-        ctk.CTkSwitch(sw_frame, text="Auto switch to new:",
-                      variable=self.auto_switch_var,
-                      command=self.save_current_settings).pack(side="left")
+        ctk.CTkSwitch(
+            sw_frame,
+            text="Auto switch to new:",
+            variable=self.auto_switch_var,
+            command=self.save_current_settings,
+        ).pack(side="left")
 
-        self.auto_mode_seg = ctk.CTkSegmentedButton(inner_settings,
-                                                    values=["Oldest", "Newest", "Add"],
-                                                    command=self.on_strat_change)
+        self.auto_mode_seg = ctk.CTkSegmentedButton(
+            inner_settings,
+            values=["Oldest", "Newest", "Add"],
+            command=self.on_strat_change,
+        )
         self.auto_mode_seg.set(self.settings.get("auto_switch_mode", "Oldest"))
         self.auto_mode_seg.pack(fill="x", pady=(0, 5))
 
         max_files_frame = ctk.CTkFrame(inner_settings, fg_color="transparent")
         max_files_frame.pack(fill="x", pady=5)
-        ctk.CTkLabel(max_files_frame, text="Max files (-1=inf):",
-                     font=("Arial", 11)).pack(side="left")
+        ctk.CTkLabel(
+            max_files_frame, text="Max files (-1=inf):", font=("Arial", 11)
+        ).pack(side="left")
         self.max_files_entry = ctk.CTkEntry(max_files_frame, width=50, height=24)
         self.max_files_entry.insert(0, str(self.settings["max_files"]))
         self.max_files_entry.pack(side=tk.RIGHT)
@@ -534,22 +659,26 @@ class DebugAnalyzerApp:
         self.max_files_entry.bind("<FocusOut>", self.save_current_settings)
 
         # 2. Batch Rules Area (Packed Bottom above Settings)
-        batch_frame = ctk.CTkFrame(self.left_frame, corner_radius=8,
-                                   fg_color=("gray85", "#222222"))
+        batch_frame = ctk.CTkFrame(
+            self.left_frame, corner_radius=8, fg_color=("gray85", "#222222")
+        )
         batch_frame.pack(fill="x", side="bottom", padx=10, pady=(5, 10))
 
         ctk.CTkLabel(batch_frame, text="Batch Rules", font=("Arial", 12, "bold")).pack(
-            anchor="w", padx=10, pady=(5, 0))
+            anchor="w", padx=10, pady=(5, 0)
+        )
 
         def create_rule_row(parent, target, text):
             row = ctk.CTkFrame(parent, fg_color="transparent")
             row.pack(fill="x", padx=10, pady=2)
             ctk.CTkLabel(row, text=text, width=60, anchor="w", font=("Arial", 11)).pack(
-                side="left")
-            seg = ctk.CTkSegmentedButton(row, values=["Hide", "-", "Show"],
-                                         command=lambda v,
-                                                        t=target: self.on_rule_change(t,
-                                                                                      v))
+                side="left"
+            )
+            seg = ctk.CTkSegmentedButton(
+                row,
+                values=["Hide", "-", "Show"],
+                command=lambda v, t=target: self.on_rule_change(t, v),
+            )
             seg.set(self.settings["batch_rules"].get(target, "-"))
             seg.pack(side=tk.RIGHT, fill="x", expand=True, padx=(5, 0))
             self.rule_segs[target] = seg
@@ -560,28 +689,40 @@ class DebugAnalyzerApp:
 
         btn_row = ctk.CTkFrame(batch_frame, fg_color="transparent")
         btn_row.pack(fill="x", padx=10, pady=(2, 6))
-        ctk.CTkButton(btn_row, text="Hide All", height=24, fg_color="#553333",
-                      command=lambda: self.toggle_all_rules("Hide")).pack(side="left",
-                                                                          expand=True,
-                                                                          padx=2)
-        ctk.CTkButton(btn_row, text="Show All", height=24, fg_color="#3a7ebf",
-                      command=lambda: self.toggle_all_rules("Show")).pack(side=tk.RIGHT,
-                                                                          expand=True,
-                                                                          padx=2)
+        ctk.CTkButton(
+            btn_row,
+            text="Hide All",
+            height=24,
+            fg_color="#553333",
+            command=lambda: self.toggle_all_rules("Hide"),
+        ).pack(side="left", expand=True, padx=2)
+        ctk.CTkButton(
+            btn_row,
+            text="Show All",
+            height=24,
+            fg_color="#3a7ebf",
+            command=lambda: self.toggle_all_rules("Show"),
+        ).pack(side=tk.RIGHT, expand=True, padx=2)
 
         create_rule_row(batch_frame, "top", "Top Graph")
         create_rule_row(batch_frame, "bot", "Bot Graph")
 
         # 3. Listbox (Packed filling remaining space)
-        self.listbox_frame = ctk.CTkFrame(self.left_frame, corner_radius=0,
-                                          fg_color="transparent")
+        self.listbox_frame = ctk.CTkFrame(
+            self.left_frame, corner_radius=0, fg_color="transparent"
+        )
         self.listbox_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         list_scroll = ctk.CTkScrollbar(self.listbox_frame)
         list_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.listbox = tk.Listbox(
-            self.listbox_frame, selectmode=tk.EXTENDED, bd=0, highlightthickness=0,
-            font=("Consolas", 10), activestyle="none", exportselection=False
+            self.listbox_frame,
+            selectmode=tk.EXTENDED,
+            bd=0,
+            highlightthickness=0,
+            font=("Consolas", 10),
+            activestyle="none",
+            exportselection=False,
         )
         self.listbox.pack(side="left", fill="both", expand=True)
         list_scroll.configure(command=self.listbox.yview)
@@ -589,23 +730,28 @@ class DebugAnalyzerApp:
         self.listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
 
         # --- RIGHT PANEL ---
-        self.graphs_container = ctk.CTkFrame(self.paned_window, corner_radius=0,
-                                             fg_color="transparent")
+        self.graphs_container = ctk.CTkFrame(
+            self.paned_window, corner_radius=0, fg_color="transparent"
+        )
 
         if not self.settings.get("sidebar_collapsed", False):
             self.paned_window.add(self.left_frame, minsize=250)
         else:
-            self.collapsed_sidebar.pack(side="left", fill=tk.Y,
-                                        before=self.paned_window)
+            self.collapsed_sidebar.pack(
+                side="left", fill=tk.Y, before=self.paned_window
+            )
 
         self.paned_window.add(self.graphs_container, minsize=400)
 
-        self.placeholder_frame = ctk.CTkFrame(self.graphs_container,
-                                              fg_color="transparent")
-        ctk.CTkLabel(self.placeholder_frame, text="No runs selected or available.",
-                     font=("Arial", 20, "bold"),
-                     text_color=("gray60", "gray40")).place(relx=0.5, rely=0.5,
-                                                            anchor=tk.CENTER)
+        self.placeholder_frame = ctk.CTkFrame(
+            self.graphs_container, fg_color="transparent"
+        )
+        ctk.CTkLabel(
+            self.placeholder_frame,
+            text="No runs selected or available.",
+            font=("Arial", 20, "bold"),
+            text_color=("gray60", "gray40"),
+        ).place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
         self.apply_layout()
 
@@ -615,8 +761,9 @@ class DebugAnalyzerApp:
         """
         if not self.settings.get("sidebar_collapsed", False):
             try:
-                self.paned_window.sash_place(0, self.settings.get("sash_position", 300),
-                                             0)
+                self.paned_window.sash_place(
+                    0, self.settings.get("sash_position", 300), 0
+                )
             except tk.TclError:
                 pass
 
@@ -627,7 +774,8 @@ class DebugAnalyzerApp:
         self.settings["sidebar_collapsed"] = True
         try:
             sash_coords = self.paned_window.sash_coord(0)
-            if sash_coords: self.settings["sash_position"] = sash_coords[0]
+            if sash_coords:
+                self.settings["sash_position"] = sash_coords[0]
         except tk.TclError:
             pass
 
@@ -659,7 +807,8 @@ class DebugAnalyzerApp:
 
         :param event: Optional event from widget binding.
         """
-        if getattr(self, '_is_saving_settings', False): return
+        if getattr(self, "_is_saving_settings", False):
+            return
         self._is_saving_settings = True
 
         try:
@@ -670,10 +819,13 @@ class DebugAnalyzerApp:
         self.root.focus_set()
 
         if 0 <= max_f < len(self.known_files) and max_f != self.settings.get(
-                "max_files", -1):
+            "max_files", -1
+        ):
             num_to_delete = len(self.known_files) - max_f
-            if not messagebox.askyesno("Confirm Deletion",
-                                       f"Changing max files to {max_f} will delete the {num_to_delete} oldest run(s).\n\nDo you want to proceed?"):
+            if not messagebox.askyesno(
+                "Confirm Deletion",
+                f"Changing max files to {max_f} will delete the {num_to_delete} oldest run(s).\n\nDo you want to proceed?",
+            ):
                 self.max_files_entry.delete(0, tk.END)
                 self.max_files_entry.insert(0, str(self.settings.get("max_files", -1)))
                 self._is_saving_settings = False
@@ -685,14 +837,16 @@ class DebugAnalyzerApp:
         except tk.TclError:
             sash_pos = self.settings.get("sash_position", 300)
 
-        self.settings.update({
-            "auto_switch_new": self.auto_switch_var.get(),
-            "auto_switch_mode": self.auto_mode_seg.get(),
-            "max_files": max_f,
-            "comparison_mode": self.comp_mode_seg.get(),
-            "theme": self.theme_seg.get(),
-            "sash_position": sash_pos
-        })
+        self.settings.update(
+            {
+                "auto_switch_new": self.auto_switch_var.get(),
+                "auto_switch_mode": self.auto_mode_seg.get(),
+                "max_files": max_f,
+                "comparison_mode": self.comp_mode_seg.get(),
+                "theme": self.theme_seg.get(),
+                "sash_position": sash_pos,
+            }
+        )
         save_settings(self.settings)
         self.enforce_max_files()
 
@@ -730,19 +884,20 @@ class DebugAnalyzerApp:
         self.save_current_settings()
 
     def on_listbox_select(self, event=None):
-        if getattr(self, '_is_updating_list', False): return
+        if getattr(self, "_is_updating_list", False):
+            return
 
         indices = self.listbox.curselection()
         if not indices and self.known_files:
             if self.selected_identifiers:
                 self.sync_listbox_selection()
                 return
-            else:
-                self.listbox.selection_set(0)
-                indices = (0,)
+            self.listbox.selection_set(0)
+            indices = (0,)
 
-        self.selected_identifiers = [self.known_files[i][0] for i in indices if
-                                     i < len(self.known_files)]
+        self.selected_identifiers = [
+            self.known_files[i][0] for i in indices if i < len(self.known_files)
+        ]
         self.sync_listbox_selection()
         self.apply_layout()
         self.update_plot()
@@ -803,7 +958,8 @@ class DebugAnalyzerApp:
         """
         for gw in self.graphs.values():
             axes = [gw.ax]
-            if gw.ax_twin: axes.append(gw.ax_twin)
+            if gw.ax_twin:
+                axes.append(gw.ax_twin)
             needs_draw = False
 
             for axis in axes:
@@ -811,13 +967,14 @@ class DebugAnalyzerApp:
                 artists = axis.get_lines() + axis.collections
                 for artist in artists:
                     label = artist.get_label()
-                    if not label or label.startswith('_'): continue
+                    if not label or label.startswith("_"):
+                        continue
 
                     lbl_lower = label.lower()
                     for k in ["pygame", "logic", "entities"]:
                         rule = self.settings["batch_rules"].get(k, "-")
                         if k in lbl_lower and rule != "-":
-                            should_be_visible = (rule == "Show")
+                            should_be_visible = rule == "Show"
                             if artist.get_visible() != should_be_visible:
                                 artist.set_visible(should_be_visible)
                                 needs_draw = True
@@ -867,16 +1024,16 @@ class DebugAnalyzerApp:
             self.graphs_container.grid_rowconfigure(0, weight=1)
             self.graphs_container.grid_rowconfigure(1, weight=1)
             return
-        else:
-            self.placeholder_frame.grid_forget()
+        self.placeholder_frame.grid_forget()
 
         if self.fullscreen_widget:
             self.graphs_container.grid_columnconfigure(0, weight=1, uniform="colGroup")
             self.graphs_container.grid_rowconfigure(0, weight=1)
             self.graphs_container.grid_rowconfigure(1, weight=0)
             self.fullscreen_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
-            self.fullscreen_widget.content_frame.pack(fill="both", expand=True, padx=2,
-                                                      pady=2)
+            self.fullscreen_widget.content_frame.pack(
+                fill="both", expand=True, padx=2, pady=2
+            )
             return
 
         mode = self.settings["comparison_mode"]
@@ -899,15 +1056,16 @@ class DebugAnalyzerApp:
         rule_bot = self.settings["batch_rules"].get("bot", "-")
 
         for g_r, g_l, col_idx in active_widgets:
-            self.graphs_container.grid_columnconfigure(col_idx, weight=1,
-                                                       uniform="colGroup")
+            self.graphs_container.grid_columnconfigure(
+                col_idx, weight=1, uniform="colGroup"
+            )
 
             # Apply global rules
             if rule_top != "-":
-                g_r.is_minimized = (rule_top == "Hide")
+                g_r.is_minimized = rule_top == "Hide"
                 g_r.btn_min.configure(text="▶" if g_r.is_minimized else "▼")
             if rule_bot != "-":
-                g_l.is_minimized = (rule_bot == "Hide")
+                g_l.is_minimized = rule_bot == "Hide"
                 g_l.btn_min.configure(text="▶" if g_l.is_minimized else "▼")
 
             if g_r.is_minimized:
@@ -935,19 +1093,25 @@ class DebugAnalyzerApp:
         Deletes old debug files if the count exceeds max_files setting.
         """
         max_f = self.settings["max_files"]
-        if max_f < 0: return
+        if max_f < 0:
+            return
 
         if len(self.known_files) > max_f:
             files_to_remove = self.known_files[max_f:]
             for f in files_to_remove:
                 ident, _, _, g_path, l_path = f
-                if g_path and os.path.exists(g_path): os.remove(g_path)
-                if l_path and os.path.exists(l_path): os.remove(l_path)
+                if g_path and os.path.exists(g_path):
+                    os.remove(g_path)
+                if l_path and os.path.exists(l_path):
+                    os.remove(l_path)
                 self.data_cache.pop(ident, None)
 
             self.known_files = self.known_files[:max_f]
-            self.selected_identifiers = [i for i in self.selected_identifiers if
-                                         i in [k[0] for k in self.known_files]]
+            self.selected_identifiers = [
+                i
+                for i in self.selected_identifiers
+                if i in [k[0] for k in self.known_files]
+            ]
             self.refresh_file_list_ui()
 
     def poll_directory(self) -> None:
@@ -964,40 +1128,49 @@ class DebugAnalyzerApp:
                 is_graphic, is_logic = False, False
 
                 if filename.startswith("graphic_debug_") and filename.endswith(".json"):
-                    identifier = filename[len("graphic_debug_"):-5]
+                    identifier = filename[len("graphic_debug_") : -5]
                     is_graphic = True
                 elif filename.startswith("logic_debug_") and filename.endswith(".json"):
-                    identifier = filename[len("logic_debug_"):-5]
+                    identifier = filename[len("logic_debug_") : -5]
                     is_logic = True
                 else:
                     continue
 
                 if identifier not in grouped_files:
-                    grouped_files[identifier] = {'graphic': None, 'logic': None,
-                                                 'mtime': 0}
+                    grouped_files[identifier] = {
+                        "graphic": None,
+                        "logic": None,
+                        "mtime": 0,
+                    }
 
-                if is_graphic: grouped_files[identifier]['graphic'] = filepath
-                if is_logic: grouped_files[identifier]['logic'] = filepath
-                grouped_files[identifier]['mtime'] = max(
-                    grouped_files[identifier]['mtime'], mtime)
+                if is_graphic:
+                    grouped_files[identifier]["graphic"] = filepath
+                if is_logic:
+                    grouped_files[identifier]["logic"] = filepath
+                grouped_files[identifier]["mtime"] = max(
+                    grouped_files[identifier]["mtime"], mtime
+                )
             except OSError:
                 continue
 
         files_data = []
         for ident, info in grouped_files.items():
-            dt = datetime.datetime.fromtimestamp(info['mtime']).strftime(
-                '%H:%M:%S %d.%m.')
+            dt = datetime.datetime.fromtimestamp(info["mtime"]).strftime(
+                "%H:%M:%S %d.%m."
+            )
             display = f"{ident} ({dt})"
             files_data.append(
-                (ident, info['mtime'], display, info['graphic'], info['logic']))
+                (ident, info["mtime"], display, info["graphic"], info["logic"])
+            )
 
         files_data.sort(key=lambda x: x[1], reverse=True)
 
         list_changed = [f[0] for f in files_data] != [f[0] for f in self.known_files]
 
         if list_changed:
-            new_idents = [f[0] for f in files_data if
-                          f[0] not in [k[0] for k in self.known_files]]
+            new_idents = [
+                f[0] for f in files_data if f[0] not in [k[0] for k in self.known_files]
+            ]
             self.known_files = files_data
             self.enforce_max_files()
 
@@ -1006,10 +1179,12 @@ class DebugAnalyzerApp:
 
                 for new_ident in new_idents:
                     if len(self.selected_identifiers) > 0:
-                        filtered_sel = [i for i in self.selected_identifiers if
-                                        i in mtime_map]
-                        current_sel_sorted = sorted(filtered_sel,
-                                                    key=lambda x: mtime_map.get(x, 0))
+                        filtered_sel = [
+                            i for i in self.selected_identifiers if i in mtime_map
+                        ]
+                        current_sel_sorted = sorted(
+                            filtered_sel, key=lambda x: mtime_map.get(x, 0)
+                        )
 
                         mode = self.settings.get("auto_switch_mode", "Oldest")
                         if len(current_sel_sorted) > 0 and mode != "Add":
@@ -1054,8 +1229,13 @@ class DebugAnalyzerApp:
         self.sync_listbox_selection()
         self._is_updating_list = False
 
-    def get_data(self, identifier: str, graphic_filepath: str | None,
-                 logic_filepath: str | None, mtime: float) -> dict[str, tp.Any]:
+    def get_data(
+        self,
+        identifier: str,
+        graphic_filepath: str | None,
+        logic_filepath: str | None,
+        mtime: float,
+    ) -> dict[str, tp.Any]:
         """
         Loads and caches data from JSON files.
 
@@ -1086,7 +1266,8 @@ class DebugAnalyzerApp:
         """
         Triggers a background thread to process data and update plots.
         """
-        if self._is_plotting: return
+        if self._is_plotting:
+            return
         self._is_plotting = True
 
         for gw in self.graphs.values():
@@ -1106,24 +1287,28 @@ class DebugAnalyzerApp:
             is_multi = len(self.selected_identifiers) > 1 and mode == "Merged"
 
             color_families = [
-                ('#1f77b4', '#004c99', '#aec7e8'),  # Blues
-                ('#d62728', '#990000', '#ff9896'),  # Reds
-                ('#2ca02c', '#006600', '#98df8a'),  # Greens
-                ('#9467bd', '#5a009d', '#c5b0d5'),  # Purples
-                ('#ff7f0e', '#cc5500', '#ffbb78'),  # Oranges
+                ("#1f77b4", "#004c99", "#aec7e8"),  # Blues
+                ("#d62728", "#990000", "#ff9896"),  # Reds
+                ("#2ca02c", "#006600", "#98df8a"),  # Greens
+                ("#9467bd", "#5a009d", "#c5b0d5"),  # Purples
+                ("#ff7f0e", "#cc5500", "#ffbb78"),  # Oranges
             ]
 
             processed_data = []
 
             for idx, identifier in enumerate(self.selected_identifiers):
-                file_info = next((f for f in self.known_files if f[0] == identifier),
-                                 None)
-                if not file_info: continue
+                file_info = next(
+                    (f for f in self.known_files if f[0] == identifier), None
+                )
+                if not file_info:
+                    continue
 
                 ident, mtime, _, graphic_filepath, logic_filepath = file_info
-                data = self.get_data(identifier, graphic_filepath, logic_filepath,
-                                     mtime)
-                if not data: continue
+                data = self.get_data(
+                    identifier, graphic_filepath, logic_filepath, mtime
+                )
+                if not data:
+                    continue
 
                 pygame_xs = [v[0] for v in data.get("pygame", [])]
                 pygame_ys = [v[1] * 1000 for v in data.get("pygame", [])]
@@ -1131,15 +1316,19 @@ class DebugAnalyzerApp:
                 logic_ys = [v[1] * 1000 for v in data.get("logic", [])[2:]]
                 bullets_xs = [v[0] for v in data.get("bullets", [])]
                 n_bullets = [v[1] for v in data.get("bullets", [])]
-                bullets_ys = [(v[2] * 1000 if v[2] is not None else None) for v in
-                              data.get("bullets", [])]
+                bullets_ys = [
+                    (v[2] * 1000 if v[2] is not None else None)
+                    for v in data.get("bullets", [])
+                ]
 
                 av_bullet_xs, av_bullet_ys = [], []
                 if n_bullets:
                     av_bullets_ys_tmp = [None] * (max(n_bullets) + 1)
                     for nb, lt in zip(n_bullets, bullets_ys):
-                        if lt is None: continue
-                        if av_bullets_ys_tmp[nb] is None: av_bullets_ys_tmp[nb] = []
+                        if lt is None:
+                            continue
+                        if av_bullets_ys_tmp[nb] is None:
+                            av_bullets_ys_tmp[nb] = []
                         av_bullets_ys_tmp[nb].append(lt)
 
                     av_bullet_ys_full = [None] * (max(n_bullets) + 1)
@@ -1154,22 +1343,38 @@ class DebugAnalyzerApp:
                     av_bullet_xs = [v for v in av_bullet_xs_full if v is not None]
                     av_bullet_ys = [v for v in av_bullet_ys_full if v is not None]
 
-                processed_data.append({
-                    "ident": ident, "idx": idx,
-                    "pygame_xs": pygame_xs, "pygame_ys": pygame_ys,
-                    "logic_xs": logic_xs, "logic_ys": logic_ys,
-                    "bullets_xs": bullets_xs, "n_bullets": n_bullets,
-                    "bullets_ys": bullets_ys,
-                    "av_bullet_xs": av_bullet_xs, "av_bullet_ys": av_bullet_ys
-                })
+                processed_data.append(
+                    {
+                        "ident": ident,
+                        "idx": idx,
+                        "pygame_xs": pygame_xs,
+                        "pygame_ys": pygame_ys,
+                        "logic_xs": logic_xs,
+                        "logic_ys": logic_ys,
+                        "bullets_xs": bullets_xs,
+                        "n_bullets": n_bullets,
+                        "bullets_ys": bullets_ys,
+                        "av_bullet_xs": av_bullet_xs,
+                        "av_bullet_ys": av_bullet_ys,
+                    }
+                )
 
-            self.root.after(0, lambda: self._apply_plots(processed_data, mode, is_multi,
-                                                         color_families))
+            self.root.after(
+                0,
+                lambda: self._apply_plots(
+                    processed_data, mode, is_multi, color_families
+                ),
+            )
         except (Exception,):
             self.root.after(0, self._cleanup_plotting_state)
 
-    def _apply_plots(self, processed_data: list[dict[str, tp.Any]], mode: str,
-                     is_multi: bool, color_families: list[tuple[str, ...]]) -> None:
+    def _apply_plots(
+        self,
+        processed_data: list[dict[str, tp.Any]],
+        mode: str,
+        is_multi: bool,
+        color_families: list[tuple[str, ...]],
+    ) -> None:
         """
         Main-thread callback to apply processed data to Matplotlib axes.
 
@@ -1180,7 +1385,8 @@ class DebugAnalyzerApp:
         """
         for gw in self.graphs.values():
             gw.ax.clear()
-            if gw.ax_twin: gw.ax_twin.clear()
+            if gw.ax_twin:
+                gw.ax_twin.clear()
 
         for pd in processed_data:
             idx = pd["idx"]
@@ -1193,7 +1399,8 @@ class DebugAnalyzerApp:
                 target_r = self.graphs.get(f"r_{ident}")
                 target_l = self.graphs.get(f"l_{ident}")
 
-            if not target_r or not target_l: continue
+            if not target_r or not target_l:
+                continue
 
             if target_r.ax_twin is None:
                 target_r.ax_twin = target_r.ax.twinx()
@@ -1206,18 +1413,37 @@ class DebugAnalyzerApp:
 
             prefix = f"[{ident}] " if is_multi else ""
 
-            target_r.ax.plot(pd["pygame_xs"], pd["pygame_ys"], label=f"{prefix}pygame",
-                             color=c_pygame)
-            target_r.ax.plot(pd["logic_xs"], pd["logic_ys"], label=f"{prefix}logic",
-                             color=c_logic)
-            target_r.ax_twin.plot(pd["bullets_xs"], pd["n_bullets"], color=c_ent,
-                                  label=f"{prefix}entities",
-                                  linestyle='--' if is_multi else '-')
+            target_r.ax.plot(
+                pd["pygame_xs"],
+                pd["pygame_ys"],
+                label=f"{prefix}pygame",
+                color=c_pygame,
+            )
+            target_r.ax.plot(
+                pd["logic_xs"], pd["logic_ys"], label=f"{prefix}logic", color=c_logic
+            )
+            target_r.ax_twin.plot(
+                pd["bullets_xs"],
+                pd["n_bullets"],
+                color=c_ent,
+                label=f"{prefix}entities",
+                linestyle="--" if is_multi else "-",
+            )
 
-            target_l.ax.scatter(pd["n_bullets"], pd["bullets_ys"],
-                                label=f"{prefix}loops", color=c_logic, alpha=0.5)
-            target_l.ax.plot(pd["av_bullet_xs"], pd["av_bullet_ys"],
-                             label=f"{prefix}avg", color=c_ent, linewidth=2)
+            target_l.ax.scatter(
+                pd["n_bullets"],
+                pd["bullets_ys"],
+                label=f"{prefix}loops",
+                color=c_logic,
+                alpha=0.5,
+            )
+            target_l.ax.plot(
+                pd["av_bullet_xs"],
+                pd["av_bullet_ys"],
+                label=f"{prefix}avg",
+                color=c_ent,
+                linewidth=2,
+            )
 
         # Setup standard layout and legends BEFORE applying rules to ensure correct initial legend generation
         for gw in self.graphs.values():
@@ -1225,7 +1451,8 @@ class DebugAnalyzerApp:
                 continue
 
             is_r_graph = gw.graph_id.startswith("merged_r") or gw.graph_id.startswith(
-                "r_")
+                "r_"
+            )
 
             if is_r_graph:
                 gw.ax.set_xlabel("Time (s)")
@@ -1233,24 +1460,33 @@ class DebugAnalyzerApp:
                 gw.ax.grid(True, alpha=0.3)
 
                 lines1, labels1 = gw.ax.get_legend_handles_labels()
-                lines2, labels2 = gw.ax_twin.get_legend_handles_labels() if gw.ax_twin else (
-                    [], [])
+                lines2, labels2 = (
+                    gw.ax_twin.get_legend_handles_labels() if gw.ax_twin else ([], [])
+                )
                 if gw.ax_twin:
-                    gw.ax_twin.legend(lines1 + lines2, labels1 + labels2,
-                                      loc='upper left', fontsize='small')
+                    gw.ax_twin.legend(
+                        lines1 + lines2,
+                        labels1 + labels2,
+                        loc="upper left",
+                        fontsize="small",
+                    )
                 else:
-                    gw.ax.legend(lines1 + lines2, labels1 + labels2, loc='upper left',
-                                 fontsize='small')
+                    gw.ax.legend(
+                        lines1 + lines2,
+                        labels1 + labels2,
+                        loc="upper left",
+                        fontsize="small",
+                    )
 
                 if gw.ax_twin:
-                    gw.ax_twin.set_ylabel('n (entities)', color='tab:red')
+                    gw.ax_twin.set_ylabel("n (entities)", color="tab:red")
                     gw.ax_twin.yaxis.set_label_position("right")
                     gw.ax_twin.yaxis.tick_right()
             else:
                 gw.ax.set_xlabel("Entities (n)")
                 gw.ax.set_ylabel("Iteration time (ms)")
                 gw.ax.grid(True, alpha=0.3)
-                gw.ax.legend(loc='upper left', fontsize='small')
+                gw.ax.legend(loc="upper left", fontsize="small")
 
             gw.setup_interactive_legend()
 
@@ -1267,7 +1503,8 @@ class DebugAnalyzerApp:
             gw.fig.canvas.draw()
 
             gw.toolbar.update()
-            if hasattr(gw.toolbar, '_nav_stack'): gw.toolbar._nav_stack.clear()
+            if hasattr(gw.toolbar, "_nav_stack"):
+                gw.toolbar._nav_stack.clear()
             gw.toolbar.push_current()
 
         self._cleanup_plotting_state()

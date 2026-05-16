@@ -3,19 +3,20 @@ amoginarium/base/_maps.py
 
 Project: amoginarium
 """
+
 import json
 import os
 import typing as tp
 
+import pygame as pg
 from icecream import ic
 
 from amoginarium.shared.utility import Vec2
-import pygame as pg
-
 
 ##################################################
 #                     Code                       #
 ##################################################
+
 
 class Maps:
     """
@@ -24,20 +25,20 @@ class Maps:
 
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
-        load a map from a json file
+        Load a map from a json file
         """
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
             ic(map_path)
             if not os.path.isfile(map_path):
-                raise FileNotFoundError(f"Couldn't find map \"{map_path}\"")
+                raise FileNotFoundError(f'Couldn\'t find map "{map_path}"')
 
         # load map data
         data = json.load(open(map_path, "r"))
         self._last_loaded = map_path
 
-        pg.display.set_caption(f"amoginarium - {data["name"]}")
+        pg.display.set_caption(f"amoginarium - {data['name']}")
         Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
 
         # set background
@@ -84,17 +85,13 @@ class Maps:
                 )
 
             else:
-                print_ic_style(
-                    f"{CC.fg.RED}invalid island: "
-                    f"{CC.fg.YELLOW}{island}"
-                )
+                print_ic_style(f"{CC.fg.RED}invalid island: {CC.fg.YELLOW}{island}")
 
         # load entities
         for entity in data["entities"]:
             if entity["type"] not in SPAWNABLES:
                 print_ic_style(
-                    f"{CC.fg.RED}unknown entity: "
-                    f"{CC.fg.YELLOW}{entity["type"]}"
+                    f"{CC.fg.RED}unknown entity: {CC.fg.YELLOW}{entity['type']}"
                 )
                 continue
 
@@ -105,14 +102,12 @@ class Maps:
 
             try:
                 SPAWNABLES[entity["type"]](
-                    Coalitions.red,
-                    Vec2().from_cartesian(*entity["pos"]),
-                    **args
+                    Coalitions.red, Vec2().from_cartesian(*entity["pos"]), **args
                 )
 
             except TypeError:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
-                    f"{CC.fg.YELLOW}{entity["type"]}{CC.fg.RED}: "
-                    f"\"{CC.fg.YELLOW}{args}{CC.fg.RED}\""
+                    f"{CC.fg.YELLOW}{entity['type']}{CC.fg.RED}: "
+                    f'"{CC.fg.YELLOW}{args}{CC.fg.RED}"'
                 )

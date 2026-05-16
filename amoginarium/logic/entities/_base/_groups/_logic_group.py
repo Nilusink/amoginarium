@@ -20,6 +20,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
     """
     A container for T objects to facilitate batch updates and management.
     """
+
     __slots__ = ("_entities",)
 
     _entities: dict[T, None]
@@ -29,7 +30,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
         Initialize the group with an optional sequence of entities.
         :param entities: Initial entities to add to the group.
         """
-        self._entities = {e: None for e in entities}
+        self._entities = dict.fromkeys(entities)
 
     def entities(self) -> list[T]:
         """:return: A shallow copy of the internal entity list."""

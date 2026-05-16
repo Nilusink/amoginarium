@@ -5,4 +5,5 @@ Project: amoginarium
 Created: 13.04.2026
 Authors: LukasKrah
 """
+
 from ._monitor import WindowsMonitorService

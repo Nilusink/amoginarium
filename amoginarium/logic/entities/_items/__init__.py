@@ -8,7 +8,7 @@ Authors: LukasKrah
 
 from ._healing_potion import HealingPotion
 from ._inventory import Inventory
-from ._something import Something
+from ._item import Item
 from ._jet_bag import JetBag
 from ._shield import Shield
-from ._item import Item
+from ._something import Something

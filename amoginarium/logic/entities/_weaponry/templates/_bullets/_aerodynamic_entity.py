@@ -8,15 +8,15 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
 import math as m
+import typing as tp
+from ctypes import Array
+from types import EllipsisType
 
+from amoginarium.shared import Coalitions, DummyCIDs, base_entity_t
 from amoginarium.shared.utility import Vec2, get_default, normalize_angle
-from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
 
-from ...._base import GravityAffected, LogicGameEntity, GameCollisions, CollisionType
+from ...._base import CollisionType, GameCollisions, GravityAffected, LogicGameEntity
 from ._base_bullet import Bullet
 
 
@@ -30,7 +30,7 @@ class AerodynamicEntity(Bullet):
         "_mass",
         "ang_vel",
         "_alpha",  # slip angle
-        "_forces_to_add"
+        "_forces_to_add",
     )
 
     _CID = DummyCIDs.aero
@@ -46,23 +46,25 @@ class AerodynamicEntity(Bullet):
     )
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            size: Vec2,
-            *,
-            initial_facing: float | EllipsisType,
-            rudder_size: float | EllipsisType = ...,
-            rudder_max_angle: float | EllipsisType = ...,
-            mass: float | EllipsisType = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            **kwargs
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        size: Vec2,
+        *,
+        initial_facing: float | EllipsisType,
+        rudder_size: float | EllipsisType = ...,
+        rudder_max_angle: float | EllipsisType = ...,
+        mass: float | EllipsisType = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        **kwargs,
     ) -> None:
         self._rudder_size = get_default(rudder_size, self._default_rudder_size)
-        self._rudder_max_angle = get_default(rudder_max_angle, self._default_rudder_max_angle)
+        self._rudder_max_angle = get_default(
+            rudder_max_angle, self._default_rudder_max_angle
+        )
         self._mass = get_default(mass, self._default_mass)
 
         self._forces_to_add: list[tuple[Vec2, Vec2]] = []
@@ -79,7 +81,7 @@ class AerodynamicEntity(Bullet):
             parent=parent,
             coalition=coalition,
             collision_exception_ids=collision_exception_ids,
-            **kwargs
+            **kwargs,
         )
         self.add(GravityAffected)
 
@@ -90,12 +92,12 @@ class AerodynamicEntity(Bullet):
     # region properties
     @property
     def mass(self) -> float:
-        """current entity mass"""
+        """Current entity mass"""
         return self._mass
 
     @property
     def rudder_angle(self) -> float:
-        """current rudder angle"""
+        """Current rudder angle"""
         return self._rudder_angle
 
     @rudder_angle.setter
@@ -104,18 +106,18 @@ class AerodynamicEntity(Bullet):
 
     @property
     def alpha(self) -> float:
-        """slip angle (facing vs. velocity)"""
+        """Slip angle (facing vs. velocity)"""
         return self._alpha
 
     # endregion
 
     # def velocity interface
     def apply_force(self, relative_force: Vec2, relative_position: Vec2) -> None:
-        """add a force to the entity resulting in acceleration + turning"""
+        """Add a force to the entity resulting in acceleration + turning"""
         self._forces_to_add.append((relative_force, relative_position))
 
     def _update_rudder(self, delta: float) -> None:
-        """update rudder position"""
+        """Update rudder position"""
 
     def _update(self, delta: float) -> None:
         forward_force = Vec2()
@@ -137,7 +139,7 @@ class AerodynamicEntity(Bullet):
         self._update_rudder(delta)
 
         # rudder force
-        rudder_force = q * self._rudder_size * self._rudder_angle * .3
+        rudder_force = q * self._rudder_size * self._rudder_angle * 0.3
 
         lever = self.size.x * 0.5
         rudder_torque = rudder_force * lever
@@ -151,8 +153,8 @@ class AerodynamicEntity(Bullet):
         forward_force += turn_drag
 
         # angular motion
-        inertia = self.mass * self.size.x * self.size.x * .01
-        damping = self.ang_vel * .8
+        inertia = self.mass * self.size.x * self.size.x * 0.01
+        damping = self.ang_vel * 0.8
 
         torque = stability_torque + rudder_torque - damping
 
@@ -175,10 +177,12 @@ class AerodynamicEntity(Bullet):
         self.facing.angle += self.ang_vel * delta
 
         # lift from rudder + body
-        lift_force = right * (q * self._rudder_size * self._rudder_angle * 50)  # rudder lift
+        lift_force = right * (
+            q * self._rudder_size * self._rudder_angle * 50
+        )  # rudder lift
         forward_force += lift_force
 
-        body_force = right * (-self.alpha * q * self.size.x * .2)  # body lift gain
+        body_force = right * (-self.alpha * q * self.size.x * 0.2)  # body lift gain
         forward_force += body_force
 
         # linear motion
@@ -193,16 +197,16 @@ class AerodynamicEntity(Bullet):
         self._buffer.param1 = self.velocity.length
 
     def _update_collision(  # type: ignore
-            self,
-            *,
-            position: Vec2 | EllipsisType = ...,
-            size: Vec2 | EllipsisType = ...,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...,
-            radius: float | None = None,
-            collision_active: bool | EllipsisType = ...,
-            shift_history: bool = True
+        self,
+        *,
+        position: Vec2 | EllipsisType = ...,
+        size: Vec2 | EllipsisType = ...,
+        rotation: float = 0.0,
+        positions: list[Vec2] | None = None,
+        centered: bool | EllipsisType = ...,
+        radius: float | None = None,
+        collision_active: bool | EllipsisType = ...,
+        shift_history: bool = True,
     ) -> None:
         super()._update_collision(
             position=position,
@@ -212,5 +216,5 @@ class AerodynamicEntity(Bullet):
             centered=centered,
             radius=radius,
             collision_active=collision_active,
-            shift_history=shift_history
+            shift_history=shift_history,
         )

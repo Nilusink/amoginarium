@@ -13,47 +13,53 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import GraphicsCIDs
-from amoginarium.shared.utility import Vec2, MASK16, get_default, normalize_angle, convert_color
-from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium import pv
+from amoginarium.shared import BaseCommandType, GraphicsCIDs, ProcessCommand
+from amoginarium.shared.utility import (
+    MASK16,
+    Vec2,
+    convert_color,
+    get_default,
+    normalize_angle,
+)
 
 from .._base_entities import PositionedLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.utility import color_t
 
 
 class DebugPolygonEntity(PositionedLogicEntity):
-    """A debug entity used to render arbitrary polygons by packing vertex data into the entity buffer. """
+    """A debug entity used to render arbitrary polygons by packing vertex data into the entity buffer."""
+
     _CID = GraphicsCIDs.debug_polygon
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            radius: float = 8,
-            p1: Vec2 | EllipsisType = ...,
-            p2: Vec2 | EllipsisType = ...,
-            p3: Vec2 | EllipsisType = ...,
-            p4: Vec2 | EllipsisType = ...,
-            p5: Vec2 | EllipsisType = ...,
-            p6: Vec2 | EllipsisType = ...,
-            p7: Vec2 | EllipsisType = ...,
-            p8: Vec2 | EllipsisType = ...,
-            points: tp.Sequence[Vec2] | EllipsisType = ...,
-            *,
-            point_color: color_t = (255, 255, 255),
-            point_radius: int = 0,
-            point_num_segments: int = 8,
-            outline_color: color_t = (255, 255, 255),
-            outline_thickness: int = 1,
-            fill_color: color_t = (255, 0, 0, 128),
-            convert_global: bool = True,
-            **kwargs: tp.Any
+        self,
+        runtime_buffer: Array[base_entity_t],
+        radius: float = 8,
+        p1: Vec2 | EllipsisType = ...,
+        p2: Vec2 | EllipsisType = ...,
+        p3: Vec2 | EllipsisType = ...,
+        p4: Vec2 | EllipsisType = ...,
+        p5: Vec2 | EllipsisType = ...,
+        p6: Vec2 | EllipsisType = ...,
+        p7: Vec2 | EllipsisType = ...,
+        p8: Vec2 | EllipsisType = ...,
+        points: tp.Sequence[Vec2] | EllipsisType = ...,
+        *,
+        point_color: color_t = (255, 255, 255),
+        point_radius: int = 0,
+        point_num_segments: int = 8,
+        outline_color: color_t = (255, 255, 255),
+        outline_thickness: int = 1,
+        fill_color: color_t = (255, 0, 0, 128),
+        convert_global: bool = True,
+        **kwargs: tp.Any,
     ) -> None:
         """
         Initializes the debug polygon with up to 8 vertices.
@@ -101,10 +107,12 @@ class DebugPolygonEntity(PositionedLogicEntity):
         kwargs["fill_color"] = convert_color(fill_color)
         kwargs["convert_global"] = convert_global
 
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs=kwargs,
-        ))
+        pv.COQ.put(
+            ProcessCommand(
+                type=BaseCommandType.spawn_dummy,
+                kwargs=kwargs,
+            )
+        )
 
     def set_points(self, points: tp.Sequence[Vec2]) -> None:
         """
@@ -136,16 +144,16 @@ class DebugPolygonEntity(PositionedLogicEntity):
         self._buffer.facing = int(normalize_angle(self.p6.angle) * 10_000)
 
         self._buffer.param3 = (
-                int(self.p3.length) & MASK16
-                | (int(self.p4.length) & MASK16) << 16
-                | (int(self.p5.length) & MASK16) << 32
-                | (int(self.p6.length) & MASK16) << 48
+            int(self.p3.length) & MASK16
+            | (int(self.p4.length) & MASK16) << 16
+            | (int(self.p5.length) & MASK16) << 32
+            | (int(self.p6.length) & MASK16) << 48
         )
 
         # dual-packed variables
         self._buffer.param4 = (
-                int(normalize_angle(self.p7.angle) * 10_000) & MASK16
-                | (int(self.p7.length) & MASK16) << 16
-                | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
-                | (int(self.p8.length) & MASK16) << 48
+            int(normalize_angle(self.p7.angle) * 10_000) & MASK16
+            | (int(self.p7.length) & MASK16) << 16
+            | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
+            | (int(self.p8.length) & MASK16) << 48
         )

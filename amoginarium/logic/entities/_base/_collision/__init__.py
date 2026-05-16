@@ -8,5 +8,5 @@ Created: 21.04.2026
 Authors: LukasKrah
 """
 
-from ._collision_types import CollisionType, HitboxTypes
 from ._collision_manager import GameCollisions
+from ._collision_types import CollisionType, HitboxTypes

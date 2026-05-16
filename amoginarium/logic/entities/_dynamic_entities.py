@@ -10,16 +10,13 @@ Nilusink
 
 from __future__ import annotations
 
-import typing as tp
-
-from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
 from amoginarium.shared import DynamicEntityParentViable
+from amoginarium.shared.param_entities import ProcessType, load_entities_from_files
 
 from ._weaponry import templates
 
-
 # gets all base-entities (BaseTurret, BaseWeapon, ...) from templates module
-_base_entities: dict[str, tp.Type[DynamicEntityParentViable]] = {
+_base_entities: dict[str, type[DynamicEntityParentViable]] = {
     e.cid(): e
     for e in [
         attr

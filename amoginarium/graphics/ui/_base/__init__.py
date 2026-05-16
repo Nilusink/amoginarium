@@ -7,8 +7,14 @@ Authors: LukasKrah
 """
 
 from ._ui_element import (
-    UIElementValueNamesEnum, UIElementValueTypesEnum, UIElementValueFloat, UIElementValueFloatOneAbsolute,
-    UIElementValueVec2, UIElementValueVec2OneAbsolute, UIElementData, UIElement
+    UIElement,
+    UIElementData,
+    UIElementValueFloat,
+    UIElementValueFloatOneAbsolute,
+    UIElementValueNamesEnum,
+    UIElementValueTypesEnum,
+    UIElementValueVec2,
+    UIElementValueVec2OneAbsolute,
 )
-from ._ui_event_element import UIEventElement
 from ._ui_entity import UIEntity
+from ._ui_event_element import UIEventElement
