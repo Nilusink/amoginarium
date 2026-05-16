@@ -157,3 +157,4 @@ structure.mmd
 debug/
 debug_viewer_settings.json
 graphic_debug.json
+generated_map.json

@@ -7,33 +7,47 @@ defines a player
 Author:
 Nilusink
 """
-from contextlib import suppress
-from time import perf_counter
-from ctypes import Array
-from icecream import ic
 import typing as tp
+from contextlib import suppress
+from ctypes import Array
+from time import perf_counter
 
-from amoginarium.shared.audio import DeathSound, SoundEffect, OnHoverButtonSound
-from amoginarium.shared import ProcessCommand, BaseCommandType, DummyCIDs, CurrentView
-from amoginarium.shared import Coalitions, ItemLike, ItemSlot, base_entity_t
+from icecream import ic
+
+from amoginarium import pv
+from amoginarium.shared import (
+    BaseCommandType,
+    Coalitions,
+    CurrentView,
+    DummyCIDs,
+    ItemLike,
+    ItemSlot,
+    ProcessCommand,
+    base_entity_t,
+)
+from amoginarium.shared.audio import DeathSound, OnHoverButtonSound, SoundEffect
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2, convert_coord
-from amoginarium import pv
 
-from .._base import GravityAffected, FrictionXAffected, Updated, CollisionLogicEntity
-from .._base import Players, GameCollisions, LogicGameEntity
-from .._items import Shield, HealingPotion, JetBag, Inventory
-from .._weaponry import HandThrownGrenade, RailGun, ExactoSniper
-from .._weaponry.templates import BaseWeapon
-from .._dynamic_entities import DYNAMIC_ENTITIES
 from ...graphics_dummies import Controller
+from .._base import (
+    CollisionLogicEntity,
+    FrictionXAffected,
+    GameCollisions,
+    GravityAffected,
+    LogicGameEntity,
+    Players,
+    Updated,
+)
+from .._dynamic_entities import DYNAMIC_ENTITIES
+from .._items import HealingPotion, Inventory, Item, JetBag, Shield
 from .._rideables import Passenger
-from .._items import Item
+from .._weaponry import ExactoSniper, HandThrownGrenade, RailGun
+from .._weaponry.templates import BaseWeapon
 
 if tp.TYPE_CHECKING:
-    from .._weaponry.templates import Bullet
+    from .._weaponry.templates import Bullet, RideableTurret
     from .._world import Island
-    from .._weaponry.templates import RideableTurret
 
 
 class Player(Passenger, LogicGameEntity):
@@ -586,12 +600,12 @@ class Player(Passenger, LogicGameEntity):
         # to let the CollisionSystem check if that position is valid!
         # 3 because, because first is for any check to happen, second for restoring the y-axis-position on a wall hit
         # If you don't know what I mean by this, just ask me. But I won't know by then probably! xD
-        if self.position.y > 2000:
-            if self.__should_be_killed >= 2:
-                self.kill()
-            self.__should_be_killed += 1
-        else:
-            self.__should_be_killed = 0
+        # if self.position.y > 2000:
+        #     if self.__should_be_killed >= 2:
+        #         self.kill()
+        #     self.__should_be_killed += 1
+        # else:
+        #     self.__should_be_killed = 0
 
     def _kill(self, killed_by=...) -> None:
         self._alive = False

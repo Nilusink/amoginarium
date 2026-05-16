@@ -7,13 +7,16 @@ load and save maps
 Author:
 Nilusink
 """
-from icecream import ic
 import json
 
-from ._json_serialize import to_str
-from ..base._groups import Updated
+from icecream import ic
+
 from amoginarium.logic.entities import Island
 from amoginarium.shared import GameEntityLike
+
+from ..entities import Updated
+from ._json_serialize import to_str
+
 # from ..entities._
 
 

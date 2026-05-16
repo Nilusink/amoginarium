@@ -7,23 +7,23 @@ Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
-from ctypes import Array
+
 import typing as tp
+from ctypes import Array
+
 import numpy as np
 
+from amoginarium.shared import Coalitions, DummyCIDs, base_entity_t
 from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import DummyCIDs
 
-from ...._base import GravityAffected, GameCollisions
-from ...._base import LogicGameEntity
+from ...._base import GameCollisions, GravityAffected, LogicGameEntity
 from ...templates import Bullet
 
 if tp.TYPE_CHECKING:
-    from ...._world import Island
-    from ...._player import Player
     from ...._items import Shield
+    from ...._player import Player
+    from ...._world import Island
 
 
 class _GrenadeShrapnel(Bullet):
@@ -36,7 +36,9 @@ class _GrenadeShrapnel(Bullet):
     __slots__ = ()
 
     def __init__(self, *args, **kwargs) -> None:
-        kwargs["collision_exception_ids"] = [_GrenadeShrapnel._col_expection_grenade_cluster]
+        kwargs["collision_exception_ids"] = [
+            _GrenadeShrapnel._col_expection_grenade_cluster
+        ]
         super().__init__(*args, **kwargs)
 
 
@@ -50,7 +52,7 @@ class Grenade(Bullet):
     _default_ttl = 5000
     _default_explosion_radius = 150
     _default_explosion_damage = 50
-    _default_recoil_factor = .5
+    _default_recoil_factor = 0.5
 
     _default_cluster_depth = 1
     _default_cluster_amount = 32
@@ -58,9 +60,9 @@ class Grenade(Bullet):
     _default_cluster_bullet_type = _GrenadeShrapnel
     _default_cluster_step_inertia = 1000
     _default_cluster_step_explosion = 150
-    _default_cluster_fuze_ttl_mult = .001
-    _default_cluster_last_step_ttl = .2
-    _default_cluster_size_mult = .1
+    _default_cluster_fuze_ttl_mult = 0.001
+    _default_cluster_last_step_ttl = 0.2
+    _default_cluster_size_mult = 0.1
 
     _bounce_friction: tp.ClassVar[float] = 0.7
 
@@ -71,13 +73,13 @@ class Grenade(Bullet):
     __slots__ = ()
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            **kwargs: tp.Any,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        **kwargs: tp.Any,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -136,8 +138,12 @@ class Grenade(Bullet):
             ry = vy - 2 * dot_product * ny
 
             # Apply bounce friction and restore world-space velocity by adding shield velocity back
-            self.velocity.x = (rx * self._bounce_friction) + event.other_entity.parent.velocity.x
-            self.velocity.y = (ry * self._bounce_friction) + event.other_entity.parent.velocity.y
+            self.velocity.x = (
+                rx * self._bounce_friction
+            ) + event.other_entity.parent.velocity.x
+            self.velocity.y = (
+                ry * self._bounce_friction
+            ) + event.other_entity.parent.velocity.y
         else:
             # If already moving away but still colliding, ensure the shield's velocity is inherited
             self.velocity.x += event.other_entity.parent.velocity.x

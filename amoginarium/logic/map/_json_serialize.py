@@ -7,10 +7,11 @@ convert everything ingame to a str
 Author:
 Nilusink
 """
+
 import json
 import re
 
-from amoginarium.logic.entities import GameEntity
+from amoginarium.logic.entities import LogicGameEntity
 from amoginarium.shared.utility import Vec2
 
 
@@ -47,16 +48,12 @@ class Encoder(json.JSONEncoder):
         elif isinstance(obj, Vec2):
             return f"@@{', '.join(map(float_to_str, obj.xy))}@@"
 
-        elif isinstance(obj, GameEntity):
+        elif isinstance(obj, LogicGameEntity):
             return preprocess(obj.to_dict())
 
         return super().default(obj)
 
 
 def to_str(game_state: dict | list) -> str:
-    out = json.dumps(
-        preprocess(game_state),
-        indent=4,
-        cls=Encoder
-    )
-    return re.sub(r'"@@(.*?)@@"', r'[\1]', out)
+    out = json.dumps(preprocess(game_state), indent=4, cls=Encoder)
+    return re.sub(r'"@@(.*?)@@"', r"[\1]", out)
