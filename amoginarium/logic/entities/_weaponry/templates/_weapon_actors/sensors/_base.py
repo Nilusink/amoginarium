@@ -9,13 +9,14 @@ Nilusink
 """
 
 from abc import ABC, abstractmethod
-
 # from types import EllipsisType
 # import typing as tp
-from amoginarium.shared import DynamicEntityParentViable, WeaponSensorCIDs
+
+from amoginarium.shared import WeaponSensorCIDs, DynamicEntityParentViable
 from amoginarium.shared.utility import Vec2
 
 from .._base_actor import BaseActor
+
 
 # if tp.TYPE_CHECKING:
 #     from ..._bullets import AerodynamicEntity
@@ -42,7 +43,7 @@ class BaseWeaponsSensor(DynamicEntityParentViable, BaseActor, ABC):
 
     @classmethod
     def cid(cls) -> str:
-        """Component ID"""
+        """component ID"""
         return cls._CID.value
 
     # endregion
@@ -50,6 +51,6 @@ class BaseWeaponsSensor(DynamicEntityParentViable, BaseActor, ABC):
     # region interface
     @abstractmethod
     def get_target(self) -> Vec2 | None:
-        """Get sensor target"""
+        """get sensor target"""
 
     # endregion

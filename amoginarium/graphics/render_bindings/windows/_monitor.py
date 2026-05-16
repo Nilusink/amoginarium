@@ -6,38 +6,36 @@ Created: 13.04.2026
 Authors: LukasKrah
 """
 
-import ctypes
 import typing as tp
+import ctypes
 
 from amoginarium.shared.utility import Vec2
 
-MONITOR_DEFAULTTONEAREST = 2
 
+MONITOR_DEFAULTTONEAREST = 2
 
 class RECT(ctypes.Structure):
     _fields_ = [
         ("left", ctypes.c_long),
         ("top", ctypes.c_long),
         ("right", ctypes.c_long),
-        ("bottom", ctypes.c_long),
+        ("bottom", ctypes.c_long)
     ]
-
 
 class MONITORINFO(ctypes.Structure):
     _fields_ = [
         ("cbSize", ctypes.c_ulong),
         ("rcMonitor", RECT),
         ("rcWork", RECT),
-        ("dwFlags", ctypes.c_ulong),
+        ("dwFlags", ctypes.c_ulong)
     ]
-
 
 MonitorEnumProc = ctypes.WINFUNCTYPE(
     ctypes.c_int,
     ctypes.c_void_p,
     ctypes.c_void_p,
     ctypes.POINTER(RECT),
-    ctypes.c_void_p,
+    ctypes.c_void_p
 )
 
 
@@ -64,9 +62,7 @@ class _WindowsMonitorService:
         if not self.__window:
             return self.__top_left, self.__size
 
-        hmonitor = self.__user32.MonitorFromWindow(
-            self.__window, MONITOR_DEFAULTTONEAREST
-        )
+        hmonitor = self.__user32.MonitorFromWindow(self.__window, MONITOR_DEFAULTTONEAREST)
 
         monitor_info = MONITORINFO()
         monitor_info.cbSize = ctypes.sizeof(MONITORINFO)

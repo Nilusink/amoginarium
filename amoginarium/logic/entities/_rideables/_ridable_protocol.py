@@ -23,12 +23,12 @@ class RideablePerks(tp.Protocol):
 
     @property
     def control_authority(self) -> bool:
-        """Specifies weather the entity takes controls or not"""
+        """specifies weather the entity takes controls or not"""
         return False
 
     @property
     def passenger_visible(self) -> bool:
-        """Specifies weather the passenger is visible or not"""
+        """specifies weather the passenger is visible or not"""
         return True
 
     def get_passenger_position(self) -> None | Vec2:

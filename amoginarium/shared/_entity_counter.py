@@ -7,9 +7,10 @@ keeps track of all entity ids
 Author:
 Nilusink
 """
-
 from __future__ import annotations
+from icecream import ic
 
+from .debugging import run_with_debug
 from ._shared_memory import MAX_ENTITIES, MAX_INVENTORIES
 
 
@@ -21,7 +22,7 @@ class _EntityCounter:
 
     def get_id(self) -> int:
         """
-        Get next free entity id
+        get next free entity id
         """
         start_id = self._current_id
         while True:
@@ -39,7 +40,7 @@ class _EntityCounter:
 
     def pop_id(self, id: int) -> bool:
         """
-        True if id was removed
+        true if id was removed
         """
         if id not in self._used_ids:
             return False
@@ -48,7 +49,7 @@ class _EntityCounter:
         return True
 
     def reset(self) -> None:
-        """Reset the counter"""
+        """reset the counter"""
         self._used_ids.clear()
         self._current_id = 0
 

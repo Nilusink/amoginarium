@@ -8,14 +8,14 @@ Author:
 Nilusink
 """
 
-import typing as tp
 from types import EllipsisType
+import typing as tp
 
-from amoginarium.shared import WeaponSensorCIDs
 from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared.utility import PI_2, Vec2, clamp_angle
+from amoginarium.shared.utility import Vec2, PI_2, clamp_angle
+from amoginarium.shared import WeaponSensorCIDs
 
-from ....._base import DebugPolygonEntity, GameCollisions
+from ....._base import GameCollisions, DebugPolygonEntity
 from ._base import BaseWeaponsSensor
 
 if tp.TYPE_CHECKING:
@@ -28,16 +28,16 @@ class HeatSeeker(BaseWeaponsSensor):
     _CID = WeaponSensorCIDs.heat
 
     def __init__(
-        self,
-        parent: "AerodynamicEntity",
-        fov: float,
-        max_range: float,
-        *,
-        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-        function_delay: float = 0,
+            self,
+            parent: "AerodynamicEntity",
+            fov: float,
+            max_range: float,
+            *,
+            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+            function_delay: float = 0,
     ) -> None:
         """
-        Homes in on a designated laser
+        homes in on a designated laser
 
         :param parent: parent bullet
         :param offset: offset from parent
@@ -51,15 +51,15 @@ class HeatSeeker(BaseWeaponsSensor):
             GameCollisions.collision_group_items,
             GameCollisions.collision_group_players,
         ]
-        self._coll_poly: list[Vec2] = [
-            Vec2(),
-        ] * 4
+        self._coll_poly: list[Vec2] = [Vec2(), ] * 4
 
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
         if self._dbe is not None:
             self._dbe.kill(self)
-            self._dbe = DebugPolygonEntity(self.parent.runtime_buffer)
+            self._dbe = DebugPolygonEntity(
+                self.parent.runtime_buffer
+            )
 
     def _update_position(self) -> None:
         super()._update_position()
@@ -98,7 +98,7 @@ class HeatSeeker(BaseWeaponsSensor):
                 self._position,
                 self._position,
                 hitbox_type="polygon",
-                start_positions=list(self._coll_poly),
+                start_positions=list(self._coll_poly)
             )
         )
 
@@ -111,12 +111,14 @@ class HeatSeeker(BaseWeaponsSensor):
 
             delta = self.parent.position - other.position
             min_delta = self.parent.position - (
-                other.position
-                + Vec2().from_polar(delta.angle - PI_2, other.size.length)
+                    other.position + Vec2().from_polar(
+                delta.angle - PI_2, other.size.length
+            )
             )
             max_delta = self.parent.position - (
-                other.position
-                + Vec2().from_polar(delta.angle + PI_2, other.size.length)
+                    other.position + Vec2().from_polar(
+                delta.angle + PI_2, other.size.length
+            )
             )
 
             min_angle = clamp_angle(min_delta.angle, delta.angle, self._fov / 2)

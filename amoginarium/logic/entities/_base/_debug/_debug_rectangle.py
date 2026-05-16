@@ -13,22 +13,22 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium import pv
-from amoginarium.shared import BaseCommandType, Coalitions, GraphicsCIDs, ProcessCommand
+from amoginarium.shared import GraphicsCIDs, Coalitions
 from amoginarium.shared.utility import convert_color
+from amoginarium.shared import BaseCommandType, ProcessCommand
+from amoginarium import pv
 
 from .._base_entities import PositionedLogicEntity
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
-    from amoginarium.shared import CIDType, base_entity_t
+    from amoginarium.shared import base_entity_t, CIDType
     from amoginarium.shared.utility import Vec2, color_t
 
 
 class DebugRectangleEntity(PositionedLogicEntity):
     """Logic entity for rendering debug rectangles via the graphics engine."""
-
     __slots__ = ()
 
     # region ClassVars
@@ -37,20 +37,20 @@ class DebugRectangleEntity(PositionedLogicEntity):
     # endregion
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        position: Vec2,
-        size: Vec2,
-        *,
-        point_color: color_t = (255, 255, 255),
-        point_radius: int = 3,
-        point_num_segments: int = 8,
-        outline_color: color_t = (255, 255, 255),
-        outline_thickness: int = 1,
-        fill_color: color_t = (255, 0, 0, 128),
-        convert_global: bool = True,
-        centered: bool = False,
-        **kwargs: tp.Any,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            position: Vec2,
+            size: Vec2,
+            *,
+            point_color: color_t = (255, 255, 255),
+            point_radius: int = 3,
+            point_num_segments: int = 8,
+            outline_color: color_t = (255, 255, 255),
+            outline_thickness: int = 1,
+            fill_color: color_t = (255, 0, 0, 128),
+            convert_global: bool = True,
+            centered: bool = False,
+            **kwargs: tp.Any
     ) -> None:
         """
         Initializes a debug rectangle and queues a spawn command for the graphics process.
@@ -79,4 +79,7 @@ class DebugRectangleEntity(PositionedLogicEntity):
         kwargs["convert_global"] = convert_global
         kwargs["centered"] = centered
 
-        pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs))
+        pv.COQ.put(ProcessCommand(
+            type=BaseCommandType.spawn_dummy,
+            kwargs=kwargs
+        ))

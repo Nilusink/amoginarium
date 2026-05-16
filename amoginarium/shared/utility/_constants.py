@@ -7,7 +7,6 @@ constant values reused in the program
 Author:
 Nilusink
 """
-
 import numpy as np
 
 SQ2 = np.sqrt(2)
@@ -19,10 +18,10 @@ PI = np.pi
 PI_2 = PI / 2
 PI_4 = PI / 4
 PI_3_4 = PI_4 * 3
-M_2_PI = 2 * PI
+M_2_PI = 2*PI
 
-RTD = 180 / PI
-DTR = PI / 180
+RTD = 180/PI
+DTR = PI/180
 
 
 __all__ = (

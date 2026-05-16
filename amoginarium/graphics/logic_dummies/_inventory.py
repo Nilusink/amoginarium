@@ -8,18 +8,17 @@ Author:
 Nilusink
 """
 
-from amoginarium import pv
 from amoginarium.shared.utility import Vec2
+from amoginarium import pv
 
 from ..entities import BaseGraphicsEntity, Drawn_0
+from ..ui import UIRectangle, AnimatedColorValues
 from ..render_bindings import renderer
-from ..ui import AnimatedColorValues, UIRectangle
-from ._synced_entities import SE_MANAGER, SyncedGraphicsEntity
+from ._synced_entities import SyncedGraphicsEntity, SE_MANAGER
 
 
 class Inventory(BaseGraphicsEntity):
     """inventory entity"""
-
     __slots__ = ["__id", "_slot_colors", "_ui"]
 
     def __init__(self, sync_id: int, parent: int | SyncedGraphicsEntity) -> None:
@@ -39,31 +38,29 @@ class Inventory(BaseGraphicsEntity):
             "basic": AnimatedColorValues(
                 (70, 70, 70),
                 (150, 150, 150),
-                extend_duration=0.1,
-                collapse_duration=0.8,
+                extend_duration=.1,
+                collapse_duration=.8
             ),
             "border_basic": (80, 80, 80),
-            "border_highlighted": (120, 120, 120),
+            "border_highlighted": (120, 120, 120)
         }
 
         self._ui = {
             "root": UIRectangle(
-                (0.5, 0.5),
-                (0.8, 0.8),
+                (.5, .5),
+                (.8, .8),
                 bg_color=self._slot_colors["border_basic"],
-                border_color=self._slot_colors["border_basic"],
-            ),
-            "slots": [
+                border_color=self._slot_colors["border_basic"]
+            ), "slots": [
                 UIRectangle(
-                    (0.5, 0.5),
-                    (0.1, 0.1),
+                    (.5, .5),
+                    (.1, .1),
                     bg_color=self._slot_colors["basic"],
                     border_color=self._slot_colors["border_basic"],
                     on_enter_callbacks=[lambda x=i: self.__slot_hover(x)],
-                    on_leave_callbacks=[lambda x=i: self.__slot_unhover(x)],
-                )
-                for i in range(self.buff.size)
-            ],
+                    on_leave_callbacks=[lambda x=i: self.__slot_unhover(x)]
+                ) for i in range(self.buff.size)
+            ]
         }
 
         # add to parent
@@ -72,26 +69,26 @@ class Inventory(BaseGraphicsEntity):
     # region properties
     @property
     def buff(self):
-        """The inventories SHM buffer"""
+        """the inventories SHM buffer"""
         return pv.I_BUFF[self.__id]
 
     @property
     def size(self) -> int:
-        """Inventory slot size"""
+        """inventory slot size"""
         return self.buff.size
 
     # endregion
 
     # region internal methods
     def __slot_hover(self, slot_id: int) -> None:
-        """Set hover to a slot"""
+        """set hover to a slot"""
         if not (0 <= slot_id < 255):
             raise ValueError(f"slot id out of range: {slot_id}")
 
         self.buff.hover = slot_id
 
     def __slot_unhover(self, slot_id: int) -> None:
-        """Reset hover (only when slot_id matches hover)"""
+        """reset hover (only when slot_id matches hover)"""
         if not slot_id == self.buff.hover:
             return
 
@@ -101,14 +98,14 @@ class Inventory(BaseGraphicsEntity):
 
     # region drawing
     def draw_at(
-        self,
-        position: tuple[float, float],
-        slots_per_row: int,
-        width: float,
-        delta_cal: float,
-        layer: int,
+            self,
+            position: tuple[float, float],
+            slots_per_row: int,
+            width: float,
+            delta_cal: float,
+            layer: int
     ) -> None:
-        """Draw inventory at center of screen"""
+        """draw inventory at center of screen"""
         self._ui["root"].position.relative_global = position
 
         slot_size = width / (slots_per_row + 0.1)
@@ -117,7 +114,9 @@ class Inventory(BaseGraphicsEntity):
         slots: list[UIRectangle] = self._ui["slots"]  # ignore: type
 
         slots[0].size.relative_global = slot_size, slot_size
-        slots[0].size.relative_global.y = slots[0].size.relative_global.x
+        slots[0].size.relative_global.y = slots[
+            0
+        ].size.relative_global.x
         slot_size = (
             slots[0].size.absolute.x,
             slots[0].size.absolute.x,
@@ -186,7 +185,7 @@ class Inventory(BaseGraphicsEntity):
                         pos,
                         (size[0] * factor, size[1] * factor),
                         convert_global=False,
-                        layer=layer,
+                        layer=layer
                     )
 
     # endregion

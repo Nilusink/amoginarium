@@ -10,24 +10,17 @@ from __future__ import annotations
 
 import typing as tp
 
+from amoginarium.shared.utility import Vec2, coord_t, convert_coord, TupleMath
 from amoginarium import pv
-from amoginarium.shared.utility import TupleMath, Vec2, convert_coord, coord_t
 
 from ..._types import Anchor, Positions
 from .._ui_entity import UIEntity
-from ._ui_element_values import (
-    UIElementData,
-    UIElementValueFloatOneAbsolute,
-    UIElementValueNamesEnum,
-    UIElementValueTypesEnum,
-    UIElementValueVec2,
-    UIElementValueVec2OneAbsolute,
-)
+from ._ui_element_values import UIElementValueVec2, UIElementValueFloatOneAbsolute, UIElementValueVec2OneAbsolute
+from ._ui_element_values import UIElementData, UIElementValueNamesEnum, UIElementValueTypesEnum
 
 
 class UIElement(UIEntity):
     """Basic UI component with position and size stuff"""
-
     __NULL_VEC2: tp.ClassVar[Vec2] = Vec2()
     __ONE_VEC2: tp.ClassVar[Vec2] = Vec2().from_cartesian(1, 1)
 
@@ -39,16 +32,17 @@ class UIElement(UIEntity):
     __absolute_values: bool
 
     def __init__(
-        self,
-        position: coord_t,
-        size: coord_t,
-        *,
-        parent: UIEntity | None = None,
-        placement_anchor: Anchor = Anchor.CENTER,
-        absolute_values: bool = False,
-        positon_is_relative_to_parent: bool = True,
-        size_is_relative_to_parent: bool = True,
-        parent_reference_position: Positions = Positions.TOP_LEFT,
+            self,
+            position: coord_t,
+            size: coord_t,
+            *,
+            parent: UIEntity | None = None,
+
+            placement_anchor: Anchor = Anchor.CENTER,
+            absolute_values: bool = False,
+            positon_is_relative_to_parent: bool = True,
+            size_is_relative_to_parent: bool = True,
+            parent_reference_position: Positions = Positions.TOP_LEFT,
     ) -> None:
         """
         Create a new UI component
@@ -75,9 +69,7 @@ class UIElement(UIEntity):
 
         self._update_relative_values()
         if absolute_values:
-            self.__data.position.relative_to_parent = self.__absolute_to_relative(
-                position, calc_for="position"
-            )
+            self.__data.position.relative_to_parent = self.__absolute_to_relative(position, calc_for="position")
             self.__data.size.relative_to_parent = self.__absolute_to_relative(size)
         else:
             self.__data.position.relative_to_parent = position
@@ -89,45 +81,27 @@ class UIElement(UIEntity):
     # region Methods: absolute/relative convert
     def _update_relative_values(self) -> None:
         """Update reference position and size"""
-        if (
-            self.__data.position_is_relative_to_parent
-            and self._next_ui_element_parent is not None
-        ):
+        if self.__data.position_is_relative_to_parent and self._next_ui_element_parent is not None:
             match self.__data.parent_reference_position:
                 case Positions.TOP_LEFT:
-                    self.__data.reference_position.copy_from(
-                        self._next_ui_element_parent._top_left
-                    )
+                    self.__data.reference_position.copy_from(self._next_ui_element_parent._top_left)
                 case Positions.TOP_RIGHT:
-                    self.__data.reference_position.copy_from(
-                        self._next_ui_element_parent._top_right
-                    )
+                    self.__data.reference_position.copy_from(self._next_ui_element_parent._top_right)
                 case Positions.BOTTOM_LEFT:
-                    self.__data.reference_position.copy_from(
-                        self._next_ui_element_parent._bottom_left
-                    )
+                    self.__data.reference_position.copy_from(self._next_ui_element_parent._bottom_left)
                 case Positions.BOTTOM_RIGHT:
-                    self.__data.reference_position.copy_from(
-                        self._next_ui_element_parent._bottom_right
-                    )
+                    self.__data.reference_position.copy_from(self._next_ui_element_parent._bottom_right)
                 case Positions.CENTER:
-                    self.__data.reference_position.copy_from(
-                        self._next_ui_element_parent._center
-                    )
+                    self.__data.reference_position.copy_from(self._next_ui_element_parent._center)
                 case _:
-                    raise ValueError(
-                        f"Invalid anchor: {self.__data.parent_reference_position}."
-                    )
+                    raise ValueError(f"Invalid anchor: {self.__data.parent_reference_position}.")
         else:
             self.__data.reference_position.absolute_global = self.__NULL_VEC2
             self.__data.reference_position.absolute_to_parent = self.__NULL_VEC2
             self.__data.reference_position.relative_global = self.__NULL_VEC2
             self.__data.reference_position.relative_to_parent = self.__NULL_VEC2
 
-        if (
-            self.__data.size_is_relative_to_parent
-            and self._next_ui_element_parent is not None
-        ):
+        if self.__data.size_is_relative_to_parent and self._next_ui_element_parent is not None:
             self.__data.reference_size.copy_from(self._next_ui_element_parent._size)
         else:
             self.__data.reference_size.absolute = pv.global_vars.get_resolution()
@@ -135,21 +109,17 @@ class UIElement(UIEntity):
             self.__data.reference_size.relative_to_parent = self.__ONE_VEC2
 
         if self._next_ui_element_parent is not None:
-            self.__data.reference_size_for_position.copy_from(
-                self._next_ui_element_parent._size
-            )
+            self.__data.reference_size_for_position.copy_from(self._next_ui_element_parent._size)
         else:
-            self.__data.reference_size_for_position.absolute = (
-                pv.global_vars.get_resolution()
-            )
+            self.__data.reference_size_for_position.absolute = pv.global_vars.get_resolution()
             self.__data.reference_size_for_position.relative_global = self.__ONE_VEC2
             self.__data.reference_size_for_position.relative_to_parent = self.__ONE_VEC2
 
     def __relative_to_absolute(
-        self,
-        relative_value: coord_t,
-        reference: coord_t | None = None,
-        calc_for: tp.Literal["position", "size"] = "size",
+            self,
+            relative_value: coord_t,
+            reference: coord_t | None = None,
+            calc_for: tp.Literal["position", "size"] = "size"
     ) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
@@ -161,27 +131,21 @@ class UIElement(UIEntity):
         return TupleMath.mul(
             convert_coord(relative_value),
             convert_coord(
-                reference
-                or (
-                    self.__data.reference_size.absolute
-                    if (calc_for == "size" and self.__data.size_is_relative_to_parent)
-                    else (
-                        self.__data.reference_size_for_position.absolute
-                        if (
-                            calc_for == "position"
-                            and self.__data.position_is_relative_to_parent
-                        )
-                        else pv.global_vars.get_resolution()
-                    )
-                )
-            ),
+                reference if reference else (
+                    self.__data.reference_size.absolute if (
+                            calc_for == "size" and self.__data.size_is_relative_to_parent
+                    ) else (
+                        self.__data.reference_size_for_position.absolute if (
+                                calc_for == "position" and self.__data.position_is_relative_to_parent
+                        ) else pv.global_vars.get_resolution())
+                ))
         )
 
     def __absolute_to_relative(
-        self,
-        absolute_value: coord_t,
-        reference: coord_t | None = None,
-        calc_for: tp.Literal["position", "size"] = "size",
+            self,
+            absolute_value: coord_t,
+            reference: coord_t | None = None,
+            calc_for: tp.Literal["position", "size"] = "size"
     ) -> tuple[float, float]:
         """
         Converts relative coords to absolute coords according to the current resolution
@@ -193,20 +157,14 @@ class UIElement(UIEntity):
         return TupleMath.div(
             convert_coord(absolute_value),
             convert_coord(
-                reference
-                or (
-                    self.__data.reference_size.absolute
-                    if (calc_for == "size" and self.__data.size_is_relative_to_parent)
-                    else (
-                        self.__data.reference_size_for_position.absolute
-                        if (
-                            calc_for == "position"
-                            and self.__data.position_is_relative_to_parent
-                        )
-                        else pv.global_vars.get_resolution()
-                    )
-                )
-            ),
+                reference if reference else (
+                    self.__data.reference_size.absolute if (
+                            calc_for == "size" and self.__data.size_is_relative_to_parent
+                    ) else (
+                        self.__data.reference_size_for_position.absolute if (
+                                calc_for == "position" and self.__data.position_is_relative_to_parent
+                        ) else pv.global_vars.get_resolution())
+                ))
         )
 
     # endregion
@@ -228,13 +186,9 @@ class UIElement(UIEntity):
                         case UIElementValueTypesEnum.ABSOLUTE:
                             self.__data.size.absolute.x = self.__data.width.absolute
                         case UIElementValueTypesEnum.RELATIVE_GLOBAL:
-                            self.__data.size.relative_global.x = (
-                                self.__data.width.relative_global
-                            )
+                            self.__data.size.relative_global.x = self.__data.width.relative_global
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
-                            self.__data.size.relative_to_parent.x = (
-                                self.__data.width.relative_to_parent
-                            )
+                            self.__data.size.relative_to_parent.x = self.__data.width.relative_to_parent
                         case _:
                             raise ValueError(f"Invalid value type: {value_type}.")
                 case UIElementValueNamesEnum.HEIGHT:
@@ -243,28 +197,21 @@ class UIElement(UIEntity):
                         case UIElementValueTypesEnum.ABSOLUTE:
                             self.__data.size.absolute.y = self.__data.height.absolute
                         case UIElementValueTypesEnum.RELATIVE_GLOBAL:
-                            self.__data.size.relative_global.y = (
-                                self.__data.height.relative_global
-                            )
+                            self.__data.size.relative_global.y = self.__data.height.relative_global
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
-                            self.__data.size.relative_to_parent.y = (
-                                self.__data.height.relative_to_parent
-                            )
+                            self.__data.size.relative_to_parent.y = self.__data.height.relative_to_parent
                         case _:
                             raise ValueError(f"Invalid value type: {value_type}.")
                 case (
-                    UIElementValueNamesEnum.CENTER
-                    | UIElementValueNamesEnum.TOP_LEFT
-                    | UIElementValueNamesEnum.TOP_RIGHT
-                    | UIElementValueNamesEnum.BOTTOM_LEFT
-                    | UIElementValueNamesEnum.BOTTOM_RIGHT
-                ):
+                UIElementValueNamesEnum.CENTER
+                | UIElementValueNamesEnum.TOP_LEFT
+                | UIElementValueNamesEnum.TOP_RIGHT
+                | UIElementValueNamesEnum.BOTTOM_LEFT
+                | UIElementValueNamesEnum.BOTTOM_RIGHT):
                     modified_obj = getattr(self.__data, value_name.name.lower())
 
-                    if value_type in (
-                        UIElementValueTypesEnum.ABSOLUTE_GLOBAL,
-                        UIElementValueTypesEnum.ABSOLUTE_TO_PARENT,
-                    ):
+                    if value_type in (UIElementValueTypesEnum.ABSOLUTE_GLOBAL,
+                                      UIElementValueTypesEnum.ABSOLUTE_TO_PARENT):
                         size_xy = self.__data.size.absolute.xy
                     elif value_type == UIElementValueTypesEnum.RELATIVE_GLOBAL:
                         size_xy = self.__data.size.relative_global.xy
@@ -299,28 +246,21 @@ class UIElement(UIEntity):
                         case Anchor.CENTER:
                             anchor_coord = half_size_xy
 
-                    offset_xy = (
-                        mod_coord[0] - anchor_coord[0],
-                        mod_coord[1] - anchor_coord[1],
-                    )
+                    offset_xy = (mod_coord[0] - anchor_coord[0], mod_coord[1] - anchor_coord[1])
 
                     match value_type:
                         case UIElementValueTypesEnum.ABSOLUTE_GLOBAL:
                             self.__data.position.absolute_global = TupleMath.sub(
-                                modified_obj.absolute_global.xy, offset_xy
-                            )
+                                modified_obj.absolute_global.xy, offset_xy)
                         case UIElementValueTypesEnum.ABSOLUTE_TO_PARENT:
                             self.__data.position.absolute_to_parent = TupleMath.sub(
-                                modified_obj.absolute_to_parent.xy, offset_xy
-                            )
+                                modified_obj.absolute_to_parent.xy, offset_xy)
                         case UIElementValueTypesEnum.RELATIVE_GLOBAL:
                             self.__data.position.relative_global = TupleMath.sub(
-                                modified_obj.relative_global.xy, offset_xy
-                            )
+                                modified_obj.relative_global.xy, offset_xy)
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
                             self.__data.position.relative_to_parent = TupleMath.sub(
-                                modified_obj.relative_to_parent.xy, offset_xy
-                            )
+                                modified_obj.relative_to_parent.xy, offset_xy)
 
                     value_name = UIElementValueNamesEnum.POSITION
                 case _:
@@ -333,24 +273,20 @@ class UIElement(UIEntity):
                             self.__data.position.relative_to_parent = self.__absolute_to_relative(
                                 TupleMath.sub(
                                     self.__data.position.absolute_global.xy,
-                                    self.__data.reference_position.absolute_global.xy,
+                                    self.__data.reference_position.absolute_global.xy
                                 ),
-                                calc_for="position",
+                                calc_for="position"
                             )
                         case UIElementValueTypesEnum.ABSOLUTE_TO_PARENT:
-                            self.__data.position.relative_to_parent = (
-                                self.__absolute_to_relative(
-                                    self.__data.position.absolute_to_parent,
-                                    calc_for="position",
-                                )
+                            self.__data.position.relative_to_parent = self.__absolute_to_relative(
+                                self.__data.position.absolute_to_parent, calc_for="position"
                             )
                         case UIElementValueTypesEnum.RELATIVE_GLOBAL:
                             self.__data.position.relative_to_parent = TupleMath.div(
                                 TupleMath.sub(
                                     self.__data.position.relative_global.xy,
-                                    self.__data.reference_position.relative_global.xy,
-                                ),
-                                self.__data.reference_size_for_position.relative_global.xy,
+                                    self.__data.reference_position.relative_global.xy),
+                                self.__data.reference_size_for_position.relative_global.xy
                             )
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
                             ...  # Calculations bases from here, no action needed
@@ -359,13 +295,13 @@ class UIElement(UIEntity):
                 case UIElementValueNamesEnum.SIZE:
                     match value_type:
                         case UIElementValueTypesEnum.ABSOLUTE:
-                            self.__data.size.relative_to_parent = (
-                                self.__absolute_to_relative(self.__data.size.absolute)
+                            self.__data.size.relative_to_parent = self.__absolute_to_relative(
+                                self.__data.size.absolute
                             )
                         case UIElementValueTypesEnum.RELATIVE_GLOBAL:
                             self.__data.size.relative_to_parent = TupleMath.div(
                                 self.__data.size.relative_global.xy,
-                                self.__data.reference_size.relative_global.xy,
+                                self.__data.reference_size.relative_global.xy
                             )
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
                             ...  # Calculations bases from here, no action needed
@@ -376,16 +312,13 @@ class UIElement(UIEntity):
                 case UIElementValueNamesEnum.SIZE_IS_RELATIVE_TO_PARENT:
                     ...
                 case (
-                    UIElementValueNamesEnum.PLACEMENT_ANCHOR
-                    | UIElementValueNamesEnum.REFERENCE_POSITION
-                    | UIElementValueNamesEnum.REFERENCE_SIZE
-                    | UIElementValueNamesEnum.PARENT_REFERENCE_POSITION
-                ):
+                UIElementValueNamesEnum.PLACEMENT_ANCHOR
+                | UIElementValueNamesEnum.REFERENCE_POSITION
+                | UIElementValueNamesEnum.REFERENCE_SIZE
+                | UIElementValueNamesEnum.PARENT_REFERENCE_POSITION):
                     ...  # No change to relative position to parent or relative size to parent
                 case _:
-                    raise ValueError(
-                        f"Invalid value name: {value_name}. IDK HOW THIS HAPPENS. CONTACT DEVELOPERS."
-                    )
+                    raise ValueError(f"Invalid value name: {value_name}. IDK HOW THIS HAPPENS. CONTACT DEVELOPERS.")
 
         return is_neq
 
@@ -393,32 +326,30 @@ class UIElement(UIEntity):
     def __calc_values(self, pass_check: bool = False) -> None:
         self._update_relative_values()
 
-        if not pass_check and not self.__check_modifications():
-            return
+        if not pass_check:
+            if not self.__check_modifications():
+                return
 
         # position relative to parent and size relative to parent are always true already
 
         # region Position
         self.__data.position.absolute_to_parent = self.__relative_to_absolute(
-            self.__data.position.relative_to_parent, calc_for="position"
-        )
+            self.__data.position.relative_to_parent, calc_for="position")
         self.__data.position.absolute_global = TupleMath.add(
             self.__data.reference_position.absolute_global.xy,
-            self.__data.position.absolute_to_parent.xy,
+            self.__data.position.absolute_to_parent.xy
         )
         self.__data.position.relative_global = TupleMath.add(
             self.__data.reference_position.relative_global.xy,
-            self.__data.position.relative_to_parent.xy,
+            self.__data.position.relative_to_parent.xy
         )
         # endregion
 
         # region Size
-        self.__data.size.absolute = self.__relative_to_absolute(
-            self.__data.size.relative_to_parent
-        )
+        self.__data.size.absolute = self.__relative_to_absolute(self.__data.size.relative_to_parent)
         self.__data.size.relative_global = TupleMath.mul(
             self.__data.size.relative_to_parent.xy,
-            self.__data.reference_size.relative_global.xy,
+            self.__data.reference_size.relative_global.xy
         )
         # endregion
 
@@ -474,13 +405,9 @@ class UIElement(UIEntity):
             off_rtp = (sz_rtp[0] * dx, sz_rtp[1] * dy)
 
             target_obj.absolute_global = TupleMath.add(pos.absolute_global.xy, off_abs)
-            target_obj.absolute_to_parent = TupleMath.add(
-                pos.absolute_to_parent.xy, off_abs
-            )
+            target_obj.absolute_to_parent = TupleMath.add(pos.absolute_to_parent.xy, off_abs)
             target_obj.relative_global = TupleMath.add(pos.relative_global.xy, off_rg)
-            target_obj.relative_to_parent = TupleMath.add(
-                pos.relative_to_parent.xy, off_rtp
-            )
+            target_obj.relative_to_parent = TupleMath.add(pos.relative_to_parent.xy, off_rtp)
 
         # endregion
 
