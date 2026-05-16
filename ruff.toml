@@ -72,6 +72,11 @@ ignore = [
     "PTH",
     "FURB136",
     "BLE001", # we use pycharms warning - also this removes brackets from (Exception,)
+    "B013", # same as above,
+    "UP015",
+    "FURB103", # discuss,
+    "FURB101",
+    "PLR0913", # dicuss - set max as alternative?
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
