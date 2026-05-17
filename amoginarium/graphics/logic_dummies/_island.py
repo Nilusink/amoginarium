@@ -16,11 +16,11 @@ from dataclasses import dataclass
 from types import EllipsisType
 
 from icecream import ic
+from utility import WtfError
 
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared import IslandCIDs
-from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t
 
 from ..textures import textures
@@ -34,6 +34,38 @@ if tp.TYPE_CHECKING:
 _ISLAND_TYPE_AIR: int = 0
 _ISLAND_TYPE_FILLED: int
 _ISLAND_TYPE_HOLE: int = 2
+
+
+class _PolyMatcher:
+    """Polygon matching."""
+
+    __slots__ = ("top", "bottom", "left", "right")
+    top: bool
+    bottom: bool
+    left: bool
+    right: bool
+
+    def __init__(self, top: bool, bottom: bool, left: bool, right: bool) -> None:
+        """
+        Polygon matching.
+
+        :param top: Whether the top edge is active.
+        :param bottom: Whether the bottom edge is active.
+        :param left: Whether the left edge is active.
+        :param right: Whether the right edge is active.
+        """
+        self.top = top
+        self.bottom = bottom
+        self.left = left
+        self.right = right
+
+    def __str__(self) -> str:
+        """:return: String formatted as [top, bottom, left, right]."""
+        return f"[{self.top}, {self.bottom}, {self.left}, {self.right}]"
+
+    def __repr__(self) -> str:
+        """:return: String representation via __str__."""
+        return self.__str__()
 
 
 def _l_get[A, B](
@@ -178,7 +210,6 @@ class _IslandTextureManager:
         """Get textures for specified island."""
         if island in self._textures:
             if texture_size in self._textures[island]:
-                ic("return existing")
                 return self._textures[island][texture_size]
 
         else:
@@ -248,15 +279,19 @@ class Island(SyncedGraphicsEntity):
 
         super().__init__(sync_id=sync_id)
 
+        self.load_textures()
         self.__parsed_island: list[tuple[int, tuple[int, int]]] = []
         self.__parse_island()
+
+        if self.__class__.__name__.startswith("Green"):
+            ic(self._size, self.__parsed_island)
 
     def __parse_island(self) -> None:
         """pre-parse the island textures."""
         # fill island with dirt
         if isinstance(self._form, EllipsisType):
-            n_rows = m.ceil(self.size.y / self._image_size[1])
-            n_columns = m.ceil(self.size.x / self._image_size[0])
+            n_rows = m.ceil(self._size.y / self._image_size[1])
+            n_columns = m.ceil(self._size.x / self._image_size[0])
 
         else:
             n_rows = len(self._form)
@@ -313,6 +348,34 @@ class Island(SyncedGraphicsEntity):
                     block_left = _l_get(_l_get(self._form, row, []), column - 1, 0)
                     block_right = _l_get(_l_get(self._form, row, []), column + 1, 0)
 
+                    if row > 0:
+                        try:
+                            block_top = self._form[row - 1][column]
+
+                        except IndexError:
+                            block_top = 0
+
+                    if row < n_rows - 1:
+                        try:
+                            block_bottom = self._form[row + 1][column]
+
+                        except IndexError:
+                            block_left = 0
+
+                    if column > 0:
+                        try:
+                            block_left = self._form[row][column - 1]
+
+                        except IndexError:
+                            block_left = 0
+
+                    if column < n_columns - 1:
+                        try:
+                            block_right = self._form[row][column + 1]
+
+                        except IndexError:
+                            block_right = 0
+
                     # get island type
                     island_type = self._form[row][column]
 
@@ -329,6 +392,12 @@ class Island(SyncedGraphicsEntity):
                     block_left in (1, 2),
                     block_right in (1, 2),
                 )
+                poly = _PolyMatcher(
+                    top=block_top in (1, 2),
+                    bottom=block_bottom in (1, 2),
+                    left=block_left in (1, 2),
+                    right=block_right in (1, 2),
+                )
 
                 # empty
                 if island_type == _ISLAND_TYPE_AIR:
@@ -339,12 +408,131 @@ class Island(SyncedGraphicsEntity):
                     texture = self._textures.dirt_hole_texture
 
                 else:
-                    texture = texture_map.get(poly, self._textures.dirt_texture)
+                    match poly:
+                        # single
+                        case _PolyMatcher(
+                            top=False, bottom=False, left=False, right=False
+                        ):
+                            texture = self._textures.island_single_texture
+
+                        # dirt
+                        case _PolyMatcher(top=True, bottom=True, left=True, right=True):
+                            texture = self._textures.dirt_texture
+
+                        # grass top
+                        case _PolyMatcher(
+                            top=False, bottom=True, left=True, right=True
+                        ):
+                            texture = self._textures.island_middle_texture
+
+                        # grass bottom
+                        case _PolyMatcher(
+                            top=True, bottom=False, left=True, right=True
+                        ):
+                            texture = self._textures.island_middle_inv_texture
+
+                        # left wall
+                        case _PolyMatcher(
+                            top=True, bottom=True, left=False, right=True
+                        ):
+                            texture = self._textures.island_wall_right_texture
+
+                        # right wall
+                        case _PolyMatcher(
+                            top=True, bottom=True, left=True, right=False
+                        ):
+                            texture = self._textures.island_wall_left_texture
+
+                        # top and bottom
+                        case _PolyMatcher(
+                            top=True, bottom=True, left=False, right=False
+                        ):
+                            texture = self._textures.island_top_bottom_texture
+
+                        # left and right
+                        case _PolyMatcher(
+                            top=False, bottom=False, left=True, right=True
+                        ):
+                            texture = self._textures.island_left_right_texture
+
+                        # bottom empty
+                        case _PolyMatcher(
+                            top=True, bottom=False, left=True, right=True
+                        ):
+                            texture = self._textures.island_middle_inv_texture
+
+                        # top empty
+                        case _PolyMatcher(
+                            top=False, bottom=True, left=True, right=True
+                        ):
+                            texture = self._textures.island_middle_texture
+
+                        # left empty
+                        case _PolyMatcher(
+                            top=True, bottom=True, left=False, right=True
+                        ):
+                            texture = self._textures.island_wall_left_texture
+
+                        # right empty
+                        case _PolyMatcher(
+                            top=True, bottom=True, left=True, right=False
+                        ):
+                            texture = self._textures.island_wall_right_texture
+
+                        # right top corner
+                        case _PolyMatcher(
+                            top=False, bottom=True, left=True, right=False
+                        ):
+                            texture = self._textures.island_right_texture
+
+                        # left top corner
+                        case _PolyMatcher(
+                            top=False, bottom=True, left=False, right=True
+                        ):
+                            texture = self._textures.island_left_texture
+
+                        # right bottom corner
+                        case _PolyMatcher(
+                            top=True, bottom=False, left=True, right=False
+                        ):
+                            texture = self._textures.island_right_inv_texture
+
+                        # left bottom corner
+                        case _PolyMatcher(
+                            top=True, bottom=False, left=False, right=True
+                        ):
+                            texture = self._textures.island_left_inv_texture
+
+                        # top connected
+                        case _PolyMatcher(
+                            top=True, bottom=False, left=False, right=False
+                        ):
+                            texture = self._textures.island_single_bottom_texture
+
+                        # bottom connected
+                        case _PolyMatcher(
+                            top=False, bottom=True, left=False, right=False
+                        ):
+                            texture = self._textures.island_single_top_texture
+
+                        # left connected
+                        case _PolyMatcher(
+                            top=False, bottom=False, left=True, right=False
+                        ):
+                            texture = self._textures.island_single_left_texture
+
+                        # right connected
+                        case _PolyMatcher(
+                            top=False, bottom=False, left=False, right=True
+                        ):
+                            texture = self._textures.island_single_right_texture
+
+                        case _:
+                            raise WtfError("idek how you got here", poly)
 
                 column_offset = self._image_size[0] * column
                 self.__parsed_island.append((texture, (column_offset, row_offset)))
 
-    @cum_timer.time_this
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:  # noqa: ARG002
         world_position = pv.global_vars.get_world_position()
         resolution = pv.global_vars.resolution_screen

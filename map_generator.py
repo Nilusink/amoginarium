@@ -14,21 +14,40 @@ from time import perf_counter
 
 import numpy as np
 import pygame as pg
-from certifi import core
 from icecream import ic
 from scipy import ndimage
 
 from amoginarium import pv
 from amoginarium.base import BaseGame
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.logic.map import preprocess, to_str
+from amoginarium.logic.map import to_str
 from amoginarium.shared.utility import Color, Vec2
-from test_map_chunk_generator import generate_chunk_noise, iterate_chunk, render_chunk
+from test_map_chunk_generator import (
+    array_get,
+    generate_chunk_noise,
+    iterate_chunk,
+    plt,
+    render_chunk,
+)
 
 ISLAND_SIZE: int = 64
-CHUNK_SIZE = ISLAND_SIZE * ISLAND_SIZE
-UPDATE_INTERVAL = 0.0000005
-MAX_LEN: int = 16
+CHUNK_SIZE = ISLAND_SIZE * 96
+CHUNK_SMOOTHING_ITERATIONS: int = 16
+UPDATE_INTERVAL = 0.0
+MAX_LEN: int = 8
+
+# spawn stuff
+IDEAL_PLATEAU_LENGTH: int = 8
+
+spawnables: list[tuple[tuple[str, tuple[float, float]], int]] = [
+    (("turret.static.ak47", (11.5, 0)), 6),  # (name, required_space), spawn_prob
+    (("turret.static.minigun", (11.5, 0)), 4),
+    (("turret.static.sniper", (11.5, 0)), 4),
+    (("turret.static.cram", (32, 0)), 1),
+    (("turret.static.sky_shield", (64, 0)), 1),
+    (("turret.static.flak", (186 / 2, 0)), 2),
+    (("turret.static.mortar", (ISLAND_SIZE * 2, ISLAND_SIZE * 10)), 7),
+]
 
 
 def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
@@ -59,14 +78,14 @@ def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
 
 def merge_chunks(
     chunks: dict[tuple[int, int], np.ndarray],
-) -> tuple[np.ndarray, tuple[int, int]]:
+) -> tuple[np.ndarray, np.ndarray, tuple[int, int]]:
     """
-    merge all small chunks into one big one
+    Merge all small chunks into one big one.
 
-    :returns: merged ndarray, min position
+    :returns: merged ndarray, mask, min position
     """
-    xs = [k[0] for k in chunks.keys()]
-    ys = [k[1] for k in chunks.keys()]
+    xs = [k[0] for k in chunks]
+    ys = [k[1] for k in chunks]
 
     min_x, max_x = min(xs), max(xs)
     min_y, max_y = min(ys), max(ys)
@@ -78,45 +97,143 @@ def merge_chunks(
     h, w = next(iter(chunks.values())).shape
 
     big = np.ones((grid_h * h, grid_w * w), dtype=np.float32)
+    mask = np.zeros((grid_h * h, grid_w * w), dtype=np.bool)
 
     # insert chunks
     for (cx, cy), chunk in chunks.items():
         x = (cx - min_x) * w
         y = (cy - min_y) * h
 
-        big[y : y + h, x : x + w] = np.rot90(chunk, -1)[:, ::-1]
+        big[y : y + h, x : x + w] = chunk.T
+        mask[y : y + h, x : x + w] = True
 
-    return big, (min_x, min_y)
+    return big, mask, (min_x, min_y)
 
 
-def top_of_column(island: np.ndarray, x: int):
-    """find top of island via column scan"""
-    col = island[:, x]
+def top_of_column(island: np.ndarray, x: int, y_start: int = 0) -> int | None:
+    """Find top of island via column scan."""
+    col = island[y_start:, x]
     ys = np.where(col)[0]
     return ys.min() if ys.size > 0 else None
 
 
-def choose_turret(
-    map_buffer: np.ndarray, spawn_pos: tuple[int, int]
-) -> tuple[str, tuple[float, float]]:
-    """choose a turret based on map location"""
-    turrets = [
-        (("turret.static.ak47", (11.5, 0)), 5),
-        (("turret.static.minigun", (11.5, 0)), 3),
-        (("turret.static.sniper", (11.5, 0)), 3),
-        (("turret.static.flak", (186 / 2, 0)), 1),
-        (("turret.static.cram", (32, 0)), 1),
-        (("turret.static.sky_shield", (64, 0)), 1),
-    ]
-    if 1:
-        turrets.append((("turret.static.mortar", (11.5, 0)), 7))
+def get_spawn_probability(island: np.ndarray) -> float:
+    """
+    Get spawn probability of an island.
+    """
+    island_length = len(island[0])
 
-    names, counts = zip(*turrets)
+    # return island_length / (CHUNK_SIZE / ISLAND_SIZE)
+    return 1
+
+
+def get_spawn_points(
+    island: np.ndarray,
+    island_start: tuple[int, int],
+    world: np.ndarray,
+    world_mask: np.ndarray,
+) -> list[tuple[tuple[float, float], list[int]]]:
+    """Get spawn point on island."""
+    island_height: int = len(island)
+    island_length: int = len(island[0])
+
+    # get top of island for each x position
+    o_heights: list[int] = [
+        island_height if (v := top_of_column(island, ind)) is None else v
+        for ind in range(island_length)
+    ]
+
+    # calculate plateaus
+    # list of height, x_start, count  (list because settable)
+    plateaus: list[list[int]] = []
+    current_plateau = -1
+    for i in range(len(o_heights)):
+        current_height = o_heights[i]
+
+        if current_height != current_plateau:
+            plateaus.append([int(current_height), i, 0])
+            current_plateau = current_height
+
+        # add step to plateau
+        plateaus[-1][-1] += 1
+
+    # create weights for plateaus (height + length)
+    weights: list[float] = [
+        (
+            (
+                (1 - (p[0] / island_height)) ** 2
+                + min(1, p[2] / IDEAL_PLATEAU_LENGTH) ** 2 * 6
+            )
+            / 7
+        )
+        ** 2
+        for p in plateaus
+    ]
+
+    out = []
+    for plateau, weight in zip(plateaus, weights, strict=True):
+        # check if point is out of bounds
+        pos = (plateau[1] + plateau[2] // 2, plateau[0])
+        world_pos = (
+            island_start[1] + pos[1] - 1,
+            island_start[0] + pos[0],
+        )
+
+        if not array_get(
+            world_mask,
+            world_pos,
+            False,
+        ):
+            try:
+                world[world_pos] = 5
+
+            except IndexError:
+                continue
+
+            continue
+
+        if random.random() < weight:
+            world[world_pos] = 10
+            out.append((pos, plateau))
+
+    return out
+
+
+def choose_turret(
+    map_buffer: np.ndarray, spawn_pos: tuple[int, int], plateau: list[int]
+) -> tuple[str, tuple[float, float]]:
+    """Choose a turret based on map location."""
+    turrets = []
+
+    for turret in spawnables:
+        x_size = turret[0][1][0] / ISLAND_SIZE
+        y_size: int = 1 + int(turret[0][1][1] // ISLAND_SIZE)
+
+        if x_size // 2 <= plateau[2]:
+            # check height requirement
+            headroom = top_of_column(map_buffer, spawn_pos[0], spawn_pos[1] - y_size)
+            headroom = headroom or y_size
+
+            if headroom < y_size - 1:
+                ic("height fail", y_size, turret[0][1][1], headroom)
+                # add visual hint to map buffer if height fail
+                map_buffer[
+                    spawn_pos[1] - y_size : max(1, spawn_pos[1] - y_size + headroom),
+                    spawn_pos[0],
+                ] = -2
+                continue
+
+            turrets.append(turret)
+
+        else:
+            ic("size fail")
+
+    names, counts = zip(*turrets, strict=True)
     return random.sample(names, 1, counts=counts)[0]
 
 
-def main() -> None:
-    """d"""
+def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR0914  # noqa: PLR0915
+    """D."""
     b = BaseGame(debug=True)
     renderer.display_set_windowed()
 
@@ -165,8 +282,8 @@ def main() -> None:
                 ]
                 new_positions = []
                 weights = []
-                for offset, weight in zip(viable_offsets, viable_weights):
-                    if not chunks.get(offset, False):  # type: ignore
+                for offset, weight in zip(viable_offsets, viable_weights, strict=True):
+                    if not chunks.get(offset):
                         new_positions.append(offset)
                         weights.append(weight)
 
@@ -205,11 +322,10 @@ def main() -> None:
             max_x = 0
             max_y = 0
             line = []
-            for _i, chunk in enumerate(chunks.values()):
-                _pos, *_ = chunk
-                _pos: Vec2
-                pos = _pos.copy() * CHUNK_SIZE
-                # line.append(pos - world_pos + CHUNK_SIZE/2)
+            for i_, chunk in enumerate(chunks.values()):
+                pos_, *_ = chunk
+                pos_: Vec2
+                pos = pos_.copy() * CHUNK_SIZE
 
                 if chunk == current_chunk:
                     color = Color().from_1(1, 0, 0, 1)
@@ -241,8 +357,7 @@ def main() -> None:
             # set view to center
             center_x = min_x + (max_x - min_x) / 2
             center_y = min_y + (max_y - min_y) / 2
-            # center = current_chunk[0].copy() * CHUNK_SIZE
-            # center += CHUNK_SIZE / 2
+
             world_pos.xy = center_x, center_y
             world_pos -= screen_pixels / 2
             pv.global_vars.set_world_position(world_pos)
@@ -292,7 +407,9 @@ def main() -> None:
                         spawn_chunk=currently_populating == 0,
                     )
 
-                if iterate_chunk(chunk_populations[curr_pos], i):
+                if iterate_chunk(
+                    chunk_populations[curr_pos], i, n_steps=CHUNK_SMOOTHING_ITERATIONS
+                ):
                     i = 0
                     currently_populating += 1
 
@@ -307,11 +424,10 @@ def main() -> None:
 
             renderer.clear_display((0.8, 0.8, 0.8))
 
-            for _i, chunk in enumerate(chunks.values()):
-                _pos, *_ = chunk
-                _pos: Vec2
-                pos = _pos.copy() * CHUNK_SIZE
-                # line.append(pos - world_pos + CHUNK_SIZE/2)
+            for i_, chunk in enumerate(chunks.values()):
+                pos_, *_ = chunk
+                pos_: Vec2
+                pos = pos_.copy() * CHUNK_SIZE
 
                 if chunk == current_chunk:
                     color = Color().from_1(1, 0, 0, 1)
@@ -324,22 +440,22 @@ def main() -> None:
                 for direction in chunk[1]:
                     draw_chunk_interface(pos - world_pos, direction)
 
-            for chunk_pos in chunk_populations:
+            for chunk_pos, chunk in chunk_populations.items():
                 pos = Vec2().from_cartesian(*chunk_pos) * CHUNK_SIZE
 
-                render_chunk(pos, chunk_populations[chunk_pos])
+                render_chunk(pos, chunk)
 
             renderer.display_draw_frame()
 
         # merge chunks
-        big_chunk, min_pos = merge_chunks(chunk_populations)
+        big_chunk, chunk_mask, min_pos = merge_chunks(chunk_populations)
         for _ in range(12):
-            iterate_chunk(big_chunk, 0)
+            iterate_chunk(big_chunk, 0, show_chunk=False)
 
         iterate_chunk(big_chunk, np.inf, show_chunk=True)
 
         # group islands
-        mask = big_chunk < 0.5
+        mask = big_chunk < 0.5  # noqa: PLR2004
         structure = np.array(  # use 4-connected islands (no diagonals allowed)
             [
                 [0, 1, 0],
@@ -374,7 +490,7 @@ def main() -> None:
         }
 
         # create islands
-        for island, pts in zip(islands, coords_list):
+        for island, pts in zip(islands, coords_list, strict=True):
             min_y, min_x = pts.min(axis=0)
             max_y, max_x = pts.max(axis=0)
 
@@ -391,39 +507,27 @@ def main() -> None:
 
             # create turrets
             # get tops of island
-            island_height = len(cropped)
-            island_length = len(cropped[0])
-
-            spawn_chance = island_length / (CHUNK_SIZE / ISLAND_SIZE)
+            spawn_chance = get_spawn_probability(cropped)
 
             if random.random() <= spawn_chance:
-                o_heights = [top_of_column(cropped, _i) for _i in range(island_length)]
-                heights = [v for v in o_heights if v is not None]
+                for (x_off, y_off), plateau in get_spawn_points(
+                    cropped, (min_x, min_y), big_chunk, chunk_mask
+                ):
+                    # calculate global position
+                    x_pos = min_x + x_off
+                    y_pos = min_y + y_off
 
-                # the higher, the more likely the spawn
-                weights = [
-                    int(((1 - (value / island_height)) ** 2) * 255) for value in heights
-                ]
-                ic(heights, weights)
+                    turret, _ = choose_turret(big_chunk, (x_pos, y_pos), plateau)
 
-                chosen_height = random.sample(heights, 1, counts=weights)[0]
-                chosen_x_offset = o_heights.index(chosen_height)
-
-                turret, offset = choose_turret(
-                    big_chunk, (min_x + chosen_x_offset, min_y + chosen_height)
-                )
-
-                ic(turret)
-
-                map_data["entities"].append(
-                    {
-                        "type": turret,
-                        "pos": (
-                            pos[0] + chosen_x_offset * ISLAND_SIZE + offset[0],
-                            pos[1] + chosen_height * ISLAND_SIZE + offset[1],
-                        ),
-                    }
-                )
+                    map_data["entities"].append(
+                        {
+                            "type": turret,
+                            "pos": (
+                                pos[0] + x_off * ISLAND_SIZE + ISLAND_SIZE / 2,
+                                pos[1] + y_off * ISLAND_SIZE,
+                            ),
+                        }
+                    )
 
         # create spawn-platform
         spawn_pos -= Vec2().from_cartesian(block_size, -32)
@@ -438,8 +542,11 @@ def main() -> None:
         )
 
         ic("writing map ...")
-        with open("generated_map.json", "w") as f:
+        with open("generated_map.json", "w", encoding="utf-8") as f:
             f.write(to_str(map_data))
+
+        plt.imshow(big_chunk)
+        plt.show()
 
         ic("done")
         b.end()
@@ -454,10 +561,10 @@ def main() -> None:
 
             renderer.clear_display()
 
-            for _i, chunk in enumerate(chunks.values()):
-                _pos, *_ = chunk
-                _pos: Vec2
-                pos = _pos.copy() * CHUNK_SIZE
+            for i_, chunk in enumerate(chunks.values()):
+                pos_, *_ = chunk
+                pos_: Vec2
+                pos = pos_.copy() * CHUNK_SIZE
                 # line.append(pos - world_pos + CHUNK_SIZE/2)
 
                 if chunk == current_chunk:

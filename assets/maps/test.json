@@ -28,7 +28,6 @@
             }
         },
         {
-            "type": "island.platform.2",
             "args": {
                 "pos": [850, 180],
                 "form": [[1]]
@@ -78,12 +77,15 @@
                 [1, 1, 0],
                 [0, 1, 0]
             ]
-        }        
+        }
     ],
     "entities": [
         {
             "type": "sensor.static.radar",
-            "pos": [2836, 185]
+            "pos": [2836, 185],
+            "args":{
+                "detection_range": 1500
+            }
         },
         {
             "type": "turret.static.flak",
