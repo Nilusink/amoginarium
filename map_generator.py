@@ -1,8 +1,8 @@
 """
+test for the map generator.
+
 test_map_generator.py
 15.05.2026
-
-test for the map generator
 
 Author:
 Nilusink

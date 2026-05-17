@@ -20,6 +20,7 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared import IslandCIDs
+from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Vec2, convert_coord, coord_t
 
 from ..textures import textures
@@ -341,13 +342,13 @@ class Island(SyncedGraphicsEntity):
                     texture = texture_map.get(poly, self._textures.dirt_texture)
 
                 column_offset = self._image_size[0] * column
-
                 self.__parsed_island.append((texture, (column_offset, row_offset)))
 
+    @cum_timer.time_this
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:  # noqa: ARG002
         world_position = pv.global_vars.get_world_position()
         resolution = pv.global_vars.resolution_screen
-        start_pos = self.pos
+        start_pos = self.world_position
 
         # check if island is on screen
         if (
@@ -367,7 +368,7 @@ class Island(SyncedGraphicsEntity):
 
             renderer.draw_textured_quad(
                 texture_id,
-                pos + start_pos,
+                pos,
                 size,
                 layer=layer,
                 offscreen_check=True,
