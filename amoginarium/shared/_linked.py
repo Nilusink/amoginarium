@@ -7,15 +7,15 @@ globals
 Author:
 Nilusink
 """
-from multiprocessing.sharedctypes import Synchronized
-from ctypes import c_double, c_int8
-from multiprocessing import Value
-from enum import Enum
+
 import typing as tp
+from ctypes import c_double, c_int8
+from enum import Enum
+from multiprocessing import Value
+from multiprocessing.sharedctypes import Synchronized
 
 from .debugging import cum_timer
 from .utility import Vec2
-
 
 _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
     "screen_size_x": c_double,
@@ -36,7 +36,7 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
     "time": c_double,
     "t_mult": c_double,
     "max_fps": c_double,
-    "background_position": c_double
+    "background_position": c_double,
 }
 
 

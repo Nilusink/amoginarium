@@ -7,12 +7,15 @@ uses the keyboard as a controller
 Author:
 Nilusink
 """
+
+from contextlib import suppress
 from dataclasses import dataclass
-from contextlib  import suppress
+
 import pygame as pg
-# from icecream import ic
 
 from ._base_controller import Controller
+
+# from icecream import ic
 
 
 # switch controller
@@ -53,14 +56,10 @@ class ControllerKeybmap:
 
 
 class GameController(Controller):
-    x_dead_zone: float = .1
-    y_dead_zone: float = .1
+    x_dead_zone: float = 0.1
+    y_dead_zone: float = 0.1
 
-    def __init__(
-            self,
-            id: str,
-            pygame_joystick: pg.joystick.JoystickType
-    ) -> None:
+    def __init__(self, id: str, pygame_joystick: pg.joystick.JoystickType) -> None:
         if not pygame_joystick.get_init():
             pygame_joystick.init()
 
@@ -82,11 +81,14 @@ class GameController(Controller):
 
     def update(self, delta):
         # read controls
-        self._keys.shoot = self.btn(ControllerKeybmap.r2) or self.btn(ControllerKeybmap.r1)
+        self._keys.shoot = self.btn(ControllerKeybmap.r2) or self.btn(
+            ControllerKeybmap.r1
+        )
         with suppress(pg.error):
-            self._keys.shoot = self._keys.shoot or self._joystick.get_axis(
-                ControllerKeybmap.r2_axis
-            ) > 0
+            self._keys.shoot = (
+                self._keys.shoot
+                or self._joystick.get_axis(ControllerKeybmap.r2_axis) > 0
+            )
 
         self._keys.reload = self.btn(ControllerKeybmap.b)
         self._keys.jump = self.btn(ControllerKeybmap.a)
@@ -94,22 +96,15 @@ class GameController(Controller):
 
         # set joystick position
         self._keys.joy_x = self.joy_curve(
-            self._joystick.get_axis(0),
-            x_deadzone=self.x_dead_zone
+            self._joystick.get_axis(0), x_deadzone=self.x_dead_zone
         )
         self._keys.joy_y = self.joy_curve(
-            self._joystick.get_axis(1),
-            x_deadzone=self.y_dead_zone
+            self._joystick.get_axis(1), x_deadzone=self.y_dead_zone
         )
 
         self._keys.joy_btn = self.btn(ControllerKeybmap.ljoy)
 
-    def rumble(
-            self,
-            low_frequency,
-            high_frequency,
-            duration
-    ) -> None:
+    def rumble(self, low_frequency, high_frequency, duration) -> None:
         self._joystick.rumble(low_frequency, high_frequency, duration)
 
     def feedback_collide(self) -> None:

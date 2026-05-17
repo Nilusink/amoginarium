@@ -1,3 +1,12 @@
+"""
+Calculates average, 1% low, and 1% high FPS from JSON.
+
+Path: fps_analyzer.py
+Project: amoginarium
+Created: 18.05.2026
+Authors: Nilusink
+"""
+
 import json
 import math
 
@@ -19,8 +28,8 @@ else:
 fpss = sorted([1 / value[1] for value in fpss])
 
 
-lo_1 = fpss[:math.ceil(len(fpss) * .01)]
-hi_1 = fpss[::-1][:math.ceil(len(fpss) * .01)]
+lo_1 = fpss[: math.ceil(len(fpss) * 0.01)]
+hi_1 = fpss[::-1][: math.ceil(len(fpss) * 0.01)]
 
 av_fps = sum(fpss) / len(fpss)
 lo_1_fps = sum(lo_1) / len(lo_1)

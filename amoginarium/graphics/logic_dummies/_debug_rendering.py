@@ -11,16 +11,24 @@ import typing as tp
 from amoginarium import pv
 from amoginarium.shared import CIDType, GraphicsCIDs
 from amoginarium.shared.utility import Color, MASK16, Vec2
-from ._synced_entities import SyncedGraphicsEntity
+
 from ..entities import Drawn_0, Drawn_2
 from ..render_bindings import renderer
+from ._synced_entities import SyncedGraphicsEntity
 
 
 class DebugRectangleEntity(SyncedGraphicsEntity):
     """A graphics-side entity used to render debug rectangles and their corner points"""
+
     __slots__ = (
-        "__point_color", "__point_radius", "__point_num_segments", "__outline_color", "__outline_thickness",
-        "__fill_color", "__centered", "__convert_global"
+        "__point_color",
+        "__point_radius",
+        "__point_num_segments",
+        "__outline_color",
+        "__outline_thickness",
+        "__fill_color",
+        "__centered",
+        "__convert_global",
     )
 
     # region ClassVars
@@ -37,17 +45,17 @@ class DebugRectangleEntity(SyncedGraphicsEntity):
     __convert_global: bool  # endregion
 
     def __init__(
-            self,
-            sync_id: int,
-            point_color: tuple[int, int, int] | tuple[int, int, int, int],
-            point_radius: int,
-            point_num_segments: int,
-            outline_color: tuple[int, int, int] | tuple[int, int, int, int],
-            outline_thickness: int,
-            fill_color: tuple[int, int, int] | tuple[int, int, int, int],
-            centered: bool,
-            convert_global: bool,
-            **_kwargs: tp.Any
+        self,
+        sync_id: int,
+        point_color: tuple[int, int, int] | tuple[int, int, int, int],
+        point_radius: int,
+        point_num_segments: int,
+        outline_color: tuple[int, int, int] | tuple[int, int, int, int],
+        outline_thickness: int,
+        fill_color: tuple[int, int, int] | tuple[int, int, int, int],
+        centered: bool,
+        convert_global: bool,
+        **_kwargs: tp.Any,
     ) -> None:
         """
         Initializes a DebugRectangleEntity.
@@ -80,7 +88,11 @@ class DebugRectangleEntity(SyncedGraphicsEntity):
         :param delta_cal: The time delta for interpolation (unused here).
         :param layer: The rendering layer index.
         """
-        pos = self.world_position - self.size / 2 if self.__centered else self.world_position
+        pos = (
+            self.world_position - self.size / 2
+            if self.__centered
+            else self.world_position
+        )
         size = self.size
 
         # Fill
@@ -88,7 +100,7 @@ class DebugRectangleEntity(SyncedGraphicsEntity):
             start=pos,
             size=size,
             color=self.__fill_color,
-            convert_global=self.__convert_global
+            convert_global=self.__convert_global,
         )
 
         # Draw outline
@@ -98,33 +110,46 @@ class DebugRectangleEntity(SyncedGraphicsEntity):
                 size=size,
                 color=self.__outline_color,
                 thickness=self.__outline_thickness,
-                convert_global=self.__convert_global
+                convert_global=self.__convert_global,
             )
 
         # Draw circles
         if self.__point_radius > 0:
             circle_pos: tuple[int, int]
             for circle_pos in (
-                    pos.xy,
-                    (pos.x + size.x, pos.y),
-                    (pos.x + size.x, pos.y + size.y),
-                    (pos.x, pos.y + size.y),
+                pos.xy,
+                (pos.x + size.x, pos.y),
+                (pos.x + size.x, pos.y + size.y),
+                (pos.x, pos.y + size.y),
             ):
                 renderer.draw_circle(
                     center=circle_pos,
                     radius=self.__point_radius,
                     num_segments=self.__point_num_segments,
                     color=self.__point_color,
-                    convert_global=self.__convert_global
+                    convert_global=self.__convert_global,
                 )
 
 
 class DebugPolygonEntity(SyncedGraphicsEntity):
     """A graphics-side entity used to render debug polygons with up to 8 vertices."""
+
     __slots__ = (
-        "__p1", "__p2", "__p3", "__p4", "__p5", "__p6", "__p7", "__p8",
-        "__point_color", "__point_radius", "__point_num_segments",
-        "__outline_color", "__outline_thickness", "__fill_color", "__convert_global"
+        "__p1",
+        "__p2",
+        "__p3",
+        "__p4",
+        "__p5",
+        "__p6",
+        "__p7",
+        "__p8",
+        "__point_color",
+        "__point_radius",
+        "__point_num_segments",
+        "__outline_color",
+        "__outline_thickness",
+        "__fill_color",
+        "__convert_global",
     )
 
     # region ClassVars
@@ -148,16 +173,16 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
     __convert_global: bool  # endregion
 
     def __init__(
-            self,
-            sync_id: int,
-            point_color: tuple[int, int, int] | tuple[int, int, int, int],
-            point_radius: int,
-            point_num_segments: int,
-            outline_color: tuple[int, int, int] | tuple[int, int, int, int],
-            outline_thickness: int,
-            fill_color: tuple[int, int, int] | tuple[int, int, int, int],
-            convert_global: bool,
-            **_kwargs: tp.Any
+        self,
+        sync_id: int,
+        point_color: tuple[int, int, int] | tuple[int, int, int, int],
+        point_radius: int,
+        point_num_segments: int,
+        outline_color: tuple[int, int, int] | tuple[int, int, int, int],
+        outline_thickness: int,
+        fill_color: tuple[int, int, int] | tuple[int, int, int, int],
+        convert_global: bool,
+        **_kwargs: tp.Any,
     ) -> None:
         """
         Initializes a DebugPolygonEntity.
@@ -232,7 +257,17 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
         world_pos = pv.global_vars.get_world_position()
 
         points: list[Vec2] = [
-            p - world_pos for p in (self.__p1, self.__p2, self.__p3, self.__p4, self.__p5, self.__p6, self.__p7, self.__p8)
+            p - world_pos
+            for p in (
+                self.__p1,
+                self.__p2,
+                self.__p3,
+                self.__p4,
+                self.__p5,
+                self.__p6,
+                self.__p7,
+                self.__p8,
+            )
             if p.x != 0 or p.y != 0
         ]
 
@@ -244,7 +279,7 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
         renderer.draw_polygon(
             vertices=points,
             color=self.__fill_color,
-            convert_global=self.__convert_global
+            convert_global=self.__convert_global,
         )
 
         # 2. Outline
@@ -253,7 +288,7 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
                 vertices=points,
                 color=self.__outline_color,
                 thickness=self.__outline_thickness,
-                convert_global=self.__convert_global
+                convert_global=self.__convert_global,
             )
 
         # 3. Points
@@ -264,15 +299,22 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
                     radius=self.__point_radius,
                     num_segments=self.__point_num_segments,
                     color=self.__point_color,
-                    convert_global=self.__convert_global
+                    convert_global=self.__convert_global,
                 )
 
 
 class DebugCircleEntity(SyncedGraphicsEntity):
     """A graphics-side entity used to render debug circles and their center points"""
+
     __slots__ = (
-        "__point_color", "__point_radius", "__point_num_segments", "__outline_color", "__outline_thickness",
-        "__fill_color", "__centered", "__convert_global"
+        "__point_color",
+        "__point_radius",
+        "__point_num_segments",
+        "__outline_color",
+        "__outline_thickness",
+        "__fill_color",
+        "__centered",
+        "__convert_global",
     )
 
     # region ClassVars
@@ -289,17 +331,17 @@ class DebugCircleEntity(SyncedGraphicsEntity):
     __convert_global: bool  # endregion
 
     def __init__(
-            self,
-            sync_id: int,
-            point_color: tuple[int, int, int] | tuple[int, int, int, int],
-            point_radius: int,
-            point_num_segments: int,
-            outline_color: tuple[int, int, int] | tuple[int, int, int, int],
-            outline_thickness: int,
-            fill_color: tuple[int, int, int] | tuple[int, int, int, int],
-            centered: bool,
-            convert_global: bool,
-            **_kwargs: tp.Any
+        self,
+        sync_id: int,
+        point_color: tuple[int, int, int] | tuple[int, int, int, int],
+        point_radius: int,
+        point_num_segments: int,
+        outline_color: tuple[int, int, int] | tuple[int, int, int, int],
+        outline_thickness: int,
+        fill_color: tuple[int, int, int] | tuple[int, int, int, int],
+        centered: bool,
+        convert_global: bool,
+        **_kwargs: tp.Any,
     ) -> None:
         """
         Initializes a DebugCircleEntity.
@@ -333,14 +375,18 @@ class DebugCircleEntity(SyncedGraphicsEntity):
         :param layer: The rendering layer index.
         """
         radius = self.size.x
-        center = self.world_position if self.__centered else self.world_position + Vec2(radius, radius)
+        center = (
+            self.world_position
+            if self.__centered
+            else self.world_position + Vec2(radius, radius)
+        )
 
         renderer.draw_circle(
             center=center,
             radius=radius,
             num_segments=self.__point_num_segments,
             color=self.__fill_color,
-            convert_global=self.__convert_global
+            convert_global=self.__convert_global,
         )
 
         # Outline
@@ -351,7 +397,7 @@ class DebugCircleEntity(SyncedGraphicsEntity):
                 num_segments=self.__point_num_segments,
                 color=self.__outline_color,
                 thickness=self.__outline_thickness,
-                convert_global=self.__convert_global
+                convert_global=self.__convert_global,
             )
 
         # Center Point
@@ -361,5 +407,5 @@ class DebugCircleEntity(SyncedGraphicsEntity):
                 radius=self.__point_radius,
                 num_segments=self.__point_num_segments,
                 color=self.__point_color,
-                convert_global=self.__convert_global
+                convert_global=self.__convert_global,
             )

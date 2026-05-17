@@ -11,6 +11,7 @@ from ._animation_types import AnimationPhase
 
 class SimpleAnimation:
     """Basic 2-position float value animation"""
+
     _start_value: float
     _end_value: float
 
@@ -18,11 +19,7 @@ class SimpleAnimation:
     _current_value: float
     _last_value: float
 
-    def __init__(
-            self,
-            start_value: float,
-            end_value: float = ...
-    ) -> None:
+    def __init__(self, start_value: float, end_value: float = ...) -> None:
         """
         Create a basic 2-position float value animation
         :param start_value: Value to start the animation from
@@ -50,7 +47,11 @@ class SimpleAnimation:
     def _calc(self, _delta: float) -> None:
         """Update the animation"""
         self._last_value = self._current_value
-        if self._phase == "at_start" or self._phase == "at_end" or self._phase == "stopped":
+        if (
+            self._phase == "at_start"
+            or self._phase == "at_end"
+            or self._phase == "stopped"
+        ):
             return
 
         if self._phase == AnimationPhase.EXTENDING:

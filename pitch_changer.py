@@ -9,6 +9,7 @@ Nilusink
 """
 
 import os
+
 import librosa
 import soundfile as sf
 
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     files = generate_pitch_variants(
         input_path=input_file,
         output_dir=os.path.join("/".join(input_file.split("/")[:-1]), ""),
-        semitone_steps=[-1, -.5, 0, .5, 1],
+        semitone_steps=[-1, -0.5, 0, 0.5, 1],
     )
 
     print(files)

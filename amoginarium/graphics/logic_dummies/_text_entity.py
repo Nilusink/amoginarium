@@ -6,11 +6,12 @@ Created: 11.04.2026
 Authors: LukasKrah
 """
 
-from icecream import ic  # noqa: F401
 import typing as tp
 
-from amoginarium.shared.utility import Color
+from icecream import ic  # noqa: F401
+
 from amoginarium.shared import GraphicsCIDs
+from amoginarium.shared.utility import Color
 
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity
@@ -20,19 +21,20 @@ class TextEntity(SyncedGraphicsEntity):
     """
     Static text synced graphics entity
     """
+
     _CID = GraphicsCIDs.static_text
 
     def __init__(
-            self,
-            sync_id: int,
-            text: str,
-            color: tuple[int, int, int] | tuple[int, int, int, int],
-            bg_color: tuple[int, int, int] | tuple[int, int, int, int],
-            size: int,
-            family: str,
-            bold: bool,
-            italic: bool,
-            **_kwargs: tp.Any
+        self,
+        sync_id: int,
+        text: str,
+        color: tuple[int, int, int] | tuple[int, int, int, int],
+        bg_color: tuple[int, int, int] | tuple[int, int, int, int],
+        size: int,
+        family: str,
+        bold: bool,
+        italic: bool,
+        **_kwargs: tp.Any,
     ) -> None:
         """
         Create a static text entity

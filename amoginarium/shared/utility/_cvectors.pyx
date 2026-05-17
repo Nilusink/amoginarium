@@ -1,6 +1,6 @@
 # fast_vec2.pyx
 cimport cython
-from libc.math cimport sqrt, atan2, cos, sin, pi, fmod
+from libc.math cimport atan2, cos, fmod, pi, sin, sqrt
 
 
 cdef class Vec2:

@@ -15,7 +15,7 @@ from __future__ import annotations
 import typing as tp
 
 from amoginarium import pv
-from amoginarium.shared import ENTITY_COUNTER, BaseLogicEntityLike
+from amoginarium.shared import BaseLogicEntityLike, ENTITY_COUNTER
 
 from .._groups import Updated
 

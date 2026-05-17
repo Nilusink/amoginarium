@@ -8,7 +8,6 @@ Authors: LukasKrah
 
 from typing import List, Tuple
 
-
 def find_minimum_rectangles(bitmap: List[List[int]]) -> List[Tuple[int, int, int, int]]:
     """
     Finds the minimum number of non-overlapping rectangles to cover all 1s in a 2D bitmap.

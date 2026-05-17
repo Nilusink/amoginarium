@@ -3,8 +3,9 @@
 # cython: wraparound=False
 # cython: cdivision=True
 
-from libcpp.vector cimport vector
 from libc.math cimport sqrt
+from libcpp.vector cimport vector
+
 
 cdef inline double c_max(double a, double b) noexcept: return a if a > b else b
 cdef inline double c_min(double a, double b) noexcept: return a if a < b else b

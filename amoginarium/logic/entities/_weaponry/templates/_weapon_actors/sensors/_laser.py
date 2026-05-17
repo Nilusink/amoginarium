@@ -8,11 +8,11 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared import WeaponSensorCIDs
+from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
 
 from ....._base import GameCollisions
@@ -47,7 +47,7 @@ class LaserDesignator:
             GameCollisions.collision_manager.manual_collision(
                 self._collision_groups,
                 origin,
-                origin + Vec2().from_polar(direction.angle, max_range)
+                origin + Vec2().from_polar(direction.angle, max_range),
             )
         )
 
@@ -64,12 +64,12 @@ class LaserSensor(BaseWeaponsSensor):
     _CID = WeaponSensorCIDs.laser
 
     def __init__(
-            self,
-            parent: "AerodynamicEntity",
-            code: int,
-            *,
-            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: "AerodynamicEntity",
+        code: int,
+        *,
+        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         """
         homes in on a designated laser

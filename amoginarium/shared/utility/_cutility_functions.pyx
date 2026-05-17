@@ -1,7 +1,8 @@
 # cython: boundscheck=False, wraparound=False, cdivision=True
 cimport cython
-from ._cvectors cimport Vec2
 from libc.stdint cimport uint8_t
+
+from ._cvectors cimport Vec2
 
 
 cpdef object convert_coord(object coord, object convert_to = tuple):

@@ -6,9 +6,9 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from ._ui_element import (
-    UIElementValueNamesEnum, UIElementValueTypesEnum, UIElementValueFloat, UIElementValueFloatOneAbsolute,
-    UIElementValueVec2, UIElementValueVec2OneAbsolute, UIElementData, UIElement
-)
-from ._ui_event_element import UIEventElement
+from ._ui_element import UIElement, UIElementData, UIElementValueFloat
+from ._ui_element import UIElementValueFloatOneAbsolute, UIElementValueNamesEnum
+from ._ui_element import UIElementValueTypesEnum, UIElementValueVec2
+from ._ui_element import UIElementValueVec2OneAbsolute
 from ._ui_entity import UIEntity
+from ._ui_event_element import UIEventElement

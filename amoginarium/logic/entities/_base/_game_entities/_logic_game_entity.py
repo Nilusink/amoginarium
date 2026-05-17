@@ -14,18 +14,17 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, normalize_angle, get_default
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import Coalitions, LogicGameEntityLike
-from amoginarium.shared import DynamicEntityParentViable
-
 from amoginarium import pv
+from amoginarium.shared import Coalitions, DynamicEntityParentViable
+from amoginarium.shared import LogicGameEntityLike
+from amoginarium.shared.debugging import CC, print_ic_style
+from amoginarium.shared.utility import get_default, normalize_angle, Vec2
 
 from ._collision_logic_entity import CollisionLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
 
@@ -46,10 +45,16 @@ class LogicGameEntity(
     - Optional Collision Detection
     - Coalitions
     """
+
     __slots__ = (
-        "facing", "velocity", "acceleration", "_coalition",
-        "_velocity_to_add", "_acceleration_to_add", "__world_position",
-        "_tags"
+        "facing",
+        "velocity",
+        "acceleration",
+        "_coalition",
+        "_velocity_to_add",
+        "_acceleration_to_add",
+        "__world_position",
+        "_tags",
     )
 
     # region InstanceVars
@@ -67,21 +72,21 @@ class LogicGameEntity(
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            size: Vec2,
-            position: Vec2,
-            *,
-            initial_velocity: Vec2 | None = None,
-            parent: LogicGameEntity | None = None,
-            coalition: Coalitions | EllipsisType = ...,
-            centered: bool = False,
-            collision_group: CollisionType.GroupID | EllipsisType | None = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            collision_exception_root: bool | EllipsisType = ...,
-            collision_exception_root_additive: bool | EllipsisType = ...,
-            tags: list[str] | None = None,
-            collision_active: bool = True
+        self,
+        runtime_buffer: Array[base_entity_t],
+        size: Vec2,
+        position: Vec2,
+        *,
+        initial_velocity: Vec2 | None = None,
+        parent: LogicGameEntity | None = None,
+        coalition: Coalitions | EllipsisType = ...,
+        centered: bool = False,
+        collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        collision_exception_root: bool | EllipsisType = ...,
+        collision_exception_root_additive: bool | EllipsisType = ...,
+        tags: list[str] | None = None,
+        collision_active: bool = True,
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -115,13 +120,15 @@ class LogicGameEntity(
             collision_exception_ids=collision_exception_ids,
             collision_exception_root=collision_exception_root,
             collision_exception_root_additive=collision_exception_root_additive,
-            collision_active=collision_active
+            collision_active=collision_active,
         )
         # region default parameters
         self._velocity_to_add = Vec2()
         self._acceleration_to_add = Vec2()
 
-        self.velocity = initial_velocity if initial_velocity is not None else Vec2()  # do not use get_default here
+        self.velocity = (
+            initial_velocity if initial_velocity is not None else Vec2()
+        )  # do not use get_default here
         self._coalition = get_default(coalition, Coalitions.neutral)
 
         self.acceleration = Vec2()
@@ -160,10 +167,7 @@ class LogicGameEntity(
                 f"serializable{CC.ctrl.ENDL}",
             )
 
-        return {
-            "type": self.cid(),
-            "pos": self.position
-        }
+        return {"type": self.cid(), "pos": self.position}
 
     def add_velocity(self, value: Vec2) -> None:
         """

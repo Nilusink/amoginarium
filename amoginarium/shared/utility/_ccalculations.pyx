@@ -1,6 +1,7 @@
 cimport cython
-from libc.math cimport sqrt, atan, cos, sin, pi
+from libc.math cimport atan, cos, pi, sin, sqrt
 from libc.stdint cimport uint16_t
+
 from ._cvectors cimport Vec2
 
 

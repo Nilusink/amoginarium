@@ -22,7 +22,7 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import CIDType, base_entity_t
+    from amoginarium.shared import base_entity_t, CIDType
     from amoginarium.shared.utility import Vec2
 
 

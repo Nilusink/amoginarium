@@ -20,6 +20,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
     """
     A container for T objects to facilitate batch updates and management.
     """
+
     __slots__ = ("_entities",)
 
     _entities: dict[T, None]

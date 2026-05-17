@@ -6,8 +6,10 @@ Created: 26.03.2024
 Authors: Nilusink, LukasKrah
 """
 
-from ._animations import AnimationPhase, anim_input_t, anim_vec2_t, AnimatedVec2Values, anim_vec2_values_t, \
-    ComplexAnimation, create_animation, Animation, SimpleAnimation, MultiAnimation, Vec2Animation, AnimatedColorValues
-from ._widgets import UIRectangle, UIButton, UICursor, UIStaticText, UIDynamicText
+from ._animations import anim_input_t, anim_vec2_t, anim_vec2_values_t
+from ._animations import AnimatedColorValues, AnimatedVec2Values, Animation
+from ._animations import AnimationPhase, ComplexAnimation, create_animation
+from ._animations import MultiAnimation, SimpleAnimation, Vec2Animation
 from ._base import UIElement, UIEntity
-from ._types import Positions, Anchor
+from ._types import Anchor, Positions
+from ._widgets import UIButton, UICursor, UIDynamicText, UIRectangle, UIStaticText

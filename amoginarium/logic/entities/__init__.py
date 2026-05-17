@@ -1,28 +1,11 @@
-from ._base import (
-    BaseLogicEntity,
-    Bullets,
-    FrictionXAffected,
-    GameCollisions,
-    GravityAffected,
-    LogicGameEntity,
-    Players,
-    PositionedLogicEntity,
-    Updated,
-    Walls,
-)
-from ._weaponry import Grenade, ExactoBullet
-from ._weaponry.templates import (
-    BaseSensor,
-    DETECTION_GLOBAL_BLUE,
-    DETECTION_GLOBAL_NEUTRAL,
-    DETECTION_GLOBAL_RED,
-    DETECTION_GROUP_MANAGER,
-    DetectionGroup,
-    MagicSensor,
-    AerodynamicEntity,
-    Bullet,
-)
-from ._world import GrassIsland, Island
-from ._spawnables import SPAWNABLES
+from ._base import BaseLogicEntity, Bullets, FrictionXAffected
+from ._base import GameCollisions, GravityAffected, LogicGameEntity
+from ._base import Players, PositionedLogicEntity, Updated, Walls
 from ._player import Player
-
+from ._spawnables import SPAWNABLES
+from ._weaponry import ExactoBullet, Grenade
+from ._weaponry.templates import AerodynamicEntity, BaseSensor, Bullet
+from ._weaponry.templates import DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
+from ._weaponry.templates import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER
+from ._weaponry.templates import DetectionGroup, MagicSensor
+from ._world import GrassIsland, Island

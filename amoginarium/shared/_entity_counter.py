@@ -7,11 +7,13 @@ keeps track of all entity ids
 Author:
 Nilusink
 """
+
 from __future__ import annotations
+
 from icecream import ic
 
-from .debugging import run_with_debug
 from ._shared_memory import MAX_ENTITIES, MAX_INVENTORIES
+from .debugging import run_with_debug
 
 
 class _EntityCounter:

@@ -4,15 +4,22 @@
 # cython: cdivision=True
 # cython: nonecheck=False
 
-from .collision_manager cimport CollisionManager, CollisionGroupStruct, EntityData, CollisionRelationStruct, DeferredDeletion
-from .collision_methods cimport aabb_aabb_swept, aabb_circle_swept, circle_circle_swept, poly_poly_swept, circle_poly_swept
-from .collision_event import CollisionEvent
+from .collision_manager cimport CollisionGroupStruct, CollisionManager
+from .collision_manager cimport CollisionRelationStruct, DeferredDeletion, EntityData
+from .collision_methods cimport aabb_aabb_swept, aabb_circle_swept, circle_circle_swept
+from .collision_methods cimport circle_poly_swept, poly_poly_swept
+
 from amoginarium.shared.utility import Vec2
+
+from .collision_event import CollisionEvent
+
+from cython.operator cimport dereference as deref
+from cython.operator cimport preincrement as inc
+from libc.math cimport cos, floor, sin, sqrt
+from libc.stdint cimport uint64_t
 from libcpp.unordered_set cimport unordered_set
 from libcpp.vector cimport vector
-from libc.stdint cimport uint64_t
-from libc.math cimport floor, cos, sin, sqrt
-from cython.operator cimport dereference as deref, preincrement as inc
+
 
 cdef class CollisionManager:
     def __init__(self, double base_cell_size=1000.0, list level_dividers=None):

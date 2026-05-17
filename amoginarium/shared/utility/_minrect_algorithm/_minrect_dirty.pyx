@@ -10,6 +10,7 @@ Authors: LukasKrah
 
 from libcpp.vector cimport vector
 
+
 # --- Fast C-Level Struct ---
 cdef struct Rect:
     int r1

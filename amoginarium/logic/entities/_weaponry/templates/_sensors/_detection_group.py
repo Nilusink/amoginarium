@@ -7,13 +7,14 @@ _detection_group.py
 Author:
 Nilusink
 """
+
 from __future__ import annotations
+
+import typing as tp
 from dataclasses import dataclass
 from time import perf_counter
-import typing as tp
 
 from ...._base import Bullets, Players
-
 from ._base_sensor import BaseSensor
 
 if tp.TYPE_CHECKING:
@@ -23,6 +24,7 @@ if tp.TYPE_CHECKING:
 @dataclass(frozen=False)
 class TargetInfo:
     """target info"""
+
     last_seen: float
     seen_by: PositionedLogicEntity
 
@@ -92,10 +94,7 @@ class DetectionGroup:
         DETECTION_GROUP_MANAGER.add(i)
         return i
 
-    def __init__(
-            self,
-            name: str = None
-    ) -> None:
+    def __init__(self, name: str = None) -> None:
         global detection_id
 
         # assign unique id
@@ -123,9 +122,9 @@ class DetectionGroup:
         return self._sensors.copy()
 
     def add_target(
-            self,
-            target: PositionedLogicEntity | tp.Iterable[PositionedLogicEntity],
-            detector: PositionedLogicEntity
+        self,
+        target: PositionedLogicEntity | tp.Iterable[PositionedLogicEntity],
+        detector: PositionedLogicEntity,
     ) -> None:
         """
         add target to detection scope
@@ -134,15 +133,13 @@ class DetectionGroup:
             for t in target:
                 if t not in self._targets:
                     self._targets[t] = TargetInfo(
-                        last_seen=perf_counter(),
-                        seen_by=detector
+                        last_seen=perf_counter(), seen_by=detector
                     )
             return
 
         if target not in self._targets:
             self._targets[target] = TargetInfo(
-                last_seen=perf_counter(),
-                seen_by=detector
+                last_seen=perf_counter(), seen_by=detector
             )
 
     def add_sensor(self, sensor: BaseSensor) -> None:
@@ -163,17 +160,13 @@ class DetectionGroup:
         #     ic(CC.fg.RED + "sensor not in list!")
 
     def update_detection(
-            self,
-            from_entities: tp.Iterable[PositionedLogicEntity] = None
+        self, from_entities: tp.Iterable[PositionedLogicEntity] = None
     ) -> None:
         """
         ask all sensors to get their targeting information
         """
         for sensor in self._sensors:
-            self.add_target(
-                sensor.get_targets(from_entities),
-                sensor.parent
-            )
+            self.add_target(sensor.get_targets(from_entities), sensor.parent)
 
     # def update(self, delta: float) -> None:
     #     now = perf_counter()
@@ -184,7 +177,7 @@ class DetectionGroup:
         self._targets.clear()
 
     def __str__(self) -> str:
-        return f"<Detection group \"{self.name}\", id \"{self.id}\">"
+        return f'<Detection group "{self.name}", id "{self.id}">'
 
     def __repr__(self) -> str:
         return self.__str__()

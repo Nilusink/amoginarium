@@ -7,7 +7,9 @@ base attributes of an entity that can ride things
 Author:
 Nilusink
 """
+
 from __future__ import annotations
+
 import typing as tp
 
 from .. import LogicGameEntity
@@ -44,10 +46,7 @@ class Passenger:
     def is_controlled(self) -> bool:
         """true if riding and being controlled"""
         ce = self.controlled_entity
-        return (
-                ce is not None
-                and ce.control_authority
-        )
+        return ce is not None and ce.control_authority
 
     @property
     def controlled_entity(self) -> tp.Union["RideableGameEntity", None]:

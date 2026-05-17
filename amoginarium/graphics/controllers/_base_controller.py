@@ -7,18 +7,22 @@ all controller types should inherit from this
 Author:
 Nilusink
 """
-from icecream import ic
+
 import typing as tp
 
-from amoginarium.shared import MAX_CONTROLLERS, Controls, ProcessCommandType, ProcessCommand
-from amoginarium.shared.utility import Vec2
+from icecream import ic
+
 from amoginarium import pv
+from amoginarium.shared import Controls, MAX_CONTROLLERS
+from amoginarium.shared import ProcessCommand, ProcessCommandType
+from amoginarium.shared.utility import Vec2
 
 
 class _Controllers:
     """
     a collection of all controllers
     """
+
     _controllers: list["Controller"]
     _callbacks: dict[int, tp.Callable]
 
@@ -39,7 +43,7 @@ class _Controllers:
 
     def get_by_id(self, cid: str) -> tp.Union["Controller", None]:
         if not self.exists(cid):
-            raise ValueError(f"No controller with id \"{cid}\" exists!")
+            raise ValueError(f'No controller with id "{cid}" exists!')
 
         for controller in self._controllers:
             if controller.id == cid:
@@ -65,16 +69,13 @@ class _Controllers:
 
         # set shm_id of controller
         cid = self.__get_id()
-        controller.controls.init(
-            cid,
-            pv.C_BUFF,
-            True
-        )
+        controller.controls.init(cid, pv.C_BUFF, True)
 
-        pv.COQ.put(ProcessCommand(
-            type=ProcessCommandType.spawn_player,
-            kwargs={"controller_id": cid}
-        ))
+        pv.COQ.put(
+            ProcessCommand(
+                type=ProcessCommandType.spawn_player, kwargs={"controller_id": cid}
+            )
+        )
 
     def update(self) -> None:
         """update all controllers"""
@@ -88,10 +89,7 @@ class _Controllers:
         for callback in self._callbacks.values():
             callback(controller)
 
-    def on_new_controller(
-        self,
-        callback: tp.Callable[["Controller"], tp.Any]
-    ) -> int:
+    def on_new_controller(self, callback: tp.Callable[["Controller"], tp.Any]) -> int:
         """
         add a callback for adding new controllers
         """
@@ -136,9 +134,11 @@ class Controller:
         ic("called base cls.get with id ", cid)
         if Controllers.exists(cid):
             ic("re-linking already existing controller", cid)
-            pv.COQ.put(ProcessCommand(
-                type=ProcessCommandType.spawn_player, kwargs={"controller_id": cid}
-            ))
+            pv.COQ.put(
+                ProcessCommand(
+                    type=ProcessCommandType.spawn_player, kwargs={"controller_id": cid}
+                )
+            )
             return Controllers.get_by_id(cid)
 
         ic("create instance in cls.get()")
@@ -240,7 +240,7 @@ class Controller:
         y_deadzone: float = 0,
         x_saturation: float = 1,
         y_saturation: float = 1,
-        curve: float = 0  # TODO: curve
+        curve: float = 0,  # TODO: curve
     ) -> float:
         """
         apply a specific curve for joystick values (rangin from -1 to 1)
@@ -272,10 +272,7 @@ class Controller:
 
         # look, I just tried putting the variables in random orders and somehow
         # it workd, I never even knew why
-        value = max(
-            0,
-            abs(value) - x_deadzone
-        ) * (
+        value = max(0, abs(value) - x_deadzone) * (
             (1 - y_deadzone) / (x_saturation - x_deadzone)
         )
 
@@ -295,12 +292,7 @@ class Controller:
         """
         raise NotImplementedError("tried to call base-controller update")
 
-    def rumble(
-        self,
-        low_frequency,
-        high_frequency,
-        duration
-    ) -> None:
+    def rumble(self, low_frequency, high_frequency, duration) -> None:
         """
         start joystick vibration
 
@@ -351,7 +343,7 @@ class Controller:
 
     def feedback_heal_stop(self) -> None:
         """
-        controller input on heal stop 
+        controller input on heal stop
         """
         if not self._heal_running:
             return
@@ -362,7 +354,7 @@ class Controller:
             self.on_feedback_heal_stop()
 
     def __str__(self) -> str:
-        return f"<{self.__class__.__name__}, id=\"{self.id}\">"
+        return f'<{self.__class__.__name__}, id="{self.id}">'
 
     def __repr__(self) -> str:
         return self.__str__()

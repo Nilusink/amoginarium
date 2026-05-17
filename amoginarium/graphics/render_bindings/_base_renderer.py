@@ -8,11 +8,12 @@ Author:
 Nilusink, LukasKrah
 """
 
+import abc
+import typing as tp
 from collections.abc import Sequence
 from types import EllipsisType
+
 from PIL import Image
-import typing as tp
-import abc
 
 from amoginarium.shared.utility import Color, coord_t, Vec2
 
@@ -55,11 +56,11 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def load_texture(
-            self,
-            image: Image.Image,
-            size: coord_t | None = None,
-            mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
-            pixel_perfect: bool = False,
+        self,
+        image: Image.Image,
+        size: coord_t | None = None,
+        mirror: tp.Literal["x", "y", "xy", "yx", ""] = "",
+        pixel_perfect: bool = False,
     ) -> tuple[TextureID, tuple[int, int]]:
         """
         Load an image texture (saves it internally)
@@ -86,9 +87,7 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def display_update(
-            self,
-            position: coord_t | None = None,
-            size: coord_t | None = None
+        self, position: coord_t | None = None, size: coord_t | None = None
     ) -> None:
         """
         Should be called when the display gets updated
@@ -157,11 +156,11 @@ class BaseRenderer(abc.ABC):
     # todo mytodo - stencils work!
     @abc.abstractmethod
     def apply_stencil[**A](
-            self,
-            stencil_func: tp.Callable[A, tp.Any],
-            show_stencil: bool = False,
-            *args: A.args,
-            **kwargs: A.kwargs
+        self,
+        stencil_func: tp.Callable[A, tp.Any],
+        show_stencil: bool = False,
+        *args: A.args,
+        **kwargs: A.kwargs,
     ) -> None: ...
 
     @abc.abstractmethod
@@ -178,17 +177,17 @@ class BaseRenderer(abc.ABC):
     # region Textured
     @abc.abstractmethod
     def draw_textured_quad(
-            self,
-            texture_id: TextureID,
-            pos: coord_t,
-            size: coord_t,
-            layer,
-            *,
-            convert_global: bool = True,
-            rotate_angle: float = 0,
-            rotate_anchor: coord_t | EllipsisType = ...,
-            offscreen_check: bool = True,
-            color: Color | EllipsisType = ...,
+        self,
+        texture_id: TextureID,
+        pos: coord_t,
+        size: coord_t,
+        layer,
+        *,
+        convert_global: bool = True,
+        rotate_angle: float = 0,
+        rotate_anchor: coord_t | EllipsisType = ...,
+        offscreen_check: bool = True,
+        color: Color | EllipsisType = ...,
     ) -> None:
         """
         Draw a rectangle with a texture
@@ -227,12 +226,12 @@ class BaseRenderer(abc.ABC):
     # region Basic shapes
     @abc.abstractmethod
     def draw_polygon(
-            self,
-            vertices: tp.Iterable[coord_t],
-            color: Color | tColor,
-            center: coord_t = None,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        vertices: tp.Iterable[coord_t],
+        color: Color | tColor,
+        center: coord_t = None,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a polygon with fill
@@ -247,12 +246,12 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_rect(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rectangle with fill
@@ -267,17 +266,17 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_rounded_rect(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            radius: float,
-            top_left_radius: float | None = None,
-            top_right_radius: float | None = None,
-            bottom_left_radius: float | None = None,
-            bottom_right_radius: float | None = None,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        radius: float,
+        top_left_radius: float | None = None,
+        top_right_radius: float | None = None,
+        bottom_left_radius: float | None = None,
+        bottom_right_radius: float | None = None,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rect with rounded corners with fill
@@ -297,13 +296,13 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_rect_line(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            thickness: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        thickness: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rectangle outline without fill
@@ -319,18 +318,18 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_rounded_rect_line(
-            self,
-            start: coord_t,
-            size: coord_t,
-            color: Color | tColor,
-            radius: float,
-            top_left_radius: float | None = None,
-            top_right_radius: float | None = None,
-            bottom_left_radius: float | None = None,
-            bottom_right_radius: float | None = None,
-            thickness: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        size: coord_t,
+        color: Color | tColor,
+        radius: float,
+        top_left_radius: float | None = None,
+        top_right_radius: float | None = None,
+        bottom_left_radius: float | None = None,
+        bottom_right_radius: float | None = None,
+        thickness: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a rounded rectangle outline without fill
@@ -351,15 +350,15 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_bar(
-            self,
-            pos: coord_t,
-            size: coord_t,
-            colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
-            progress: float,
-            *,
-            background_color: Color | EllipsisType = ...,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        pos: coord_t,
+        size: coord_t,
+        colors: tuple[Color, Color, Color] | tuple[Color, Color] | tuple[Color],
+        progress: float,
+        *,
+        background_color: Color | EllipsisType = ...,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         # todo: MYTODO - comment
@@ -378,14 +377,14 @@ class BaseRenderer(abc.ABC):
     # region Circles
     @abc.abstractmethod
     def draw_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a circle with fill
@@ -401,15 +400,15 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_line_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            thickness: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        thickness: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a circle outline
@@ -426,16 +425,16 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_partial_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            angle_start: coord_t,
-            angle_end: coord_t,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            convert_global=True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        angle_start: coord_t,
+        angle_end: coord_t,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        convert_global=True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a partial circle with fill
@@ -453,17 +452,17 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_dashed_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            draw_len: int = 1,
-            gap_len: int = 1,
-            thickness: int = 1,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        draw_len: int = 1,
+        gap_len: int = 1,
+        thickness: int = 1,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a dashed circle line with point_num_segments segments
@@ -482,19 +481,19 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_partial_dashed_circle(
-            self,
-            center: coord_t,
-            radius: float,
-            angle_start: coord_t,
-            angle_end: coord_t,
-            num_segments: int,
-            color: Color | tColor,
-            *,
-            draw_len: int = 1,
-            gap_len: int = 1,
-            thickness=1,
-            convert_global=True,
-            offscreen_check: bool = True
+        self,
+        center: coord_t,
+        radius: float,
+        angle_start: coord_t,
+        angle_end: coord_t,
+        num_segments: int,
+        color: Color | tColor,
+        *,
+        draw_len: int = 1,
+        gap_len: int = 1,
+        thickness=1,
+        convert_global=True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a partial dashed circle line with point_num_segments segments
@@ -518,14 +517,14 @@ class BaseRenderer(abc.ABC):
     # region Lines
     @abc.abstractmethod
     def draw_line(
-            self,
-            start: coord_t,
-            end: coord_t,
-            color: Color | tColor,
-            *,
-            global_position: bool = True,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        end: coord_t,
+        color: Color | tColor,
+        *,
+        global_position: bool = True,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a simple line
@@ -541,15 +540,15 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_thick_line(
-            self,
-            start: coord_t,
-            end: coord_t,
-            color: Color | tColor,
-            *,
-            thickness: float = 1.0,
-            global_position: bool = True,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        start: coord_t,
+        end: coord_t,
+        color: Color | tColor,
+        *,
+        thickness: float = 1.0,
+        global_position: bool = True,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a line with thickness
@@ -564,14 +563,14 @@ class BaseRenderer(abc.ABC):
         """
 
     def draw_lines(
-            self,
-            points: Sequence[coord_t],
-            color: Color | Sequence[Color],
-            *,
-            thickness: float = 1.0,
-            global_position: bool = True,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        points: Sequence[coord_t],
+        color: Color | Sequence[Color],
+        *,
+        thickness: float = 1.0,
+        global_position: bool = True,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a simple line
@@ -590,20 +589,20 @@ class BaseRenderer(abc.ABC):
     # region Texts and surfaces
     @abc.abstractmethod
     def draw_dynamic_text(
-            self,
-            pos: coord_t,
-            text: str,
-            *,
-            color: Color | tColor = (255, 255, 255, 255),
-            bg_color: Color | tColor = (0, 0, 0, 0),
-            centered: bool = False,
-            font_size: int = 64,
-            font_family: str = "arial",
-            bold: bool = False,
-            italic: bool = False,
-            text_id: DynamicTextID | None = None,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        pos: coord_t,
+        text: str,
+        *,
+        color: Color | tColor = (255, 255, 255, 255),
+        bg_color: Color | tColor = (0, 0, 0, 0),
+        centered: bool = False,
+        font_size: int = 64,
+        font_family: str = "arial",
+        bold: bool = False,
+        italic: bool = False,
+        text_id: DynamicTextID | None = None,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> DynamicTextID:
         """
         Draw a dynamic text to the given position
@@ -626,14 +625,14 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def draw_static_text(
-            self,
-            pos: coord_t,
-            text_id: StaticTextID,
-            *,
-            centered: bool = False,
-            scale: float = 1.0,
-            convert_global: bool = True,
-            offscreen_check: bool = True
+        self,
+        pos: coord_t,
+        text_id: StaticTextID,
+        *,
+        centered: bool = False,
+        scale: float = 1.0,
+        convert_global: bool = True,
+        offscreen_check: bool = True,
     ) -> None:
         """
         Draw a static text
@@ -649,15 +648,15 @@ class BaseRenderer(abc.ABC):
 
     @abc.abstractmethod
     def generate_static_text(
-            self,
-            text: str,
-            color: Color | tColor,
-            bg_color: Color | tColor,
-            *,
-            font_size: int = 64,
-            font_family: str = "arial",
-            bold: bool = False,
-            italic: bool = False
+        self,
+        text: str,
+        color: Color | tColor,
+        bg_color: Color | tColor,
+        *,
+        font_size: int = 64,
+        font_family: str = "arial",
+        bold: bool = False,
+        italic: bool = False,
     ) -> StaticTextID:
         """
         Generate a static text
@@ -672,4 +671,5 @@ class BaseRenderer(abc.ABC):
         :raises NotImplementedError: If the renderer does not implement this method
         """
         raise NotImplementedError
+
     # endregion

@@ -1,6 +1,4 @@
-class Vec2:
-    ...
-
+class Vec2: ...
 
 def calculate_launch_angle(
     position_delta: Vec2,
@@ -9,7 +7,7 @@ def calculate_launch_angle(
     launch_speed: float,
     recalculate: int = 10,
     aim_type: str = "low",
-    g: float = 9.81
+    g: float = 9.81,
 ) -> tuple[Vec2, float, Vec2]:
     """
     :param position_delta: the position delta between cannon and target

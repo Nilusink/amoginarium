@@ -7,13 +7,17 @@ load and save maps
 Author:
 Nilusink
 """
-from icecream import ic
+
 import json
 
-from ._json_serialize import to_str
-from ..base._groups import Updated
+from icecream import ic
+
 from amoginarium.logic.entities import Island
 from amoginarium.shared import GameEntityLike
+
+from ..base._groups import Updated
+from ._json_serialize import to_str
+
 # from ..entities._
 
 
@@ -23,7 +27,7 @@ def save_map(filepaht: str) -> None:
         "background": 2,
         "spawn_pos": [100, 600],
         "platforms": [],
-        "entities": []
+        "entities": [],
     }
     for entity in Updated.entities():
         entity: GameEntityLike

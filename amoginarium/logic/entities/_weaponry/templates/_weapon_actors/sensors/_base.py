@@ -9,13 +9,14 @@ Nilusink
 """
 
 from abc import ABC, abstractmethod
-# from types import EllipsisType
-# import typing as tp
 
-from amoginarium.shared import WeaponSensorCIDs, DynamicEntityParentViable
+from amoginarium.shared import DynamicEntityParentViable, WeaponSensorCIDs
 from amoginarium.shared.utility import Vec2
 
 from .._base_actor import BaseActor
+
+# from types import EllipsisType
+# import typing as tp
 
 
 # if tp.TYPE_CHECKING:

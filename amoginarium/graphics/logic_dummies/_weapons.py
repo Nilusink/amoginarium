@@ -8,20 +8,21 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from icecream import ic  # noqa: F401
-import typing as tp
 import math as m
+import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, Color, WtfError, convert_coord, RTD, PI
-from amoginarium.shared import WeaponCIDs
+from icecream import ic  # noqa: F401
+
 from amoginarium import pv
+from amoginarium.shared import WeaponCIDs
+from amoginarium.shared.utility import Color, convert_coord, PI, RTD, Vec2, WtfError
 
-from ..entities import Drawn_1, Drawn_0, Drawn_2
+from ..entities import Drawn_0, Drawn_1, Drawn_2
 from ..render_bindings import renderer
 from ..textures import textures
-from ._synced_entities import SyncedLRImageEntity, Iconifyable
 from ._bullet import BulletDummy
+from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
 
 class WeaponDummy(Iconifyable, SyncedLRImageEntity):
@@ -39,7 +40,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     _image_name: tp.ClassVar[str] = "minigun"
     _image_mirror: tp.ClassVar[str] = ""
     _image_rotate_anchor: tp.ClassVar[Vec2] = Vec2().from_cartesian(35, 30)
-    _bar_colors: tp.ClassVar = (Color().from_1(.55, .55, 1),)
+    _bar_colors: tp.ClassVar = (Color().from_1(0.55, 0.55, 1),)
     _texture_id_l: tp.ClassVar[int | EllipsisType] = ...
     _texture_id_r: tp.ClassVar[int | EllipsisType] = ...
 
@@ -88,7 +89,10 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
         return super().__new__(cls)  # type: ignore
 
-    def __init__(self, sync_id: int, ) -> None:
+    def __init__(
+        self,
+        sync_id: int,
+    ) -> None:
         super().__init__(
             sync_id=sync_id,
         )
@@ -127,7 +131,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             return
 
         # because no super call
-        angle = self.facing.angle * 180/m.pi
+        angle = self.facing.angle * 180 / m.pi
         world_pos = pv.global_vars.get_world_position()
 
         # draw bullet
@@ -139,10 +143,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             if self.facing.x < 0:
                 bmp.y *= -1
 
-            bullet_offset = Vec2().from_polar(
-                bmp.angle + self.facing.angle,
-                bmp.length
-            )
+            bullet_offset = Vec2().from_polar(bmp.angle + self.facing.angle, bmp.length)
 
             bullet_pos = self.pos - bullet_size / 2
             bullet_pos += bullet_offset
@@ -170,13 +171,13 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 rotate_angle=angle - 180,
                 rotate_anchor=anchor,
                 layer=layer,
-                force_draw=self._highlight
+                force_draw=self._highlight,
             )
 
         else:
             anchor = Vec2().from_cartesian(
                 self._image_rotate_anchor.x * self.param0,
-                self._image_rotate_anchor.y * self.param0
+                self._image_rotate_anchor.y * self.param0,
             )
             pos = self.pos - anchor
             pos -= world_pos
@@ -188,7 +189,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 rotate_angle=angle,
                 rotate_anchor=anchor,
                 layer=layer,
-                force_draw=self._highlight
+                force_draw=self._highlight,
             )
 
         # draw ammo bar
@@ -204,7 +205,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 size = self.size
 
             renderer.draw_bar(
-                (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5*7),
+                (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5 * 7),
                 (size.x, 7),
                 self._bar_colors,
                 self.param1,
@@ -254,22 +255,23 @@ class ExactoSniper(WeaponDummy):
         # draw laser to target
         if self.param4:
             laser_end = (
-                    Vec2().from_polar(self.param3 / 10_000, self.param4)
-                    - pv.global_vars.get_world_position()
+                Vec2().from_polar(self.param3 / 10_000, self.param4)
+                - pv.global_vars.get_world_position()
             )
             laser_start = (
-                    self.world_position
-                    + Vec2().from_polar(self.facing.angle, 100)
-                    + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
+                self.world_position
+                + Vec2().from_polar(self.facing.angle, 100)
+                + Vec2().from_polar(self.facing.angle - m.pi / 2, 2)
             )
             renderer.draw_thick_line(
                 laser_start,
                 laser_end,
-                Color().from_1(1, 0, 0, .2),
+                Color().from_1(1, 0, 0, 0.2),
                 thickness=3,
             )
             renderer.draw_circle(
                 laser_end,
-                8, 16,
-                Color().from_1(1, 0, 0, .6),
+                8,
+                16,
+                Color().from_1(1, 0, 0, 0.6),
             )

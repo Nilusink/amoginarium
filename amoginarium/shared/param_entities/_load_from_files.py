@@ -8,17 +8,17 @@ Author:
 Nilusink
 """
 
-from pathlib import Path
-from icecream import ic
-from enum import Enum
-import typing as tp
 import tomllib
+import typing as tp
+from enum import Enum
+from pathlib import Path
 
+from icecream import ic
+
+from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect
+from amoginarium.shared.audio import PRESETS, RandomizedEffect
+from amoginarium.shared.audio import ScopedRandomizedEffect, SoundEffect
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared.audio import SoundEffect, RandomizedEffect, PRESETS
-from amoginarium.shared.audio import ScopedRandomizedEffect, PresetEffect
-from amoginarium.shared.audio import ContinuousSoundEffect
-
 
 BASE_DIR = "./assets/entities/"
 _GRAPHICS_KEYS = ("image", "trace")
@@ -27,6 +27,7 @@ _SHARED_KEYS = ("bullet",)
 
 class ProcessType(Enum):
     """defines logic or base / render process"""
+
     base = 0
     logic = 1
 
@@ -71,16 +72,16 @@ def _cid(cls):
 
 
 def load_entities_from_files(
-        process_type: ProcessType,
-        entity_index: dict[str, tp.Type],
-        directory: str = BASE_DIR
+    process_type: ProcessType,
+    entity_index: dict[str, tp.Type],
+    directory: str = BASE_DIR,
 ) -> dict[str, tp.Type]:
     """load all entities specified in assets"""
 
     entity_index = entity_index.copy()
     new_entities: dict[str, tp.Type] = {}
 
-    # inherits form other dynamic entities 
+    # inherits form other dynamic entities
     to_inherit = {}
 
     for file in Path(directory).rglob("*.toml", case_sensitive=False):
@@ -112,16 +113,17 @@ def load_entities_from_files(
             if data["id"]["from"] not in entity_index:
                 lazy_inherit = True
 
-            class_name = f"File{"".join([
-                p.capitalize()
-                for s in data["id"]["cid"].split(".")
-                for p in s.split("_")
-            ])}"
+            class_name = f"File{
+                ''.join(
+                    [
+                        p.capitalize()
+                        for s in data['id']['cid'].split('.')
+                        for p in s.split('_')
+                    ]
+                )
+            }"
 
-            __dict: dict[str, tp.Any] = {
-                "_CID": cid,
-                "cid": classmethod(_cid)
-            }
+            __dict: dict[str, tp.Any] = {"_CID": cid, "cid": classmethod(_cid)}
             # fill dict
             if "visibility" in data:
                 if "size" in data["visibility"]:
@@ -161,7 +163,7 @@ def load_entities_from_files(
                             sound_class_name = "".join(
                                 [p.capitalize() for p in sound_name]
                             )
-                        
+
                         else:
                             sound_class_name = sound_name.capitalize()
 
@@ -169,9 +171,9 @@ def load_entities_from_files(
                         effect: tp.Type[PresetEffect] = type(
                             f"{sound_class_name}Effect",
                             (PresetEffect,),
-                            {"_sound_name": sound_name}
+                            {"_sound_name": sound_name},
                         )
-                    
+
                     if "scope" in data["sound"]:
                         sound_scope: str = data["sound"]["scope"]
 
@@ -179,14 +181,14 @@ def load_entities_from_files(
                         effect: tp.Type[ScopedRandomizedEffect] = type(
                             f"{sound_scope.capitalize()}Effect",
                             (ScopedRandomizedEffect,),
-                            {"_scope": sound_scope}
+                            {"_scope": sound_scope},
                         )
-                    
+
                     if "preset" in data["sound"]:
                         preset = data["sound"]["preset"]
                         if preset in PRESETS:
                             effect = PRESETS[preset]
-                    
+
                     if effect:
                         if "volume" in data["sound"]:
                             effect.volume = data["sound"]["volume"]
@@ -210,7 +212,6 @@ def load_entities_from_files(
                     k0: str = list(data[subsection].keys())[0]
 
                     if k0.isnumeric() and isinstance(data[subsection][k0], dict):
-
                         # if is list, append to values and continue
                         __dict[f"_default_{subsection}"] = list(
                             data[subsection].values()
@@ -236,11 +237,7 @@ def load_entities_from_files(
                 parent_class = entity_index[data["id"]["from"]]
 
                 # noinspection PyTypeChecker
-                new_class: tp.Type = type(
-                    class_name,
-                    (parent_class,),
-                    __dict
-                )  # type: ignore[assignment]
+                new_class: tp.Type = type(class_name, (parent_class,), __dict)  # type: ignore[assignment]
                 new_entities[cid] = new_class
 
             else:
@@ -256,9 +253,7 @@ def load_entities_from_files(
             # if inheritance is possible, append to entity index
             if params[1] in new_entities:
                 new_entities[cid] = type(
-                    params[0],
-                    (new_entities[params[1]],),
-                    params[2]
+                    params[0], (new_entities[params[1]],), params[2]
                 )
                 to_inherit.pop(cid)
 

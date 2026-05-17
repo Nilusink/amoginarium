@@ -7,6 +7,7 @@ convert everything ingame to a str
 Author:
 Nilusink
 """
+
 import json
 import re
 
@@ -54,9 +55,5 @@ class Encoder(json.JSONEncoder):
 
 
 def to_str(game_state: dict | list) -> str:
-    out = json.dumps(
-        preprocess(game_state),
-        indent=4,
-        cls=Encoder
-    )
-    return re.sub(r'"@@(.*?)@@"', r'[\1]', out)
+    out = json.dumps(preprocess(game_state), indent=4, cls=Encoder)
+    return re.sub(r'"@@(.*?)@@"', r"[\1]", out)

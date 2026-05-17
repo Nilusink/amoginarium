@@ -6,16 +6,17 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
+import typing as tp
 from dataclasses import dataclass
 from enum import StrEnum
-import typing as tp
 
-from amoginarium.shared.utility import coord_t, color_t
+from amoginarium.shared.utility import color_t, coord_t
 
 
 # region Single/MultiAnimation
 class AnimationPhase(StrEnum):
     """Enumeration representing the various phases of an animation."""
+
     AT_START = "AT_START"
     EXTENDING = "EXTENDING"
     STOPPED = "STOPPED"
@@ -38,6 +39,7 @@ type anim_vec2_t = coord_t | float | int
 @dataclass  # noqa
 class AnimatedVec2Values:
     """Animated color value"""
+
     start_vec: anim_vec2_t
     end_vec: anim_vec2_t = ...
     extend_duration: anim_vec2_t = ...
@@ -48,9 +50,7 @@ class AnimatedVec2Values:
     collapse_curve: anim_curve_t = ...
 
 
-type anim_vec2_values_t = tp.Union[
-    AnimatedVec2Values, anim_vec2_t
-]
+type anim_vec2_values_t = tp.Union[AnimatedVec2Values, anim_vec2_t]
 
 # endregion
 
@@ -61,6 +61,7 @@ type anim_float_t = tp.Union[float, int]
 @dataclass  # noqa
 class AnimatedFloatValues:
     """Animated float value"""
+
     start_value: anim_float_t
     end_value: anim_float_t = ...
     extend_duration: anim_float_t = ...
@@ -72,21 +73,22 @@ class AnimatedFloatValues:
 
 
 # noinspection DuplicatedCode
-type anim_float_values_t = tp.Union[
-    AnimatedFloatValues, anim_float_t
-]
+type anim_float_values_t = tp.Union[AnimatedFloatValues, anim_float_t]
 
 # endregion
 
 # region ColorAnimation
 type anim_color_t = color_t
 # noinspection DuplicatedCode
-type anim_color_time_t = tp.Tuple[float, float, float, float] | tp.Tuple[int, int, int, int] | float | int
+type anim_color_time_t = (
+    tp.Tuple[float, float, float, float] | tp.Tuple[int, int, int, int] | float | int
+)
 
 
 @dataclass  # noqa
 class AnimatedColorValues:
     """Animated float value"""
+
     start_value: anim_color_t
     end_value: anim_color_t = ...
     extend_duration: anim_color_time_t = ...
@@ -98,8 +100,6 @@ class AnimatedColorValues:
 
 
 # noinspection DuplicatedCode
-type anim_color_values_t = tp.Union[
-    AnimatedColorValues, anim_color_t
-]
+type anim_color_values_t = tp.Union[AnimatedColorValues, anim_color_t]
 
 # endregion

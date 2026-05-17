@@ -8,12 +8,12 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from time import perf_counter
 import typing as tp
+from time import perf_counter
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2
 from amoginarium.shared import MissileCIDs
+from amoginarium.shared.utility import Vec2
 
 from ..entities import Animation
 from ..textures import textures
@@ -24,6 +24,7 @@ class MultiStageMissileDummy(BulletDummy):
     """
     ``flags[14]``: thrust active
     """
+
     _CID = MissileCIDs.multi_stage
 
     _animation_scope: str = "flame"
@@ -84,10 +85,7 @@ class MultiStageMissileDummy(BulletDummy):
 
     def _flame_position(self) -> Vec2:
         """flame position for animation"""
-        return self.pos + Vec2().from_polar(
-            self.facing.angle,
-            self.size.x / 5
-        )
+        return self.pos + Vec2().from_polar(self.facing.angle, self.size.x / 5)
 
     def _kill(self) -> None:
         self._animation.stop()
@@ -119,8 +117,7 @@ class GuidedMultiStageMissileDummy(MultiStageMissileDummy):
     def _flame_position(self) -> Vec2:
         """flame position for animation"""
         return self.pos + Vec2().from_polar(
-            self.facing.angle,
-            self.size.x / 2.1 + self._animation_size[0] / 2
+            self.facing.angle, self.size.x / 2.1 + self._animation_size[0] / 2
         )
 
 

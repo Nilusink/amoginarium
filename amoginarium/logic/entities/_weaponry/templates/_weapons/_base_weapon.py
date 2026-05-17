@@ -6,27 +6,28 @@ Created: 18.04.2026
 Authors: LukasKrah
 """
 
-from types import EllipsisType
-from random import random
-from ctypes import Array
-from icecream import ic
 import typing as tp
+from ctypes import Array
+from random import random
+from types import EllipsisType
 
-from amoginarium.shared.audio import ContinuousSoundEffect, ReloadGeneric
-from amoginarium.shared.audio import RandomizedEffect, SoundEffect
-from amoginarium.shared.utility import Vec2, convert_coord, get_default
-from amoginarium.shared import base_entity_t, WeaponCIDs
-from amoginarium.shared import Coalitions
+from icecream import ic
 
-from .._bullets import Bullet
-from ...._base import Updated, LogicGameEntity, GameCollisions
+from amoginarium.shared import base_entity_t, Coalitions, WeaponCIDs
+from amoginarium.shared.audio import ContinuousSoundEffect, RandomizedEffect
+from amoginarium.shared.audio import ReloadGeneric, SoundEffect
+from amoginarium.shared.utility import convert_coord, get_default, Vec2
+
+from ...._base import GameCollisions, LogicGameEntity, Updated
 from ...._items import Item
+from .._bullets import Bullet
 
 
 class BaseWeapon(Item):
     """
     basic functionality of all weapons
     """
+
     _no_bullet_gravity: bool = False
     _current_recoil_time: float = 0
     _current_sound_time: float = 0
@@ -59,7 +60,10 @@ class BaseWeapon(Item):
         inaccuracy: float | EllipsisType = ...,
         muzzle_velocity: float | EllipsisType = ...,
         recoil_factor: float | EllipsisType = ...,
-        sound_effect: ContinuousSoundEffect | SoundEffect | RandomizedEffect | EllipsisType = ...,
+        sound_effect: ContinuousSoundEffect
+        | SoundEffect
+        | RandomizedEffect
+        | EllipsisType = ...,
         bullet_type: tp.Type[Bullet] | EllipsisType = ...,
         weapon_size: Vec2 | EllipsisType = ...,
         drop_casings: bool = False,
@@ -72,9 +76,7 @@ class BaseWeapon(Item):
             weapon_size: Vec2 = Vec2().from_cartesian(20, 20)
 
         super().__init__(
-            runtime_buffer=runtime_buffer,
-            size=weapon_size,
-            spawn_args=spawn_args
+            runtime_buffer=runtime_buffer, size=weapon_size, spawn_args=spawn_args
         )
 
         self._e_id = GameCollisions.add_exception()
@@ -116,9 +118,7 @@ class BaseWeapon(Item):
             muzzle_velocity, self._default_muzzle_velocity
         )
         # noinspection PyTypeChecker
-        self._parent_position_offset: Vec2 = convert_coord(
-            parent_position_offset, Vec2
-        )
+        self._parent_position_offset: Vec2 = convert_coord(parent_position_offset, Vec2)
 
         self._spawned_graphics = False
 
@@ -128,7 +128,9 @@ class BaseWeapon(Item):
             self._bullet_offset: Vec2 = Vec2()
 
         else:
-            self._bullet_offset: Vec2 = convert_coord(self._default_bullet_mount_point, Vec2)  # ignore: type
+            self._bullet_offset: Vec2 = convert_coord(
+                self._default_bullet_mount_point, Vec2
+            )  # ignore: type
 
     # region properties
     @property
@@ -175,27 +177,19 @@ class BaseWeapon(Item):
 
     # endregion
 
-    def get_mag_state(
-            self,
-            max_out: float
-    ) -> tuple[float, int] | tuple[float, float]:
+    def get_mag_state(self, max_out: float) -> tuple[float, int] | tuple[float, float]:
         """
         returns the current mag size (rising when reloading)
         :param max_out: output size
         :returns: x out of max_out, value of current state
         """
         if not self._current_reload_time:
-            return self._mag_state * (
-                    max_out / self._default_mag_size
-            ), self._mag_state
+            return self._mag_state * (max_out / self._default_mag_size), self._mag_state
 
         return (
-            (
-                (
-                    self._reload_time - self._current_reload_time
-                ) / self._reload_time
-            ) * max_out,
-            round(self._current_reload_time, 2)
+            ((self._reload_time - self._current_reload_time) / self._reload_time)
+            * max_out,
+            round(self._current_reload_time, 2),
         )
 
     def _update(self, delta: float) -> None:
@@ -242,11 +236,11 @@ class BaseWeapon(Item):
                 self._sound_effect.done()
 
     def shoot(
-            self,
-            direction: Vec2,
-            bullet_tof: float | EllipsisType = ...,
-            target_pos: Vec2 | EllipsisType = ...,
-            **bullet_args
+        self,
+        direction: Vec2,
+        bullet_tof: float | EllipsisType = ...,
+        target_pos: Vec2 | EllipsisType = ...,
+        **bullet_args,
     ) -> bool:
         """
         shoot a bullet and check for recoil and reload
@@ -286,13 +280,16 @@ class BaseWeapon(Item):
 
         # recoil
         if hasattr(self.parent, "_impulse_resistance_factor"):
-            recoil = Vec2().from_polar(
-                direction.angle,
-                self._bullet_type.get_recoil_fac(
-                    self._bullet_type.get_weight(self._bullet_type._default_size),
-                    self.muzzle_velocity + self.parent.velocity.length
+            recoil = (
+                Vec2().from_polar(
+                    direction.angle,
+                    self._bullet_type.get_recoil_fac(
+                        self._bullet_type.get_weight(self._bullet_type._default_size),
+                        self.muzzle_velocity + self.parent.velocity.length,
+                    ),
                 )
-            ) * -self.parent._impulse_resistance_factor
+                * -self.parent._impulse_resistance_factor
+            )
 
             recoil *= self.recoil_factor
             self.parent.add_velocity(recoil)
@@ -315,29 +312,22 @@ class BaseWeapon(Item):
         if direction.x < 0:
             bof.y *= -1
 
-        bullet_offset = Vec2().from_polar(
-            bof.angle + direction.angle,
-            bof.length
-        )
+        bullet_offset = Vec2().from_polar(bof.angle + direction.angle, bof.length)
 
         self._bullet_type(
             runtime_buffer=self._runtime_buffer,
             parent=self.parent,
             coalition=self.coalition,
             initial_position=(
-                self.parent.position
-                + self._parent_position_offset
-                + bullet_offset
+                self.parent.position + self._parent_position_offset + bullet_offset
             ),
-            initial_velocity=Vec2().from_polar(
-                direction.angle, self.muzzle_velocity
-            )
+            initial_velocity=Vec2().from_polar(direction.angle, self.muzzle_velocity)
             + self.parent.velocity,
             weapon_collision_exception_id=self._e_id,
             initial_facing=direction.angle,
             target_pos=target_pos,
             no_gravity=self._no_bullet_gravity,
-            **kwargs
+            **kwargs,
         )
 
         # TODO: casings
@@ -378,16 +368,16 @@ class FileLoadedWeapon(BaseWeapon):
     _CID = WeaponCIDs.base
 
     def __init__(
-            self,
-            parent,
-            runtime_buffer: Array[base_entity_t],
-            drop_casings: bool = False,
-            parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
-            **kwargs
+        self,
+        parent,
+        runtime_buffer: Array[base_entity_t],
+        drop_casings: bool = False,
+        parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
+        **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
             parent_position_offset=parent_position_offset,
-            **kwargs
+            **kwargs,
         )

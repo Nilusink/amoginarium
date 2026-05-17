@@ -7,10 +7,11 @@ defines a few useful classes
 Author:
 Nilusink, melektron
 """
-from time import perf_counter
-import typing as tp
+
 import asyncio
 import inspect
+import typing as tp
+from time import perf_counter
 
 
 class BetterDict:
@@ -36,10 +37,7 @@ class SimpleLock:
     def __init__(self) -> None:
         self.__locked_by: str = ...
 
-    def aquire(
-            self,
-            timeout: float = 0
-    ) -> bool:
+    def aquire(self, timeout: float = 0) -> bool:
         """
         :param timeout: timeout in seconds
         """

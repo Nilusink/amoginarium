@@ -6,8 +6,9 @@ Created: 03.04.2026
 Authors: LukasKrah
 """
 
-import pygame as pg
 import OpenGL.GL as GL
+import pygame as pg
+
 
 # Define a pure C struct to hold character data.
 # This prevents Python object overhead during rendering.

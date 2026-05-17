@@ -6,8 +6,8 @@ Created: 25.03.2026
 Authors: LukasKrah
 """
 
-from ._ui_element_values import (
-    UIElementValueNamesEnum, UIElementValueTypesEnum, UIElementValueFloat, UIElementValueFloatOneAbsolute,
-    UIElementValueVec2, UIElementValueVec2OneAbsolute, UIElementData
-)
 from ._ui_element import UIElement
+from ._ui_element_values import UIElementData, UIElementValueFloat
+from ._ui_element_values import UIElementValueFloatOneAbsolute, UIElementValueNamesEnum
+from ._ui_element_values import UIElementValueTypesEnum, UIElementValueVec2
+from ._ui_element_values import UIElementValueVec2OneAbsolute

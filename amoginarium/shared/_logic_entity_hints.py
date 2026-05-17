@@ -15,7 +15,7 @@ import typing as tp
 if tp.TYPE_CHECKING:
     from types import EllipsisType
 
-    from . import CIDType, Coalitions, base_entity_t
+    from . import base_entity_t, CIDType, Coalitions
     from .collision_detection import CollisionEvent
     from .utility import Vec2
 
