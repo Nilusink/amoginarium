@@ -241,7 +241,7 @@ def choose_turret(
 
 
 def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
-    """D."""
+    """Da main func."""
     b = BaseGame(debug=True)
     renderer.display_set_windowed()
 
@@ -273,7 +273,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             if perf_counter() - last_update > UPDATE_INTERVAL:
                 # create new chunk
                 _old_pos, *_ = current_chunk
-                old_pos = (int(_old_pos.x), int(_old_pos.y))
+                old_pos: tuple[int, int] = int(_old_pos.x), int(_old_pos.y)
 
                 # create new direction
                 viable_weights = [
