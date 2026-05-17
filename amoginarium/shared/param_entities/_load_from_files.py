@@ -77,7 +77,7 @@ def load_entities_from_files(
 ) -> dict[str, type]:
     """Load all entities specified in assets"""
     entity_index = entity_index.copy()
-    new_entities: dict[str, tp.Type] = {}
+    new_entities: dict[str, type] = {}
 
     # inherits form other dynamic entities
     to_inherit = {}
@@ -151,7 +151,7 @@ def load_entities_from_files(
 
                 if "sound" in data:
                     effect: (
-                        tp.Type[SoundEffect | RandomizedEffect | ContinuousSoundEffect]
+                        type[SoundEffect | RandomizedEffect | ContinuousSoundEffect]
                         | None
                     ) = None
                     if "name" in data["sound"]:
@@ -166,7 +166,7 @@ def load_entities_from_files(
                             sound_class_name = sound_name.capitalize()
 
                         # noinspection PyTypeChecker
-                        effect: tp.Type[PresetEffect] = type(
+                        effect: type[PresetEffect] = type(
                             f"{sound_class_name}Effect",
                             (PresetEffect,),
                             {"_sound_name": sound_name},
@@ -176,7 +176,7 @@ def load_entities_from_files(
                         sound_scope: str = data["sound"]["scope"]
 
                         # noinspection PyTypeChecker
-                        effect: tp.Type[ScopedRandomizedEffect] = type(
+                        effect: type[ScopedRandomizedEffect] = type(
                             f"{sound_scope.capitalize()}Effect",
                             (ScopedRandomizedEffect,),
                             {"_scope": sound_scope},
@@ -235,7 +235,7 @@ def load_entities_from_files(
                 parent_class = entity_index[data["id"]["from"]]
 
                 # noinspection PyTypeChecker
-                new_class: tp.Type = type(
+                new_class: type = type(
                     class_name,
                     (parent_class,),
                     __dict,

@@ -6,13 +6,8 @@ Created: 25.03.2026
 Authors: LukasKrah
 """
 
-from ._ui_element import UIElement
 from ._ui_element_values import (
-    UIElementData,
-    UIElementValueFloat,
-    UIElementValueFloatOneAbsolute,
-    UIElementValueNamesEnum,
-    UIElementValueTypesEnum,
-    UIElementValueVec2,
-    UIElementValueVec2OneAbsolute,
+    UIElementValueNamesEnum, UIElementValueTypesEnum, UIElementValueFloat, UIElementValueFloatOneAbsolute,
+    UIElementValueVec2, UIElementValueVec2OneAbsolute, UIElementData
 )
+from ._ui_element import UIElement

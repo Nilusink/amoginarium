@@ -8,11 +8,11 @@ Author:
 Nilusink
 """
 
-import typing as tp
 from types import EllipsisType
+import typing as tp
 
-from amoginarium.shared import WeaponSensorCIDs
 from amoginarium.shared.collision_detection import CollisionEvent
+from amoginarium.shared import WeaponSensorCIDs
 from amoginarium.shared.utility import Vec2
 
 from ....._base import GameCollisions
@@ -29,7 +29,7 @@ class LaserDesignator:
 
     def __init__(self, code: int = 1688) -> None:
         """
-        Designate targets for laser sensor
+        designate targets for laser sensor
 
         :param code: laser code
         """
@@ -38,16 +38,16 @@ class LaserDesignator:
 
     @property
     def code(self) -> int:
-        """Designator code"""
+        """designator code"""
         return self.__code
 
     def shine(self, origin: Vec2, direction: Vec2, max_range: float) -> None:
-        """Shine the laser in a direction"""
+        """shine the laser in a direction"""
         entities: list[CollisionEvent] = (
             GameCollisions.collision_manager.manual_collision(
                 self._collision_groups,
                 origin,
-                origin + Vec2().from_polar(direction.angle, max_range),
+                origin + Vec2().from_polar(direction.angle, max_range)
             )
         )
 
@@ -64,15 +64,15 @@ class LaserSensor(BaseWeaponsSensor):
     _CID = WeaponSensorCIDs.laser
 
     def __init__(
-        self,
-        parent: "AerodynamicEntity",
-        code: int,
-        *,
-        offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-        function_delay: float = 0,
+            self,
+            parent: "AerodynamicEntity",
+            code: int,
+            *,
+            offset: tuple[float, float] | Vec2 | EllipsisType = ...,
+            function_delay: float = 0,
     ) -> None:
         """
-        Homes in on a designated laser
+        homes in on a designated laser
 
         :param parent: parent bullet
         :param code: laser code
@@ -82,19 +82,19 @@ class LaserSensor(BaseWeaponsSensor):
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
         self.__code: int = code
-        self._target: Vec2 | None = None
+        self._target: None | Vec2 = None
 
     # region properties
     @property
     def code(self) -> int:
-        """Designator code"""
+        """designator code"""
         return self.__code
 
     # endregion
 
     # region interface
     def get_target(self) -> Vec2 | None:
-        """Get sensor target"""
+        """get sensor target"""
         if self._target:
             return self._parent.position - self._target
 

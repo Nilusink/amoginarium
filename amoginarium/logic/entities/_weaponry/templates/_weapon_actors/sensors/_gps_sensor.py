@@ -8,6 +8,8 @@ Author:
 Nilusink
 """
 
+from types import EllipsisType
+
 from amoginarium.shared import WeaponSensorCIDs
 from amoginarium.shared.utility import Vec2
 

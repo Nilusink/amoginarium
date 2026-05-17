@@ -7,9 +7,7 @@ background music
 Author:
 Nilusink
 """
-
 from random import randint
-
 import pygame as pg
 
 from ._sounds import sounds
@@ -23,7 +21,7 @@ class BackgroundPlayer:
 
     def assign_scope(self, scope: str) -> None:
         """
-        Select a scope to play background songs from
+        select a scope to play background songs from
         """
         for sound in sounds.get_all_from_scope(scope):
             self._sound_files.append(sound)
@@ -37,13 +35,15 @@ class BackgroundPlayer:
         self._playing = sound.play(loops=-1, fade_ms=5000)
 
     def start(self) -> None:
-        sound = self._sound_files[randint(0, len(self._sound_files) - 1)]
+        sound = self._sound_files[
+            randint(0, len(self._sound_files) - 1)
+        ]
         sound.set_volume(self.volume)
         self._playing = sound.play(loops=-1, fade_ms=5000)
 
     def update(self) -> None:
         """
-        Checks if the sound is done and plays another one
+        checks if the sound is done and plays another one
         """
         if self._playing is ... or not self._playing.get_busy():
             self.start()

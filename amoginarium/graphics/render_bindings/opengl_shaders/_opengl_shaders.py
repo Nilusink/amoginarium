@@ -5,13 +5,10 @@ Project: amoginarium
 Created: 07.04.2026
 Authors: LukasKrah
 """
-
 import os
 import typing as tp
-
 from OpenGL.GL import *
 from OpenGL.GL import shaders
-
 
 class BaseShader:
     """Base class responsible for loading and compiling shaders."""
@@ -29,9 +26,9 @@ class BaseShader:
         vert_path = os.path.join(base_dir, *self.path, f"{self.name}.vert")
         frag_path = os.path.join(base_dir, *self.path, f"{self.name}.frag")
 
-        with open(vert_path, "r") as f:
+        with open(vert_path, 'r') as f:
             vert_code = f.read()
-        with open(frag_path, "r") as f:
+        with open(frag_path, 'r') as f:
             frag_code = f.read()
 
         v_shader = shaders.compileShader(vert_code, GL_VERTEX_SHADER)
@@ -40,6 +37,7 @@ class BaseShader:
 
     def _init_uniforms(self):
         """Override this in subclasses to cache specific uniform locations."""
+        pass
 
     def use(self):
         """Convenience method to activate the shader."""
@@ -75,3 +73,4 @@ class Shaders:
     def init_shaders() -> None:
         Shaders.dash = DashShader()
         Shaders.test = TestShader()
+

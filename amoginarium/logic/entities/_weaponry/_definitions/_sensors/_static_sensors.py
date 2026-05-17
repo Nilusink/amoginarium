@@ -8,23 +8,18 @@ Author:
 Nilusink
 """
 
-import typing as tp
 from ctypes import Array
+import typing as tp
 
-from amoginarium import pv
-from amoginarium.shared import (
-    BaseCommandType,
-    Coalitions,
-    DummyCIDs,
-    ProcessCommand,
-    SensorCIDs,
-    base_entity_t,
-)
+from amoginarium.shared import SensorCIDs, base_entity_t, ProcessCommand
+from amoginarium.shared import BaseCommandType, Coalitions, DummyCIDs
 from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
+from amoginarium import pv
 
-from ...._base import GameCollisions, LogicGameEntity
-from ...templates import BaseSensor, DetectionGroup, MagicSensor, RadarSensor
+from ...._base import LogicGameEntity, GameCollisions
+from ...templates import DetectionGroup, BaseSensor
+from ...templates import MagicSensor, RadarSensor
 
 if tp.TYPE_CHECKING:
     from ...templates import Bullet
@@ -34,19 +29,19 @@ class VisualSensor(LogicGameEntity):
     __slots__ = ("detection_group", "coalition", "_hp")
 
     _CID = SensorCIDs.magic
-    _sensor_type: type[BaseSensor] = MagicSensor
+    _sensor_type: tp.Type[BaseSensor] = MagicSensor
     _size: tuple[float, float] = (64, 64)
     _max_hp = 40
 
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
     def __init__(
-        self,
-        runtime_buffer: Array[base_entity_t],
-        position: Vec2,
-        coalition: Coalitions,
-        detection_group: DetectionGroup = None,
-        **sensor_args,
+            self,
+            runtime_buffer: Array[base_entity_t],
+            position: Vec2,
+            coalition: Coalitions,
+            detection_group: DetectionGroup = None,
+            **sensor_args,
     ) -> None:
         self.coalition = coalition
         self._hp = self._max_hp
@@ -55,7 +50,7 @@ class VisualSensor(LogicGameEntity):
             runtime_buffer=runtime_buffer,
             position=position,
             size=Vec2().from_cartesian(*self._size),
-            centered=True,
+            centered=True
         )
         self._create_collision()
         # self.add(CollisionDestroyed)
@@ -74,12 +69,7 @@ class VisualSensor(LogicGameEntity):
         pv.COQ.put(
             ProcessCommand(
                 type=BaseCommandType.spawn_dummy,
-                kwargs={
-                    "id": self.id,
-                    "cid": DummyCIDs.base_bullet.value,
-                    "spawn_time": 0,
-                    "position": position.xy,
-                },
+                kwargs={"id": self.id, "cid": DummyCIDs.base_bullet.value, "spawn_time": 0, "position": position.xy},
             )
         )
 

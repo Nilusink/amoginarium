@@ -5,19 +5,14 @@ Project: amoginarium
 Created: 28.04.2026
 Authors: LukasKrah
 """
-
 import os
 import re
 import subprocess
 from pathlib import Path
 
-
 def run_cmd(cmd):
     # Suppress console spam from pyreverse during recursive runs
-    subprocess.run(
-        cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-    )
-
+    subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def process_packages():
     """Processes pyreverse output to create a structural mermaid graph."""
@@ -25,12 +20,12 @@ def process_packages():
     if not os.path.exists(input_file):
         return
 
-    with open(input_file, "r") as f:
+    with open(input_file, 'r') as f:
         lines = f.readlines()
 
     edges, classes = [], set()
-    pattern = re.compile(r"(\w+)\s+(-->|\.\.>)\s+(\w+)")
-    class_pattern = re.compile(r"class\s+(\w+)\s*\{?")
+    pattern = re.compile(r'(\w+)\s+(-->|\.\.>)\s+(\w+)')
+    class_pattern = re.compile(r'class\s+(\w+)\s*\{?')
 
     for line in lines:
         if m := pattern.search(line):
@@ -43,20 +38,18 @@ def process_packages():
     root_dir = Path(".")
 
     for p in root_dir.iterdir():
-        if p.name.startswith(".") or (
-            p.name.startswith("__") and p.name != "__init__.py"
-        ):
+        if p.name.startswith('.') or (p.name.startswith('__') and p.name != '__init__.py'):
             continue
         if p.is_dir():
             top_name = p.name
             top_items_fs.add(top_name)
             item_to_top[top_name] = top_name
-            for sub_p in p.rglob("*.py"):
-                if sub_p.name != "__init__.py":
+            for sub_p in p.rglob('*.py'):
+                if sub_p.name != '__init__.py':
                     item_to_top[sub_p.stem] = top_name
-        elif p.is_file() and p.suffix == ".py":
+        elif p.is_file() and p.suffix == '.py':
             top_name = p.stem
-            if top_name in ("__init__", "test"):
+            if top_name in ('__init__', 'test'):
                 continue
             top_items_fs.add(top_name)
             item_to_top[top_name] = top_name
@@ -78,9 +71,8 @@ def process_packages():
     mmd += [f"    {root_name} --- {i}\n" for i in valid_top_items if i in init_imports]
     mmd += ["\n"] + [f"    {s} --> {d}\n" for s, d in sorted(cross_links)]
 
-    with open(output_file, "w") as f:
+    with open(output_file, 'w') as f:
         f.writelines(mmd)
-
 
 def process_classes():
     """Processes pyreverse output to create a class relationship mermaid graph."""
@@ -88,17 +80,17 @@ def process_classes():
     if not os.path.exists(input_file):
         return
 
-    with open(input_file, "r") as f:
+    with open(input_file, 'r') as f:
         lines = f.readlines()
     classes, edges = set(), []
-    cp, ep = re.compile(r"class\s+(\w+)\s*\{?"), re.compile(r"(\w+)\s+(.*?)\s+(\w+)")
+    cp, ep = re.compile(r'class\s+(\w+)\s*\{?'), re.compile(r'(\w+)\s+(.*?)\s+(\w+)')
 
     for line in lines:
         if m := cp.search(line):
             classes.add(m.group(1))
         elif m := ep.search(line):
             u, arrow, v = m.groups()
-            if any(x in arrow for x in ["-->", "--|>", "..>"]):
+            if any(x in arrow for x in ['-->', '--|>', '..>']):
                 edges.append((u, v))
                 classes.update([u, v])
 
@@ -129,24 +121,15 @@ def process_classes():
 
     mmd, g_idx = ["graph RL"], 1
     for i in range(0, len(isolated), 5):
-        mmd += (
-            [f'\n    subgraph Group{g_idx} [" "]\n']
-            + [f"        {n}\n" for n in isolated[i : i + 5]]
-            + ["    end"]
-        )
+        mmd += [f'\n    subgraph Group{g_idx} [" "]\n'] + [f'        {n}\n' for n in isolated[i:i + 5]] + ['    end']
         g_idx += 1
     for t in trees:
-        mmd += (
-            [f'\n    subgraph Group{g_idx} [" "]\n']
-            + [f"        {n}\n" for n in t]
-            + ["    end"]
-        )
+        mmd += [f'\n    subgraph Group{g_idx} [" "]\n'] + [f'        {n}\n' for n in t] + ['    end']
         g_idx += 1
-    mmd += ["\n"] + [f"    {u} --> {v}\n" for u, v in edges]
+    mmd += ["\n"] + [f'    {u} --> {v}\n' for u, v in edges]
 
-    with open(input_file, "w") as f:
+    with open(input_file, 'w') as f:
         f.writelines(mmd)
-
 
 def update_readme_file():
     """Updates the README in the current folder, injecting content between specific tags."""
@@ -155,29 +138,22 @@ def update_readme_file():
     cc = open(cf).read().strip() if os.path.exists(cf) else ""
 
     cwd = Path.cwd().resolve().as_posix()
-    h_path = cwd[cwd.find("amoginarium") :] if "amoginarium" in cwd else Path.cwd().name
+    h_path = cwd[cwd.find("amoginarium"):] if "amoginarium" in cwd else Path.cwd().name
     ticks = "`" * 3
 
     # Tag constants for strict injection
-    S_START, S_END = (
-        "<!--- MermaidStructureStart --->",
-        "<!--- MermaidStructureEnd --->",
-    )
+    S_START, S_END = "<!--- MermaidStructureStart --->", "<!--- MermaidStructureEnd --->"
     C_START, C_END = "<!--- MermaidClassesStart --->", "<!--- MermaidClassesEnd --->"
 
     if not os.path.exists(rf):
         # CREATE: Only if there is actual data
         if sc or cc:
-            with open(rf, "w") as f:
+            with open(rf, 'w') as f:
                 f.write(f"# {h_path}\n\n")
                 if sc:
-                    f.write(
-                        f'<details open>\n\n<summary><h2 style="display:inline-block">Structure</h2></summary>\n\n{S_START}\n{ticks}mermaid\n{sc}\n{ticks}\n{S_END}\n\n</details>\n\n'
-                    )
+                    f.write(f"<details open>\n\n<summary><h2 style=\"display:inline-block\">Structure</h2></summary>\n\n{S_START}\n{ticks}mermaid\n{sc}\n{ticks}\n{S_END}\n\n</details>\n\n")
                 if cc:
-                    f.write(
-                        f'<details open>\n\n<summary><h2 style="display:inline-block">Classes</h2></summary>\n\n{C_START}\n{ticks}mermaid\n{cc}\n{ticks}\n{C_END}\n\n</details>\n'
-                    )
+                    f.write(f"<details open>\n\n<summary><h2 style=\"display:inline-block\">Classes</h2></summary>\n\n{C_START}\n{ticks}mermaid\n{cc}\n{ticks}\n{C_END}\n\n</details>\n")
             print("  -> Created README.md")
         ss, cs = bool(sc), bool(cc)
     else:
@@ -191,9 +167,7 @@ def update_readme_file():
             e_idx = content.find(S_END, s_idx)
             if e_idx != -1:
                 replacement = f"\n{ticks}mermaid\n{sc}\n{ticks}\n" if sc else "\n"
-                content = (
-                    content[: s_idx + len(S_START)] + replacement + content[e_idx:]
-                )
+                content = content[:s_idx + len(S_START)] + replacement + content[e_idx:]
                 ss, updated = True, True
 
         # Classes Injection
@@ -202,13 +176,11 @@ def update_readme_file():
             e_idx = content.find(C_END, c_idx)
             if e_idx != -1:
                 replacement = f"\n{ticks}mermaid\n{cc}\n{ticks}\n" if cc else "\n"
-                content = (
-                    content[: c_idx + len(C_START)] + replacement + content[e_idx:]
-                )
+                content = content[:c_idx + len(C_START)] + replacement + content[e_idx:]
                 cs, updated = True, True
 
         if updated:
-            with open(rf, "w") as f:
+            with open(rf, 'w') as f:
                 f.write(content)
             print("  -> Updated README.md")
         else:
@@ -219,7 +191,6 @@ def update_readme_file():
         if os.path.exists(file):
             os.remove(file)
 
-
 def run_pipeline(target_dir: Path, require_updatable: bool):
     """Executes the mapping logic in a specific directory."""
     if not any(target_dir.glob("*.py")):
@@ -229,11 +200,8 @@ def run_pipeline(target_dir: Path, require_updatable: bool):
         readme_file = target_dir / "README.md"
         if not readme_file.exists():
             return
-        content = readme_file.read_text(encoding="utf-8", errors="ignore")
-        if (
-            "<!--- MermaidStructureStart --->" not in content
-            and "<!--- MermaidClassesStart --->" not in content
-        ):
+        content = readme_file.read_text(encoding='utf-8', errors='ignore')
+        if "<!--- MermaidStructureStart --->" not in content and "<!--- MermaidClassesStart --->" not in content:
             return
 
     original_dir = Path.cwd()
@@ -252,24 +220,17 @@ def run_pipeline(target_dir: Path, require_updatable: bool):
     finally:
         os.chdir(original_dir)
 
-
 def walk_and_process(require_updatable: bool):
     """Recursively walks through folders to execute the pipeline."""
     root = Path.cwd()
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [
-            d
-            for d in dirnames
-            if not (d.startswith(".") or d.startswith("__") or d in ("venv", "env"))
-        ]
+        dirnames[:] = [d for d in dirnames if not (d.startswith('.') or d.startswith('__') or d in ('venv', 'env'))]
         run_pipeline(Path(dirpath), require_updatable)
-
 
 def cmd_gen_readme():
     """Command: gen_readme - Current folder only."""
     run_pipeline(Path.cwd(), require_updatable=False)
     print("Done.")
-
 
 def cmd_update_readmes():
     """Command: update_readmes - Recursive, existing tags only."""
@@ -277,13 +238,11 @@ def cmd_update_readmes():
     walk_and_process(require_updatable=True)
     print("Done updating existing READMEs.")
 
-
 def cmd_create_readmes():
     """Command: create_readmes - Recursive, all Python folders."""
     print("Generating/Updating READMEs for ALL Python folders recursively...")
     walk_and_process(require_updatable=False)
     print("Done generating all READMEs.")
-
 
 if __name__ == "__main__":
     cmd_gen_readme()

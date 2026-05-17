@@ -7,18 +7,15 @@ Shared memory synced graphics entities
 Author:
 Nilusink
 """
-
 from __future__ import annotations
-
-import math as m
-import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
-
 from icecream import ic  # noqa: F401
+import math as m
+import time
 
+from amoginarium.shared.utility import Vec2, Color, coord_t
 from amoginarium import pv
-from amoginarium.shared.utility import Color, Vec2, coord_t
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
@@ -32,7 +29,7 @@ class _SyncedEntitiesManager:
 
     def add_entity(self, sync_id: int, entity: SyncedGraphicsEntity) -> None:
         """
-        Add an entity to the manager
+        add an entity to the manager
         """
         # delete old entity if it already exists
         if sync_id in self._entities:
@@ -48,7 +45,7 @@ class _SyncedEntitiesManager:
 
     def del_entity(self, sync_id: int) -> bool:
         """
-        Remove an entity from the manager
+        remove an entity from the manager
 
         :returns: true if entity was removed, false if not present
         """
@@ -60,7 +57,7 @@ class _SyncedEntitiesManager:
 
     def get_entity(self, sync_id: int) -> SyncedGraphicsEntity | None:
         """
-        Get a graphics entity by ID
+        get a graphics entity by ID
 
         :returns: None if not found, entity if present
         """
@@ -70,7 +67,7 @@ class _SyncedEntitiesManager:
         return self._entities[sync_id]
 
     def reset(self) -> None:
-        """Kill all entities and reset buffer"""
+        """kill all entities and reset buffer"""
         for eid, entity in self._entities.copy().items():
             self.del_entity(eid)
             entity.kill()
@@ -85,17 +82,8 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     """
 
     __slots__ = [
-        "pos",
-        "facing",
-        "size",
-        "alive",
-        "param0",
-        "param1",
-        "param2",
-        "param3",
-        "__id",
-        "param4",
-        "_logic_visibility",
+        "pos", "facing", "size", "alive", "param0", "param1", "param2",
+        "param3", "__id", "param4", "_logic_visibility"
     ]
     pos: Vec2
     facing: Vec2
@@ -152,7 +140,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     @property
     def world_position(self) -> Vec2:
         """
-        Entity position - world position offset
+        entity position - world position offset
         """
         return self.pos - pv.global_vars.get_world_position()
 
@@ -163,7 +151,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     @property
     def id(self) -> int:
-        """Sync ID"""
+        """sync ID"""
         return self.__id
 
     # endregion
@@ -171,7 +159,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     # region buffer control
     def _get_bit(self, param: str, bit_index: int) -> bool:
         """
-        Get one single bits value
+        get one single bits value
 
         :param param: param to get bit from
         :param bit_index: which bit to get
@@ -183,7 +171,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     def _update_from_buffer(self) -> None:
         """
-        Update entity values from shared buffer
+        update entity values from shared buffer
         """
         self.pos.x = pv.E_BUFF[self.__id].pos_x
         self.pos.y = pv.E_BUFF[self.__id].pos_y
@@ -210,7 +198,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     def update_from_buffer(self, recursive: bool = True) -> None:
         """
-        Update entity values from shared buffer
+        update entity values from shared buffer
         """
         self._update_from_buffer()
 
@@ -245,11 +233,13 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                 (0, 0),
                 (2000, 2000),
                 Color().from_1(
-                    0.6, 0.6, 0.7, 0.125 + m.sin(2 * time.perf_counter() + self.id) / 8
+                    0.6,
+                    0.6,
+                    .7,
+                    0.125 + m.sin(2 * time.perf_counter() + self.id) / 8
                 ),
             )
             renderer.disable_stencil()
-
     # endregion
 
 
@@ -257,20 +247,28 @@ class SyncedImageEntity(SyncedGraphicsEntity):
     __slots__ = ["_texture_id", "_lifetime"]
 
     def __init__(
-        self, sync_id: int, texture_id: int, parent: int | None = None
+            self,
+            sync_id: int,
+            texture_id: int,
+            parent: int | None = None
     ) -> None:
         self._texture_id = texture_id
         super().__init__(sync_id, parent)
 
     @property
     def texture_id(self) -> int:
-        """Image texture id"""
+        """image texture id"""
         return self._texture_id
 
     def draw_at(
-        self, position: coord_t, size: coord_t, layer: int, *, rotation: float = 0
+            self,
+            position: coord_t,
+            size: coord_t,
+            layer: int,
+            *,
+            rotation: float = 0
     ) -> None:
-        """Draw an entity at specified position and size"""
+        """draw an entity at specified position and size"""
         renderer.draw_textured_quad(
             self._texture_id,
             position,
@@ -307,7 +305,7 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
             self.world_position - self.size / 2,
             self.size,
-            layer=layer,
+            layer=layer
         )
 
 
@@ -321,7 +319,7 @@ class Iconifyable(ABC):
     @abstractmethod
     def get_icon(self) -> tuple[int, tuple[int, int]]:
         """
-        Get icon of item
+        get icon of item
 
         :returns: icon texture id, icon size
         """
