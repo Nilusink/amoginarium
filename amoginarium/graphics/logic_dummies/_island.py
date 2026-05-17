@@ -36,38 +36,6 @@ _ISLAND_TYPE_FILLED: int
 _ISLAND_TYPE_HOLE: int = 2
 
 
-class _PolyMatcher:
-    """Polygon matching."""
-
-    __slots__ = ("top", "bottom", "left", "right")
-    top: bool
-    bottom: bool
-    left: bool
-    right: bool
-
-    def __init__(self, top: bool, bottom: bool, left: bool, right: bool) -> None:
-        """
-        Polygon matching.
-
-        :param top: Whether the top edge is active.
-        :param bottom: Whether the bottom edge is active.
-        :param left: Whether the left edge is active.
-        :param right: Whether the right edge is active.
-        """
-        self.top = top
-        self.bottom = bottom
-        self.left = left
-        self.right = right
-
-    def __str__(self) -> str:
-        """:return: String formatted as [top, bottom, left, right]."""
-        return f"[{self.top}, {self.bottom}, {self.left}, {self.right}]"
-
-    def __repr__(self) -> str:
-        """:return: String representation via __str__."""
-        return self.__str__()
-
-
 def _l_get[A, B](
     lst: tp.Sequence[A],
     index: int,
@@ -338,66 +306,40 @@ class Island(SyncedGraphicsEntity):
             row_offset = self._image_size[1] * row
 
             for column in range(n_columns):
-                island_type = -1
-
                 # check adjacent blocks
+                block_top = 0
+                block_bottom = 0
+                block_left = 0
+                block_right = 0
+
+                island_type = -1
                 if not isinstance(self._form, EllipsisType):
                     # try to get blocks, else treat as air
-                    block_top = _l_get(_l_get(self._form, row - 1, []), column, 0)
-                    block_bottom = _l_get(_l_get(self._form, row + 1, []), column, 0)
-                    block_left = _l_get(_l_get(self._form, row, []), column - 1, 0)
-                    block_right = _l_get(_l_get(self._form, row, []), column + 1, 0)
-
                     if row > 0:
-                        try:
-                            block_top = self._form[row - 1][column]
-
-                        except IndexError:
-                            block_top = 0
+                        block_top = _l_get(_l_get(self._form, row - 1, []), column, 0)
 
                     if row < n_rows - 1:
-                        try:
-                            block_bottom = self._form[row + 1][column]
-
-                        except IndexError:
-                            block_left = 0
+                        block_bottom = _l_get(
+                            _l_get(self._form, row + 1, []), column, 0
+                        )
 
                     if column > 0:
-                        try:
-                            block_left = self._form[row][column - 1]
-
-                        except IndexError:
-                            block_left = 0
+                        block_left = _l_get(_l_get(self._form, row, []), column - 1, 0)
 
                     if column < n_columns - 1:
-                        try:
-                            block_right = self._form[row][column + 1]
+                        block_right = _l_get(_l_get(self._form, row, []), column + 1, 0)
 
-                        except IndexError:
-                            block_right = 0
+                    try:
+                        island_type = self._form[row][column]
 
-                    # get island type
-                    island_type = self._form[row][column]
+                    except IndexError:
+                        continue
 
                 else:
                     block_top = row != 0
                     block_bottom = row != n_rows - 1
                     block_left = column != 0
                     block_right = column != n_columns - 1
-
-                # corners
-                poly = (
-                    block_top in (1, 2),
-                    block_bottom in (1, 2),
-                    block_left in (1, 2),
-                    block_right in (1, 2),
-                )
-                poly = _PolyMatcher(
-                    top=block_top in (1, 2),
-                    bottom=block_bottom in (1, 2),
-                    left=block_left in (1, 2),
-                    right=block_right in (1, 2),
-                )
 
                 # empty
                 if island_type == _ISLAND_TYPE_AIR:
@@ -408,127 +350,13 @@ class Island(SyncedGraphicsEntity):
                     texture = self._textures.dirt_hole_texture
 
                 else:
-                    match poly:
-                        # single
-                        case _PolyMatcher(
-                            top=False, bottom=False, left=False, right=False
-                        ):
-                            texture = self._textures.island_single_texture
-
-                        # dirt
-                        case _PolyMatcher(top=True, bottom=True, left=True, right=True):
-                            texture = self._textures.dirt_texture
-
-                        # grass top
-                        case _PolyMatcher(
-                            top=False, bottom=True, left=True, right=True
-                        ):
-                            texture = self._textures.island_middle_texture
-
-                        # grass bottom
-                        case _PolyMatcher(
-                            top=True, bottom=False, left=True, right=True
-                        ):
-                            texture = self._textures.island_middle_inv_texture
-
-                        # left wall
-                        case _PolyMatcher(
-                            top=True, bottom=True, left=False, right=True
-                        ):
-                            texture = self._textures.island_wall_right_texture
-
-                        # right wall
-                        case _PolyMatcher(
-                            top=True, bottom=True, left=True, right=False
-                        ):
-                            texture = self._textures.island_wall_left_texture
-
-                        # top and bottom
-                        case _PolyMatcher(
-                            top=True, bottom=True, left=False, right=False
-                        ):
-                            texture = self._textures.island_top_bottom_texture
-
-                        # left and right
-                        case _PolyMatcher(
-                            top=False, bottom=False, left=True, right=True
-                        ):
-                            texture = self._textures.island_left_right_texture
-
-                        # bottom empty
-                        case _PolyMatcher(
-                            top=True, bottom=False, left=True, right=True
-                        ):
-                            texture = self._textures.island_middle_inv_texture
-
-                        # top empty
-                        case _PolyMatcher(
-                            top=False, bottom=True, left=True, right=True
-                        ):
-                            texture = self._textures.island_middle_texture
-
-                        # left empty
-                        case _PolyMatcher(
-                            top=True, bottom=True, left=False, right=True
-                        ):
-                            texture = self._textures.island_wall_left_texture
-
-                        # right empty
-                        case _PolyMatcher(
-                            top=True, bottom=True, left=True, right=False
-                        ):
-                            texture = self._textures.island_wall_right_texture
-
-                        # right top corner
-                        case _PolyMatcher(
-                            top=False, bottom=True, left=True, right=False
-                        ):
-                            texture = self._textures.island_right_texture
-
-                        # left top corner
-                        case _PolyMatcher(
-                            top=False, bottom=True, left=False, right=True
-                        ):
-                            texture = self._textures.island_left_texture
-
-                        # right bottom corner
-                        case _PolyMatcher(
-                            top=True, bottom=False, left=True, right=False
-                        ):
-                            texture = self._textures.island_right_inv_texture
-
-                        # left bottom corner
-                        case _PolyMatcher(
-                            top=True, bottom=False, left=False, right=True
-                        ):
-                            texture = self._textures.island_left_inv_texture
-
-                        # top connected
-                        case _PolyMatcher(
-                            top=True, bottom=False, left=False, right=False
-                        ):
-                            texture = self._textures.island_single_bottom_texture
-
-                        # bottom connected
-                        case _PolyMatcher(
-                            top=False, bottom=True, left=False, right=False
-                        ):
-                            texture = self._textures.island_single_top_texture
-
-                        # left connected
-                        case _PolyMatcher(
-                            top=False, bottom=False, left=True, right=False
-                        ):
-                            texture = self._textures.island_single_left_texture
-
-                        # right connected
-                        case _PolyMatcher(
-                            top=False, bottom=False, left=False, right=True
-                        ):
-                            texture = self._textures.island_single_right_texture
-
-                        case _:
-                            raise WtfError("idek how you got here", poly)
+                    poly = (
+                        block_top in (1, 2),
+                        block_bottom in (1, 2),
+                        block_left in (1, 2),
+                        block_right in (1, 2),
+                    )
+                    texture = texture_map[poly]
 
                 column_offset = self._image_size[0] * column
                 self.__parsed_island.append((texture, (column_offset, row_offset)))

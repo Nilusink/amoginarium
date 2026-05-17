@@ -12,8 +12,8 @@ def main():
 
     # create initial controller
     # KeyboardController.get()
-    game.load_map("assets/maps/test.json")
-    # game.load_map("generated_map.json")
+    # game.load_map("assets/maps/test.json")
+    game.load_map("generated_map.json")
     game.mainloop()
 
 
