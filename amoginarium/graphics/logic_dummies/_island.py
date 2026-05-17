@@ -40,6 +40,8 @@ def _l_get[A, B](
     lst: tp.Sequence[A],
     index: int,
     default: B = None,
+    *,
+    default_on_neg: bool = False,
 ) -> A | B:
     """
     Get list index with default.
@@ -47,8 +49,12 @@ def _l_get[A, B](
     :param lst: list to get from
     :param index: list index
     :param default: default value
+    :param default_on_neg: return default on negative values
     :returns: value if index is valid, else default
     """
+    if default_on_neg and index < 0:
+        return default
+
     try:
         return lst[index]
 
@@ -251,9 +257,6 @@ class Island(SyncedGraphicsEntity):
         self.__parsed_island: list[tuple[int, tuple[int, int]]] = []
         self.__parse_island()
 
-        if self.__class__.__name__.startswith("Green"):
-            ic(self._size, self.__parsed_island)
-
     def __parse_island(self) -> None:
         """pre-parse the island textures."""
         # fill island with dirt
@@ -306,28 +309,33 @@ class Island(SyncedGraphicsEntity):
             row_offset = self._image_size[1] * row
 
             for column in range(n_columns):
-                # check adjacent blocks
-                block_top = 0
-                block_bottom = 0
-                block_left = 0
-                block_right = 0
-
                 island_type = -1
+                # try to get adjacent blocks, else treat as air
                 if not isinstance(self._form, EllipsisType):
-                    # try to get blocks, else treat as air
-                    if row > 0:
-                        block_top = _l_get(_l_get(self._form, row - 1, []), column, 0)
-
-                    if row < n_rows - 1:
-                        block_bottom = _l_get(
-                            _l_get(self._form, row + 1, []), column, 0
-                        )
-
-                    if column > 0:
-                        block_left = _l_get(_l_get(self._form, row, []), column - 1, 0)
-
-                    if column < n_columns - 1:
-                        block_right = _l_get(_l_get(self._form, row, []), column + 1, 0)
+                    block_top = _l_get(
+                        _l_get(self._form, row - 1, [], default_on_neg=True),
+                        column,
+                        0,
+                        default_on_neg=True,
+                    )
+                    block_bottom = _l_get(
+                        _l_get(self._form, row + 1, [], default_on_neg=True),
+                        column,
+                        0,
+                        default_on_neg=True,
+                    )
+                    block_left = _l_get(
+                        _l_get(self._form, row, [], default_on_neg=True),
+                        column - 1,
+                        0,
+                        default_on_neg=True,
+                    )
+                    block_right = _l_get(
+                        _l_get(self._form, row, [], default_on_neg=True),
+                        column + 1,
+                        0,
+                        default_on_neg=True,
+                    )
 
                     try:
                         island_type = self._form[row][column]

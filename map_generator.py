@@ -12,6 +12,7 @@ import random
 import typing as tp
 from time import perf_counter
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pygame as pg
 from icecream import ic
@@ -20,15 +21,8 @@ from scipy import ndimage
 from amoginarium import pv
 from amoginarium.base import BaseGame
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.logic.map import to_str
+from amoginarium.logic.map import array_get, generate_chunk_noise, iterate_chunk, to_str
 from amoginarium.shared.utility import Color, Vec2
-from test_map_chunk_generator import (
-    array_get,
-    generate_chunk_noise,
-    iterate_chunk,
-    plt,
-    render_chunk,
-)
 
 ISLAND_SIZE: int = 64
 CHUNK_SIZE = ISLAND_SIZE * 96
@@ -50,11 +44,29 @@ spawnables: list[tuple[tuple[str, tuple[float, float]], int]] = [
 ]
 
 
+def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
+    """Render a chunk."""
+    world_pos = pv.global_vars.get_world_position()
+
+    chunk_size_x = len(chunk)
+    chunk_size_y = len(chunk[0])
+
+    for col in range(chunk_size_x):
+        for row in range(chunk_size_y):
+            renderer.draw_rect(
+                Vec2().from_cartesian(
+                    col * ISLAND_SIZE,
+                    row * ISLAND_SIZE,
+                )
+                - world_pos
+                + pos,
+                (ISLAND_SIZE, ISLAND_SIZE),
+                Color().from_1(*(chunk[col, row],) * 3, 1),
+            )
+
+
 def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
-    """draw "interface" for chunk"""
-
-    # if_type -= 1
-
+    """Draw interface for chunk."""
     _center_pos = pos.copy()
     _center_pos += CHUNK_SIZE / 2
     _pos = _center_pos.copy()
@@ -64,13 +76,12 @@ def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
     elif if_type == 1:
         _pos.x += CHUNK_SIZE / 2
 
-    elif if_type == 2:
+    elif if_type == 2:  # noqa: PLR2004
         _pos.y -= CHUNK_SIZE / 2
 
     else:
         _pos.y += CHUNK_SIZE / 2
 
-    # renderer.draw_circle(_pos, CHUNK_SIZE / 10, 8, Color().from_1(1, 1, 0))
     renderer.draw_thick_line(
         _center_pos, _pos, Color().from_1(1, 1, 0), thickness=CHUNK_SIZE / 10
     )
@@ -96,7 +107,7 @@ def merge_chunks(
     # create output array
     h, w = next(iter(chunks.values())).shape
 
-    big = np.ones((grid_h * h, grid_w * w), dtype=np.float32)
+    big = np.ones((grid_h * h, grid_w * w), dtype=np.float64)
     mask = np.zeros((grid_h * h, grid_w * w), dtype=np.bool)
 
     # insert chunks
@@ -117,13 +128,10 @@ def top_of_column(island: np.ndarray, x: int, y_start: int = 0) -> int | None:
     return ys.min() if ys.size > 0 else None
 
 
-def get_spawn_probability(island: np.ndarray) -> float:
+def get_spawn_probability(_island: np.ndarray) -> float:
     """
     Get spawn probability of an island.
     """
-    island_length = len(island[0])
-
-    # return island_length / (CHUNK_SIZE / ISLAND_SIZE)
     return 1
 
 
@@ -232,7 +240,7 @@ def choose_turret(
     return random.sample(names, 1, counts=counts)[0]
 
 
-def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR0914  # noqa: PLR0915
+def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
     """D."""
     b = BaseGame(debug=True)
     renderer.display_set_windowed()
@@ -303,7 +311,7 @@ def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR
                     old_chunk = chunks[old_pos]
                     chunk_directions = old_chunk[1]
                     chunk_directions.append(direction_type ^ 1)
-                    chunks[old_pos] = (old_chunk[0], chunk_directions)  # type: ignore
+                    chunks[old_pos] = (old_chunk[0], chunk_directions)  # type: ignore  # noqa: PGH003
 
                     current_chunk = (new_pos, [direction_type])
                     chunks[index] = current_chunk
@@ -311,7 +319,7 @@ def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR
                     last_update = perf_counter()
                     i = len(chunks) - 1
 
-            if i < MAX_LEN and not i % 10 == 1:
+            if i < MAX_LEN and i % 10 != 1:
                 continue
 
             # clear display
@@ -322,7 +330,7 @@ def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR
             max_x = 0
             max_y = 0
             line = []
-            for i_, chunk in enumerate(chunks.values()):
+            for chunk in chunks.values():
                 pos_, *_ = chunk
                 pos_: Vec2
                 pos = pos_.copy() * CHUNK_SIZE
@@ -424,7 +432,7 @@ def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR
 
             renderer.clear_display((0.8, 0.8, 0.8))
 
-            for i_, chunk in enumerate(chunks.values()):
+            for chunk in chunks.values():
                 pos_, *_ = chunk
                 pos_: Vec2
                 pos = pos_.copy() * CHUNK_SIZE
@@ -450,9 +458,9 @@ def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR
         # merge chunks
         big_chunk, chunk_mask, min_pos = merge_chunks(chunk_populations)
         for _ in range(12):
-            iterate_chunk(big_chunk, 0, show_chunk=False)
+            iterate_chunk(big_chunk, 0, 1)
 
-        iterate_chunk(big_chunk, np.inf, show_chunk=True)
+        iterate_chunk(big_chunk, 2, 1)
 
         # group islands
         mask = big_chunk < 0.5  # noqa: PLR2004
@@ -551,43 +559,6 @@ def main() -> None:  # noqa: PLR0912  # noqa: C901  # noqa: PLR0912  # noqa: PLR
         ic("done")
         b.end()
         return
-
-        running = True
-        while running:
-            for event in pg.event.get():
-                if event.type == pg.QUIT:
-                    running = False
-                    break
-
-            renderer.clear_display()
-
-            for i_, chunk in enumerate(chunks.values()):
-                pos_, *_ = chunk
-                pos_: Vec2
-                pos = pos_.copy() * CHUNK_SIZE
-                # line.append(pos - world_pos + CHUNK_SIZE/2)
-
-                if chunk == current_chunk:
-                    color = Color().from_1(1, 0, 0, 1)
-
-                else:
-                    color = Color().from_1(1, 1, 1, 1)
-
-                renderer.draw_rect(pos - world_pos, (CHUNK_SIZE,) * 2, color)
-
-                for direction in chunk[1]:
-                    draw_chunk_interface(pos - world_pos, direction)
-
-            for chunk_pos in chunk_populations:
-                pos = Vec2().from_cartesian(*chunk_pos) * CHUNK_SIZE
-
-                render_chunk(pos, chunk_populations[chunk_pos])
-
-            renderer.display_draw_frame()
-
-        if not running:
-            ic(i)
-            break
 
     b.end()
 
