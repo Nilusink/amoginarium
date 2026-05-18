@@ -1,5 +1,5 @@
 """
-Vec2 class and vec2 related functions
+Vec2 class and vec2 related functions.
 
 Path: amoginarium/shared/utility/_cvectors.pyi
 Project: amoginarium

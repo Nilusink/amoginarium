@@ -1,5 +1,5 @@
 """
-Run amoginarium
+Run amoginarium.
 
 Path: main.py
 Project: amoginarium

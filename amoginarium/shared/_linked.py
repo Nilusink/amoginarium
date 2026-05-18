@@ -1,11 +1,10 @@
 """
-_linked.py
-20. March 2024
+Globals.
 
-globals
-
-Author:
-Nilusink
+Path: amoginarium/shared/_linked.py
+Project: amoginarium
+Created: 20.03.2024
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

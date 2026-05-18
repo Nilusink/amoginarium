@@ -1,9 +1,10 @@
 """
-amoginarium/logic/entities/_items/_jet_bag.py
+Defines a jetpack item providing flight acceleration and sound.
 
+Path: amoginarium/logic/entities/_items/_jet_bag.py
 Project: amoginarium
 Created: 18.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
 from ctypes import Array

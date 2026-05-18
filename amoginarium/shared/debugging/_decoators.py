@@ -1,11 +1,10 @@
 """
-_basegame.py
-25. January 2024
+Defines the core game.
 
-Defines the core game
-
-Author:
-Nilusink
+Path: amoginarium/shared/debugging/_decoators.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink, LukasKrah
 """
 # ruff: noqa: T201
 

@@ -4,7 +4,7 @@ Implements scrolling and parallax background systems.
 Path: amoginarium/base/_scrolling_background.py
 Project: amoginarium
 Created: 26.01.2024
-Authors: LukasKrah
+Authors: Nilusink
 """
 
 from types import EllipsisType

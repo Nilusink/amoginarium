@@ -1,11 +1,10 @@
 """
-_utility_functions.py
-19. March 2024
+A few useful functions.
 
-a few useful functions
-
-Author:
-Nilusink
+Path: amoginarium/shared/utility/_utility_functions.py
+Project: amoginarium
+Created: 19.03.2024
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

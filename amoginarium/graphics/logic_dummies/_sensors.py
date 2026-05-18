@@ -4,7 +4,7 @@ Sensor HUDs.
 Path: amoginarium/graphics/logic_dummies/_sensors.py
 Project: amoginarium
 Created: 15.04.2026
-Authors: LukasKrah
+Authors: Nilusink
 """
 
 from types import EllipsisType

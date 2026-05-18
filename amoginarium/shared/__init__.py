@@ -1,7 +1,10 @@
 """
-amoginarium/shared/__init__.py
+Exposes shared data types, memory structures, and entity protocols.
 
+Path: amoginarium/shared/__init__.py
 Project: amoginarium
+Created: 01.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 from ._controlls import Controls

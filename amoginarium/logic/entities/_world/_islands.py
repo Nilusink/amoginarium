@@ -1,11 +1,10 @@
 """
-amoginarium/logic/entities/_world/_islands.py
-26. January 2024
+An island in the sky.
 
-an island in the sky
-
-Author:
-Nilusink, Lukas
+Path: amoginarium/logic/entities/_world/_islands.py
+Project: amoginarium
+Created: 28.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

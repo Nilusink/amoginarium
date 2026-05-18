@@ -1,11 +1,10 @@
 """
-_weapons.py
-01.04.2026
+Implements weapons for players and turrets.
 
-implements weapons for players and turrets
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/_definitions/_weapons/_weapons.py
+Project: amoginarium
+Created: 01.04.2026
+Authors: LukasKrah
 """
 
 from ctypes import Array

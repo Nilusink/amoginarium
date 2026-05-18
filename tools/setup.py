@@ -5,7 +5,7 @@ Path: tools/setup.py
 Project: amoginarium
 Created: 28.04.2026
 Authors: LukasKrah
-"""
+"""  # noqa: INP001
 
 from setuptools import setup
 

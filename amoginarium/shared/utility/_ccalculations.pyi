@@ -1,5 +1,5 @@
 """
-Vec2 class and calculate_launch_angle
+Vec2 class and calculate_launch_angle.
 
 Path: amoginarium/shared/utility/_ccalculations.pyi
 Project: amoginarium
@@ -19,6 +19,8 @@ def calculate_launch_angle(
     g: float = 9.81,
 ) -> tuple[Vec2, float, Vec2]:
     """
+    Calculate the launch angle of a projectile.
+
     :param position_delta: the position delta between cannon and target
     :param target_velocity: the current velocity of the target, pass empty Vec2 if no velocity is known
     :param target_acceleration: the current acceleration of the target, pass empty Vec2 if no velocity is known

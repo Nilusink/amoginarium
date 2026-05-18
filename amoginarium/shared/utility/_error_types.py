@@ -1,13 +1,12 @@
 """
-_error_types.py
-21.04.2026
+Error types.
 
-Error types
-
-Author:
-Nilusink
+Path: amoginarium/shared/utility/_error_types.py
+Project: amoginarium
+Created: 21.04.2026
+Authors: Nilusink
 """
 
 
 class WtfError(Exception):
-    """how did you even get here?"""
+    """how did you even get here?"""  # noqa: D400

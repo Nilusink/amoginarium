@@ -1,11 +1,10 @@
 """
-_player.py
-26. January 2024
+Defines a player.
 
-defines a player
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_player/_player.py
+Project: amoginarium
+Created: 30.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

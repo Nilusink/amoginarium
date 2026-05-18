@@ -1,11 +1,10 @@
 """
-_rideable_turret.py
-13.05.2026
+Turret that can be ridden.
 
-Turret that can be ridden
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_turrets/_rideable_turret.py
+Project: amoginarium
+Created: 13.05.2026
+Authors: Nilusink
 """
 
 import typing as tp
@@ -14,9 +13,9 @@ from types import EllipsisType
 
 import numpy as np
 from icecream import ic
-from amoginarium.logic.entities import BaseLogicEntity
 
 from amoginarium import pv
+from amoginarium.logic.entities import BaseLogicEntity
 from amoginarium.shared import base_entity_t, BaseCommandType
 from amoginarium.shared import Coalitions, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings

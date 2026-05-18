@@ -1,11 +1,10 @@
 """
-_effect.py
-22. March 2024
+Manages spatialized audio effects, sound playback, and preset sound classes.
 
-a basic sound effect
-
-Author:
-Nilusink
+Path: amoginarium/shared/audio/_effect.py
+Project: amoginarium
+Created: 22.03.2024
+Authors: Nilusink, LukasKrah
 """
 
 import math as m

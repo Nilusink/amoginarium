@@ -1,5 +1,5 @@
 """
-Color class, fade function, c_255_to_1 function
+Color class, fade function, c_255_to_1 function.
 
 Path: amoginarium/shared/utility/_ccolor.pyi
 Project: amoginarium

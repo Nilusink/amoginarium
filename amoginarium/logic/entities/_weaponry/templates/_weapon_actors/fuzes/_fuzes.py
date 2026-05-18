@@ -1,11 +1,10 @@
 """
-_fuzes.py
-08.05.2026
+Different type of fuzes.
 
-Different type of fuzes
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/fuzes/_fuzes.py
+Project: amoginarium
+Created: 08.05.2026
+Authors: Nilusink
 """
 
 import typing as tp

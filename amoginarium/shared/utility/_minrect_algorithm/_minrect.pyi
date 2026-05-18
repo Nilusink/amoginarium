@@ -1,6 +1,7 @@
 """
-amoginarium/logic/_minrect.pyi.py
+Algorythm for finding minimum rectangles.
 
+Path: amoginarium/shared/utility/_minrect_algorithm/_minrect.pyi
 Project: amoginarium
 Created: 31.03.2026
 Authors: LukasKrah

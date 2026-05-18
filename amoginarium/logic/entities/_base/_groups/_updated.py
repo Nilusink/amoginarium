@@ -1,9 +1,9 @@
 """
-amoginarium/logic/entities/_base/_groups/_updated.py
-
 Specialized group for tracking entities that require regular update ticks.
+
 Includes boundary checking and bulk texture loading utility methods.
 
+Path: amoginarium/logic/entities/_base/_groups/_updated.py
 Project: amoginarium
 Created: 25.01.2024
 Authors: Nilusink, LukasKrah

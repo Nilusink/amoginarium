@@ -1,11 +1,10 @@
 """
-_ridable_protocol.py
-05.05.2026
+Base attributes a rideable entity needs.
 
-base attributes a rideable entity needs
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_rideables/_ridable_protocol.py
+Project: amoginarium
+Created: 05.05.2026
+Authors: Nilusink
 """
 
 import typing as tp

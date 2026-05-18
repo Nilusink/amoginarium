@@ -1,11 +1,11 @@
 """
-_guided_multi_stage_missile.py
-10.05.2026
+A multi-stage missile with guidance.
 
-a multi-stage missile with guidance
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
+      _guided_multi_stage_missile.py
+Project: amoginarium
+Created: 10.05.2026
+Authors: Nilusink
 """
 
 import math as m

@@ -1,11 +1,10 @@
 """
-_exacto.py
-17.04.2026
+Implements bullet, weapon, and turret for the exacto system.
 
-Implements both bullet + weapon for the exacto system
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/_definitions/_combined/_exacto.py
+Project: amoginarium
+Created: 17.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -15,10 +14,8 @@ import typing as tp
 from ctypes import Array
 from types import EllipsisType
 
-from amoginarium.shared import VisibleGameEntityLike
-
-from amoginarium.shared import base_entity_t, Coalitions
-from amoginarium.shared import DummyCIDs, TurretCIDs, WeaponCIDs
+from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
+from amoginarium.shared import TurretCIDs, VisibleGameEntityLike, WeaponCIDs
 from amoginarium.shared.audio import Sniper as SniperSound
 from amoginarium.shared.utility import coord_t, get_default, normalize_angle, Vec2
 

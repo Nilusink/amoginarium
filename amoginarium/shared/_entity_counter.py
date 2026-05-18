@@ -1,11 +1,10 @@
 """
-_entity_counter.py
-28.03.2026
+Keeps track of all entity ids.
 
-keeps track of all entity ids
-
-Author:
-Nilusink
+Path: amoginarium/shared/_entity_counter.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink
 """
 
 from __future__ import annotations

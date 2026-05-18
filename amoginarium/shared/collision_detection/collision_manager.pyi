@@ -1,5 +1,5 @@
 """
-Collision Manager
+Collision Manager.
 
 Path: amoginarium/shared/collision_detection/collision_manager.pyi
 Project: amoginarium

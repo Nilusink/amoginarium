@@ -1,9 +1,10 @@
 """
-amoginarium/logic/entities/_items/_shield.py
+Defines a shield item that blocks projectiles and absorbs damage.
 
+Path: amoginarium/logic/entities/_items/_shield.py
 Project: amoginarium
 Created: 18.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

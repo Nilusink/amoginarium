@@ -1,11 +1,10 @@
 """
-_background.py
-22. March 2024
+Background music.
 
-background music
-
-Author:
-Nilusink
+Path: amoginarium/shared/audio/_background.py
+Project: amoginarium
+Created: 25.03.2024
+Authors: Nilusink
 """
 
 from random import randint

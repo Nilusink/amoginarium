@@ -1,11 +1,10 @@
 """
-_entity_hints.py
-12.03.2026
+Type hints for entities.
 
-type hints for entities
-
-Author:
-Nilusink
+Path: amoginarium/shared/_entity_hints.py
+Project: amoginarium
+Created: 12.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

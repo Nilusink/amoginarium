@@ -1,9 +1,10 @@
 """
-amoginarium/logic/entities/_weapons/_base_weapon.py
+Base class for weapon logic, handling shooting, reloading, and recoil.
 
+Path: amoginarium/logic/entities/_weaponry/templates/_weapons/_base_weapon.py
 Project: amoginarium
-Created: 18.04.2026
-Authors: LukasKrah
+Created: 01.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

@@ -1,9 +1,7 @@
 """
-amoginarium/logic/entities/_base/_groups/_entity_type_groups.py
-
 Contains predefined entity type groups (Bullets, Walls, Players).
-Includes helper methods for querying spatial extremes of player entities.
 
+Path: amoginarium/logic/entities/_base/_groups/_entity_type_groups.py
 Project: amoginarium
 Created: 25.01.2024
 Authors: Nilusink, LukasKrah

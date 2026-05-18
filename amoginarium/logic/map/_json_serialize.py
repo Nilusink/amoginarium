@@ -1,11 +1,10 @@
 """
-_json_serialize.py
-15.03.2026
+Convert everything ingame to a str.
 
-convert everything ingame to a str
-
-Author:
-Nilusink
+Path: amoginarium/logic/map/_json_serialize.py
+Project: amoginarium
+Created: 15.03.2026
+Authors: Nilusink
 """
 
 import json

@@ -1,11 +1,10 @@
 """
-_controlls.py
-31.03.2026
+Synced controller controls.
 
-synced controller controls
-
-Author:
-Nilusink
+Path: amoginarium/shared/_controlls.py
+Project: amoginarium
+Created: 31.03.2026
+Authors: Nilusink
 """
 
 from ctypes import Array

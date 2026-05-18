@@ -1,11 +1,10 @@
 """
-_console_colors.py
-25. January 2024
+Defines a few console colors.
 
-defines a few console colors
-
-Author:
-Nilusink
+Path: amoginarium/shared/debugging/_console_colors.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink
 """
 # ruff: noqa: T201
 

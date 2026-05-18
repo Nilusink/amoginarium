@@ -1,11 +1,10 @@
 """
-_base.py
-10.05.2026
+Base weapons sensor used in weapons guidance.
 
-base weapons sensor used in weapons guidance
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/sensors/_base.py
+Project: amoginarium
+Created: 10.05.2026
+Authors: Nilusink
 """
 
 from abc import ABC, abstractmethod

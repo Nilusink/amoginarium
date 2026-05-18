@@ -1,11 +1,10 @@
 """
-_base_missile.py
-05.05.2026
+Base missile Type.
 
-base missile Type
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/_base_missile.py
+Project: amoginarium
+Created: 05.05.2026
+Authors: Nilusink
 """
 
 import typing as tp

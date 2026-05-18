@@ -1,8 +1,9 @@
 """
-amoginarium/logic/_minrect.pyi.py
+Algorythm for finding minimum rectangles without a perfect result but way faster.
 
+Path: amoginarium/shared/utility/_minrect_algorithm/_minrect_dirty.pyi
 Project: amoginarium
-Created: 31.03.2026
+Created: 13.04.2026
 Authors: LukasKrah
 """
 

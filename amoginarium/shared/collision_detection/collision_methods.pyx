@@ -2,6 +2,14 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+"""
+Collision Methods.
+
+Path: amoginarium/shared/collision_detection/collision_methods.pyx
+Project: amoginarium
+Created: 17.04.2026
+Authors: LukasKrah
+"""
 
 from libc.math cimport sqrt
 from libcpp.vector cimport vector

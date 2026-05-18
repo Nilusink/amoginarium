@@ -1,5 +1,5 @@
 """
-Utility functions written in cython
+Utility functions written in cython.
 
 Path: amoginarium/shared/utility/_cutility_functions.pyi
 Project: amoginarium

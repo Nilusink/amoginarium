@@ -1,11 +1,10 @@
 """
-amoginarium/logic/entities/_weapons/_base_charged_weapon.py
+Weapons that need to charge before firing (bow).
 
-weapons that need to charge before firing (bow)
-
+Path: amoginarium/logic/entities/_weaponry/templates/_weapons/_base_charged_weapon.py
 Project: amoginarium
 Created: 14.03.2026
-Authors: Nilusink, LukasKrah
+Authors: Nilusink
 """
 
 import typing as tp

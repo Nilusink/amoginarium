@@ -1,11 +1,10 @@
 """
-_sounds.py
-22. March 2024
+Global sounds.
 
-global sounds
-
-Author:
-Nilusink
+Path: amoginarium/shared/audio/_sounds.py
+Project: amoginarium
+Created: 26.03.2024
+Authors: Nilusink
 """
 
 import json

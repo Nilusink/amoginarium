@@ -1,7 +1,10 @@
 """
-amoginarium/settings/_settings.py
+Manages persistent game configuration via JSON file I/O (not used).
 
+Path: amoginarium/shared/settings/_settings.py
 Project: amoginarium
+Created: 01.03.2026
+Authors: LukasKrah
 """
 
 from __future__ import annotations

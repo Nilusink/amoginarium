@@ -4,7 +4,7 @@ Analyzes the runtimes of amoginarium.
 Path: debug_analyzer.py
 Project: amoginarium
 Created: 25.01.2024
-Authors: Nilusink
+Authors: Nilusink, LukasKrah
 """
 
 import json

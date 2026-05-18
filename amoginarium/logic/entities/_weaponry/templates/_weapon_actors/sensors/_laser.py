@@ -1,11 +1,10 @@
 """
-_sensors.py
-10.05.2026
+Laser sensor and designator.
 
-laser sensor and designator
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/sensors/_laser.py
+Project: amoginarium
+Created: 10.05.2026
+Authors: Nilusink
 """
 
 import typing as tp

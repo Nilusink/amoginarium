@@ -1,11 +1,10 @@
 """
-_shared_memory.py
-28.03.2026
+Shared memory objects.
 
-shared memory objects
-
-Author:
-Nilusink
+Path: amoginarium/shared/_shared_memory.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink
 """
 # ruff: noqa: T201
 

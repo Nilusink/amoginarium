@@ -1,11 +1,10 @@
 """
-_aerodynamic_entity.py
-17.04.2026
+Really simple game-ifyed version of aerodynamics.
 
-Really simple game-ifyed version of aerodynamics
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_bullets/_aerodynamic_entity.py
+Project: amoginarium
+Created: 17.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 import math as m

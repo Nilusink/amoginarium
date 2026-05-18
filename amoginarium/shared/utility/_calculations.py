@@ -1,11 +1,10 @@
 """
-_calculations.py
-17. March 2024
+Defines a functions that perform some kind of calculation.
 
-defines a functions that perform some kind of calculation
-
-Author:
-Nilusink
+Path: amoginarium/shared/utility/_calculations.py
+Project: amoginarium
+Created: 17.03.22024
+Authors: Nilusink
 """
 
 import math as m

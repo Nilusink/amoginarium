@@ -7,7 +7,7 @@ and establishes bidirectional collision relationships.
 Path: amoginarium/logic/entities/_base/_collision/_collision_manager.py
 Project: amoginarium
 Created: 16.04.2026
-Authors: LukasKrah, Nilusin
+Authors: LukasKrah, Nilusink
 """
 
 import typing as tp

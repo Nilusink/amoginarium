@@ -1,9 +1,10 @@
 """
-amoginarium/logic/entities/_combat/__init__.py
+Exports base and rideable turret templates for weaponry logic.
 
+Path: amoginarium/logic/entities/_weaponry/templates/_turrets/__init__.py
 Project: amoginarium
 Created: 18.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
 from ._base_turret import BaseTurret, TargetSolution

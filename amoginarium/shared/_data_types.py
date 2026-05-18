@@ -1,11 +1,10 @@
 """
-_data_types.py
-18.03.2026
+Various data types.
 
-Various data types
-
-Author:
-Nilusink
+Path: amoginarium/shared/_data_types.py
+Project: amoginarium
+Created: 18.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

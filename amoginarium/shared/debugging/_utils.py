@@ -1,11 +1,10 @@
 """
-_utils.py
-22. March 2024
+Generally useful functions.
 
-generally useful functions
-
-Author:
-Nilusink
+Path: amoginarium/shared/debugging/_utils.py
+Project: amoginarium
+Created: 22.03.2024
+Authors: Nilusink, LukasKrah
 """
 
 import inspect

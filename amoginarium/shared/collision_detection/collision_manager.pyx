@@ -3,6 +3,14 @@
 # cython: wraparound=False
 # cython: cdivision=True
 # cython: nonecheck=False
+"""
+Collision Manager.
+
+Path: amoginarium/shared/collision_detection/collision_manager.pyx
+Project: amoginarium
+Created: 17.04.2026
+Authors: LukasKrah
+"""
 
 from .collision_manager cimport CollisionGroupStruct, CollisionManager
 from .collision_manager cimport CollisionRelationStruct, DeferredDeletion, EntityData

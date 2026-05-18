@@ -1,11 +1,10 @@
 """
-amoginarium/logic/entities/_items/_something.py
-
 IDK what this is. Definitely something.
 
+Path: amoginarium/logic/entities/_items/_something.py
 Project: amoginarium
 Created: 18.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

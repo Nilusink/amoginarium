@@ -1,11 +1,10 @@
 """
-_pid_controller.pyx
-10.05.2026
+Simple PID controller.
 
-simple PID controller
-
-Author:
-Nilusink
+Path: amoginarium/shared/utility/_pid_controller.pyx
+Project: amoginarium
+Created: 10.05.2026
+Authors: Nilusink
 """
 
 

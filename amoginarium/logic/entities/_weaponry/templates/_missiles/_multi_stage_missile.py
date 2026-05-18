@@ -1,11 +1,10 @@
 """
-_multi_stage_missile.py
-05.05.2026
+Missile "bullet".
 
-missile "bullet"
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/_multi_stage_missile.py
+Project: amoginarium
+Created: 05.05.2026
+Authors: Nilusink
 """
 
 import typing as tp

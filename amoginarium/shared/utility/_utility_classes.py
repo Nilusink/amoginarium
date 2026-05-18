@@ -1,11 +1,10 @@
 """
-_utility_classes.py
-25. January 2024
+Defines a few useful classes.
 
-defines a few useful classes
-
-Author:
-Nilusink, melektron
+Path: amoginarium/shared/utility/_utility_classes.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink, LukasKrah
 """
 
 import asyncio

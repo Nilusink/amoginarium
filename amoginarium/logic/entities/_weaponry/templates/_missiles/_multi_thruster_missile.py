@@ -1,11 +1,11 @@
 """
-_multi_thruster_missile.py
-11.05.2026
+Missile that maneuvers by applying small thrusters.
 
-missile that maneuvers by applying small thrusters
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
+      _multi_thruster_missile.py
+Project: amoginarium
+Created: 11.05.2026
+Authors: Nilusink
 """
 
 from ctypes import Array

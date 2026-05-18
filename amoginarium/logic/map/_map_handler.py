@@ -1,11 +1,10 @@
 """
-_map_handler.py
-15.03.2026
+Load and save maps.
 
-load and save maps
-
-Author:
-Nilusink
+Path: amoginarium/logic/map/_map_handler.py
+Project: amoginarium
+Created: 15.03.2026
+Authors: Nilusink
 """
 
 import json

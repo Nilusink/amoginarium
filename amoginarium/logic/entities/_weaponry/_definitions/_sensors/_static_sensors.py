@@ -1,11 +1,10 @@
 """
-_static_sensors.py
-15.04.2026
+Allows sensors to be placed on the map.
 
-allows sensors to be placed on the map
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/_definitions/_sensors/_static_sensors.py
+Project: amoginarium
+Created: 15.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

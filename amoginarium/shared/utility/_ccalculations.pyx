@@ -1,5 +1,5 @@
 """
-Vec2 class and calculate_launch_angle
+Vec2 class and calculate_launch_angle.
 
 Path: amoginarium/shared/utility/_ccalculations.pyx
 Project: amoginarium

@@ -1,11 +1,10 @@
 """
-_inventory.py
-16.03.2026
+Basic inventory can be used by all entities (players, chests, ...).
 
-basic inventory, can be used by all entities (players, chests, ...)
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_items/_inventory.py
+Project: amoginarium
+Created: 16.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

@@ -1,6 +1,7 @@
 """
-amoginarium/logic/entities/_bullets/bullet.py
+Base class for bullet entities handling physics, collisions, and clustering.
 
+Path: amoginarium/logic/entities/_weaponry/templates/_bullets/_base_bullet.py
 Project: amoginarium
 Created: 31.03.2026
 Authors: Nilusink, LukasKrah

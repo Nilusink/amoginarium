@@ -1,11 +1,10 @@
 """
-amoginarium/logic/entities/_bullets/__init__.py
+Implements logic bullets.
 
-Implements logic bullets
-
+Path: amoginarium/logic/entities/_bullets/__init__.py
 Project: amoginarium
 Created: 18.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
 from ._aerodynamic_entity import AerodynamicEntity

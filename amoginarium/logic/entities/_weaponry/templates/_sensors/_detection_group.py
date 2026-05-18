@@ -1,11 +1,10 @@
 """
-_detection_group.py
-10.03.2026
+"Data-link" to share target information.
 
-"Data-link" to share target informatino
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_sensors/_detection_group.py
+Project: amoginarium
+Created: 10.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

@@ -1,11 +1,11 @@
 """
-_calculated_rideable_turret.py
-14.05.2026
+A rideable turret that calculates bullet launch angle.
 
-a rideable turret that calculates bullet launch angle
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/
+      templates/_turrets/_calculated_rideable_turret.py
+Project: amoginarium
+Created: 14.05.2026
+Authors: LukasKrah
 """
 
 import ctypes

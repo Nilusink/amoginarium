@@ -1,11 +1,10 @@
 """
-_radar.py
-10.03.2026
+"Radar" sensors that can see through walls.
 
-"radar" sensors that can see through walls
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_sensors/_radar_sensor.py
+Project: amoginarium
+Created: 10.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

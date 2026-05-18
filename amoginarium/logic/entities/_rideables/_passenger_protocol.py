@@ -1,11 +1,10 @@
 """
-_passenger_protocol.py
-05.05.2026
+Base attributes of an entity that can ride things.
 
-base attributes of an entity that can ride things
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_rideables/_passenger_protocol.py
+Project: amoginarium
+Created: 05.05.2026
+Authors: Nilusink
 """
 
 from __future__ import annotations

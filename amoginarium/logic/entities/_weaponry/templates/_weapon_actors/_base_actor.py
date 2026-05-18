@@ -1,11 +1,10 @@
 """
-_base_actor.py
-10.05.2026
+Base weapon actor (sensor, fuze, ...).
 
-base weapon actor (sensor, fuze, ...)
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/_base_actor.py
+Project: amoginarium
+Created: 08.05.2026
+Authors: LukasKrah
 """
 
 import typing as tp

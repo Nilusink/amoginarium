@@ -1,11 +1,11 @@
 """
-_player_controlled_missile.py
-12.05.2026
+MultiStageMissile than can be controlled by the player.
 
-MultiStageMissile than can be controlled by the player
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
+      _player_controlled_missile.py
+Project: amoginarium
+Created: 12.05.2026
+Authors: LukasKrah
 """
 
 import typing as tp

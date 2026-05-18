@@ -1,11 +1,10 @@
 """
-_item.py
-06.04.2026
+All items should inherit from this.
 
-all items should inherit from this
-
-Author:
-Nilusink, LukasKrah
+Path: amoginarium/logic/entities/_items/_item.py
+Project: amoginarium
+Created: 01.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 import math as m
@@ -13,10 +12,9 @@ import typing as tp
 from ctypes import Array
 from types import EllipsisType
 
-from amoginarium.shared.collision_detection import CollisionEvent
-
 from amoginarium import pv
 from amoginarium.shared import base_entity_t, BaseCommandType, ProcessCommand
+from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
 
 from .._base import CollisionLogicEntity, CollisionType, GameCollisions

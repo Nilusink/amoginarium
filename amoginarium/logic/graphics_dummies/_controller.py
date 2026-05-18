@@ -1,11 +1,10 @@
 """
-_controller.py
-31.03.2026
+Controller synced to graphics controls.
 
-controller synced to graphics controls
-
-Author:
-Nilusink
+Path: amoginarium/logic/graphics_dummies/_controller.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink
 """
 
 import typing as tp
