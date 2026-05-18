@@ -1,11 +1,10 @@
 """
-pitch_changer.py
-07.04.2026
+Changes the pitch of a sound effect.
 
-changes the pitch of a sound effect
-
-Author:
-Nilusink
+Path: pitch_changer.py
+Project: amoginarium
+Created: 07.04.2026
+Authors: Nilusink
 """
 
 import os

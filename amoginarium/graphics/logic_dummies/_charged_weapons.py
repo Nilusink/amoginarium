@@ -1,11 +1,10 @@
 """
-_charged_weapons.py
-11.04.2026
+Charged weapon dummies.
 
-charged weapon dummies
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_charged_weapons.py
+Project: amoginarium
+Created: 11.04.2026
+Authors: Nilusink
 """
 
 from types import EllipsisType

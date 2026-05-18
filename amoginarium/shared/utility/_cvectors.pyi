@@ -1,3 +1,12 @@
+"""
+Vec2 class and vec2 related functions
+
+Path: amoginarium/shared/utility/_cvectors.pyi
+Project: amoginarium
+Created: 11.03.2026
+Authors: Nilusink
+"""
+
 class Vec2:
     x: float
     y: float

@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_base/__init__.py
+Exports core UI base classes and data types for amoginarium.
 
+Path: amoginarium/graphics/ui/_base/__init__.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah

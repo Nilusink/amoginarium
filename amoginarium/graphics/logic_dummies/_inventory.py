@@ -1,11 +1,10 @@
 """
-_inventory.py
-06.04.2026
+Inventory dummy (+UI) for logic.
 
-Inventory dummy (+UI) for logic
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_inventory.py
+Project: amoginarium
+Created: 06.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 from amoginarium import pv

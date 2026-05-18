@@ -1,8 +1,9 @@
 """
-amoginarium/graphics/ui/_base/_focus.py
+Manages UI element focus states and event callback registration.
 
+Path: amoginarium/graphics/ui/_base/_focus.py
 Project: amoginarium
-Created: 03.04.2026
+Created: 11.04.2026
 Authors: LukasKrah
 """
 

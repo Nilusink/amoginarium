@@ -1,11 +1,10 @@
 """
-_keyboard_controller.py
-25. January 2024
+Uses the keyboard as a controller.
 
-uses the keyboard as a controller
-
-Author:
-Nilusink
+Path: amoginarium/graphics/controllers/_keyboard_controller.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

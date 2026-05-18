@@ -1,11 +1,10 @@
 """
-map_editor.py
-15.03.2026
+Edit maps.
 
-edit maps
-
-Author:
-Nilusink
+Path: map_editor.py
+Project: amoginarium
+Created: 09.02.2024
+Authors: Nilusink
 """
 
 from contextlib import suppress

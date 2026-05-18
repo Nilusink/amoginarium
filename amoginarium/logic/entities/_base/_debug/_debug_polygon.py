@@ -1,12 +1,12 @@
 """
-amoginarium/logic/entities/_base/_debug/_debug_polygon.py
-
 Contains the DebugPolygonEntity for rendering arbitrary polygons.
+
 Packs vertex data efficiently into the entity buffer for the renderer.
 
+Path: amoginarium/logic/entities/_base/_debug/_debug_polygon.py
 Project: amoginarium
-Created: 25.04.2026
-Authors: LukasKrah
+Created: 17.04.2026
+Authors: LukasKrah, Nilusink
 """
 
 from __future__ import annotations

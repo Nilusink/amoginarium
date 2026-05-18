@@ -1,9 +1,10 @@
 """
-amoginarium/graphics/ui/_widgets/_ui_rectangle.py
+Defines an animated UI rectangle with hover effects and sounds.
 
+Path: amoginarium/graphics/ui/_widgets/_ui_rectangle.py
 Project: amoginarium
 Created: 01.03.2026
-Authors: LukasKrah
+Authors: LukasKrah, Nilusink
 """
 
 import typing as tp

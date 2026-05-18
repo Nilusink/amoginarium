@@ -1,7 +1,10 @@
 """
-amoginarium/base/_settings.py
+UI component for managing display scaling and engine settings.
 
+Path: amoginarium/base/_settings_menu.py
 Project: amoginarium
+Created: 01.03.2026
+Authors: LukasKrah
 """
 
 from typing import Callable, Literal
@@ -9,10 +12,6 @@ from typing import Callable, Literal
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
-
-##################################################
-#                     Code                       #
-##################################################
 
 
 class SettingsMenu(UIEntity):

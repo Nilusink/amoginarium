@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_debug.py
+Class decorator for visualizing UI element bounding boxes and anchors.
 
+Path: amoginarium/graphics/ui/_debug.py
 Project: amoginarium
 Created: 25.03.2026
 Authors: LukasKrah
@@ -11,9 +12,6 @@ import typing as tp
 
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared.utility import TupleMath
-
-# Assuming renderer is imported in this file
-# import renderer
 
 T = tp.TypeVar("T", bound=tp.Type)
 

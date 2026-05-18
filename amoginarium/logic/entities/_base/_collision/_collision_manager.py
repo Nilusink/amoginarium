@@ -1,12 +1,13 @@
 """
-amoginarium/logic/entities/_base/_collision/_collision_manager.py
-
 Central manager for handling all game collision logic.
-Registers groups, handles hitboxes, and establishes bidirectional collision relationships.
 
+Registers groups, handles hitboxes,
+and establishes bidirectional collision relationships.
+
+Path: amoginarium/logic/entities/_base/_collision/_collision_manager.py
 Project: amoginarium
 Created: 16.04.2026
-Authors: LukasKrah
+Authors: LukasKrah, Nilusin
 """
 
 import typing as tp

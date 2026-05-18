@@ -1,11 +1,10 @@
 """
-_bullet.py
-31.03.2026
+Bullet dummy entity.
 
-Bullet dummy entity
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_bullet.py
+Project: amoginarium
+Created: 31.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 from types import EllipsisType

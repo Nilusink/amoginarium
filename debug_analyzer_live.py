@@ -1,11 +1,13 @@
 """
-debug_analyzer.py
+Live dashboard for analyzing and comparing amoginarium engine runtimes.
 
-Live dashboard for analyzing the runtimes of amoginatorium.
 Features live-reloading, multi-file comparison, background thread caching,
 interactive native legends, dynamic space reclamation, and batch toggles.
 
-Author: Nilusink (Rewritten for Live GUI with CustomTkinter)
+Path: debug_analyzer_live.py
+Project: amoginarium
+Created: 05.05.2026
+Authors: LukasKrah, Nilusink
 """
 
 import datetime

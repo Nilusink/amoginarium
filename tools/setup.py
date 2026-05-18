@@ -1,3 +1,12 @@
+"""
+Installs amoginarium-tools for automated README generation.
+
+Path: tools/setup.py
+Project: amoginarium
+Created: 28.04.2026
+Authors: LukasKrah
+"""
+
 from setuptools import setup
 
 setup(

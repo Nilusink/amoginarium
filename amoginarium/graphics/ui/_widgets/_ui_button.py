@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_widgets/_ui_button.py
+Defines an animated UI button with text and sound effects.
 
+Path: amoginarium/graphics/ui/_widgets/_ui_button.py
 Project: amoginarium
 Created: 26.03.2024
 Authors: Nilusink, LukasKrah

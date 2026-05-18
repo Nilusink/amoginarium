@@ -1,11 +1,10 @@
 """
-_game_controller.py
-26. January 2024
+Uses the keyboard as a controller.
 
-uses the keyboard as a controller
-
-Author:
-Nilusink
+Path: amoginarium/graphics/controllers/_game_controller.py
+Project: amoginarium
+Created: 27.01.2024
+Authors: Nilusink
 """
 
 from contextlib import suppress

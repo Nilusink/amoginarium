@@ -3,8 +3,8 @@ Exposes graphical dummy representations of logic entities for rendering.
 
 Path: amoginarium/graphics/logic_dummies/__init__.py
 Project: amoginarium
-Created: 18.05.2026
-Authors: LukasKrah
+Created: 29.03.2026
+Authors: Nilusink
 """
 
 from ._bullet import BulletDummy

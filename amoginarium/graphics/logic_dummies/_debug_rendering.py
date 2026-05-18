@@ -1,9 +1,10 @@
 """
-amoginarium/graphics/logic_dummies/_dynamic_debug_rendering.py
+Graphics entities for rendering debug shapes from logic buffers.
 
+Path: amoginarium/graphics/logic_dummies/_debug_rendering.py
 Project: amoginarium
 Created: 17.04.2026
-Authors: LukasKrah
+Authors: LukasKrah, Nilusink
 """
 
 import typing as tp

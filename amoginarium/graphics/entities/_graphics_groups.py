@@ -1,11 +1,10 @@
 """
-_graphics_groups.py
-29.03.2026
+Pygame groups for drawn entities.
 
-pygame groups for drawn entities
-
-Author:
-Nilusink
+Path: amoginarium/graphics/entities/_graphics_groups.py
+Project: amoginarium
+Created: 29.03.2026
+Authors: Nilusink
 """
 
 import typing as tp

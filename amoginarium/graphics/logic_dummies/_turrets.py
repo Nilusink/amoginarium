@@ -1,11 +1,10 @@
 """
-_turrets.py
-01.04.2026
+Turret dummies.
 
-turret dummies
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_turrets.py
+Project: amoginarium
+Created: 01.04.2026
+Authors: Nilusink
 """
 
 import ctypes

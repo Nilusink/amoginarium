@@ -1,8 +1,9 @@
 """
-amoginarium/render_bindings/_opengl_shader.py
+OpenGL renderer implementation using shaders.
 
+Path: amoginarium/graphics/render_bindings/_opengl_shader.py
 Project: amoginarium
-Created: 07.04.2026
+Created: 08.04.2026
 Authors: LukasKrah
 """
 

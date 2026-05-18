@@ -1,8 +1,9 @@
 """
-amoginarium/graphics/logic_dummies/_text_entity.py
+Defines a synced graphics entity for rendering static text.
 
+Path: amoginarium/graphics/logic_dummies/_text_entity.py
 Project: amoginarium
-Created: 11.04.2026
+Created: 12.04.2026
 Authors: LukasKrah
 """
 

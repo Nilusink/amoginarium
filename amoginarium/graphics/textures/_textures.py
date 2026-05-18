@@ -1,11 +1,10 @@
 """
-_linked.py
-20. March 2024
+Manages loading, caching, and retrieving textures from files or zips.
 
-globals
-
-Author:
-Nilusink
+Path: amoginarium/graphics/textures/_textures.py
+Project: amoginarium
+Created: 20.03.2024
+Authors: Nilusink
 """
 
 import os

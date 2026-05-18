@@ -1,11 +1,10 @@
 """
-_dynamic_entities.py
-20.04.2026
+Dynamically loaded entities.
 
-dynamically loaded entities
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_dynamic_entities.py
+Project: amoginarium
+Created: 20.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

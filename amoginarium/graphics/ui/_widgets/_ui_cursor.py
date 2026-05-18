@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_widgets/_ui_cursor.py
+Manages the UI cursor position, velocity, and rendering logic.
 
+Path: amoginarium/graphics/ui/_widgets/_ui_cursor.py
 Project: amoginarium
 Created: 11.03.2026
 Authors: LukasKrah

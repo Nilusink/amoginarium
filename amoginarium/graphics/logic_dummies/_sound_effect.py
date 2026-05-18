@@ -1,11 +1,10 @@
 """
-_sound_effect.py
-29.03.2026
+Dummy for playing a sound effect, sends command instead of creating a sound.
 
-dummy for playing a sound effect, sends command instead of creating a sound
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_sound_effect.py
+Project: amoginarium
+Created: 29.03.2026
+Authors: Nilusink
 """
 
 from amoginarium import pv

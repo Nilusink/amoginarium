@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_animations/_complex_animation.py
+Implements advanced UI animations with curves, debouncing, and durations.
 
+Path: amoginarium/graphics/ui/_animations/_complex_animation.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah

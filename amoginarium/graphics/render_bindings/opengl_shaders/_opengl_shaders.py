@@ -1,6 +1,7 @@
 """
-amoginarium/render_bindings/_opengl_shaders.py
+Loads, compiles, and manages OpenGL shader programs and uniforms.
 
+Path: amoginarium/graphics/render_bindings/opengl_shaders/_opengl_shaders.py
 Project: amoginarium
 Created: 07.04.2026
 Authors: LukasKrah

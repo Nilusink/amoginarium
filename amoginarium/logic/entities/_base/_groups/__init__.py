@@ -1,9 +1,10 @@
 """
-amoginarium/logic/entities/_base/_groups/__init__.py
+Initialization for entity groups.
 
-Initialization for entity groups. Provides access to all predefined group
-instances used to categorize and batch-process logic entities.
+Provides access to all predefined group instances
+used to categorize and batch-process logic entities.
 
+Path: amoginarium/logic/entities/_base/_groups/__init__.py
 Project: amoginarium
 Created: 18.04.2026
 Authors: LukasKrah

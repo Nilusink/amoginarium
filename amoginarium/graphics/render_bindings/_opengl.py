@@ -1,11 +1,10 @@
 """
-_opengl.py
-21. March 2024
+A few functions for rendering.
 
-a few functions for rendering
-
-Author:
-Nilusink
+Path: amoginarium/graphics/render_bindings/_opengl.py
+Project: amoginarium
+Created: 22.03.2024
+Authors: Nilusink, LukasKrah
 """
 
 import os

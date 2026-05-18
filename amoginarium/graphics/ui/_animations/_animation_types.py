@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_animations/_animation_types.py
+Defines core type aliases and dataclasses for UI animation states.
 
+Path: amoginarium/graphics/ui/_animations/_animation_types.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah

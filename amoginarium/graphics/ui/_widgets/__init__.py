@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_widgets/__init__.py
+Exposes core UI widget components for the graphics engine.
 
+Path: amoginarium/graphics/ui/_widgets/__init__.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah

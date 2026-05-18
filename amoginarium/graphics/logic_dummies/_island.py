@@ -1,11 +1,10 @@
 """
-_island.py
-30.03.2026
+Visual representation of an island.
 
-visual representation of an island
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_island.py
+Project: amoginarium
+Created: 30.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

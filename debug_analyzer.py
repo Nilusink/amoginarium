@@ -1,11 +1,10 @@
 """
-debug_analyzer.py
-25. January 2024
+Analyzes the runtimes of amoginarium.
 
-Analyzes the runtimes of amoginatorium
-
-Author:
-Nilusink
+Path: debug_analyzer.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink
 """
 
 import json

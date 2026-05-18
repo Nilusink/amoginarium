@@ -1,11 +1,10 @@
 """
-__shared_process_creator.py
-29.03.2026
+Creates all data used for process sharing.
 
-creates all data used for process sharing.
-
-Author:
-Nilusink
+Path: amoginarium/__shared_process_creator.py
+Project: amoginarium
+Created: 29.03.2026
+Authors: Nilusink
 """
 
 from ctypes import addressof, Array, memset, sizeof

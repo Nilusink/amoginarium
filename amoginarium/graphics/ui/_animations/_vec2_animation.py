@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_animations/_vec2_animation.py
+Provides a MultiAnimation implementation for 2D vector transitions.
 
+Path: amoginarium/graphics/ui/_animations/_vec2_animation.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah

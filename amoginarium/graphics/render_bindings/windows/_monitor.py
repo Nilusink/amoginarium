@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/render_bindings/windows/_monitor.py
+Retrieves Windows monitor dimensions and window-to-monitor intersection bounds.
 
+Path: amoginarium/graphics/render_bindings/windows/_monitor.py
 Project: amoginarium
 Created: 13.04.2026
 Authors: LukasKrah

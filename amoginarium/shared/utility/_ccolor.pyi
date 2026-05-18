@@ -1,3 +1,12 @@
+"""
+Color class, fade function, c_255_to_1 function
+
+Path: amoginarium/shared/utility/_ccolor.pyi
+Project: amoginarium
+Created: 16.03.2026
+Authors: Nilusink
+"""
+
 import typing as tp
 
 class Color:

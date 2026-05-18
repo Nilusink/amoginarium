@@ -1,11 +1,10 @@
 """
-_run_logic.py
-28.03.2026
+Runs the logic process.
 
-runs the logic process
-
-Author:
-Nilusink
+Path: amoginarium/logic/_run_logic.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 import ctypes

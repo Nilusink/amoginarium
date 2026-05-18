@@ -1,11 +1,10 @@
 """
-_spawnables.py
-15.03.2026
+Collects every spawn-able entity.
 
-collects every spawn-able entity
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_spawnables.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

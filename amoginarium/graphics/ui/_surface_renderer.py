@@ -1,9 +1,10 @@
 """
-amoginarium/graphics/ui/_surface_renderer.py
+Provides a static utility class for drawing shapes on surfaces.
 
+Path: amoginarium/graphics/ui/_surface_renderer.py
 Project: amoginarium
 Created: 15.03.2026
-Authors: LukasKrah
+Authors: LukasKrah, Nilusink
 """
 
 import typing as tp

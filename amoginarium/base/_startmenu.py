@@ -1,22 +1,16 @@
 """
-amoginarium/base/_startmenu.py
+Defines the main menu UI with game navigation buttons.
 
+Path: amoginarium/base/_startmenu.py
 Project: amoginarium
+Created: 01.03.2026
+Authors: LukasKrah
 """
 
-##################################################
-#                    Imports                     #
-##################################################
-
 import typing as tp
-from turtledemo.planet_and_moon import Star
 
 from amoginarium.graphics.logic_dummies import PresetGraphicsSoundEffect
 from amoginarium.graphics.ui import UIButton, UIRectangle, UIStaticText
-
-##################################################
-#                     Code                       #
-##################################################
 
 
 class _StartGameButtonClick(PresetGraphicsSoundEffect):

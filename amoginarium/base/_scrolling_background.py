@@ -1,11 +1,10 @@
 """
-_scrolling_background.py
-27. January 2024
+Implements scrolling and parallax background systems.
 
-A parallax-scrolling background
-
-Author:
-Nilusink
+Path: amoginarium/base/_scrolling_background.py
+Project: amoginarium
+Created: 26.01.2024
+Authors: LukasKrah
 """
 
 from types import EllipsisType

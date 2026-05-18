@@ -1,11 +1,10 @@
 """
-_weapons.py
-02.04.2026
+Weapon models.
 
-Weapon models
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_weapons.py
+Project: amoginarium
+Created: 02.04.2026
+Authors: Nilusink
 """
 
 import math as m

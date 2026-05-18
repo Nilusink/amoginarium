@@ -1,20 +1,15 @@
 """
-amoginarium/base/_pausemenu.py
+Defines the pause menu UI with navigation and action buttons.
 
+Path: amoginarium/base/_pausemenu.py
 Project: amoginarium
+Created: 01.03.2026
+Authors: LukasKrah
 """
-
-##################################################
-#                    Imports                     #
-##################################################
 
 from typing import Callable
 
 from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
-
-##################################################
-#                     Code                       #
-##################################################
 
 
 class PauseMenu(UIEntity):

@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_base/_ui_event_element.py
+Base class for UI elements handling mouse events and collisions.
 
+Path: amoginarium/graphics/ui/_base/_ui_event_element.py
 Project: amoginarium
 Created: 18.03.2026
 Authors: LukasKrah

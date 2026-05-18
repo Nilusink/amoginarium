@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_animations/_color_animation.py
+Provides RGBA color transitions using multichannel animation logic.
 
+Path: amoginarium/graphics/ui/_animations/_color_animation.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah

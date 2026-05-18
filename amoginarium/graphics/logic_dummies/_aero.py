@@ -1,11 +1,10 @@
 """
-_aero.py
-17.04.2026
+Aerodynamics skeleton entity.
 
-aerodynamics skeleton entity
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_aero.py
+Project: amoginarium
+Created: 17.04.2026
+Authors: Nilusink
 """
 
 import math as m

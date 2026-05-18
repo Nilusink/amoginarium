@@ -1,11 +1,10 @@
 """
-_sensors.py
-15.04.2026
+Sensor HUDs.
 
-sensor HUDs
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_sensors.py
+Project: amoginarium
+Created: 15.04.2026
+Authors: LukasKrah
 """
 
 from types import EllipsisType
@@ -22,7 +21,7 @@ from ._synced_entities import SyncedGraphicsEntity
 
 class SensorHUD(SyncedGraphicsEntity):
     """
-    sensor entity
+    sensor entity.
 
     ``param0`` detection range
     ``param1`` target x

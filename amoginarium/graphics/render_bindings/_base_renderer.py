@@ -1,11 +1,10 @@
 """
-_base_renderer.py
-21. March 2024
+Prototype renderer.
 
-prototype renderer
-
-Author:
-Nilusink, LukasKrah
+Path: amoginarium/graphics/render_bindings/_base_renderer.py
+Project: amoginarium
+Created: 22.03.2024
+Authors: Nilusink, LukasKrah
 """
 
 import abc

@@ -1,3 +1,12 @@
+"""
+Compiles Cython extensions with OpenMP and optimized C++ flags.
+
+Path: setup.py
+Project: amoginarium
+Created: 11.03.2026
+Authors: Nilusink, LukasKrah
+"""
+
 # from setuptools import setup
 # from Cython.Build import cythonize
 #

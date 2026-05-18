@@ -1,11 +1,10 @@
 """
-_base_controller.py
-25. January 2024
+All controller types should inherit from this.
 
-all controller types should inherit from this
-
-Author:
-Nilusink
+Path: amoginarium/graphics/controllers/_base_controller.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink
 """
 
 import typing as tp

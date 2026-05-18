@@ -1,5 +1,13 @@
-#! venv/bin/python
-# from amoginarium.shared.controllers import KeyboardController
+"""
+Run amoginarium
+
+Path: main.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink, LukasKrah
+"""
+
+# from amoginarium.shared.controllers import KeyboardController  # noqa: ERA001
 import sys
 
 from amoginarium.base import BaseGame

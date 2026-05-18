@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_animations/_simple_animation.py
+Provides a basic two-state float value animation controller.
 
+Path: amoginarium/graphics/ui/_animations/_simple_animation.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah

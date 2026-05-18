@@ -1,11 +1,10 @@
 """
-_basic_animation.py
-19. March 2024
+An animation made from multiple images.
 
-An animation made from multiple images
-
-Author:
-Nilusink
+Path: amoginarium/graphics/entities/_animation.py
+Project: amoginarium
+Created: 13.03.2026
+Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

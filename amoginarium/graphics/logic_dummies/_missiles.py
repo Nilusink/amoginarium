@@ -1,11 +1,10 @@
 """
-_missiles.py
-05.05.2026
+Missile dummies.
 
-Missile dummies
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_missiles.py
+Project: amoginarium
+Created: 05.05.2026
+Authors: Nilusink
 """
 
 import typing as tp

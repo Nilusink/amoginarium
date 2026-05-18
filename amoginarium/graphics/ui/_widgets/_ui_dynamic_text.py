@@ -1,8 +1,9 @@
 """
-amoginarium/graphics/ui/_widgets/_ui_dynamic_text.py
+Defines a UI widget for rendering and updating dynamic text.
 
+Path: amoginarium/graphics/ui/_widgets/_ui_dynamic_text.py
 Project: amoginarium
-Created: 03.04.2026
+Created: 12.04.2026
 Authors: LukasKrah
 """
 

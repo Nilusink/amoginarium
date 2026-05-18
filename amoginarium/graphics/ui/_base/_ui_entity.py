@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_base/_ui_entity.py
+Base class for UI entities managing hierarchy, visibility, and updates.
 
+Path: amoginarium/graphics/ui/_base/_ui_entity.py
 Project: amoginarium
 Created: 10.03.2026
 Authors: LukasKrah

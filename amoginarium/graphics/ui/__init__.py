@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/__init__.py
+Exports core UI components, animations, and types for the engine.
 
+Path: amoginarium/graphics/ui/__init__.py
 Project: amoginarium
 Created: 26.03.2024
 Authors: Nilusink, LukasKrah

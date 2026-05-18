@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_animations/__init__.py
+Exports UI animation types, curves, and specialized animation controllers.
 
+Path: amoginarium/graphics/ui/_animations/__init__.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah
