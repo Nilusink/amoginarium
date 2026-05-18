@@ -18,8 +18,14 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, Coalitions, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
-from amoginarium.shared.utility import convert_coord, get_default, MASK16
-from amoginarium.shared.utility import MASK32, normalize_angle, Vec2
+from amoginarium.shared.utility import (
+    MASK16,
+    MASK32,
+    Vec2,
+    convert_coord,
+    get_default,
+    normalize_angle,
+)
 
 from ...._base import GameCollisions, LogicGameEntity
 from ...._rideables import Passenger, RideablePerks
@@ -259,7 +265,6 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
         dmg = event.other_entity.damage
         if dmg > 0 and event.other_entity.root != self.root:
-            ic(event.other_entity.root, self, self.weapon)
             self.hit(dmg, hit_by=event.other_entity)
 
     def _collision_start(self, events: list[CollisionEvent[Bullet | Player]]) -> None:
