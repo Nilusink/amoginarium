@@ -9,14 +9,15 @@ Nilusink
 """
 
 from types import EllipsisType
+
 from icecream import ic  # noqa: F401
 
-from amoginarium.shared.utility import Vec2, Color, unpack_int
-from amoginarium.shared import SensorCIDs
 from amoginarium import pv
+from amoginarium.shared import SensorCIDs
+from amoginarium.shared.utility import Color, Vec2, unpack_int
 
-from ._synced_entities import SyncedGraphicsEntity
 from ..render_bindings import renderer
+from ._synced_entities import SyncedGraphicsEntity
 
 
 class SensorHUD(SyncedGraphicsEntity):
@@ -78,7 +79,7 @@ class SensorHUD(SyncedGraphicsEntity):
                             (self.pos + t1) - world_pos,
                             (self.pos + t2) - world_pos,
                         ),
-                        color=Color().from_1(0.2, 0.2, 1, 0.5),
+                        color=Color().from_1(0.2, 0.2, 1, 0.3),
                     )
 
 

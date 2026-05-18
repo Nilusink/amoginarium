@@ -33,14 +33,15 @@ MAX_LEN: int = 8
 # spawn stuff
 IDEAL_PLATEAU_LENGTH: int = 8
 
-spawnables: list[tuple[tuple[str, tuple[float, float]], int]] = [
-    (("turret.static.ak47", (11.5, 0)), 6),  # (name, required_space), spawn_prob
-    (("turret.static.minigun", (11.5, 0)), 4),
-    (("turret.static.sniper", (11.5, 0)), 4),
-    (("turret.static.cram", (32, 0)), 1),
-    (("turret.static.sky_shield", (64, 0)), 1),
-    (("turret.static.flak", (186 / 2, 0)), 2),
-    (("turret.static.mortar", (ISLAND_SIZE * 2, ISLAND_SIZE * 10)), 7),
+# syntax: (name, required_space), spawn_weight, cluster_variant_chance
+spawnables: list[tuple[tuple[str, tuple[float, float]], int, float]] = [
+    (("turret.static.ak47", (23, 0)), 6, 0),
+    (("turret.static.minigun", (128, 0)), 4, 0),
+    (("turret.static.sniper", (128, 0)), 4, 0),
+    (("turret.static.cram", (64, 0)), 1, 0),
+    (("turret.static.sky_shield", (128, 0)), 1, 0),
+    (("turret.static.flak", (186, 0)), 2, 0),
+    (("turret.static.mortar", (ISLAND_SIZE * 2, ISLAND_SIZE * 10)), 7, 0.5),
 ]
 
 
@@ -209,7 +210,7 @@ def get_spawn_points(
 
 def choose_turret(
     map_buffer: np.ndarray, spawn_pos: tuple[int, int], plateau: list[int]
-) -> tuple[str, tuple[float, float]]:
+) -> tuple[str, tuple[float, float], dict] | None:
     """Choose a turret based on map location."""
     turrets = []
 
@@ -217,7 +218,7 @@ def choose_turret(
         x_size = turret[0][1][0] / ISLAND_SIZE
         y_size: int = 1 + int(turret[0][1][1] // ISLAND_SIZE)
 
-        if x_size // 2 <= plateau[2]:
+        if x_size <= plateau[2]:
             # check height requirement
             headroom = top_of_column(map_buffer, spawn_pos[0], spawn_pos[1] - y_size)
             headroom = headroom or y_size
@@ -231,10 +232,19 @@ def choose_turret(
                 ] = -2
                 continue
 
-            turrets.append(turret)
+            turret_args = {}
+
+            if turret[2] > 0 and random.random() <= turret[2]:
+                turret_args["cluster"] = True
+
+            turrets.append(((*turret[0], turret_args), turret[1]))
 
         else:
             ic("size fail")
+
+    if len(turrets) == 0:
+        ic("no valid turrets found")
+        return None
 
     names, counts = zip(*turrets, strict=True)
     return random.sample(names, 1, counts=counts)[0]
@@ -525,7 +535,12 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                     x_pos = min_x + x_off
                     y_pos = min_y + y_off
 
-                    turret, _ = choose_turret(big_chunk, (x_pos, y_pos), plateau)
+                    turret_ = choose_turret(big_chunk, (x_pos, y_pos), plateau)
+
+                    if not turret_:
+                        continue
+
+                    turret, _, args = turret_
 
                     map_data["entities"].append(
                         {
@@ -534,6 +549,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                                 pos[0] + x_off * ISLAND_SIZE + ISLAND_SIZE / 2,
                                 pos[1] + y_off * ISLAND_SIZE,
                             ),
+                            "args": args,
                         }
                     )
 

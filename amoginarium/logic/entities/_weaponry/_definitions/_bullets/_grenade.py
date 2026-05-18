@@ -7,23 +7,23 @@ Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
-from ctypes import Array
+
 import typing as tp
+from ctypes import Array
+
 import numpy as np
 
+from amoginarium.shared import Coalitions, DummyCIDs, base_entity_t
 from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import DummyCIDs
 
-from ...._base import GravityAffected, GameCollisions
-from ...._base import LogicGameEntity
+from ...._base import GameCollisions, GravityAffected, LogicGameEntity
 from ...templates import Bullet
 
 if tp.TYPE_CHECKING:
-    from ...._world import Island
-    from ...._player import Player
     from ...._items import Shield
+    from ...._player import Player
+    from ...._world import Island
 
 
 class _GrenadeShrapnel(Bullet):
@@ -47,7 +47,7 @@ class Grenade(Bullet):
 
     _default_size = 32
     _default_base_damage = 0
-    _default_ttl = 5000
+    _default_ttl = 5
     _default_explosion_radius = 150
     _default_explosion_damage = 50
     _default_recoil_factor = .5
