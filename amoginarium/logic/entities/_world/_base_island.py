@@ -1,6 +1,7 @@
 """
-amoginarium/logic/entities/_world/_base_island.py
+Base class for island entities with bitmap-based collision generation.
 
+Path: amoginarium/logic/entities/_world/_base_island.py
 Project: amoginarium
 Created: 26.01.2024
 Authors: Nilusink, LukasKrah
@@ -14,26 +15,19 @@ import typing as tp
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, CIDType, ProcessCommand
 from amoginarium.shared.debugging import CC, print_ic_style
-from amoginarium.shared.utility import (
-    Vec2,
-    convert_coord,
-    find_minimum_rectangles_dirty,
-)
+from amoginarium.shared.utility import convert_coord
+from amoginarium.shared.utility import find_minimum_rectangles_dirty, Vec2
 
-from .._base import (
-    CollisionType,
-    DebugRectangleEntity,
-    GameCollisions,
-    LogicGameEntity,
-    Walls,
-)
+from .._base import DebugRectangleEntity, GameCollisions, LogicGameEntity, Walls
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t
+    from amoginarium.shared import base_entity_t, CIDType
     from amoginarium.shared.utility import coord_t
+
+    from .._base import CollisionType
 
 
 class Island(LogicGameEntity):
@@ -50,11 +44,10 @@ class Island(LogicGameEntity):
     )
     __DEBUG_DRAW_HITBOXES: tp.ClassVar[bool] = False
 
-    ISLANDS: tp.ClassVar[dict[CIDType, tp.Type[Island]]] = {}
-    ISLANDS_REVERSE: tp.ClassVar[dict[tp.Type[Island], CIDType]] = {}
+    ISLANDS: tp.ClassVar[dict[CIDType, type[Island]]] = {}
+    ISLANDS_REVERSE: tp.ClassVar[dict[type[Island], CIDType]] = {}
 
     # endregion
-
     # region InstanceVars
     _size: EllipsisType | Vec2
     _form: EllipsisType | list[list[int]]
@@ -81,7 +74,8 @@ class Island(LogicGameEntity):
         :param bounce: Bounciness factor for collisions.
         """
         if size is ... and form is ...:
-            raise ValueError("either size or form have to be given!")
+            msg = "either size or form have to be given!"
+            raise ValueError(msg)
 
         start = convert_coord(pos, Vec2)
         self._size = ... if size is ... else convert_coord(size, Vec2)

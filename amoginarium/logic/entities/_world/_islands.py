@@ -1,20 +1,22 @@
 """
-an island in the sky.
+An island in the sky.
 
-amoginarium/logic/entities/_world/_islands.py
-26. January 2024
-
-Author:
-Nilusink, Lukas
+Path: amoginarium/logic/entities/_world/_islands.py
+Project: amoginarium
+Created: 28.04.2026
+Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared import CIDType, IslandCIDs
+from amoginarium.shared import IslandCIDs
 
 from ._base_island import Island
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared import CIDType
 
 
 class GrassIsland(Island):
@@ -41,6 +43,6 @@ __islands: tp.Iterable[type[Island]] = [
     GreenBrickIsland,
 ]
 
-Island.ISLANDS = {c.cid(): c for c in __islands}
+Island.ISLANDS: dict[CIDType, type[Island]] = {c.cid(): c for c in __islands}
 
 Island._islands_reverse = {v: k for k, v in Island.ISLANDS.items()}  # noqa: SLF001

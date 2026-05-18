@@ -1,23 +1,28 @@
 """
-_sensors.py
-15.04.2026
+Sensor HUDs.
 
-sensor HUDs
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_sensors.py
+Project: amoginarium
+Created: 15.04.2026
+Authors: Nilusink
 """
 
-from types import EllipsisType
+from __future__ import annotations
 
-from icecream import ic  # noqa: F401
+from types import EllipsisType
+from typing import TYPE_CHECKING
+
+from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared import SensorCIDs
-from amoginarium.shared.utility import Color, Vec2, unpack_int
+from amoginarium.shared.utility import Color, unpack_int
 
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity
+
+if TYPE_CHECKING:
+    from amoginarium.shared.utility import Vec2
 
 
 class SensorHUD(SyncedGraphicsEntity):
@@ -92,7 +97,6 @@ class RadarSensorHUD(SensorHUD):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
-        return
 
         # t_pos = Vec2().from_cartesian(self.param1, self.param2)
         #

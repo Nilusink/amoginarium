@@ -1,21 +1,23 @@
 """
-_map_handler.py
-15.03.2026
+Load and save maps.
 
-load and save maps
-
-Author:
-Nilusink
+Path: amoginarium/logic/map/_map_handler.py
+Project: amoginarium
+Created: 15.03.2026
+Authors: Nilusink
 """
-import json
+
+from typing import TYPE_CHECKING
 
 from icecream import ic
 
 from amoginarium.logic.entities import Island
-from amoginarium.shared import GameEntityLike
 
 from ..entities import Updated
 from ._json_serialize import to_str
+
+if TYPE_CHECKING:
+    from amoginarium.shared import GameEntityLike
 
 # from ..entities._
 
@@ -38,5 +40,5 @@ def save_map(filepaht: str) -> None:
         else:
             map["entities"].append(entity)
 
-    with open(filepaht, "w") as file:
+    with open(filepaht, "w", encoding="utf-8") as file:
         file.write(to_str(map))

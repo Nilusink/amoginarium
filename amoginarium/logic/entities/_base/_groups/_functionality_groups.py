@@ -1,9 +1,7 @@
 """
-amoginarium/logic/entities/_base/_groups/_functionality_groups.py
-
 Contains logical groups that apply global physics properties.
-Includes FrictionXAffected and GravityAffected for batch physics processing.
 
+Path: amoginarium/logic/entities/_base/_groups/_functionality_groups.py
 Project: amoginarium
 Created: 25.01.2024
 Authors: Nilusink, LukasKrah
@@ -11,14 +9,15 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
-from amoginarium.shared import LogicGameEntityLike
 from amoginarium import pv
+from amoginarium.shared import LogicGameEntityLike
 
 from ._base_group import BaseGroup
 
 
 class _GravityAffected(BaseGroup[LogicGameEntityLike]):
     """Logic group handling gravity calculations for entities."""
+
     __slots__ = ()
 
     @property
@@ -41,6 +40,7 @@ class _GravityAffected(BaseGroup[LogicGameEntityLike]):
 
 class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
     """Logic group handling horizontal friction calculations for entities."""
+
     __slots__ = ()
 
     @property
@@ -58,7 +58,9 @@ class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
         """
         friction = self.friction
         for sprite in self.entities():
-            sprite.acceleration.x = (sprite.acceleration.x - (sprite.velocity.x * 0.01)) * friction
+            sprite.acceleration.x = (
+                sprite.acceleration.x - (sprite.velocity.x * 0.01)
+            ) * friction
 
 
 GravityAffected: tp.Final[_GravityAffected] = _GravityAffected()

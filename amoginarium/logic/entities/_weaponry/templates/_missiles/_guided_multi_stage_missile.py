@@ -1,31 +1,40 @@
 """
-_guided_multi_stage_missile.py
-10.05.2026
+A multi-stage missile with guidance.
 
-a multi-stage missile with guidance
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
+      _guided_multi_stage_missile.py
+Project: amoginarium
+Created: 10.05.2026
+Authors: Nilusink
 """
 
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
-import numpy as np
+from __future__ import annotations
+
 import math as m
+import typing as tp
 
-from amoginarium.shared.utility import Vec2, clamp_angle, PIDController, PI_4
+import numpy as np
+
+from amoginarium.shared import MissileCIDs
 from amoginarium.shared.utility import calculate_launch_angle_all_directions
-from amoginarium.shared import MissileCIDs, base_entity_t, Coalitions
+from amoginarium.shared.utility import clamp_angle, PI_4, PIDController, Vec2
 
-from ...._base import LogicGameEntity, GravityAffected
-from .._weapon_actors.sensors import BaseWeaponsSensor
+from ...._base import GravityAffected
 from ._multi_stage_missile import MultiStageMissile
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions
+
+    from ...._base import LogicGameEntity
+    from .._weapon_actors.sensors import BaseWeaponsSensor
 
 
 class GuidedMultiStageMissile(MultiStageMissile):
     """
-    a multi-stage missile with guidance
+    a multi-stage missile with guidance.
     """
 
     _CID = MissileCIDs.guided_multi_stage
@@ -43,19 +52,19 @@ class GuidedMultiStageMissile(MultiStageMissile):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            *,
-            initial_facing: float | EllipsisType = ...,
-            rudder_size: float | EllipsisType = ...,
-            rudder_max_angle: float | EllipsisType = ...,
-            base_mass: float | EllipsisType = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            **kwargs,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        *,
+        initial_facing: float | EllipsisType = ...,
+        rudder_size: float | EllipsisType = ...,
+        rudder_max_angle: float | EllipsisType = ...,
+        base_mass: float | EllipsisType = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -68,7 +77,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
             rudder_max_angle=rudder_max_angle,
             base_mass=base_mass,
             collision_exception_ids=collision_exception_ids,
-            **kwargs
+            **kwargs,
         )
 
         # set defaults
@@ -92,7 +101,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
 
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         """
-        update guidance system
+        Update guidance system
         :param dt: time delta since last update
         :param target_delta: delta to target position
         :return:
@@ -111,7 +120,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
                         self.velocity.length,
                         recalculate=10,
                         aim_type="low",
-                        g=GravityAffected.gravity * 2
+                        g=GravityAffected.gravity * 2,
                     )
 
                 except ValueError:
@@ -136,7 +145,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
             )
 
             # PD-controller
-            rudder = error * 1.5 - (self.ang_vel * .5)
+            rudder = error * 1.5 - (self.ang_vel * 0.5)
 
             # clamp rudder
             rudder = min(max(rudder, -self._rudder_max_angle), self._rudder_max_angle)
@@ -145,11 +154,11 @@ class GuidedMultiStageMissile(MultiStageMissile):
                 self._rudder_angle = rudder
 
             else:
-                self._rudder_angle = np.sign(self.alpha) * (
-                    clamp_angle(
-                        abs(self.alpha) / PI_4, 0, 1
-                    )
-                ) * self._rudder_max_angle
+                self._rudder_angle = (
+                    np.sign(self.alpha)
+                    * (clamp_angle(abs(self.alpha) / PI_4, 0, 1))
+                    * self._rudder_max_angle
+                )
 
         else:
             self._rudder_angle = 0

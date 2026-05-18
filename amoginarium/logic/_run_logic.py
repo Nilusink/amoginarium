@@ -3,70 +3,43 @@ Runs the logic process.
 
 Path: amoginarium/logic/_run_logic.py
 Project: amoginarium
-Created: 18.05.2026
-Authors: Nilusink
+Created: 28.03.2026
+Authors: Nilusink, LukasKrah
 """
+
+from __future__ import annotations
 
 import ctypes
 import json
 import os
-from multiprocessing import Queue, synchronize
-from multiprocessing.connection import Connection
-from multiprocessing.shared_memory import SharedMemory
-from multiprocessing.sharedctypes import Synchronized
 from queue import Empty
 from time import perf_counter, perf_counter_ns, sleep
+from typing import TYPE_CHECKING
 
 import pygame as pg
 from icecream import colorize, ic
 
 from amoginarium import pv
-from amoginarium.shared import (
-    ENTITY_COUNTER,
-    INVENTORY_COUNTER,
-    MAX_ENTITIES,
-    BaseCommandType,
-    Coalitions,
-    GlobalVars,
-    ProcessCommand,
-    ProcessCommandType,
-    base_entity_t,
-)
-from amoginarium.shared.audio import (
-    BackgroundPlayer,
-    SoundEffect,
-    sound_effects,
-    sounds,
-)
-from amoginarium.shared.debugging import (
-    CC,
-    cum_timer,
-    get_fg_color,
-    print_ic_style,
-    print_with_prefix,
-    run_with_debug,
-)
+from amoginarium.shared import base_entity_t, BaseCommandType, Coalitions
+from amoginarium.shared import ENTITY_COUNTER, GlobalVars, INVENTORY_COUNTER
+from amoginarium.shared import MAX_ENTITIES, ProcessCommand, ProcessCommandType
+from amoginarium.shared.audio import BackgroundPlayer, sound_effects
+from amoginarium.shared.audio import SoundEffect, sounds
+from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
+from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.utility import Vec2
 
-from .entities import (
-    DETECTION_GLOBAL_BLUE,
-    DETECTION_GLOBAL_NEUTRAL,
-    DETECTION_GLOBAL_RED,
-    DETECTION_GROUP_MANAGER,
-    SPAWNABLES,
-    Bullets,
-    DetectionGroup,
-    FrictionXAffected,
-    GameCollisions,
-    GrassIsland,
-    GravityAffected,
-    Island,
-    LogicGameEntity,
-    Player,
-    Players,
-    Updated,
-)
+from .entities import Bullets, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
+from .entities import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER, DetectionGroup
+from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAffected
+from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
 from .graphics_dummies import Controller
+
+if TYPE_CHECKING:
+    from multiprocessing import Queue, synchronize
+    from multiprocessing.connection import Connection
+    from multiprocessing.shared_memory import SharedMemory
+    from multiprocessing.sharedctypes import Synchronized
 
 
 class LogicProcess:
@@ -74,7 +47,7 @@ class LogicProcess:
     Logic Process data.
     """
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         shm: SharedMemory,
         c_shm: SharedMemory,
@@ -144,8 +117,29 @@ class LogicProcess:
         self._running = True
         self._paused = False
 
+        # self._v = 3000
+        # self._b_vel, *_ = calculate_launch_angle(
+        #     Vec2().from_cartesian(6000, -65),
+        #     Vec2(),
+        #     Vec2(),
+        #     self._v,
+        #     aim_type="high",
+        #     g=GravityAffected.gravity * 2
+        # )
+        # self._b_vel.y *= -1
+        # ic(self._b_vel)
         self._b_start = Vec2().from_cartesian(700, 700)
         self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
+        # self._w = Mortar(
+        #     self._dummy_dad,
+        #     self._runtime_buffer,
+        #     bullet_speed=self._v
+        # )
+        # self._w.set_parent(self._dummy_dad)
+        # self._w.show()
+        # self._w._mag_size = 4
+        # self._w.reload(True)
+        # self._w.facing = self._b_vel
 
     # region properties
     @property
@@ -200,8 +194,8 @@ class LogicProcess:
             f"{get_fg_color(12)}logic{get_fg_color(247)} |> "
         )
 
-    def load_map(self, map_path: str) -> None:  # noqa: C901, PLR0912
-        """Load a map from a JSON file."""
+    def load_map(self, map_path: str) -> None:
+        """Load a map from a json file."""
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
@@ -214,7 +208,7 @@ class LogicProcess:
         self._last_map_path = map_path
 
         # load map data
-        data = json.load(open(map_path, "r", encoding="utf-8"))  # noqa: SIM115
+        data = json.load(open(map_path, "r", encoding="utf-8"))
         self._last_loaded = map_path
 
         pg.display.set_caption(f"amoginarium - {data['name']}")
@@ -228,17 +222,17 @@ class LogicProcess:
                 island_type = Island.ISLANDS[island["type"]]
 
             if "args" in island:
-                _i = island_type(self._runtime_buffer, **island["args"])
+                island_type(self._runtime_buffer, **island["args"])
 
             elif "size" in island:
-                _i = island_type(
+                island_type(
                     self._runtime_buffer,
                     Vec2().from_cartesian(*island["pos"]),
                     size=Vec2().from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
-                _i = island_type(
+                island_type(
                     self._runtime_buffer,
                     Vec2().from_cartesian(*island["pos"]),
                     form=island["form"],
@@ -247,6 +241,12 @@ class LogicProcess:
             else:
                 print_ic_style(f"{CC.fg.RED}invalid island: {CC.fg.YELLOW}{island}")
                 continue
+
+            # if "move" in island:
+            #     create_moving_island(
+            #         i,
+            #         **island["move"]
+            #     )
 
         # load entities
         detection_groups: dict[int, DetectionGroup] = {
@@ -291,7 +291,7 @@ class LogicProcess:
         self._map_loading = False
 
     @cum_timer.time_this
-    def update_entities(self, delta: float) -> bool:  # noqa: C901, PLR0912, PLR0915
+    def update_entities(self, delta: float) -> bool:
         """
         Update all entities.
 
@@ -307,7 +307,7 @@ class LogicProcess:
         # update commands
         while True:
             try:
-                item: ProcessCommand = cum_timer.time_this(self._ciq.get_nowait)()
+                item: ProcessCommand = self._ciq.get_nowait()
 
             except Empty:
                 break
@@ -337,7 +337,8 @@ class LogicProcess:
 
             elif item.type == ProcessCommandType.play_sound:
                 kwargs = item.kwargs
-                s = SoundEffect(kwargs.pop("sound_name"))
+                s = SoundEffect(kwargs["sound_name"])
+                kwargs.pop("sound_name")
                 s.play(**kwargs)
 
             elif item.type == ProcessCommandType.spawn_player:
@@ -382,12 +383,17 @@ class LogicProcess:
         # update entities
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
+        # WallBouncer.update()
 
         Bullets.update(delta)
+        # ic(list(Bullets.entities()))
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
+        # CollisionDestroyed.update()
+
         # update world position
+        # _, max_player_pos = Players.get_position_extremes()
         players = Players.entities()
         if len(players) > 0:
             curr_view = players[0].get_current_view()
@@ -445,6 +451,8 @@ class LogicProcess:
         for e in Updated.entities() + Bullets.entities():
             e.kill()
 
+        # collision_manager.clear_all_entities()
+
         # reset shared values
         self._write_lock.acquire()
         pv.reset()
@@ -471,7 +479,7 @@ class LogicProcess:
         times = cum_timer.get_times()
         for func, values in sorted(times.items(), key=lambda e: e[1][0]):
             print_ic_style(
-                f"{func}, called {values[1]} times {round(values[2], 3)}μs each,"
+                f"{func}, called {values[1]} times {round(values[2], 3)}µs each,"
                 f" totaling {round(values[0] / 1000, 2)}ms"
             )
 
@@ -494,7 +502,7 @@ class LogicProcess:
             )
 
 
-def run_continuous(  # noqa: PLR0917
+def run_continuous(
     shm: SharedMemory,
     c_shm: SharedMemory,
     i_shm: SharedMemory,
@@ -505,7 +513,7 @@ def run_continuous(  # noqa: PLR0917
     base_comm: Connection,
     process_comm: Connection,
     start_time: float,
-    time_multiplier: float,  # noqa: ARG001
+    time_multiplier: float,
     run_name: str,
 ) -> None:
     """

@@ -1,16 +1,18 @@
 """
-amoginarium/graphics/logic_dummies/_text_entity.py
+Defines a synced graphics entity for rendering static text.
 
+Path: amoginarium/graphics/logic_dummies/_text_entity.py
 Project: amoginarium
-Created: 11.04.2026
+Created: 12.04.2026
 Authors: LukasKrah
 """
 
-from icecream import ic  # noqa: F401
 import typing as tp
 
-from amoginarium.shared.utility import Color
+from icecream import ic
+
 from amoginarium.shared import GraphicsCIDs
+from amoginarium.shared.utility import Color
 
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity
@@ -18,21 +20,22 @@ from ._synced_entities import SyncedGraphicsEntity
 
 class TextEntity(SyncedGraphicsEntity):
     """
-    Static text synced graphics entity
+    Static text synced graphics entity.
     """
+
     _CID = GraphicsCIDs.static_text
 
     def __init__(
-            self,
-            sync_id: int,
-            text: str,
-            color: tuple[int, int, int] | tuple[int, int, int, int],
-            bg_color: tuple[int, int, int] | tuple[int, int, int, int],
-            size: int,
-            family: str,
-            bold: bool,
-            italic: bool,
-            **_kwargs: tp.Any
+        self,
+        sync_id: int,
+        text: str,
+        color: tuple[int, int, int] | tuple[int, int, int, int],
+        bg_color: tuple[int, int, int] | tuple[int, int, int, int],
+        size: int,
+        family: str,
+        bold: bool,
+        italic: bool,
+        **_kwargs: tp.Any,
     ) -> None:
         """
         Create a static text entity
@@ -44,7 +47,7 @@ class TextEntity(SyncedGraphicsEntity):
         :param family: Font family
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
-        :param _kwargs: Other arguments passed such as coalition
+        :param _kwargs: Other arguments passed such as coalition.
         """
         super().__init__(sync_id)
 

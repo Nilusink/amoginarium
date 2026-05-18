@@ -1,35 +1,43 @@
 """
-amoginarium/graphics/ui/_animations/_multi_animation.py
+Manages multiple synchronized animations using scalar or sequence inputs.
 
+Path: amoginarium/graphics/ui/_animations/_multi_animation.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from ._animation_types import anim_input_t, AnimationPhase, anim_curve_input_t, anim_curve_t
-from ._complex_animation import create_animation, Animation
+from ._complex_animation import create_animation
+
+if tp.TYPE_CHECKING:
+    from ._animation_types import anim_curve_input_t, anim_curve_t
+    from ._animation_types import anim_input_t, AnimationPhase
+    from ._complex_animation import Animation
 
 
 class MultiAnimation[A]:
     """Handles multiple animations with flexibility to process scalar values or sequences."""
+
     __animations: list[Animation]
     __is_single: bool
     __count: int
 
     def __init__(
-            self,
-            start_values: anim_input_t,
-            end_values: anim_input_t | None = None,
-            *_args: tp.Any,
-            extend_durations: anim_input_t | None = None,
-            collapse_durations: anim_input_t | None = None,
-            extend_debounce_duration: anim_input_t | None = None,
-            collapse_debounce_duration: anim_input_t | None = None,
-            extend_curve: anim_curve_input_t | None = None,
-            collapse_curve: anim_curve_input_t | None = None,
-            count: int | None = None
+        self,
+        start_values: anim_input_t,
+        end_values: anim_input_t | None = None,
+        *_args: tp.Any,
+        extend_durations: anim_input_t | None = None,
+        collapse_durations: anim_input_t | None = None,
+        extend_debounce_duration: anim_input_t | None = None,
+        collapse_debounce_duration: anim_input_t | None = None,
+        extend_curve: anim_curve_input_t | None = None,
+        collapse_curve: anim_curve_input_t | None = None,
+        count: int | None = None,
     ) -> None:
         """
         Create a MultiAnimation instance
@@ -54,14 +62,14 @@ class MultiAnimation[A]:
 
         # Check if ALL inputs are single values (or None)
         all_single_or_none = (
-                _is_single_or_none(start_values) and
-                _is_single_or_none(end_values) and
-                _is_single_or_none(extend_durations) and
-                _is_single_or_none(collapse_durations) and
-                _is_single_or_none(extend_debounce_duration) and
-                _is_single_or_none(collapse_debounce_duration) and
-                _is_single_or_none(extend_curve) and
-                _is_single_or_none(collapse_curve)
+            _is_single_or_none(start_values)
+            and _is_single_or_none(end_values)
+            and _is_single_or_none(extend_durations)
+            and _is_single_or_none(collapse_durations)
+            and _is_single_or_none(extend_debounce_duration)
+            and _is_single_or_none(collapse_debounce_duration)
+            and _is_single_or_none(extend_curve)
+            and _is_single_or_none(collapse_curve)
         )
 
         if all_single_or_none:
@@ -88,7 +96,7 @@ class MultiAnimation[A]:
                     extend_debounce_duration=ex_deb,
                     collapse_debounce_duration=col_deb,
                     extend_curve=ex_curve,
-                    collapse_curve=col_curve
+                    collapse_curve=col_curve,
                 )
             ]
         else:
@@ -96,10 +104,16 @@ class MultiAnimation[A]:
 
             # Extract all arguments that are sequences
             sequences = [
-                x for x in (
-                    start_values, end_values, extend_durations, collapse_durations,
-                    extend_debounce_duration, collapse_debounce_duration,
-                    extend_curve, collapse_curve
+                x
+                for x in (
+                    start_values,
+                    end_values,
+                    extend_durations,
+                    collapse_durations,
+                    extend_debounce_duration,
+                    collapse_debounce_duration,
+                    extend_curve,
+                    collapse_curve,
                 )
                 if isinstance(x, (tuple, list))
             ]
@@ -107,15 +121,16 @@ class MultiAnimation[A]:
             if sequences:
                 seq_length = max(len(seq) for seq in sequences)
                 if count is not None and count != seq_length:
-                    raise ValueError(
+                    msg = (
                         f"Provided count ({count}) does not match the longest "
                         f"provided sequence ({seq_length})."
                     )
+                    raise ValueError(msg)
                 self.__count = seq_length
             else:
                 self.__count = count if count is not None else 1
 
-            def _normalize(val, is_numeric: bool = True) -> tp.Tuple:
+            def _normalize(val, is_numeric: bool = True) -> tuple:
                 # Map None to Ellipsis (...) so default kwargs in create_animation trigger correctly
                 if val in (None, ...):
                     return (...,) * self.__count
@@ -153,23 +168,23 @@ class MultiAnimation[A]:
                     extend_debounce_duration=ex_deb_norm[i],
                     collapse_debounce_duration=col_deb_norm[i],
                     extend_curve=ex_curve_norm[i],
-                    collapse_curve=col_curve_norm[i]
+                    collapse_curve=col_curve_norm[i],
                 )
                 for i in range(self.__count)
             ]
 
     def extend(self) -> None:
-        """Start extending from current to end values"""
+        """Start extending from current to end values."""
         for anim in self.__animations:
             anim.extend()
 
     def contract(self) -> None:
-        """Start contracting from current to start values"""
+        """Start contracting from current to start values."""
         for anim in self.__animations:
             anim.collapse()
 
     def stop(self) -> None:
-        """Stop the animations at the current values"""
+        """Stop the animations at the current values."""
         for anim in self.__animations:
             anim.stop()
 
@@ -177,7 +192,7 @@ class MultiAnimation[A]:
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: Value differences between current and last values
+        :return: Value differences between current and last values.
         """
         if self.__is_single:
             val = self.__animations[0].update(delta)
@@ -187,10 +202,10 @@ class MultiAnimation[A]:
 
     def is_changing(self) -> bool:
         """:return: Whether any animation is currently in extension or contraction phase"""
-        return any([anim.is_changing() for anim in self.__animations])
+        return any(anim.is_changing() for anim in self.__animations)
 
     def reset(self) -> None:
-        """Reset the animations to their start values"""
+        """Reset the animations to their start values."""
         for anim in self.__animations:
             anim.reset()
 
@@ -258,4 +273,5 @@ class MultiAnimation[A]:
     def current_time(self) -> A:
         """:return: Current times of the animations"""
         return tuple(anim.current_time for anim in self.__animations)
+
     # endregion

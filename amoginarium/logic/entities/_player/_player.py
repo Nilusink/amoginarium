@@ -1,52 +1,43 @@
 """
-_player.py
-26. January 2024
+Defines a player.
 
-defines a player
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_player/_player.py
+Project: amoginarium
+Created: 30.03.2026
+Authors: Nilusink, LukasKrah
 """
+
+from __future__ import annotations
 
 import typing as tp
 from contextlib import suppress
-from ctypes import Array
 from time import perf_counter
 
 from icecream import ic
 
 from amoginarium import pv
-from amoginarium.shared import (
-    BaseCommandType,
-    Coalitions,
-    CurrentView,
-    DummyCIDs,
-    ItemLike,
-    ItemSlot,
-    ProcessCommand,
-    base_entity_t,
-)
+from amoginarium.shared import BaseCommandType, Coalitions
+from amoginarium.shared import CurrentView, DummyCIDs, ProcessCommand
 from amoginarium.shared.audio import DeathSound, OnHoverButtonSound, SoundEffect
-from amoginarium.shared.collision_detection import CollisionEvent
-from amoginarium.shared.utility import Vec2, convert_coord
+from amoginarium.shared.utility import convert_coord, Vec2
 
-from ...graphics_dummies import Controller
-from .._base import (
-    CollisionLogicEntity,
-    FrictionXAffected,
-    GameCollisions,
-    GravityAffected,
-    LogicGameEntity,
-    Players,
-    Updated,
-)
+from .._base import FrictionXAffected, GameCollisions, GravityAffected
+from .._base import LogicGameEntity, Players, Updated
 from .._dynamic_entities import DYNAMIC_ENTITIES
-from .._items import HealingPotion, Inventory, Item, JetBag, Shield
+from .._items import HealingPotion, Inventory, JetBag, Shield
 from .._rideables import Passenger
 from .._weaponry import ExactoSniper, HandThrownGrenade, RailGun
 from .._weaponry.templates import BaseWeapon
 
 if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t, ItemLike, ItemSlot
+    from amoginarium.shared.collision_detection import CollisionEvent
+
+    from ...graphics_dummies import Controller
+    from .._base import CollisionLogicEntity
+    from .._items import Item
     from .._weaponry.templates import Bullet, RideableTurret
     from .._world import Island
 
@@ -206,7 +197,7 @@ class Player(Passenger, LogicGameEntity):
     # endregion
 
     def get_current_view(self) -> CurrentView:
-        """Get current player viewport"""
+        """Get current player viewport."""
         pos = self.position
         zoom = 0
 
@@ -289,9 +280,7 @@ class Player(Passenger, LogicGameEntity):
         self._hp = new
         return True
 
-    def __on_collision_island(
-        self, events: list[CollisionEvent["Island"]]
-    ) -> list[bool]:
+    def __on_collision_island(self, events: list[CollisionEvent[Island]]) -> list[bool]:
         accepted_collisions: list[bool] = [False for _ in events]
 
         active_normals = [
@@ -300,7 +289,7 @@ class Player(Passenger, LogicGameEntity):
             False,
             False,
         ]  # x-negative, x-positive, y-negative, y-positive
-        if GameCollisions.collision_group_islands in self._active_normals.keys():
+        if GameCollisions.collision_group_islands in self._active_normals:
             for normal in self._active_normals[GameCollisions.collision_group_islands]:
                 if normal.x < -0.5:
                     active_normals[0] = True
@@ -354,26 +343,26 @@ class Player(Passenger, LogicGameEntity):
 
         return accepted_collisions
 
-    def __on_collision_bullet(self, events: list[CollisionEvent["Bullet"]]) -> None:
+    def __on_collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
         for event in events:
             dmg = event.other_entity.damage
             if dmg > 0 and event.other_entity.parent != self:
                 self.hit(dmg, hit_by=event.other_entity)
 
-    def __on_collision_item(self, events: list[CollisionEvent["Item"]]) -> None:
+    def __on_collision_item(self, events: list[CollisionEvent[Item]]) -> None:
         for event in events:
             if event.other_entity.item_pickupable():
                 self.pickup_item(event.other_entity)
 
     def __on_collision_rideable(
-        self, events: list[CollisionEvent["RideableTurret"]]
+        self, events: list[CollisionEvent[RideableTurret]]
     ) -> None:
         for event in events:
             event.other_entity.highlight()
             self._colliding_rideables.append(event.other_entity)
 
     def __on_collision_rideable_end(
-        self, events: list[CollisionEvent["RideableTurret"]]
+        self, events: list[CollisionEvent[RideableTurret]]
     ) -> None:
         for event in events:
             if event.other_entity in self._colliding_rideables:
@@ -382,16 +371,14 @@ class Player(Passenger, LogicGameEntity):
 
     def _collision_start(
         self,
-        events: list[
-            CollisionEvent[tp.Union["Bullet", "Island", "Item", "RideableTurret"]]
-        ],
+        events: list[CollisionEvent[Bullet | Island | Item | RideableTurret]],
     ) -> list[bool] | None:
         if events[0].group_id == GameCollisions.collision_group_islands:
             events: list[CollisionEvent[Island]]
             return self.__on_collision_island(events)
 
-        elif events[0].group_id == GameCollisions.collision_group_bullets:
-            events: list[CollisionEvent["Bullet"]]
+        if events[0].group_id == GameCollisions.collision_group_bullets:
+            events: list[CollisionEvent[Bullet]]
             self.__on_collision_bullet(events)
 
         elif (
@@ -402,7 +389,7 @@ class Player(Passenger, LogicGameEntity):
             self.__on_collision_item(events)
 
         elif events[0].group_id == GameCollisions.collision_group_rideable_turrets:
-            events: list[CollisionEvent["RideableTurret"]]
+            events: list[CollisionEvent[RideableTurret]]
             self.__on_collision_rideable(events)
 
         return None
@@ -417,7 +404,7 @@ class Player(Passenger, LogicGameEntity):
         self.__ride_pressed = True
         super().clear_controlled_entity(to_clear)
 
-    def _update(self, delta):
+    def _update(self, delta) -> None:
         # update passenger status
         self.update_passenger(delta)
 
@@ -444,7 +431,7 @@ class Player(Passenger, LogicGameEntity):
         self.facing.angle = vector.angle
 
         # update movement
-        if GameCollisions.collision_group_islands in self._active_normals.keys():
+        if GameCollisions.collision_group_islands in self._active_normals:
             for n in self._active_normals[GameCollisions.collision_group_islands]:
                 if n.y < -0.5:
                     self._on_ground = True
@@ -657,12 +644,12 @@ class Player(Passenger, LogicGameEntity):
     def add_velocity(self, value: Vec2) -> None:
         """
         Add velocity to the entity and guarantee that it will be valid (for short bursts)
-        :param value: 2D velocity to add
+        :param value: 2D velocity to add.
         """
         x = value.x
         y = value.y
 
-        if GameCollisions.collision_group_islands in self._active_normals.keys():
+        if GameCollisions.collision_group_islands in self._active_normals:
             for n in self._active_normals[GameCollisions.collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
@@ -675,12 +662,12 @@ class Player(Passenger, LogicGameEntity):
     def add_acceleration(self, value: Vec2) -> None:
         """
         Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
-        :param value: 2D acceleration to add
+        :param value: 2D acceleration to add.
         """
         x = value.x
         y = value.y
 
-        if GameCollisions.collision_group_islands in self._active_normals.keys():
+        if GameCollisions.collision_group_islands in self._active_normals:
             for n in self._active_normals[GameCollisions.collision_group_islands]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:

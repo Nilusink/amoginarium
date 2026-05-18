@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_debug.py
+Class decorator for visualizing UI element bounding boxes and anchors.
 
+Path: amoginarium/graphics/ui/_debug.py
 Project: amoginarium
 Created: 25.03.2026
 Authors: LukasKrah
@@ -8,15 +9,14 @@ Authors: LukasKrah
 
 import functools
 import typing as tp
-from amoginarium.shared.utility import TupleMath
+
 from amoginarium.graphics.render_bindings import renderer
+from amoginarium.shared.utility import TupleMath
 
-# Assuming renderer is imported in this file
-# import renderer
+T = tp.TypeVar("T", bound=type)
 
-T = tp.TypeVar('T', bound=tp.Type)
 
-def draw_debug_bounds(cls: T) -> T:
+def draw_debug_bounds[T: type](cls: T) -> T:
     """
     Class decorator for UIElements. Automatically draws the center,
     corners, and bounding lines after the standard _gl_draw is called.
@@ -35,17 +35,22 @@ def draw_debug_bounds(cls: T) -> T:
             radius=10,
             color=(255, 0, 0),
             num_segments=16,
-            convert_global=False
+            convert_global=False,
         )
 
         # 3. Draw Corners (Green)
-        for point in [self.top_left, self.top_right, self.bottom_left, self.bottom_right]:
+        for point in [
+            self.top_left,
+            self.top_right,
+            self.bottom_left,
+            self.bottom_right,
+        ]:
             renderer.draw_circle(
                 point.absolute_global,
                 radius=10,
                 color=(0, 255, 0),
                 num_segments=16,
-                convert_global=False
+                convert_global=False,
             )
 
         # 4. Draw Edges (Blue)
@@ -56,7 +61,7 @@ def draw_debug_bounds(cls: T) -> T:
             tl_xy,
             TupleMath.add(tl_xy, (self.width.absolute, 0)),
             (0, 0, 255),
-            convert_global=False
+            convert_global=False,
         )
 
         # Left Edge
@@ -64,15 +69,17 @@ def draw_debug_bounds(cls: T) -> T:
             tl_xy,
             TupleMath.add(tl_xy, (0, self.height.absolute)),
             (0, 0, 255),
-            convert_global=False
+            convert_global=False,
         )
 
         # Bottom Edge (Added to complete the box)
         renderer.draw_line(
             self.bottom_left.absolute_global.xy,
-            TupleMath.add(self.bottom_left.absolute_global.xy, (self.width.absolute, 0)),
+            TupleMath.add(
+                self.bottom_left.absolute_global.xy, (self.width.absolute, 0)
+            ),
             (0, 0, 255),
-            convert_global=False
+            convert_global=False,
         )
 
         # Right Edge (Added to complete the box)
@@ -80,7 +87,7 @@ def draw_debug_bounds(cls: T) -> T:
             self.top_right.absolute_global.xy,
             TupleMath.add(self.top_right.absolute_global.xy, (0, self.height.absolute)),
             (0, 0, 255),
-            convert_global=False
+            convert_global=False,
         )
 
     # Replace the class's _gl_draw with our wrapped version

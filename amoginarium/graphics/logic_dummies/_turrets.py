@@ -1,34 +1,32 @@
 """
-_turrets.py
-01.04.2026
+Turret dummies.
 
-turret dummies
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_turrets.py
+Project: amoginarium
+Created: 01.04.2026
+Authors: Nilusink
 """
 
-import ctypes
-import typing as tp
-from types import EllipsisType
+from __future__ import annotations
 
-from icecream import ic  # noqa: F401
+import ctypes
+import math
+import typing as tp
+
+from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared import TurretCIDs
-from amoginarium.shared.utility import (
-    MASK16,
-    MASK32,
-    MASK64,
-    Color,
-    Vec2,
-    normalize_angle,
-)
+from amoginarium.shared.utility import Color, MASK16, MASK32, MASK64
+from amoginarium.shared.utility import normalize_angle, Vec2
 
 from ..entities import Drawn_1, Drawn_2
 from ..render_bindings import renderer
 from ..textures import textures
 from ._synced_entities import SE_MANAGER, SyncedGraphicsEntity
+
+if tp.TYPE_CHECKING:
+    from types import EllipsisType
 
 
 class BaseTurretDummy(SyncedGraphicsEntity):
@@ -36,7 +34,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
     ``param0`` health
     ``param3`` target pos (x=0-31, y=32-63)
     ``param4`` engagement range & valid_angles (min=0-15, max=16-31),
-        (start=32-47, end=48-63)
+        (start=32-47, end=48-63).
     """
 
     __slots__ = ["_target_pos", "_range", "_angles", "_hp_colors"]
@@ -99,7 +97,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
             end_angle / 10_000 if end_angle < MASK16 else -1,
         )
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         # only draw engagement range if on screen
         world_position = pv.global_vars.get_world_position()
         resolution = pv.global_vars.resolution_screen
@@ -138,7 +136,7 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                 )
 
                 angle_delta = abs(normalize_angle(self._angles[1] - self._angles[0]))
-                segments = int(64 * (angle_delta / (2 * 3.1415926)))
+                segments = int(64 * (angle_delta / (2 * math.pi)))
 
                 renderer.draw_partial_dashed_circle(
                     engage_center,
@@ -269,7 +267,7 @@ class CalculatedRideableTurretDummy(BaseTurretDummy):
         )
         super().load_textures()
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
 
         if layer == 1 and self._get_bit("flags", 14):

@@ -1,36 +1,44 @@
 """
-amoginarium/logic/entities/_items/_jet_bag.py
+Defines a jetpack item providing flight acceleration and sound.
 
+Path: amoginarium/logic/entities/_items/_jet_bag.py
 Project: amoginarium
 Created: 18.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
-from ctypes import Array
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium import pv
-from amoginarium.shared import ItemCIDs, base_entity_t
+from amoginarium.shared import ItemCIDs
 from amoginarium.shared.audio import RocketSound
 from amoginarium.shared.utility import Vec2
 
 from .._base import GameCollisions
 from ._something import Something
 
+if TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+
 
 class JetBag(Something):
-    """makes you flyyyyyy"""
+    """makes you flyyyyyy."""
 
     _CID = ItemCIDs.jetbag
-    _reload_per_second: float = .5
+    _reload_per_second: float = 0.5
     _acceleration = 19
-    _max_uses: int = 500
+    _max_uses: int = 5
 
     __slots__ = ("_in_use", "_facing", "_size_fac", "_sound")
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent_position_offset: Vec2,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent_position_offset: Vec2,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -85,11 +93,10 @@ class JetBag(Something):
                 if hasattr(self.parent, "_impulse_resistance_factor"):
                     # noinspection PyProtectedMember
                     recoil = Vec2().from_cartesian(
-                        0,
-                        -self.parent._impulse_resistance_factor
+                        0, -self.parent._impulse_resistance_factor
                     )
                     recoil.length *= (
-                            self._acceleration * pv.global_vars.get_acceleration_factor()
+                        self._acceleration * pv.global_vars.get_acceleration_factor()
                     )
                     self.parent.add_acceleration(recoil)
 
@@ -100,12 +107,14 @@ class JetBag(Something):
                 self._set_bit("flags", 14, False)  # set use to false
 
         elif GameCollisions.collision_group_islands in self.parent._active_normals:
-            for normal in self.parent._active_normals[GameCollisions.collision_group_islands]:
+            for normal in self.parent._active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 if normal.y < -0.5:
                     if self._uses_left < self._max_uses:
                         self._uses_left = min(
                             self._uses_left + self._reload_per_second * delta,
-                            self._max_uses
+                            self._max_uses,
                         )
                     continue
 

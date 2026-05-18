@@ -1,6 +1,15 @@
 # fast_vec2.pyx
+"""
+Vec2 class and vec2 related functions.
+
+Path: amoginarium/shared/utility/_cvectors.pyx
+Project: amoginarium
+Created: 11.03.2026
+Authors: Nilusink
+"""
+
 cimport cython
-from libc.math cimport sqrt, atan2, cos, sin, pi, fmod
+from libc.math cimport atan2, cos, fmod, pi, sin, sqrt
 
 
 cdef class Vec2:

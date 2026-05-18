@@ -1,6 +1,7 @@
 # cython: language_level=3
 from libcpp.vector cimport vector
 
+
 cdef bint aabb_aabb_swept(
         double a_px_o, double a_py_o, double a_px_n, double a_py_n, double a_sx, double a_sy,
         double b_px_o, double b_py_o, double b_px_n, double b_py_n, double b_sx, double b_sy,

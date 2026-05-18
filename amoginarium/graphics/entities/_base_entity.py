@@ -1,23 +1,32 @@
 """
-_base_entity.py
-29.03.2026
+Graphics base entity.
 
-Graphics base entity
-
-Author:
-Nilusink
+Path: amoginarium/graphics/entities/_base_entity.py
+Project: amoginarium
+Created: 29.03.2026
+Authors: Nilusink, LukasKrah
 """
+
 from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared import CIDType
+if tp.TYPE_CHECKING:
+    from amoginarium.shared import CIDType
 
 
 class BaseGraphicsEntity:
-    """base for all graphics entities"""
+    """base for all graphics entities."""
+
     __slots__ = [
-        "__g", "_children", "_parent", "_root_visibility", "_highlight",
-        "_visible", "_lifetime", "_draw_children"
+        "__g",
+        "_children",
+        "_parent",
+        "_root_visibility",
+        "_highlight",
+        "_visible",
+        "_lifetime",
+        "_draw_children",
     ]
 
     _CID: tp.ClassVar[CIDType] = ...
@@ -47,18 +56,18 @@ class BaseGraphicsEntity:
     @property
     def visible(self) -> bool:
         """
-        returns current visibility state
+        Returns current visibility state.
         """
         return self._visible
 
     @property
     def parent(self) -> BaseGraphicsEntity | None:
-        """parent"""
+        """Parent."""
         return self._parent
 
     @parent.setter
     def parent(self, parent: BaseGraphicsEntity) -> None:
-        """parent"""
+        """Parent."""
         self._parent = parent
 
     # endregion
@@ -66,7 +75,7 @@ class BaseGraphicsEntity:
     # region Methods: pygame
     def add(self, *groups) -> None:
         """
-        add entity to one or more groups
+        Add entity to one or more groups.
         """
         has = self.__g.__contains__
 
@@ -77,7 +86,7 @@ class BaseGraphicsEntity:
 
     def remove(self, *groups) -> None:
         """
-        remove entity from one or more groups
+        Remove entity from one or more groups.
         """
         has = self.__g.__contains__
 
@@ -88,7 +97,7 @@ class BaseGraphicsEntity:
 
     def kill(self) -> None:
         """
-        remove entity from all groups
+        Remove entity from all groups.
         """
         # kill children first
         for child in self._children:
@@ -105,7 +114,7 @@ class BaseGraphicsEntity:
     # region class methods
     @classmethod
     def cid(cls) -> str:
-        """Component-ID"""
+        """Component-ID."""
         if cls._CID is ...:
             raise ValueError("__cid is not defined for " + cls.__name__)
 
@@ -123,10 +132,10 @@ class BaseGraphicsEntity:
     # endregion
 
     # region gl_draw
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         """
         Draw function for this UI.
-        Use in inheritance for the actual drawing
+        Use in inheritance for the actual drawing.
         """
         return
 
@@ -134,7 +143,7 @@ class BaseGraphicsEntity:
         """
         Called before gl_draw
         :param drawn: Whether the UI-entity will be drawn
-        :param layer: what layer the draw function has been called by
+        :param layer: what layer the draw function has been called by.
         """
         return
 
@@ -142,24 +151,24 @@ class BaseGraphicsEntity:
         """
         Called after gl_draw
         :param drawn: Whether the UI-entity was drawn
-        :param layer: what layer the draw function has been called by
+        :param layer: what layer the draw function has been called by.
         """
         return
 
     @tp.final
     def gl_draw(
-            self,
-            delta_cal: float,
-            recursive: bool = True,
-            force_draw: bool = False,
-            layer: int = 0,
+        self,
+        delta_cal: float,
+        recursive: bool = True,
+        force_draw: bool = False,
+        layer: int = 0,
     ) -> None:
         """
         Draw this UI-entity.
         :param delta_cal: delta used for animation calculations
         :param recursive: Draw the children tree recursively
         :param force_draw: Ignore visibility
-        :param layer: what layer the draw function has been called by
+        :param layer: what layer the draw function has been called by.
 
         Note: Only overwrite in inheritance for before/after draw updates
         Note: Ignores parent visibility
@@ -186,7 +195,7 @@ class BaseGraphicsEntity:
     def add_child(self, child: BaseGraphicsEntity) -> None:
         """
         Add a child UI-Entity to this Graphics-Entity
-        :param child: Child Graphics-Entity
+        :param child: Child Graphics-Entity.
         """
         if child not in self._children:
             self._children.append(child)
@@ -195,7 +204,7 @@ class BaseGraphicsEntity:
     def remove_child(self, child: BaseGraphicsEntity) -> None:
         """
         Remove a child UI-Entity from this Graphics-Entity
-        :param child: Child Graphics-Entity
+        :param child: Child Graphics-Entity.
         """
         if child in self._children:
             self._children.remove(child)

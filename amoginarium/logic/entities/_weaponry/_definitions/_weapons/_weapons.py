@@ -1,27 +1,33 @@
 """
-_weapons.py
-01.04.2026
+Implements weapons for players and turrets.
 
-implements weapons for players and turrets
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/_definitions/_weapons/_weapons.py
+Project: amoginarium
+Created: 01.04.2026
+Authors: LukasKrah
 """
 
-from ctypes import Array
+from __future__ import annotations
 
-from amoginarium.shared import WeaponCIDs, base_entity_t
+from typing import TYPE_CHECKING
+
+from amoginarium.shared import WeaponCIDs
 from amoginarium.shared.audio import SoundEffect
 from amoginarium.shared.utility import Vec2
 
 from ...templates import BaseWeapon
 from .._bullets import Grenade
 
+if TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+
 
 class HandThrownGrenade(BaseWeapon):
     """
     A grenade ... thrown by ...
-    your hand
+    your hand.
     """
 
     _CID = WeaponCIDs.h_grenade

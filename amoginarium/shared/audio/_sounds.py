@@ -1,26 +1,27 @@
 """
-_sounds.py
-22. March 2024
+Global sounds.
 
-global sounds
-
-Author:
-Nilusink
+Path: amoginarium/shared/audio/_sounds.py
+Project: amoginarium
+Created: 26.03.2024
+Authors: Nilusink
 """
 
-from amoginarium.shared.debugging import print_ic_style, get_fg_color, CC
-import pygame as pg
-import typing as tp
-import zipfile
 import json
 import os
+import typing as tp
+import zipfile
 
+import pygame as pg
+
+from amoginarium.shared.debugging import CC, get_fg_color, print_ic_style
 
 type sound_name_t = str | tuple[str, str]
 
 
 class NamedSound(tp.TypedDict):
-    """a sound-effect with a name"""
+    """a sound-effect with a name."""
+
     sound: pg.mixer.Sound
     name: str
 
@@ -38,10 +39,11 @@ class _Sounds:
 
     def load_sounds(self, path: str) -> None:
         """
-        load all sounds from a zip file or a directory
+        Load all sounds from a zip file or a directory.
         """
         if not os.path.exists(path):
-            raise FileNotFoundError(f"{path} doesn't exist!")
+            msg = f"{path} doesn't exist!"
+            raise FileNotFoundError(msg)
 
         is_zip = os.path.isfile(path)
 
@@ -62,7 +64,7 @@ class _Sounds:
             scope = path.split("/")[-1]
 
         if self.debug >= 2:
-            print_ic_style(f"loading audio scope {get_fg_color(36)}\"{scope}\"")
+            print_ic_style(f'loading audio scope {get_fg_color(36)}"{scope}"')
 
         for f in files:
             parts = (f.filename if is_zip else f).split(".")
@@ -74,16 +76,16 @@ class _Sounds:
                 if scope not in self._data:
                     self._data[scope] = {}
 
-                if sound_zip:
-                    fp = sound_zip.open(f)
-
-                else:
-                    fp = open(path + "/" + f)
+                fp = (
+                    sound_zip.open(f)
+                    if sound_zip
+                    else open(path + "/" + f, encoding="utf-8")
+                )
 
                 # append to data scope
                 try:
                     self._data[scope][ending.lower()] = json.load(fp)
-                
+
                 except json.JSONDecodeError:
                     print_ic_style(
                         f"{CC.fg.RED}- invalid info json: "
@@ -97,43 +99,31 @@ class _Sounds:
                 continue
 
             if self.debug >= 2:
-                print_ic_style(
-                    f"- texture: {get_fg_color(36)}\"{filename}\""
-                )
+                print_ic_style(f'- texture: {get_fg_color(36)}"{filename}"')
 
-            if sound_zip:
-                file = sound_zip.open(f)
-
-            else:
-                file = path + "/" + f
+            file = sound_zip.open(f) if sound_zip else path + "/" + f
 
             sound = pg.mixer.Sound(file)
 
             if scope not in self._sounds:
                 self._sounds[scope] = {}
 
-            self._sounds[scope][filename] = {
-                "name": filename,
-                "sound": sound
-            }
+            self._sounds[scope][filename] = {"name": filename, "sound": sound}
 
         if self.debug:
             print_ic_style(
-                f"loaded sound scope {get_fg_color(36)}\"{scope}\""
+                f'loaded sound scope {get_fg_color(36)}"{scope}"'
                 f"{get_fg_color(247)}"
                 f", sounds: {get_fg_color(37)}{len(self._sounds[scope])}"
             )
 
-    def get_sound(
-            self,
-            name: str,
-            scope: str | None = None
-    ) -> pg.mixer.Sound | None:
+    def get_sound(self, name: str, scope: str | None = None) -> pg.mixer.Sound | None:
         """
-        returns a sound if it exists
+        Returns a sound if it exists.
         """
         if scope is not None and scope not in self._sounds:
-            raise ValueError(f"scope \"{scope}\" not found")
+            msg = f'scope "{scope}" not found'
+            raise ValueError(msg)
 
         for n_scope in self._sounds if scope is None else [scope]:
             for sound in self._sounds[n_scope]:
@@ -141,49 +131,45 @@ class _Sounds:
                 if self._sounds[n_scope][sound]["name"] == name:
                     if self.debug >= 3:
                         print_ic_style(
-                            f"{get_fg_color(36)}\"{name}\"{get_fg_color(247)} "
-                            f"found in scope {get_fg_color(36)}\"{n_scope}\""
+                            f'{get_fg_color(36)}"{name}"{get_fg_color(247)} '
+                            f'found in scope {get_fg_color(36)}"{n_scope}"'
                         )
 
                     return self._sounds[n_scope][sound]["sound"]
 
-        else:
-            if self.debug >= 3:
-                if scope is None:
-                    print_ic_style(
-                        f"{get_fg_color(36)}\"{name}\"{get_fg_color(247)} "
-                        f"not found in scope {get_fg_color(36)}\"{scope}\""
-                    )
+        if self.debug >= 3:
+            if scope is None:
+                print_ic_style(
+                    f'{get_fg_color(36)}"{name}"{get_fg_color(247)} '
+                    f'not found in scope {get_fg_color(36)}"{scope}"'
+                )
 
-                else:
-                    print_ic_style(
-                        f"{get_fg_color(36)}\"{name}\"{get_fg_color(247)} "
-                        f"not found in any loaded scope"
-                    )
+            else:
+                print_ic_style(
+                    f'{get_fg_color(36)}"{name}"{get_fg_color(247)} '
+                    f"not found in any loaded scope"
+                )
 
-            return None
+        return None
 
     def get_all_from_scope(
-            self,
-            scope: str,
+        self,
+        scope: str,
     ) -> list[pg.mixer.Sound]:
         """
-        get all textures from a scope
+        Get all textures from a scope.
         """
         if scope not in self._sounds:
-            raise ValueError(f"scope \"{scope}\" not found")
+            msg = f'scope "{scope}" not found'
+            raise ValueError(msg)
 
         if self.debug >= 2:
-            print_ic_style(
-                f"getting all sounds from scope {get_fg_color(36)}\"{scope}\""
-            )
+            print_ic_style(f'getting all sounds from scope {get_fg_color(36)}"{scope}"')
 
         out = []
-        for _, sound in self._sounds[scope].items():
+        for sound in self._sounds[scope].values():
             if self.debug >= 3:
-                print_ic_style(
-                    f"- sound: {get_fg_color(36)}\"{sound["name"]}\""
-                )
+                print_ic_style(f'- sound: {get_fg_color(36)}"{sound["name"]}"')
 
             out.append(sound["sound"])
 
@@ -191,7 +177,7 @@ class _Sounds:
 
     def get_scope_info(self, scope: str) -> dict[str, dict]:
         """
-        get info dicts from loaded scope
+        Get info dicts from loaded scope.
 
         :returns: info dict (empty if not loaded)
         """

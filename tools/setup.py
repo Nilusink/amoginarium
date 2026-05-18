@@ -1,14 +1,23 @@
+"""
+Installs amoginarium-tools for automated README generation.
+
+Path: tools/setup.py
+Project: amoginarium
+Created: 28.04.2026
+Authors: LukasKrah
+"""  # noqa: INP001
+
 from setuptools import setup
 
 setup(
-    name='amoginarium-tools',
-    version='1.0',
-    packages=['arch_gen'],
+    name="amoginarium-tools",
+    version="1.0",
+    packages=["arch_gen"],
     entry_points={
-        'console_scripts': [
-            'gen_readme=arch_gen.generate_architecture:cmd_gen_readme',
-            'update_readmes=arch_gen.generate_architecture:cmd_update_readmes',
-            'create_readmes=arch_gen.generate_architecture:cmd_create_readmes',
+        "console_scripts": [
+            "gen_readme=arch_gen.generate_architecture:cmd_gen_readme",
+            "update_readmes=arch_gen.generate_architecture:cmd_update_readmes",
+            "create_readmes=arch_gen.generate_architecture:cmd_create_readmes",
         ],
     },
 )

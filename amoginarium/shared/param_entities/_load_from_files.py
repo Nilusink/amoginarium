@@ -1,11 +1,10 @@
 """
-_load_from_files.py
-20.04.2026
+Load entities from files.
 
-load entities from files
-
-Author:
-Nilusink
+Path: amoginarium/shared/param_entities/_load_from_files.py
+Project: amoginarium
+Created: 20.04.2026
+Authors: Nilusink
 """
 
 import tomllib
@@ -15,11 +14,12 @@ from pathlib import Path
 
 from icecream import ic
 
-from amoginarium.shared.audio import SoundEffect, RandomizedEffect, PRESETS
-from amoginarium.shared.audio import ScopedRandomizedEffect, PresetEffect
-from amoginarium.shared.audio import ContinuousSoundEffect
+from amoginarium.shared.audio import PresetEffect, PRESETS, ScopedRandomizedEffect
 from amoginarium.shared.utility import Vec2
 
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.audio import ContinuousSoundEffect
+    from amoginarium.shared.audio import RandomizedEffect, SoundEffect
 
 BASE_DIR = "./assets/entities/"
 _GRAPHICS_KEYS = ("image", "trace")
@@ -27,25 +27,25 @@ _SHARED_KEYS = ("bullet",)
 
 
 class ProcessType(Enum):
-    """defines logic or base / render process"""
+    """defines logic or base / render process."""
 
     base = 0
     logic = 1
 
 
 class _ResolveThis:
-    """entities specified as CIDs"""
+    """entities specified as CIDs."""
 
     def __init__(self, entity_cid: str) -> None:
         self._CID = entity_cid
 
     def resolve(self, entity_index: dict[str, type]) -> type:
-        """Resolve string"""
+        """Resolve string."""
         return entity_index[self._CID]
 
 
 def check_value[A](value: A, convert_vec2: bool = False) -> A | _ResolveThis:
-    """Checks if a value needs to be resolved"""
+    """Checks if a value needs to be resolved."""
     if isinstance(value, str) and value.startswith("<") and value.endswith(">"):
         return _ResolveThis(value.lstrip("<").rstrip(">"))
 
@@ -65,7 +65,7 @@ def check_value[A](value: A, convert_vec2: bool = False) -> A | _ResolveThis:
 
 
 def _cid(cls):
-    """Return cid encased in an object.value (to mimic enum)"""
+    """Return cid encased in an object.value (to mimic enum)."""
     # noinspection PyTypeChecker
     return cls._CID
 
@@ -75,7 +75,7 @@ def load_entities_from_files(
     entity_index: dict[str, type],
     directory: str = BASE_DIR,
 ) -> dict[str, type]:
-    """Load all entities specified in assets"""
+    """Load all entities specified in assets."""
     entity_index = entity_index.copy()
     new_entities: dict[str, type] = {}
 
@@ -121,7 +121,7 @@ def load_entities_from_files(
                 )
             }"
 
-            __dict: dict[str, tp.Any] = {"_CID": cid, "cid": classmethod(_cid)}
+            dict_: dict[str, tp.Any] = {"_CID": cid, "cid": classmethod(_cid)}
             # fill dict
             if "visibility" in data:
                 if "size" in data["visibility"]:
@@ -134,20 +134,20 @@ def load_entities_from_files(
                     elif isinstance(size, list):
                         size: Vec2 = Vec2().from_cartesian(size[0], size[1])
 
-                    __dict["_default_size"] = size
+                    dict_["_default_size"] = size
 
                 if process_type == ProcessType.base:
                     for key, value in data["visibility"].items():
                         if key == "size":
                             continue
 
-                        __dict[f"_default_{key}"] = check_value(value)
+                        dict_[f"_default_{key}"] = check_value(value)
 
             # behaviour
             if process_type == ProcessType.logic:
                 if "behaviour" in data:
                     for key, value in data["behaviour"].items():
-                        __dict[f"_default_{key}"] = check_value(value)
+                        dict_[f"_default_{key}"] = check_value(value)
 
                 if "sound" in data:
                     effect: (
@@ -191,7 +191,7 @@ def load_entities_from_files(
                         if "volume" in data["sound"]:
                             effect.volume = data["sound"]["volume"]
 
-                        __dict["_default_sound_effect"] = effect
+                        dict_["_default_sound_effect"] = effect
 
             for subsection in data:
                 if process_type == ProcessType.logic:
@@ -202,16 +202,16 @@ def load_entities_from_files(
                     ):
                         continue
 
-                    elif subsection.startswith("sensor"):
-                        __dict["_sensors_list"] = list(data[subsection].values())
+                    if subsection.startswith("sensor"):
+                        dict_["_sensors_list"] = list(data[subsection].values())
                         continue
 
                     # check if list
-                    k0: str = list(data[subsection].keys())[0]
+                    k0: str = next(iter(data[subsection].keys()))
 
                     if k0.isnumeric() and isinstance(data[subsection][k0], dict):
                         # if is list, append to values and continue
-                        __dict[f"_default_{subsection}"] = list(
+                        dict_[f"_default_{subsection}"] = list(
                             data[subsection].values()
                         )
                         continue
@@ -229,21 +229,17 @@ def load_entities_from_files(
                         dict_key = f"_{subsection}_{key}"
                         value = check_value(value, True)
 
-                    __dict[dict_key] = value
+                    dict_[dict_key] = value
 
             if not lazy_inherit:
                 parent_class = entity_index[data["id"]["from"]]
 
                 # noinspection PyTypeChecker
-                new_class: type = type(
-                    class_name,
-                    (parent_class,),
-                    __dict,
-                )  # type: ignore[assignment]
+                new_class: type = type(class_name, (parent_class,), dict_)  # type: ignore[assignment]
                 new_entities[cid] = new_class
 
             else:
-                to_inherit[cid] = (class_name, data["id"]["from"], __dict)
+                to_inherit[cid] = (class_name, data["id"]["from"], dict_)
 
     for _ in range(len(to_inherit)):
         for cid, params in to_inherit.copy().items():
@@ -255,9 +251,7 @@ def load_entities_from_files(
             # if inheritance is possible, append to entity index
             if params[1] in new_entities:
                 new_entities[cid] = type(
-                    params[0],
-                    (new_entities[params[1]],),
-                    params[2],
+                    params[0], (new_entities[params[1]],), params[2]
                 )
                 to_inherit.pop(cid)
 
@@ -265,7 +259,8 @@ def load_entities_from_files(
             break
 
     else:
-        raise RuntimeError(f"Circular dependency detected: {list(to_inherit.keys())}")
+        msg = f"Circular dependency detected: {list(to_inherit.keys())}"
+        raise RuntimeError(msg)
 
     entity_index.update(new_entities)
 

@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_animations/_simple_animation.py
+Provides a basic two-state float value animation controller.
 
+Path: amoginarium/graphics/ui/_animations/_simple_animation.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah
@@ -10,7 +11,8 @@ from ._animation_types import AnimationPhase
 
 
 class SimpleAnimation:
-    """Basic 2-position float value animation"""
+    """Basic 2-position float value animation."""
+
     _start_value: float
     _end_value: float
 
@@ -18,15 +20,11 @@ class SimpleAnimation:
     _current_value: float
     _last_value: float
 
-    def __init__(
-            self,
-            start_value: float,
-            end_value: float = ...
-    ) -> None:
+    def __init__(self, start_value: float, end_value: float = ...) -> None:
         """
         Create a basic 2-position float value animation
         :param start_value: Value to start the animation from
-        :param end_value: Maximum extended value
+        :param end_value: Maximum extended value.
         """
         self._start_value = start_value
         self._end_value = end_value if end_value != ... else start_value
@@ -36,21 +34,25 @@ class SimpleAnimation:
         self._last_value = start_value
 
     def extend(self) -> None:
-        """Start extending from current to end value"""
+        """Start extending from current to end value."""
         self._phase = AnimationPhase.EXTENDING
 
     def collapse(self) -> None:
-        """Start collapsing from current to start value"""
+        """Start collapsing from current to start value."""
         self._phase = AnimationPhase.COLLAPSING
 
     def stop(self) -> None:
-        """Stop the animation at the current value"""
+        """Stop the animation at the current value."""
         self._phase = AnimationPhase.STOPPED
 
     def _calc(self, _delta: float) -> None:
-        """Update the animation"""
+        """Update the animation."""
         self._last_value = self._current_value
-        if self._phase == "at_start" or self._phase == "at_end" or self._phase == "stopped":
+        if (
+            self._phase == "at_start"
+            or self._phase == "at_end"
+            or self._phase == "stopped"
+        ):
             return
 
         if self._phase == AnimationPhase.EXTENDING:
@@ -64,13 +66,13 @@ class SimpleAnimation:
         """
         Update the animation
         :param delta: Time since the last update in seconds
-        :return: Value difference between current and last value
+        :return: Value difference between current and last value.
         """
         self._calc(delta)
         return self._current_value - self._last_value
 
     def reset(self) -> None:
-        """Reset the animation to its start value"""
+        """Reset the animation to its start value."""
         self._phase = AnimationPhase.AT_START
         self._current_value = self._start_value
 
