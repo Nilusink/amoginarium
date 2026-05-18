@@ -11,15 +11,21 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import Color, color_t, convert_color, coord_t
+from amoginarium.shared.utility import convert_color, coord_t, Color, color_t
 
-from ...logic_dummies import PresetGraphicsSoundEffect
 from ...render_bindings import renderer
-from .._animations import anim_color_values_t, anim_float_values_t
-from .._animations import anim_vec2_values_t, AnimatedColorValues
-from .._animations import AnimatedFloatValues, AnimatedVec2Values, peaked_s_curve
-from .._base import UIEntity
+from ...sound_effect import PresetGraphicsSoundEffect
+from .._animations import (
+    anim_color_values_t,
+    anim_float_values_t,
+    AnimatedColorValues,
+    AnimatedFloatValues,
+    peaked_s_curve,
+    anim_vec2_values_t,
+    AnimatedVec2Values,
+)
 from .._types import Anchor, Positions
+from .._base import UIEntity
 from ._ui_rectangle import UIRectangle
 
 

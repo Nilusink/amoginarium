@@ -13,7 +13,7 @@ import typing as tp
 from ctypes import Array
 from types import EllipsisType
 
-from shared.collision_detection import CollisionEvent
+from amoginarium.shared.collision_detection import CollisionEvent
 
 from amoginarium import pv
 from amoginarium.shared import base_entity_t, BaseCommandType, ProcessCommand

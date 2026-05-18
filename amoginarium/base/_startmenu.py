@@ -9,7 +9,7 @@ Authors: LukasKrah
 
 import typing as tp
 
-from amoginarium.graphics.logic_dummies import PresetGraphicsSoundEffect
+from amoginarium.graphics.sound_effect import PresetGraphicsSoundEffect
 from amoginarium.graphics.ui import UIButton, UIRectangle, UIStaticText
 
 

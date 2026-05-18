@@ -14,7 +14,7 @@ from types import EllipsisType
 
 import numpy as np
 from icecream import ic
-from logic.entities import BaseLogicEntity
+from amoginarium.logic.entities import BaseLogicEntity
 
 from amoginarium import pv
 from amoginarium.shared import base_entity_t, BaseCommandType

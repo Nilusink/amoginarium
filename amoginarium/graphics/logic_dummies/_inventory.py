@@ -7,13 +7,13 @@ Created: 06.04.2026
 Authors: Nilusink, LukasKrah
 """
 
-from amoginarium import pv
 from amoginarium.shared.utility import Vec2
+from amoginarium import pv
 
 from ..entities import BaseGraphicsEntity, Drawn_0
+from ..ui import UIRectangle, AnimatedColorValues
 from ..render_bindings import renderer
-from ..ui import AnimatedColorValues, UIRectangle
-from ._synced_entities import SE_MANAGER, SyncedGraphicsEntity
+from ._synced_entities import SyncedGraphicsEntity, SE_MANAGER
 
 
 class Inventory(BaseGraphicsEntity):

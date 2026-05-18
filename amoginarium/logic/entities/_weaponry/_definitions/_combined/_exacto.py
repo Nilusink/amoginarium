@@ -15,7 +15,7 @@ import typing as tp
 from ctypes import Array
 from types import EllipsisType
 
-from shared import VisibleGameEntityLike
+from amoginarium.shared import VisibleGameEntityLike
 
 from amoginarium.shared import base_entity_t, Coalitions
 from amoginarium.shared import DummyCIDs, TurretCIDs, WeaponCIDs

@@ -44,3 +44,6 @@ class PresetGraphicsSoundEffect(GraphicsSoundEffect):
 
     def __init__(self):
         super().__init__(self._sound_name)
+
+
+__all__ = ["GraphicsSoundEffect", "PresetGraphicsSoundEffect"]

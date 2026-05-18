@@ -10,7 +10,7 @@ Authors: LukasKrah, Nilusink
 import typing as tp
 
 from ....shared.utility import coord_t
-from ...logic_dummies import GraphicsSoundEffect
+from ...sound_effect import GraphicsSoundEffect
 from ...render_bindings import renderer
 from .._animations import anim_color_values_t, anim_float_values_t
 from .._animations import anim_vec2_values_t, ColorAnimation

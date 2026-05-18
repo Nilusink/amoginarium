@@ -7,4 +7,4 @@ Created: 25.01.2024
 Authors: Nilusink
 """
 
-from .logic_dummies import GraphicsSoundEffect
+from .sound_effect import GraphicsSoundEffect
