@@ -7,27 +7,31 @@ Created: 15.04.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
-from ctypes import Array
 
 from amoginarium import pv
-from amoginarium.shared import base_entity_t, BaseCommandType, Coalitions
-from amoginarium.shared import DummyCIDs, ProcessCommand, SensorCIDs
-from amoginarium.shared.collision_detection import CollisionEvent
+from amoginarium.shared import BaseCommandType, DummyCIDs, ProcessCommand, SensorCIDs
 from amoginarium.shared.utility import Vec2
 
 from ...._base import GameCollisions, LogicGameEntity
-from ...templates import BaseSensor, DetectionGroup, MagicSensor, RadarSensor
+from ...templates import DetectionGroup, MagicSensor, RadarSensor
 
 if tp.TYPE_CHECKING:
-    from ...templates import Bullet
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared.collision_detection import CollisionEvent
+
+    from ...templates import BaseSensor, Bullet
 
 
 class VisualSensor(LogicGameEntity):
     __slots__ = ("detection_group", "coalition", "_hp")
 
     _CID = SensorCIDs.magic
-    _sensor_type: tp.Type[BaseSensor] = MagicSensor
+    _sensor_type: type[BaseSensor] = MagicSensor
     _size: tuple[float, float] = (64, 64)
     _max_hp = 40
 
@@ -82,12 +86,12 @@ class VisualSensor(LogicGameEntity):
         if self._hp <= 0:
             self.kill()
 
-    def __on_collision_bullet(self, event: CollisionEvent["Bullet"]) -> None:
+    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
         dmg = event.other_entity.damage
         if dmg > 0 and event.other_entity.parent != self:
             self.hit(dmg, hit_by=event.other_entity)
 
-    def _collision_start(self, events: list[CollisionEvent["Bullet"]]) -> None:
+    def _collision_start(self, events: list[CollisionEvent[Bullet]]) -> None:
         for event in events:
             if event.group_id == GameCollisions.collision_group_bullets:
                 self.__on_collision_bullet(event)

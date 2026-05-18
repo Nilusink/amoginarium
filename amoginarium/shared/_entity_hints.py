@@ -10,12 +10,13 @@ Authors: Nilusink, LukasKrah
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Protocol
+from typing import Protocol, TYPE_CHECKING
 
-import pygame as pg
+if TYPE_CHECKING:
+    import pygame as pg
 
-from ._linked import Coalitions
-from .utility import Vec2
+    from ._linked import Coalitions
+    from .utility import Vec2
 
 
 class HasPosition(Protocol):
@@ -27,17 +28,17 @@ class HasFacing(Protocol):
 
 
 class DynamicEntityParentViable(ABC):
-    """can be used as dynamic entity parent"""
+    """can be used as dynamic entity parent."""
 
     @classmethod
     @abstractmethod
     def has_cid(cls) -> bool:
-        """entity has component ID?"""
+        """Entity has component ID?"""
 
     @classmethod
     @abstractmethod
     def cid(cls) -> str:
-        """component ID"""
+        """Component ID."""
 
 
 class BaseEntityLike(Protocol):
@@ -157,7 +158,6 @@ class PlayerLike(VisibleGameEntityLike, Protocol):
 
 
 class BaseItemLike(Protocol):
-    ...
     _position: Vec2
     _size: Vec2
 

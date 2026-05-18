@@ -13,10 +13,10 @@ import typing as tp
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared.utility import TupleMath
 
-T = tp.TypeVar("T", bound=tp.Type)
+T = tp.TypeVar("T", bound=type)
 
 
-def draw_debug_bounds(cls: T) -> T:
+def draw_debug_bounds[T: type](cls: T) -> T:
     """
     Class decorator for UIElements. Automatically draws the center,
     corners, and bounding lines after the standard _gl_draw is called.

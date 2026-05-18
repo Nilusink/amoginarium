@@ -36,7 +36,7 @@ class KeyboardController(Controller):
 
         self._controls = Keyboardcontrols()
 
-    def update(self, delta):
+    def update(self, delta) -> None:
         pressed_keys = pg.key.get_pressed()
         mouse_buttons = pg.mouse.get_pressed(5)
         pos = pg.mouse.get_pos()

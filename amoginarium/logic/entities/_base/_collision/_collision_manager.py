@@ -10,11 +10,16 @@ Created: 16.04.2026
 Authors: LukasKrah, Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared.collision_detection import CollisionCallback, CollisionManager
+from amoginarium.shared.collision_detection import CollisionManager
 
-from ._collision_types import CollisionType, HitboxTypes
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.collision_detection import CollisionCallback
+
+    from ._collision_types import CollisionType, HitboxTypes
 
 
 # noinspection DuplicatedCode
@@ -218,10 +223,7 @@ class _GameCollisions:
         :param targets: A list of group IDs to collide with.
         """
         for group_b in targets:
-            if group_a <= group_b:
-                rel_key = (group_a, group_b)
-            else:
-                rel_key = (group_b, group_a)
+            rel_key = (group_a, group_b) if group_a <= group_b else (group_b, group_a)
 
             if rel_key in self._registered_relations:
                 continue
@@ -240,7 +242,7 @@ class _GameCollisions:
         """
         Registers a new collision exception rule and returns its unique identifier.
         :return: A unique integer identifier for the collision exception.
-        :rtype: int
+        :rtype: int.
         """
         self.__exception_num += 1
         return self.__exception_num

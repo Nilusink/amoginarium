@@ -12,8 +12,8 @@ import json
 import matplotlib.pyplot as plt
 
 red = "tab:red"
-data = json.load(open("graphic_debug.json", "r"))
-logic_data = json.load(open("logic_debug.json", "r"))
+data = json.load(open("graphic_debug.json", "r", encoding="utf-8"))
+logic_data = json.load(open("logic_debug.json", "r", encoding="utf-8"))
 data.update(logic_data)
 
 pygame_xs = []
@@ -51,7 +51,7 @@ for value in data["bullets"]:
 
 # calculate average loop time per bullet
 av_bullets_ys_tmp = [None] * (max(n_bullets) + 1)
-for n_bullet, loop_time in zip(n_bullets, bullets_ys):
+for n_bullet, loop_time in zip(n_bullets, bullets_ys, strict=False):
     if av_bullets_ys_tmp[n_bullet] is None:
         av_bullets_ys_tmp[n_bullet] = []
 

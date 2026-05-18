@@ -10,7 +10,7 @@ Authors: Nilusink, LukasKrah
 from ._calculations import calculate_launch_angle_iterative, rk4_update
 from ._ccalculations import calculate_launch_angle
 from ._ccolor import c_255_to_1, Color, fade
-from ._constants import *  # noqa: F403
+from ._constants import *
 from ._cutility_functions import add_tuple, convert_coord, is_related
 from ._cutility_functions import pack_int, point_in_triangle
 from ._cutility_functions import raycast_mask, raycast_size, unpack_int

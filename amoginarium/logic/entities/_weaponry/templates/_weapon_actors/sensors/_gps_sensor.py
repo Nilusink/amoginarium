@@ -8,16 +8,20 @@ Created: 14.05.2026
 Authors: Nilusink
 """
 
-from types import EllipsisType
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium.shared import WeaponSensorCIDs
-from amoginarium.shared.utility import Vec2
 
 from ._base import BaseWeaponsSensor
 
+if TYPE_CHECKING:
+    from amoginarium.shared.utility import Vec2
+
 
 class GPSSensor(BaseWeaponsSensor):
-    """heat seeking sensor"""
+    """heat seeking sensor."""
 
     _CID = WeaponSensorCIDs.gps
 

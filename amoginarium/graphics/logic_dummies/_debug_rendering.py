@@ -7,19 +7,24 @@ Created: 17.04.2026
 Authors: LukasKrah, Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
 
 from amoginarium import pv
-from amoginarium.shared import CIDType, GraphicsCIDs
-from amoginarium.shared.utility import Color, MASK16, Vec2
+from amoginarium.shared import GraphicsCIDs
+from amoginarium.shared.utility import MASK16, Vec2
 
 from ..entities import Drawn_0, Drawn_2
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity
 
+if tp.TYPE_CHECKING:
+    from amoginarium.shared import CIDType
+
 
 class DebugRectangleEntity(SyncedGraphicsEntity):
-    """A graphics-side entity used to render debug rectangles and their corner points"""
+    """A graphics-side entity used to render debug rectangles and their corner points."""
 
     __slots__ = (
         "__point_color",
@@ -305,7 +310,7 @@ class DebugPolygonEntity(SyncedGraphicsEntity):
 
 
 class DebugCircleEntity(SyncedGraphicsEntity):
-    """A graphics-side entity used to render debug circles and their center points"""
+    """A graphics-side entity used to render debug circles and their center points."""
 
     __slots__ = (
         "__point_color",

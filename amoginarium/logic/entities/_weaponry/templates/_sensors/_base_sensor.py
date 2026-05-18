@@ -7,22 +7,30 @@ Created: 10.03.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
-from ctypes import Array
 
 import numpy as np
 
 from amoginarium import pv
-from amoginarium.shared import base_entity_t, BaseCommandType
-from amoginarium.shared import ProcessCommand, SensorCIDs
-from amoginarium.shared.utility import convert_coord, coord_t, MASK16, pack_int, Vec2
+from amoginarium.shared import BaseCommandType, ProcessCommand, SensorCIDs
+from amoginarium.shared.utility import convert_coord, MASK16, pack_int, Vec2
 
-from ...._base import LogicGameEntity, PositionedLogicEntity, Updated
+from ...._base import PositionedLogicEntity, Updated
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.utility import coord_t
+
+    from ...._base import LogicGameEntity
 
 
 class BaseSensor(PositionedLogicEntity):
     """
-    sensor entity
+    sensor entity.
 
     ``param0`` detection range
     """
@@ -32,7 +40,6 @@ class BaseSensor(PositionedLogicEntity):
 
     _parent: PositionedLogicEntity
     _visible: bool
-    _has_sectors: float = 0
     _min_rcs: float = 0
 
     def __init__(
@@ -90,7 +97,7 @@ class BaseSensor(PositionedLogicEntity):
 
     def _calculate_sphere(self) -> list[Vec2]:
         """
-        calculate detection sphere
+        Calculate detection sphere.
         """
         angle_step = (np.pi * 2) / self._sphere_accuracy
 
@@ -105,7 +112,7 @@ class BaseSensor(PositionedLogicEntity):
         self._detection_group = group
 
     def get_targets(
-        self, from_entities: tp.Iterable[LogicGameEntity] = None
+        self, from_entities: tp.Iterable[LogicGameEntity] | None = None
     ) -> list[LogicGameEntity]:
         raise NotImplementedError
 

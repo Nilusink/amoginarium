@@ -11,22 +11,21 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import convert_color, coord_t, Color, color_t
+from amoginarium.shared.utility import Color, convert_color
 
 from ...render_bindings import renderer
 from ...sound_effect import PresetGraphicsSoundEffect
-from .._animations import (
-    anim_color_values_t,
-    anim_float_values_t,
-    AnimatedColorValues,
-    AnimatedFloatValues,
-    peaked_s_curve,
-    anim_vec2_values_t,
-    AnimatedVec2Values,
-)
+from .._animations import AnimatedColorValues, AnimatedFloatValues
+from .._animations import AnimatedVec2Values, peaked_s_curve
 from .._types import Anchor, Positions
-from .._base import UIEntity
 from ._ui_rectangle import UIRectangle
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import color_t, coord_t
+
+    from .._animations import anim_color_values_t
+    from .._animations import anim_float_values_t, anim_vec2_values_t
+    from .._base import UIEntity
 
 
 # region SoundsEffects
@@ -119,7 +118,7 @@ class UIButton(UIRectangle):
         on_click_sound: PresetGraphicsSoundEffect | None = ButtonClickSound,
     ) -> None:
         """
-        a button, what did you expect?
+        A button, what did you expect?
         :param position: Relative position of the component (absolute if absolute_values is set to True)
         :param size: Relative size of the component (absolute if absolute_values is set to True)
         :param parent: Optional parent UI-Entity
@@ -147,7 +146,7 @@ class UIButton(UIRectangle):
         :param on_leave_callbacks: Callbacks to be called when a cursor leaves the component
         :param on_enter_sound: Sound to play when the cursor enters the rectangle
         :param on_leave_sound: Sound to play when the cursor leaves the rectangle
-        :param on_click_sound: Sound to play when the cursor clicks the rectangle
+        :param on_click_sound: Sound to play when the cursor clicks the rectangle.
         """
         super().__init__(
             position=position,
@@ -196,7 +195,7 @@ class UIButton(UIRectangle):
             )
 
         if self.__command is not None:
-            self.add_click_callback(lambda: self.__command())
+            self.add_click_callback(self.__command)
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
@@ -259,9 +258,8 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError(
-                "Cannot change text. dynamic_text is set to false"
-            )
+            msg = "Cannot change text. dynamic_text is set to false"
+            raise NotImplementedError(msg)
         self.__text = value
 
     @property
@@ -276,9 +274,8 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError(
-                "Cannot change text. dynamic_text is set to false"
-            )
+            msg = "Cannot change text. dynamic_text is set to false"
+            raise NotImplementedError(msg)
         self.__text_color = convert_color(value, Color)
 
     @property
@@ -293,9 +290,8 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError(
-                "Cannot change text. dynamic_text is set to false"
-            )
+            msg = "Cannot change text. dynamic_text is set to false"
+            raise NotImplementedError(msg)
         self.__font_size = value
 
     @property
@@ -310,9 +306,8 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError(
-                "Cannot change text. dynamic_text is set to false"
-            )
+            msg = "Cannot change text. dynamic_text is set to false"
+            raise NotImplementedError(msg)
         self.__font_family = value
 
     @property
@@ -327,9 +322,8 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError(
-                "Cannot change text. dynamic_text is set to false"
-            )
+            msg = "Cannot change text. dynamic_text is set to false"
+            raise NotImplementedError(msg)
         self.__bold = value
 
     @property
@@ -344,9 +338,8 @@ class UIButton(UIRectangle):
         :raises NotImplementedError: If dynamic_text is set to false
         """
         if not self.__dynamic_text:
-            raise NotImplementedError(
-                "Cannot change text. dynamic_text is set to false"
-            )
+            msg = "Cannot change text. dynamic_text is set to false"
+            raise NotImplementedError(msg)
         self.__italic = value
 
     # endregion

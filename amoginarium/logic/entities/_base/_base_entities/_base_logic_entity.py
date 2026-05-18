@@ -48,7 +48,7 @@ class MurderViable(tp.Protocol):
     """Can kill someone."""
 
     @property
-    def parent(self) -> tp.Any:  # noqa: ANN401
+    def parent(self) -> tp.Any:
         """Parent."""
 
 

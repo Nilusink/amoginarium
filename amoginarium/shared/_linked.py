@@ -7,16 +7,20 @@ Created: 20.03.2024
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 from ctypes import c_double, c_int8
 from enum import Enum
 from multiprocessing import Value
-from multiprocessing.sharedctypes import Synchronized
 
 from .debugging import cum_timer
 from .utility import Vec2
 
-_GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
+if tp.TYPE_CHECKING:
+    from multiprocessing.sharedctypes import Synchronized
+
+_GLOBAL_VARS_VALUES: dict[str, type] = {
     "screen_size_x": c_double,
     "screen_size_y": c_double,
     "screen_size_real_x": c_double,
@@ -41,7 +45,7 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
 
 def generate_global_vars() -> dict[str, Synchronized]:
     """
-    generate multiprocessing Values for global vars
+    Generate multiprocessing Values for global vars.
     """
     out = {}
     for key, value in _GLOBAL_VARS_VALUES.items():
@@ -104,7 +108,7 @@ class GlobalVars:
             self.__compiled.append((item, obj, attr, []))
 
     def add_callback(self, value: str, callback: tp.Callable[[tp.Any], tp.Any]) -> None:
-        """add a value change callback"""
+        """Add a value change callback."""
         for i, v in enumerate(self.__compiled):
             if v[1] == value:
                 self.__compiled[i][3].append(callback)
@@ -259,24 +263,25 @@ class GlobalVars:
 
     def translate_scale[A: float | int | Vec2](self, value: A) -> A:
         """
-        translate an absolute value to a screen-size relative value
+        Translate an absolute value to a screen-size relative value.
         """
         if self._pixel_per_meter is ...:
-            raise RuntimeError("pixel per meter hasn't been set yet")
+            msg = "pixel per meter hasn't been set yet"
+            raise RuntimeError(msg)
 
         return value * self._pixel_per_meter
 
     def translate_screen_coord[A: float | int | Vec2](self, coord: A) -> A:
         """
-        translate an absolute coordinate to a screen-relative coordinate
+        Translate an absolute coordinate to a screen-relative coordinate.
         """
         scaled_coord = self.translate_scale(coord)
 
         return scaled_coord - self._pixel_per_meter
 
-    def reset(self):
+    def reset(self) -> None:
         """
-        reset all variables to their original state
+        Reset all variables to their original state.
         """
         self.set_pixel_per_meter(1)
         self.set_background_position(0)
@@ -285,7 +290,7 @@ class GlobalVars:
     @cum_timer.time_this
     def update(self) -> None:
         """
-        update from Values
+        Update from Values.
         """
         for item, obj, attr, callbacks in self.__compiled:
             new = item.value

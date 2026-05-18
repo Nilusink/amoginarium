@@ -7,8 +7,15 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from ._animation_types import anim_float_values_t, AnimatedFloatValues
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from ._animation_types import AnimatedFloatValues
 from ._complex_animation import Animation, create_animation
+
+if TYPE_CHECKING:
+    from ._animation_types import anim_float_values_t
 
 
 class _FloatAnimationHelper:
@@ -43,7 +50,8 @@ class _FloatAnimationHelper:
                     collapse_curve=values[7] if length > 7 else ...,
                 )
 
-        raise ValueError(f"Unsupported conversion format: {values}")
+        msg = f"Unsupported conversion format: {values}"
+        raise ValueError(msg)
 
 
 FloatAnimation = Animation

@@ -7,8 +7,6 @@ Created: 16.03.2026
 Authors: Nilusink
 """
 
-import typing as tp
-
 class Color:
     rgb1: tuple[float, float, float]
     rgb255: tuple[int, int, int]

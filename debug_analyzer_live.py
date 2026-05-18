@@ -10,9 +10,13 @@ Created: 05.05.2026
 Authors: LukasKrah, Nilusink
 """
 
+from __future__ import annotations
+
+import contextlib
 import datetime
 import glob
 import json
+import operator
 import os
 import threading
 import tkinter as tk
@@ -48,7 +52,7 @@ DEFAULT_SETTINGS = {
 def load_settings():
     if os.path.exists(SETTINGS_FILE):
         try:
-            with open(SETTINGS_FILE, "r") as f:
+            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
                 settings = json.load(f)
 
                 # Ensure all nested defaults exist
@@ -64,9 +68,9 @@ def load_settings():
     return DEFAULT_SETTINGS.copy()
 
 
-def save_settings(settings):
+def save_settings(settings) -> None:
     try:
-        with open(SETTINGS_FILE, "w") as f:
+        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(settings, f, indent=4)
     except OSError:
         pass
@@ -75,7 +79,7 @@ def save_settings(settings):
 # --- CUSTOM GRAPH WIDGET ---
 class GraphWidget(ctk.CTkFrame):
     """
-    GraphWidget
+    GraphWidget.
 
     A custom frame containing a Matplotlib figure, toolbar, and interactive controls.
     """
@@ -104,7 +108,7 @@ class GraphWidget(ctk.CTkFrame):
         master: tk.Widget,
         graph_id: str,
         title_text: str,
-        app: "DebugAnalyzerApp",
+        app: DebugAnalyzerApp,
         **kwargs: tp.Any,
     ) -> None:
         """
@@ -183,7 +187,7 @@ class GraphWidget(ctk.CTkFrame):
         self.toolbar.pack(side="bottom", fill="x")
 
         self.linedict = {}
-        self.fig.canvas.mpl_connect("pick_event", self.on_pick)  # noqa
+        self.fig.canvas.mpl_connect("pick_event", self.on_pick)
 
     def toggle_minimize(self) -> None:
         """
@@ -224,20 +228,17 @@ class GraphWidget(ctk.CTkFrame):
         if not leg:
             return
 
-        orig_handles = {}
         h1, l1 = self.ax.get_legend_handles_labels()
-        for h, l in zip(h1, l1):
-            orig_handles[l] = h
+        orig_handles = {l: h for h, l in zip(h1, l1, strict=False)}
 
         if self.ax_twin:
             h2, l2 = self.ax_twin.get_legend_handles_labels()
-            for h, l in zip(h2, l2):
-                orig_handles[l] = h
+            orig_handles.update({l: h for h, l in zip(h2, l2, strict=False)})
 
         self.linedict = {}
-        for leg_obj, text_obj in zip(leg.legend_handles, leg.texts):
+        for leg_obj, text_obj in zip(leg.legend_handles, leg.texts, strict=False):
             leg_obj.set_picker(True)  # type: ignore
-            leg_obj.set_pickradius(5)  # noqa
+            leg_obj.set_pickradius(5)
             text_obj.set_picker(True)  # type: ignore
 
             label = text_obj.get_text()
@@ -286,7 +287,7 @@ class GraphWidget(ctk.CTkFrame):
         if not leg:
             return
 
-        for l_h, l_t in zip(leg.legend_handles, leg.texts):
+        for l_h, l_t in zip(leg.legend_handles, leg.texts, strict=False):
             origline = self.linedict.get(l_h)
             if origline:
                 vis = origline.get_visible()
@@ -310,8 +311,8 @@ class GraphWidget(ctk.CTkFrame):
                     ydata = line.get_ydata()
                     valid_y = [y for y in ydata if y is not None and y == y]
                     if valid_y:
-                        y_min = min(y_min, min(valid_y))  # type: ignore
-                        y_max = max(y_max, max(valid_y))  # type: ignore
+                        y_min = min(y_min, *valid_y)  # type: ignore
+                        y_max = max(y_max, *valid_y)  # type: ignore
                         has_visible = True
 
             # Check scatter collections
@@ -322,8 +323,8 @@ class GraphWidget(ctk.CTkFrame):
                         ydata = offsets[:, 1]
                         valid_y = [y for y in ydata if y is not None and y == y]
                         if valid_y:
-                            y_min = min(y_min, min(valid_y))  # type: ignore
-                            y_max = max(y_max, max(valid_y))  # type: ignore
+                            y_min = min(y_min, *valid_y)  # type: ignore
+                            y_max = max(y_max, *valid_y)  # type: ignore
                             has_visible = True
 
             if has_visible:
@@ -342,7 +343,7 @@ class GraphWidget(ctk.CTkFrame):
 # --- MAIN APP ---
 class DebugAnalyzerApp:
     """
-    DebugAnalyzerApp
+    DebugAnalyzerApp.
 
     Main application class for the live debug analyzer dashboard.
     """
@@ -670,7 +671,7 @@ class DebugAnalyzerApp:
             anchor="w", padx=10, pady=(5, 0)
         )
 
-        def create_rule_row(parent, target, text):
+        def create_rule_row(parent, target, text) -> None:
             row = ctk.CTkFrame(parent, fg_color="transparent")
             row.pack(fill="x", padx=10, pady=2)
             ctk.CTkLabel(row, text=text, width=60, anchor="w", font=("Arial", 11)).pack(
@@ -762,12 +763,10 @@ class DebugAnalyzerApp:
         Restores the paned window sash position from settings.
         """
         if not self.settings.get("sidebar_collapsed", False):
-            try:
+            with contextlib.suppress(tk.TclError):
                 self.paned_window.sash_place(
                     0, self.settings.get("sash_position", 300), 0
                 )
-            except tk.TclError:
-                pass
 
     def collapse_sidebar(self) -> None:
         """
@@ -885,7 +884,7 @@ class DebugAnalyzerApp:
         """
         self.save_current_settings()
 
-    def on_listbox_select(self, event=None):
+    def on_listbox_select(self, event=None) -> None:
         if getattr(self, "_is_updating_list", False):
             return
 
@@ -894,9 +893,8 @@ class DebugAnalyzerApp:
             if self.selected_identifiers:
                 self.sync_listbox_selection()
                 return
-            else:
-                self.listbox.selection_set(0)
-                indices = (0,)
+            self.listbox.selection_set(0)
+            indices = (0,)
 
         self.selected_identifiers = [
             self.known_files[i][0] for i in indices if i < len(self.known_files)
@@ -1027,8 +1025,7 @@ class DebugAnalyzerApp:
             self.graphs_container.grid_rowconfigure(0, weight=1)
             self.graphs_container.grid_rowconfigure(1, weight=1)
             return
-        else:
-            self.placeholder_frame.grid_forget()
+        self.placeholder_frame.grid_forget()
 
         if self.fullscreen_widget:
             self.graphs_container.grid_columnconfigure(0, weight=1, uniform="colGroup")
@@ -1167,7 +1164,7 @@ class DebugAnalyzerApp:
                 (ident, info["mtime"], display, info["graphic"], info["logic"])
             )
 
-        files_data.sort(key=lambda x: x[1], reverse=True)
+        files_data.sort(key=operator.itemgetter(1), reverse=True)
 
         list_changed = [f[0] for f in files_data] != [f[0] for f in self.known_files]
 
@@ -1228,7 +1225,7 @@ class DebugAnalyzerApp:
         """
         self._is_updating_list = True
         self.listbox.delete(0, tk.END)
-        for ident, _, display, _, _ in self.known_files:
+        for _ident, _, display, _, _ in self.known_files:
             self.listbox.insert(tk.END, display)
         self.sync_listbox_selection()
         self._is_updating_list = False
@@ -1255,10 +1252,10 @@ class DebugAnalyzerApp:
         combined_data = {}
         try:
             if graphic_filepath and os.path.exists(graphic_filepath):
-                with open(graphic_filepath, "r") as f:
+                with open(graphic_filepath, "r", encoding="utf-8") as f:
                     combined_data.update(json.load(f))
             if logic_filepath and os.path.exists(logic_filepath):
-                with open(logic_filepath, "r") as f:
+                with open(logic_filepath, "r", encoding="utf-8") as f:
                     combined_data.update(json.load(f))
             self.data_cache[identifier] = (mtime, combined_data)
             return combined_data
@@ -1328,7 +1325,7 @@ class DebugAnalyzerApp:
                 av_bullet_xs, av_bullet_ys = [], []
                 if n_bullets:
                     av_bullets_ys_tmp = [None] * (max(n_bullets) + 1)
-                    for nb, lt in zip(n_bullets, bullets_ys):
+                    for nb, lt in zip(n_bullets, bullets_ys, strict=False):
                         if lt is None:
                             continue
                         if av_bullets_ys_tmp[nb] is None:

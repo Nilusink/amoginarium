@@ -7,20 +7,27 @@ Created: 01.04.2026
 Authors: LukasKrah
 """
 
-from ctypes import Array
+from __future__ import annotations
 
-from amoginarium.shared import base_entity_t, WeaponCIDs
+from typing import TYPE_CHECKING
+
+from amoginarium.shared import WeaponCIDs
 from amoginarium.shared.audio import SoundEffect
 from amoginarium.shared.utility import Vec2
 
 from ...templates import BaseWeapon
 from .._bullets import Grenade
 
+if TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+
 
 class HandThrownGrenade(BaseWeapon):
     """
     A grenade ... thrown by ...
-    your hand
+    your hand.
     """
 
     _CID = WeaponCIDs.h_grenade

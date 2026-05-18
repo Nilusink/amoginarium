@@ -11,6 +11,7 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
+import contextlib
 import typing as tp
 
 from amoginarium.shared import BaseLogicEntityLike
@@ -25,12 +26,12 @@ class LogicGroup[T: BaseLogicEntityLike]:
 
     _entities: dict[T, None]
 
-    def __init__(self, *entities: T):
+    def __init__(self, *entities: T) -> None:
         """
         Initialize the group with an optional sequence of entities.
         :param entities: Initial entities to add to the group.
         """
-        self._entities = {e: None for e in entities}
+        self._entities = dict.fromkeys(entities)
 
     def entities(self) -> list[T]:
         """:return: A shallow copy of the internal entity list."""
@@ -50,10 +51,8 @@ class LogicGroup[T: BaseLogicEntityLike]:
         Removes an entity from the group if it exists.
         :param entity: The logic entity to remove.
         """
-        try:
+        with contextlib.suppress(KeyError):
             del self._entities[entity]
-        except KeyError:
-            pass
 
     remove_internal = remove
 

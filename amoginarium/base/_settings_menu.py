@@ -7,11 +7,16 @@ Created: 01.03.2026
 Authors: LukasKrah
 """
 
-from typing import Callable, Literal
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class SettingsMenu(UIEntity):

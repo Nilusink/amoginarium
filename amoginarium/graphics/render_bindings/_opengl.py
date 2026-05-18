@@ -7,6 +7,8 @@ Created: 22.03.2024
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import os
 
 # Stop Windows from minimizing/re-initializing the window if it thinks it lost focus
@@ -15,6 +17,7 @@ os.environ["SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS"] = "0"
 os.environ["SDL_VIDEO_HIGHDPI_DISABLED"] = "1"
 
 import math as m
+import operator
 import typing as tp
 from collections.abc import Sequence
 from types import EllipsisType
@@ -26,30 +29,34 @@ from OpenGL.GL import GL_ALPHA_TEST, GL_ALWAYS, GL_BLEND, GL_CLAMP_TO_EDGE
 from OpenGL.GL import GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_EQUAL, GL_FALSE
 from OpenGL.GL import GL_FLOAT, GL_GREATER, GL_KEEP, GL_LINEAR, GL_LINES, GL_MODELVIEW
 from OpenGL.GL import GL_NEAREST, GL_ONE_MINUS_SRC_ALPHA, GL_POLYGON, GL_PROJECTION
-from OpenGL.GL import GL_QUADS, GL_REPEAT, GL_REPLACE, GL_RGBA, GL_SRC_ALPHA
+from OpenGL.GL import GL_QUADS, GL_REPLACE, GL_RGBA, GL_SRC_ALPHA
 from OpenGL.GL import GL_STENCIL_BUFFER_BIT, GL_STENCIL_TEST, GL_TEXTURE_2D
 from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_WRAP_S
 from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TRIANGLE_STRIP, GL_TRUE, GL_UNSIGNED_BYTE
-from OpenGL.GL import GL_VERTEX_ARRAY, GL_VIEWPORT, glAlphaFunc, glBegin
-from OpenGL.GL import glBindTexture, glBlendFunc, glClear, glClearColor, glColor3f
-from OpenGL.GL import glColor4f, glColorMask, glDisable, glDisableClientState
-from OpenGL.GL import glDrawArrays, glEnable, glEnableClientState, glEnd
-from OpenGL.GL import glGenTextures, glGetIntegerv, glLoadIdentity, glMatrixMode
-from OpenGL.GL import glOrtho, glPopMatrix, glPushMatrix, glRotated, glStencilFunc
-from OpenGL.GL import glStencilMask, glStencilOp, glTexCoord2f, glTexImage2D
-from OpenGL.GL import glTexParameteri, glTranslate, glTranslated, glTranslatef
-from OpenGL.GL import glVertex2f, glVertexPointer, glViewport
+from OpenGL.GL import GL_VERTEX_ARRAY, glAlphaFunc, glBegin, glBindTexture, glBlendFunc
+from OpenGL.GL import glClear, glClearColor, glColor3f, glColor4f, glColorMask
+from OpenGL.GL import glDisable, glDisableClientState, glDrawArrays, glEnable
+from OpenGL.GL import glEnableClientState, glEnd, glGenTextures, glLoadIdentity
+from OpenGL.GL import glMatrixMode, glOrtho, glPopMatrix, glPushMatrix, glRotated
+from OpenGL.GL import glStencilFunc, glStencilMask, glStencilOp, glTexCoord2f
+from OpenGL.GL import glTexImage2D, glTexParameteri, glTranslate, glTranslated
+from OpenGL.GL import glTranslatef, glVertex2f, glVertexPointer, glViewport
 from OpenGL.GLU import gluOrtho2D
 from PIL import Image
 
 from amoginarium import pv
 from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Color, convert_color, convert_coord
-from amoginarium.shared.utility import coord_t, fade, normalize_angle, PI_2, Vec2
+from amoginarium.shared.utility import fade, normalize_angle, PI_2, Vec2
 
-from ._base_renderer import BaseRenderer, tColor
+from ._base_renderer import BaseRenderer
 from .opengl_fonts import GLFont
 from .windows import WindowsMonitorService
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import coord_t
+
+    from ._base_renderer import tColor
 
 # define types
 
@@ -90,7 +97,7 @@ class OpenGLRenderer(BaseRenderer):
         super().__init__()
 
     # region Extra internal methods
-    # todo: WHAT?
+    # TODO: WHAT?
     def get_font(
         self, size: int, family: str, bold: bool = False, italic: bool = False
     ) -> pg.font.Font:
@@ -116,25 +123,23 @@ class OpenGLRenderer(BaseRenderer):
         :param color: Color to set
         :return: The color as a Color object
         :raises ValueError: If a tuple of invalid length is provided
-        :raises TypeError: If color is not a Color object or a tuple
+        :raises TypeError: If color is not a Color object or a tuple.
         """
         if isinstance(color, Color):
             glColor4f(*color.rgba1)
 
             return color
-        elif isinstance(color, tuple):
+        if isinstance(color, tuple):
             if len(color) == 3:
                 glColor3f(*color)
             elif len(color) == 4:
                 glColor4f(*color)
             else:
-                raise ValueError(
-                    f"Invalid color tuple length (expected 3 or 4, got {len(color)}): {color}"
-                )
+                msg = f"Invalid color tuple length (expected 3 or 4, got {len(color)}): {color}"
+                raise ValueError(msg)
             return Color().from_1(*color)
-        raise TypeError(
-            f"Expected a Color object or a tuple, but got {type(color).__name__}: {color!r}"
-        )
+        msg = f"Expected a Color object or a tuple, but got {type(color).__name__}: {color!r}"
+        raise TypeError(msg)
 
     @staticmethod
     @cum_timer.time_this
@@ -146,7 +151,7 @@ class OpenGLRenderer(BaseRenderer):
         Check if a rect is out of the screen
         :param top_left: Absolute top left position
         :param size: Absolute size
-        :return: True if rect is out of screen
+        :return: True if rect is out of screen.
         """
         x1, y1 = convert_coord(top_left)
         w, h = convert_coord(size)
@@ -243,7 +248,7 @@ class OpenGLRenderer(BaseRenderer):
     def init(self, title: str) -> None:
         """
         Initialize the renderer and global_vars
-        :param title: Window title
+        :param title: Window title.
         """
         pg.init()
         pv.global_vars = pv.global_vars
@@ -324,7 +329,7 @@ class OpenGLRenderer(BaseRenderer):
 
     def quit(self) -> None:
         """
-        Quit the display
+        Quit the display.
         """
         pg.quit()
 
@@ -341,7 +346,7 @@ class OpenGLRenderer(BaseRenderer):
         :param size: Size of image or None
         :param mirror: Axes to mirror the image on
         :param pixel_perfect: set texture scaling behavior
-        :returns: integer texture id, (width, height)
+        :returns: integer texture id, (width, height).
         """
         if size is not None:
             if image.size != (target_size := convert_coord(size, int)):
@@ -403,7 +408,7 @@ class OpenGLRenderer(BaseRenderer):
     def clear_display(self, color: Color | tColor = (0, 0, 0, 0)) -> None:
         """
         Clear the whole window
-        :param color: Color to clear the window with
+        :param color: Color to clear the window with.
         """
         conv_color: Color = convert_color(color, Color)
         glClearColor(*conv_color.rgba1)
@@ -415,7 +420,7 @@ class OpenGLRenderer(BaseRenderer):
         """
         Should be called when the display gets updated
         :param position: Position of the display
-        :param size: Size of the display
+        :param size: Size of the display.
         """
         if self.__display_state in ["fullscreen", "windowed_fullscreen"]:
             self.__window.restore()
@@ -487,7 +492,7 @@ class OpenGLRenderer(BaseRenderer):
     def display_get_geometry(self) -> tuple[Vec2, Vec2]:
         """
         Change the position and size of the display
-        :return: (position, size) of the window
+        :return: (position, size) of the window.
         """
         pos_x, pos_y = self.__window.position
         size_w, size_h = self.__window.size
@@ -501,7 +506,7 @@ class OpenGLRenderer(BaseRenderer):
         """
         Change the position and size of the display
         :param position: New position
-        :param size: New size
+        :param size: New size.
         """
         self.__window.set_windowed()
 
@@ -517,7 +522,7 @@ class OpenGLRenderer(BaseRenderer):
 
     def display_fullscreen(self) -> None:
         """
-        Activate fullscreen mode
+        Activate fullscreen mode.
         """
         self.__display_save_geometry()
         self.__window.set_fullscreen(True)
@@ -526,7 +531,7 @@ class OpenGLRenderer(BaseRenderer):
 
     def display_windowed_fullscreen(self) -> None:
         """
-        Activate windowed fullscreen mode
+        Activate windowed fullscreen mode.
         """
         self.__display_save_geometry()
         pos, size, combined = WindowsMonitorService.get_current_monitor_combined()
@@ -553,13 +558,13 @@ class OpenGLRenderer(BaseRenderer):
         """
         Set the caption/titlebar of the display
         :param title: String title
-        :param icon: Icon
+        :param icon: Icon.
         """
         self.__window.title = title
 
     def display_draw_frame(self) -> None:
         """
-        Called each frame after the drawing
+        Called each frame after the drawing.
         """
         self.__window.flip()
         self.__clock.tick(pv.global_vars.get_max_fps())
@@ -580,9 +585,9 @@ class OpenGLRenderer(BaseRenderer):
 
         self.enable_stencil(show_stencil)
 
-    def start_stencil(self, show_stencil=False):
+    def start_stencil(self, show_stencil=False) -> None:
         """
-        call this, then draw stencil, then draw enable_stencil
+        Call this, then draw stencil, then draw enable_stencil.
         """
         glEnable(GL_STENCIL_TEST)
         glClear(GL_STENCIL_BUFFER_BIT)
@@ -597,9 +602,9 @@ class OpenGLRenderer(BaseRenderer):
         if not show_stencil:
             glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)  # if mask invis
 
-    def enable_stencil(self, show_stencil=False):
+    def enable_stencil(self, show_stencil=False) -> None:
         """
-        start_stencil must be called first
+        start_stencil must be called first.
         """
         if not show_stencil:
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
@@ -640,7 +645,7 @@ class OpenGLRenderer(BaseRenderer):
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :param layer: Layer number
         :param force_draw: force the renderer to draw the quad NOW (only use for stencils)
-        :param color: overlay color to tint the quad
+        :param color: overlay color to tint the quad.
         """
         pos_vec2: Vec2 = convert_coord(pos, Vec2)  # type: ignore
         size_vec2: Vec2 = convert_coord(size, Vec2)  # type: ignore
@@ -689,8 +694,8 @@ class OpenGLRenderer(BaseRenderer):
             self.__layer_cache[layer].append(draw_info)
 
     def __draw_layer(self, layer: list[dict[str, tp.Any]]) -> None:
-        """draw one texture layer"""
-        layer = sorted(layer, key=lambda x: x["texture_id"])
+        """Draw one texture layer."""
+        layer = sorted(layer, key=operator.itemgetter("texture_id"))
 
         # reset color
         glColor3f(1.0, 1.0, 1.0)
@@ -778,7 +783,7 @@ class OpenGLRenderer(BaseRenderer):
         :param color: Drawing color
         :param center: Optional center position
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: NOT SUPPORTED
+        :param offscreen_check: NOT SUPPORTED.
         """
         vertices_vec2: list[Vec2] = [convert_coord(v, Vec2) for v in vertices]
 
@@ -828,7 +833,7 @@ class OpenGLRenderer(BaseRenderer):
         :param thickness: Thickness of the outline
         :param center: Optional center position
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: NOT SUPPORTED
+        :param offscreen_check: NOT SUPPORTED.
         """
         vertices_vec2: list[Vec2] = [convert_coord(v, Vec2) for v in vertices]
         if not vertices_vec2:
@@ -892,7 +897,7 @@ class OpenGLRenderer(BaseRenderer):
         :param size: Width and height of the rectangle
         :param color: Drawing color
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         start_vec2: Vec2 = convert_coord(start, Vec2)
         size_vec2: Vec2 = convert_coord(size, Vec2)
@@ -946,7 +951,7 @@ class OpenGLRenderer(BaseRenderer):
         :param bottom_left_radius: Individual radius for the bottom left corner. Defaults to radius
         :param bottom_right_radius: Individual radius for the bottom right corner. Defaults to radius
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         start_vec: Vec2 = convert_coord(start, Vec2)
         size_vec: Vec2 = convert_coord(size, Vec2)
@@ -1059,7 +1064,7 @@ class OpenGLRenderer(BaseRenderer):
         :param color: Drawing color
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         start_vec: Vec2 = convert_coord(start, Vec2)
         size_vec: Vec2 = convert_coord(size, Vec2)
@@ -1132,7 +1137,7 @@ class OpenGLRenderer(BaseRenderer):
         :param bottom_right_radius: Individual radius for the bottom right corner. Defaults to radius
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         start_vec: Vec2 = convert_coord(start, Vec2)
         size_vec: Vec2 = convert_coord(size, Vec2)
@@ -1243,7 +1248,7 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(start_vec, size_vec)
 
-    # todo mytodo work on this
+    # TODO mytodo work on this
     def draw_bar(
         self,
         pos: coord_t,
@@ -1256,7 +1261,7 @@ class OpenGLRenderer(BaseRenderer):
         offscreen_check: bool = True,
     ) -> None:
         """
-        draw a progress? bar at the specified location (using specified color gradient
+        Draw a progress? bar at the specified location (using specified color gradient.
         """
         pos: Vec2 = convert_coord(pos, Vec2)  # ignore: type
         size: Vec2 = convert_coord(size, Vec2)  # ignore: type
@@ -1275,7 +1280,8 @@ class OpenGLRenderer(BaseRenderer):
             )  # ignore: type
 
         else:
-            raise RuntimeError(f'Invalid colors for "draw_bar": {colors}')
+            msg = f'Invalid colors for "draw_bar": {colors}'
+            raise RuntimeError(msg)
 
         if isinstance(background_color, EllipsisType):
             background_color: Color = Color().from_1(0, 0, 0, 0.5)
@@ -1332,7 +1338,7 @@ class OpenGLRenderer(BaseRenderer):
         :param num_segments: Number of segments
         :param color: Drawing color
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing (rect check)
+        :param offscreen_check: Whether to check it the element is on the window before drawing (rect check).
         """
         center_vec2: Vec2 = convert_coord(center, Vec2)
 
@@ -1352,7 +1358,7 @@ class OpenGLRenderer(BaseRenderer):
 
         glBegin(GL_POLYGON)
 
-        step = 6.283185307179586 / num_segments
+        step = m.tau / num_segments
         [
             glVertex2f(radius * m.cos(i * step), radius * m.sin(i * step))
             for i in range(num_segments)
@@ -1385,7 +1391,7 @@ class OpenGLRenderer(BaseRenderer):
         :param color: Drawing color
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         center_vec2: Vec2 = convert_coord(center, Vec2)
 
@@ -1407,7 +1413,7 @@ class OpenGLRenderer(BaseRenderer):
 
         glBegin(GL_TRIANGLE_STRIP)
 
-        step: float = 6.283185307179586 / num_segments
+        step: float = m.tau / num_segments
         [
             (glVertex2f(outer * c, outer * s), glVertex2f(radius * c, radius * s))
             for i in range(num_segments + 1)
@@ -1444,7 +1450,7 @@ class OpenGLRenderer(BaseRenderer):
         :param num_segments: Number of segments
         :param color: Drawing color
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         center_vec2: Vec2 = convert_coord(center, Vec2)
         angle_start_vec2: Vec2 = convert_coord(angle_start, Vec2)
@@ -1514,7 +1520,7 @@ class OpenGLRenderer(BaseRenderer):
         :param gap_len: Number of segments left out by a gap
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         center_vec2: Vec2 = convert_coord(center, Vec2)
 
@@ -1540,7 +1546,7 @@ class OpenGLRenderer(BaseRenderer):
         if num_to_draw == 0:
             return
 
-        step = 6.283185307179586 / num_segments
+        step = m.tau / num_segments
 
         angles1 = active_indices * step
         angles2 = angles1 + step
@@ -1599,7 +1605,7 @@ class OpenGLRenderer(BaseRenderer):
         :param gap_len: Number of segments left out by a gap
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         center_vec2: Vec2 = convert_coord(center, Vec2)
         start_vec: Vec2 = convert_coord(angle_start, Vec2)
@@ -1692,7 +1698,7 @@ class OpenGLRenderer(BaseRenderer):
         :param color: Drawing color
         :param global_position: IDK
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         start_vec2: Vec2 = convert_coord(start, Vec2)
         end_vec2: Vec2 = convert_coord(end, Vec2)
@@ -1742,7 +1748,7 @@ class OpenGLRenderer(BaseRenderer):
         :param thickness: Thickness of the line
         :param global_position: IDK
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         start_vec2: Vec2 = convert_coord(start, Vec2)
         end_vec2: Vec2 = convert_coord(end, Vec2)
@@ -1802,7 +1808,7 @@ class OpenGLRenderer(BaseRenderer):
         """
         Draw a simple line
         :param points: list of line points
-        :param color: one color or color for each point
+        :param color: one color or color for each point.
 
         :param thickness: line thickness
         :param global_position: position in global space or relative to previous
@@ -1813,16 +1819,16 @@ class OpenGLRenderer(BaseRenderer):
             return
 
         # convert points to Vec2
-        _points: list[Vec2] = [convert_coord(c, Vec2) for c in points]  # type: ignore
+        points_: list[Vec2] = [convert_coord(c, Vec2) for c in points]  # type: ignore
 
         if convert_global:
-            _points = [pv.global_vars.translate_screen_coord(p) for p in _points]
+            points_ = [pv.global_vars.translate_screen_coord(p) for p in points_]
             thickness = pv.global_vars.translate_scale(thickness)
 
         if offscreen_check:
             # check if all points are oob
-            if self._check_out_of_screen(_points[0], (_points[0] - _points[1])):
-                for point in _points:
+            if self._check_out_of_screen(points_[0], (points_[0] - points_[1])):
+                for point in points_:
                     if not self._check_out_of_screen(point, (1, 1)):
                         break
 
@@ -1847,17 +1853,17 @@ class OpenGLRenderer(BaseRenderer):
         glBegin(GL_TRIANGLE_STRIP)
 
         # draw points as thick line
-        n_points = len(_points)
+        n_points = len(points_)
         for i in range(n_points):
             if i == 0:
-                direction = (_points[0] - _points[1]).normalize()
+                direction = (points_[0] - points_[1]).normalize()
 
             elif i == n_points - 1:
-                direction = (_points[-2] - _points[-1]).normalize()
+                direction = (points_[-2] - points_[-1]).normalize()
 
             else:
                 # use prev and next points as normal vector
-                direction = (_points[i - 1] - _points[i + 1]).normalize()
+                direction = (points_[i - 1] - points_[i + 1]).normalize()
 
             d = Vec2().from_polar(
                 direction.angle + PI_2, thickness / 2
@@ -1866,8 +1872,8 @@ class OpenGLRenderer(BaseRenderer):
             if color_list:
                 self.__set_color(color[i])
 
-            glVertex2f(*(_points[i] + d).xy)
-            glVertex2f(*(_points[i] - d).xy)
+            glVertex2f(*(points_[i] + d).xy)
+            glVertex2f(*(points_[i] - d).xy)
 
         glEnd()
 
@@ -1907,7 +1913,7 @@ class OpenGLRenderer(BaseRenderer):
         :param text_id: NOT SUPPORTED
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing.
-        :return: DynamicTextID (None) - not implemented
+        :return: DynamicTextID (None) - not implemented.
         """
         if not isinstance(bg_color, Color):
             bg_color = self.__set_color(bg_color)
@@ -1978,7 +1984,7 @@ class OpenGLRenderer(BaseRenderer):
         :param font_family: Font family
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
-        :return: StaticTextID integer
+        :return: StaticTextID integer.
         """
         surface = self.get_font(font_size, font_family, bold, italic).render(
             text, True, convert_color(color, Color).rgba255
@@ -2021,7 +2027,7 @@ class OpenGLRenderer(BaseRenderer):
         :param centered: Whether pos is center or top left
         :param scale: Scale the surface size
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         tex_id = self.__static_text_graphics[text_id][0]
         w, h = self.__static_text_graphics[text_id][1]

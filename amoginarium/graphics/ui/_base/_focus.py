@@ -7,6 +7,8 @@ Created: 11.04.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import abc
 import typing as tp
 

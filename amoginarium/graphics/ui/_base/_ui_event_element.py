@@ -14,13 +14,15 @@ import typing as tp
 # noinspection PyPackageRequirements
 import pygame as pg
 
-from amoginarium.shared.utility import convert_coord, coord_t, Vec2
+from amoginarium.shared.utility import convert_coord, Vec2
 
 from ...entities import Cursor, UIEntities
 from .._types import Anchor, Positions
 from ._ui_element import UIElement
 
 if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import coord_t
+
     from .._widgets import UICursor
     from ._ui_entity import UIEntity
 
@@ -77,7 +79,7 @@ class UIEventElement(UIElement):
         :param use_collision_mask: Whether to use a collision mask or just a collision box
         :param on_enter_callbacks: List of callbacks to be called when a cursor enters the component
         :param on_leave_callbacks: List of callbacks to be called when a cursor leaves the component
-        :param on_buffer_callbacks: List of callbacks to be called when a cursor buffers the component
+        :param on_buffer_callbacks: List of callbacks to be called when a cursor buffers the component.
         """
         super().__init__(
             position=position,
@@ -111,7 +113,7 @@ class UIEventElement(UIElement):
 
     # region TEMP: Click Callbacks
     def check_click(self) -> None:
-        """TEMP: check if clicked"""
+        """TEMP: check if clicked."""
         if self.is_hovered and self.visible:
             for cb in self.__on_click_callbacks:
                 cb()
@@ -161,7 +163,8 @@ class UIEventElement(UIElement):
         :raises ValueError: If use_collision_mask is set to false
         """
         if not self.__use_collision_mask:
-            raise ValueError("use_collision_mask is set to false")
+            msg = "use_collision_mask is set to false"
+            raise ValueError(msg)
 
         if self.__collision_recreation or self.__collision_surface is None:
             self.__collision_recreation = False
@@ -178,7 +181,8 @@ class UIEventElement(UIElement):
         :raises ValueError: If use_collision_mask is set to false
         """
         if not self.__use_collision_mask:
-            raise ValueError("use_collision_mask is set to false")
+            msg = "use_collision_mask is set to false"
+            raise ValueError(msg)
 
         if self.__collision_mask is None:
             self.__collision_mask = pg.mask.from_surface(self._collision_surface)
@@ -221,7 +225,7 @@ class UIEventElement(UIElement):
         Check if coords are over the component with a buffer
         :param coords: Coordinates to check
         :param buffer: Buffer around the coordinates
-        :return: Whether coords are over the component
+        :return: Whether coords are over the component.
         """
         if all(
             [
@@ -258,7 +262,7 @@ class UIEventElement(UIElement):
     # endregion
 
     # region Methods: Drawing & Updates
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         """
         The draw function called in loop. Updates hover state trackers and handles
         collision surface recreation flags before calling the parent UIElement draw.
@@ -275,34 +279,33 @@ class UIEventElement(UIElement):
 
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         super()._after_gl_draw(drawn, layer)
-        if drawn:
-            if (
-                self.__on_enter_callbacks
-                or self.__on_leave_callbacks
-                or self.__on_buffer_callbacks
+        if drawn and (
+            self.__on_enter_callbacks
+            or self.__on_leave_callbacks
+            or self.__on_buffer_callbacks
+        ):
+            hovered_inner = self.__hovered_inner()
+            hovered_outer = self.__hovered_outer()
+
+            if hovered_inner is None or hovered_outer is None:
+                return
+
+            if hovered_inner and not self.__is_hovered_inner_last:
+                self.__is_hovered = True
+                for callback in self.__on_enter_callbacks:
+                    callback()
+            elif self.__is_hovered_outer_last and not hovered_outer:
+                self.__is_hovered = False
+                for callback in self.__on_leave_callbacks:
+                    callback()
+            elif (
+                self.__is_hovered_inner_last
+                and not hovered_inner
+                and hovered_outer
+                and self.__is_hovered_outer_last
             ):
-                hovered_inner = self.__hovered_inner()
-                hovered_outer = self.__hovered_outer()
-
-                if hovered_inner is None or hovered_outer is None:
-                    return
-
-                if hovered_inner and not self.__is_hovered_inner_last:
-                    self.__is_hovered = True
-                    for callback in self.__on_enter_callbacks:
-                        callback()
-                elif self.__is_hovered_outer_last and not hovered_outer:
-                    self.__is_hovered = False
-                    for callback in self.__on_leave_callbacks:
-                        callback()
-                elif (
-                    self.__is_hovered_inner_last
-                    and not hovered_inner
-                    and hovered_outer
-                    and self.__is_hovered_outer_last
-                ):
-                    for callback in self.__on_buffer_callbacks:
-                        callback()
+                for callback in self.__on_buffer_callbacks:
+                    callback()
 
     def _reset(self) -> None:
         super()._reset()

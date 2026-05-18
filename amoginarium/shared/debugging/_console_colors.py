@@ -16,7 +16,7 @@ from icecream import ic
 
 class BetterDict:
     """
-    each element is also accessible with instance.element
+    each element is also accessible with instance.element.
     """
 
     def __init__(self, **initial) -> None:
@@ -114,7 +114,7 @@ def get_fg_color(n: int) -> str:
     Standard background color where n can be a number between 0-7
     High intensity background color where n can be a number between 8-15
     Rainbow background color where n can be a number between 16-231
-    Gray background color where n can be a number between 232-255
+    Gray background color where n can be a number between 232-255.
     """
     return f"\u001b[38;5;{n}m"
 
@@ -133,7 +133,7 @@ def terminal_link(uri, label=None):
 
 if __name__ == "__main__":
 
-    def p():
+    def p() -> str:
         t = 1243.1251
         t1, t2 = str(t).split(".")
 

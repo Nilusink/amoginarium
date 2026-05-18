@@ -7,35 +7,39 @@ Created: 13.05.2026
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
-from ctypes import Array
 from types import EllipsisType
 
 import numpy as np
 from icecream import ic
 
 from amoginarium import pv
-from amoginarium.logic.entities import BaseLogicEntity
-from amoginarium.shared import base_entity_t, BaseCommandType
-from amoginarium.shared import Coalitions, ProcessCommand, TurretCIDs
+from amoginarium.shared import BaseCommandType, Coalitions, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
-from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import convert_coord, get_default, MASK16
 from amoginarium.shared.utility import MASK32, normalize_angle, Vec2
 
-from .....graphics_dummies import Controller
 from ...._base import GameCollisions, LogicGameEntity
 from ...._rideables import Passenger, RideablePerks
-from .._weapons import BaseWeapon
 
 if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.logic.entities import BaseLogicEntity
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.collision_detection import CollisionEvent
+
+    from .....graphics_dummies import Controller
     from ...._player import Player
     from .._bullets import Bullet
+    from .._weapons import BaseWeapon
 
 
 class RideableTurret(RideablePerks, LogicGameEntity):
     """
-    a fixed-position turret than can be ridden
+    a fixed-position turret than can be ridden.
     """
 
     _CID = TurretCIDs.rideable_base
@@ -67,7 +71,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     _default_target_taps: tp.ClassVar[int] = 1  # shots per click
 
-    _default_weapon_type: tp.Type[BaseWeapon] | EllipsisType = ...
+    _default_weapon_type: type[BaseWeapon] | EllipsisType = ...
     _default_weapon_drop_casings: tp.ClassVar[bool] = False
     _default_weapon_position_offset: tp.ClassVar[
         Vec2 | list[float] | tuple[float, float]
@@ -102,7 +106,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         # get size and convert to Vec2
-        _size: Vec2 = convert_coord(  # type: ignore
+        size_: Vec2 = convert_coord(  # type: ignore
             get_default(size, self._default_size), Vec2
         )
         weapon_kwargs: dict = get_default(weapon_kwargs, {})
@@ -115,11 +119,11 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         self._turn_speed: float = get_default(self._default_turn_speed, np.inf)
 
         self._valid_angles = ...
-        _valid_angles = self._default_engagement_valid_angles
-        if not isinstance(_valid_angles, EllipsisType):
+        valid_angles = self._default_engagement_valid_angles
+        if not isinstance(valid_angles, EllipsisType):
             self._valid_angles = [
                 Vec2().from_polar(a, 1) if isinstance(a, (float, int)) else a
-                for a in _valid_angles
+                for a in valid_angles
             ]
 
             self._valid_angles[0].length = self.max_range  # type: ignore
@@ -136,7 +140,8 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             )
 
         if isinstance(self._default_weapon_type, EllipsisType):
-            raise RuntimeError(f"No weapon set for {self.__class__.__name__}")
+            msg = f"No weapon set for {self.__class__.__name__}"
+            raise RuntimeError(msg)
 
         if cluster:
             weapon_kwargs["cluster"] = True
@@ -163,7 +168,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         # init parent class
         super().__init__(
             runtime_buffer=runtime_buffer,
-            size=_size,
+            size=size_,
             position=position,
             coalition=Coalitions.blue,
             centered=True,
@@ -175,8 +180,8 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         self._create_collision()
 
         # player variables
-        self._player: tp.Union["Player", None] = None
-        self._controller: tp.Union[Controller, None] = None
+        self._player: Player | None = None
+        self._controller: Controller | None = None
         self.__ride_pressed = False
 
         # spawn logic dummy
@@ -190,12 +195,12 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     # region properties
     @property
     def min_range(self) -> float:
-        """min engagement range"""
+        """Min engagement range."""
         return self._default_engagement_min_range
 
     @property
     def max_range(self) -> float:
-        """max engagement range"""
+        """Max engagement range."""
         return self._default_engagement_max_range
 
     @property
@@ -217,18 +222,18 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     def passenger_visible(self) -> bool:
         return self._passenger_visible
 
-    def get_passenger_position(self) -> None | Vec2:
+    def get_passenger_position(self) -> Vec2 | None:
         return self.position + self._passenger_offset
 
-    def get_camera_position(self) -> None | Vec2:
+    def get_camera_position(self) -> Vec2 | None:
         return self.position
 
-    def get_camera_zoom(self) -> None | float:
+    def get_camera_zoom(self) -> float | None:
         return None
 
-    def set_passenger(self, passenger: "Player") -> bool:
+    def set_passenger(self, passenger: Player) -> bool:
         """
-        assign passenger to turret
+        Assign passenger to turret.
 
         :returns: True if successful
         """
@@ -251,34 +256,31 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     # endregion
 
     # region collision
-    def __on_collision_bullet(self, event: CollisionEvent["Bullet"]) -> None:
+    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
         dmg = event.other_entity.damage
         if dmg > 0 and event.other_entity.root != self.root:
             ic(event.other_entity.root, self, self.weapon)
             self.hit(dmg, hit_by=event.other_entity)
 
-    def _collision_start(
-        self, events: list[CollisionEvent[tp.Union["Bullet", "Player"]]]
-    ) -> None:
+    def _collision_start(self, events: list[CollisionEvent[Bullet | Player]]) -> None:
         # bullet - 5 turrets - events länge 5
         # turret - events 1 bullet
         for event in events:
             if event.group_id == GameCollisions.collision_group_bullets:
-                event: CollisionEvent["Bullet"]
+                event: CollisionEvent[Bullet]
                 self.__on_collision_bullet(event)
 
     # endregion
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         """
-        deal damage to the turret
+        Deal damage to the turret.
         """
         self._hp -= damage
 
         # ping on bullet hit
-        if not isinstance(hit_by, EllipsisType):
-            if hit_by._tags.__contains__("bullet"):
-                self._ping.play(pos=self.position)
+        if not isinstance(hit_by, EllipsisType) and "bullet" in hit_by._tags:
+            self._ping.play(pos=self.position)
 
         # check for turret death
         if self._hp <= 0:
@@ -291,7 +293,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         target_pos: Vec2 | EllipsisType = ...,
         **bullet_args,
     ) -> None:
-        """checks if shot is inside parameters"""
+        """Checks if shot is inside parameters."""
         self.weapon.shoot(
             self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
@@ -368,7 +370,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         super()._update(delta)
 
     def _turn_at(self, angle: float, dt: float) -> None:
-        """turn towards a target"""
+        """Turn towards a target."""
         if not isinstance(self._default_weapon_static_facing, EllipsisType):
             self.weapon.facing.angle = self._default_weapon_static_facing
             return
@@ -396,11 +398,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
                     d = min_a - max_a
 
                     # clamp to corresponding angle
-                    if new_angle + d / 2 > min_a:
-                        new_angle = min_a
-
-                    else:
-                        new_angle = max_a
+                    new_angle = min_a if new_angle + d / 2 > min_a else max_a
 
             else:
                 new_angle = min(max(new_angle, min_a), max_a)

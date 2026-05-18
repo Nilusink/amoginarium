@@ -7,15 +7,21 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-import typing as tp
-from types import EllipsisType
+from __future__ import annotations
 
-from ._animation_types import anim_curve_t, AnimationPhase
+import typing as tp
+
+from ._animation_types import AnimationPhase
 from ._simple_animation import SimpleAnimation
+
+if tp.TYPE_CHECKING:
+    from types import EllipsisType
+
+    from ._animation_types import anim_curve_t
 
 
 class ComplexAnimation(SimpleAnimation):
-    """Animation with extended functionality"""
+    """Animation with extended functionality."""
 
     _extend_duration: float
     _extend_debounce_duration: float
@@ -54,7 +60,7 @@ class ComplexAnimation(SimpleAnimation):
         :param collapse_debounce_duration: Minimum time in collapsing phase before starting to collapse.
         Defaults to extend_debounce_duration
         :param extend_curve: Extend curve function. Takes float from 0 to 1
-        :param collapse_curve: Collapse curve function. Takes float from 0 to 1. Defaults t reverse extend_curve
+        :param collapse_curve: Collapse curve function. Takes float from 0 to 1. Defaults t reverse extend_curve.
         """
         super().__init__(start_value, end_value)
 
@@ -89,15 +95,14 @@ class ComplexAnimation(SimpleAnimation):
         """
         Calculates the relative progress of the animation based on value
         :param value_progress: Current absolute progression
-        :return: Current relative progression
+        :return: Current relative progression.
         """
         if self._start_value == self._end_value:
             return 1.0
-        else:
-            return value_progress / (self._end_value - self._start_value)
+        return value_progress / (self._end_value - self._start_value)
 
     def extend(self) -> None:
-        """Start extending from current to end value"""
+        """Start extending from current to end value."""
         if self._phase in (AnimationPhase.EXTENDING, AnimationPhase.AT_END):
             return
 
@@ -114,7 +119,7 @@ class ComplexAnimation(SimpleAnimation):
         self._current_time = 0.0
 
     def collapse(self) -> None:
-        """Start collapsing from current to start value"""
+        """Start collapsing from current to start value."""
         if self._phase in (AnimationPhase.COLLAPSING, AnimationPhase.AT_START):
             return
 
@@ -131,14 +136,14 @@ class ComplexAnimation(SimpleAnimation):
         self._current_time = 0.0
 
     def stop(self) -> None:
-        """Stop the animation at the current value"""
+        """Stop the animation at the current value."""
         self._phase = AnimationPhase.STOPPED
         self._debounce_timer = 0.0
 
     def _calc(self, delta: float) -> None:
         """
         Update the animation
-        :param delta: Time since the last update in seconds
+        :param delta: Time since the last update in seconds.
         """
         self._last_value = self._current_value
         if self._phase in (

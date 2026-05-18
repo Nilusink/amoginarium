@@ -12,7 +12,7 @@ from amoginarium.shared import ProcessCommand, ProcessCommandType
 
 
 class GraphicsSoundEffect:
-    """graphics sound effect dummy"""
+    """graphics sound effect dummy."""
 
     volume: float = 1
 
@@ -25,7 +25,7 @@ class GraphicsSoundEffect:
         maxtime: int = 0,
         fade_ms: int = 0,
     ) -> None:
-        """send command to play sound"""
+        """Send command to play sound."""
         pv.COQ.put(
             ProcessCommand(
                 type=ProcessCommandType.play_sound,
@@ -42,7 +42,7 @@ class GraphicsSoundEffect:
 class PresetGraphicsSoundEffect(GraphicsSoundEffect):
     _sound_name: str
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(self._sound_name)
 
 

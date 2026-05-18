@@ -43,7 +43,7 @@ class LogicGameEntity(
     - Positon, Size
     - Velocity, Acceleration
     - Optional Collision Detection
-    - Coalitions
+    - Coalitions.
     """
 
     __slots__ = (
@@ -137,7 +137,7 @@ class LogicGameEntity(
 
         self._tags = {}
         if tags is not None:
-            self._tags.update({tag: None for tag in tags})
+            self._tags.update(dict.fromkeys(tags))
         # endregion
 
     # region Properties
@@ -171,22 +171,22 @@ class LogicGameEntity(
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
-        :param value: 2D velocity to add
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
+        :param value: 2D velocity to add.
         """
         self._velocity_to_add += value
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
-        :param value: 2D acceleration to add
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        :param value: 2D acceleration to add.
         """
         self._acceleration_to_add += value
 
     def _update(self, delta: float) -> None:
         """
         Update logic game entity
-        :param delta: time since the last update
+        :param delta: time since the last update.
         """
         self.__world_position = pv.global_vars.get_world_position()
 

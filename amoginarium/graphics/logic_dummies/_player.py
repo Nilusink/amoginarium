@@ -8,7 +8,7 @@ Authors: Nilusink, LukasKrah
 """
 
 import pygame as pg
-from icecream import ic  # noqa: F401
+from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared import DummyCIDs
@@ -31,7 +31,7 @@ PIXEL_LINE_VERTICAL = pg.mask.Mask((1, 32), True)
 
 class PlayerDummy(SyncedLRImageEntity):
     """
-    `param0` health (0-1)
+    `param0` health (0-1).
     """
 
     __slots__ = ["_hp_colors", "_hotbar", "_inventory"]
@@ -50,12 +50,12 @@ class PlayerDummy(SyncedLRImageEntity):
         if cls._player_left_64_texture is ...:
             cls.load_textures()
 
-        return super(PlayerDummy, cls).__new__(cls)
+        return super().__new__(cls)
 
     @classmethod
     def load_textures(cls) -> None:
         """
-        Load the textures for player
+        Load the textures for player.
         """
         cls._player_right_64_texture, _ = textures.get_texture(
             PLAYER_RIGHT_64_PATH, (64, 64)
@@ -116,7 +116,7 @@ class PlayerDummy(SyncedLRImageEntity):
         self._hotbar: Inventory = Inventory(h_id, self)
         self._inventory: Inventory = Inventory(i_id, self)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         if layer == 0:
             super()._gl_draw(delta_cal, layer)
 

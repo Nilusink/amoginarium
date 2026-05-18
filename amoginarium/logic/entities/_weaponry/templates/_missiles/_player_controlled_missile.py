@@ -8,20 +8,26 @@ Created: 12.05.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
-from ctypes import Array
-from types import EllipsisType
 
 import numpy as np
 
-from amoginarium.shared import base_entity_t, Coalitions, MissileCIDs
-from amoginarium.shared.utility import clamp_angle, PI_4, Vec2
+from amoginarium.shared import MissileCIDs
+from amoginarium.shared.utility import clamp_angle, PI_4
 
-from ...._base import LogicGameEntity
 from ...._rideables import Passenger, RideablePerks
 from ._guided_multi_stage_missile import GuidedMultiStageMissile
 
 if tp.TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared.utility import Vec2
+
+    from ...._base import LogicGameEntity
     from ...._player import Player
 
 
@@ -58,7 +64,7 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
         )
 
         # get player
-        self._player: "Player" = self.root  # type: ignore
+        self._player: Player = self.root  # type: ignore
 
         # check for passenger protocol
         if not isinstance(self._player, Passenger):
@@ -81,13 +87,13 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
     def passenger_visible(self) -> bool:
         return True
 
-    def get_passenger_position(self) -> None | Vec2:
+    def get_passenger_position(self) -> Vec2 | None:
         return None
 
-    def get_camera_position(self) -> None | Vec2:
+    def get_camera_position(self) -> Vec2 | None:
         return self.position.copy()
 
-    def get_camera_zoom(self) -> None | float:
+    def get_camera_zoom(self) -> float | None:
         return None
 
     # endregion

@@ -7,17 +7,24 @@ Created: 06.04.2026
 Authors: Nilusink, LukasKrah
 """
 
-from amoginarium.shared.utility import Vec2
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from amoginarium import pv
+from amoginarium.shared.utility import Vec2
 
 from ..entities import BaseGraphicsEntity, Drawn_0
-from ..ui import UIRectangle, AnimatedColorValues
 from ..render_bindings import renderer
-from ._synced_entities import SyncedGraphicsEntity, SE_MANAGER
+from ..ui import AnimatedColorValues, UIRectangle
+from ._synced_entities import SE_MANAGER
+
+if TYPE_CHECKING:
+    from ._synced_entities import SyncedGraphicsEntity
 
 
 class Inventory(BaseGraphicsEntity):
-    """inventory entity"""
+    """inventory entity."""
 
     __slots__ = ["__id", "_slot_colors", "_ui"]
 
@@ -71,27 +78,28 @@ class Inventory(BaseGraphicsEntity):
     # region properties
     @property
     def buff(self):
-        """the inventories SHM buffer"""
+        """The inventories SHM buffer."""
         return pv.I_BUFF[self.__id]
 
     @property
     def size(self) -> int:
-        """inventory slot size"""
+        """Inventory slot size."""
         return self.buff.size
 
     # endregion
 
     # region internal methods
     def __slot_hover(self, slot_id: int) -> None:
-        """set hover to a slot"""
+        """Set hover to a slot."""
         if not (0 <= slot_id < 255):
-            raise ValueError(f"slot id out of range: {slot_id}")
+            msg = f"slot id out of range: {slot_id}"
+            raise ValueError(msg)
 
         self.buff.hover = slot_id
 
     def __slot_unhover(self, slot_id: int) -> None:
-        """reset hover (only when slot_id matches hover)"""
-        if not slot_id == self.buff.hover:
+        """Reset hover (only when slot_id matches hover)."""
+        if slot_id != self.buff.hover:
             return
 
         self.buff.hover = 255  # 255 = none
@@ -107,7 +115,7 @@ class Inventory(BaseGraphicsEntity):
         delta_cal: float,
         layer: int,
     ) -> None:
-        """draw inventory at center of screen"""
+        """Draw inventory at center of screen."""
         self._ui["root"].position.relative_global = position
 
         slot_size = width / (slots_per_row + 0.1)
@@ -137,11 +145,7 @@ class Inventory(BaseGraphicsEntity):
         for row in range(rows):
             for col in range(slots_per_row):
                 slot_id = row * slots_per_row + col
-                if slot_id == self.buff.selected:
-                    highlight = True
-
-                else:
-                    highlight = False
+                highlight = slot_id == self.buff.selected
 
                 ui_slot = self._ui["slots"][slot_id]
                 ui_slot.position.absolute_global = (

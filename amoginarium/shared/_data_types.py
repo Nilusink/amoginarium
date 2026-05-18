@@ -7,6 +7,8 @@ Created: 18.03.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 from dataclasses import dataclass, field
 from enum import Enum
@@ -23,7 +25,7 @@ type item_t = ItemLike | None  # ItemLike | WeaponLike | None
 @dataclass
 class ItemSlot:
     """
-    A slot in a players inventory
+    A slot in a players inventory.
     """
 
     item: item_t
@@ -34,16 +36,16 @@ class ItemSlot:
 
 @dataclass
 class CurrentView:
-    """current player view"""
+    """current player view."""
 
-    pos: "Vec2"
+    pos: Vec2
     zoom: float
     centered: bool = False
 
 
 class DummyCIDs(Enum):
     """
-    Component IDs for Graphics dummies
+    Component IDs for Graphics dummies.
     """
 
     player = "dummy.player"
@@ -57,7 +59,7 @@ class DummyCIDs(Enum):
 
 
 class MissileCIDs(Enum):
-    """Component IDs for missiles"""
+    """Component IDs for missiles."""
 
     base = "dummy.missile.base"
     multi_stage = "dummy.missile.multi_stage"
@@ -67,7 +69,7 @@ class MissileCIDs(Enum):
 
 
 class WeaponSensorCIDs(Enum):
-    """Component IDs for weapon sensors"""
+    """Component IDs for weapon sensors."""
 
     base = "sensor.weapon.base"
     laser = "sensor.weapon.laser"
@@ -77,7 +79,7 @@ class WeaponSensorCIDs(Enum):
 
 class IslandCIDs(Enum):
     """
-    Component IDs for Graphics islands
+    Component IDs for Graphics islands.
     """
 
     grass_island = "island.grass"
@@ -87,7 +89,7 @@ class IslandCIDs(Enum):
 
 class TurretCIDs(Enum):
     """
-    Component IDs for Graphics turrets
+    Component IDs for Graphics turrets.
     """
 
     minigun = "turret.static.minigun"
@@ -105,7 +107,7 @@ class TurretCIDs(Enum):
 
 class WeaponCIDs(Enum):
     """
-    Component IDs for Graphics weapons
+    Component IDs for Graphics weapons.
     """
 
     minigun = "weapon.minigun"
@@ -122,7 +124,7 @@ class WeaponCIDs(Enum):
 
 
 class SensorCIDs(Enum):
-    """Component IDs for graphics sensors"""
+    """Component IDs for graphics sensors."""
 
     radar = "sensor.static.radar"
     visual = "sensor.static.visual"
@@ -134,7 +136,7 @@ class SensorCIDs(Enum):
 
 
 class ItemCIDs(Enum):
-    """Component IDs for items"""
+    """Component IDs for items."""
 
     shield = "item.shield"
     healing_potion = "item.healing_potion"
@@ -143,7 +145,7 @@ class ItemCIDs(Enum):
 
 class GraphicsCIDs(Enum):
     """
-    Component IDs for other Graphics
+    Component IDs for other Graphics.
     """
 
     static_text = "static.text"
@@ -153,7 +155,7 @@ class GraphicsCIDs(Enum):
 
 
 class _CIDRegister:
-    """represent all item CIDs as ints"""
+    """represent all item CIDs as ints."""
 
     __slots__ = ["_cids"]
 
@@ -162,13 +164,13 @@ class _CIDRegister:
 
         i = 1  # start with 1 because 0 is no item
         for enum in enums:
-            for name in getattr(enum, "_value2member_map_").keys():
+            for name in enum._value2member_map_:
                 self._cids[name] = i
                 i += 1
 
     def get_id(self, cid: str | tp.Any) -> int:
         """
-        get the corresponding ID from n CID
+        Get the corresponding ID from n CID.
 
         :param cid: original CID
         :returns: corresponding ID, 0 if not found
@@ -196,7 +198,7 @@ type CIDType = (
 
 class ProcessCommandType(Enum):
     """
-    Commands sent from base to process
+    Commands sent from base to process.
     """
 
     # process control
@@ -217,7 +219,7 @@ class ProcessCommandType(Enum):
 
 class BaseCommandType(Enum):
     """
-    commands sent from process to base
+    commands sent from process to base.
     """
 
     spawn_dummy = 0  # {"id": <sync id>, "cid": DummyCIDs, **kwargs}
@@ -228,7 +230,7 @@ class BaseCommandType(Enum):
 @dataclass
 class ProcessCommand:
     """
-    Base command type (all commands)
+    Base command type (all commands).
     """
 
     type: ProcessCommandType | BaseCommandType

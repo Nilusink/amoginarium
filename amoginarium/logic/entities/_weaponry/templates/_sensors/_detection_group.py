@@ -14,22 +14,22 @@ from dataclasses import dataclass
 from time import perf_counter
 
 from ...._base import Bullets, Players
-from ._base_sensor import BaseSensor
 
 if tp.TYPE_CHECKING:
     from ...._base import PositionedLogicEntity
+    from ._base_sensor import BaseSensor
 
 
 @dataclass(frozen=False)
 class TargetInfo:
-    """target info"""
+    """target info."""
 
     last_seen: float
     seen_by: PositionedLogicEntity
 
 
 class _DetectionGroupManager:
-    """manages all detection groups"""
+    """manages all detection groups."""
 
     _instance: _DetectionGroupManager = ...
     _detection_groups: list[DetectionGroup]
@@ -60,7 +60,7 @@ class _DetectionGroupManager:
 
     def update_detection(self) -> None:
         """
-        ask all sensors to get their targeting information
+        Ask all sensors to get their targeting information.
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
@@ -72,8 +72,8 @@ class _DetectionGroupManager:
 
     def reset(self) -> None:
         """
-        reset all target groups each loop so targets won't
-        be visible forever
+        Reset all target groups each loop so targets won't
+        be visible forever.
         """
         for group in self._detection_groups:
             group.reset()
@@ -83,7 +83,7 @@ detection_id: int = 0
 
 
 class DetectionGroup:
-    """Group of sensors"""
+    """Group of sensors."""
 
     _targets: dict[PositionedLogicEntity, TargetInfo]
     _sensors: list[BaseSensor]
@@ -93,7 +93,7 @@ class DetectionGroup:
         DETECTION_GROUP_MANAGER.add(i)
         return i
 
-    def __init__(self, name: str = None) -> None:
+    def __init__(self, name: str | None = None) -> None:
         global detection_id
 
         # assign unique id
@@ -126,7 +126,7 @@ class DetectionGroup:
         detector: PositionedLogicEntity,
     ) -> None:
         """
-        add target to detection scope
+        Add target to detection scope.
         """
         if isinstance(target, tp.Iterable):
             for t in target:
@@ -143,14 +143,14 @@ class DetectionGroup:
 
     def add_sensor(self, sensor: BaseSensor) -> None:
         """
-        adds a sensor to detection scope
+        Adds a sensor to detection scope.
         """
         self._sensors.append(sensor)
         sensor.group_add(self)
 
     def remove_sensor(self, sensor: BaseSensor) -> None:
         """
-        remove a sensor
+        Remove a sensor.
         """
         if sensor in self._sensors:
             self._sensors.remove(sensor)
@@ -159,10 +159,10 @@ class DetectionGroup:
         #     ic(CC.fg.RED + "sensor not in list!")
 
     def update_detection(
-        self, from_entities: tp.Iterable[PositionedLogicEntity] = None
+        self, from_entities: tp.Iterable[PositionedLogicEntity] | None = None
     ) -> None:
         """
-        ask all sensors to get their targeting information
+        Ask all sensors to get their targeting information.
         """
         for sensor in self._sensors:
             self.add_target(sensor.get_targets(from_entities), sensor.parent)

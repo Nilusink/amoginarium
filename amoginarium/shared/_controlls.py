@@ -7,11 +7,16 @@ Created: 31.03.2026
 Authors: Nilusink
 """
 
-from ctypes import Array
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from icecream import ic
 
-from ._shared_memory import base_controller_t
+if TYPE_CHECKING:
+    from ctypes import Array
+
+    from ._shared_memory import base_controller_t
 
 
 class Controls:
@@ -23,7 +28,7 @@ class Controls:
         self, id: int, c_shm: Array[base_controller_t], initialize: bool = False
     ) -> None:
         """
-        setup controller
+        Setup controller.
 
         :param id: controller id (for shm)
         :param c_shm: controller shared memory buffer

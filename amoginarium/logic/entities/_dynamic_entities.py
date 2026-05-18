@@ -9,15 +9,17 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-import typing as tp
+from typing import TYPE_CHECKING
 
-from amoginarium.shared import DynamicEntityParentViable
 from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
 
 from ._weaponry import templates
 
+if TYPE_CHECKING:
+    from amoginarium.shared import DynamicEntityParentViable
+
 # gets all base-entities (BaseTurret, BaseWeapon, ...) from templates module
-_base_entities: dict[str, tp.Type[DynamicEntityParentViable]] = {
+_base_entities: dict[str, type[DynamicEntityParentViable]] = {
     e.cid(): e
     for e in [
         attr

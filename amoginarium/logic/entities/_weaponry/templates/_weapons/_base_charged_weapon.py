@@ -7,21 +7,25 @@ Created: 14.03.2026
 Authors: Nilusink
 """
 
-import typing as tp
-from ctypes import Array
-from types import EllipsisType
+from __future__ import annotations
 
-from amoginarium.shared import base_entity_t
-from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect, SmallExplosion
-from amoginarium.shared.utility import Vec2
+from typing import TYPE_CHECKING
 
 from .._bullets import Bullet
 from ._base_weapon import BaseWeapon
 
+if TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.audio import ContinuousSoundEffect, PresetEffect
+    from amoginarium.shared.utility import Vec2
+
 
 class BaseChargedWeapon(BaseWeapon):
     """
-    weapon with ability to charge
+    weapon with ability to charge.
 
     ``param2`` charge state
     """
@@ -43,7 +47,7 @@ class BaseChargedWeapon(BaseWeapon):
         bullet_explosion_damage: tuple[float, float] = (0, 0),
         drop_casings: bool = False,
         sound_effect: ContinuousSoundEffect | PresetEffect | EllipsisType = ...,
-        bullet_type: tp.Type[Bullet] = Bullet,
+        bullet_type: type[Bullet] = Bullet,
         **bullet_kwargs,
     ) -> None:
         super().__init__(
@@ -104,7 +108,7 @@ class BaseChargedWeapon(BaseWeapon):
     @property
     def charged(self) -> float:
         """
-        amount charged
+        Amount charged.
         """
         return self._charged
 
@@ -139,19 +143,19 @@ class BaseChargedWeapon(BaseWeapon):
         ) * self._recoil_curve(self._charged)
 
     def _update_kwargs(self) -> None:
-        """update weapon params"""
+        """Update weapon params."""
         self._bullet_kwargs["explosion_radius"] = self.bullet_explosion_radius
         self._bullet_kwargs["explosion_damage"] = self.bullet_explosion_damage
 
     def charge(self) -> None:
         """
-        start charging
+        Start charging.
         """
         self._charging = True
 
     def stop(self) -> None:
         """
-        stop charging (reset to 0)
+        Stop charging (reset to 0).
         """
         self._charging = False
         self._charged = 0

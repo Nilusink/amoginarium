@@ -25,7 +25,7 @@ class EntityChildViable(tp.Protocol):
     def update(self, delta: float) -> None:
         """
         Update function
-        :param delta: Tme since the last update
+        :param delta: Tme since the last update.
         """
         ...
 
@@ -40,7 +40,7 @@ class BaseLogicEntityLike(tp.Protocol):
     - Parent/Children relations
     - groups
     - update
-    - visibility
+    - visibility.
     """
 
     @property
@@ -70,45 +70,45 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def _set_bit(self, param: str, bit_index: int, value: bool) -> None:
         """
-        set (or reset) on a specified bit
+        Set (or reset) on a specified bit
         :param param: what parameter to set the bit at
         :param bit_index: bit to set
-        :param value: what to set the bit to
+        :param value: what to set the bit to.
         """
         ...
 
     def add(self, *groups: tp.Any) -> None:
         """
-        add entity to one or more logic groups
-        :param groups: to add entity to
+        Add entity to one or more logic groups
+        :param groups: to add entity to.
         """
         ...
 
     def remove(self, *groups: tp.Any) -> None:
         """
-        remove entity from one or more logic groups
-        :param groups: to remove entity from
+        Remove entity from one or more logic groups
+        :param groups: to remove entity from.
         """
         ...
 
     def _kill(self, killed_by: tp.Any | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
-        :param killed_by: who killed this entity
+        :param killed_by: who killed this entity.
         """
         ...
 
     def kill(self, killed_by: tp.Any | EllipsisType = ...) -> None:
         """
         Kill entity and all its children
-        :param killed_by: who killed this entity
+        :param killed_by: who killed this entity.
         """
         ...
 
     def _update(self, delta: float) -> None:
         """
         Update function for the entity
-        :param delta: time since the last update
+        :param delta: time since the last update.
         """
         ...
 
@@ -116,24 +116,24 @@ class BaseLogicEntityLike(tp.Protocol):
         """
         Update entity and their children
         :param delta: time since the last update
-        :param recursive: Whether to update children recursively
+        :param recursive: Whether to update children recursively.
         """
         ...
 
     def show(self) -> None:
-        """Set visibility to 1"""
+        """Set visibility to 1."""
         ...
 
     def hide(self) -> None:
-        """Set visibility to 0"""
+        """Set visibility to 0."""
         ...
 
     def highlight(self) -> None:
-        """highlight the graphics entity"""
+        """Highlight the graphics entity."""
         ...
 
     def stop_highlight(self) -> None:
-        """stop highlighting the graphics entity"""
+        """Stop highlighting the graphics entity."""
         ...
 
 
@@ -197,7 +197,7 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         ...
 
     def _get_root_collision_exceptions(self) -> list[int]:
-        """Calculates root collision exceptions rules"""
+        """Calculates root collision exceptions rules."""
         ...
 
     def _collision_start(
@@ -225,7 +225,7 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
     ) -> None:
         """
         Called on collision end
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
         ...
 
@@ -234,7 +234,7 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
     ) -> None:
         """
         Callback on COLLISION_END, called by the collision manager
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
         ...
 
@@ -257,7 +257,7 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         :param positions: Optional list of vertices for polygonal hitboxes.
         :param centered: Whether the hitbox is centered on the position.
         :param radius: Optional radius for circular hitboxes.
-        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
         """
         ...
 
@@ -303,7 +303,7 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
     - Position, Size
     - Velocity, Acceleration
     - Optional Collision Detection
-    - Coalitions
+    - Coalitions.
     """
 
     facing: Vec2
@@ -336,14 +336,14 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
-        :param value: 2D velocity to add
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
+        :param value: 2D velocity to add.
         """
         ...
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
-        :param value: 2D acceleration to add
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        :param value: 2D acceleration to add.
         """
         ...

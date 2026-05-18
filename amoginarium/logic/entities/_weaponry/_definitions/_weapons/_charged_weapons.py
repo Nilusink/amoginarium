@@ -7,13 +7,20 @@ Created: 14.03.2026
 Authors: Nilusink
 """
 
-from ctypes import Array
+from __future__ import annotations
 
-from amoginarium.shared import base_entity_t, WeaponCIDs
+from typing import TYPE_CHECKING
+
+from amoginarium.shared import WeaponCIDs
 from amoginarium.shared.audio import SmallExplosion
 from amoginarium.shared.utility import Vec2
 
 from ...templates import BaseChargedWeapon
+
+if TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
 
 
 class RailGun(BaseChargedWeapon):

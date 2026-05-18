@@ -35,7 +35,7 @@ class _Settings:
 
     def read(self) -> None:
         try:
-            with open(self.__file, "r") as file:
+            with open(self.__file, "r", encoding="utf-8") as file:
                 self.__data = load(file)
         except FileNotFoundError:
             self.__data = {
@@ -58,7 +58,7 @@ class _Settings:
         for key in self.__data:
             self.__data[key] = getattr(self, key)
 
-        with open(self.__file, "w") as file:
+        with open(self.__file, "w", encoding="utf-8") as file:
             dump(self.__data, file, indent=4)
 
 

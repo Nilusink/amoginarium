@@ -7,6 +7,8 @@ Created: 25.01.2024
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import json
 import subprocess
 import typing as tp
@@ -21,7 +23,7 @@ import pygame as pg  # Will be removed after controller/keybind refactoring
 from icecream import colorizedStderrPrint, ic
 
 from amoginarium import pv
-from amoginarium.graphics.controllers import Controller, Controllers, KeyboardController
+from amoginarium.graphics.controllers import Controllers, KeyboardController
 from amoginarium.graphics.entities import Drawn_0, Drawn_1, Drawn_2
 from amoginarium.graphics.entities import SyncedEntities, UIEntities
 from amoginarium.graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
@@ -39,9 +41,12 @@ from ._scrolling_background import ParallaxBackground
 from ._settings_menu import SettingsMenu
 from ._startmenu import StartMenu
 
+if tp.TYPE_CHECKING:
+    from amoginarium.graphics.controllers import Controller
+
 
 class BoundFunction[**A, R]:
-    """a function with pre-determined arguments"""
+    """a function with pre-determined arguments."""
 
     func: tp.Callable[A, R]
     args: A.args
@@ -60,26 +65,26 @@ class BoundFunction[**A, R]:
 
 def current_time() -> str:
     """
-    helper function for IC debugging
+    Helper function for IC debugging.
     """
     ms = str(round(perf_counter(), 4)).split(".")[1]
     return f"{strftime('%H:%M:%S')}.{ms: <4} |> "
 
 
 class BaseGame:
-    """base game class"""
+    """base game class."""
 
     running: bool = False
     _last_logic: float
     _bg_color: tuple[float, float, float]
     _instance: tp.Self = ...
 
-    def __new__(cls, *args, **kwargs) -> "BaseGame":
+    def __new__(cls, *args, **kwargs) -> tp.Self:
         # only one instance can exist
         if cls._instance is not ...:
             return cls._instance
 
-        new = super(BaseGame, cls).__new__(cls)
+        new = super().__new__(cls)
         cls._instance = new
         return new
 
@@ -245,7 +250,7 @@ class BaseGame:
     @run_with_debug(reraise_errors=True, show_finish=True)
     def preload(self) -> None:
         """
-        load all textures n stuff
+        Load all textures n stuff.
         """
         start = perf_counter_ns()
         self._update_loading_screen(10, "loading textures")
@@ -311,18 +316,18 @@ class BaseGame:
 
     @property
     def id(self) -> int:
-        """why is this even here"""
+        """Why is this even here."""
         return -1
 
     @property
     def root(self) -> tp.Self:
-        """same question"""
+        """Same question."""
         return self
 
     @run_with_debug()
     def load_map(self, map_path: tp.LiteralString) -> None:
         """
-        load a map from a JSON file
+        Load a map from a JSON file.
         """
         # issue load command
         pv.COQ.put(
@@ -332,7 +337,7 @@ class BaseGame:
         )
 
         # stuff
-        data = json.load(open(map_path, "r"))
+        data = json.load(open(map_path, "r", encoding="utf-8"))
         renderer.display_set_title(f"amoginarium - {data['name']}")
 
         # set background
@@ -351,8 +356,8 @@ class BaseGame:
 
     def time_since_start(self) -> str:
         """
-        stylized time since game start
-        gamestart being time since `mainloop` was called
+        Stylized time since game start
+        gamestart being time since `mainloop` was called.
         """
         if hasattr(self, "_game_start"):
             t_ms = round(perf_counter() - self._game_start, 4)
@@ -369,7 +374,7 @@ class BaseGame:
 
     def _add_controller(self, controller: Controller) -> None:
         """
-        appends a new controller to the queue
+        Appends a new controller to the queue.
         """
         self._new_controllers.append(controller)
 
@@ -379,7 +384,7 @@ class BaseGame:
 
     def _run_pygame(self) -> None:
         """
-        start pygame
+        Start pygame.
         """
         last = perf_counter()
         last_fps_print = 0
@@ -390,7 +395,7 @@ class BaseGame:
 
         @dataclass(frozen=True)
         class UIVisiblity:
-            """this is a docstring"""
+            """this is a docstring."""
 
             start_menu: bool
             pause_menu: bool
@@ -406,15 +411,15 @@ class BaseGame:
 
         # self.load_map("assets/maps/test.json")
 
-        def load_ui_visibility():
-            """whatever this does (I didn't code it)"""
+        def load_ui_visibility() -> None:
+            """Whatever this does (I didn't code it)."""
             visibility = ui_visibility[active_scene]
             start_menu.set_visibility(visibility.start_menu)
             pause_menu.set_visibility(visibility.pause_menu)
             settings.set_visibility(visibility.settings)
 
-        def start_game():
-            """start game callback"""
+        def start_game() -> None:
+            """Start game callback."""
             nonlocal active_scene
             active_scene = "Game"
 
@@ -422,8 +427,8 @@ class BaseGame:
             # unpause game
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
-        def reset_game(primary_call: bool = True):
-            """reset game callback"""
+        def reset_game(primary_call: bool = True) -> None:
+            """Reset game callback."""
             nonlocal active_scene
             active_scene = "Game"
 
@@ -453,24 +458,24 @@ class BaseGame:
             # unpause logic
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.unpause))
 
-        def back_to_menu():
-            """menu callback"""
+        def back_to_menu() -> None:
+            """Menu callback."""
             nonlocal active_scene
             reset_game(False)
             active_scene = "StartMenu"
 
             load_ui_visibility()
 
-        def pause_game():
-            """pause callback"""
+        def pause_game() -> None:
+            """Pause callback."""
             nonlocal active_scene
             active_scene = "PauseMenu"
 
             load_ui_visibility()
             pv.COQ.put(ProcessCommand(type=ProcessCommandType.pause))
 
-        def open_settings():
-            """settings callback"""
+        def open_settings() -> None:
+            """Settings callback."""
             nonlocal active_scene
             if active_scene == "PauseMenu":
                 active_scene = "PauseSettings"
@@ -479,8 +484,8 @@ class BaseGame:
 
             load_ui_visibility()
 
-        def close_settings():
-            """anti-settings callback"""
+        def close_settings() -> None:
+            """anti-settings callback."""
             nonlocal active_scene
 
             if active_scene == "PauseSettings":
@@ -490,8 +495,8 @@ class BaseGame:
 
             load_ui_visibility()
 
-        def handle_zoom(e):
-            """zoom callback"""
+        def handle_zoom(e) -> None:
+            """Zoom callback."""
             self.global_vars.set_pixel_per_meter(
                 self.global_vars.get_pixel_per_meter() * (1 + e.y / 30)
             )
@@ -612,9 +617,10 @@ class BaseGame:
                             pause_game()
                         elif active_scene == "PauseMenu":
                             start_game()
-                        elif active_scene == "PauseSettings":
-                            close_settings()
-                        elif active_scene == "StartSettings":
+                        elif (
+                            active_scene == "PauseSettings"
+                            or active_scene == "StartSettings"
+                        ):
                             close_settings()
                 elif event.type == pg.MOUSEBUTTONUP:
                     if event.button == pg.BUTTON_LEFT:
@@ -699,7 +705,7 @@ class BaseGame:
 
     def draw_entities_only(self) -> None:
         """
-        only draw entities, no game updates or menus
+        Only draw entities, no game updates or menus.
         """
         renderer.clear_display()
 
@@ -719,7 +725,7 @@ class BaseGame:
 
     def mainloop(self) -> None:
         """
-        run the game
+        Run the game.
         """
         self.running = True
 
@@ -730,7 +736,7 @@ class BaseGame:
     @run_with_debug()
     def end(self) -> None:
         """
-        stop everything
+        Stop everything.
         """
         # send end to process
         pv.COQ.put(ProcessCommand(type=ProcessCommandType.quit))
@@ -756,14 +762,16 @@ class BaseGame:
 
         makedirs("debug", exist_ok=True)
         with open(
-            f"debug/graphic_debug_{self._git_branch}_{int(self._game_start)}.json", "w"
+            f"debug/graphic_debug_{self._git_branch}_{int(self._game_start)}.json",
+            "w",
+            encoding="utf-8",
         ) as out:
             json.dump(
                 {"pygame": self._pygame_loop_times, "total": self._total_loop_times},
                 out,
             )
 
-        with open("graphic_debug.json", "w") as out:
+        with open("graphic_debug.json", "w", encoding="utf-8") as out:
             json.dump(
                 {"pygame": self._pygame_loop_times, "total": self._total_loop_times},
                 out,

@@ -7,11 +7,12 @@ Created: 29.03.2026
 Authors: Nilusink
 """
 
-from ctypes import addressof, Array, memset, sizeof
-from multiprocessing import Lock, Pipe, Queue
-from multiprocessing.connection import Connection
-from multiprocessing.shared_memory import SharedMemory
+from __future__ import annotations
+
+from ctypes import addressof, memset, sizeof
+from multiprocessing import Pipe, Queue
 from queue import Empty
+from typing import TYPE_CHECKING
 
 from icecream import ic
 
@@ -20,6 +21,12 @@ from .shared import get_controller_memory, get_entity_memory
 from .shared import get_inventory_memory, get_write_lock, GlobalVars, inventory_t
 from .shared import MAX_CONTROLLERS, MAX_ENTITIES, MAX_INVENTORIES
 from .shared.utility import Vec2
+
+if TYPE_CHECKING:
+    from ctypes import Array
+    from multiprocessing import Lock
+    from multiprocessing.connection import Connection
+    from multiprocessing.shared_memory import SharedMemory
 
 
 class _ProcessValues:
@@ -41,7 +48,8 @@ class _ProcessValues:
 
     def create_shared_process_values(self) -> None:
         if self.global_vars is not ...:
-            raise RuntimeError("create_shared_process_values called twice!")
+            msg = "create_shared_process_values called twice!"
+            raise RuntimeError(msg)
 
         self.global_vars = GlobalVars(generate_global_vars())
         self.SHM = get_entity_memory()
@@ -74,7 +82,8 @@ class _ProcessValues:
         process_comm: Connection,
     ) -> None:
         if self.global_vars is not ...:
-            raise RuntimeError("set_shared_process_values called twice!")
+            msg = "set_shared_process_values called twice!"
+            raise RuntimeError(msg)
 
         ic(shared_memory)
 
@@ -92,7 +101,7 @@ class _ProcessValues:
         self.PROCESS_COMM = process_comm
 
     def reset(self) -> None:
-        """reset everything"""
+        """Reset everything."""
         # initialize shared memories to all 0s
         memset(addressof(self.E_BUFF), 0, sizeof(self.E_BUFF))
         memset(addressof(self.C_BUFF), 0, sizeof(self.C_BUFF))

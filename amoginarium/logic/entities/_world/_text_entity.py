@@ -25,7 +25,7 @@ if tp.TYPE_CHECKING:
 
 class TextEntity(LogicGameEntity):
     """
-    Static text logic game entity
+    Static text logic game entity.
     """
 
     __slots__ = ()
@@ -55,7 +55,7 @@ class TextEntity(LogicGameEntity):
         :param family: Font family
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
-        :param kwargs: Other arguments passed such as coalition
+        :param kwargs: Other arguments passed such as coalition.
         """
         super().__init__(runtime_buffer, Vec2(), position, coalition=Coalitions.neutral)
 

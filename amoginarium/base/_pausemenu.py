@@ -7,9 +7,14 @@ Created: 01.03.2026
 Authors: LukasKrah
 """
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium.graphics.ui import UIButton, UIEntity, UIRectangle
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class PauseMenu(UIEntity):

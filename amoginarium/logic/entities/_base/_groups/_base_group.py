@@ -11,6 +11,7 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
+import operator
 import typing as tp
 
 from amoginarium.shared import PositionedLogicEntityLike
@@ -23,7 +24,7 @@ if tp.TYPE_CHECKING:
 
 
 class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
-    """Basic group for logic entities"""
+    """Basic group for logic entities."""
 
     __slots__ = ()
 
@@ -40,7 +41,7 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
         :param center: Center of the circle
         :param radius: Radius of the circle (Max distance)
         :param min_radius: Minimum distance
-        :return: list of tuples (distance, entity) of entities in the circle
+        :return: list of tuples (distance, entity) of entities in the circle.
         """
         out = []
 
@@ -50,7 +51,7 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
             if min_radius <= delta.length <= radius:
                 out.append((delta.length, sprite))
 
-        return sorted(out, key=lambda r: r[0])
+        return sorted(out, key=operator.itemgetter(0))
 
     @staticmethod
     def entities_in_partial_circle(
@@ -69,7 +70,7 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
         :param angle_start: Starting angle of the partial circle
         :param angle_end: Ending angle of the partial circle
         :param min_radius: Minimum distance
-        :return: list of tuples (distance, entity) of entities in the circle
+        :return: list of tuples (distance, entity) of entities in the circle.
         """
         out = []
         angle_delta = normalize_angle(angle_end.angle - angle_start.angle)
@@ -89,15 +90,15 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
                 ):
                     out.append((delta.length, sprite))
 
-        return sorted(out, key=lambda r: r[0])
+        return sorted(out, key=operator.itemgetter(0))
 
     def get_entities_in_circle(
         self, center: Vec2, radius: float
     ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
-        get all entities of this group inside a circle, sorted by distance (closest first)
+        Get all entities of this group inside a circle, sorted by distance (closest first)
         :param center: center of the circle
         :param radius: radius of the circle
-        :return: list of tuples (distance, entity) of entities in the circle
+        :return: list of tuples (distance, entity) of entities in the circle.
         """
         return self.entities_in_circle(self.entities(), center, radius)

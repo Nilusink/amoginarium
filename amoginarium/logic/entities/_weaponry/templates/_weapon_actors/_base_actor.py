@@ -7,19 +7,22 @@ Created: 08.05.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
-from types import EllipsisType
 
 from amoginarium.shared.utility import convert_coord, get_default, Vec2
 
 from ...._base import DebugCircleEntity
 
 if tp.TYPE_CHECKING:
+    from types import EllipsisType
+
     from .._bullets import Bullet
 
 
 class BaseActor:
-    """detonates a bullet"""
+    """detonates a bullet."""
 
     # region ClassVars
     _DEBUG: tp.ClassVar[bool] = False
@@ -28,13 +31,13 @@ class BaseActor:
 
     def __init__(
         self,
-        parent: "Bullet",
+        parent: Bullet,
         *,
         offset: tuple[float, float] | Vec2 | EllipsisType = ...,
         function_delay: float = 0,
     ) -> None:
         """
-        base weapon actor
+        Base weapon actor.
 
         :param parent: parent bullet
         :param offset: offset relative to bullet
@@ -44,8 +47,8 @@ class BaseActor:
         self._arm_delay = function_delay
 
         # calculate offset
-        _offset: Vec2 | tuple[int, int] = get_default(offset, Vec2())
-        self._offset: Vec2 = convert_coord(_offset, Vec2)  # type: ignore
+        offset_: Vec2 | tuple[int, int] = get_default(offset, Vec2())
+        self._offset: Vec2 = convert_coord(offset_, Vec2)  # type: ignore
 
         self._position = Vec2()
         self._last_pos = Vec2()
@@ -65,17 +68,17 @@ class BaseActor:
         self._last_pos.xy = self._position.xy
 
     @property
-    def parent(self) -> "Bullet":
-        """bullets parent"""
+    def parent(self) -> Bullet:
+        """Bullets parent."""
         return self._parent
 
     def kill(self, killed_by) -> None:
-        """kills actor"""
+        """Kills actor."""
         if self._dbe is not None:
             self._dbe.kill(killed_by)
 
     def _update_position(self) -> None:
-        """update fuze position"""
+        """Update fuze position."""
         self._last_pos.xy = self._position.xy
 
         # add offset with rotation
@@ -88,11 +91,11 @@ class BaseActor:
             self._dbe.position = self._position.copy()
 
     def _update(self) -> None:
-        """updates the fuze"""
+        """Updates the fuze."""
 
     @tp.final
     def update(self) -> None:
-        """updates the fuze"""
+        """Updates the fuze."""
         self._update_position()
 
         if self._parent.lifetime >= self._arm_delay:

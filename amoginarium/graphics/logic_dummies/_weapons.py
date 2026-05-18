@@ -11,7 +11,7 @@ import math as m
 import typing as tp
 from types import EllipsisType
 
-from icecream import ic  # noqa: F401
+from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared import WeaponCIDs
@@ -29,7 +29,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
 
     ``flags[13]`` weapon loaded
     ``param0`` size fac
-    ``param1`` mag state
+    ``param1`` mag state.
     """
 
     __slots__ = ()
@@ -44,7 +44,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     _texture_id_r: tp.ClassVar[int | EllipsisType] = ...
 
     # visible bullet params
-    _bullet_type: tp.ClassVar[tp.Type[BulletDummy]] = BulletDummy
+    _bullet_type: tp.ClassVar[type[BulletDummy]] = BulletDummy
     _bullet_visible: tp.ClassVar[bool] = False
     _bullet_mount_point: tp.ClassVar[tuple[int, int] | EllipsisType] = ...
     # endregion
@@ -56,7 +56,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     @classmethod
     def load_textures(cls) -> None:
         """
-        load weapon textures
+        Load weapon textures.
 
         .. note:: only execute once!
         """
@@ -117,9 +117,9 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
         self.remove(Drawn_0)
         self.add(Drawn_1)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         """
-        Draw weapon (centered) at a specified position
+        Draw weapon (centered) at a specified position.
 
         :param delta_cal: used for the occasional calculation
         """
@@ -219,7 +219,8 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             size: tuple[float, float] = cls._default_size
 
         else:
-            raise WtfError("?")
+            msg = "?"
+            raise WtfError(msg)
 
         if isinstance(cls._texture_id_r, EllipsisType):
             return -1, (-1, -1)
@@ -241,12 +242,12 @@ class ExactoSniper(WeaponDummy):
     _default_size: tuple[int, int] = (120, 60)
     _image_rotate_anchor = Vec2().from_cartesian(25, 33)
 
-    def __init__(self, max_range: float, **kwargs):
+    def __init__(self, max_range: float, **kwargs) -> None:
         super().__init__(**kwargs)
         self.add(Drawn_2)
         self._max_range = max_range
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         if layer == 1:
             super()._gl_draw(delta_cal, layer)
             return

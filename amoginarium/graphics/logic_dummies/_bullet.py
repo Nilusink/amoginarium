@@ -7,17 +7,25 @@ Created: 31.03.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 from types import EllipsisType
+from typing import TYPE_CHECKING
 
 from amoginarium import pv
 from amoginarium.shared import DummyCIDs
 from amoginarium.shared.utility import Color, convert_color, convert_coord
-from amoginarium.shared.utility import coord_t, fade, get_default, Vec2
+from amoginarium.shared.utility import fade, get_default, Vec2
 
 from ..entities import explosion
 from ..render_bindings import renderer
 from ..textures import textures
-from ._synced_entities import BaseGraphicsEntity, SyncedImageEntity
+from ._synced_entities import SyncedImageEntity
+
+if TYPE_CHECKING:
+    from amoginarium.shared.utility import coord_t
+
+    from ._synced_entities import BaseGraphicsEntity
 
 BULLET_PATH = "bullet"
 
@@ -26,7 +34,7 @@ class BulletDummy(SyncedImageEntity):
     """
     ``param0`` explosion size
     ``param1`` velocity (length)
-    ``param2`` velocity (angle)
+    ``param2`` velocity (angle).
     """
 
     __slots__ = [
@@ -63,7 +71,7 @@ class BulletDummy(SyncedImageEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        """load all required textures ONCE per class"""
+        """Load all required textures ONCE per class."""
         if cls.__dict__.get("_bullet_image", ...) is ...:
             if isinstance(cls._default_size, (int, float)):
                 cls._default_size = Vec2().from_cartesian(
@@ -135,15 +143,14 @@ class BulletDummy(SyncedImageEntity):
                 self._c_trace_color: Color = convert_color(trace_color, Color)
                 self._original_alpha = self._c_trace_color.a1
 
-        else:
-            if isinstance(self._trace_color, (tuple, list)):
-                self._c_trace_color: tuple[Color, Color] = tuple(
-                    convert_color(c, Color) for c in self._trace_color
-                )
+        elif isinstance(self._trace_color, (tuple, list)):
+            self._c_trace_color: tuple[Color, Color] = tuple(
+                convert_color(c, Color) for c in self._trace_color
+            )
 
-            else:
-                self._c_trace_color: Color = self._trace_color.copy()
-                self._original_alpha = self._c_trace_color.a1
+        else:
+            self._c_trace_color: Color = self._trace_color.copy()
+            self._original_alpha = self._c_trace_color.a1
 
         if isinstance(self._trace_color, (list, tuple)) and len(self._trace_color) == 1:
             self._c_trace_color: Color = self._c_trace_color[0]
@@ -153,7 +160,7 @@ class BulletDummy(SyncedImageEntity):
 
     @classmethod
     def bullet_image(cls) -> int:
-        """bullet texture ID"""
+        """Bullet texture ID."""
         return cls._bullet_image
 
     def _kill(self) -> None:
@@ -171,13 +178,12 @@ class BulletDummy(SyncedImageEntity):
 
             return
 
-        if not self._trace_only:
-            if self.param0 > 0:
-                explosion.draw(
-                    delay=0.05,  # min(.01, .05 * (self.param0 / 96)),
-                    size=Vec2().from_cartesian(self.param0 * 2, self.param0 * 2),
-                    position=self.pos.copy(),
-                )
+        if not self._trace_only and self.param0 > 0:
+            explosion.draw(
+                delay=0.05,  # min(.01, .05 * (self.param0 / 96)),
+                size=Vec2().from_cartesian(self.param0 * 2, self.param0 * 2),
+                position=self.pos.copy(),
+            )
 
         super().kill()
 
@@ -202,7 +208,7 @@ class BulletDummy(SyncedImageEntity):
         *,
         rotation: float = 0,
     ) -> None:
-        """draw an entity at specified position and size"""
+        """Draw an entity at specified position and size."""
         if cls.bullet_image() is ...:
             cls.load_textures()
 
@@ -214,7 +220,9 @@ class BulletDummy(SyncedImageEntity):
             layer=layer,
         )
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0, draw_entity: bool = True):
+    def _gl_draw(
+        self, delta_cal: float, layer: int = 0, draw_entity: bool = True
+    ) -> None:
         if self._visibility_offset > self._lifetime:
             self._last_pos.length = 0
             self._lifetime += delta_cal

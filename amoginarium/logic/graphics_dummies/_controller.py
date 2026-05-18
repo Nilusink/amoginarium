@@ -8,11 +8,13 @@ Authors: Nilusink
 """
 
 import typing as tp
-from types import EllipsisType
 
 from amoginarium import pv
 from amoginarium.shared import Controls
 from amoginarium.shared.utility import Vec2
+
+if tp.TYPE_CHECKING:
+    from types import EllipsisType
 
 
 class Controller:
@@ -107,7 +109,7 @@ class Controller:
         curve: float = 0,  # TODO: curve
     ) -> float:
         """
-        apply a specific curve for joystick values (rangin from -1 to 1)
+        Apply a specific curve for joystick values (rangin from -1 to 1).
 
         :param value: value to process
         :param x_deadzone: percentage of how much input shuold be ignore
@@ -152,7 +154,7 @@ class Controller:
 
     def rumble(self, low_frequency, high_frequency, duration) -> None:
         """
-        start joystick vibration
+        Start joystick vibration.
 
         :param low_frequency:
         :param high_frequency:
@@ -163,33 +165,33 @@ class Controller:
 
     def stop_rumble(self) -> None:
         """
-        stop joystick vibration
+        Stop joystick vibration.
         """
         if self.on_stop_rumble is not ...:
             self.on_stop_rumble()
 
     def feedback_collide(self) -> None:
         """
-        when the player hits a wall
+        When the player hits a wall.
         """
 
     def feedback_shoot(self) -> None:
         """
-        controller input on shoot
+        Controller input on shoot.
         """
         if self.on_feedback_shoot is not ...:
             self.on_feedback_shoot()
 
     def feedback_hit(self) -> None:
         """
-        controller input on hit
+        Controller input on hit.
         """
         if self.on_feedback_hit is not ...:
             self.on_feedback_hit()
 
     def feedback_heal_start(self) -> None:
         """
-        controller input on heal start
+        Controller input on heal start.
         """
         if self._heal_running:
             return
@@ -201,7 +203,7 @@ class Controller:
 
     def feedback_heal_stop(self) -> None:
         """
-        controller input on heal stop
+        Controller input on heal stop.
         """
         if not self._heal_running:
             return

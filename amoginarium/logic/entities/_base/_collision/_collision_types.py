@@ -14,7 +14,7 @@ from enum import StrEnum
 
 class CollisionType:
     """
-    Defines type aliases for collision-related identifiers to improve code clarity
+    Defines type aliases for collision-related identifiers to improve code clarity.
     """
 
     __slots__ = ()

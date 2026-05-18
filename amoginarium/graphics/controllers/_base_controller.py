@@ -7,6 +7,8 @@ Created: 25.01.2024
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
 
 from icecream import ic
@@ -19,10 +21,10 @@ from amoginarium.shared.utility import Vec2
 
 class _Controllers:
     """
-    a collection of all controllers
+    a collection of all controllers.
     """
 
-    _controllers: list["Controller"]
+    _controllers: list[Controller]
     _callbacks: dict[int, tp.Callable]
 
     def __init__(self) -> None:
@@ -31,18 +33,19 @@ class _Controllers:
         self._used_ids: set[int] = set()
 
     @property
-    def controllers(self) -> list["Controller"]:
+    def controllers(self) -> list[Controller]:
         return self._controllers.copy()
 
     def exists(self, cid: str) -> bool:
         """
-        checks if a controller already exists
+        Checks if a controller already exists.
         """
         return cid in [c.id for c in self._controllers]
 
-    def get_by_id(self, cid: str) -> tp.Union["Controller", None]:
+    def get_by_id(self, cid: str) -> Controller | None:
         if not self.exists(cid):
-            raise ValueError(f'No controller with id "{cid}" exists!')
+            msg = f'No controller with id "{cid}" exists!'
+            raise ValueError(msg)
 
         for controller in self._controllers:
             if controller.id == cid:
@@ -56,12 +59,12 @@ class _Controllers:
                 self._used_ids.add(i)
                 return i
 
-        else:
-            raise RuntimeError("controller limit reached")
+        msg = "controller limit reached"
+        raise RuntimeError(msg)
 
-    def append(self, controller: "Controller") -> None:
+    def append(self, controller: Controller) -> None:
         """
-        add a new controller to the group
+        Add a new controller to the group.
         """
         self._controllers.append(controller)
         self._on_new_controller(controller)
@@ -77,20 +80,20 @@ class _Controllers:
         )
 
     def update(self) -> None:
-        """update all controllers"""
+        """Update all controllers."""
         for controller in self._controllers:
             controller.update(0)
 
-    def _on_new_controller(self, controller: "Controller") -> None:
+    def _on_new_controller(self, controller: Controller) -> None:
         """
-        actual callback method
+        Actual callback method.
         """
         for callback in self._callbacks.values():
             callback(controller)
 
-    def on_new_controller(self, callback: tp.Callable[["Controller"], tp.Any]) -> int:
+    def on_new_controller(self, callback: tp.Callable[[Controller], tp.Any]) -> int:
         """
-        add a callback for adding new controllers
+        Add a callback for adding new controllers.
         """
         if len(self._callbacks) == 0:
             new_id = 0
@@ -104,16 +107,17 @@ class _Controllers:
 
     def remove_callback(self, cid: int) -> None:
         """
-        remove a callback with it's callback-id
+        Remove a callback with it's callback-id.
         """
         if cid in self._callbacks:
             self._callbacks.pop(cid)
             return
 
-        raise ValueError(f"Invalid cid: {cid}")
+        msg = f"Invalid cid: {cid}"
+        raise ValueError(msg)
 
     def reset(self) -> None:
-        """reset all controllers"""
+        """Reset all controllers."""
         self._controllers.clear()
         self._used_ids.clear()
 
@@ -125,10 +129,10 @@ class Controller:
     _keys: Controls
 
     def __new__(cls, *args, **kwargs):
-        return super(Controller, cls).__new__(cls)
+        return super().__new__(cls)
 
     @classmethod
-    def get(cls, cid: str, *args, **kwargs) -> "Controller":
+    def get(cls, cid: str, *args, **kwargs) -> Controller:
         ic("base get")
         ic("called base cls.get with id ", cid)
         if Controllers.exists(cid):
@@ -163,7 +167,7 @@ class Controller:
     @property
     def id(self) -> str:
         """
-        unique id
+        Unique id.
         """
         return self._id
 
@@ -242,7 +246,7 @@ class Controller:
         curve: float = 0,  # TODO: curve
     ) -> float:
         """
-        apply a specific curve for joystick values (rangin from -1 to 1)
+        Apply a specific curve for joystick values (rangin from -1 to 1).
 
         :param value: value to process
         :param x_deadzone: percentage of how much input shuold be ignore
@@ -287,13 +291,14 @@ class Controller:
 
     def update(self, delta: float) -> None:
         """
-        update the control inputs
+        Update the control inputs.
         """
-        raise NotImplementedError("tried to call base-controller update")
+        msg = "tried to call base-controller update"
+        raise NotImplementedError(msg)
 
     def rumble(self, low_frequency, high_frequency, duration) -> None:
         """
-        start joystick vibration
+        Start joystick vibration.
 
         :param low_frequency:
         :param high_frequency:
@@ -304,33 +309,33 @@ class Controller:
 
     def stop_rumble(self) -> None:
         """
-        stop joystick vibration
+        Stop joystick vibration.
         """
         if self.on_stop_rumble is not ...:
             self.on_stop_rumble()
 
     def feedback_collide(self) -> None:
         """
-        when the player hits a wall
+        When the player hits a wall.
         """
 
     def feedback_shoot(self) -> None:
         """
-        controller input on shoot
+        Controller input on shoot.
         """
         if self.on_feedback_shoot is not ...:
             self.on_feedback_shoot()
 
     def feedback_hit(self) -> None:
         """
-        controller input on hit
+        Controller input on hit.
         """
         if self.on_feedback_hit is not ...:
             self.on_feedback_hit()
 
     def feedback_heal_start(self) -> None:
         """
-        controller input on heal start
+        Controller input on heal start.
         """
         if self._heal_running:
             return
@@ -342,7 +347,7 @@ class Controller:
 
     def feedback_heal_stop(self) -> None:
         """
-        controller input on heal stop
+        Controller input on heal stop.
         """
         if not self._heal_running:
             return

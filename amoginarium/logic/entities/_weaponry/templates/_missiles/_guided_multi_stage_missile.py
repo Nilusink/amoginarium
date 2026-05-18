@@ -8,25 +8,33 @@ Created: 10.05.2026
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import math as m
 import typing as tp
-from ctypes import Array
-from types import EllipsisType
 
 import numpy as np
 
-from amoginarium.shared import base_entity_t, Coalitions, MissileCIDs
+from amoginarium.shared import MissileCIDs
 from amoginarium.shared.utility import calculate_launch_angle_all_directions
 from amoginarium.shared.utility import clamp_angle, PI_4, PIDController, Vec2
 
-from ...._base import GravityAffected, LogicGameEntity
-from .._weapon_actors.sensors import BaseWeaponsSensor
+from ...._base import GravityAffected
 from ._multi_stage_missile import MultiStageMissile
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions
+
+    from ...._base import LogicGameEntity
+    from .._weapon_actors.sensors import BaseWeaponsSensor
 
 
 class GuidedMultiStageMissile(MultiStageMissile):
     """
-    a multi-stage missile with guidance
+    a multi-stage missile with guidance.
     """
 
     _CID = MissileCIDs.guided_multi_stage
@@ -93,7 +101,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
 
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         """
-        update guidance system
+        Update guidance system
         :param dt: time delta since last update
         :param target_delta: delta to target position
         :return:

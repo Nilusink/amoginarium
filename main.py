@@ -15,7 +15,7 @@ from amoginarium.base import BaseGame
 sys.setrecursionlimit(10000)
 
 
-def main():
+def main() -> None:
     game = BaseGame(debug=True, show_targets=True, time_multiplier=1)
 
     # create initial controller

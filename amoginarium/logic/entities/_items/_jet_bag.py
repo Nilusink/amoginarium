@@ -7,19 +7,26 @@ Created: 18.04.2026
 Authors: Nilusink, LukasKrah
 """
 
-from ctypes import Array
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium import pv
-from amoginarium.shared import base_entity_t, ItemCIDs
+from amoginarium.shared import ItemCIDs
 from amoginarium.shared.audio import RocketSound
 from amoginarium.shared.utility import Vec2
 
 from .._base import GameCollisions
 from ._something import Something
 
+if TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+
 
 class JetBag(Something):
-    """makes you flyyyyyy"""
+    """makes you flyyyyyy."""
 
     _CID = ItemCIDs.jetbag
     _reload_per_second: float = 0.5

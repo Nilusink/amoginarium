@@ -15,7 +15,7 @@ from amoginarium.shared.utility import Vec2
 
 
 class Inline:
-    def __init__(self, data):
+    def __init__(self, data) -> None:
         self.data = data
 
 
@@ -32,7 +32,7 @@ def preprocess(obj):
     return obj
 
 
-def float_to_str(value: float | int) -> str:
+def float_to_str(value: float) -> str:
     if value.is_integer():
         return str(int(value))
 
@@ -44,10 +44,10 @@ class Encoder(json.JSONEncoder):
         if isinstance(obj, Inline):
             return f"@@{', '.join(map(float_to_str, obj.data))}@@"
 
-        elif isinstance(obj, Vec2):
+        if isinstance(obj, Vec2):
             return f"@@{', '.join(map(float_to_str, obj.xy))}@@"
 
-        elif isinstance(obj, GameEntity):
+        if isinstance(obj, GameEntity):
             return preprocess(obj.to_dict())
 
         return super().default(obj)

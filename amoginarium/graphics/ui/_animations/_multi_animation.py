@@ -7,11 +7,16 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from ._animation_types import anim_curve_input_t, anim_curve_t
-from ._animation_types import anim_input_t, AnimationPhase
-from ._complex_animation import Animation, create_animation
+from ._complex_animation import create_animation
+
+if tp.TYPE_CHECKING:
+    from ._animation_types import anim_curve_input_t, anim_curve_t
+    from ._animation_types import anim_input_t, AnimationPhase
+    from ._complex_animation import Animation
 
 
 class MultiAnimation[A]:
@@ -116,15 +121,16 @@ class MultiAnimation[A]:
             if sequences:
                 seq_length = max(len(seq) for seq in sequences)
                 if count is not None and count != seq_length:
-                    raise ValueError(
+                    msg = (
                         f"Provided count ({count}) does not match the longest "
                         f"provided sequence ({seq_length})."
                     )
+                    raise ValueError(msg)
                 self.__count = seq_length
             else:
                 self.__count = count if count is not None else 1
 
-            def _normalize(val, is_numeric: bool = True) -> tp.Tuple:
+            def _normalize(val, is_numeric: bool = True) -> tuple:
                 # Map None to Ellipsis (...) so default kwargs in create_animation trigger correctly
                 if val in (None, ...):
                     return (...,) * self.__count
@@ -168,17 +174,17 @@ class MultiAnimation[A]:
             ]
 
     def extend(self) -> None:
-        """Start extending from current to end values"""
+        """Start extending from current to end values."""
         for anim in self.__animations:
             anim.extend()
 
     def contract(self) -> None:
-        """Start contracting from current to start values"""
+        """Start contracting from current to start values."""
         for anim in self.__animations:
             anim.collapse()
 
     def stop(self) -> None:
-        """Stop the animations at the current values"""
+        """Stop the animations at the current values."""
         for anim in self.__animations:
             anim.stop()
 
@@ -186,7 +192,7 @@ class MultiAnimation[A]:
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: Value differences between current and last values
+        :return: Value differences between current and last values.
         """
         if self.__is_single:
             val = self.__animations[0].update(delta)
@@ -196,10 +202,10 @@ class MultiAnimation[A]:
 
     def is_changing(self) -> bool:
         """:return: Whether any animation is currently in extension or contraction phase"""
-        return any([anim.is_changing() for anim in self.__animations])
+        return any(anim.is_changing() for anim in self.__animations)
 
     def reset(self) -> None:
-        """Reset the animations to their start values"""
+        """Reset the animations to their start values."""
         for anim in self.__animations:
             anim.reset()
 

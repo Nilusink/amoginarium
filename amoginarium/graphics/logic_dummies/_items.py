@@ -21,7 +21,7 @@ from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
 class BaseItem(Iconifyable, SyncedLRImageEntity):
     """
-    base graphics item
+    base graphics item.
 
     ``param1``: usage
     """
@@ -35,7 +35,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        """load textures for class"""
+        """Load textures for class."""
         if cls._texture_id_r is not ...:
             return
 
@@ -84,7 +84,9 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
     def get_icon(self) -> tuple[int, tuple[int, int]]:
         return self._texture_id_r, self._image_size
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0, draw_item: bool = True):
+    def _gl_draw(
+        self, delta_cal: float, layer: int = 0, draw_item: bool = True
+    ) -> None:
         if draw_item:
             angle = self.facing.angle * (180 / m.pi)
             if self.facing.x < 0:
@@ -128,7 +130,7 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
 class Shield(BaseItem):
     """
-    protective shield
+    protective shield.
 
     ``param1``: usage
     """
@@ -142,7 +144,7 @@ class Shield(BaseItem):
 
 class HealingPotion(BaseItem):
     """
-    healing potion
+    healing potion.
 
     ``param0``: fluid tilt
     ``param1``: usage
@@ -208,7 +210,7 @@ class HealingPotion(BaseItem):
 
 
 class JetBag(BaseItem):
-    """makes you fly (not actually, but it makes it look like you do)"""
+    """makes you fly (not actually, but it makes it look like you do)."""
 
     __slots__ = ()
 

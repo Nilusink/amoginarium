@@ -7,20 +7,27 @@ Created: 18.04.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import math as m
 import typing as tp
-from ctypes import Array
 
-from amoginarium.shared import base_entity_t, ItemCIDs
-from amoginarium.shared.audio import ContinuousSoundEffect, PotionDrink
+from amoginarium.shared import ItemCIDs
+from amoginarium.shared.audio import PotionDrink
 from amoginarium.shared.utility import Vec2
 
 from ._something import Something
 
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.audio import ContinuousSoundEffect
+
 
 class HealingPotion(Something):
     """
-    healing potion
+    healing potion.
 
     ``param0``: f_tilt
     """

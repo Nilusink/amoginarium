@@ -7,7 +7,9 @@ Created: 11.04.2026
 Authors: Nilusink
 """
 
-from types import EllipsisType
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium.shared import WeaponCIDs
 from amoginarium.shared.utility import Color, Vec2
@@ -16,17 +18,20 @@ from ..render_bindings import renderer
 from ..textures import textures
 from ._weapons import WeaponDummy
 
+if TYPE_CHECKING:
+    from types import EllipsisType
+
 
 class ChargedWeaponDummy(WeaponDummy):
     """
-    weapon with charging bar
+    weapon with charging bar.
 
     ``param2``: charge state
     """
 
     _c_bar_colors: tuple[Color] = (Color().from_255(143, 0, 124),)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
 
         # draw charge bar
@@ -52,7 +57,7 @@ class ChargedWeaponDummy(WeaponDummy):
 
 
 class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
-    """weapon with changing textures"""
+    """weapon with changing textures."""
 
     _image_name = ...
     _image_scope: str = "railgun"
@@ -83,12 +88,12 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
 
     @property
     def _texture_id_r(self) -> int:
-        """texture id right"""
+        """Texture id right."""
         return self._images[round(self.param2 * (len(self._images) - 1))]
 
     @property
     def _texture_id_l(self) -> int:
-        """texture id left"""
+        """Texture id left."""
         return self._images_m[round(self.param2 * (len(self._images) - 1))]
 
 

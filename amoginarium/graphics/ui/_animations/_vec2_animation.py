@@ -7,17 +7,23 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from types import EllipsisType
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium.shared.utility import Vec2
 
-from ._animation_types import anim_input_t, anim_vec2_t
-from ._animation_types import anim_vec2_values_t, AnimatedVec2Values
+from ._animation_types import AnimatedVec2Values
 from ._multi_animation import MultiAnimation
+
+if TYPE_CHECKING:
+    from types import EllipsisType
+
+    from ._animation_types import anim_input_t, anim_vec2_t, anim_vec2_values_t
 
 
 class Vec2Animation(MultiAnimation):
-    """Double float animation for Vec2"""
+    """Double float animation for Vec2."""
 
     __vec2: Vec2
     __delta_vec2: Vec2
@@ -25,7 +31,7 @@ class Vec2Animation(MultiAnimation):
     def __init__(self, value: anim_vec2_values_t) -> None:
         """
         Create a Vec2 animation
-        :param value: Vec2 animation values
+        :param value: Vec2 animation values.
         """
         parsed_value = self.__convert_anim_vec2_values(value)
 
@@ -52,13 +58,13 @@ class Vec2Animation(MultiAnimation):
 
         # Pull current values from MultiAnimation to initialize the vector
         current = super().current_value
-        self.__vec2.xy = current if current else (0.0, 0.0)
+        self.__vec2.xy = current or (0.0, 0.0)
 
     def update(self, delta: float) -> Vec2:
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: Value difference between current and last value
+        :return: Value difference between current and last value.
         """
         self.__delta_vec2.xy = super().update(delta)
         self.__vec2.xy = super().current_value
@@ -143,4 +149,5 @@ class Vec2Animation(MultiAnimation):
                     collapse_curve=values[7] if length > 7 else ...,
                 )
 
-        raise ValueError(f"Unsupported conversion format: {values}")
+        msg = f"Unsupported conversion format: {values}"
+        raise ValueError(msg)

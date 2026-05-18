@@ -7,17 +7,22 @@ Created: 11.04.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared.utility import color_t, coord_t
-
 from ...render_bindings import renderer
-from .._base import UIEntity, UIEventElement
+from .._base import UIEventElement
 from .._types import Anchor, Positions
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import color_t, coord_t
+
+    from .._base import UIEntity
 
 
 class UIStaticText(UIEventElement):
-    """Static text UI widget - text values can't be changed after creation"""
+    """Static text UI widget - text values can't be changed after creation."""
 
     __text_id: renderer.StaticTextID
 
@@ -65,7 +70,7 @@ class UIStaticText(UIEventElement):
         :param use_collision_mask: Whether to use a collision mask or just a collision box
         :param on_enter_callbacks: List of callbacks to be called when a cursor enters the component
         :param on_leave_callbacks: List of callbacks to be called when a cursor leaves the component
-        :param on_buffer_callbacks: List of callbacks to be called when a cursor buffers the component
+        :param on_buffer_callbacks: List of callbacks to be called when a cursor buffers the component.
 
         """
         super().__init__(

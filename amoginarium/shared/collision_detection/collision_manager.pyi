@@ -15,7 +15,7 @@ from .collision_event import CollisionCallback, CollisionEvent
 
 class CollisionManager:
     def __init__(
-        self, base_cell_size: float = 100.0, level_dividers: list[int] = None
+        self, base_cell_size: float = 100.0, level_dividers: list[int] | None = None
     ) -> None: ...
     def add_group(
         self, max_level: int, is_static: bool = False, hitbox_type: str = "aabb"

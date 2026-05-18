@@ -7,9 +7,12 @@ Created: 17.04.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared.utility import Vec2
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import Vec2
 
 
 class CollisionEvent[T]:

@@ -7,6 +7,8 @@ Created: 17.03.22024
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import math as m
 import typing as tp
 
@@ -33,6 +35,7 @@ def calculate_launch_angle_iterative(
         sol: unit vector to aim turret
         a_time: time-of-flight until intercept
         a_pos: predicted intercept position
+
     """
     # initial guess: straight-line travel time ignoring gravity
     a_time = position_delta.length / launch_speed if launch_speed > 0 else 0.1
@@ -89,7 +92,7 @@ def rk4_update(
     velocity: Vec2,
     acceleration_func: tp.Callable[[Vec2, Vec2], Vec2],
     dt: float,
-) -> tuple["Vec2", "Vec2"]:
+) -> tuple[Vec2, Vec2]:
     """
     Perform a single RK4 integration step for position and velocity.
 
@@ -99,7 +102,6 @@ def rk4_update(
     :param dt: timestep in seconds
     :return: (new_position, new_velocity)
     """
-
     # k1
     k1_v = acceleration_func(position, velocity) * dt
     k1_x = velocity * dt

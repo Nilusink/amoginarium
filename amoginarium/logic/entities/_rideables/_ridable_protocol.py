@@ -7,13 +7,16 @@ Created: 05.05.2026
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared.utility import Vec2
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import Vec2
 
 
 class RideablePerks(tp.Protocol):
-    """perks of an entity that can be ridden"""
+    """perks of an entity that can be ridden."""
 
     __slots__ = []
 
@@ -22,21 +25,21 @@ class RideablePerks(tp.Protocol):
 
     @property
     def control_authority(self) -> bool:
-        """specifies weather the entity takes controls or not"""
+        """Specifies weather the entity takes controls or not."""
         return False
 
     @property
     def passenger_visible(self) -> bool:
-        """specifies weather the passenger is visible or not"""
+        """Specifies weather the passenger is visible or not."""
         return True
 
-    def get_passenger_position(self) -> None | Vec2:
+    def get_passenger_position(self) -> Vec2 | None:
         """:returns: position of passenger if modified"""
 
-    def get_camera_position(self) -> None | Vec2:
+    def get_camera_position(self) -> Vec2 | None:
         """:returns: position of camera if modified"""
 
-    def get_camera_zoom(self) -> None | float:
+    def get_camera_zoom(self) -> float | None:
         """:returns cam zoom if modified"""
 
 

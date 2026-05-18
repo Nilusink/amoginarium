@@ -12,17 +12,22 @@ from __future__ import annotations
 import typing as tp
 
 from amoginarium import pv
-from amoginarium.shared.utility import convert_coord, coord_t, TupleMath, Vec2
+from amoginarium.shared.utility import convert_coord, TupleMath, Vec2
 
 from ..._types import Anchor, Positions
 from .._ui_entity import UIEntity
-from ._ui_element_values import UIElementData, UIElementValueFloatOneAbsolute
-from ._ui_element_values import UIElementValueNamesEnum, UIElementValueTypesEnum
-from ._ui_element_values import UIElementValueVec2, UIElementValueVec2OneAbsolute
+from ._ui_element_values import UIElementData, UIElementValueNamesEnum
+from ._ui_element_values import UIElementValueTypesEnum
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import coord_t
+
+    from ._ui_element_values import UIElementValueFloatOneAbsolute
+    from ._ui_element_values import UIElementValueVec2, UIElementValueVec2OneAbsolute
 
 
 class UIElement(UIEntity):
-    """Basic UI component with position and size stuff"""
+    """Basic UI component with position and size stuff."""
 
     __NULL_VEC2: tp.ClassVar[Vec2] = Vec2()
     __ONE_VEC2: tp.ClassVar[Vec2] = Vec2().from_cartesian(1, 1)
@@ -55,7 +60,7 @@ class UIElement(UIEntity):
         :param absolute_values: Whether the position and size are absolute or relative
         :param positon_is_relative_to_parent: WWhether the position is relative to the parent or the screen
         :param size_is_relative_to_parent: Whether the size is relative to the parent or the screen
-        :param parent_reference_position: What reference position of the parent component to use
+        :param parent_reference_position: What reference position of the parent component to use.
         """
         super().__init__(parent=parent)
 
@@ -84,7 +89,7 @@ class UIElement(UIEntity):
 
     # region Methods: absolute/relative convert
     def _update_relative_values(self) -> None:
-        """Update reference position and size"""
+        """Update reference position and size."""
         if (
             self.__data.position_is_relative_to_parent
             and self._next_ui_element_parent is not None
@@ -111,9 +116,8 @@ class UIElement(UIEntity):
                         self._next_ui_element_parent._center
                     )
                 case _:
-                    raise ValueError(
-                        f"Invalid anchor: {self.__data.parent_reference_position}."
-                    )
+                    msg = f"Invalid anchor: {self.__data.parent_reference_position}."
+                    raise ValueError(msg)
         else:
             self.__data.reference_position.absolute_global = self.__NULL_VEC2
             self.__data.reference_position.absolute_to_parent = self.__NULL_VEC2
@@ -152,14 +156,13 @@ class UIElement(UIEntity):
         :param relative_value: Relative value to convert
         :param reference: Absolute reference value to convert relative coords to
         :param calc_for: Whether the transformation is for size or position
-        :return: Absolute value
+        :return: Absolute value.
         """
         return TupleMath.mul(
             convert_coord(relative_value),
             convert_coord(
                 reference
-                if reference
-                else (
+                or (
                     self.__data.reference_size.absolute
                     if (calc_for == "size" and self.__data.size_is_relative_to_parent)
                     else (
@@ -185,14 +188,13 @@ class UIElement(UIEntity):
         :param absolute_value: Absolute value to convert
         :param reference: Absolute reference value to convert relative coords to
         :param calc_for: Whether the transformation is for size or position
-        :return: Relative value
+        :return: Relative value.
         """
         return TupleMath.div(
             convert_coord(absolute_value),
             convert_coord(
                 reference
-                if reference
-                else (
+                or (
                     self.__data.reference_size.absolute
                     if (calc_for == "size" and self.__data.size_is_relative_to_parent)
                     else (
@@ -234,7 +236,8 @@ class UIElement(UIEntity):
                                 self.__data.width.relative_to_parent
                             )
                         case _:
-                            raise ValueError(f"Invalid value type: {value_type}.")
+                            msg = f"Invalid value type: {value_type}."
+                            raise ValueError(msg)
                 case UIElementValueNamesEnum.HEIGHT:
                     value_name = UIElementValueNamesEnum.SIZE
                     match value_type:
@@ -249,7 +252,8 @@ class UIElement(UIEntity):
                                 self.__data.height.relative_to_parent
                             )
                         case _:
-                            raise ValueError(f"Invalid value type: {value_type}.")
+                            msg = f"Invalid value type: {value_type}."
+                            raise ValueError(msg)
                 case (
                     UIElementValueNamesEnum.CENTER
                     | UIElementValueNamesEnum.TOP_LEFT
@@ -269,7 +273,8 @@ class UIElement(UIEntity):
                     elif value_type == UIElementValueTypesEnum.RELATIVE_TO_PARENT:
                         size_xy = self.__data.size.relative_to_parent.xy
                     else:
-                        raise ValueError(f"Invalid value type: {value_type}.")
+                        msg = f"Invalid value type: {value_type}."
+                        raise ValueError(msg)
 
                     half_size_xy = TupleMath.div(size_xy, (2, 2))
 
@@ -353,7 +358,8 @@ class UIElement(UIEntity):
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
                             ...  # Calculations bases from here, no action needed
                         case _:
-                            raise ValueError(f"Invalid value type: {value_type}.")
+                            msg = f"Invalid value type: {value_type}."
+                            raise ValueError(msg)
                 case UIElementValueNamesEnum.SIZE:
                     match value_type:
                         case UIElementValueTypesEnum.ABSOLUTE:
@@ -368,7 +374,8 @@ class UIElement(UIEntity):
                         case UIElementValueTypesEnum.RELATIVE_TO_PARENT:
                             ...  # Calculations bases from here, no action needed
                         case _:
-                            raise ValueError(f"Invalid value type: {value_type}.")
+                            msg = f"Invalid value type: {value_type}."
+                            raise ValueError(msg)
                 case UIElementValueNamesEnum.POSITION_IS_RELATIVE_TO_PARENT:
                     ...
                 case UIElementValueNamesEnum.SIZE_IS_RELATIVE_TO_PARENT:
@@ -381,9 +388,8 @@ class UIElement(UIEntity):
                 ):
                     ...  # No change to relative position to parent or relative size to parent
                 case _:
-                    raise ValueError(
-                        f"Invalid value name: {value_name}. IDK HOW THIS HAPPENS. CONTACT DEVELOPERS."
-                    )
+                    msg = f"Invalid value name: {value_name}. IDK HOW THIS HAPPENS. CONTACT DEVELOPERS."
+                    raise ValueError(msg)
 
         return is_neq
 
@@ -391,9 +397,8 @@ class UIElement(UIEntity):
     def __calc_values(self, pass_check: bool = False) -> None:
         self._update_relative_values()
 
-        if not pass_check:
-            if not self.__check_modifications():
-                return
+        if not pass_check and not self.__check_modifications():
+            return
 
         # position relative to parent and size relative to parent are always true already
 
@@ -446,7 +451,8 @@ class UIElement(UIEntity):
             case Anchor.CENTER:
                 ax, ay = 0.5, 0.5
             case _:
-                raise ValueError(f"Invalid anchor: {self.__data.placement_anchor}")
+                msg = f"Invalid anchor: {self.__data.placement_anchor}"
+                raise ValueError(msg)
 
         pos = self.__data.position
         sz_abs = self.__data.size.absolute.xy
@@ -486,9 +492,9 @@ class UIElement(UIEntity):
         self._ui_changed = True
         self.__last_data.copy_from(self.__data)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         """
-        The draw function called in loop
+        The draw function called in loop.
 
         It should always follow this structure:
         - Compare if anything changed, requiring redrawing of the collision surface/mask

@@ -7,12 +7,11 @@ Created: 02.03.2026
 Authors: LukasKrah
 """
 
-import typing as tp
 from enum import StrEnum
 
 
 class Anchor(StrEnum):
-    """UI Placement anchor types"""
+    """UI Placement anchor types."""
 
     NW = "nw"
     NE = "NE"
@@ -22,7 +21,7 @@ class Anchor(StrEnum):
 
 
 class Positions(StrEnum):
-    """UI Positions of each element"""
+    """UI Positions of each element."""
 
     TOP_LEFT = "top_left"
     TOP_RIGHT = "top_right"

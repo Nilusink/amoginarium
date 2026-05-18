@@ -187,7 +187,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
     # region Methods: Collision calculations
     def __calculate_active_normals(self) -> None:
-        """Pre-calculates active normals grouped by collision group ID for faster access"""
+        """Pre-calculates active normals grouped by collision group ID for faster access."""
         active_normals: dict[int, list[Vec2]] = {}
 
         for event in self._active_collisions.values():
@@ -199,14 +199,14 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
     @property
     def _collision_exception_root_ids(self) -> list[CollisionType.ExceptionID]:
-        """Returns root collision exceptions rules"""
+        """Returns root collision exceptions rules."""
         return self.__collision_exception_root_ids
 
     @_collision_exception_root_ids.setter
     def _collision_exception_root_ids(
         self, value: list[CollisionType.ExceptionID]
     ) -> None:
-        """Sets root collision exceptions rules"""
+        """Sets root collision exceptions rules."""
         self.__collision_exception_root_ids = value
         for child in self._children:
             child._calculate_root_collision_exceptions()
@@ -214,7 +214,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     def _calculate_root_collision_exceptions(
         self,
     ) -> list[CollisionType.ExceptionID] | None:
-        """Calculates root collision exceptions rules"""
+        """Calculates root collision exceptions rules."""
         collision_exception_root_ids: list[CollisionType.ExceptionID] = []
 
         if self.__collision_exception_root:
@@ -228,7 +228,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     def _change_parent(self, parent: CollisionLogicEntity | None) -> None:
         """
         Change parent and update root collision exceptions down the tree
-        :param parent: New parent
+        :param parent: New parent.
         """
         self._parent = parent
         self._calculate_root_collision_exceptions()
@@ -244,7 +244,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :param events: All details regarding the collisions
         :return: List of bools stating whether each collision is accepted.
            If False the CollisionManager will not call COLLISION_END
-           and will call COLLISION_START again if there still is a collision in the next update
+           and will call COLLISION_START again if there still is a collision in the next update.
         """
 
     @tp.final
@@ -257,16 +257,15 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :param events: All details regarding the collisions
         :return: List of bools stating whether each collision is accepted.
            If False the CollisionManager will not call COLLISION_END
-           and will call COLLISION_START again if there still is a collision in the next update
+           and will call COLLISION_START again if there still is a collision in the next update.
         """
         # ic("COL START", self, events)
         collisions_result: list[bool] | None = self._collision_start(events)
 
         # Save accepted collisions in self._active_collisions
         for i in range(len(events)):
-            if collisions_result is not None:
-                if not collisions_result[i]:
-                    continue
+            if collisions_result is not None and not collisions_result[i]:
+                continue
             self._active_collisions[events[i].collision_id] = events[i]
 
         self.__calculate_active_normals()
@@ -282,24 +281,22 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     ) -> None:
         """
         Called on collision end
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
 
     @tp.final
     def collision_end(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> None:
         """
         Callback on COLLISION_END, called by the collision manager
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
         # ic("COL END", self, events)
         # Filter for collisions that are still active
         actual_events = [
-            event
-            for event in events
-            if event.collision_id in self._active_collisions.keys()
+            event for event in events if event.collision_id in self._active_collisions
         ]
         for event in actual_events:
-            if event.collision_id in self._active_collisions.keys():
+            if event.collision_id in self._active_collisions:
                 del self._active_collisions[event.collision_id]
 
         self.__calculate_active_normals()
@@ -328,7 +325,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :param positions: Optional list of vertices for polygonal hitboxes.
         :param centered: Whether the hitbox is centered on the position.
         :param radius: Optional radius for circular hitboxes.
-        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
         """
         if position == ...:
             position = self.position
@@ -456,10 +453,9 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
                         )
                     )
 
-        else:
-            if self.__debug_entity is not None:
-                self.__debug_entity.kill()
-                self.__debug_entity = None
+        elif self.__debug_entity is not None:
+            self.__debug_entity.kill()
+            self.__debug_entity = None
 
     @tp.final
     def _delete_collision(self) -> None:
@@ -481,7 +477,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     def _update(self, delta: float) -> None:
         """
         Update shared memory and collision entity
-        :param delta: time since the last update
+        :param delta: time since the last update.
         """
         self._update_collision()
         super()._update(delta)
@@ -489,7 +485,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
         """
         Remove from groups and collision manager
-        :param killed_by: who killed this entity
+        :param killed_by: who killed this entity.
         """
         self._delete_collision()
         super()._kill(killed_by)

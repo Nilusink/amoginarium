@@ -7,42 +7,27 @@ Created: 08.04.2026
 Authors: LukasKrah
 """
 
-import math as m
-import typing as tp
-from types import EllipsisType
+from __future__ import annotations
 
-import numpy as np
-import pygame as pg
+from typing import TYPE_CHECKING
+
 from icecream import ic
-from OpenGL.GL import GL_ALPHA_TEST, GL_ALWAYS, GL_BLEND, GL_CLAMP_TO_EDGE, GL_EQUAL
-from OpenGL.GL import GL_FALSE, GL_FLOAT, GL_GREATER, GL_KEEP, GL_LINEAR, GL_LINES
-from OpenGL.GL import GL_NEAREST, GL_ONE_MINUS_SRC_ALPHA, GL_POLYGON, GL_PROJECTION
-from OpenGL.GL import GL_QUADS, GL_REPEAT, GL_REPLACE, GL_RGBA, GL_SRC_ALPHA
-from OpenGL.GL import GL_STENCIL_BUFFER_BIT, GL_STENCIL_TEST, GL_TEXTURE_2D
-from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_WRAP_S
-from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP, GL_TRUE
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_VERTEX_ARRAY, glAlphaFunc, glBegin
-from OpenGL.GL import glBindTexture, glBlendFunc, glClear, glClearColor, glColor3f
-from OpenGL.GL import glColor4f, glColorMask, glDisable, glDisableClientState
-from OpenGL.GL import glDrawArrays, glEnable, glEnableClientState, glEnd, glGenTextures
-from OpenGL.GL import glLoadIdentity, glMatrixMode, glPopMatrix, glPushMatrix
-from OpenGL.GL import glRotated, glStencilFunc, glStencilMask, glStencilOp
-from OpenGL.GL import glTexCoord2f, glTexImage2D, glTexParameteri, glTranslate
-from OpenGL.GL import glTranslated, glTranslatef, glUniform1f, glUniform4f
-from OpenGL.GL import glUseProgram, glVertex2f, glVertexPointer
-from OpenGL.GLU import gluOrtho2D
-from PIL import Image
-from pygame.locals import DOUBLEBUF, OPENGL
+from OpenGL.GL import GL_FLOAT, GL_QUADS, GL_TRIANGLE_FAN, GL_VERTEX_ARRAY, glBegin
+from OpenGL.GL import glDisableClientState, glDrawArrays, glEnableClientState
+from OpenGL.GL import glEnd, glPopMatrix, glPushMatrix, glTranslate, glUniform1f
+from OpenGL.GL import glUniform4f, glUseProgram, glVertex2f, glVertexPointer
 
 from amoginarium.shared.debugging import cum_timer
-from amoginarium.shared.utility import Color, convert_color, convert_coord
-from amoginarium.shared.utility import coord_t, fade, normalize_angle, Vec2
+from amoginarium.shared.utility import convert_coord, Vec2
 
 from ... import pv
-from ._base_renderer import tColor
 from ._opengl import OpenGLRenderer
-from .opengl_fonts import GLFont
 from .opengl_shaders import Shaders
+
+if TYPE_CHECKING:
+    from amoginarium.shared.utility import Color, coord_t
+
+    from ._base_renderer import tColor
 
 # define types
 
@@ -53,7 +38,7 @@ class OpenGLShaderRenderer(OpenGLRenderer):
     def init(self, title: str) -> None:
         """
         Initialize the renderer and global_vars
-        :param title: Window title
+        :param title: Window title.
         """
         super().init(title)
 
@@ -86,7 +71,7 @@ class OpenGLShaderRenderer(OpenGLRenderer):
         :param gap_len: Number of segments left out by a gap
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
-        :param offscreen_check: Whether to check it the element is on the window before drawing
+        :param offscreen_check: Whether to check it the element is on the window before drawing.
         """
         center_vec2: Vec2 = convert_coord(center, Vec2)
 

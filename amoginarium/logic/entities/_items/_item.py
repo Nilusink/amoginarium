@@ -7,26 +7,31 @@ Created: 01.04.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import math as m
 import typing as tp
-from ctypes import Array
 from types import EllipsisType
 
 from amoginarium import pv
-from amoginarium.shared import base_entity_t, BaseCommandType, ProcessCommand
-from amoginarium.shared.collision_detection import CollisionEvent
+from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium.shared.utility import Vec2
 
-from .._base import CollisionLogicEntity, CollisionType, GameCollisions
-from .._base import GravityAffected, LogicGameEntity, Updated
+from .._base import GameCollisions, GravityAffected, LogicGameEntity, Updated
 
 if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.collision_detection import CollisionEvent
+
+    from .._base import CollisionType
     from .._player import Player
     from .._world import Island
 
 
 class Item(LogicGameEntity):
-    """base item class"""
+    """base item class."""
 
     __slots__ = ("_current_timeout",)
 
@@ -61,10 +66,7 @@ class Item(LogicGameEntity):
         self._current_timeout = 0
 
         # spawn graphics counterpart
-        if isinstance(spawn_args, EllipsisType):
-            kwargs = {}
-        else:
-            kwargs = spawn_args
+        kwargs = {} if isinstance(spawn_args, EllipsisType) else spawn_args
 
         kwargs.update({"id": self.id, "cid": self.cid()})
         pv.COQ.put(
@@ -79,7 +81,7 @@ class Item(LogicGameEntity):
         return self._current_timeout <= 0
 
     def set_parent(self, parent: LogicGameEntity) -> None:
-        """assign parent to item and remove own physics"""
+        """Assign parent to item and remove own physics."""
         self._change_parent(parent)
         self._set_bit("flags", 15, True)
         self.remove(GravityAffected, Updated)
@@ -88,7 +90,7 @@ class Item(LogicGameEntity):
         self._collision_active = False
 
     def _collision_start(
-        self, events: list[CollisionEvent[tp.Union["Player", "Island"]]]
+        self, events: list[CollisionEvent[Player | Island]]
     ) -> list[bool] | None:
         group_id: CollisionType.GroupID = events[0].group_id
         if group_id == GameCollisions.collision_group_islands:
@@ -96,7 +98,7 @@ class Item(LogicGameEntity):
         return None
 
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
-        """remove parent from item and run own physics"""
+        """Remove parent from item and run own physics."""
         self._change_parent(None)
         self._set_bit("flags", 15, False)
         self.acceleration *= 0

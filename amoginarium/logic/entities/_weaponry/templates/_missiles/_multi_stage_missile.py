@@ -7,23 +7,30 @@ Created: 05.05.2026
 Authors: Nilusink
 """
 
-import typing as tp
-from ctypes import Array
-from types import EllipsisType
+from __future__ import annotations
 
-from amoginarium.shared import base_entity_t, Coalitions, MissileCIDs
-from amoginarium.shared.utility import Vec2
+from typing import TYPE_CHECKING
 
-from ...._base import LogicGameEntity
+from amoginarium.shared import MissileCIDs
+
 from ._base_missile import BaseMissile
 
+if TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared.utility import Vec2
+
+    from ...._base import LogicGameEntity
+
 # params are: time for stage, thrust, fuel flow in weight / s
-type crude_motor_stage_t = tuple[float, float, tp.Optional[float]]
+type crude_motor_stage_t = tuple[float, float, float | None]
 
 
 class MultiStageMissile(BaseMissile):
     """
-    thrust defined by stages
+    thrust defined by stages.
 
     ``flags[14]``: thrust active
     """
@@ -116,7 +123,7 @@ class MultiStageMissile(BaseMissile):
     # endregion
 
     def __update_stage(self, dt: float) -> None:
-        """update thrust and fuel weight based on time delta"""
+        """Update thrust and fuel weight based on time delta."""
         if dt <= 0:
             return
 

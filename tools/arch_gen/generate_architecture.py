@@ -14,20 +14,20 @@ import subprocess
 from pathlib import Path
 
 
-def run_cmd(cmd):
+def run_cmd(cmd) -> None:
     # Suppress console spam from pyreverse during recursive runs
     subprocess.run(
         cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
 
 
-def process_packages():
+def process_packages() -> None:
     """Processes pyreverse output to create a structural mermaid graph."""
     input_file, output_file = "packages.mmd", "structure.mmd"
     if not os.path.exists(input_file):
         return
 
-    with open(input_file, "r") as f:
+    with open(input_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     edges, classes = [], set()
@@ -80,17 +80,17 @@ def process_packages():
     mmd += [f"    {root_name} --- {i}\n" for i in valid_top_items if i in init_imports]
     mmd += ["\n"] + [f"    {s} --> {d}\n" for s, d in sorted(cross_links)]
 
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.writelines(mmd)
 
 
-def process_classes():
+def process_classes() -> None:
     """Processes pyreverse output to create a class relationship mermaid graph."""
     input_file = "classes.mmd"
     if not os.path.exists(input_file):
         return
 
-    with open(input_file, "r") as f:
+    with open(input_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
     classes, edges = set(), []
     cp, ep = re.compile(r"class\s+(\w+)\s*\{?"), re.compile(r"(\w+)\s+(.*?)\s+(\w+)")
@@ -146,15 +146,15 @@ def process_classes():
         g_idx += 1
     mmd += ["\n"] + [f"    {u} --> {v}\n" for u, v in edges]
 
-    with open(input_file, "w") as f:
+    with open(input_file, "w", encoding="utf-8") as f:
         f.writelines(mmd)
 
 
-def update_readme_file():
+def update_readme_file() -> None:
     """Updates the README in the current folder, injecting content between specific tags."""
     sf, cf, rf = "structure.mmd", "classes.mmd", "README.md"
-    sc = open(sf).read().strip() if os.path.exists(sf) else ""
-    cc = open(cf).read().strip() if os.path.exists(cf) else ""
+    sc = open(sf, encoding="utf-8").read().strip() if os.path.exists(sf) else ""
+    cc = open(cf, encoding="utf-8").read().strip() if os.path.exists(cf) else ""
 
     cwd = Path.cwd().resolve().as_posix()
     h_path = cwd[cwd.find("amoginarium") :] if "amoginarium" in cwd else Path.cwd().name
@@ -170,7 +170,7 @@ def update_readme_file():
     if not os.path.exists(rf):
         # CREATE: Only if there is actual data
         if sc or cc:
-            with open(rf, "w") as f:
+            with open(rf, "w", encoding="utf-8") as f:
                 f.write(f"# {h_path}\n\n")
                 if sc:
                     f.write(
@@ -184,7 +184,7 @@ def update_readme_file():
         ss, cs = bool(sc), bool(cc)
     else:
         # UPDATE: Strict tag checking
-        content = open(rf).read()
+        content = open(rf, encoding="utf-8").read()
         ss, cs, updated = False, False, False
 
         # Structure Injection
@@ -210,19 +210,19 @@ def update_readme_file():
                 cs, updated = True, True
 
         if updated:
-            with open(rf, "w") as f:
+            with open(rf, "w", encoding="utf-8") as f:
                 f.write(content)
             print("  -> Updated README.md")
         else:
             print("  -> Skipped README.md (No Mermaid tags found)")
 
     # Cleanup leftover files
-    for success, file in [(ss, sf), (cs, cf)]:
+    for _success, file in [(ss, sf), (cs, cf)]:
         if os.path.exists(file):
             os.remove(file)
 
 
-def run_pipeline(target_dir: Path, require_updatable: bool):
+def run_pipeline(target_dir: Path, require_updatable: bool) -> None:
     """Executes the mapping logic in a specific directory."""
     if not any(target_dir.glob("*.py")):
         return
@@ -255,32 +255,32 @@ def run_pipeline(target_dir: Path, require_updatable: bool):
         os.chdir(original_dir)
 
 
-def walk_and_process(require_updatable: bool):
+def walk_and_process(require_updatable: bool) -> None:
     """Recursively walks through folders to execute the pipeline."""
     root = Path.cwd()
-    for dirpath, dirnames, filenames in os.walk(root):
+    for dirpath, dirnames, _filenames in os.walk(root):
         dirnames[:] = [
             d
             for d in dirnames
-            if not (d.startswith(".") or d.startswith("__") or d in ("venv", "env"))
+            if not (d.startswith((".", "__")) or d in ("venv", "env"))
         ]
         run_pipeline(Path(dirpath), require_updatable)
 
 
-def cmd_gen_readme():
+def cmd_gen_readme() -> None:
     """Command: gen_readme - Current folder only."""
     run_pipeline(Path.cwd(), require_updatable=False)
     print("Done.")
 
 
-def cmd_update_readmes():
+def cmd_update_readmes() -> None:
     """Command: update_readmes - Recursive, existing tags only."""
     print("Scanning for updatable READMEs recursively...")
     walk_and_process(require_updatable=True)
     print("Done updating existing READMEs.")
 
 
-def cmd_create_readmes():
+def cmd_create_readmes() -> None:
     """Command: create_readmes - Recursive, all Python folders."""
     print("Generating/Updating READMEs for ALL Python folders recursively...")
     walk_and_process(require_updatable=False)

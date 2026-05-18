@@ -13,16 +13,20 @@ import math as m
 import typing as tp
 from dataclasses import dataclass
 
-import pygame as pg
-from icecream import ic  # noqa: F401
+from icecream import ic
 
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared import IslandCIDs
-from amoginarium.shared.utility import convert_coord, coord_t, Vec2, WtfError
+from amoginarium.shared.utility import convert_coord, Vec2, WtfError
 
 from ..textures import textures
 from ._synced_entities import SyncedGraphicsEntity
+
+if tp.TYPE_CHECKING:
+    import pygame as pg
+
+    from amoginarium.shared.utility import coord_t
 
 
 class _PolyMatcher:
@@ -83,7 +87,7 @@ class _IslandTextureManager:
 
     def __init__(self) -> None:
         self._textures: tp.MutableMapping[
-            tp.Type[Island], tp.MutableMapping[int, IslandTextures]
+            type[Island], tp.MutableMapping[int, IslandTextures]
         ] = {}
 
     @staticmethod
@@ -173,9 +177,7 @@ class _IslandTextureManager:
 
         return IslandTextures(**out_tex)
 
-    def get_textures(
-        self, island: tp.Type[Island], texture_size: int
-    ) -> IslandTextures:
+    def get_textures(self, island: type[Island], texture_size: int) -> IslandTextures:
         if island in self._textures:
             if texture_size in self._textures[island]:
                 ic("return existing")
@@ -212,7 +214,7 @@ class Island(SyncedGraphicsEntity):
         if cls._textures is ...:
             cls.load_textures()
 
-        return super(Island, cls).__new__(cls)
+        return super().__new__(cls)
 
     @classmethod
     def load_textures(cls) -> None:
@@ -229,7 +231,8 @@ class Island(SyncedGraphicsEntity):
         form: list[list[int]] = ...,
     ) -> None:
         if size is ... and form is ...:
-            raise ValueError("either size or form have to be given!")
+            msg = "either size or form have to be given!"
+            raise ValueError(msg)
 
         self._size = ... if size is ... else convert_coord(size, Vec2)
         self._form = form
@@ -337,7 +340,7 @@ class Island(SyncedGraphicsEntity):
                     continue
 
                 # hole
-                elif island_type == 2:
+                if island_type == 2:
                     texture = self._textures.dirt_hole_texture
 
                 else:
@@ -461,7 +464,8 @@ class Island(SyncedGraphicsEntity):
                             texture = self._textures.island_single_right_texture
 
                         case _:
-                            raise WtfError("idek how you got here", poly)
+                            msg = "idek how you got here"
+                            raise WtfError(msg, poly)
 
                 column_offset = self._image_size[0] * column
                 pos = start_pos + Vec2().from_cartesian(column_offset, row_offset)
@@ -469,8 +473,8 @@ class Island(SyncedGraphicsEntity):
                 renderer.draw_textured_quad(texture, pos, size, layer=layer)
 
         if self.debug:
-            debug_surface = self.mask.to_surface()
-            # todo: mytodo - reimplement other way of debug!
+            self.mask.to_surface()
+            # TODO: mytodo - reimplement other way of debug!
             # renderer.draw_pg_surf((
             #     self.world_position.x,
             #     self.world_position.y + self.size.y
@@ -503,10 +507,10 @@ class GreenBrickIsland(Island):
     _CID = IslandCIDs.green_brick_island
 
 
-__islands: tp.Iterable[tp.Type[Island]] = [
+__islands: tp.Iterable[type[Island]] = [
     GrassIsland,
     GrayBrickIsland,
     GreenBrickIsland,
 ]
 
-ISLANDS: tp.Mapping[str, tp.Type[Island]] = {c.cid(): c for c in __islands}
+ISLANDS: tp.Mapping[str, type[Island]] = {c.cid(): c for c in __islands}

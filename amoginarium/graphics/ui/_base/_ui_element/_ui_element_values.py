@@ -12,14 +12,17 @@ from __future__ import annotations
 import typing as tp
 from enum import Enum
 
-from amoginarium.shared.utility import convert_coord, coord_t, Vec2
+from amoginarium.shared.utility import convert_coord, Vec2
 
 from ..._types import Anchor, Positions
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import coord_t
 
 
 # region ValuesEnums
 class UIElementValueNamesEnum(Enum):
-    """The different UIElementData values"""
+    """The different UIElementData values."""
 
     NONE = 0
     PLACEMENT_ANCHOR = 1
@@ -40,7 +43,7 @@ class UIElementValueNamesEnum(Enum):
 
 
 class UIElementValueTypesEnum(Enum):
-    """The different subtypes of the Float/Vec2 values"""
+    """The different subtypes of the Float/Vec2 values."""
 
     NONE = 0
     ABSOLUTE = 1
@@ -66,7 +69,7 @@ class _UIElementValueFloatBase:
     def __init__(self, value_name: UIElementValueNamesEnum) -> None:
         """
         Initializes the base relative float values.
-        :param value_name: The identifier for this specific UI value
+        :param value_name: The identifier for this specific UI value.
         """
         self._value_name = value_name
         self.__relative_global = 0.0
@@ -103,18 +106,18 @@ class _UIElementValueFloatBase:
     def copy_from(self, other: _UIElementValueFloatBase) -> None:
         """
         Updates this instance with values from another in-place.
-        :param other: The instance to copy values from
+        :param other: The instance to copy values from.
         """
         self.relative_global = other.relative_global
         self.relative_to_parent = other.relative_to_parent
 
     def not_equal(
         self, other: _UIElementValueFloatBase
-    ) -> tp.Tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
+    ) -> tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
         """
         Checks for inequality and identifies which specific attribute differs.
         :param other: The instance to compare against
-        :return: Tuple containing a boolean if not equal, the value name, and the specific value type
+        :return: Tuple containing a boolean if not equal, the value name, and the specific value type.
         """
         if self.relative_global != other.relative_global:
             return True, self._value_name, UIElementValueTypesEnum.RELATIVE_GLOBAL
@@ -122,14 +125,14 @@ class _UIElementValueFloatBase:
             return True, self._value_name, UIElementValueTypesEnum.RELATIVE_TO_PARENT
         return False, self._value_name, UIElementValueTypesEnum.NONE
 
-    def __ne__(self, other: "_UIElementValueFloatBase") -> bool:
+    def __ne__(self, other: _UIElementValueFloatBase) -> bool:
         """
         :param other: The instance to compare against
         :return: Whether the instances are not equal
         """
         return self.not_equal(other)[0]
 
-    def __eq__(self, other: "_UIElementValueFloatBase") -> bool:
+    def __eq__(self, other: _UIElementValueFloatBase) -> bool:
         """
         :param other: The instance to compare against
         :return: Whether the instances are equal
@@ -148,7 +151,7 @@ class UIElementValueFloat(_UIElementValueFloatBase):
     def __init__(self, value_name: UIElementValueNamesEnum) -> None:
         """
         Initializes the float values.
-        :param value_name: The identifier for this specific UI value
+        :param value_name: The identifier for this specific UI value.
         """
         super().__init__(value_name)
         self.__absolute_global = 0.0
@@ -182,10 +185,10 @@ class UIElementValueFloat(_UIElementValueFloatBase):
         """
         self.__absolute_to_parent = value
 
-    def copy_from(self, other: "UIElementValueFloat") -> None:
+    def copy_from(self, other: UIElementValueFloat) -> None:
         """
         Updates this instance with values from another in-place.
-        :param other: The instance to copy values from
+        :param other: The instance to copy values from.
         """
         super().copy_from(other)
         self.absolute_global = other.absolute_global
@@ -193,11 +196,11 @@ class UIElementValueFloat(_UIElementValueFloatBase):
 
     def not_equal(
         self, other: UIElementValueFloat
-    ) -> tp.Tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
+    ) -> tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
         """
         Checks for inequality and identifies which specific attribute differs.
         :param other: The instance to compare against
-        :return: Tuple containing a boolean if not equal, the value name, and the specific value type
+        :return: Tuple containing a boolean if not equal, the value name, and the specific value type.
         """
         is_neq, val_name, val_type = super().not_equal(other)
         if is_neq:
@@ -228,7 +231,7 @@ class UIElementValueFloatOneAbsolute(_UIElementValueFloatBase):
     def __init__(self, value_name: UIElementValueNamesEnum) -> None:
         """
         Initializes the float values.
-        :param value_name: The identifier for this specific UI value
+        :param value_name: The identifier for this specific UI value.
         """
         super().__init__(value_name)
         self.__absolute = 0.0
@@ -250,18 +253,18 @@ class UIElementValueFloatOneAbsolute(_UIElementValueFloatBase):
     def copy_from(self, other: UIElementValueFloatOneAbsolute) -> None:
         """
         Updates this instance with values from another in-place.
-        :param other: The instance to copy values from
+        :param other: The instance to copy values from.
         """
         super().copy_from(other)
         self.absolute = other.absolute
 
     def not_equal(
         self, other: UIElementValueFloatOneAbsolute
-    ) -> tp.Tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
+    ) -> tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
         """
         Checks for inequality and identifies which specific attribute differs.
         :param other: The instance to compare against
-        :return: Tuple containing a boolean if not equal, the value name, and the specific value type
+        :return: Tuple containing a boolean if not equal, the value name, and the specific value type.
         """
         is_neq, val_name, val_type = super().not_equal(other)
         if is_neq:
@@ -272,7 +275,7 @@ class UIElementValueFloatOneAbsolute(_UIElementValueFloatBase):
 
         return False, self._value_name, UIElementValueTypesEnum.NONE
 
-    def __ne__(self, other: "UIElementValueFloatOneAbsolute") -> bool:
+    def __ne__(self, other: UIElementValueFloatOneAbsolute) -> bool:
         """
         :param other: The instance to compare against
         :return: Whether the instances are not equal
@@ -296,7 +299,7 @@ class _UIElementValueVec2Base:
     def __init__(self, value_name: UIElementValueNamesEnum) -> None:
         """
         Initializes the base relative vector values.
-        :param value_name: The identifier for this specific UI value
+        :param value_name: The identifier for this specific UI value.
         """
         self._value_name = value_name
         self.__relative_global = Vec2()
@@ -330,21 +333,21 @@ class _UIElementValueVec2Base:
         """
         self.__relative_to_parent.xy = convert_coord(value)
 
-    def copy_from(self, other: "_UIElementValueVec2Base") -> None:
+    def copy_from(self, other: _UIElementValueVec2Base) -> None:
         """
         Updates this instance with values from another in-place.
-        :param other: The instance to copy values from
+        :param other: The instance to copy values from.
         """
         self.relative_global = other.relative_global.xy
         self.relative_to_parent = other.relative_to_parent.xy
 
     def not_equal(
-        self, other: "_UIElementValueVec2Base"
-    ) -> tp.Tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
+        self, other: _UIElementValueVec2Base
+    ) -> tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
         """
         Checks for inequality and identifies which specific attribute differs.
         :param other: The instance to compare against
-        :return: Tuple containing a boolean if not equal, the value name, and the specific value type
+        :return: Tuple containing a boolean if not equal, the value name, and the specific value type.
         """
         if self.relative_global.xy != other.relative_global.xy:
             return True, self._value_name, UIElementValueTypesEnum.RELATIVE_GLOBAL
@@ -352,14 +355,14 @@ class _UIElementValueVec2Base:
             return True, self._value_name, UIElementValueTypesEnum.RELATIVE_TO_PARENT
         return False, self._value_name, UIElementValueTypesEnum.NONE
 
-    def __ne__(self, other: "_UIElementValueVec2Base") -> bool:
+    def __ne__(self, other: _UIElementValueVec2Base) -> bool:
         """
         :param other: The instance to compare against
         :return: Whether the instances are not equal
         """
         return self.not_equal(other)[0]
 
-    def __eq__(self, other: "_UIElementValueVec2Base") -> bool:
+    def __eq__(self, other: _UIElementValueVec2Base) -> bool:
         """
         :param other: The instance to compare against
         :return: Whether the instances are equal
@@ -378,7 +381,7 @@ class UIElementValueVec2(_UIElementValueVec2Base):
     def __init__(self, value_name: UIElementValueNamesEnum) -> None:
         """
         Initializes the vector values.
-        :param value_name: The identifier for this specific UI value
+        :param value_name: The identifier for this specific UI value.
         """
         super().__init__(value_name)
         self.__absolute_global = Vec2()
@@ -412,22 +415,22 @@ class UIElementValueVec2(_UIElementValueVec2Base):
         """
         self.__absolute_to_parent.xy = convert_coord(value)
 
-    def copy_from(self, other: "UIElementValueVec2") -> None:
+    def copy_from(self, other: UIElementValueVec2) -> None:
         """
         Updates this instance with values from another in-place.
-        :param other: The instance to copy values from
+        :param other: The instance to copy values from.
         """
         super().copy_from(other)
         self.absolute_global = other.absolute_global.xy
         self.absolute_to_parent = other.absolute_to_parent.xy
 
     def not_equal(
-        self, other: "UIElementValueVec2"
-    ) -> tp.Tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
+        self, other: UIElementValueVec2
+    ) -> tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
         """
         Checks for inequality and identifies which specific attribute differs.
         :param other: The instance to compare against
-        :return: Tuple containing a boolean if not equal, the value name, and the specific value type
+        :return: Tuple containing a boolean if not equal, the value name, and the specific value type.
         """
         is_neq, val_name, val_type = super().not_equal(other)
         if is_neq:
@@ -440,7 +443,7 @@ class UIElementValueVec2(_UIElementValueVec2Base):
 
         return False, self._value_name, UIElementValueTypesEnum.NONE
 
-    def __ne__(self, other: "UIElementValueVec2") -> bool:
+    def __ne__(self, other: UIElementValueVec2) -> bool:
         """
         :param other: The instance to compare against
         :return: Whether the instances are not equal
@@ -458,7 +461,7 @@ class UIElementValueVec2OneAbsolute(_UIElementValueVec2Base):
     def __init__(self, value_name: UIElementValueNamesEnum) -> None:
         """
         Initializes the vector values.
-        :param value_name: The identifier for this specific UI value
+        :param value_name: The identifier for this specific UI value.
         """
         super().__init__(value_name)
         self.__absolute = Vec2()
@@ -477,21 +480,21 @@ class UIElementValueVec2OneAbsolute(_UIElementValueVec2Base):
         """
         self.__absolute.xy = convert_coord(value)
 
-    def copy_from(self, other: "UIElementValueVec2OneAbsolute") -> None:
+    def copy_from(self, other: UIElementValueVec2OneAbsolute) -> None:
         """
         Updates this instance with values from another in-place.
-        :param other: The instance to copy values from
+        :param other: The instance to copy values from.
         """
         super().copy_from(other)
         self.absolute = other.absolute.xy
 
     def not_equal(
-        self, other: "UIElementValueVec2OneAbsolute"
-    ) -> tp.Tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
+        self, other: UIElementValueVec2OneAbsolute
+    ) -> tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
         """
         Checks for inequality and identifies which specific attribute differs.
         :param other: The instance to compare against
-        :return: Tuple containing a boolean if not equal, the value name, and the specific value type
+        :return: Tuple containing a boolean if not equal, the value name, and the specific value type.
         """
         is_neq, val_name, val_type = super().not_equal(other)
         if is_neq:
@@ -502,7 +505,7 @@ class UIElementValueVec2OneAbsolute(_UIElementValueVec2Base):
 
         return False, self._value_name, UIElementValueTypesEnum.NONE
 
-    def __ne__(self, other: "UIElementValueVec2OneAbsolute") -> bool:
+    def __ne__(self, other: UIElementValueVec2OneAbsolute) -> bool:
         """
         :param other: The instance to compare against
         :return: Whether the instances are not equal
@@ -517,7 +520,7 @@ class UIElementValueVec2OneAbsolute(_UIElementValueVec2Base):
 # noinspection DuplicatedCode
 class UIElementData:
     """
-    Position data for UIElement that can all influence each other
+    Position data for UIElement that can all influence each other.
     """
 
     placement_anchor: Anchor
@@ -574,7 +577,7 @@ class UIElementData:
     def copy_from(self, other: UIElementData) -> None:
         """
         Updates this instance with values from another in-place.
-        :param other: The instance to copy values from
+        :param other: The instance to copy values from.
         """
         self.placement_anchor = other.placement_anchor
         self.position_is_relative_to_parent = other.position_is_relative_to_parent
@@ -598,11 +601,11 @@ class UIElementData:
 
     def not_equal(
         self, other: object
-    ) -> tp.Tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
+    ) -> tuple[bool, UIElementValueNamesEnum, UIElementValueTypesEnum]:
         """
         Checks for inequality and identifies which specific attribute differs.
         :param other: The instance to compare against
-        :return: Tuple containing a boolean if not equal, the value name, and the specific value type
+        :return: Tuple containing a boolean if not equal, the value name, and the specific value type.
         """
         if not isinstance(other, UIElementData):
             return True, UIElementValueNamesEnum.NONE, UIElementValueTypesEnum.NONE
@@ -693,7 +696,7 @@ class UIElementData:
         """
         Explicitly compares all values to guarantee detection of changes.
         :param other: The instance to compare against
-        :return: Whether the instances are not equal
+        :return: Whether the instances are not equal.
         """
         if not isinstance(other, UIElementData):
             return NotImplemented

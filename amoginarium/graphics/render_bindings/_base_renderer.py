@@ -7,14 +7,18 @@ Created: 22.03.2024
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import abc
 import typing as tp
-from collections.abc import Sequence
-from types import EllipsisType
 
-from PIL import Image
+if tp.TYPE_CHECKING:
+    from collections.abc import Sequence
+    from types import EllipsisType
 
-from amoginarium.shared.utility import Color, coord_t, Vec2
+    from PIL import Image
+
+    from amoginarium.shared.utility import Color, coord_t, Vec2
 
 # define types
 type Color3 = tuple[float, float, float]
@@ -27,7 +31,7 @@ type tColor = Color3 | Color4
 
 class BaseRenderer(abc.ABC):
     """
-    Abstract Renderer Class
+    Abstract Renderer Class.
     """
 
     type TextureID = tp.Any
@@ -41,7 +45,7 @@ class BaseRenderer(abc.ABC):
         """
         Initialize the renderer and pv.global_vars
         :param title: Window title
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -49,7 +53,7 @@ class BaseRenderer(abc.ABC):
     def quit(self) -> None:
         """
         Quit the display
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -68,7 +72,7 @@ class BaseRenderer(abc.ABC):
         :param mirror: Axes to mirror the image on
         :param pixel_perfect: set texture scaling behavior
         :returns: texture_id, (width, height)
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -80,7 +84,7 @@ class BaseRenderer(abc.ABC):
         """
         Clear the whole window
         :param color: Color to clear the window with
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -92,7 +96,7 @@ class BaseRenderer(abc.ABC):
         Should be called when the display gets updated
         :param position: Position of the display
         :param size: Size of the display
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -101,7 +105,7 @@ class BaseRenderer(abc.ABC):
         """
         Change the position and size of the display
         :return: (position, size) of the window
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -111,7 +115,7 @@ class BaseRenderer(abc.ABC):
         Change the position and size of the display
         :param position: New position
         :param size: New size
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -119,7 +123,7 @@ class BaseRenderer(abc.ABC):
     def display_fullscreen(self) -> None:
         """
         Activate fullscreen mode
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -127,7 +131,7 @@ class BaseRenderer(abc.ABC):
     def display_windowed_fullscreen(self) -> None:
         """
         Activate windowed fullscreen mode
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -137,7 +141,7 @@ class BaseRenderer(abc.ABC):
         Set the caption/titlebar of the display
         :param title: String title
         :param icon: Icon
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -145,14 +149,14 @@ class BaseRenderer(abc.ABC):
     def display_draw_frame(self) -> None:
         """
         Called each frame after the drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
     # endregion
 
     # region Stencil
-    # todo mytodo - stencils work!
+    # TODO mytodo - stencils work!
     @abc.abstractmethod
     def apply_stencil[**A](
         self,
@@ -199,13 +203,13 @@ class BaseRenderer(abc.ABC):
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :param layer: Layer number
         :param color: overlay color to tint the quad
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
     def flush(self) -> None:
         """
-        flush all texture layers
+        Flush all texture layers.
 
         :raises NotImplementedError: If the renderer does not implement this method
         """
@@ -213,7 +217,7 @@ class BaseRenderer(abc.ABC):
 
     def flush_layer(self, layer: int) -> None:
         """
-        flush one texture layer
+        Flush one texture layer.
 
         :param layer: layer to flush
         :raises NotImplementedError: If the renderer does not implement this method
@@ -239,7 +243,7 @@ class BaseRenderer(abc.ABC):
         :param center: Optional center position
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -259,7 +263,7 @@ class BaseRenderer(abc.ABC):
         :param color: Drawing color
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -289,7 +293,7 @@ class BaseRenderer(abc.ABC):
         :param bottom_right_radius: Individual radius for the bottom right corner. Defaults to radius
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -311,7 +315,7 @@ class BaseRenderer(abc.ABC):
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -343,7 +347,7 @@ class BaseRenderer(abc.ABC):
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -393,7 +397,7 @@ class BaseRenderer(abc.ABC):
         :param color: Drawing color
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -418,7 +422,7 @@ class BaseRenderer(abc.ABC):
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -445,7 +449,7 @@ class BaseRenderer(abc.ABC):
         :param color: Drawing color
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -474,7 +478,7 @@ class BaseRenderer(abc.ABC):
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -507,7 +511,7 @@ class BaseRenderer(abc.ABC):
         :param thickness: Thickness of the outline
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -533,7 +537,7 @@ class BaseRenderer(abc.ABC):
         :param global_position: IDK
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -558,7 +562,7 @@ class BaseRenderer(abc.ABC):
         :param global_position: IDK
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
 
     def draw_lines(
@@ -574,7 +578,7 @@ class BaseRenderer(abc.ABC):
         """
         Draw a simple line
         :param points: list of line points
-        :param color: one color or color for each point
+        :param color: one color or color for each point.
 
         :param thickness: line thickness
         :param global_position: position in global space or relative to previous
@@ -618,7 +622,7 @@ class BaseRenderer(abc.ABC):
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
         :return: DynamicTextID
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -641,7 +645,7 @@ class BaseRenderer(abc.ABC):
         :param scale: Scale the text size
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 
@@ -667,7 +671,7 @@ class BaseRenderer(abc.ABC):
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
         :return: StaticTextID
-        :raises NotImplementedError: If the renderer does not implement this method
+        :raises NotImplementedError: If the renderer does not implement this method.
         """
         raise NotImplementedError
 

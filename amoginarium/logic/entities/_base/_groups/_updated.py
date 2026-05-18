@@ -57,7 +57,7 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
         their texture loading logic if available.
         """
         # get the different types of entities
-        types = tuple(set([s.__class__ for s in self.entities()]))
+        types = tuple({s.__class__ for s in self.entities()})
 
         # load the textures for each different type
         for t in types:

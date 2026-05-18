@@ -15,7 +15,10 @@ import soundfile as sf
 
 
 def generate_pitch_variants(
-    input_path: str, output_dir: str, semitone_steps: list[float], prefix: str = None
+    input_path: str,
+    output_dir: str,
+    semitone_steps: list[float],
+    prefix: str | None = None,
 ) -> list[str]:
     """
     Generate pitch-shifted variants of an audio file while preserving duration.
@@ -28,8 +31,8 @@ def generate_pitch_variants(
 
     Returns:
         List of output file paths
-    """
 
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     # --- Load audio ---

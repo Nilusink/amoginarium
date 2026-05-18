@@ -7,22 +7,26 @@ Created: 13.03.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 from types import EllipsisType
 
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.shared import HasFacing, HasPosition
-from amoginarium.shared.utility import convert_coord, coord_t
-from amoginarium.shared.utility import normalize_angle, RTD, Vec2
+from amoginarium.shared.utility import convert_coord, normalize_angle, RTD, Vec2
 
 from ..textures import textures
 from ._base_entity import BaseGraphicsEntity
 from ._graphics_groups import Drawn_0
 
+if tp.TYPE_CHECKING:
+    from amoginarium.shared import HasFacing, HasPosition
+    from amoginarium.shared.utility import coord_t
+
 
 class Animation(BaseGraphicsEntity):
-    """base animation class"""
+    """base animation class."""
 
     def __init__(
         self,
@@ -103,7 +107,7 @@ class Animation(BaseGraphicsEntity):
 
     @property
     def rotation(self) -> float:
-        """rotation"""
+        """Rotation."""
         rot = 0
 
         # get rotation reference
@@ -122,7 +126,7 @@ class Animation(BaseGraphicsEntity):
 
     @property
     def rotate_anchor(self) -> Vec2:
-        """image rotation anchor"""
+        """Image rotation anchor."""
         if isinstance(self._rotate_anchor, EllipsisType):
             return self._size / 2
 
@@ -147,7 +151,7 @@ class Animation(BaseGraphicsEntity):
         self._playing = False
         del self
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         self._current_t -= delta_cal
         if self._current_t <= 0:
             if (self._current_image + 1) >= len(self._textures):
@@ -187,7 +191,7 @@ def play_animation(
     delay=0.2,
 ) -> None:
     """
-    play an animation based on textures
+    Play an animation based on textures.
     """
     Animation(
         textures, sizes[0], delay, position, position_reference, position_offset
@@ -196,7 +200,7 @@ def play_animation(
 
 class ImageAnimation:
     """
-    play an animation from a directory
+    play an animation from a directory.
     """
 
     _textures: list[int] = ...
@@ -210,7 +214,7 @@ class ImageAnimation:
 
     def load_textures(self, size: Vec2 = None) -> None:
         """
-        load all textures required for the animation
+        Load all textures required for the animation.
         """
         self._textures = []
         self._sizes = []
@@ -227,7 +231,7 @@ class ImageAnimation:
         layer: int = 0,
     ) -> None:
         """
-        play the recently loaded animation
+        Play the recently loaded animation.
 
         either position or position_reference have to be given
         """

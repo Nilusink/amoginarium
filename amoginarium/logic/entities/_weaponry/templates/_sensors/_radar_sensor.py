@@ -7,22 +7,31 @@ Created: 10.03.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
-from ctypes import Array
 
 import numpy as np
 from icecream import ic
 
-from amoginarium.shared import base_entity_t, SensorCIDs
-from amoginarium.shared.utility import coord_t, normalize_angle, point_in_triangle, Vec2
+from amoginarium.shared import SensorCIDs
+from amoginarium.shared.utility import normalize_angle, point_in_triangle, Vec2
 
-from ...._base import Bullets, LogicGameEntity, Players
+from ...._base import Bullets, Players
 from ._base_sensor import BaseSensor
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.utility import coord_t
+
+    from ...._base import LogicGameEntity
 
 
 class RadarSensor(BaseSensor):
     """
-    sensor split into sectors, detection using angle width
+    sensor split into sectors, detection using angle width.
 
     ``param0`` detection range
     ``param3`` detect sectors (x4, 16 bit each)
@@ -58,7 +67,7 @@ class RadarSensor(BaseSensor):
         self, targets: tp.Iterable[LogicGameEntity]
     ) -> list[LogicGameEntity]:
         """
-        check if a target is inside the calculated sphere
+        Check if a target is inside the calculated sphere.
         """
         out = []
         center: Vec2 = self.parent.position + self._position_offset
@@ -106,7 +115,7 @@ class RadarSensor(BaseSensor):
         return out
 
     def get_targets(
-        self, from_entities: tp.Iterable[LogicGameEntity] = None
+        self, from_entities: tp.Iterable[LogicGameEntity] | None = None
     ) -> list[LogicGameEntity]:
         if from_entities is None:
             targets = [p for p in Players.entities() if p.alive]

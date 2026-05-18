@@ -7,8 +7,14 @@ Created: 08.05.2026
 Authors: Nilusink
 """
 
-from ._base import BaseFuze
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from ._fuzes import AltitudeFuze, PositionFuze, ProximityFuze, TTLFuze, TTLMultFuze
+
+if TYPE_CHECKING:
+    from ._base import BaseFuze
 
 FUZES: dict[str, type[BaseFuze]] = {
     "ttl": TTLFuze,

@@ -7,15 +7,20 @@ Created: 15.03.2026
 Authors: LukasKrah, Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
 
 import pygame as pg
 
-from amoginarium.shared.utility import color_t, convert_coord, coord_t
+from amoginarium.shared.utility import convert_coord
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import color_t, coord_t
 
 
 class PygameSurfaceRenderer:
-    """PygameSurfaceRenderer"""
+    """PygameSurfaceRenderer."""
 
     @staticmethod
     def draw_rect(
@@ -25,11 +30,11 @@ class PygameSurfaceRenderer:
         *_args: tp.Any,
         color: color_t = (255, 255, 255, 255),
         width: int = 0,
-        border_radius: int | float = -1,
-        border_top_left_radius: int | float = -1,
-        border_top_right_radius: int | float = -1,
-        border_bottom_left_radius: int | float = -1,
-        border_bottom_right_radius: int | float = -1,
+        border_radius: float = -1,
+        border_top_left_radius: float = -1,
+        border_top_right_radius: float = -1,
+        border_bottom_left_radius: float = -1,
+        border_bottom_right_radius: float = -1,
     ) -> pg.Rect:
         """
         Draws a rectangle on the given surface.
@@ -57,7 +62,7 @@ class PygameSurfaceRenderer:
             border. If you don't set this value, it will use the border_radius value.
         :returns: a rect bounding the changed pixels, if nothing is drawn the
             bounding rect's position will be the position of the given ``rect``
-            parameter and its width and height will be 0
+            parameter and its width and height will be 0.
         """
         return pg.draw.rect(
             surface=surface,

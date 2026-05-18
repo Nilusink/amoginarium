@@ -7,15 +7,14 @@ Created: 28.03.2026
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import ctypes
 import json
 import os
-from multiprocessing import Queue, synchronize
-from multiprocessing.connection import Connection
-from multiprocessing.shared_memory import SharedMemory
-from multiprocessing.sharedctypes import Synchronized
 from queue import Empty
 from time import perf_counter, perf_counter_ns, sleep
+from typing import TYPE_CHECKING
 
 import pygame as pg
 from icecream import colorize, ic
@@ -24,8 +23,8 @@ from amoginarium import pv
 from amoginarium.shared import base_entity_t, BaseCommandType, Coalitions
 from amoginarium.shared import ENTITY_COUNTER, GlobalVars, INVENTORY_COUNTER
 from amoginarium.shared import MAX_ENTITIES, ProcessCommand, ProcessCommandType
-from amoginarium.shared.audio import BackgroundPlayer, LargeExplosion
-from amoginarium.shared.audio import sound_effects, SoundEffect, sounds
+from amoginarium.shared.audio import BackgroundPlayer, sound_effects
+from amoginarium.shared.audio import SoundEffect, sounds
 from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
 from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.utility import Vec2
@@ -36,10 +35,16 @@ from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAff
 from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
 from .graphics_dummies import Controller
 
+if TYPE_CHECKING:
+    from multiprocessing import Queue, synchronize
+    from multiprocessing.connection import Connection
+    from multiprocessing.shared_memory import SharedMemory
+    from multiprocessing.sharedctypes import Synchronized
+
 
 class LogicProcess:
     """
-    Logic Process data
+    Logic Process data.
     """
 
     def __init__(
@@ -152,7 +157,7 @@ class LogicProcess:
     @run_with_debug(reraise_errors=True, show_finish=True)
     def preload(self) -> None:
         """
-        preloads sound effects
+        Preloads sound effects.
         """
         start = perf_counter_ns()
         # load sounds
@@ -179,7 +184,7 @@ class LogicProcess:
         ic(load_time)
 
     def get_ic_prefix(self) -> str:
-        """get terminal prefix for icecream"""
+        """Get terminal prefix for icecream."""
         t = round(perf_counter() - self._start, 4)
 
         t1, t2 = str(t).split(".")
@@ -190,19 +195,20 @@ class LogicProcess:
         )
 
     def load_map(self, map_path: str) -> None:
-        """load a map from a json file"""
+        """Load a map from a json file."""
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
             ic(map_path)
             if not os.path.isfile(map_path):
-                raise FileNotFoundError(f'Couldn\'t find map "{map_path}"')
+                msg = f'Couldn\'t find map "{map_path}"'
+                raise FileNotFoundError(msg)
 
         self._map_loading = True
         self._last_map_path = map_path
 
         # load map data
-        data = json.load(open(map_path, "r"))
+        data = json.load(open(map_path, "r", encoding="utf-8"))
         self._last_loaded = map_path
 
         pg.display.set_caption(f"amoginarium - {data['name']}")
@@ -212,22 +218,21 @@ class LogicProcess:
         # load islands
         for island in data["platforms"]:
             island_type = GrassIsland
-            if "type" in island:
-                if island["type"] in Island.ISLANDS:
-                    island_type = Island.ISLANDS[island["type"]]
+            if "type" in island and island["type"] in Island.ISLANDS:
+                island_type = Island.ISLANDS[island["type"]]
 
             if "args" in island:
-                i = island_type(self._runtime_buffer, **island["args"])
+                island_type(self._runtime_buffer, **island["args"])
 
             elif "size" in island:
-                i = island_type(
+                island_type(
                     self._runtime_buffer,
                     Vec2().from_cartesian(*island["pos"]),
                     size=Vec2().from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
-                i = island_type(
+                island_type(
                     self._runtime_buffer,
                     Vec2().from_cartesian(*island["pos"]),
                     form=island["form"],
@@ -280,7 +285,7 @@ class LogicProcess:
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
                     f"{CC.fg.YELLOW}{SPAWNABLES[entity['type']].__name__}{CC.fg.RED}: "
-                    f'"{CC.fg.YELLOW}{args.__repr__()}{CC.fg.RED}"'
+                    f'"{CC.fg.YELLOW}{args!r}{CC.fg.RED}"'
                 )
 
         self._map_loading = False
@@ -288,7 +293,7 @@ class LogicProcess:
     @cum_timer.time_this
     def update_entities(self, delta: float) -> bool:
         """
-        update all entities
+        Update all entities.
 
         :returns: True if update, false if paused
         """
@@ -296,7 +301,7 @@ class LogicProcess:
 
         self._logic_loop_times.append((start - self._start, delta))
         self._n_bullets_times.append(
-            (start - self._start, Bullets.__len__() + Updated.__len__(), delta)
+            (start - self._start, len(Bullets) + len(Updated), delta)
         )
 
         # update commands
@@ -312,7 +317,7 @@ class LogicProcess:
                 self.end()
                 return False
 
-            elif item.type == ProcessCommandType.reset:
+            if item.type == ProcessCommandType.reset:
                 self.reset_game()
                 self._paused = True
                 ic("logic reset complete")
@@ -321,7 +326,7 @@ class LogicProcess:
                 )
                 return False
 
-            elif item.type == ProcessCommandType.pause:
+            if item.type == ProcessCommandType.pause:
                 self._paused = True
 
             elif item.type == ProcessCommandType.unpause:
@@ -430,7 +435,7 @@ class LogicProcess:
     @cum_timer.time_this
     def update_memory(self) -> None:
         """
-        copy runtime buffer to memory buffer
+        Copy runtime buffer to memory buffer.
         """
         self._write_lock.acquire()
         ctypes.memmove(
@@ -441,7 +446,7 @@ class LogicProcess:
         self._write_lock.release()
 
     def reset_game(self) -> None:
-        """reset game state"""
+        """Reset game state."""
         # kill all entities
         for e in Updated.entities() + Bullets.entities():
             e.kill()
@@ -461,7 +466,7 @@ class LogicProcess:
         ENTITY_COUNTER.reset()
 
     def end(self) -> None:
-        """close the logic thread"""
+        """Close the logic thread."""
         # print entity stats
         entities = Updated.entities() + Bullets.entities()
         entities = [e.__class__.__name__ for e in entities]
@@ -484,12 +489,14 @@ class LogicProcess:
         # write debug data
         os.makedirs("debug", exist_ok=True)
         with open(
-            f"debug/logic_debug_{self._run_name}_{int(self._start)}.json", "w"
+            f"debug/logic_debug_{self._run_name}_{int(self._start)}.json",
+            "w",
+            encoding="utf-8",
         ) as out:
             json.dump(
                 {"logic": self._logic_loop_times, "bullets": self._n_bullets_times}, out
             )
-        with open(f"logic_debug.json", "w") as out:
+        with open("logic_debug.json", "w", encoding="utf-8") as out:
             json.dump(
                 {"logic": self._logic_loop_times, "bullets": self._n_bullets_times}, out
             )
@@ -510,7 +517,7 @@ def run_continuous(
     run_name: str,
 ) -> None:
     """
-    run the logic process continuously
+    Run the logic process continuously.
     """
     global_vars = GlobalVars(global_vars_values, False)
     global_vars.update()

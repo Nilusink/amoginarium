@@ -7,15 +7,19 @@ Created: 17.04.2026
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import math as m
 import typing as tp
-from types import EllipsisType
 
 from amoginarium.shared import DummyCIDs
 from amoginarium.shared.utility import Color, Vec2
 
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity
+
+if tp.TYPE_CHECKING:
+    from types import EllipsisType
 
 
 class AeroDummy(SyncedGraphicsEntity):
@@ -29,10 +33,10 @@ class AeroDummy(SyncedGraphicsEntity):
         visibility_offset: float = 0,
         target_pos: Vec2 | EllipsisType = ...,
         **kwargs: tp.Any,
-    ):
+    ) -> None:
         super().__init__(sync_id)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         # length
         renderer.draw_thick_line(
             self.world_position - self.facing * self.size.x / 2,

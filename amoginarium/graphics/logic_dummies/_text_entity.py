@@ -9,7 +9,7 @@ Authors: LukasKrah
 
 import typing as tp
 
-from icecream import ic  # noqa: F401
+from icecream import ic
 
 from amoginarium.shared import GraphicsCIDs
 from amoginarium.shared.utility import Color
@@ -20,7 +20,7 @@ from ._synced_entities import SyncedGraphicsEntity
 
 class TextEntity(SyncedGraphicsEntity):
     """
-    Static text synced graphics entity
+    Static text synced graphics entity.
     """
 
     _CID = GraphicsCIDs.static_text
@@ -47,7 +47,7 @@ class TextEntity(SyncedGraphicsEntity):
         :param family: Font family
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
-        :param _kwargs: Other arguments passed such as coalition
+        :param _kwargs: Other arguments passed such as coalition.
         """
         super().__init__(sync_id)
 

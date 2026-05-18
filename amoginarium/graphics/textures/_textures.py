@@ -7,6 +7,8 @@ Created: 20.03.2024
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import os
 import typing as tp
 import zipfile
@@ -15,23 +17,26 @@ from PIL import Image
 
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared.debugging import get_fg_color, print_ic_style
-from amoginarium.shared.utility import convert_coord, coord_t
+from amoginarium.shared.utility import convert_coord
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import coord_t
 
 type mirror_t = tp.Literal["x", "y", "xy", "yx", ""]
 
 
 class Texture(tp.TypedDict):
-    """texture dict"""
+    """texture dict."""
 
     id: int
     name: str
     mirror: mirror_t
     size: tuple[int, int]
-    pixel_perfect: tp.Optional[bool]
+    pixel_perfect: bool | None
 
 
 class FileImage(tp.TypedDict):
-    """texture + file pair"""
+    """texture + file pair."""
 
     image: Image.Image
     name: str
@@ -48,10 +53,11 @@ class _Textures:
 
     def load_images(self, path: str) -> None:
         """
-        load all textures from a zip file or a directory
+        Load all textures from a zip file or a directory.
         """
         if not os.path.exists(path):
-            raise FileNotFoundError(f"{path} doesn't exist!")
+            msg = f"{path} doesn't exist!"
+            raise FileNotFoundError(msg)
 
         is_zip = os.path.isfile(path)
 
@@ -85,11 +91,7 @@ class _Textures:
             if self.debug >= 2:
                 print_ic_style(f'- texture: {get_fg_color(36)}"{filename}"')
 
-            if img_zip:
-                file = img_zip.open(f)
-
-            else:
-                file = path + "/" + f
+            file = img_zip.open(f) if img_zip else path + "/" + f
 
             img = Image.open(file)
 
@@ -114,17 +116,13 @@ class _Textures:
         pixel_perfect: bool = False,
     ) -> Texture | None:
         """
-        returns a texture if it already exists
+        Returns a texture if it already exists.
         """
         if scope not in self._textures:
             return None
 
         scopes: tp.Iterable[str]
-        if scope:
-            scopes = [scope]
-
-        else:
-            scopes = self._raw_images.keys()
+        scopes = [scope] if scope else self._raw_images.keys()
 
         for current_scope in scopes:
             for texture in self._textures[current_scope]:
@@ -159,7 +157,7 @@ class _Textures:
         pixel_perfect: bool = False,
     ) -> tuple[int, tuple[int, int]]:
         """
-        get the ID of a texture, prevents double loading
+        Get the ID of a texture, prevents double loading.
         """
         if size is not None:
             size: tuple[float, float] = convert_coord(size)
@@ -171,12 +169,14 @@ class _Textures:
 
         if scope is not None:
             if scope not in self._raw_images:
-                raise ValueError(f'scope "{scope}" not found')
+                msg = f'scope "{scope}" not found'
+                raise ValueError(msg)
 
             if name not in self._raw_images[scope]:
-                raise ValueError(f'"{name}" not found in scope "{scope}"')
+                msg = f'"{name}" not found in scope "{scope}"'
+                raise ValueError(msg)
 
-            _scope = scope
+            scope_ = scope
 
         else:
             for s in self._raw_images:
@@ -187,33 +187,34 @@ class _Textures:
                             f'found in scope {get_fg_color(36)}"{s}"'
                         )
 
-                    _scope = s
+                    scope_ = s
                     break
 
             else:
-                raise ValueError(f'"{name}" not found in any loaded scope')
+                msg_0 = f'"{name}" not found in any loaded scope'
+                raise ValueError(msg_0)
 
-        texture, _size = renderer.load_texture(
-            image=self._raw_images[_scope][name]["image"],
+        texture, size_ = renderer.load_texture(
+            image=self._raw_images[scope_][name]["image"],
             size=size,
             mirror=mirror,
             pixel_perfect=pixel_perfect,
         )
 
         if scope not in self._textures:
-            self._textures[_scope] = []
+            self._textures[scope_] = []
 
-        self._textures[_scope].append(
+        self._textures[scope_].append(
             {
                 "id": texture,
                 "mirror": mirror,
                 "name": name,
-                "size": _size,
+                "size": size_,
                 "pixel_perfect": pixel_perfect,
             }
         )
 
-        return texture, _size
+        return texture, size_
 
     def get_all_from_scope(
         self,
@@ -223,10 +224,11 @@ class _Textures:
         pixel_perfect: bool = False,
     ) -> list[tuple[int, tuple[int, int]]]:
         """
-        get all textures from a scope
+        Get all textures from a scope.
         """
         if scope not in self._raw_images:
-            raise ValueError(f'scope "{scope}" not found')
+            msg = f'scope "{scope}" not found'
+            raise ValueError(msg)
 
         if self.debug >= 2:
             print_ic_style(
@@ -234,7 +236,7 @@ class _Textures:
             )
 
         out = []
-        for _, image in self._raw_images[scope].items():
+        for image in self._raw_images[scope].values():
             if self.debug >= 3:
                 print_ic_style(f'- texture: {get_fg_color(36)}"{image["name"]}"')
 
@@ -252,10 +254,11 @@ class _Textures:
 
     def get_raw_from_scope(self, scope: str) -> list[str]:
         """
-        return all texture names from a scope
+        Return all texture names from a scope.
         """
         if scope not in self._raw_images:
-            raise ValueError(f'scope "{scope}" not found')
+            msg = f'scope "{scope}" not found'
+            raise ValueError(msg)
 
         return list(self._raw_images[scope].keys())
 

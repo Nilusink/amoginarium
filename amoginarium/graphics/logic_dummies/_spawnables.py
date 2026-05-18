@@ -7,9 +7,11 @@ Created: 28.03.2026
 Authors: Nilusink, LukasKrah
 """
 
-import typing as tp
+from __future__ import annotations
 
-from icecream import ic  # noqa: F401
+from typing import TYPE_CHECKING
+
+from icecream import ic
 
 from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
 
@@ -23,13 +25,15 @@ from ._missiles import GuidedMultiStageMissileDummy, MultiStageMissileDummy
 from ._missiles import MultiThrusterMissileDummy, PlayerControlledMissileDummy
 from ._player import PlayerDummy
 from ._sensors import MagicSensorHUD, RadarSensorHUD, SensorHUD, VisualSensorHUD
-from ._synced_entities import SyncedGraphicsEntity
 from ._text_entity import TextEntity
 from ._turrets import BaseTurretDummy, CalculatedRideableTurretDummy
 from ._turrets import ExactoSniperTurretDummy, RideableTurret
 from ._weapons import ExactoSniper, HandThrownGrenade, WeaponDummy
 
-GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
+if TYPE_CHECKING:
+    from ._synced_entities import SyncedGraphicsEntity
+
+GRAPHICS_SPAWNABLES: dict[str, type[SyncedGraphicsEntity]] = {
     e.cid(): e
     for e in [
         WeaponDummy,

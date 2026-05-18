@@ -8,10 +8,14 @@ Authors: Nilusink
 """
 # ruff: noqa: T201
 
+from __future__ import annotations
+
 import ctypes
 import typing as tp
 from multiprocessing import Lock, shared_memory
-from multiprocessing.shared_memory import SharedMemory
+
+if tp.TYPE_CHECKING:
+    from multiprocessing.shared_memory import SharedMemory
 
 # region constants
 MAX_ENTITIES: int = 32_000

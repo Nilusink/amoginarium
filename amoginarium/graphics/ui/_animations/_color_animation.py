@@ -7,24 +7,31 @@ Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from types import EllipsisType
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from amoginarium.shared.utility import Color, convert_color
 
-from ._animation_types import anim_color_t, anim_color_time_t, anim_color_values_t
-from ._animation_types import anim_input_t, AnimatedColorValues
+from ._animation_types import AnimatedColorValues
 from ._multi_animation import MultiAnimation
+
+if TYPE_CHECKING:
+    from types import EllipsisType
+
+    from ._animation_types import anim_color_t, anim_color_time_t
+    from ._animation_types import anim_color_values_t, anim_input_t
 
 
 class ColorAnimation(MultiAnimation):
-    """RGBA float animation for Color"""
+    """RGBA float animation for Color."""
 
     __color: Color
 
     def __init__(self, value: anim_color_values_t) -> None:
         """
         Create a Color animation
-        :param value: Color animation values
+        :param value: Color animation values.
         """
         parsed_value = self.__convert_anim_color_values(value)
 
@@ -46,15 +53,13 @@ class ColorAnimation(MultiAnimation):
 
         # Initialize the stored Color object using the current values calculated by MultiAnimation
         current = super().current_value
-        self.__color = convert_color(
-            current if current else (0.0, 0.0, 0.0, 0.0), convert_to=Color
-        )
+        self.__color = convert_color(current or (0.0, 0.0, 0.0, 0.0), convert_to=Color)
 
     def update(self, delta: float) -> Color:
         """
         Update the animations
         :param delta: Time since the last update in seconds
-        :return: New color
+        :return: New color.
         """
         super().update(delta)
         self.__color.rgb1 = super().current_value
@@ -163,4 +168,5 @@ class ColorAnimation(MultiAnimation):
                     collapse_curve=values[7] if length > 7 else ...,
                 )
 
-        raise ValueError(f"Unsupported conversion format: {values}")
+        msg = f"Unsupported conversion format: {values}"
+        raise ValueError(msg)

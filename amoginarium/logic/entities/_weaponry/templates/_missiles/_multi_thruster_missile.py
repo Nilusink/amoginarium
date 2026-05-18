@@ -8,16 +8,24 @@ Created: 11.05.2026
 Authors: Nilusink
 """
 
-from ctypes import Array
-from types import EllipsisType
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from amoginarium.shared import base_entity_t, Coalitions, MissileCIDs
+from amoginarium.shared import MissileCIDs
 from amoginarium.shared.utility import normalize_angle_neg, PI, PI_2, Vec2
 
-from ...._base import LogicGameEntity
 from ._guided_multi_stage_missile import GuidedMultiStageMissile
+
+if TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions
+
+    from ...._base import LogicGameEntity
 
 
 class MultiThrusterMissile(GuidedMultiStageMissile):

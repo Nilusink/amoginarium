@@ -11,7 +11,7 @@ Authors: Nilusink
 import json
 import math
 
-data = json.load(open("graphic_debug.json", "r"))
+data = json.load(open("graphic_debug.json", "r", encoding="utf-8"))
 
 
 # filter out first second

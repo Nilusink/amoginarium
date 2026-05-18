@@ -7,21 +7,26 @@ Created: 01.03.2026
 Authors: LukasKrah, Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from ....shared.utility import coord_t
-from ...sound_effect import GraphicsSoundEffect
 from ...render_bindings import renderer
-from .._animations import anim_color_values_t, anim_float_values_t
-from .._animations import anim_vec2_values_t, ColorAnimation
-from .._animations import create_float_animation, FloatAnimation, Vec2Animation
-from .._base import UIEntity, UIEventElement
+from .._animations import ColorAnimation, create_float_animation, Vec2Animation
+from .._base import UIEventElement
 from .._surface_renderer import PygameSurfaceRenderer
 from .._types import Anchor, Positions
 
+if tp.TYPE_CHECKING:
+    from ....shared.utility import coord_t
+    from ...sound_effect import GraphicsSoundEffect
+    from .._animations import anim_color_values_t, anim_float_values_t
+    from .._animations import anim_vec2_values_t, FloatAnimation
+    from .._base import UIEntity
+
 
 class UIRectangle(UIEventElement):
-    """UI rectangle with basic sounds and animations"""
+    """UI rectangle with basic sounds and animations."""
 
     __bg_color_animation: ColorAnimation
     __border_color_animation: ColorAnimation
@@ -80,7 +85,7 @@ class UIRectangle(UIEventElement):
         :param size_extend: Hover animated size expansion
         :param on_enter_sound: Sound to play when the cursor enters the rectangle
         :param on_leave_sound: Sound to play when the cursor leaves the rectangle
-        :param on_click_sound: Sound to play when the cursor clicks the rectangle
+        :param on_click_sound: Sound to play when the cursor clicks the rectangle.
         """
         super().__init__(
             position=position,
@@ -136,7 +141,7 @@ class UIRectangle(UIEventElement):
         self.__border_color_animation = ColorAnimation(value)
 
     def __on_cursor_enter(self) -> None:
-        """Called when a cursor enters the rectangle"""
+        """Called when a cursor enters the rectangle."""
         if self.__on_hover_sound is not None:
             self.__on_hover_sound.play()
         self.__extend_animation.extend()
@@ -146,7 +151,7 @@ class UIRectangle(UIEventElement):
         self.__radius_animation.extend()
 
     def __on_cursor_leave(self) -> None:
-        """Called when a cursor leaves the rectangle"""
+        """Called when a cursor leaves the rectangle."""
         if self.__on_leave_sound is not None:
             self.__on_leave_sound.play()
         self.__extend_animation.contract()
@@ -156,7 +161,7 @@ class UIRectangle(UIEventElement):
         self.__radius_animation.collapse()
 
     def __on_cursor_in_buffer(self) -> None:
-        """Called when a cursor is right on the edge of the rectangle"""
+        """Called when a cursor is right on the edge of the rectangle."""
         self.__extend_animation.stop()
         self.__bg_color_animation.stop()
         self.__border_color_animation.stop()

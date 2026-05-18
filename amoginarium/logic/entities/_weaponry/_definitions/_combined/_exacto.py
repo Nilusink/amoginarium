@@ -11,17 +11,23 @@ from __future__ import annotations
 
 import math as m
 import typing as tp
-from ctypes import Array
-from types import EllipsisType
 
-from amoginarium.shared import base_entity_t, Coalitions, DummyCIDs
-from amoginarium.shared import TurretCIDs, VisibleGameEntityLike, WeaponCIDs
+from amoginarium.shared import DummyCIDs, TurretCIDs, WeaponCIDs
 from amoginarium.shared.audio import Sniper as SniperSound
-from amoginarium.shared.utility import coord_t, get_default, normalize_angle, Vec2
+from amoginarium.shared.utility import get_default, normalize_angle, Vec2
 
-from ...._base import CollisionType, GameCollisions, LogicGameEntity
+from ...._base import GameCollisions
 from ...templates import AerodynamicEntity, BaseTurret
 from ...templates import BaseWeapon, RadarSensor, TargetSolution
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions, VisibleGameEntityLike
+    from amoginarium.shared.utility import coord_t
+
+    from ...._base import CollisionType, LogicGameEntity
 
 
 class ExactoBullet(AerodynamicEntity):
@@ -107,7 +113,7 @@ class ExactoBullet(AerodynamicEntity):
 
 
 class ExactoSniper(BaseWeapon):
-    """exacto sniper"""
+    """exacto sniper."""
 
     _CID = WeaponCIDs.exacto_sniper
     _max_range = 3500
@@ -219,7 +225,7 @@ class ExactoTurret(BaseTurret):
         self._current_target = None
 
     def __get_target(self) -> Vec2 | None:
-        """return current target for exacto"""
+        """Return current target for exacto."""
         if self._current_target:
             if self._current_target in self.available_targets:
                 # raycast towards target

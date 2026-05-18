@@ -90,7 +90,7 @@ class _WindowsMonitorService:
         Calculates a bounding box encompassing ALL monitors the window intersects.
         Automatically bridges gaps in odd arrangements.
         Only expands if the window penetrates at least 1/3 of the target screen.
-        :returns: (top_left, size, whether its a combined monitor)
+        :returns: (top_left, size, whether its a combined monitor).
         """
         if not self.__window:
             return self.__top_left, self.__size, False
@@ -105,7 +105,7 @@ class _WindowsMonitorService:
 
         all_monitors: list[tuple[int, int, int, int]] = []
 
-        def enum_callback(hMonitor, hdcMonitor, lprcMonitor, dwData):
+        def enum_callback(hMonitor, hdcMonitor, lprcMonitor, dwData) -> int:
             r = lprcMonitor.contents
             all_monitors.append((r.left, r.top, r.right, r.bottom))
             return 1

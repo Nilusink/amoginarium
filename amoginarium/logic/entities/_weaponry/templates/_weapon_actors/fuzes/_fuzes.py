@@ -7,27 +7,31 @@ Created: 08.05.2026
 Authors: Nilusink
 """
 
+from __future__ import annotations
+
 import typing as tp
-from types import EllipsisType
 
 from icecream import ic
 
-from amoginarium.shared.collision_detection import CollisionEvent
 from amoginarium.shared.utility import Vec2
 
 from ....._base import GameCollisions
 from ._base import BaseFuze
 
 if tp.TYPE_CHECKING:
+    from types import EllipsisType
+
+    from amoginarium.shared.collision_detection import CollisionEvent
+
     from ..._bullets import Bullet
 
 
 class TTLFuze(BaseFuze):
-    """detonates after a mult*ttl"""
+    """detonates after a mult*ttl."""
 
     def __init__(
         self,
-        parent: "Bullet",
+        parent: Bullet,
         ttl: float,
         *,
         offset: Vec2 | EllipsisType = ...,
@@ -47,11 +51,11 @@ class TTLFuze(BaseFuze):
 
 
 class TTLMultFuze(TTLFuze):
-    """multiplies the ttl"""
+    """multiplies the ttl."""
 
     def __init__(
         self,
-        parent: "Bullet",
+        parent: Bullet,
         ttl: float,
         mult: float,
         *,
@@ -64,11 +68,11 @@ class TTLMultFuze(TTLFuze):
 
 
 class PositionFuze(BaseFuze):
-    """fuzes based specified target position (static)"""
+    """fuzes based specified target position (static)."""
 
     def __init__(
         self,
-        parent: "Bullet",
+        parent: Bullet,
         position: Vec2,
         distance: float,
         *,
@@ -93,11 +97,11 @@ class PositionFuze(BaseFuze):
 
 
 class ProximityFuze(BaseFuze):
-    """fuzed if anything comes closer to fuze than a specified distance"""
+    """fuzed if anything comes closer to fuze than a specified distance."""
 
     def __init__(
         self,
-        parent: "Bullet",
+        parent: Bullet,
         distance: float,
         collision_exception_id: int,
         *,
@@ -140,11 +144,11 @@ class ProximityFuze(BaseFuze):
 
 
 class AltitudeFuze(BaseFuze):
-    """fuzes if height below fuze is less than x (must be above x first to arm)"""
+    """fuzes if height below fuze is less than x (must be above x first to arm)."""
 
     def __init__(
         self,
-        parent: "Bullet",
+        parent: Bullet,
         height: float,
         collision_exception_id: int,
         *,
@@ -181,6 +185,5 @@ class AltitudeFuze(BaseFuze):
                 if diff.y > 0:
                     self._parent.kill(self)
 
-        else:
-            if not entities:
-                self._armed = True
+        elif not entities:
+            self._armed = True

@@ -11,4 +11,4 @@ from .._base_actor import BaseActor
 
 
 class BaseFuze(BaseActor):
-    """bullet fuze"""
+    """bullet fuze."""
