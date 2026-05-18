@@ -6,7 +6,6 @@ Project: amoginarium
 Created: 18.05.2026
 Authors: Nilusink
 """
-from libc.stdint cimport uint8_t
 
 
 cpdef int array_get(object array, object pos, object default)

@@ -7,8 +7,6 @@ Created: 18.05.2026
 Authors: Nilusink
 """
 
-from libc.stdint cimport uint8_t
-
 import numpy as np
 
 

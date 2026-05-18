@@ -7,7 +7,6 @@ Created: 18.05.2026
 Authors: Nilusink
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
 
