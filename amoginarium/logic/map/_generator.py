@@ -10,6 +10,10 @@ Authors: Nilusink
 import numpy as np
 
 _RNG = np.random.default_rng()
+LEFT = 0
+RIGHT = 1
+TOP = 2
+BOTTOM = 3
 
 
 def generate_chunk_noise(
@@ -33,6 +37,7 @@ def generate_chunk_noise(
     small: np.ndarray = _RNG.random((size[0] // x_stretch, size[1]))
     chunk = np.repeat(small, x_stretch, axis=0)
 
+    # interface multiplier sizes
     x_start = int(size[0] / 5)
     x_mid = size[0] // 2
     x_end = size[0] - x_start
@@ -41,19 +46,39 @@ def generate_chunk_noise(
     y_mid = size[1] // 2
     y_end = size[1] - y_start
 
-    for interface in interfaces:
-        if interface == 0:  # left
-            chunk[0:x_mid, y_start:y_end] *= slice_multiplier
+    # wall multiplier sizes
+    x_wall_start = int(size[0] * 0.05)
+    x_wall_end = size[0] - x_wall_start
 
-        elif interface == 1:  # right
-            chunk[x_mid:-1, y_start:y_end] *= slice_multiplier
+    y_wall_start = int(size[1] * 0.05)
+    y_wall_end = size[1] - y_wall_start
 
-        elif interface == 2:  # top  # noqa: PLR2004
-            chunk[x_start:x_end, 0:y_mid] *= slice_multiplier
+    # check which sides should be open
+    if LEFT in interfaces:
+        chunk[:x_mid, y_start:y_end] *= slice_multiplier
 
-        else:  # bottom
-            chunk[x_start:x_end, y_mid:-1] *= slice_multiplier
+    else:
+        chunk[:x_wall_start, :] = 0
 
+    if RIGHT in interfaces:
+        chunk[x_mid:, y_start:y_end] *= slice_multiplier
+
+    else:
+        chunk[x_wall_end:, :] = 0
+
+    if TOP in interfaces:
+        chunk[x_start:x_end, :y_mid] *= slice_multiplier
+
+    else:
+        chunk[:, :y_wall_start] = 0
+
+    if BOTTOM in interfaces:
+        chunk[x_start:x_end, y_mid:] *= slice_multiplier
+
+    else:
+        chunk[:, y_wall_end:] = 0
+
+    # if spawn chunk, make sure the center is free
     if spawn_chunk:
         chunk[x_mid - 5 : x_mid + 5, y_mid - 5 : y_mid + 5] = 1
 

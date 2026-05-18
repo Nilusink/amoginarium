@@ -14,53 +14,111 @@ os.environ['SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS'] = '0'
 # Stop Windows DPI scaling from slightly altering the window size and triggering a loop
 os.environ['SDL_VIDEO_HIGHDPI_DISABLED'] = '1'
 
-from OpenGL.GL import glTranslate, glMatrixMode, glLoadIdentity, glTexCoord2f
-from OpenGL.GL import GL_PROJECTION, GL_SRC_ALPHA, GL_BLEND, GL_CLAMP_TO_EDGE
-from OpenGL.GL import glBindTexture, glTexParameteri, glTexImage2D, glEnable
-from OpenGL.GL import glGenTextures, glVertex2f, glColor3f, glColor4f, glEnd
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_ONE_MINUS_SRC_ALPHA
-from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT, GL_LINES
-from OpenGL.GL import GL_TEXTURE_WRAP_T, GL_TEXTURE_MIN_FILTER, GL_POLYGON
-from OpenGL.GL import glDisable, glBegin, glClearColor, glGetIntegerv
-from OpenGL.GL import glBlendFunc, glRotated, GL_NEAREST, GL_VIEWPORT
-from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_RGBA
-from OpenGL.GL import glTranslated, GL_TRIANGLE_STRIP, glStencilFunc, GL_KEEP
-from OpenGL.GL import glStencilOp, glStencilMask, GL_STENCIL_TEST, GL_ALWAYS
-from OpenGL.GL import GL_REPLACE, GL_EQUAL, glClear, GL_STENCIL_BUFFER_BIT
-from OpenGL.GL import GL_ALPHA_TEST, GL_FALSE, glViewport, glOrtho
-from OpenGL.GL import glPushMatrix, glPopMatrix, glTranslatef
-from OpenGL.GL import GL_QUADS, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
-from OpenGL.GL import (glEnableClientState, glDisableClientState, glVertexPointer,
-                       glDrawArrays)
-from OpenGL.GL import GL_VERTEX_ARRAY, GL_FLOAT, GL_MODELVIEW
-from OpenGL.GL import glAlphaFunc, GL_GREATER, glColorMask, GL_TRUE
-from OpenGL.GLU import gluOrtho2D
-
+import math as m
+import typing as tp
 from collections.abc import Sequence
 from types import EllipsisType
-from icecream import ic
-from PIL import Image
-import pygame as pg
-import typing as tp
+
 import numpy as np
-import math as m
-
-from amoginarium.shared.debugging import cum_timer
-from amoginarium.shared.utility import Vec2, Color, convert_coord, normalize_angle, fade
-from amoginarium.shared.utility import coord_t, convert_color, PI_2
-
-from ._base_renderer import BaseRenderer, tColor
-from .windows import WindowsMonitorService
-from .opengl_fonts import GLFont
+import pygame as pg
+from icecream import ic
+from OpenGL.GL import (
+    GL_ALPHA_TEST,
+    GL_ALWAYS,
+    GL_BLEND,
+    GL_CLAMP_TO_EDGE,
+    GL_COLOR_BUFFER_BIT,
+    GL_DEPTH_BUFFER_BIT,
+    GL_EQUAL,
+    GL_FALSE,
+    GL_FLOAT,
+    GL_GREATER,
+    GL_KEEP,
+    GL_LINEAR,
+    GL_LINES,
+    GL_MODELVIEW,
+    GL_NEAREST,
+    GL_ONE_MINUS_SRC_ALPHA,
+    GL_POLYGON,
+    GL_PROJECTION,
+    GL_QUADS,
+    GL_REPEAT,
+    GL_REPLACE,
+    GL_RGBA,
+    GL_SRC_ALPHA,
+    GL_STENCIL_BUFFER_BIT,
+    GL_STENCIL_TEST,
+    GL_TEXTURE_2D,
+    GL_TEXTURE_MAG_FILTER,
+    GL_TEXTURE_MIN_FILTER,
+    GL_TEXTURE_WRAP_S,
+    GL_TEXTURE_WRAP_T,
+    GL_TRIANGLE_STRIP,
+    GL_TRUE,
+    GL_UNSIGNED_BYTE,
+    GL_VERTEX_ARRAY,
+    GL_VIEWPORT,
+    glAlphaFunc,
+    glBegin,
+    glBindTexture,
+    glBlendFunc,
+    glClear,
+    glClearColor,
+    glColor3f,
+    glColor4f,
+    glColorMask,
+    glDisable,
+    glDisableClientState,
+    glDrawArrays,
+    glEnable,
+    glEnableClientState,
+    glEnd,
+    glGenTextures,
+    glGetIntegerv,
+    glLoadIdentity,
+    glMatrixMode,
+    glOrtho,
+    glPopMatrix,
+    glPushMatrix,
+    glRotated,
+    glStencilFunc,
+    glStencilMask,
+    glStencilOp,
+    glTexCoord2f,
+    glTexImage2D,
+    glTexParameteri,
+    glTranslate,
+    glTranslated,
+    glTranslatef,
+    glVertex2f,
+    glVertexPointer,
+    glViewport,
+)
+from OpenGL.GLU import gluOrtho2D
+from PIL import Image
 
 from amoginarium import pv
+from amoginarium.shared.debugging import cum_timer
+from amoginarium.shared.utility import (
+    PI_2,
+    Color,
+    Vec2,
+    convert_color,
+    convert_coord,
+    coord_t,
+    fade,
+    normalize_angle,
+)
 
+from ._base_renderer import BaseRenderer, tColor
+from .opengl_fonts import GLFont
+from .windows import WindowsMonitorService
 
 # define types
 
 
 # noinspection DuplicatedCode
-class OpenGLRenderer(BaseRenderer):
+class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
     __slots__ = (
         "__dynamic_text_fonts", "__static_text_graphics", "__static_text_id_counter", "__static_text_fonts",
         "__clock", "__window", "__previous_window_position", "__previous_window_size"

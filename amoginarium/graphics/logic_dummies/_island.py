@@ -21,7 +21,7 @@ from utility import WtfError
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared import IslandCIDs
-from amoginarium.shared.utility import Vec2, convert_coord, coord_t
+from amoginarium.shared.utility import Vec2, clamp, convert_coord, coord_t
 
 from ..textures import textures
 from ._synced_entities import SyncedGraphicsEntity
@@ -254,7 +254,7 @@ class Island(SyncedGraphicsEntity):
         super().__init__(sync_id=sync_id)
 
         self.load_textures()
-        self.__parsed_island: list[tuple[int, tuple[int, int]]] = []
+        self.__parsed_island: list[list[int]] = []
         self.__parse_island()
 
     def __parse_island(self) -> None:
@@ -304,14 +304,25 @@ class Island(SyncedGraphicsEntity):
             (False, False, False, True): self._textures.island_single_right_texture,
         }
 
+        self.__parsed_island = [[0] * n_columns for _ in range(n_rows)]
+
         # parse island
         for row in range(n_rows):
-            row_offset = self._image_size[1] * row
-
             for column in range(n_columns):
                 island_type = -1
-                # try to get adjacent blocks, else treat as air
+
                 if not isinstance(self._form, EllipsisType):
+                    try:
+                        island_type = self._form[row][column]
+
+                    except IndexError:
+                        continue
+
+                    # empty
+                    if island_type == _ISLAND_TYPE_AIR:
+                        continue
+
+                    # try to get adjacent blocks, else treat as air
                     block_top = _l_get(
                         _l_get(self._form, row - 1, [], default_on_neg=True),
                         column,
@@ -337,21 +348,11 @@ class Island(SyncedGraphicsEntity):
                         default_on_neg=True,
                     )
 
-                    try:
-                        island_type = self._form[row][column]
-
-                    except IndexError:
-                        continue
-
                 else:
                     block_top = row != 0
                     block_bottom = row != n_rows - 1
                     block_left = column != 0
                     block_right = column != n_columns - 1
-
-                # empty
-                if island_type == _ISLAND_TYPE_AIR:
-                    continue
 
                 # hole
                 if island_type == _ISLAND_TYPE_HOLE:
@@ -366,13 +367,14 @@ class Island(SyncedGraphicsEntity):
                     )
                     texture = texture_map[poly]
 
-                column_offset = self._image_size[0] * column
-                self.__parsed_island.append((texture, (column_offset, row_offset)))
+                self.__parsed_island[row][column] = texture
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:  # noqa: ARG002
         world_position = pv.global_vars.get_world_position()
         resolution = pv.global_vars.resolution_screen
         start_pos = self.world_position
+
+        world_end = world_position + resolution
 
         # check if island is on screen
         if (
@@ -386,23 +388,50 @@ class Island(SyncedGraphicsEntity):
         if self._highlight:
             renderer.start_stencil(True)
 
-        for texture_id, (column_offset, row_offset) in self.__parsed_island:
-            pos = start_pos + Vec2().from_cartesian(column_offset, row_offset)
-            size = self._image_size
+        # for texture_id, (column_offset, row_offset) in self.__parsed_island:
+        n_rows = len(self.__parsed_island)
+        n_cols = len(self.__parsed_island[0])
 
-            renderer.draw_textured_quad(
-                texture_id,
-                pos,
-                size,
-                layer=layer,
-                offscreen_check=True,
-            )
+        vis_row_start = int(
+            clamp((world_position.y - self.pos.y) // self._image_size[1], 0, n_rows)
+        )
+        vis_row_end = int(
+            clamp((world_end.y - self.pos.y) // self._image_size[1] + 1, 0, n_rows)
+        )
+
+        vis_col_start = int(
+            clamp((world_position.x - self.pos.x) // self._image_size[0], 0, n_cols)
+        )
+        vis_col_end = int(
+            clamp((world_end.x - self.pos.x) // self._image_size[1] + 1, 0, n_cols)
+        )
+
+        # only iterate columns and rows that are on screen
+        for row in range(max(vis_row_start, 0), min(vis_row_end, n_rows)):
+            for col in range(max(vis_col_start, 0), min(vis_col_end, n_cols)):
+                # check if air
+                if (texture_id := self.__parsed_island[row][col]) > 0:
+                    pos = (
+                        start_pos.x + col * self._image_size[0],
+                        start_pos.y + row * self._image_size[1],
+                    )
+                    size = self._image_size
+
+                    renderer.draw_textured_quad(
+                        texture_id,
+                        pos,
+                        size,
+                        layer=layer,
+                        offscreen_check=False,
+                    )
 
         if self._highlight:
             renderer.enable_stencil(True)
 
             renderer.draw_rect(
-                self.world_position - self.size / 2, self.size * 2, (1, 1, 1, 0.5)
+                self.world_position - self.size / 2,
+                self.size * 2,
+                (1, 1, 1, 0.5),
             )
 
             renderer.disable_stencil()

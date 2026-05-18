@@ -28,7 +28,14 @@ ISLAND_SIZE: int = 64
 CHUNK_SIZE = ISLAND_SIZE * 96
 CHUNK_SMOOTHING_ITERATIONS: int = 16
 UPDATE_INTERVAL = 0.0
-MAX_LEN: int = 8
+MAX_LEN: int = 16
+
+PATH_DIR_WEIGHTS: list[int] = [
+    6,
+    2,
+    1,
+    1,
+]
 
 # spawn stuff
 IDEAL_PLATEAU_LENGTH: int = 8
@@ -286,12 +293,6 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                 old_pos: tuple[int, int] = int(_old_pos.x), int(_old_pos.y)
 
                 # create new direction
-                viable_weights = [
-                    8,
-                    3,
-                    1,
-                    1,
-                ]
                 viable_offsets = [
                     (int(old_pos[0]) + 1, int(old_pos[1])),
                     (int(old_pos[0]) - 1, int(old_pos[1])),
@@ -300,7 +301,9 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                 ]
                 new_positions = []
                 weights = []
-                for offset, weight in zip(viable_offsets, viable_weights, strict=True):
+                for offset, weight in zip(
+                    viable_offsets, PATH_DIR_WEIGHTS, strict=True
+                ):
                     if not chunks.get(offset):
                         new_positions.append(offset)
                         weights.append(weight)
