@@ -5,6 +5,7 @@ Project: amoginarium
 Created: 28.04.2026
 Authors: LukasKrah
 """
+# ruff: noqa: T201
 
 import os
 import re

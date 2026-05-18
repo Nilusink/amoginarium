@@ -7,6 +7,7 @@ Created: 11.03.2026
 Authors: Nilusink, LukasKrah
 """
 
+# ruff: disable[ERA001]
 # from setuptools import setup
 # from Cython.Build import cythonize
 #
@@ -15,6 +16,8 @@ Authors: Nilusink, LukasKrah
 #     ext_modules=cythonize("_ccalculations.pyx", compiler_directives={"boundscheck": False, "wraparound": False}),
 #     zip_safe=False,
 # )
+# ruff: enable[ERA001]
+
 import os
 import sys
 

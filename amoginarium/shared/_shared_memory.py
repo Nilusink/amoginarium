@@ -7,6 +7,7 @@ shared memory objects
 Author:
 Nilusink
 """
+# ruff: noqa: T201
 
 import ctypes
 import typing as tp

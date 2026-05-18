@@ -6,6 +6,7 @@ Project: amoginarium
 Created: 07.04.2026
 Authors: Nilusink
 """
+# ruff: noqa: T201
 
 import os
 

@@ -7,6 +7,7 @@ defines a few console colors
 Author:
 Nilusink
 """
+# ruff: noqa: T201
 
 import os
 import typing as tp

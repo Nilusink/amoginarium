@@ -7,6 +7,7 @@ constant values reused in the program
 Author:
 Nilusink
 """
+# ruff: noqa: T201
 
 import numpy as np
 

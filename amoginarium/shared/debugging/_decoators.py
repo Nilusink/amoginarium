@@ -7,6 +7,7 @@ Defines the core game
 Author:
 Nilusink
 """
+# ruff: noqa: T201
 
 import typing as tp
 from time import perf_counter_ns

@@ -6,6 +6,7 @@ Project: amoginarium
 Created: 15.03.2024
 Authors: Nilusink
 """
+# ruff: noqa: T201
 
 import json
 import math
