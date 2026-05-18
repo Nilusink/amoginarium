@@ -8,6 +8,8 @@ Author:
 Nilusink
 """
 
+from __future__ import annotations
+
 import random
 import typing as tp
 from enum import Enum
@@ -17,7 +19,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pygame as pg
 from icecream import ic
-from numpy.typing import NDArray
 from scipy import ndimage
 
 from amoginarium import pv
@@ -25,6 +26,9 @@ from amoginarium.base import BaseGame
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.logic.map import array_get, generate_chunk_noise, iterate_chunk, to_str
 from amoginarium.shared.utility import Color, Vec2
+
+if tp.TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 DEBUG: bool = False
 ISLAND_SIZE: int = 64
@@ -85,23 +89,23 @@ def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
 
 def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
     """Draw interface for chunk."""
-    _center_pos = pos.copy()
-    _center_pos += CHUNK_SIZE / 2
-    _pos = _center_pos.copy()
+    center_pos_ = pos.copy()
+    center_pos_ += CHUNK_SIZE / 2
+    pos_ = center_pos_.copy()
     if if_type == 0:
-        _pos.x -= CHUNK_SIZE / 2
+        pos_.x -= CHUNK_SIZE / 2
 
     elif if_type == 1:
-        _pos.x += CHUNK_SIZE / 2
+        pos_.x += CHUNK_SIZE / 2
 
-    elif if_type == 2:  # noqa: PLR2004
-        _pos.y -= CHUNK_SIZE / 2
+    elif if_type == 2:
+        pos_.y -= CHUNK_SIZE / 2
 
     else:
-        _pos.y += CHUNK_SIZE / 2
+        pos_.y += CHUNK_SIZE / 2
 
     renderer.draw_thick_line(
-        _center_pos, _pos, Color().from_1(1, 1, 0), thickness=CHUNK_SIZE / 10
+        center_pos_, pos_, Color().from_1(1, 1, 0), thickness=CHUNK_SIZE / 10
     )
 
 
@@ -244,7 +248,7 @@ def get_spawn_points(  # noqa: PLR0914
         if not array_get(
             world_mask,
             world_pos,
-            False,
+            False,  # noqa: FBT003
         ):
             try:
                 world[world_pos] = 1.5
@@ -338,8 +342,8 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             # update chunks
             if perf_counter() - last_update > UPDATE_INTERVAL:
                 # create new chunk
-                _old_pos, *_ = current_chunk
-                old_pos: tuple[int, int] = int(_old_pos.x), int(_old_pos.y)
+                old_pos_, *_ = current_chunk
+                old_pos: tuple[int, int] = int(old_pos_.x), int(old_pos_.y)
 
                 # create new direction
                 viable_offsets = [
@@ -527,7 +531,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
         iterate_chunk(big_chunk, 2, 1)
 
         # group islands
-        mask = big_chunk < 0.5  # noqa: PLR2004
+        mask = big_chunk < 0.5
         structure = np.array(  # use 4-connected islands (no diagonals allowed)
             [
                 [0, 1, 0],
