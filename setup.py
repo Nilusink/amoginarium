@@ -21,8 +21,12 @@ Authors: Nilusink, LukasKrah
 import os
 import sys
 
+import setuptools.config.pyprojecttoml
 from Cython.Build import cythonize
 from setuptools import Extension, setup
+
+setuptools.config.pyprojecttoml.read_configuration = lambda *_args, **_kwargs: {}
+
 
 # 1. Determine OS-specific compiler flags for OpenMP and Maximum Speed
 c_args = []
@@ -72,7 +76,7 @@ setup(
             "wraparound": False,
             "cdivision": True,
         },
-    )
+    ),
 )
 
 
