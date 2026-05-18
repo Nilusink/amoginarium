@@ -1,6 +1,14 @@
-from ._sound_effect import GraphicsSoundEffect, PresetGraphicsSoundEffect
+"""
+Exposes graphical dummy representations of logic entities for rendering.
+
+Path: amoginarium/graphics/logic_dummies/__init__.py
+Project: amoginarium
+Created: 29.03.2026
+Authors: Nilusink
+"""
+
+from ._bullet import BulletDummy
+from ._island import Island, ISLANDS
+from ._player import PlayerDummy
 from ._spawnables import GRAPHICS_SPAWNABLES
 from ._synced_entities import SE_MANAGER
-from ._island import ISLANDS, Island
-from ._bullet import BulletDummy
-from ._player import PlayerDummy

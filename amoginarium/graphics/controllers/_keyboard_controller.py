@@ -1,14 +1,15 @@
 """
-_keyboard_controller.py
-25. January 2024
+Uses the keyboard as a controller.
 
-uses the keyboard as a controller
-
-Author:
-Nilusink
+Path: amoginarium/graphics/controllers/_keyboard_controller.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink, LukasKrah
 """
-from dataclasses import dataclass
+
 import typing as tp
+from dataclasses import dataclass
+
 import pygame as pg
 
 from amoginarium import pv
@@ -35,15 +36,12 @@ class KeyboardController(Controller):
 
         self._controls = Keyboardcontrols()
 
-    def update(self, delta):
+    def update(self, delta) -> None:
         pressed_keys = pg.key.get_pressed()
         mouse_buttons = pg.mouse.get_pressed(5)
         pos = pg.mouse.get_pos()
         screen_size_offset = pv.global_vars.get_screen_size_offset()
-        pos = (
-            (pos[0] - screen_size_offset.x),
-            (pos[1] - screen_size_offset.y)
-        )
+        pos = ((pos[0] - screen_size_offset.x), (pos[1] - screen_size_offset.y))
 
         # read controls
         up = pressed_keys[self._controls.up]

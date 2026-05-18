@@ -1,20 +1,24 @@
 """
-pitch_changer.py
-07.04.2026
+Changes the pitch of a sound effect.
 
-changes the pitch of a sound effect
-
-Author:
-Nilusink
+Path: pitch_changer.py
+Project: amoginarium
+Created: 07.04.2026
+Authors: Nilusink
 """
+# ruff: noqa: T201
 
 import os
+
 import librosa
 import soundfile as sf
 
 
 def generate_pitch_variants(
-    input_path: str, output_dir: str, semitone_steps: list[float], prefix: str = None
+    input_path: str,
+    output_dir: str,
+    semitone_steps: list[float],
+    prefix: str | None = None,
 ) -> list[str]:
     """
     Generate pitch-shifted variants of an audio file while preserving duration.
@@ -27,8 +31,8 @@ def generate_pitch_variants(
 
     Returns:
         List of output file paths
-    """
 
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     # --- Load audio ---
@@ -66,7 +70,7 @@ if __name__ == "__main__":
     files = generate_pitch_variants(
         input_path=input_file,
         output_dir=os.path.join("/".join(input_file.split("/")[:-1]), ""),
-        semitone_steps=[-1, -.5, 0, .5, 1],
+        semitone_steps=[-1, -0.5, 0, 0.5, 1],
     )
 
     print(files)

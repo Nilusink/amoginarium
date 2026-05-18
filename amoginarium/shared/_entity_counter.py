@@ -1,16 +1,16 @@
 """
-_entity_counter.py
-28.03.2026
+Keeps track of all entity ids.
 
-keeps track of all entity ids
-
-Author:
-Nilusink
+Path: amoginarium/shared/_entity_counter.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink
 """
+
 from __future__ import annotations
+
 from icecream import ic
 
-from .debugging import run_with_debug
 from ._shared_memory import MAX_ENTITIES, MAX_INVENTORIES
 
 
@@ -22,7 +22,7 @@ class _EntityCounter:
 
     def get_id(self) -> int:
         """
-        get next free entity id
+        Get next free entity id.
         """
         start_id = self._current_id
         while True:
@@ -36,11 +36,12 @@ class _EntityCounter:
 
             if self._current_id == start_id:
                 # ic(start_id, self._current_id, len(self._used_ids), self._size, self._used_ids)
-                raise RuntimeError("entity limit reached")
+                msg = "entity limit reached"
+                raise RuntimeError(msg)
 
     def pop_id(self, id: int) -> bool:
         """
-        true if id was removed
+        True if id was removed.
         """
         if id not in self._used_ids:
             return False
@@ -49,7 +50,7 @@ class _EntityCounter:
         return True
 
     def reset(self) -> None:
-        """reset the counter"""
+        """Reset the counter."""
         self._used_ids.clear()
         self._current_id = 0
 

@@ -1,6 +1,7 @@
 """
-amoginarium/logic/_tuplemath.pyx
+Fast tuple basic math operations.
 
+Path: amoginarium/shared/utility/_tuplemath.pyx
 Project: amoginarium
 Created: 03.04.2026
 Authors: LukasKrah

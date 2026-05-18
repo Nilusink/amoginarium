@@ -1,37 +1,41 @@
 """
-_fuzes.py
-08.05.2026
+Different type of fuzes.
 
-Different type of fuzes
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/fuzes/_fuzes.py
+Project: amoginarium
+Created: 08.05.2026
+Authors: Nilusink
 """
 
-from types import EllipsisType
-from icecream import ic
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared.collision_detection import CollisionEvent
+from icecream import ic
+
 from amoginarium.shared.utility import Vec2
 
 from ....._base import GameCollisions
 from ._base import BaseFuze
 
 if tp.TYPE_CHECKING:
+    from types import EllipsisType
+
+    from amoginarium.shared.collision_detection import CollisionEvent
+
     from ..._bullets import Bullet
 
 
 class TTLFuze(BaseFuze):
-    """detonates after a mult*ttl"""
+    """detonates after a mult*ttl."""
 
     def __init__(
-            self,
-            parent: "Bullet",
-            ttl: float,
-            *,
-            offset: Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: Bullet,
+        ttl: float,
+        *,
+        offset: Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
@@ -47,32 +51,33 @@ class TTLFuze(BaseFuze):
 
 
 class TTLMultFuze(TTLFuze):
-    """multiplies the ttl"""
+    """multiplies the ttl."""
 
     def __init__(
-            self,
-            parent: "Bullet",
-            ttl: float,
-            mult: float,
-            *,
-            offset: Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: Bullet,
+        ttl: float,
+        mult: float,
+        *,
+        offset: Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
-        super().__init__(parent, ttl=ttl * mult, offset=offset,
-                         function_delay=function_delay)
+        super().__init__(
+            parent, ttl=ttl * mult, offset=offset, function_delay=function_delay
+        )
 
 
 class PositionFuze(BaseFuze):
-    """fuzes based specified target position (static)"""
+    """fuzes based specified target position (static)."""
 
     def __init__(
-            self,
-            parent: "Bullet",
-            position: Vec2,
-            distance: float,
-            *,
-            offset: Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: Bullet,
+        position: Vec2,
+        distance: float,
+        *,
+        offset: Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
@@ -92,16 +97,16 @@ class PositionFuze(BaseFuze):
 
 
 class ProximityFuze(BaseFuze):
-    """fuzed if anything comes closer to fuze than a specified distance"""
+    """fuzed if anything comes closer to fuze than a specified distance."""
 
     def __init__(
-            self,
-            parent: "Bullet",
-            distance: float,
-            collision_exception_id: int,
-            *,
-            offset: Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: Bullet,
+        distance: float,
+        collision_exception_id: int,
+        *,
+        offset: Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
@@ -110,7 +115,7 @@ class ProximityFuze(BaseFuze):
             GameCollisions.collision_group_turrets,
             GameCollisions.collision_group_players,
             GameCollisions.collision_group_islands,
-            GameCollisions.collision_group_shields
+            GameCollisions.collision_group_shields,
         ]
         self._distance = distance
 
@@ -139,16 +144,16 @@ class ProximityFuze(BaseFuze):
 
 
 class AltitudeFuze(BaseFuze):
-    """fuzes if height below fuze is less than x (must be above x first to arm)"""
+    """fuzes if height below fuze is less than x (must be above x first to arm)."""
 
     def __init__(
-            self,
-            parent: "Bullet",
-            height: float,
-            collision_exception_id: int,
-            *,
-            offset: Vec2 | EllipsisType = ...,
-            function_delay: float = 0,
+        self,
+        parent: Bullet,
+        height: float,
+        collision_exception_id: int,
+        *,
+        offset: Vec2 | EllipsisType = ...,
+        function_delay: float = 0,
     ) -> None:
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
@@ -180,6 +185,5 @@ class AltitudeFuze(BaseFuze):
                 if diff.y > 0:
                     self._parent.kill(self)
 
-        else:
-            if not entities:
-                self._armed = True
+        elif not entities:
+            self._armed = True

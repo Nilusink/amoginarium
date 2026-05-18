@@ -1,21 +1,31 @@
 """
-_multi_thruster_missile.py
-11.05.2026
+Missile that maneuvers by applying small thrusters.
 
-missile that maneuvers by applying small thrusters
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
+      _multi_thruster_missile.py
+Project: amoginarium
+Created: 11.05.2026
+Authors: Nilusink
 """
-from types import EllipsisType
-from ctypes import Array
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from amoginarium.shared.utility import Vec2, normalize_angle_neg, PI, PI_2
-from amoginarium.shared import MissileCIDs, base_entity_t, Coalitions
+from amoginarium.shared import MissileCIDs
+from amoginarium.shared.utility import normalize_angle_neg, PI, PI_2, Vec2
 
-from ...._base import LogicGameEntity
 from ._guided_multi_stage_missile import GuidedMultiStageMissile
+
+if TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions
+
+    from ...._base import LogicGameEntity
 
 
 class MultiThrusterMissile(GuidedMultiStageMissile):
@@ -23,19 +33,19 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
     _DEBUG = True
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            *,
-            initial_facing: float | EllipsisType = ...,
-            rudder_size: float | EllipsisType = ...,
-            rudder_max_angle: float | EllipsisType = ...,
-            base_mass: float | EllipsisType = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            **kwargs,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        *,
+        initial_facing: float | EllipsisType = ...,
+        rudder_size: float | EllipsisType = ...,
+        rudder_max_angle: float | EllipsisType = ...,
+        base_mass: float | EllipsisType = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        **kwargs,
     ) -> None:
         super().__init__(
             runtime_buffer,
@@ -82,9 +92,7 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
             if self._current_stage == 0:
                 target_delta.y = min(0, target_delta.y)
 
-            angle_delta = normalize_angle_neg(
-                target_delta.angle - self.facing.angle
-            )
+            angle_delta = normalize_angle_neg(target_delta.angle - self.facing.angle)
             angular_target_velocity = np.sign(angle_delta) * max(0.2, abs(angle_delta))
 
         else:
@@ -167,42 +175,67 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
         if self._rotational_thrust_values[0] != 0:
             self.apply_force(
                 Vec2().from_polar(PI_2, self._rotational_thrust_values[0]),
-                Vec2().from_cartesian(-self.size.x / 3, 0)  # apply at back of missile
+                Vec2().from_cartesian(-self.size.x / 3, 0),  # apply at back of missile
             )
 
         if self._rotational_thrust_values[1] != 0:
             self.apply_force(
                 Vec2().from_polar(PI_2 * 3, self._rotational_thrust_values[1]),
-                Vec2().from_cartesian(-self.size.x / 3, 0)  # apply at back of missile
+                Vec2().from_cartesian(-self.size.x / 3, 0),  # apply at back of missile
             )
 
         # apply directional thrust
         for direction in range(4):
             self.apply_force(
-                Vec2().from_polar(PI_2 * direction,
-                                  self._directional_thrust_values[direction]),
-                Vec2()
+                Vec2().from_polar(
+                    PI_2 * direction, self._directional_thrust_values[direction]
+                ),
+                Vec2(),
             )
 
         # update debug entity
         if self._DEBUG:
             self._dbe.p1 = self.position + Vec2().from_polar(
                 self.facing.angle + 0,
-                max(200 * (self._directional_thrust_values[0]
-                           / self._directional_thrust_amount), 1),
+                max(
+                    200
+                    * (
+                        self._directional_thrust_values[0]
+                        / self._directional_thrust_amount
+                    ),
+                    1,
+                ),
             )
             self._dbe.p2 = self.position + Vec2().from_polar(
                 self.facing.angle + PI_2,
-                max(200 * (self._directional_thrust_values[1]
-                           / self._directional_thrust_amount), 1),
+                max(
+                    200
+                    * (
+                        self._directional_thrust_values[1]
+                        / self._directional_thrust_amount
+                    ),
+                    1,
+                ),
             )
             self._dbe.p3 = self.position + Vec2().from_polar(
                 self.facing.angle + PI,
-                max(200 * (self._directional_thrust_values[2]
-                           / self._directional_thrust_amount), 1),
+                max(
+                    200
+                    * (
+                        self._directional_thrust_values[2]
+                        / self._directional_thrust_amount
+                    ),
+                    1,
+                ),
             )
             self._dbe.p4 = self.position + Vec2().from_polar(
                 self.facing.angle + PI_2 * 3,
-                max(200 * (self._directional_thrust_values[3]
-                           / self._directional_thrust_amount), 1),
+                max(
+                    200
+                    * (
+                        self._directional_thrust_values[3]
+                        / self._directional_thrust_amount
+                    ),
+                    1,
+                ),
             )

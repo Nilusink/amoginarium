@@ -1,14 +1,16 @@
 """
-amoginarium/settings/_settings.py
+Manages persistent game configuration via JSON file I/O (not used).
 
+Path: amoginarium/shared/settings/_settings.py
 Project: amoginarium
+Created: 01.03.2026
+Authors: LukasKrah
 """
 
 from __future__ import annotations
 
-from json import load, dump
 import typing as tp
-
+from json import dump, load
 
 ##################################################
 #                     Code                       #
@@ -33,7 +35,7 @@ class _Settings:
 
     def read(self) -> None:
         try:
-            with open(self.__file, "r") as file:
+            with open(self.__file, "r", encoding="utf-8") as file:
                 self.__data = load(file)
         except FileNotFoundError:
             self.__data = {
@@ -42,7 +44,7 @@ class _Settings:
                 "master_volume": 1.0,
                 "gun_volume": 1.0,
                 "music_volume": 1.0,
-                "scaling": 0
+                "scaling": 0,
             }
             for key, value in self.__data.items():
                 self.__setattr__(key, value)
@@ -56,7 +58,7 @@ class _Settings:
         for key in self.__data:
             self.__data[key] = getattr(self, key)
 
-        with open(self.__file, "w") as file:
+        with open(self.__file, "w", encoding="utf-8") as file:
             dump(self.__data, file, indent=4)
 
 

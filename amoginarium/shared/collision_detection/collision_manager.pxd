@@ -1,8 +1,9 @@
 # cython: language_level=3
-from libcpp.vector cimport vector
+from libc.stdint cimport uint64_t
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
-from libc.stdint cimport uint64_t
+from libcpp.vector cimport vector
+
 
 cdef struct EntityData:
     int id

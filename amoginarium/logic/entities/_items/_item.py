@@ -1,51 +1,64 @@
 """
-_item.py
-06.04.2026
+All items should inherit from this.
 
-all items should inherit from this
-
-Author:
-Nilusink, LukasKrah
+Path: amoginarium/logic/entities/_items/_item.py
+Project: amoginarium
+Created: 01.04.2026
+Authors: Nilusink, LukasKrah
 """
 
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
+from __future__ import annotations
+
 import math as m
+import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared import base_entity_t, ProcessCommand, BaseCommandType
-from amoginarium.shared.utility import Vec2
 from amoginarium import pv
-from shared.collision_detection import CollisionEvent
+from amoginarium.shared import BaseCommandType, ProcessCommand
+from amoginarium.shared.utility import Vec2
 
-from .._base import GravityAffected, Updated, LogicGameEntity, GameCollisions, CollisionType, CollisionLogicEntity
+from .._base import GameCollisions, GravityAffected, LogicGameEntity, Updated
 
 if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.collision_detection import CollisionEvent
+
+    from .._base import CollisionType
     from .._player import Player
     from .._world import Island
 
 
 class Item(LogicGameEntity):
-    """base item class"""
+    """base item class."""
+
     __slots__ = ("_current_timeout",)
 
     # region ClassVars
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = GameCollisions.collision_group_items
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = (
+        GameCollisions.collision_group_items
+    )
     _drop_timeout: tp.ClassVar[int] = 1
     # endregion
     # region InstanceVars
     _current_timeout: int  # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            size: Vec2,
-            spawn_args: dict[str, tp.Any] | EllipsisType = ...,
-            create_collision: bool = True,
-            collision_active: bool = False
+        self,
+        runtime_buffer: Array[base_entity_t],
+        size: Vec2,
+        spawn_args: dict[str, tp.Any] | EllipsisType = ...,
+        create_collision: bool = True,
+        collision_active: bool = False,
     ) -> None:
         # init logic entity
-        super().__init__(runtime_buffer, size=size, position=Vec2(), collision_active=collision_active)
+        super().__init__(
+            runtime_buffer,
+            size=size,
+            position=Vec2(),
+            collision_active=collision_active,
+        )
         if create_collision:
             self._create_collision()
 
@@ -53,23 +66,22 @@ class Item(LogicGameEntity):
         self._current_timeout = 0
 
         # spawn graphics counterpart
-        if isinstance(spawn_args, EllipsisType):
-            kwargs = {}
-        else:
-            kwargs = spawn_args
+        kwargs = {} if isinstance(spawn_args, EllipsisType) else spawn_args
 
         kwargs.update({"id": self.id, "cid": self.cid()})
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs=kwargs,
-        ))
+        pv.COQ.put(
+            ProcessCommand(
+                type=BaseCommandType.spawn_dummy,
+                kwargs=kwargs,
+            )
+        )
 
     def item_pickupable(self) -> bool:
-        """ :return: Whether this item can be picked up """
+        """:return: Whether this item can be picked up"""
         return self._current_timeout <= 0
 
     def set_parent(self, parent: LogicGameEntity) -> None:
-        """assign parent to item and remove own physics"""
+        """Assign parent to item and remove own physics."""
         self._change_parent(parent)
         self._set_bit("flags", 15, True)
         self.remove(GravityAffected, Updated)
@@ -77,14 +89,16 @@ class Item(LogicGameEntity):
         self.stop_highlight()
         self._collision_active = False
 
-    def _collision_start(self, events: list[CollisionEvent[tp.Union["Player", "Island"]]]) -> list[bool] | None:
+    def _collision_start(
+        self, events: list[CollisionEvent[Player | Island]]
+    ) -> list[bool] | None:
         group_id: CollisionType.GroupID = events[0].group_id
         if group_id == GameCollisions.collision_group_islands:
             self.position = events[0].position
         return None
 
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
-        """remove parent from item and run own physics"""
+        """Remove parent from item and run own physics."""
         self._change_parent(None)
         self._set_bit("flags", 15, False)
         self.acceleration *= 0
@@ -122,6 +136,6 @@ class Item(LogicGameEntity):
         super()._update(delta)
 
         # add "floating" effect
-        self._runtime_buffer[self.id].pos_y = self.position.y - (
-                m.sin(self._lifetime * 2) + 1
-        ) * 10
+        self._runtime_buffer[self.id].pos_y = (
+            self.position.y - (m.sin(self._lifetime * 2) + 1) * 10
+        )

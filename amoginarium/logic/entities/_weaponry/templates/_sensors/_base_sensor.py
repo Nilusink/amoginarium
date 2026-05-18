@@ -1,46 +1,54 @@
 """
-amoginarium/logic/entities/_sensors/_base_sensor.py
+Base class for logic entities handling spatial detection and targeting.
 
+Path: amoginarium/logic/entities/_weaponry/templates/_sensors/_base_sensor.py
 Project: amoginarium
-Created: 18.04.2026
+Created: 10.03.2026
 Authors: Nilusink, LukasKrah
 """
 
-from ctypes import Array
+from __future__ import annotations
+
 import typing as tp
+
 import numpy as np
 
-from amoginarium.shared import base_entity_t, SensorCIDs, ProcessCommand
-from amoginarium.shared.utility import coord_t, convert_coord, Vec2
-from amoginarium.shared.utility import pack_int, MASK16
-from amoginarium.shared import BaseCommandType
 from amoginarium import pv
+from amoginarium.shared import BaseCommandType, ProcessCommand, SensorCIDs
+from amoginarium.shared.utility import convert_coord, MASK16, pack_int, Vec2
 
-from ...._base import PositionedLogicEntity, LogicGameEntity
-from ...._base import Updated
+from ...._base import PositionedLogicEntity, Updated
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.utility import coord_t
+
+    from ...._base import LogicGameEntity
 
 
 class BaseSensor(PositionedLogicEntity):
     """
-    sensor entity
+    sensor entity.
 
     ``param0`` detection range
     """
+
     _CID = SensorCIDs.hud
     _has_sectors: tp.ClassVar[bool] = False
 
     _parent: PositionedLogicEntity
     _visible: bool
-    _has_sectors: float = 0
     _min_rcs: float = 0
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: PositionedLogicEntity,
-            detection_range: float,
-            position_offset: coord_t = ...,
-            visible: bool = True,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: PositionedLogicEntity,
+        detection_range: float,
+        position_offset: coord_t = ...,
+        visible: bool = True,
     ) -> None:
         super().__init__(
             runtime_buffer=runtime_buffer, position=Vec2(), size=Vec2(), parent=parent
@@ -63,7 +71,7 @@ class BaseSensor(PositionedLogicEntity):
         self._highlighted_sectors = []
 
         bits_per_value = len(self._sphere).bit_length()  # make sure +1 is available
-        self._values_per_param = 64//bits_per_value
+        self._values_per_param = 64 // bits_per_value
 
         pv.COQ.put(
             ProcessCommand(
@@ -73,7 +81,7 @@ class BaseSensor(PositionedLogicEntity):
                     "cid": self.cid(),
                     "sectors": self._sphere,
                     "min_rcs": self._min_rcs,
-                    "vpp": self._values_per_param
+                    "vpp": self._values_per_param,
                 },
             )
         )
@@ -89,7 +97,7 @@ class BaseSensor(PositionedLogicEntity):
 
     def _calculate_sphere(self) -> list[Vec2]:
         """
-        calculate detection sphere
+        Calculate detection sphere.
         """
         angle_step = (np.pi * 2) / self._sphere_accuracy
 
@@ -104,8 +112,7 @@ class BaseSensor(PositionedLogicEntity):
         self._detection_group = group
 
     def get_targets(
-            self,
-            from_entities: tp.Iterable[LogicGameEntity] = None
+        self, from_entities: tp.Iterable[LogicGameEntity] | None = None
     ) -> list[LogicGameEntity]:
         raise NotImplementedError
 
@@ -136,19 +143,19 @@ class BaseSensor(PositionedLogicEntity):
                     64, self._values_per_param, sectors[: self._values_per_param]
                 )
 
-                if len(sectors) > 2*self._values_per_param:
+                if len(sectors) > 2 * self._values_per_param:
                     self._buffer.param4 = pack_int(
                         64,
                         self._values_per_param,
-                        sectors[self._values_per_param:2 * self._values_per_param],
+                        sectors[self._values_per_param : 2 * self._values_per_param],
                     )
 
                 else:
                     self._buffer.param4 = pack_int(
                         64,
                         self._values_per_param,
-                        sectors[self._values_per_param:]
-                        + [MASK16] * (2*self._values_per_param - len(sectors)),
+                        sectors[self._values_per_param :]
+                        + [MASK16] * (2 * self._values_per_param - len(sectors)),
                     )
 
             else:
@@ -163,7 +170,6 @@ class BaseSensor(PositionedLogicEntity):
             self._detection_group.remove_sensor(self)
 
         super()._kill(*_args, **_kwargs)
-
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} range={self.detection_range}>"

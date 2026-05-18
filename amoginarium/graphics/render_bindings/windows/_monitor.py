@@ -1,41 +1,44 @@
 """
-amoginarium/graphics/render_bindings/windows/_monitor.py
+Retrieves Windows monitor dimensions and window-to-monitor intersection bounds.
 
+Path: amoginarium/graphics/render_bindings/windows/_monitor.py
 Project: amoginarium
 Created: 13.04.2026
 Authors: LukasKrah
 """
 
-import typing as tp
 import ctypes
+import typing as tp
 
 from amoginarium.shared.utility import Vec2
 
-
 MONITOR_DEFAULTTONEAREST = 2
+
 
 class RECT(ctypes.Structure):
     _fields_ = [
         ("left", ctypes.c_long),
         ("top", ctypes.c_long),
         ("right", ctypes.c_long),
-        ("bottom", ctypes.c_long)
+        ("bottom", ctypes.c_long),
     ]
+
 
 class MONITORINFO(ctypes.Structure):
     _fields_ = [
         ("cbSize", ctypes.c_ulong),
         ("rcMonitor", RECT),
         ("rcWork", RECT),
-        ("dwFlags", ctypes.c_ulong)
+        ("dwFlags", ctypes.c_ulong),
     ]
+
 
 MonitorEnumProc = ctypes.WINFUNCTYPE(
     ctypes.c_int,
     ctypes.c_void_p,
     ctypes.c_void_p,
     ctypes.POINTER(RECT),
-    ctypes.c_void_p
+    ctypes.c_void_p,
 )
 
 
@@ -62,7 +65,9 @@ class _WindowsMonitorService:
         if not self.__window:
             return self.__top_left, self.__size
 
-        hmonitor = self.__user32.MonitorFromWindow(self.__window, MONITOR_DEFAULTTONEAREST)
+        hmonitor = self.__user32.MonitorFromWindow(
+            self.__window, MONITOR_DEFAULTTONEAREST
+        )
 
         monitor_info = MONITORINFO()
         monitor_info.cbSize = ctypes.sizeof(MONITORINFO)
@@ -85,7 +90,7 @@ class _WindowsMonitorService:
         Calculates a bounding box encompassing ALL monitors the window intersects.
         Automatically bridges gaps in odd arrangements.
         Only expands if the window penetrates at least 1/3 of the target screen.
-        :returns: (top_left, size, whether its a combined monitor)
+        :returns: (top_left, size, whether its a combined monitor).
         """
         if not self.__window:
             return self.__top_left, self.__size, False
@@ -100,7 +105,7 @@ class _WindowsMonitorService:
 
         all_monitors: list[tuple[int, int, int, int]] = []
 
-        def enum_callback(hMonitor, hdcMonitor, lprcMonitor, dwData):
+        def enum_callback(hMonitor, hdcMonitor, lprcMonitor, dwData) -> int:
             r = lprcMonitor.contents
             all_monitors.append((r.left, r.top, r.right, r.bottom))
             return 1

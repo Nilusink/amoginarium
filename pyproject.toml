@@ -1,0 +1,152 @@
+[project]
+name = "amoginarium"
+version = "0.0.0"
+description = ""
+authors = [
+    {name = "Nilusink", email = "me@nilus.ink"},
+    {name = "LukasKrah", email = "support@nilus.ink"}
+]
+license = "GPL-3.0"
+license-files = ["LICENSE"]
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = "==3.12"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Programming Language :: Cython",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment :: Arcade",
+    "Topic :: Games/Entertainment :: Real Time Strategy",
+    "Topic :: Games/Entertainment :: Simulation",
+    "Topic :: Software Development :: Libraries :: pygame"
+]
+
+[project.urls]
+Repository = "https://github.com/Nilusink/amoginarium"
+
+[tool.ruff]
+# https://docs.astral.sh/ruff/
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ALL"]
+preview = true
+ignore = [
+    "COM812",
+    "D212", # Conflicts with D213
+    "D203", # Conflicts with D211
+    "DOC201", # preview - does not work with restructedText
+    "DOC501", # preview - does not work with restructedText
+    "CPY001",
+    "RUF005",
+    "D200",
+    "TID252",
+    "RUF023",
+    "PLR1714", # For speed reasons - using a set is slower,
+    "PLR1730", # For speed reasons - using max is slower
+    "RUF022",
+    "PYI011",
+    "PTH",
+    "FURB136",
+    "B013", # (Exception,) -> Exception - not good!
+    "UP015",
+    "FURB103",
+    "FURB101",
+    "PLR0913",
+    "PYI021",
+    "PLR6201",
+    "ANN401",
+    "S311",
+    "I",
+    "PLR2004",
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Enable `from __future__ import annotations` imports
+future-annotations = true
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doc tests are all supported.
+docstring-code-format = false
+docstring-code-line-length = "dynamic"  # adhere to global line length limit
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+
+[tool.ruff.lint.pyflakes]
+allowed-unused-imports = ["icecream.ic"]
+
+[tool.ruff.lint.flake8-type-checking]
+strict = true
+
+[tool.isort]
+# https://isort.readthedocs.io/en/latest/configuration/options.html
+multi_line_output = 9
+py_version = 312
+order_by_type = false
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+indent = 4
+atomic = true
+balanced_wrapping = true

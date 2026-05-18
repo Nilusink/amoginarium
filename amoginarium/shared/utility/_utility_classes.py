@@ -1,21 +1,21 @@
 """
-_utility_classes.py
-25. January 2024
+Defines a few useful classes.
 
-defines a few useful classes
-
-Author:
-Nilusink, melektron
+Path: amoginarium/shared/utility/_utility_classes.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink, LukasKrah
 """
-from time import perf_counter
-import typing as tp
+
 import asyncio
 import inspect
+import typing as tp
+from time import perf_counter
 
 
 class BetterDict:
     """
-    each element is also accessible with instance.element
+    each element is also accessible with instance.element.
     """
 
     def __init__(self, **initial) -> None:
@@ -36,10 +36,7 @@ class SimpleLock:
     def __init__(self) -> None:
         self.__locked_by: str = ...
 
-    def aquire(
-            self,
-            timeout: float = 0
-    ) -> bool:
+    def aquire(self, timeout: float = 0) -> bool:
         """
         :param timeout: timeout in seconds
         """
@@ -57,20 +54,21 @@ class SimpleLock:
 
     def release(self) -> None:
         """
-        release a lock (only works from same function)
+        Release a lock (only works from same function).
         """
         curframe = inspect.currentframe()
         called_by = inspect.getouterframes(curframe, 2)[1][3]
 
         if called_by != self.__locked_by:
-            raise NameError("Lock can't be released from different function!")
+            msg = "Lock can't be released from different function!"
+            raise NameError(msg)
 
         self.__locked_by = ...
 
 
 class _BaseTimer:
     @staticmethod
-    def _run_callback(cb: tp.Union[tp.Callable, None]):
+    def _run_callback(cb: tp.Callable | None) -> None:
         if cb is not None:
             asyncio.create_task(cb())
 
@@ -84,19 +82,19 @@ class WDTimer(_BaseTimer):
         If the timer reaches zero (timeout) it fires a callback.
         When the timer is restarted the first time after reaching zero using
         refresh() (or the first time it this method is called) a restart
-        callback fires.)
+        callback fires.).
 
         timeout: time to count down for in seconds
         """
         self._timeout: float = timeout
         self._timer_task: asyncio.Task | None = None
-        self._on_timeout_cb: tp.Union[tp.Callable, None] = None
-        self._on_restart_cb: tp.Union[tp.Callable, None] = None
+        self._on_timeout_cb: tp.Callable | None = None
+        self._on_restart_cb: tp.Callable | None = None
 
     def on_timeout(self, cb: tp.Callable):
         """
         Registers a callback handler (must be async) for the timeout events
-        (aka. when the timer isn't refreshed before the timeout time.)
+        (aka. when the timer isn't refreshed before the timeout time.).
 
         Note: There can only be one callback, registering a second one
         overwrites the first one.
@@ -109,7 +107,7 @@ class WDTimer(_BaseTimer):
         """
         Registers a callback handler (must be async) for the restart events
         (aka. when the timer restarts counting after a timeout or
-        on initial start)
+        on initial start).
 
         Note: There can only be one callback, registering a second one
         overwrites the first one.
@@ -126,14 +124,8 @@ class WDTimer(_BaseTimer):
         This causes restart callback to run if the timer isn't running
         at the time of calling.
         """
-
         # first start
-        if self._timer_task is None:
-            self._run_callback(self._on_restart_cb)
-            self._timer_task = asyncio.create_task(self._timer_fn())
-
-        # after timeout
-        elif self._timer_task.done():
+        if self._timer_task is None or self._timer_task.done():
             self._run_callback(self._on_restart_cb)
             self._timer_task = asyncio.create_task(self._timer_fn())
 
@@ -146,17 +138,18 @@ class WDTimer(_BaseTimer):
 
     def cancel(self) -> None:
         """
-        cancel the timer
+        Cancel the timer.
         """
         if self._timer_task is not None:
             self._timer_task.cancel()
 
-    async def _timer_fn(self):
+    async def _timer_fn(self) -> None:
         await asyncio.sleep(self._timeout)
         self._run_callback(self._on_timeout_cb)
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._timer_task is None:
             return self
         self._timer_task.cancel()
         self._timer_task = None
+        return None

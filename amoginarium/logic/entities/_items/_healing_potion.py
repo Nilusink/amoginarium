@@ -1,25 +1,33 @@
 """
-amoginarium/logic/entities/_items/_healing_potion.py
+Defines a consumable healing potion entity with physics-based tilt.
 
+Path: amoginarium/logic/entities/_items/_healing_potion.py
 Project: amoginarium
 Created: 18.04.2026
-Authors: LukasKrah
+Authors: Nilusink, LukasKrah
 """
 
-from ctypes import Array
-import typing as tp
+from __future__ import annotations
+
 import math as m
+import typing as tp
 
+from amoginarium.shared import ItemCIDs
+from amoginarium.shared.audio import PotionDrink
 from amoginarium.shared.utility import Vec2
-from amoginarium.shared import base_entity_t, ItemCIDs
 
-from amoginarium.shared.audio import PotionDrink, ContinuousSoundEffect
 from ._something import Something
+
+if tp.TYPE_CHECKING:
+    from ctypes import Array
+
+    from amoginarium.shared import base_entity_t
+    from amoginarium.shared.audio import ContinuousSoundEffect
 
 
 class HealingPotion(Something):
     """
-    healing potion
+    healing potion.
 
     ``param0``: f_tilt
     """
@@ -38,9 +46,9 @@ class HealingPotion(Something):
     _sound: ContinuousSoundEffect
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent_position_offset: Vec2,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent_position_offset: Vec2,
     ) -> None:
         super().__init__(
             runtime_buffer, Vec2().from_cartesian(32, 32), parent_position_offset
@@ -68,10 +76,7 @@ class HealingPotion(Something):
 
         if self._drinking:
             # noinspection PyTypeChecker
-            heal = min(
-                self._uses_left,
-                self._heal_per_sec * delta
-            )
+            heal = min(self._uses_left, self._heal_per_sec * delta)
             if self.parent.heal(heal):
                 self._uses_left -= heal
                 if not self._sound.playing:
@@ -84,8 +89,8 @@ class HealingPotion(Something):
                 self.stop_use()
                 self.kill()
 
-        stiffness = .2
-        damping = .9
+        stiffness = 0.2
+        damping = 0.9
 
         self._target_rotation = self.facing.angle * (180 / m.pi)
         target = -self._target_rotation
@@ -96,10 +101,10 @@ class HealingPotion(Something):
         acc_angle *= 180 / m.pi
 
         acceleration += (
-                m.sin(m.radians(acc_angle))
-                * acc_mag
-                * self.parent.acceleration.length
-                / 500
+            m.sin(m.radians(acc_angle))
+            * acc_mag
+            * self.parent.acceleration.length
+            / 500
         )
 
         self._f_velocity += acceleration

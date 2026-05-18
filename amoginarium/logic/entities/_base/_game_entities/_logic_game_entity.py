@@ -1,10 +1,10 @@
 """
-amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
+Defines the core LogicGameEntity.
 
-Defines the core LogicGameEntity which combines spatial data, physics
-(velocity/acceleration), and collision detection, serving as the base class for
-standard game objects.
+Combines spatial data, physics (velocity/acceleration), and collision detection,
+serving as the base class for standard game objects.
 
+Path: amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
 Project: amoginarium
 Created: 28.03.2026
 Authors: Nilusink, LukasKrah
@@ -14,18 +14,17 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, normalize_angle, get_default
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import Coalitions, LogicGameEntityLike
-from amoginarium.shared import DynamicEntityParentViable
-
 from amoginarium import pv
+from amoginarium.shared import Coalitions, DynamicEntityParentViable
+from amoginarium.shared import LogicGameEntityLike
+from amoginarium.shared.debugging import CC, print_ic_style
+from amoginarium.shared.utility import get_default, normalize_angle, Vec2
 
 from ._collision_logic_entity import CollisionLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
 
@@ -44,12 +43,18 @@ class LogicGameEntity(
     - Positon, Size
     - Velocity, Acceleration
     - Optional Collision Detection
-    - Coalitions
+    - Coalitions.
     """
+
     __slots__ = (
-        "facing", "velocity", "acceleration", "_coalition",
-        "_velocity_to_add", "_acceleration_to_add", "__world_position",
-        "_tags"
+        "facing",
+        "velocity",
+        "acceleration",
+        "_coalition",
+        "_velocity_to_add",
+        "_acceleration_to_add",
+        "__world_position",
+        "_tags",
     )
 
     # region InstanceVars
@@ -67,21 +72,21 @@ class LogicGameEntity(
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            size: Vec2,
-            position: Vec2,
-            *,
-            initial_velocity: Vec2 | None = None,
-            parent: LogicGameEntity | None = None,
-            coalition: Coalitions | EllipsisType = ...,
-            centered: bool = False,
-            collision_group: CollisionType.GroupID | EllipsisType | None = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            collision_exception_root: bool | EllipsisType = ...,
-            collision_exception_root_additive: bool | EllipsisType = ...,
-            tags: list[str] | None = None,
-            collision_active: bool = True
+        self,
+        runtime_buffer: Array[base_entity_t],
+        size: Vec2,
+        position: Vec2,
+        *,
+        initial_velocity: Vec2 | None = None,
+        parent: LogicGameEntity | None = None,
+        coalition: Coalitions | EllipsisType = ...,
+        centered: bool = False,
+        collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        collision_exception_root: bool | EllipsisType = ...,
+        collision_exception_root_additive: bool | EllipsisType = ...,
+        tags: list[str] | None = None,
+        collision_active: bool = True,
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -115,13 +120,15 @@ class LogicGameEntity(
             collision_exception_ids=collision_exception_ids,
             collision_exception_root=collision_exception_root,
             collision_exception_root_additive=collision_exception_root_additive,
-            collision_active=collision_active
+            collision_active=collision_active,
         )
         # region default parameters
         self._velocity_to_add = Vec2()
         self._acceleration_to_add = Vec2()
 
-        self.velocity = initial_velocity if initial_velocity is not None else Vec2()  # do not use get_default here
+        self.velocity = (
+            initial_velocity if initial_velocity is not None else Vec2()
+        )  # do not use get_default here
         self._coalition = get_default(coalition, Coalitions.neutral)
 
         self.acceleration = Vec2()
@@ -130,7 +137,7 @@ class LogicGameEntity(
 
         self._tags = {}
         if tags is not None:
-            self._tags.update({tag: None for tag in tags})
+            self._tags.update(dict.fromkeys(tags))
         # endregion
 
     # region Properties
@@ -160,29 +167,26 @@ class LogicGameEntity(
                 f"serializable{CC.ctrl.ENDL}",
             )
 
-        return {
-            "type": self.cid(),
-            "pos": self.position
-        }
+        return {"type": self.cid(), "pos": self.position}
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity and guarantee that it will be valid (for short bursts)
-        :param value: 2D velocity to add
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
+        :param value: 2D velocity to add.
         """
         self._velocity_to_add += value
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity and guarantee that it will be valid (for long accelerations)
-        :param value: 2D acceleration to add
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        :param value: 2D acceleration to add.
         """
         self._acceleration_to_add += value
 
     def _update(self, delta: float) -> None:
         """
         Update logic game entity
-        :param delta: time since the last update
+        :param delta: time since the last update.
         """
         self.__world_position = pv.global_vars.get_world_position()
 

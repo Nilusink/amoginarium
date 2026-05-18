@@ -1,6 +1,7 @@
 """
-amoginarium/graphics/ui/_base/_ui_entity.py
+Base class for UI entities managing hierarchy, visibility, and updates.
 
+Path: amoginarium/graphics/ui/_base/_ui_entity.py
 Project: amoginarium
 Created: 10.03.2026
 Authors: LukasKrah
@@ -8,8 +9,8 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
 from ...entities import BaseGraphicsEntity
 
@@ -18,7 +19,8 @@ if tp.TYPE_CHECKING:
 
 
 class UIEntity(BaseGraphicsEntity):
-    """Base UI-Entity, no UI, just default entity relation / method stuff"""
+    """Base UI-Entity, no UI, just default entity relation / method stuff."""
+
     _parent: UIEntity | None
     _children: list[UIEntity]
 
@@ -26,16 +28,12 @@ class UIEntity(BaseGraphicsEntity):
     _root_visibility: bool
     __visibility_change_root: bool
 
-    __next_ui_element_parent: UIElement | None | EllipsisType
+    __next_ui_element_parent: UIElement | EllipsisType | None
 
-    def __init__(
-            self,
-            *,
-            parent: UIEntity | None = None
-    ) -> None:
+    def __init__(self, *, parent: UIEntity | None = None) -> None:
         """
         Create base UI-Entity
-        :param parent: Optional parent UI-Entity
+        :param parent: Optional parent UI-Entity.
         """
         super().__init__(parent)
 
@@ -50,31 +48,31 @@ class UIEntity(BaseGraphicsEntity):
 
     # region Methods: reset
     def _reset(self) -> None:
-        """Reset the UI-Entity. Use in inheritance for actual resetting"""
+        """Reset the UI-Entity. Use in inheritance for actual resetting."""
         return
 
     @tp.final
     def reset(self, recursive: bool = True) -> None:
         """
         Reset the UI-Entity and all its children recursively
-        :param recursive: Also reset the children tree recursively
+        :param recursive: Also reset the children tree recursively.
         """
         self._reset()
         if recursive:
             for child in self._children:
                 child.reset()
 
-    #endregion
+    # endregion
 
     # region Methods: visibility
     def _destroy_root_visibility(self) -> None:
-        """Destroys the root visibility up the parent chain"""
+        """Destroys the root visibility up the parent chain."""
         if self._parent is not None:
             self._parent._root_visibility = False
             self._parent._destroy_root_visibility()
 
     def __check_root_visibility(self) -> None:
-        """Check the children visibility chain to detect if the visibility of this entity is a root visibility"""
+        """Check the children visibility chain to detect if the visibility of this entity is a root visibility."""
         is_root: bool = True
         for child in self._children:
             if child._visible is not None:
@@ -83,14 +81,14 @@ class UIEntity(BaseGraphicsEntity):
         self._root_visibility = is_root
 
     def _set_visibility_recursive(
-            self,
-            value: bool | None,
-            is_caller: bool = False,
+        self,
+        value: bool | None,
+        is_caller: bool = False,
     ) -> None:
         """
         Set the visibility of this UI-Entity and all its children recursively. Not intended for external use.
         :param value: New visibility
-        :param is_caller: Will not affect the visibility attributes of this UI-Entity
+        :param is_caller: Will not affect the visibility attributes of this UI-Entity.
         """
         if not is_caller:
             self._visible = value
@@ -98,7 +96,9 @@ class UIEntity(BaseGraphicsEntity):
         for child in self._children:
             child._set_visibility_recursive(value)
 
-    def __set_visibility(self, value: bool | None, recursive: bool = False, attach_to_parent: bool = True) -> None:
+    def __set_visibility(
+        self, value: bool | None, recursive: bool = False, attach_to_parent: bool = True
+    ) -> None:
         """
         Set visibility of this UI-Entity.
         :param recursive: Whether to overwrite the visibility down the children tree
@@ -113,46 +113,56 @@ class UIEntity(BaseGraphicsEntity):
         if not recursive:
             if not self._root_visibility:
                 self.__check_root_visibility()
+        elif attach_to_parent:
+            if not self._root_visibility:
+                self._set_visibility_recursive(None, is_caller=True)
+                self._root_visibility = True
         else:
-            if attach_to_parent:
-                if not self._root_visibility:
-                    self._set_visibility_recursive(None, is_caller=True)
-                    self._root_visibility = True
-            else:
-                self._set_visibility_recursive(value, is_caller=True)
+            self._set_visibility_recursive(value, is_caller=True)
 
-    def hide(self, recursive: bool = False, attach_to_parent: bool = True, reset: bool = True) -> None:
+    def hide(
+        self, recursive: bool = False, attach_to_parent: bool = True, reset: bool = True
+    ) -> None:
         """
         Hide this UI-Entity. By default, the children tree is attached to this visibility.
         :param recursive: Whether to overwrite the visibility down the children tree
         :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
                                  If False, the visibility of each child is individually set to hide
                                  Only used if recursive is set to True.
-        :param reset: Whether reset should be called recursively
+        :param reset: Whether reset should be called recursively.
         """
-        self.__set_visibility(False, recursive=recursive, attach_to_parent=attach_to_parent)
+        self.__set_visibility(
+            False, recursive=recursive, attach_to_parent=attach_to_parent
+        )
         if reset:
             self.reset()
 
-    def show(self, recursive: bool = False, attach_to_parent: bool = True, reset: bool = False) -> None:
+    def show(
+        self,
+        recursive: bool = False,
+        attach_to_parent: bool = True,
+        reset: bool = False,
+    ) -> None:
         """
         Show this UI-Entity. By default, the children tree is attached to this visibility.
         :param recursive: Whether to overwrite the visibility down the children tree
         :param attach_to_parent: Whether to attach the visibility of the children tree to this UI-Entity.
                                  If False, the visibility of each child is individually set to show
                                  Only used if recursive is set to True.
-        :param reset: Whether reset should be called recursively
+        :param reset: Whether reset should be called recursively.
         """
-        self.__set_visibility(True, recursive=recursive, attach_to_parent=attach_to_parent)
+        self.__set_visibility(
+            True, recursive=recursive, attach_to_parent=attach_to_parent
+        )
         if reset:
             self.reset()
 
     def set_visibility(
-            self,
-            value: bool | None,
-            recursive: bool = False,
-            attach_to_parent: bool = True,
-            reset: bool | EllipsisType = ...
+        self,
+        value: bool | None,
+        recursive: bool = False,
+        attach_to_parent: bool = True,
+        reset: bool | EllipsisType = ...,
     ) -> None:
         """
         Set the visibility of this UI-Entity.
@@ -163,7 +173,9 @@ class UIEntity(BaseGraphicsEntity):
                                  Only used if recursive is set to True.
         :param reset: Whether reset should be called recursively. Defaults to True if value is False, False otherwise.
         """
-        self.__set_visibility(value, recursive=recursive, attach_to_parent=attach_to_parent)
+        self.__set_visibility(
+            value, recursive=recursive, attach_to_parent=attach_to_parent
+        )
         reset = reset if reset is not ... else (value is False)
         if reset:
             self.reset()
@@ -171,24 +183,24 @@ class UIEntity(BaseGraphicsEntity):
     # endregion
 
     # region Methods: drawing
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         """
         Draw function for this UI.
-        Use in inheritance for the actual drawing
+        Use in inheritance for the actual drawing.
         """
         return
 
     def _before_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
         Called before gl_draw
-        :param: Whether the UI-entity will be drawn
+        :param: Whether the UI-entity will be drawn.
         """
         return
 
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
         Called after gl_draw
-        :param: Whether the UI-entity was drawn
+        :param: Whether the UI-entity was drawn.
         """
         return
 
@@ -199,7 +211,7 @@ class UIEntity(BaseGraphicsEntity):
         """
         Actual update function for this UI-Entity.
         Use in inheritance for the actual updating.
-        :param delta: Time since the last update in seconds
+        :param delta: Time since the last update in seconds.
         """
         return
 
@@ -208,7 +220,7 @@ class UIEntity(BaseGraphicsEntity):
         """
         Update ui entity
         :param delta: Time since the last update in seconds
-        :param recursive: Update the children tree recursively
+        :param recursive: Update the children tree recursively.
         """
         self._update(delta)
         if recursive:
@@ -222,8 +234,7 @@ class UIEntity(BaseGraphicsEntity):
         """:return: Next UI-Element in the parent chain or None if there is none"""
         if self._parent is not None:
             return self._parent._next_ui_element_parent_recursion()
-        else:
-            return None
+        return None
 
     @property
     def _next_ui_element_parent(self) -> UIElement | None:
@@ -232,7 +243,9 @@ class UIEntity(BaseGraphicsEntity):
             return parent
 
         if self._parent is not None:
-            self.__next_ui_element_parent = self._parent._next_ui_element_parent_recursion()
+            self.__next_ui_element_parent = (
+                self._parent._next_ui_element_parent_recursion()
+            )
         else:
             self.__next_ui_element_parent = None
         return self.__next_ui_element_parent  # type: ignore
@@ -266,12 +279,12 @@ class UIEntity(BaseGraphicsEntity):
 
     @property
     def children(self) -> list[UIEntity]:
-        """return: List of children"""
+        """return: List of children."""
         return self._children
 
     @property
     def root(self) -> UIEntity:
-        """return: Root entity or None"""
+        """return: Root entity or None."""
         return self._parent.root if self._parent else self
 
     # endregion

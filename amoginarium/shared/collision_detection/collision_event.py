@@ -1,9 +1,30 @@
+"""
+Defines data structures for collision events and callback types.
+
+Path: amoginarium/shared/collision_detection/collision_event.py
+Project: amoginarium
+Created: 17.04.2026
+Authors: LukasKrah
+"""
+
+from __future__ import annotations
+
 import typing as tp
-from amoginarium.shared.utility import Vec2
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import Vec2
 
 
 class CollisionEvent[T]:
-    __slots__ = ("collision_id", "relation_id", "group_id", "other_entity", "position", "normal", "time")
+    __slots__ = (
+        "collision_id",
+        "relation_id",
+        "group_id",
+        "other_entity",
+        "position",
+        "normal",
+        "time",
+    )
     collision_id: int
     relation_id: int
     group_id: int
@@ -13,14 +34,14 @@ class CollisionEvent[T]:
     time: float
 
     def __init__(
-            self,
-            collision_id: int,
-            relation_id: int,
-            group_id: int,
-            other_entity: T,
-            position: Vec2,
-            normal: Vec2,
-            time: float,
+        self,
+        collision_id: int,
+        relation_id: int,
+        group_id: int,
+        other_entity: T,
+        position: Vec2,
+        normal: Vec2,
+        time: float,
     ) -> None:
         self.collision_id = collision_id
         self.relation_id = relation_id
@@ -34,4 +55,6 @@ class CollisionEvent[T]:
         return f"<CollisionEvent(col_id={self.collision_id}, rel_id={self.relation_id}, group={self.group_id}, other={self.other_entity}, pos={self.position}, norm={self.normal}, time={self.time})>"
 
 
-type CollisionCallback = tp.Callable[[tp.Any, list[CollisionEvent[tp.Any]]], list[bool] | None]
+type CollisionCallback = tp.Callable[
+    [tp.Any, list[CollisionEvent[tp.Any]]], list[bool] | None
+]

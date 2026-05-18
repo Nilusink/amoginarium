@@ -2,9 +2,18 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+"""
+Collision Methods.
 
-from libcpp.vector cimport vector
+Path: amoginarium/shared/collision_detection/collision_methods.pyx
+Project: amoginarium
+Created: 17.04.2026
+Authors: LukasKrah
+"""
+
 from libc.math cimport sqrt
+from libcpp.vector cimport vector
+
 
 cdef inline double c_max(double a, double b) noexcept: return a if a > b else b
 cdef inline double c_min(double a, double b) noexcept: return a if a < b else b

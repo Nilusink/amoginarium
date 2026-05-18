@@ -1,13 +1,15 @@
 """
-amoginarium/render_bindings/_opengl_fonts.pyx
+OpenGL Font Rendering.
 
+Path: amoginarium/graphics/render_bindings/opengl_fonts/_opengl_fonts.pyx
 Project: amoginarium
 Created: 03.04.2026
 Authors: LukasKrah
 """
 
-import pygame as pg
 import OpenGL.GL as GL
+import pygame as pg
+
 
 # Define a pure C struct to hold character data.
 # This prevents Python object overhead during rendering.

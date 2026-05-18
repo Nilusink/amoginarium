@@ -1,43 +1,46 @@
 """
-_basic_animation.py
-19. March 2024
+An animation made from multiple images.
 
-An animation made from multiple images
-
-Author:
-Nilusink
+Path: amoginarium/graphics/entities/_animation.py
+Project: amoginarium
+Created: 13.03.2026
+Authors: Nilusink, LukasKrah
 """
 
-from types import EllipsisType
-import typing as tp
+from __future__ import annotations
 
-from amoginarium.graphics.render_bindings import renderer
-from amoginarium.shared.utility import Vec2, coord_t, convert_coord
-from amoginarium.shared.utility import normalize_angle, RTD
-from amoginarium.shared import HasPosition, HasFacing
+import typing as tp
+from types import EllipsisType
+
 from amoginarium import pv
+from amoginarium.graphics.render_bindings import renderer
+from amoginarium.shared.utility import convert_coord, normalize_angle, RTD, Vec2
 
 from ..textures import textures
 from ._base_entity import BaseGraphicsEntity
 from ._graphics_groups import Drawn_0
 
+if tp.TYPE_CHECKING:
+    from amoginarium.shared import HasFacing, HasPosition
+    from amoginarium.shared.utility import coord_t
+
 
 class Animation(BaseGraphicsEntity):
-    """base animation class"""
+    """base animation class."""
 
     def __init__(
-            self,
-            textures: tp.Sequence[int],
-            size: coord_t,
-            delay: float,
-            position: coord_t | EllipsisType = ...,
-            position_reference: HasPosition | tp.Callable[[], Vec2] | EllipsisType = ...,
-            position_offset: coord_t | EllipsisType = ...,
-            rotation_reference: HasFacing | tp.Callable[[], Vec2] | EllipsisType = ...,
-            rotation_offset: float | EllipsisType = ...,
-            rotate_anchor: Vec2 | EllipsisType = ...,
-            loop: bool = False,
-            layer: int = 0,
+        self,
+        textures: tp.Sequence[int],
+        size: coord_t,
+        delay: float,
+        position: coord_t | EllipsisType = ...,
+        position_reference: HasPosition | tp.Callable[[], Vec2] | EllipsisType = ...,
+        position_offset: coord_t | EllipsisType = ...,
+        rotation_reference: HasFacing | tp.Callable[[], Vec2] | EllipsisType = ...,
+        rotation_offset: float | EllipsisType = ...,
+        rotate_anchor: Vec2 | EllipsisType = ...,
+        loop: bool = False,
+        layer: int = 0,
     ) -> None:
         """
         :param textures: list of texture ids to play as an animation
@@ -60,7 +63,7 @@ class Animation(BaseGraphicsEntity):
         self._size: Vec2 = convert_coord(size, Vec2)  # type: ignore
         self._delay = delay
         self._loop = loop
-        
+
         if isinstance(position, EllipsisType):
             self._position: Vec2 | EllipsisType = ...
 
@@ -71,7 +74,7 @@ class Animation(BaseGraphicsEntity):
 
         if isinstance(position_offset, EllipsisType):
             self._position_offset: Vec2 | EllipsisType = ...
-        
+
         else:
             self._position_offset: Vec2 | EllipsisType = convert_coord(
                 position_offset, Vec2
@@ -104,7 +107,7 @@ class Animation(BaseGraphicsEntity):
 
     @property
     def rotation(self) -> float:
-        """rotation"""
+        """Rotation."""
         rot = 0
 
         # get rotation reference
@@ -123,7 +126,7 @@ class Animation(BaseGraphicsEntity):
 
     @property
     def rotate_anchor(self) -> Vec2:
-        """image rotation anchor"""
+        """Image rotation anchor."""
         if isinstance(self._rotate_anchor, EllipsisType):
             return self._size / 2
 
@@ -148,7 +151,7 @@ class Animation(BaseGraphicsEntity):
         self._playing = False
         del self
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         self._current_t -= delta_cal
         if self._current_t <= 0:
             if (self._current_image + 1) >= len(self._textures):
@@ -175,47 +178,43 @@ class Animation(BaseGraphicsEntity):
             self._size,
             rotate_angle=self.rotation * RTD,
             rotate_anchor=self.rotate_anchor,
-            layer=self._layer
+            layer=self._layer,
         )
 
 
 def play_animation(
-        sizes: tp.Sequence[Vec2],
-        textures: tp.Sequence[int],
-        position: Vec2 = ...,
-        position_reference: HasPosition = ...,
-        position_offset: coord_t = ...,
-        delay=.2
+    sizes: tp.Sequence[Vec2],
+    textures: tp.Sequence[int],
+    position: Vec2 = ...,
+    position_reference: HasPosition = ...,
+    position_offset: coord_t = ...,
+    delay=0.2,
 ) -> None:
     """
-    play an animation based on textures
+    Play an animation based on textures.
     """
     Animation(
-        textures,
-        sizes[0],
-        delay,
-        position,
-        position_reference,
-        position_offset
+        textures, sizes[0], delay, position, position_reference, position_offset
     ).play()
 
 
 class ImageAnimation:
     """
-    play an animation from a directory
+    play an animation from a directory.
     """
+
     _textures: list[int] = ...
     _sizes: list[Vec2] = ...
 
     def __init__(
-            self,
-            animation_scope: str,
+        self,
+        animation_scope: str,
     ) -> None:
         self._scope = animation_scope
 
     def load_textures(self, size: Vec2 = None) -> None:
         """
-        load all textures required for the animation
+        Load all textures required for the animation.
         """
         self._textures = []
         self._sizes = []
@@ -224,15 +223,15 @@ class ImageAnimation:
             self._sizes.append(Vec2().from_cartesian(*size))
 
     def draw(
-            self,
-            delay,
-            size: Vec2,
-            position: Vec2 = ...,
-            position_reference: HasPosition = ...,
-            layer: int = 0
+        self,
+        delay,
+        size: Vec2,
+        position: Vec2 = ...,
+        position_reference: HasPosition = ...,
+        layer: int = 0,
     ) -> None:
         """
-        play the recently loaded animation
+        Play the recently loaded animation.
 
         either position or position_reference have to be given
         """
@@ -240,12 +239,7 @@ class ImageAnimation:
             self.load_textures()
 
         Animation(
-            self._textures,
-            size,
-            delay,
-            position,
-            position_reference,
-            layer=layer
+            self._textures, size, delay, position, position_reference, layer=layer
         ).play()
 
 

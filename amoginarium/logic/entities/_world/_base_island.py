@@ -1,6 +1,7 @@
 """
-amoginarium/logic/entities/_world/_base_island.py
+Base class for island entities with bitmap-based collision generation.
 
+Path: amoginarium/logic/entities/_world/_base_island.py
 Project: amoginarium
 Created: 26.01.2024
 Authors: Nilusink, LukasKrah
@@ -8,23 +9,25 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-import typing as tp
 import random
+import typing as tp
 
-from amoginarium.shared.utility import Vec2, convert_coord, find_minimum_rectangles_dirty
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import BaseCommandType, CIDType
-from amoginarium.shared import ProcessCommand
 from amoginarium import pv
+from amoginarium.shared import BaseCommandType, ProcessCommand
+from amoginarium.shared.debugging import CC, print_ic_style
+from amoginarium.shared.utility import convert_coord
+from amoginarium.shared.utility import find_minimum_rectangles_dirty, Vec2
 
-from .._base import LogicGameEntity, Walls, GameCollisions, DebugRectangleEntity, CollisionType
+from .._base import DebugRectangleEntity, GameCollisions, LogicGameEntity, Walls
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
+    from amoginarium.shared import base_entity_t, CIDType
     from amoginarium.shared.utility import coord_t
-    from amoginarium.shared import base_entity_t
+
+    from .._base import CollisionType
 
 
 class Island(LogicGameEntity):
@@ -32,14 +35,17 @@ class Island(LogicGameEntity):
     Base class for island entities in the game world.
     Handles collision generation from bitmaps and logic-to-graphics synchronization.
     """
+
     __slots__ = ("_size", "_form", "_damage", "_bounce")
     # region ClassVars
     _block_size: tp.ClassVar[tuple[int, int]] = (64, 64)
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = GameCollisions.collision_group_islands
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = (
+        GameCollisions.collision_group_islands
+    )
     __DEBUG_DRAW_HITBOXES: tp.ClassVar[bool] = False
 
-    ISLANDS: tp.ClassVar[dict[CIDType, tp.Type[Island]]] = {}
-    ISLANDS_REVERSE: tp.ClassVar[dict[tp.Type[Island], CIDType]] = {}
+    ISLANDS: tp.ClassVar[dict[CIDType, type[Island]]] = {}
+    ISLANDS_REVERSE: tp.ClassVar[dict[type[Island], CIDType]] = {}
 
     # endregion
     # region InstanceVars
@@ -49,13 +55,13 @@ class Island(LogicGameEntity):
     _bounce: float  # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            pos: coord_t,
-            size: coord_t | EllipsisType = ...,
-            form: list[list[int]] | EllipsisType = ...,
-            damage: float | EllipsisType = ...,
-            bounce: float | EllipsisType = ...
+        self,
+        runtime_buffer: Array[base_entity_t],
+        pos: coord_t,
+        size: coord_t | EllipsisType = ...,
+        form: list[list[int]] | EllipsisType = ...,
+        damage: float | EllipsisType = ...,
+        bounce: float | EllipsisType = ...,
     ) -> None:
         """
         Initialize an Island entity.
@@ -67,7 +73,8 @@ class Island(LogicGameEntity):
         :param bounce: Bounciness factor for collisions.
         """
         if size is ... and form is ...:
-            raise ValueError("either size or form have to be given!")
+            msg = "either size or form have to be given!"
+            raise ValueError(msg)
 
         start = convert_coord(pos, Vec2)
         self._size = ... if size is ... else convert_coord(size, Vec2)
@@ -78,7 +85,7 @@ class Island(LogicGameEntity):
         if form is not ...:
             self._size = Vec2().from_cartesian(
                 self.__class__._block_size[0] * max(len(r) for r in form),
-                self.__class__._block_size[1] * len(form)
+                self.__class__._block_size[1] * len(form),
             )
 
         super().__init__(
@@ -102,23 +109,20 @@ class Island(LogicGameEntity):
         else:
             kwargs["size"] = self._size.xy
 
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_island,
-            kwargs=kwargs
-        ))
+        pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_island, kwargs=kwargs))
 
     @classmethod
     def random_between(
-            cls,
-            runtime_buffer: Array[base_entity_t],
-            x_start: int,
-            x_end: int,
-            y_start: int,
-            y_end: int,
-            x_size_start: int,
-            x_size_end: int,
-            y_size_start: int,
-            y_size_end: int
+        cls,
+        runtime_buffer: Array[base_entity_t],
+        x_start: int,
+        x_end: int,
+        y_start: int,
+        y_end: int,
+        x_size_start: int,
+        x_size_end: int,
+        y_size_start: int,
+        y_size_end: int,
     ) -> tp.Self:
         """
         Create an island with randomized position and size.
@@ -161,8 +165,9 @@ class Island(LogicGameEntity):
         rectangles covering the solid blocks to optimize collision checks.
         """
         if self._form is ...:
-            GameCollisions.collision_manager.register_entity(GameCollisions.collision_group_islands, self,
-                                                             self.position, self.size)
+            GameCollisions.collision_manager.register_entity(
+                GameCollisions.collision_group_islands, self, self.position, self.size
+            )
             if Island.__DEBUG_DRAW_HITBOXES:
                 DebugRectangleEntity(self._runtime_buffer, self.position, self.size)
             return
@@ -198,8 +203,9 @@ class Island(LogicGameEntity):
             position = convert_coord((rect_x, rect_y), Vec2)
             size = convert_coord((rect_w, rect_h), Vec2)
 
-            GameCollisions.collision_manager.register_entity(GameCollisions.collision_group_islands, self,
-                                                             position, size)
+            GameCollisions.collision_manager.register_entity(
+                GameCollisions.collision_group_islands, self, position, size
+            )
             if Island.__DEBUG_DRAW_HITBOXES:
                 DebugRectangleEntity(self._runtime_buffer, position, size)
 
@@ -208,11 +214,7 @@ class Island(LogicGameEntity):
         Convert island state to a dictionary for serialization/saving.
         :return: A dictionary containing the island's configuration and type.
         """
-        out: tp.MutableMapping[str, tp.Any] = {
-            "args": {
-                "pos": self.position
-            }
-        }
+        out: tp.MutableMapping[str, tp.Any] = {"args": {"pos": self.position}}
         if self.form:
             out["args"]["form"] = self.form
 
@@ -224,8 +226,7 @@ class Island(LogicGameEntity):
 
         except KeyError:
             print_ic_style(
-                f"{CC.fg.RED}invalid island type: "
-                f"{self.__class__}{CC.ctrl.ENDC}"
+                f"{CC.fg.RED}invalid island type: {self.__class__}{CC.ctrl.ENDC}"
             )
 
         return out

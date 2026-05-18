@@ -1,30 +1,36 @@
 """
-_multi_stage_missile.py
-05.05.2026
+Missile "bullet".
 
-missile "bullet"
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/templates/_missiles/_multi_stage_missile.py
+Project: amoginarium
+Created: 05.05.2026
+Authors: Nilusink
 """
 
-from types import EllipsisType
-from ctypes import Array
-import typing as tp
+from __future__ import annotations
 
-from amoginarium.shared import Coalitions, base_entity_t, MissileCIDs
-from amoginarium.shared.utility import Vec2
+from typing import TYPE_CHECKING
 
-from ...._base import LogicGameEntity
+from amoginarium.shared import MissileCIDs
+
 from ._base_missile import BaseMissile
 
+if TYPE_CHECKING:
+    from ctypes import Array
+    from types import EllipsisType
+
+    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared.utility import Vec2
+
+    from ...._base import LogicGameEntity
+
 # params are: time for stage, thrust, fuel flow in weight / s
-type crude_motor_stage_t = tuple[float, float, tp.Optional[float]]
+type crude_motor_stage_t = tuple[float, float, float | None]
 
 
 class MultiStageMissile(BaseMissile):
     """
-    thrust defined by stages
+    thrust defined by stages.
 
     ``flags[14]``: thrust active
     """
@@ -34,13 +40,13 @@ class MultiStageMissile(BaseMissile):
         "__current_thrust",
         "_stages",
         "__current_stage",
-        "__current_stage_t"
+        "__current_stage_t",
     )
 
     _CID = MissileCIDs.multi_stage
 
     # region motor stages
-    _default_motor_start: crude_motor_stage_t = (.5, 0)
+    _default_motor_start: crude_motor_stage_t = (0.5, 0)
     _default_motor_launch: crude_motor_stage_t = (1, 300, 50)
     _default_motor_accel: crude_motor_stage_t = (2, 100, 10)
     _default_motor_march: crude_motor_stage_t = (0, 0)
@@ -53,19 +59,19 @@ class MultiStageMissile(BaseMissile):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            parent: LogicGameEntity,
-            coalition: Coalitions,
-            initial_position: Vec2,
-            initial_velocity: Vec2,
-            *,
-            initial_facing: float | EllipsisType = ...,
-            rudder_size: float | EllipsisType = ...,
-            rudder_max_angle: float | EllipsisType = ...,
-            base_mass: float | EllipsisType = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            **kwargs,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        parent: LogicGameEntity,
+        coalition: Coalitions,
+        initial_position: Vec2,
+        initial_velocity: Vec2,
+        *,
+        initial_facing: float | EllipsisType = ...,
+        rudder_size: float | EllipsisType = ...,
+        rudder_max_angle: float | EllipsisType = ...,
+        base_mass: float | EllipsisType = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        **kwargs,
     ) -> None:
         # calculate motor params
         self._stages = [
@@ -98,7 +104,7 @@ class MultiStageMissile(BaseMissile):
             fuel_mass=self.__current_fuel_weight,
             base_mass=base_mass,
             collision_exception_ids=collision_exception_ids,
-            **kwargs
+            **kwargs,
         )
 
     # region properties
@@ -117,7 +123,7 @@ class MultiStageMissile(BaseMissile):
     # endregion
 
     def __update_stage(self, dt: float) -> None:
-        """update thrust and fuel weight based on time delta"""
+        """Update thrust and fuel weight based on time delta."""
         if dt <= 0:
             return
 
@@ -138,10 +144,7 @@ class MultiStageMissile(BaseMissile):
         self._set_bit("flags", 14, self.__current_thrust > 0)
 
         if len(self._stages[self.__current_stage]) > 2:
-            self.__current_fuel_weight -= (
-                    self._stages[self.__current_stage][2]
-                    * dt
-            )  # type: ignore
+            self.__current_fuel_weight -= self._stages[self.__current_stage][2] * dt  # type: ignore
 
         # increment stage
         if self.__current_stage_t < 0:
@@ -156,7 +159,7 @@ class MultiStageMissile(BaseMissile):
 
             # set next stage time (+ overflow from last stage)
             self.__current_stage_t = (
-                    self._stages[self.__current_stage][0] + self.__current_stage_t
+                self._stages[self.__current_stage][0] + self.__current_stage_t
             )
 
     def _update(self, delta: float, apply_thrust: bool = True) -> None:
