@@ -22,7 +22,7 @@ from ._synced_entities import SyncedGraphicsEntity
 
 class SensorHUD(SyncedGraphicsEntity):
     """
-    sensor entity
+    Sensor entity.
 
     ``param0`` detection range
     ``param1`` target x
@@ -79,7 +79,7 @@ class SensorHUD(SyncedGraphicsEntity):
                             (self.pos + t1) - world_pos,
                             (self.pos + t2) - world_pos,
                         ),
-                        color=Color().from_1(0.2, 0.2, 1, 0.3),
+                        color=Color().from_1(0.3, 0.3, 1, 0.1),
                     )
 
 

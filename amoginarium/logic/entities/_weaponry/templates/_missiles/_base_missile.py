@@ -8,17 +8,15 @@ Author:
 Nilusink
 """
 
-from types import EllipsisType
-from ctypes import Array
 import typing as tp
+from ctypes import Array
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, get_default, normalize_angle_neg
-from amoginarium.shared import Coalitions, base_entity_t
-
+from amoginarium.shared import Coalitions, MissileCIDs, base_entity_t
 from amoginarium.shared.audio import PresetEffect
-from amoginarium.shared import MissileCIDs
+from amoginarium.shared.utility import Vec2, get_default, normalize_angle_neg
 
-from ...._base import LogicGameEntity, DebugPolygonEntity
+from ...._base import DebugPolygonEntity, LogicGameEntity
 from .._bullets import AerodynamicEntity
 
 
@@ -30,7 +28,7 @@ class BaseMissile(AerodynamicEntity):
 
     # region ClassVars
     _CIDs = MissileCIDs.base
-    _DEBUG: tp.ClassVar[bool] = True
+    _DEBUG: tp.ClassVar[bool] = False
 
     _default_fuel_mass: tp.ClassVar[float] = 0
     _default_size: tp.ClassVar[tuple[float, float] | list[float]] = [100, 10]

@@ -10,12 +10,14 @@ Nilusink
 
 import random
 import typing as tp
+from enum import Enum
 from time import perf_counter
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pygame as pg
 from icecream import ic
+from numpy.typing import NDArray
 from scipy import ndimage
 
 from amoginarium import pv
@@ -24,11 +26,12 @@ from amoginarium.graphics.render_bindings import renderer
 from amoginarium.logic.map import array_get, generate_chunk_noise, iterate_chunk, to_str
 from amoginarium.shared.utility import Color, Vec2
 
+DEBUG: bool = False
 ISLAND_SIZE: int = 64
 CHUNK_SIZE = ISLAND_SIZE * 96
 CHUNK_SMOOTHING_ITERATIONS: int = 16
 UPDATE_INTERVAL = 0.0
-MAX_LEN: int = 16
+MAX_LEN: int = 8
 
 PATH_DIR_WEIGHTS: list[int] = [
     6,
@@ -50,6 +53,13 @@ spawnables: list[tuple[tuple[str, tuple[float, float]], int, float]] = [
     (("turret.static.flak", (186, 0)), 2, 0),
     (("turret.static.mortar", (ISLAND_SIZE * 2, ISLAND_SIZE * 10)), 7, 0.5),
 ]
+
+
+class IslandType(Enum):
+    """Island connection types."""
+
+    connect_8 = 0
+    connect_4 = 1
 
 
 def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
@@ -95,9 +105,33 @@ def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
     )
 
 
+def get_islands(
+    source: NDArray[np.bool_],
+    connection_type: IslandType = IslandType.connect_4,
+) -> tuple[NDArray[np.int32], int]:
+    """Get all islands from source chunk."""
+    if connection_type == IslandType.connect_4:
+        structure = np.array(
+            [
+                [0, 1, 0],
+                [1, 1, 1],
+                [0, 1, 0],
+            ]
+        )
+
+    else:
+        structure = np.ones((3, 3))
+
+    # get standalone "islands"
+    labels, num_islands = ndimage.label(source, structure=structure)
+
+    return labels, num_islands  # type: ignore[rtype-OK]
+
+
 def merge_chunks(
-    chunks: dict[tuple[int, int], np.ndarray],
-) -> tuple[np.ndarray, np.ndarray, tuple[int, int]]:
+    chunks: dict[tuple[int, int], NDArray[np.float64]],
+    masks: dict[tuple[int, int], NDArray[np.bool_]],
+) -> tuple[NDArray[np.float64], NDArray[np.bool_], tuple[int, int]]:
     """
     Merge all small chunks into one big one.
 
@@ -119,12 +153,12 @@ def merge_chunks(
     mask = np.zeros((grid_h * h, grid_w * w), dtype=np.bool)
 
     # insert chunks
-    for (cx, cy), chunk in chunks.items():
+    for ((cx, cy), chunk), mask_ in zip(chunks.items(), masks.values(), strict=True):
         x = (cx - min_x) * w
         y = (cy - min_y) * h
 
         big[y : y + h, x : x + w] = chunk.T
-        mask[y : y + h, x : x + w] = True
+        mask[y : y + h, x : x + w] = mask_.T
 
     return big, mask, (min_x, min_y)
 
@@ -136,42 +170,54 @@ def top_of_column(island: np.ndarray, x: int, y_start: int = 0) -> int | None:
     return ys.min() if ys.size > 0 else None
 
 
-def get_spawn_probability(_island: np.ndarray) -> float:
-    """
-    Get spawn probability of an island.
-    """
-    return 1
-
-
-def get_spawn_points(
-    island: np.ndarray,
-    island_start: tuple[int, int],
-    world: np.ndarray,
-    world_mask: np.ndarray,
+def get_spawn_points(  # noqa: PLR0914
+    island: NDArray[np.bool_],
+    spawn_point: tuple[int, int],
+    world: NDArray[np.float64],
+    world_mask: NDArray[np.bool_],
 ) -> list[tuple[tuple[float, float], list[int]]]:
     """Get spawn point on island."""
     island_height: int = len(island)
-    island_length: int = len(island[0])
-
-    # get top of island for each x position
-    o_heights: list[int] = [
-        island_height if (v := top_of_column(island, ind)) is None else v
-        for ind in range(island_length)
-    ]
 
     # calculate plateaus
+    # get surfaces
+    labels, _ = get_islands(~island)
+    target = labels[spawn_point[::-1]]
+
+    if target == 0:
+        msg = "Not inside a cave"
+        raise ValueError(msg)
+
+    # get caves
+    cave_mask = labels == target
+    cave = island.copy()
+    cave[~cave_mask] = True  # outside = solid
+
+    # extract surfaces
+    surface = np.zeros_like(cave, dtype=bool)
+    surface[1:, :] = cave[1:, :] & ~cave[:-1, :]
+    surface &= cave
+
     # list of height, x_start, count  (list because settable)
-    plateaus: list[list[int]] = []
-    current_plateau = -1
-    for i in range(len(o_heights)):
-        current_height = o_heights[i]
+    plateaus: list[tuple[int, int, int]] = []
+    height, width = surface.shape
+    for y in range(height):
+        row = surface[y]
 
-        if current_height != current_plateau:
-            plateaus.append([int(current_height), i, 0])
-            current_plateau = current_height
+        x = 0
+        while x < width:
+            if not row[x]:
+                x += 1
+                continue
 
-        # add step to plateau
-        plateaus[-1][-1] += 1
+            start = x
+
+            while x < width and row[x]:
+                x += 1
+
+            length = x - start
+
+            plateaus.append((y, start, length))
 
     # create weights for plateaus (height + length)
     weights: list[float] = [
@@ -191,8 +237,8 @@ def get_spawn_points(
         # check if point is out of bounds
         pos = (plateau[1] + plateau[2] // 2, plateau[0])
         world_pos = (
-            island_start[1] + pos[1] - 1,
-            island_start[0] + pos[0],
+            pos[1] - 1,
+            pos[0],
         )
 
         if not array_get(
@@ -201,15 +247,16 @@ def get_spawn_points(
             False,
         ):
             try:
-                world[world_pos] = 5
+                world[world_pos] = 1.5
 
             except IndexError:
                 continue
 
             continue
 
+        world[world_pos] = 2
         if random.random() < weight:
-            world[world_pos] = 10
+            world[world_pos] = 4
             out.append((pos, plateau))
 
     return out
@@ -257,6 +304,7 @@ def choose_turret(
     return random.sample(names, 1, counts=counts)[0]
 
 
+# noinspection DuplicatedCode
 def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
     """Da main func."""
     b = BaseGame(debug=True)
@@ -274,7 +322,8 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
         last_update = perf_counter()
         current_chunk = (Vec2(), [])
         chunks: dict[tuple[int, int], tuple[Vec2, list[int]]] = {(0, 0): current_chunk}
-        chunk_populations: dict[tuple[int, int], np.ndarray] = {}
+        chunk_populations: dict[tuple[int, int], NDArray[np.float64]] = {}
+        spawn_masks: dict[tuple[int, int], NDArray[np.bool_]] = {}
 
         while running:
             # handle pg events
@@ -422,10 +471,12 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
 
                 # generate chunk if it doesn't exist yet
                 if i == 0:
-                    chunk_populations[curr_pos] = generate_chunk_noise(
-                        (noise_scale,) * 2,
-                        interfaces=chunks[curr_pos][1],
-                        spawn_chunk=currently_populating == 0,
+                    chunk_populations[curr_pos], spawn_masks[curr_pos] = (
+                        generate_chunk_noise(
+                            (noise_scale,) * 2,
+                            interfaces=chunks[curr_pos][1],
+                            spawn_chunk=currently_populating == 0,
+                        )
                     )
 
                 if iterate_chunk(
@@ -469,7 +520,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             renderer.display_draw_frame()
 
         # merge chunks
-        big_chunk, chunk_mask, min_pos = merge_chunks(chunk_populations)
+        big_chunk, chunk_mask, min_pos = merge_chunks(chunk_populations, spawn_masks)
         for _ in range(12):
             iterate_chunk(big_chunk, 0, 1)
 
@@ -486,7 +537,9 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
         )
         labels, num_islands = ndimage.label(mask, structure=structure)
 
-        islands = [(labels == i) for i in range(1, num_islands + 1)]
+        islands: list[NDArray] = [  # type: ignore[trust-me-bro]
+            (labels == i) for i in range(1, num_islands + 1)
+        ]
         coords_list = [np.argwhere(labels == i) for i in range(1, num_islands + 1)]
 
         # write map
@@ -526,35 +579,34 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             }
             map_data["platforms"].append(chunk)
 
-            # create turrets
-            # get tops of island
-            spawn_chance = get_spawn_probability(cropped)
+        # generate turrets
+        i_spawn_ = spawn_pos / ISLAND_SIZE
+        i_spawn = int(i_spawn_.x), int(i_spawn_.y)
+        ic(i_spawn)
+        for (x_off, y_off), plateau in get_spawn_points(
+            big_chunk == 0, i_spawn, big_chunk, chunk_mask
+        ):
+            turret_ = choose_turret(
+                big_chunk,
+                (int(x_off), int(y_off)),
+                plateau,
+            )
 
-            if random.random() <= spawn_chance:
-                for (x_off, y_off), plateau in get_spawn_points(
-                    cropped, (min_x, min_y), big_chunk, chunk_mask
-                ):
-                    # calculate global position
-                    x_pos = min_x + x_off
-                    y_pos = min_y + y_off
+            if not turret_:
+                continue
 
-                    turret_ = choose_turret(big_chunk, (x_pos, y_pos), plateau)
+            turret, _, args = turret_
 
-                    if not turret_:
-                        continue
-
-                    turret, _, args = turret_
-
-                    map_data["entities"].append(
-                        {
-                            "type": turret,
-                            "pos": (
-                                pos[0] + x_off * ISLAND_SIZE + ISLAND_SIZE / 2,
-                                pos[1] + y_off * ISLAND_SIZE,
-                            ),
-                            "args": args,
-                        }
-                    )
+            map_data["entities"].append(
+                {
+                    "type": turret,
+                    "pos": (
+                        x_off * ISLAND_SIZE + ISLAND_SIZE / 2,
+                        y_off * ISLAND_SIZE,
+                    ),
+                    "args": args,
+                }
+            )
 
         # create spawn-platform
         spawn_pos -= Vec2().from_cartesian(block_size, -32)

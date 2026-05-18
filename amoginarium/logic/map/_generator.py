@@ -7,7 +7,9 @@ Created: 18.05.2026
 Authors: Nilusink
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 
 _RNG = np.random.default_rng()
 LEFT = 0
@@ -23,7 +25,7 @@ def generate_chunk_noise(
     slice_multiplier: float = 1.4,
     spawn_chunk: bool = False,
     x_stretch: int = 4,
-) -> np.ndarray:
+) -> tuple[NDArray[np.float64], NDArray[np.bool_]]:
     """
     Generate chunk noise with interface positions.
 
@@ -32,8 +34,10 @@ def generate_chunk_noise(
     :param slice_multiplier: multiplier for interface slices
     :param spawn_chunk: if set, center of chunk will always be cleared
     :param x_stretch: noise stretch in x-axis
-    :return: white noise
+    :return: white noise, spawn mask
     """
+    mask = np.ones(size, dtype=np.bool)
+
     small: np.ndarray = _RNG.random((size[0] // x_stretch, size[1]))
     chunk = np.repeat(small, x_stretch, axis=0)
 
@@ -71,6 +75,7 @@ def generate_chunk_noise(
 
     else:
         chunk[:, :y_wall_start] = 0
+        mask[:, : int(size[1] / 3)] = 0
 
     if BOTTOM in interfaces:
         chunk[x_start:x_end, y_mid:] *= slice_multiplier
@@ -78,8 +83,9 @@ def generate_chunk_noise(
     else:
         chunk[:, y_wall_end:] = 0
 
-    # if spawn chunk, make sure the center is free
+    # if spawn chunk, make sure the center is free of islands and turrets
     if spawn_chunk:
         chunk[x_mid - 5 : x_mid + 5, y_mid - 5 : y_mid + 5] = 1
+        mask[x_start:x_end, y_start:y_end] = 0
 
-    return chunk
+    return chunk, mask
