@@ -368,6 +368,27 @@ class LogicProcess:
                 else:
                     self._ciq.put(item)
 
+            elif item.type == ProcessCommandType.set_zoom:
+                # get current center
+                screen_size = pv.global_vars.get_screen_size()
+                ppm = pv.global_vars.get_pixel_per_meter()
+
+                screen_pixels = (screen_size / ppm) / 2
+                current_center: Vec2 = (
+                    pv.global_vars.get_world_position() + screen_pixels
+                )
+
+                # zoom
+                ppm *= item.kwargs["zoom"]
+                pv.global_vars.set_pixel_per_meter(ppm)
+
+                # update position
+                screen_pixels = (screen_size / ppm) / 2
+                w_pos = current_center - screen_pixels
+                pv.global_vars.set_world_position(w_pos)
+                self._x_pid.set_value(w_pos.x)
+                self._y_pid.set_value(w_pos.y)
+
             else:
                 ic(item)
 
@@ -406,7 +427,6 @@ class LogicProcess:
         players = Players.entities()
         if len(players) > 0:
             curr_view = players[0].get_current_view()
-            # world_position = pv.global_vars.get_world_position()
 
             screen_pixels = (
                 pv.global_vars.get_screen_size() / pv.global_vars.get_pixel_per_meter()
@@ -421,27 +441,11 @@ class LogicProcess:
             else:
                 curr_view.pos -= screen_pixels
 
+                # set position in case of graphics position update
                 x_pos = self._x_pid.update_value(curr_view.pos.x, delta)
                 y_pos = self._y_pid.update_value(curr_view.pos.y, delta)
 
                 Updated.world_position.xy = x_pos, y_pos
-                # ic(Updated.world_position.xy)
-
-                # if max_player_pos.x > world_position.x + screen_pixels.x:
-                #     x = max_player_pos.x - screen_pixels.x
-                #     Updated.world_position.x = x
-                #
-                # elif max_player_pos.x < world_position.x + screen_pixels.x * 0.6:
-                #     x = max_player_pos.x - screen_pixels.x * 0.6
-                #     Updated.world_position.x = x
-                #
-                # if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
-                #     y = max_player_pos.y - screen_pixels.y * 1.4
-                #     Updated.world_position.y = y
-                #
-                # elif max_player_pos.y < world_position.y + screen_pixels.y * 0.6:
-                #     y = max_player_pos.y - screen_pixels.y * 0.6
-                #     Updated.world_position.y = y
 
             pv.audio_observer_pos.xy = (Updated.world_position - screen_pixels).xy
             self._global_vars.set_world_position(Updated.world_position)

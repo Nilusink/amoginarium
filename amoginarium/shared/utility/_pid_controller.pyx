@@ -22,6 +22,9 @@ cdef class PIDController:
     def value(self) -> float:
         return self._value
 
+    cpdef set_value(self, double new_val):
+        self._value = new_val
+
     cpdef double update_value(self, double new_val, double dt):
         return self.update(new_val - self._value, dt)
 

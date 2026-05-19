@@ -24,16 +24,27 @@ from icecream import colorizedStderrPrint, ic
 
 from amoginarium import pv
 from amoginarium.graphics.controllers import Controllers, KeyboardController
-from amoginarium.graphics.entities import Drawn_0, Drawn_1, Drawn_2
-from amoginarium.graphics.entities import SyncedEntities, UIEntities
+from amoginarium.graphics.entities import (
+    Drawn_0,
+    Drawn_1,
+    Drawn_2,
+    SyncedEntities,
+    UIEntities,
+)
 from amoginarium.graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.graphics.textures import textures
 from amoginarium.graphics.ui import UICursor
 from amoginarium.logic import run_continuous
 from amoginarium.shared import BaseCommandType, ProcessCommand, ProcessCommandType
-from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
-from amoginarium.shared.debugging import print_with_prefix, run_with_debug
+from amoginarium.shared.debugging import (
+    CC,
+    cum_timer,
+    get_fg_color,
+    print_ic_style,
+    print_with_prefix,
+    run_with_debug,
+)
 from amoginarium.shared.settings import Settings
 
 from ._pausemenu import PauseMenu
@@ -43,6 +54,7 @@ from ._startmenu import StartMenu
 
 if tp.TYPE_CHECKING:
     from amoginarium.graphics.controllers import Controller
+    from amoginarium.shared.utility import Vec2
 
 
 class BoundFunction[**A, R]:
@@ -409,8 +421,6 @@ class BaseGame:
             "Game": UIVisiblity(False, False, False),
         }
 
-        # self.load_map("assets/maps/test.json")
-
         def load_ui_visibility() -> None:
             """Whatever this does (I didn't code it)."""
             visibility = ui_visibility[active_scene]
@@ -495,10 +505,12 @@ class BaseGame:
 
             load_ui_visibility()
 
-        def handle_zoom(e) -> None:
+        def handle_zoom(e: Vec2) -> None:
             """Zoom callback."""
-            self.global_vars.set_pixel_per_meter(
-                self.global_vars.get_pixel_per_meter() * (1 + e.y / 30)
+            pv.COQ.put(
+                ProcessCommand(
+                    type=ProcessCommandType.set_zoom, kwargs={"zoom": 1 + e.y / 30}
+                )
             )
 
         start_menu = StartMenu(start_game, open_settings, self.__clean_end)
@@ -601,6 +613,7 @@ class BaseGame:
                 elif event.type == pg.MOUSEWHEEL:
                     if active_scene in ["Game", "PauseSettings", "PauseMenu"]:
                         handle_zoom(event)
+
                 elif event.type == pg.QUIT:
                     self.__clean_end()
 

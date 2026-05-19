@@ -216,6 +216,9 @@ class ProcessCommandType(Enum):
     # entity spawning
     spawn_player = 6  # {"controller_id": int}
 
+    # camera control
+    set_zoom = 7  # {"zoom": <float, relative to 1>}
+
 
 class BaseCommandType(Enum):
     """

@@ -13,6 +13,9 @@ class PIDController:
     def value(self) -> float:
         """Get current PID controller value."""
 
+    def set_value(self, new_val: float) -> None:
+        """Set current value."""
+
     def update_value(self, new_val: float, dt: float) -> float:
         """Update PID controller based on absolute value."""
 
