@@ -303,10 +303,16 @@ class LogicProcess:
                     f'"{CC.fg.YELLOW}{args!r}{CC.fg.RED}"'
                 )
 
+        # set initial camera position
+        view_pos = data["end_pos"] if "end_pos" in data else data["spawn_pos"]
+
+        self._x_pid.set_value(view_pos[0])
+        self._y_pid.set_value(view_pos[1])
+
         self._map_loading = False
 
     @cum_timer.time_this
-    def update_entities(self, delta: float) -> bool:
+    def update_entities(self, delta: float) -> bool:  # noqa: C901, PLR0912, PLR0915
         """
         Update all entities.
 
