@@ -230,7 +230,14 @@ def calculate_launch_angle_all_directions(
 
 
 def clamp[A: int | float](value: A, a: float, b: float) -> A:
-    """Clamp a value between a and b."""
+    """
+    Clamp a value between a and b.
+
+    :param value: value to clamp
+    :param a: min value
+    :param b: max value
+    :returns: clamped value
+    """
     if value < a:
         return a
 

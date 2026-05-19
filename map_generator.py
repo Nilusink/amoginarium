@@ -37,7 +37,7 @@ CHUNK_SMOOTHING_ITERATIONS: tp.Final[int] = 16
 UPDATE_INTERVAL: tp.Final[float] = 0.0
 MAX_LEN: tp.Final[int] = 8
 
-PATH_DIR_WEIGHTS: list[int] = [
+PATH_DIR_WEIGHTS: tp.Final[list[int]] = [
     6,
     2,
     1,
@@ -66,12 +66,12 @@ class IslandType(Enum):
     connect_4 = 1
 
 
-def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
+def render_chunk(pos: Vec2, chunk: NDArray[np.float64]) -> None:
     """
     Render a chunk.
 
-    :param pos:
-    :param chunk:
+    :param pos: position of chunk
+    :param chunk: chunk to render
     """
     world_pos = pv.global_vars.get_world_position()
 
@@ -96,8 +96,8 @@ def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
     """
     Draw interface for chunk.
 
-    :param pos:
-    :param if_type:
+    :param pos: position of chunk
+    :param if_type: interface type (direction)
     """
     center_pos_ = pos.copy()
     center_pos_ += CHUNK_SIZE / 2
@@ -126,9 +126,9 @@ def get_islands(
     """
     Get all islands from source chunk.
 
-    :param source:
-    :param connection_type:
-    :return:
+    :param source: source chunk buffer, bool
+    :param connection_type: diagonals allowed?
+    :returns: (buffer with islands, number of islands)
     """
     if connection_type == IslandType.connect_4:
         structure = np.array(
@@ -155,9 +155,9 @@ def merge_chunks(
     """
     Merge all small chunks into one big one.
 
-    :param chunks: Your chunk
-    :param masks: What in the holy mask
-    :returns: merged ndarray, mask, min position
+    :param chunks: individual chunk buffers
+    :param masks: individual chunk spawn masks
+    :returns: big chunk buffer + spawn mask, min pos
     """
     xs = [k[0] for k in chunks]
     ys = [k[1] for k in chunks]
@@ -185,14 +185,14 @@ def merge_chunks(
     return big, mask, (min_x, min_y)
 
 
-def top_of_column(island: np.ndarray, x: int, y_start: int = 0) -> int | None:
+def top_of_column(island: NDArray[np.bool_], x: int, y_start: int = 0) -> int | None:
     """
     Find top of island via column scan.
 
-    :param island: The island
-    :param x: The x
-    :param y_start: The y start
-    :return: IDK
+    :param island: island buffer
+    :param x: x index
+    :param y_start: y start (downwards)
+    :returns: y index of island if found
     """
     col = island[y_start:, x]
     ys = np.where(col)[0]
@@ -204,15 +204,15 @@ def get_spawn_points(  # noqa: PLR0914
     spawn_point: tuple[int, int],
     world: NDArray[np.float64],
     world_mask: NDArray[np.bool_],
-) -> list[tuple[tuple[float, float], list[int]]]:
+) -> list[tuple[tuple[float, float], tuple[int, int, int]]]:
     """
     Get spawn point on island.
 
-    :param island: The island
-    :param spawn_point: The spawn point
-    :param world: The world
-    :param world_mask: The world mask
-    :return: IDK
+    :param island: world as island (bool)
+    :param spawn_point: world spawn point
+    :param world: world buffer
+    :param world_mask: global spawn mask
+    :returns: list of spawn-pos, plateau
     :raises ValueError: IDK
     """
     island_height: int = len(island)
@@ -301,13 +301,17 @@ def get_spawn_points(  # noqa: PLR0914
 
 
 def choose_turret(
-    map_buffer: np.ndarray, spawn_pos: tuple[int, int], plateau: list[int]
+    map_buffer: NDArray[np.float64],
+    spawn_pos: tuple[int, int],
+    plateau: tuple[int, int, int],
 ) -> tuple[str, tuple[float, float], dict] | None:
     """
     Choose a turret based on map location.
 
-    :param map_buffer: The map
-    :return: IDK
+    :param map_buffer: world buffer
+    :param spawn_pos: turret spawn position
+    :param plateau: plateau where turret will spawn
+    :returns: turret name, (turret size), turret args
     """
     turrets = []
 
