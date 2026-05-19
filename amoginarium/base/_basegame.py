@@ -695,13 +695,6 @@ class BaseGame:
             renderer.display_draw_frame()
 
         ic("pygame end")
-        times = cum_timer.get_times()
-        for func, values in sorted(times.items(), key=lambda e: e[1][0]):
-            print_ic_style(
-                f"{func}, called {values[1]} times {round(values[2], 3)}µs each, "
-                f"totaling {round(values[0] / 1000, 2)}ms"
-            )
-
         self.end()
 
     def draw_entities_only(self) -> None:
@@ -741,6 +734,14 @@ class BaseGame:
         """
         # send end to process
         pv.COQ.put(ProcessCommand(type=ProcessCommandType.quit))
+
+        # print debug times
+        times = cum_timer.get_times()
+        for func, values in sorted(times.items(), key=lambda e: e[1][0]):
+            print_ic_style(
+                f"{func}, called {values[1]} times {round(values[2], 3)}μs each, "
+                f"totaling {round(values[0] / 1000, 2)}ms"
+            )
 
         # check if end has already been called
         if self._ended:

@@ -216,7 +216,11 @@ class LogicProcess:
         Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
 
         # load islands
+        i = 0
+        ic("spawning islands ...")
         for island in data["platforms"]:
+            ic(i)
+            i += 1
             island_type = GrassIsland
             if "type" in island and island["type"] in Island.ISLANDS:
                 island_type = Island.ISLANDS[island["type"]]
@@ -247,6 +251,8 @@ class LogicProcess:
             #         i,
             #         **island["move"]
             #     )
+
+        ic("spawning entities")
 
         # load entities
         detection_groups: dict[int, DetectionGroup] = {
@@ -287,6 +293,8 @@ class LogicProcess:
                     f"{CC.fg.YELLOW}{SPAWNABLES[entity['type']].__name__}{CC.fg.RED}: "
                     f'"{CC.fg.YELLOW}{args!r}{CC.fg.RED}"'
                 )
+
+        ic("map done")
 
         self._map_loading = False
 

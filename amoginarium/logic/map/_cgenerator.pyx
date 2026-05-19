@@ -50,7 +50,6 @@ cpdef bint iterate_chunk(
         int col, row
         int sx = chunk.shape[0]
         int sy = chunk.shape[1]
-
         double[:, :] old_map
         double curr_value
         double total
@@ -60,34 +59,34 @@ cpdef bint iterate_chunk(
     if i < n_steps:
         old_map = np.array(chunk, copy=True)
 
+        # parallel outer loop
         for col in range(sx):
             for row in range(sy):
 
                 curr_value = old_map[col, row]
 
-                # own value weighted 4x
                 total = curr_value * 4.0
                 count = 4
 
                 val = get_val(old_map, col - 1, row, sx, sy)
                 if val >= 0:
-                    total += val
-                    count += 1
+                    total = total + val
+                    count = count + 1
 
                 val = get_val(old_map, col + 1, row, sx, sy)
                 if val >= 0:
-                    total += val
-                    count += 1
+                    total = total + val
+                    count = count + 1
 
                 val = get_val(old_map, col, row - 1, sx, sy)
                 if val >= 0:
-                    total += val
-                    count += 1
+                    total = total + val
+                    count = count + 1
 
                 val = get_val(old_map, col, row + 1, sx, sy)
                 if val >= 0:
-                    total += val
-                    count += 1
+                    total = total + val
+                    count = count + 1
 
                 chunk[col, row] = total / count
 

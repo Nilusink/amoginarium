@@ -12,6 +12,9 @@ from __future__ import annotations
 import random
 import typing as tp
 
+import numpy as np
+from icecream import ic
+
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium.shared.debugging import CC, print_ic_style
@@ -97,7 +100,9 @@ class Island(LogicGameEntity):
 
         self.add(Walls)
 
+        ic("parent done")
         self._create_collision_entites()
+        ic("coll calc done")
 
         # spawn graphics entity
         kwargs: dict[str, tp.Any] = {
@@ -174,21 +179,13 @@ class Island(LogicGameEntity):
             return
 
         # Collision rects
-        n_rows = len(self._form)
-        n_columns = max(len(row) for row in self._form)
+        ic("mask")
 
-        bitmap = [[0] * n_columns for _ in range(n_rows)]
-        for r in range(n_rows):
-            for c in range(n_columns):
-                try:
-                    # island_type > 0 means it's a solid block
-                    if self._form[r][c] > 0:
-                        bitmap[r][c] = 1
-                except IndexError:
-                    # Jagged edge, leave as 0
-                    pass
+        bitmap_ = np.array(self._form, np.uint8)
+        bitmap = bitmap_ > 0
 
-        raw_rects = find_minimum_rectangles_dirty(bitmap)
+        ic("find mrd")
+        raw_rects = find_minimum_rectangles_dirty(bitmap.tolist())
 
         for r1, c1, r2, c2 in raw_rects:
             # Calculate cell dimensions
