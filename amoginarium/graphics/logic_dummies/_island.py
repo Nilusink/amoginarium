@@ -16,7 +16,6 @@ from dataclasses import dataclass
 from types import EllipsisType
 
 from icecream import ic
-from utility import WtfError
 
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
