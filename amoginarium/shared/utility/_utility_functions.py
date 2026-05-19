@@ -184,7 +184,7 @@ def calculate_launch_angle_all_directions(
     g: float = 9.81,
 ) -> tuple[Vec2, float, Vec2]:
     """
-    Removes calculate_launch_angles directional restrictions.
+    Remove calculate_launch_angles directional restriction.
 
     :param position_delta: the position delta between cannon and target
     :param target_velocity: the current velocity of the target, pass empty Vec2 if no velocity is known
@@ -227,3 +227,21 @@ def calculate_launch_angle_all_directions(
         predict.x *= -1
 
     return aiming_angle, tof, predict
+
+
+def clamp[A: int | float](value: A, a: float, b: float) -> A:
+    """
+    Clamp a value between a and b.
+
+    :param value: value to clamp
+    :param a: min value
+    :param b: max value
+    :returns: clamped value
+    """
+    if value < a:
+        return a
+
+    if value > b:
+        return b
+
+    return value

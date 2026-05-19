@@ -10,7 +10,7 @@ Authors: Nilusink
 import json
 import re
 
-from amoginarium.logic.entities import GameEntity
+from amoginarium.logic.entities import LogicGameEntity
 from amoginarium.shared.utility import Vec2
 
 
@@ -47,7 +47,7 @@ class Encoder(json.JSONEncoder):
         if isinstance(obj, Vec2):
             return f"@@{', '.join(map(float_to_str, obj.xy))}@@"
 
-        if isinstance(obj, GameEntity):
+        if isinstance(obj, LogicGameEntity):
             return preprocess(obj.to_dict())
 
         return super().default(obj)

@@ -65,6 +65,7 @@ class Island(LogicGameEntity):
     ) -> None:
         """
         Initialize an Island entity.
+
         :param runtime_buffer: The C-level memory buffer for entity data.
         :param pos: Initial position of the island.
         :param size: Dimensions of the island (used if form is not provided).

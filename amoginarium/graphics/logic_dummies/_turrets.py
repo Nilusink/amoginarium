@@ -222,7 +222,6 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                     self.world_position - self.size / 2,
                     self.size,
                     layer=self._default_layer,
-                    # force_draw=self._highlight
                 )
 
             else:
@@ -233,7 +232,6 @@ class BaseTurretDummy(SyncedGraphicsEntity):
                     - Vec2().from_cartesian(-self.size.x / 2, self.size.y / 2),
                     (-self.size.x, self.size.y),
                     layer=self._default_layer,
-                    # force_draw=self._highlight,
                 )
 
         elif layer == 2:

@@ -34,7 +34,7 @@ class BaseMissile(AerodynamicEntity):
 
     # region ClassVars
     _CIDs = MissileCIDs.base
-    _DEBUG: tp.ClassVar[bool] = True
+    _DEBUG: tp.ClassVar[bool] = False
 
     _default_fuel_mass: tp.ClassVar[float] = 0
     _default_size: tp.ClassVar[tuple[float, float] | list[float]] = [100, 10]
@@ -57,7 +57,7 @@ class BaseMissile(AerodynamicEntity):
         fuel_mass: float | EllipsisType = ...,
         base_mass: float | EllipsisType = ...,
         collision_exception_ids: list[int] | int | None = None,
-        **kwargs,
+        **kwargs,  # noqa: ANN003
     ) -> None:
         size: Vec2 | list | tuple = self._default_size
 
@@ -125,7 +125,7 @@ class BaseMissile(AerodynamicEntity):
 
         return val
 
-    def _update(self, delta: float, apply_thrust: bool = True) -> None:
+    def _update(self, delta: float, apply_thrust: bool = True) -> None:  # noqa: FBT002
         # apply thrust force at rear of missile
         if self.thrust != 0 and apply_thrust:
             self.apply_force(

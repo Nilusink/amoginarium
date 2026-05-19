@@ -158,3 +158,4 @@ debug/
 debug_viewer_settings.json
 graphic_debug.json
 *.pyd
+generated_map.json

@@ -13,7 +13,7 @@ from icecream import ic
 
 from amoginarium.logic.entities import Island
 
-from ..base._groups import Updated
+from ..entities import Updated
 from ._json_serialize import to_str
 
 if TYPE_CHECKING:

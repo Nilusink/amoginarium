@@ -21,17 +21,6 @@ from ._minrect_algorithm import find_minimum_rectangles, find_minimum_rectangles
 from ._pid_controller import PIDController
 from ._tuplemath import TupleMath
 from ._utility_classes import BetterDict, SimpleLock, WDTimer
-from ._utility_functions import calculate_launch_angle_all_directions, classname
-from ._utility_functions import color_t, convert_color, coord_t, get_default
-from ._utility_functions import is_parent, lidar_sphere, multi_raycast_mask
-
-# from ._cutility_functions import point_in_triangle as _pit, raycast_mask as _rm, convert_coord as _cc, is_related as _ir
-# from ._ccalculations import calculate_launch_angle as _cla
-# from ._utility_functions import multi_raycast_mask as _mrm
-#
-# calculate_launch_angle = cum_timer.time_this(_cla)
-# point_in_triangle = cum_timer.time_this(_pit)
-# raycast_mask = cum_timer.time_this(_rm)
-# multi_raycast_mask = cum_timer.time_this(_mrm)
-# convert_coord = cum_timer.time_this(_cc)
-# is_related = cum_timer.time_this(_ir)
+from ._utility_functions import calculate_launch_angle_all_directions, clamp, classname
+from ._utility_functions import color_t, convert_color, coord_t, get_default, is_parent
+from ._utility_functions import lidar_sphere, multi_raycast_mask

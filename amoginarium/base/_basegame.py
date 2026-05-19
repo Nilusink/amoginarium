@@ -577,6 +577,7 @@ class BaseGame:
                         sync_id = item.kwargs.pop("id")
                         ISLANDS[cid](sync_id=sync_id, **item.kwargs)
 
+            ppm = self.global_vars.get_pixel_per_meter()
             renderer.clear_display()
 
             # total delta since last call
@@ -636,7 +637,7 @@ class BaseGame:
             ]:
                 # update background music
                 if not isinstance(self._background, EllipsisType):
-                    self._background.set_position(world_pos.x)
+                    self._background.set_position(world_pos.x * ppm)
                     self._background.draw(delta)
 
                 renderer.flush()
@@ -667,7 +668,7 @@ class BaseGame:
 
                 # draw background
                 if not isinstance(self._background, EllipsisType):
-                    self._background.set_position(world_pos.x)
+                    self._background.set_position(world_pos.x * ppm)
                     self._background.draw(delta)
 
                 renderer.flush()

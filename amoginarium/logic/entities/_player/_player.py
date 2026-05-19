@@ -110,7 +110,7 @@ class Player(Passenger, LogicGameEntity):
         self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
-            DYNAMIC_ENTITIES["weapon.atgm"](self, self._runtime_buffer, False),
+            DYNAMIC_ENTITIES["weapon.ak47"](self, self._runtime_buffer, False),
             DYNAMIC_ENTITIES["weapon.minigun"](
                 self, self._runtime_buffer, False, parent_position_offset=(0, 10)
             ),
@@ -601,12 +601,12 @@ class Player(Passenger, LogicGameEntity):
         # to let the CollisionSystem check if that position is valid!
         # 3 because, because first is for any check to happen, second for restoring the y-axis-position on a wall hit
         # If you don't know what I mean by this, just ask me. But I won't know by then probably! xD
-        if self.position.y > 2000:
-            if self.__should_be_killed >= 2:
-                self.kill()
-            self.__should_be_killed += 1
-        else:
-            self.__should_be_killed = 0
+        # if self.position.y > 2000:
+        #     if self.__should_be_killed >= 2:
+        #         self.kill()
+        #     self.__should_be_killed += 1
+        # else:
+        #     self.__should_be_killed = 0
 
     def _kill(self, killed_by=...) -> None:
         self._alive = False
