@@ -67,7 +67,12 @@ class IslandType(Enum):
 
 
 def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
-    """Render a chunk."""
+    """
+    Render a chunk.
+
+    :param pos:
+    :param chunk:
+    """
     world_pos = pv.global_vars.get_world_position()
 
     chunk_size_x = len(chunk)
@@ -88,7 +93,12 @@ def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
 
 
 def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
-    """Draw interface for chunk."""
+    """
+    Draw interface for chunk.
+
+    :param pos:
+    :param if_type:
+    """
     center_pos_ = pos.copy()
     center_pos_ += CHUNK_SIZE / 2
     pos_ = center_pos_.copy()
@@ -113,7 +123,13 @@ def get_islands(
     source: NDArray[np.bool_],
     connection_type: IslandType = IslandType.connect_4,
 ) -> tuple[NDArray[np.int32], int]:
-    """Get all islands from source chunk."""
+    """
+    Get all islands from source chunk.
+
+    :param source:
+    :param connection_type:
+    :return:
+    """
     if connection_type == IslandType.connect_4:
         structure = np.array(
             [
@@ -139,6 +155,8 @@ def merge_chunks(
     """
     Merge all small chunks into one big one.
 
+    :param chunks: Your chunk
+    :param masks: What in the holy mask
     :returns: merged ndarray, mask, min position
     """
     xs = [k[0] for k in chunks]
@@ -168,7 +186,14 @@ def merge_chunks(
 
 
 def top_of_column(island: np.ndarray, x: int, y_start: int = 0) -> int | None:
-    """Find top of island via column scan."""
+    """
+    Find top of island via column scan.
+
+    :param island: The island
+    :param x: The x
+    :param y_start: The y start
+    :return: IDK
+    """
     col = island[y_start:, x]
     ys = np.where(col)[0]
     return ys.min() if ys.size > 0 else None
@@ -180,7 +205,16 @@ def get_spawn_points(  # noqa: PLR0914
     world: NDArray[np.float64],
     world_mask: NDArray[np.bool_],
 ) -> list[tuple[tuple[float, float], list[int]]]:
-    """Get spawn point on island."""
+    """
+    Get spawn point on island.
+
+    :param island: The island
+    :param spawn_point: The spawn point
+    :param world: The world
+    :param world_mask: The world mask
+    :return: IDK
+    :raises ValueError: IDK
+    """
     island_height: int = len(island)
 
     # calculate plateaus
@@ -269,7 +303,12 @@ def get_spawn_points(  # noqa: PLR0914
 def choose_turret(
     map_buffer: np.ndarray, spawn_pos: tuple[int, int], plateau: list[int]
 ) -> tuple[str, tuple[float, float], dict] | None:
-    """Choose a turret based on map location."""
+    """
+    Choose a turret based on map location.
+
+    :param map_buffer: The map
+    :return: IDK
+    """
     turrets = []
 
     for turret in spawnables:
