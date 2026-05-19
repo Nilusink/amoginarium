@@ -24,31 +24,36 @@ from scipy import ndimage
 from amoginarium import pv
 from amoginarium.base import BaseGame
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.logic.map import array_get, generate_chunk_noise, iterate_chunk, to_str
+from amoginarium.logic.map import array_get, generate_chunk_noise
+from amoginarium.logic.map import iterate_chunk as i_c
+from amoginarium.logic.map import to_str
+from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Color, Vec2
 
 if tp.TYPE_CHECKING:
     from numpy.typing import NDArray
 
-DEBUG: bool = False
-ISLAND_SIZE: int = 64
-CHUNK_SIZE = ISLAND_SIZE * 96
-CHUNK_SMOOTHING_ITERATIONS: int = 16
-UPDATE_INTERVAL = 0.0
-MAX_LEN: int = 8
+iterate_chunk = cum_timer.time_this(i_c)
 
-PATH_DIR_WEIGHTS: list[int] = [
-    6,
-    2,
+DEBUG: tp.Final[bool] = False
+ISLAND_SIZE: tp.Final[int] = 64
+CHUNK_SIZE: tp.Final[int] = ISLAND_SIZE * 96
+CHUNK_SMOOTHING_ITERATIONS: tp.Final[int] = 16
+UPDATE_INTERVAL: tp.Final[float] = 0.0
+MAX_LEN: tp.Final[int] = 1024
+
+PATH_DIR_WEIGHTS: tp.Final[list[int]] = [
+    1,
+    1,
     1,
     1,
 ]
 
 # spawn stuff
-IDEAL_PLATEAU_LENGTH: int = 8
+IDEAL_PLATEAU_LENGTH: tp.Final[int] = 8
 
 # syntax: (name, required_space), spawn_weight, cluster_variant_chance
-spawnables: list[tuple[tuple[str, tuple[float, float]], int, float]] = [
+spawnables: tp.Final[list[tuple[tuple[str, tuple[float, float]], int, float]]] = [
     (("turret.static.ak47", (23, 0)), 6, 0),
     (("turret.static.minigun", (128, 0)), 4, 0),
     (("turret.static.sniper", (128, 0)), 4, 0),
@@ -66,8 +71,13 @@ class IslandType(Enum):
     connect_4 = 1
 
 
-def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
-    """Render a chunk."""
+def render_chunk(pos: Vec2, chunk: NDArray[np.float64]) -> None:
+    """
+    Render a chunk.
+
+    :param pos: position of chunk
+    :param chunk: chunk to render
+    """
     world_pos = pv.global_vars.get_world_position()
 
     chunk_size_x = len(chunk)
@@ -88,7 +98,12 @@ def render_chunk(pos: Vec2, chunk: np.ndarray) -> None:
 
 
 def draw_chunk_interface(pos: Vec2, if_type: int) -> None:
-    """Draw interface for chunk."""
+    """
+    Draw interface for chunk.
+
+    :param pos: position of chunk
+    :param if_type: interface type (direction)
+    """
     center_pos_ = pos.copy()
     center_pos_ += CHUNK_SIZE / 2
     pos_ = center_pos_.copy()
@@ -113,7 +128,13 @@ def get_islands(
     source: NDArray[np.bool_],
     connection_type: IslandType = IslandType.connect_4,
 ) -> tuple[NDArray[np.int32], int]:
-    """Get all islands from source chunk."""
+    """
+    Get all islands from source chunk.
+
+    :param source: source chunk buffer, bool
+    :param connection_type: diagonals allowed?
+    :returns: (buffer with islands, number of islands)
+    """
     if connection_type == IslandType.connect_4:
         structure = np.array(
             [
@@ -139,7 +160,9 @@ def merge_chunks(
     """
     Merge all small chunks into one big one.
 
-    :returns: merged ndarray, mask, min position
+    :param chunks: individual chunk buffers
+    :param masks: individual chunk spawn masks
+    :returns: big chunk buffer + spawn mask, min pos
     """
     xs = [k[0] for k in chunks]
     ys = [k[1] for k in chunks]
@@ -167,8 +190,15 @@ def merge_chunks(
     return big, mask, (min_x, min_y)
 
 
-def top_of_column(island: np.ndarray, x: int, y_start: int = 0) -> int | None:
-    """Find top of island via column scan."""
+def top_of_column(island: NDArray[np.bool_ | np.float64], x: int, y_start: int = 0) -> int | None:
+    """
+    Find top of island via column scan.
+
+    :param island: island buffer
+    :param x: x index
+    :param y_start: y start (downwards)
+    :returns: y index of island if found
+    """
     col = island[y_start:, x]
     ys = np.where(col)[0]
     return ys.min() if ys.size > 0 else None
@@ -179,8 +209,17 @@ def get_spawn_points(  # noqa: PLR0914
     spawn_point: tuple[int, int],
     world: NDArray[np.float64],
     world_mask: NDArray[np.bool_],
-) -> list[tuple[tuple[float, float], list[int]]]:
-    """Get spawn point on island."""
+) -> list[tuple[tuple[float, float], tuple[int, int, int]]]:
+    """
+    Get spawn point on island.
+
+    :param island: world as island (bool)
+    :param spawn_point: world spawn point
+    :param world: world buffer
+    :param world_mask: global spawn mask
+    :returns: list of spawn-pos, plateau
+    :raises ValueError: IDK
+    """
     island_height: int = len(island)
 
     # calculate plateaus
@@ -267,9 +306,18 @@ def get_spawn_points(  # noqa: PLR0914
 
 
 def choose_turret(
-    map_buffer: np.ndarray, spawn_pos: tuple[int, int], plateau: list[int]
+    map_buffer: NDArray[np.float64],
+    spawn_pos: tuple[int, int],
+    plateau: tuple[int, int, int],
 ) -> tuple[str, tuple[float, float], dict] | None:
-    """Choose a turret based on map location."""
+    """
+    Choose a turret based on map location.
+
+    :param map_buffer: world buffer
+    :param spawn_pos: turret spawn position
+    :param plateau: plateau where turret will spawn
+    :returns: turret name, (turret size), turret args
+    """
     turrets = []
 
     for turret in spawnables:
@@ -282,7 +330,7 @@ def choose_turret(
             headroom = headroom or y_size
 
             if headroom < y_size - 1:
-                ic("height fail", y_size, turret[0][1][1], headroom)
+
                 # add visual hint to map buffer if height fail
                 map_buffer[
                     spawn_pos[1] - y_size : max(1, spawn_pos[1] - y_size + headroom),
@@ -296,9 +344,6 @@ def choose_turret(
                 turret_args["cluster"] = True
 
             turrets.append(((*turret[0], turret_args), turret[1]))
-
-        else:
-            ic("size fail")
 
     if len(turrets) == 0:
         ic("no valid turrets found")
@@ -519,16 +564,21 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             for chunk_pos, chunk in chunk_populations.items():
                 pos = Vec2().from_cartesian(*chunk_pos) * CHUNK_SIZE
 
-                render_chunk(pos, chunk)
+                renderer.draw_rect(pos - world_pos, (CHUNK_SIZE,) * 2, Color().from_1(0.5, 0.5, 0.5, 1))
 
             renderer.display_draw_frame()
 
         # merge chunks
+        ic("merging ...")
         big_chunk, chunk_mask, min_pos = merge_chunks(chunk_populations, spawn_masks)
+        ic("iterating")
+
         for _ in range(12):
             iterate_chunk(big_chunk, 0, 1)
 
         iterate_chunk(big_chunk, 2, 1)
+
+        ic("iteration done")
 
         # group islands
         mask = big_chunk < 0.5
@@ -540,11 +590,6 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             ]
         )
         labels, num_islands = ndimage.label(mask, structure=structure)
-
-        islands: list[NDArray] = [  # type: ignore[trust-me-bro]
-            (labels == i) for i in range(1, num_islands + 1)
-        ]
-        coords_list = [np.argwhere(labels == i) for i in range(1, num_islands + 1)]
 
         # write map
         block_size = 24 * 3
@@ -567,13 +612,17 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             "entities": [],
         }
 
-        # create islands
-        for island, pts in zip(islands, coords_list, strict=True):
-            min_y, min_x = pts.min(axis=0)
-            max_y, max_x = pts.max(axis=0)
+        slices = ndimage.find_objects(labels)
 
-            cropped = island[min_y : max_y + 1, min_x : max_x + 1]
-            pos = tuple(map(float, (min_x * ISLAND_SIZE, min_y * ISLAND_SIZE)))
+        for i, slc in enumerate(slices, start=1):
+            if slc is None:
+                continue
+
+            cropped = labels[slc] == i
+
+            min_y, min_x = slc[0].start, slc[1].start
+
+            pos = (min_x * ISLAND_SIZE, min_y * ISLAND_SIZE)
 
             chunk = {
                 "args": {
@@ -581,6 +630,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                     "form": cropped.tolist(),
                 }
             }
+
             map_data["platforms"].append(chunk)
 
         # generate turrets

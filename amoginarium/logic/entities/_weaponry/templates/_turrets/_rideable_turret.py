@@ -18,14 +18,8 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, Coalitions, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
-from amoginarium.shared.utility import (
-    MASK16,
-    MASK32,
-    Vec2,
-    convert_coord,
-    get_default,
-    normalize_angle,
-)
+from amoginarium.shared.utility import convert_coord, get_default, MASK16
+from amoginarium.shared.utility import MASK32, normalize_angle, Vec2
 
 from ...._base import GameCollisions, LogicGameEntity
 from ...._rideables import Passenger, RideablePerks

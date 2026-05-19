@@ -13,7 +13,7 @@ import typing as tp
 from types import EllipsisType
 
 from amoginarium.shared import MissileCIDs
-from amoginarium.shared.utility import Vec2, get_default, normalize_angle_neg
+from amoginarium.shared.utility import get_default, normalize_angle_neg, Vec2
 
 from ...._base import DebugPolygonEntity
 from .._bullets import AerodynamicEntity
@@ -21,7 +21,7 @@ from .._bullets import AerodynamicEntity
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
-    from amoginarium.shared import Coalitions, base_entity_t
+    from amoginarium.shared import base_entity_t, Coalitions
     from amoginarium.shared.audio import PresetEffect
 
     from ...._base import LogicGameEntity
