@@ -13,7 +13,7 @@ import random
 import typing as tp
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, CIDType, ProcessCommand
+from amoginarium.shared import BaseCommandType, ProcessCommand
 from amoginarium.shared.debugging import CC, print_ic_style
 from amoginarium.shared.utility import convert_coord
 from amoginarium.shared.utility import find_minimum_rectangles_dirty, Vec2

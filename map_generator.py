@@ -30,12 +30,12 @@ from amoginarium.shared.utility import Color, Vec2
 if tp.TYPE_CHECKING:
     from numpy.typing import NDArray
 
-DEBUG: bool = False
-ISLAND_SIZE: int = 64
-CHUNK_SIZE = ISLAND_SIZE * 96
-CHUNK_SMOOTHING_ITERATIONS: int = 16
-UPDATE_INTERVAL = 0.0
-MAX_LEN: int = 8
+DEBUG: tp.Final[bool] = False
+ISLAND_SIZE: tp.Final[int] = 64
+CHUNK_SIZE: tp.Final[int] = ISLAND_SIZE * 96
+CHUNK_SMOOTHING_ITERATIONS: tp.Final[int] = 16
+UPDATE_INTERVAL: tp.Final[float] = 0.0
+MAX_LEN: tp.Final[int] = 8
 
 PATH_DIR_WEIGHTS: list[int] = [
     6,
@@ -45,10 +45,10 @@ PATH_DIR_WEIGHTS: list[int] = [
 ]
 
 # spawn stuff
-IDEAL_PLATEAU_LENGTH: int = 8
+IDEAL_PLATEAU_LENGTH: tp.Final[int] = 8
 
 # syntax: (name, required_space), spawn_weight, cluster_variant_chance
-spawnables: list[tuple[tuple[str, tuple[float, float]], int, float]] = [
+spawnables: tp.Final[list[tuple[tuple[str, tuple[float, float]], int, float]]] = [
     (("turret.static.ak47", (23, 0)), 6, 0),
     (("turret.static.minigun", (128, 0)), 4, 0),
     (("turret.static.sniper", (128, 0)), 4, 0),

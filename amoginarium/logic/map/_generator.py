@@ -9,18 +9,18 @@ Authors: Nilusink
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as tp
 
 import numpy as np
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from numpy.typing import NDArray
 
-_RNG = np.random.default_rng()
-LEFT = 0
-RIGHT = 1
-TOP = 2
-BOTTOM = 3
+_RNG: tp.Final[np.random.Generator] = np.random.default_rng()
+LEFT: tp.Final[int] = 0
+RIGHT: tp.Final[int] = 1
+TOP: tp.Final[int] = 2
+BOTTOM: tp.Final[int] = 3
 
 
 def generate_chunk_noise(
