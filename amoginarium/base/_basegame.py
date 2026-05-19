@@ -139,7 +139,6 @@ class BaseGame:
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start,
-                "time_multiplier": time_multiplier,
                 "run_name": self._git_branch,
             },
         )

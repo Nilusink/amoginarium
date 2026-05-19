@@ -79,7 +79,7 @@ class LogicProcess:
     Logic Process data.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         shm: SharedMemory,
         c_shm: SharedMemory,
@@ -209,8 +209,8 @@ class LogicProcess:
             f"{get_fg_color(12)}logic{get_fg_color(247)} |> "
         )
 
-    def load_map(self, map_path: str) -> None:
-        """Load a map from a json file."""
+    def load_map(self, map_path: str) -> None:  # noqa: C901, PLR0912
+        """Load a map from a JSON file."""
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
@@ -220,11 +220,9 @@ class LogicProcess:
                 raise FileNotFoundError(msg)
 
         self._map_loading = True
-        self._last_map_path = map_path
 
         # load map data
         data = json.load(open(map_path, "r", encoding="utf-8"))
-        self._last_loaded = map_path
 
         pg.display.set_caption(f"amoginarium - {data['name']}")
 
@@ -256,12 +254,6 @@ class LogicProcess:
             else:
                 print_ic_style(f"{CC.fg.RED}invalid island: {CC.fg.YELLOW}{island}")
                 continue
-
-            # if "move" in island:
-            #     create_moving_island(
-            #         i,
-            #         **island["move"]
-            #     )
 
         # load entities
         detection_groups: dict[int, DetectionGroup] = {
@@ -477,8 +469,6 @@ class LogicProcess:
         for e in Updated.entities() + Bullets.entities():
             e.kill()
 
-        # collision_manager.clear_all_entities()
-
         # reset shared values
         self._write_lock.acquire()
         pv.reset()
@@ -505,7 +495,7 @@ class LogicProcess:
         times = cum_timer.get_times()
         for func, values in sorted(times.items(), key=lambda e: e[1][0]):
             print_ic_style(
-                f"{func}, called {values[1]} times {round(values[2], 3)}µs each,"
+                f"{func}, called {values[1]} times {round(values[2], 3)}μs each,"
                 f" totaling {round(values[0] / 1000, 2)}ms"
             )
 
@@ -528,7 +518,7 @@ class LogicProcess:
             )
 
 
-def run_continuous(
+def run_continuous(  # noqa: PLR0917
     shm: SharedMemory,
     c_shm: SharedMemory,
     i_shm: SharedMemory,
@@ -539,13 +529,12 @@ def run_continuous(
     base_comm: Connection,
     process_comm: Connection,
     start_time: float,
-    time_multiplier: float,
     run_name: str,
 ) -> None:
     """
     Run the logic process continuously.
     """
-    global_vars = GlobalVars(global_vars_values, False)
+    global_vars = GlobalVars(global_vars_values, False)  # noqa: FBT003
     global_vars.update()
 
     lp = LogicProcess(
