@@ -20,13 +20,15 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared import IslandCIDs
-from amoginarium.shared.utility import Vec2, clamp, convert_coord, coord_t
+from amoginarium.shared.utility import clamp, convert_coord, Vec2
 
 from ..textures import textures
 from ._synced_entities import SyncedGraphicsEntity
 
 if tp.TYPE_CHECKING:
     import pygame as pg
+
+    from amoginarium.shared.utility import coord_t
 
 
 # island types

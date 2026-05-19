@@ -6,6 +6,7 @@ Project: amoginarium
 Created: 18.05.2026
 Authors: Nilusink
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
