@@ -10,6 +10,7 @@ Nilusink
 
 
 cdef class PIDController:
-    cdef double kp, ki, kd, integral, prev_error
+    cdef double kp, ki, kd, integral, prev_error, _value
 
+    cpdef double update_value(self, double new_val, double dt)
     cpdef double update(self, double error, double dt)

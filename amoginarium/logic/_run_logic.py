@@ -20,19 +20,51 @@ import pygame as pg
 from icecream import colorize, ic
 
 from amoginarium import pv
-from amoginarium.shared import base_entity_t, BaseCommandType, Coalitions
-from amoginarium.shared import ENTITY_COUNTER, GlobalVars, INVENTORY_COUNTER
-from amoginarium.shared import MAX_ENTITIES, ProcessCommand, ProcessCommandType
-from amoginarium.shared.audio import BackgroundPlayer, sound_effects
-from amoginarium.shared.audio import SoundEffect, sounds
-from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
-from amoginarium.shared.debugging import print_with_prefix, run_with_debug
-from amoginarium.shared.utility import Vec2
+from amoginarium.shared import (
+    ENTITY_COUNTER,
+    INVENTORY_COUNTER,
+    MAX_ENTITIES,
+    BaseCommandType,
+    Coalitions,
+    GlobalVars,
+    ProcessCommand,
+    ProcessCommandType,
+    base_entity_t,
+)
+from amoginarium.shared.audio import (
+    BackgroundPlayer,
+    SoundEffect,
+    sound_effects,
+    sounds,
+)
+from amoginarium.shared.debugging import (
+    CC,
+    cum_timer,
+    get_fg_color,
+    print_ic_style,
+    print_with_prefix,
+    run_with_debug,
+)
+from amoginarium.shared.utility import PIDController, Vec2
 
-from .entities import Bullets, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER, DetectionGroup
-from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAffected
-from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
+from .entities import (
+    DETECTION_GLOBAL_BLUE,
+    DETECTION_GLOBAL_NEUTRAL,
+    DETECTION_GLOBAL_RED,
+    DETECTION_GROUP_MANAGER,
+    SPAWNABLES,
+    Bullets,
+    DetectionGroup,
+    FrictionXAffected,
+    GameCollisions,
+    GrassIsland,
+    GravityAffected,
+    Island,
+    LogicGameEntity,
+    Player,
+    Players,
+    Updated,
+)
 from .graphics_dummies import Controller
 
 if TYPE_CHECKING:
@@ -117,29 +149,12 @@ class LogicProcess:
         self._running = True
         self._paused = False
 
-        # self._v = 3000
-        # self._b_vel, *_ = calculate_launch_angle(
-        #     Vec2().from_cartesian(6000, -65),
-        #     Vec2(),
-        #     Vec2(),
-        #     self._v,
-        #     aim_type="high",
-        #     g=GravityAffected.gravity * 2
-        # )
-        # self._b_vel.y *= -1
-        # ic(self._b_vel)
         self._b_start = Vec2().from_cartesian(700, 700)
         self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
-        # self._w = Mortar(
-        #     self._dummy_dad,
-        #     self._runtime_buffer,
-        #     bullet_speed=self._v
-        # )
-        # self._w.set_parent(self._dummy_dad)
-        # self._w.show()
-        # self._w._mag_size = 4
-        # self._w.reload(True)
-        # self._w.facing = self._b_vel
+
+        # world position pid controller
+        self._x_pid = PIDController(4, 0.0001, 0.5)
+        self._y_pid = PIDController(4, 0.0001, 0.5)
 
     # region properties
     @property
@@ -383,23 +398,15 @@ class LogicProcess:
         # update entities
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
-        # WallBouncer.update()
 
         Bullets.update(delta)
-        # ic(list(Bullets.entities()))
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
-        # CollisionDestroyed.update()
-
-        # update world position
-        # _, max_player_pos = Players.get_position_extremes()
         players = Players.entities()
         if len(players) > 0:
             curr_view = players[0].get_current_view()
-            max_player_pos = curr_view.pos
-            pv.audio_observer_pos.xy = max_player_pos.xy
-            world_position = pv.global_vars.get_world_position()
+            # world_position = pv.global_vars.get_world_position()
 
             screen_pixels = (
                 pv.global_vars.get_screen_size() / pv.global_vars.get_pixel_per_meter()
@@ -407,27 +414,36 @@ class LogicProcess:
 
             if curr_view.centered:
                 Updated.world_position.xy = (
-                    max_player_pos.x - screen_pixels.x,
-                    max_player_pos.y - screen_pixels.y,
+                    curr_view.pos.x - screen_pixels.x,
+                    curr_view.pos.y - screen_pixels.y,
                 )
 
             else:
-                if max_player_pos.x > world_position.x + screen_pixels.x:
-                    x = max_player_pos.x - screen_pixels.x
-                    Updated.world_position.x = x
+                curr_view.pos -= screen_pixels
 
-                elif max_player_pos.x < world_position.x + screen_pixels.x * 0.6:
-                    x = max_player_pos.x - screen_pixels.x * 0.6
-                    Updated.world_position.x = x
+                x_pos = self._x_pid.update_value(curr_view.pos.x, delta)
+                y_pos = self._y_pid.update_value(curr_view.pos.y, delta)
 
-                if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
-                    y = max_player_pos.y - screen_pixels.y * 1.4
-                    Updated.world_position.y = y
+                Updated.world_position.xy = x_pos, y_pos
+                # ic(Updated.world_position.xy)
 
-                elif max_player_pos.y < world_position.y + screen_pixels.y * 0.6:
-                    y = max_player_pos.y - screen_pixels.y * 0.6
-                    Updated.world_position.y = y
+                # if max_player_pos.x > world_position.x + screen_pixels.x:
+                #     x = max_player_pos.x - screen_pixels.x
+                #     Updated.world_position.x = x
+                #
+                # elif max_player_pos.x < world_position.x + screen_pixels.x * 0.6:
+                #     x = max_player_pos.x - screen_pixels.x * 0.6
+                #     Updated.world_position.x = x
+                #
+                # if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
+                #     y = max_player_pos.y - screen_pixels.y * 1.4
+                #     Updated.world_position.y = y
+                #
+                # elif max_player_pos.y < world_position.y + screen_pixels.y * 0.6:
+                #     y = max_player_pos.y - screen_pixels.y * 0.6
+                #     Updated.world_position.y = y
 
+            pv.audio_observer_pos.xy = (Updated.world_position - screen_pixels).xy
             self._global_vars.set_world_position(Updated.world_position)
 
         return True

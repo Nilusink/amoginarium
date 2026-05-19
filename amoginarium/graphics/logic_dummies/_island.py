@@ -1,11 +1,10 @@
 """
-visual representation of an island.
+Visual representation of an Island.
 
-_island.py
-30.03.2026
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_island.py
+Project: amoginarium
+Created: 30.03.2026
+Authors: Nilusink
 """
 
 from __future__ import annotations
@@ -16,18 +15,19 @@ from dataclasses import dataclass
 from types import EllipsisType
 
 from icecream import ic
-from utility import WtfError
 
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared import IslandCIDs
-from amoginarium.shared.utility import Vec2, clamp, convert_coord, coord_t
+from amoginarium.shared.utility import Vec2, clamp, convert_coord
 
 from ..textures import textures
 from ._synced_entities import SyncedGraphicsEntity
 
 if tp.TYPE_CHECKING:
     import pygame as pg
+
+    from amoginarium.shared.utility import coord_t
 
 
 # island types
@@ -386,7 +386,7 @@ class Island(SyncedGraphicsEntity):
             return
 
         if self._highlight:
-            renderer.start_stencil(True)
+            renderer.start_stencil(True)  # noqa: FBT003
 
         # for texture_id, (column_offset, row_offset) in self.__parsed_island:
         n_rows = len(self.__parsed_island)
@@ -426,7 +426,7 @@ class Island(SyncedGraphicsEntity):
                     )
 
         if self._highlight:
-            renderer.enable_stencil(True)
+            renderer.enable_stencil(True)  # noqa: FBT003
 
             renderer.draw_rect(
                 self.world_position - self.size / 2,

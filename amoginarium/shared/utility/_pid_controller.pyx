@@ -16,14 +16,36 @@ cdef class PIDController:
         self.ki = i
         self.kd = d
 
+        self._value = 0
+
+    @property
+    def value(self) -> float:
+        return self._value
+
+    cpdef double update_value(self, double new_val, double dt):
+        return self.update(new_val - self._value, dt)
+
     cpdef double update(self, double error, double dt):
+        cdef:
+            double derivative
+            double output
+
+        if dt <= 1e-9:
+            # self._value += error
+            return self._value
+
         self.integral += error * dt
 
         derivative = (error - self.prev_error) / dt
         self.prev_error = error
 
-        return (
+        output = (
             self.kp * error +
             self.ki * self.integral +
             self.kd * derivative
         )
+
+        # apply PID output TO the value
+        self._value += output * dt
+
+        return self._value

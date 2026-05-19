@@ -9,5 +9,12 @@ Authors: Nilusink
 
 class PIDController:
     def __init__(self, p: float, i: float, d: float) -> None: ...
-    def update(self, error: float, double: float) -> float:
-        """Update the PID controller."""
+    @property
+    def value(self) -> float:
+        """Get current PID controller value."""
+
+    def update_value(self, new_val: float, dt: float) -> float:
+        """Update PID controller based on absolute value."""
+
+    def update(self, error: float, dt: float) -> float:
+        """Update the PID controller based on relative error."""
