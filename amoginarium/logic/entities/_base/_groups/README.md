@@ -3,11 +3,11 @@
 <details open>
 
 <summary><h2 style="display:inline-block">Structure</h2></summary>
-
+<!--- MermaidStructureStart --->
 
 ```mermaid
 graph TD
-    subgraph Group [" "]
+    subgraph Group ["‎"]
         _base_group
         _entity_type_groups
         _functionality_groups
@@ -28,17 +28,17 @@ graph TD
     _updated --> _base_group
 ```
 
-
+<!--- MermaidStructureEnd --->
 </details>
 
 <details open>
 
 <summary><h2 style="display:inline-block">Classes</h2></summary>
-
+<!--- MermaidClassesStart --->
 
 ```mermaid
 graph RL
-    subgraph Group1 [" "]
+    subgraph Group1 ["‎"]
         BaseGroup
         LogicGroup
         _Bullets
@@ -57,5 +57,5 @@ graph RL
     _Updated --> BaseGroup
 ```
 
-
+<!--- MermaidClassesEnd --->
 </details>
