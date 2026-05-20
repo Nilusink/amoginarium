@@ -97,7 +97,6 @@ class OpenGLRenderer(BaseRenderer):
         super().__init__()
 
     # region Extra internal methods
-    # TODO: WHAT?
     def get_font(
         self, size: int, family: str, bold: bool = False, italic: bool = False
     ) -> pg.font.Font:
@@ -1248,7 +1247,6 @@ class OpenGLRenderer(BaseRenderer):
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(start_vec, size_vec)
 
-    # TODO mytodo work on this
     def draw_bar(
         self,
         pos: coord_t,
