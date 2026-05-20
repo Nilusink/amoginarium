@@ -17,7 +17,7 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t
+    from amoginarium.shared import base_entity_t, MurderViable
     from amoginarium.shared.utility import Vec2
 
     from .._base import LogicGameEntity
@@ -89,12 +89,31 @@ class Something(Item):
         self.stop_use()
         self._set_bit("flags", 14, False)  # set use to false
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
-        if self._used_callback and self._used_callback(1):
-            self._uses_left = self._max_uses
 
-        else:
-            super()._kill()
+    def _after_kill(
+        self,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+        killed: bool = True,
+    ) -> None:
+        ...
+
+    @tp.override
+    def _before_kill(
+        self,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> bool:
+        """
+        If the item is used up but gets reused, it will be reset instead of killed
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively
+        :return: False if the item gets reused
+        """
+        if self._used_callback and self._used_callback(1):
+            self.reset()
+            return False
+        return True
 
     def reset(self) -> None:
         """Reset the item."""
