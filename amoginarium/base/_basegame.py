@@ -31,7 +31,8 @@ from amoginarium.graphics.render_bindings import renderer
 from amoginarium.graphics.textures import textures
 from amoginarium.graphics.ui import UICursor
 from amoginarium.logic import run_continuous
-from amoginarium.shared import BaseCommandType, ProcessCommand, ProcessCommandType
+from amoginarium.shared import BaseCommandType, DebugVarsEnum
+from amoginarium.shared import ProcessCommand, ProcessCommandType
 from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
 from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.settings import Settings
@@ -613,7 +614,7 @@ class BaseGame:
                             renderer.display_set_windowed()
                         else:
                             renderer.display_windowed_fullscreen()
-                    if event.key == pg.K_ESCAPE:
+                    elif event.key == pg.K_ESCAPE:
                         if active_scene == "Game":
                             pause_game()
                         elif active_scene == "PauseMenu":
@@ -623,6 +624,8 @@ class BaseGame:
                             or active_scene == "StartSettings"
                         ):
                             close_settings()
+                    elif event.key == pg.K_h:
+                        pv.global_vars.toggle_debug_var(DebugVarsEnum.DRAW_HITBOXES)
                 elif event.type == pg.MOUSEBUTTONUP:
                     if event.button == pg.BUTTON_LEFT:
                         for sprite in UIEntities:
