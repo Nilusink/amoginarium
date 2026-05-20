@@ -23,33 +23,9 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t
+    from amoginarium.shared import base_entity_t, EntityChildViable, MurderViable
 
     from .._groups import LogicGroup
-
-
-class EntityChildViable(tp.Protocol):
-    """
-    Minimum requirements for an object to be assigned as the child of a logic entity.
-    """
-
-    def update(self, delta: float) -> None:
-        """
-        Update function.
-
-        :param delta: Tme since the last update
-        """
-
-    def kill(self) -> None:
-        """Clean up and terminate the child."""
-
-
-class MurderViable(tp.Protocol):
-    """Can kill someone."""
-
-    @property
-    def parent(self) -> tp.Any:
-        """Parent."""
 
 
 class BaseLogicEntity(BaseLogicEntityLike):

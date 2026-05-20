@@ -21,12 +21,70 @@ class EntityLike(tp.Protocol):
     mask: pg.Mask
     rect: pg.Rect
 
-def convert_coord[A: Vec2 | tuple | float](
-    coord: coord_t, convert_to: type[A] = tuple
-) -> A | tuple[A, A]:
+@tp.overload
+def convert_coord(
+        coord: coord_t,
+        convert_to: tuple | int | Vec2
+) -> coord_t:
     """
-    Accepts both tuple and Vec2.
+    Convert 2-dimensional coordinate type
+    :param coord: Value to convert
+    :param convert_to: What to convert to
+    :return: Converted value
     """
+
+
+@tp.overload
+def convert_coord(coord: coord_t, convert_to: type[Vec2]) -> Vec2: ...
+
+
+@tp.overload
+def convert_coord(coord: coord_t, convert_to: type[int]) -> tuple[int, int]: ...
+
+
+@tp.overload
+def convert_coord(
+        coord: Vec2,
+        convert_to: type[tuple]
+) -> tuple[float, float]: ...
+
+
+@tp.overload
+def convert_coord(
+        coord: tuple[int, int],
+        convert_to: type[tuple]
+) -> tuple[int, int]: ...
+
+
+@tp.overload
+def convert_coord(
+        coord: tuple[float, int],
+        convert_to: type[tuple]
+) -> tuple[float, int]: ...
+
+
+@tp.overload
+def convert_coord(
+        coord: tuple[int, float],
+        convert_to: type[tuple]
+) -> tuple[int, float]: ...
+
+
+@tp.overload
+def convert_coord(
+        coord: tuple[float, float],
+        convert_to: type[tuple]
+) -> tuple[float, float]: ...
+
+@tp.overload
+def convert_coord[T: tuple[float | int, float | int]](
+        coord: T,
+) -> T: ...
+
+@tp.overload
+def convert_coord(
+        coord: Vec2,
+) -> tuple[float, float]: ...
 
 def is_related(a: object, b: object, depth: int = 2) -> bool:
     """

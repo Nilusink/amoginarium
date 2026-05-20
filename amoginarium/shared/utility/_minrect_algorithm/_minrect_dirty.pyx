@@ -19,7 +19,7 @@ cdef struct Rect:
     int r2
     int c2
 
-cpdef list find_minimum_rectangles_dirty(list bitmap):
+cpdef object find_minimum_rectangles_dirty(list bitmap):
     """
     Greedy heuristic to find near-minimum rectangles, heavily optimized in C++.
     Finds the largest available rectangle, marks it, and repeats.
