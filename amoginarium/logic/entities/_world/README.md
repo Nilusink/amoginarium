@@ -1,4 +1,4 @@
-# amoginarium/amoginarium/logic/entities/_base/_base_entities
+# amoginarium/amoginarium/logic/entities/_world
 
 <details open>
 
@@ -8,14 +8,16 @@
 ```mermaid
 graph TD
     subgraph Group ["‎"]
-        _base_logic_entity
-        _positioned_logic_entity
+        _base_island
+        _islands
+        _text_entity
     end
 
-    _base_entities --- _base_logic_entity
-    _base_entities --- _positioned_logic_entity
+    _world --- _base_island
+    _world --- _islands
+    _world --- _text_entity
 
-    _positioned_logic_entity --> _base_logic_entity
+    _islands --> _base_island
 ```
 
 <!--- MermaidStructureEnd --->
@@ -29,13 +31,17 @@ graph TD
 ```mermaid
 graph RL
     subgraph Group1 ["‎"]
-        EntityChildViable
+        TextEntity
     end
     subgraph Group2 ["‎"]
-        BaseLogicEntity
-        PositionedLogicEntity
+        GrassIsland
+        GrayBrickIsland
+        GreenBrickIsland
+        Island
     end
-    PositionedLogicEntity --> BaseLogicEntity
+    GrassIsland --> Island
+    GrayBrickIsland --> Island
+    GreenBrickIsland --> Island
 ```
 
 <!--- MermaidClassesEnd --->

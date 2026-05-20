@@ -49,14 +49,14 @@ class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
         Get the friction coefficient.
         :return: Friction value.
         """
-        return 60
+        return 60.0
 
     def calculate_friction(self, _delta: float) -> None:
         """
         Calculate and apply horizontal friction to entities based on their current velocity.
         :param _delta: Time elapsed since the last frame.
         """
-        friction = self.friction
+        friction: float = self.friction
         for sprite in self.entities():
             sprite.acceleration.x = (
                 sprite.acceleration.x - (sprite.velocity.x * 0.01)

@@ -7,6 +7,8 @@ Created: 25.01.2024
 Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
 from amoginarium.shared import PositionedLogicEntityLike
@@ -14,6 +16,9 @@ from amoginarium.shared.utility import Vec2
 
 from ._base_group import BaseGroup
 from ._updated import Updated
+
+if tp.TYPE_CHECKING:
+    from ..._player import Player
 
 
 class _Bullets(BaseGroup[PositionedLogicEntityLike]):
@@ -28,7 +33,7 @@ class _Walls(BaseGroup[PositionedLogicEntityLike]):
     __slots__ = ()
 
 
-class _Players(BaseGroup["Player"]):
+class _Players(BaseGroup[Player]):
     """Group containing all player entities and spawn logic."""
 
     __slots__ = ()
@@ -59,8 +64,8 @@ class _Players(BaseGroup["Player"]):
         Calculate the maximum X-axis position among all players.
         :return: Vec2 representing the position of the rightmost player.
         """
-        max_sprite = None
-        max_x = -float("inf")
+        max_sprite: PositionedLogicEntityLike | None = None
+        max_x: float = -float("inf")
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -75,8 +80,8 @@ class _Players(BaseGroup["Player"]):
         Calculate the minimum X-axis position among all players.
         :return: Vec2 representing the position of the leftmost player.
         """
-        min_sprite = None
-        min_x = float("inf")
+        min_sprite: PositionedLogicEntityLike | None = None
+        min_x: float = float("inf")
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -84,21 +89,19 @@ class _Players(BaseGroup["Player"]):
                 min_x = px
                 min_sprite = sprite
 
-        return (
-            min_sprite.position.copy()
-            if min_sprite
-            else Vec2().from_cartesian(float("inf"), float("inf"))
-        )
+        if min_sprite is None:
+            return Vec2().from_cartesian(float("inf"), float("inf"))
+        return min_sprite.position.copy()
 
     def get_position_extremes(self) -> tuple[Vec2, Vec2]:
         """
         Get the minimum and maximum X-axis positions in a single pass.
         :return: A tuple of (min_pos, max_pos) Vec2 objects.
         """
-        max_sprite = None
-        min_sprite = None
-        max_x = -float("inf")
-        min_x = float("inf")
+        max_sprite: PositionedLogicEntityLike | None = None
+        min_sprite: PositionedLogicEntityLike | None = None
+        max_x: float = -float("inf")
+        min_x: float = float("inf")
 
         for sprite in self.entities():
             px = sprite.position.x

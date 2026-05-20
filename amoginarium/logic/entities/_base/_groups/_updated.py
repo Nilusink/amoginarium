@@ -43,12 +43,9 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
         :param margin: Additional padding for the boundary check.
         :return: True if the sprite is out of bounds, False otherwise.
         """
-        return any(
-            [
-                self.world_position.x + margin > sprite.position.x,
-                sprite.position.x + margin
-                > self.world_position.x + pv.global_vars.get_screen_size().x,
-            ]
+        return self.world_position.x + margin > sprite.position.x or (
+            sprite.position.x + margin
+            > self.world_position.x + pv.global_vars.get_screen_size().x
         )
 
     def load_textures(self) -> None:
@@ -57,7 +54,9 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
         their texture loading logic if available.
         """
         # get the different types of entities
-        types = tuple({s.__class__ for s in self.entities()})
+        types: tuple[type[PositionedLogicEntityLike], ...] = tuple(
+            {s.__class__ for s in self.entities()}
+        )
 
         # load the textures for each different type
         for t in types:

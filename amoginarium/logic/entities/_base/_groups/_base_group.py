@@ -43,10 +43,10 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
         :param min_radius: Minimum distance
         :return: list of tuples (distance, entity) of entities in the circle.
         """
-        out = []
+        out: list[tuple[float, PositionedLogicEntityLike]] = []
 
         for sprite in entities:
-            delta = sprite.position - center
+            delta: Vec2 = sprite.position - center
 
             if min_radius <= delta.length <= radius:
                 out.append((delta.length, sprite))
@@ -72,13 +72,13 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
         :param min_radius: Minimum distance
         :return: list of tuples (distance, entity) of entities in the circle.
         """
-        out = []
-        angle_delta = normalize_angle(angle_end.angle - angle_start.angle)
-        start2 = angle_start.angle + angle_delta
-        end2 = angle_end.angle - angle_delta
+        out: list[tuple[float, PositionedLogicEntityLike]] = []
+        angle_delta: float = normalize_angle(angle_end.angle - angle_start.angle)
+        start2: float = angle_start.angle + angle_delta
+        end2: float = angle_end.angle - angle_delta
 
         for sprite in entities:
-            delta = sprite.position - center
+            delta: Vec2 = sprite.position - center
 
             if min_radius <= delta.length <= radius:
                 delta.angle = normalize_angle(delta.angle)
@@ -96,7 +96,8 @@ class BaseGroup[T: PositionedLogicEntityLike](LogicGroup[T]):
         self, center: Vec2, radius: float
     ) -> list[tuple[float, PositionedLogicEntityLike]]:
         """
-        Get all entities of this group inside a circle, sorted by distance (closest first)
+        Get entities of this group inside a circle, sorted by distance (closest first).
+
         :param center: center of the circle
         :param radius: radius of the circle
         :return: list of tuples (distance, entity) of entities in the circle.
