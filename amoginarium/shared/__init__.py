@@ -18,7 +18,8 @@ from ._entity_hints import GameEntityLike, HasFacing, HasPosition, IslandLike
 from ._entity_hints import ItemLike, PlayerLike, VisibleGameEntityLike, WeaponLike
 from ._linked import Coalitions, generate_global_vars, GlobalVars
 from ._logic_entity_hints import BaseLogicEntityLike, CollisionLogicEntityLike
-from ._logic_entity_hints import LogicGameEntityLike, PositionedLogicEntityLike
+from ._logic_entity_hints import EntityChildViable, LogicGameEntityLike
+from ._logic_entity_hints import MurderViable, PositionedLogicEntityLike
 from ._shared_memory import base_controller_t, base_entity_t, get_controller_memory
 from ._shared_memory import get_entity_memory, get_inventory_memory, get_write_lock
 from ._shared_memory import inventory_t, item_slot_t, MAX_CONTROLLERS, MAX_ENTITIES
