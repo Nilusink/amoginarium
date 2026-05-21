@@ -147,9 +147,7 @@ class Shield(Something):
     def item_pickupable(self) -> bool:
         return self._parent is None and super().item_pickupable()
 
-    def hit(
-        self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...
-    ) -> None:
+    def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         if not self._in_use:
             super().hit(damage, hit_by)
 

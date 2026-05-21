@@ -152,16 +152,15 @@ class GlobalVars:
 
     def set_debug_var(self, num: DebugVarsEnum, value: bool) -> None:
         if value:
-            self._debug_vars |= (1 << num.value)
+            self._debug_vars |= 1 << num.value
         else:
             self._debug_vars &= ~(1 << num.value)
 
         self.__values["debug_vars"].value = self._debug_vars
 
     def toggle_debug_var(self, num: DebugVarsEnum) -> None:
-        self._debug_vars ^= (1 << num.value)
+        self._debug_vars ^= 1 << num.value
         self.__values["debug_vars"].value = self._debug_vars
-
 
     def get_screen_size(self) -> Vec2:
         return self._screen_size.copy()

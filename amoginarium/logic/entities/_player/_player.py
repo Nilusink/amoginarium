@@ -16,8 +16,8 @@ from time import perf_counter
 from icecream import ic
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, Coalitions, CurrentView
-from amoginarium.shared import DummyCIDs, ProcessCommand
+from amoginarium.shared import BaseCommandType, Coalitions
+from amoginarium.shared import CurrentView, DummyCIDs, ProcessCommand
 from amoginarium.shared.audio import DeathSound, OnHoverButtonSound, SoundEffect
 from amoginarium.shared.utility import convert_coord, Vec2
 
@@ -30,11 +30,10 @@ from .._weaponry import ExactoSniper, HandThrownGrenade, RailGun
 from .._weaponry.templates import BaseWeapon
 
 if tp.TYPE_CHECKING:
-    from amoginarium.shared import MurderViable
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, ItemLike, ItemSlot
+    from amoginarium.shared import base_entity_t, ItemLike, ItemSlot, MurderViable
     from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
     from amoginarium.shared.collision_detection import CollisionGroupIDType
@@ -413,9 +412,7 @@ class Player(Passenger, LogicGameEntity):
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
-        events: list[
-            CollisionEvent[Item | Shield | Bullet | Island | Grenade]
-        ],
+        events: list[CollisionEvent[Item | Shield | Bullet | Island | Grenade]],
     ) -> list[bool] | None:
         """
         Distribute collision start events to different methods.

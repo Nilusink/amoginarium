@@ -255,8 +255,8 @@ class Island(LogicGameEntity):
                     # Jagged edge, leave as 0
                     pass
 
-        self._raw_rects: list[tuple[int, int, int, int]] = find_minimum_rectangles_dirty(
-            bitmap
+        self._raw_rects: list[tuple[int, int, int, int]] = (
+            find_minimum_rectangles_dirty(bitmap)
         )
 
         for r1, c1, r2, c2 in self._raw_rects:

@@ -14,26 +14,25 @@ Authors: LukasKrah
 """
 
 # noinspection PyUnresolvedReferences
-from ._collision_manager cimport (
-CollisionManager, CollisionGroupStruct,
-EntityData, CollisionRelationStruct, DeferredDeletion
-)
-from ._collision_methods cimport (
-aabb_aabb_swept, aabb_circle_swept, circle_circle_swept,
-poly_poly_swept, circle_poly_swept)
-from ._collision_event import CollisionEvent
-from ._collision_types import (
-    CollisionGroupIDType, CollisionEntityIDType,
-    CollisionCallbackType, CollisionRelationIDType,
-    CollisionExceptionIDType
-)
+
+from ._collision_manager cimport CollisionGroupStruct, CollisionManager
+from ._collision_manager cimport CollisionRelationStruct, DeferredDeletion, EntityData
+from ._collision_methods cimport aabb_aabb_swept, aabb_circle_swept
+from ._collision_methods cimport circle_circle_swept, circle_poly_swept
+from ._collision_methods cimport poly_poly_swept
+
 from ..utility import Vec2
-from libcpp.unordered_set cimport unordered_set
-from libcpp.vector cimport vector
-from libc.stdint cimport uint64_t
-from libc.math cimport floor, cos, sin, sqrt
+from ._collision_event import CollisionEvent
+from ._collision_types import CollisionCallbackType, CollisionEntityIDType
+from ._collision_types import CollisionExceptionIDType, CollisionGroupIDType
+from ._collision_types import CollisionRelationIDType
+
 # noinspection PyUnresolvedReferences
 from cython.operator cimport dereference, preincrement
+from libc.math cimport cos, floor, sin, sqrt
+from libc.stdint cimport uint64_t
+from libcpp.unordered_set cimport unordered_set
+from libcpp.vector cimport vector
 
 
 # noinspection DuplicatedCode

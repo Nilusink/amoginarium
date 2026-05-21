@@ -9,15 +9,13 @@ Created: 13.05.2026
 Authors: LukasKrah
 """
 
+from libc.stdint cimport uint64_t
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
 from libcpp.vector cimport vector
-from libc.stdint cimport uint64_t
 
-from ._collision_types import (
-    CollisionGroupIDType, CollisionEntityIDType,
-    CollisionRelationIDType
-)
+from ._collision_types import CollisionEntityIDType, CollisionGroupIDType
+from ._collision_types import CollisionRelationIDType
 
 """
 Data of a single entity in the collision system

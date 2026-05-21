@@ -14,4 +14,5 @@ class DebugVarsEnum(Enum):
     """
     Enum for debug values shared via global vars
     """
+
     DRAW_HITBOXES = 0

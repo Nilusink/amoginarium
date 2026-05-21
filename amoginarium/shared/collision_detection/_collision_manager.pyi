@@ -11,13 +11,10 @@ import typing as tp
 
 from amoginarium.shared.utility import Vec2
 
-from ._collision_types import (
-    CollisionHitboxType, CollisionGroupIDType, CollisionEntityIDType,
-    CollisionCallbackType, CollisionRelationIDType,
-    CollisionExceptionIDType
-)
 from ._collision_event import CollisionEvent
-
+from ._collision_types import CollisionCallbackType, CollisionEntityIDType
+from ._collision_types import CollisionExceptionIDType, CollisionGroupIDType
+from ._collision_types import CollisionHitboxType, CollisionRelationIDType
 
 class CollisionManager:
     """
@@ -31,9 +28,9 @@ class CollisionManager:
     """
 
     def __init__(
-            self,
-            base_cell_size: float = 100.0,
-            level_dividers: list[int] | None = None,
+        self,
+        base_cell_size: float = 100.0,
+        level_dividers: list[int] | None = None,
     ) -> None:
         """
         Create a new CollisionSystemManager
@@ -43,11 +40,10 @@ class CollisionManager:
         """
 
     def add_group(
-            self,
-            max_level: int,
-            is_static: bool = False,
-            hitbox_type: CollisionHitboxType \
-                    = CollisionHitboxType.aabb,
+        self,
+        max_level: int,
+        is_static: bool = False,
+        hitbox_type: CollisionHitboxType = CollisionHitboxType.aabb,
     ) -> CollisionGroupIDType:
         """
         Add a new entity group
@@ -68,18 +64,19 @@ class CollisionManager:
         """
 
     def register_entity(
-            self,
-            group_id: CollisionGroupIDType,
-            instance: tp.Any,
-            position: Vec2 | None = None,
-            size: Vec2 | None = None,
-            centered: bool = False,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            radius: float | None = None,
-            ignore_collisions: CollisionExceptionIDType |
-                               list[CollisionExceptionIDType] | None = None,
-            is_active: bool = True,
+        self,
+        group_id: CollisionGroupIDType,
+        instance: tp.Any,
+        position: Vec2 | None = None,
+        size: Vec2 | None = None,
+        centered: bool = False,
+        rotation: float = 0.0,
+        positions: list[Vec2] | None = None,
+        radius: float | None = None,
+        ignore_collisions: CollisionExceptionIDType
+        | list[CollisionExceptionIDType]
+        | None = None,
+        is_active: bool = True,
     ) -> CollisionEntityIDType:
         """
         Register a new entity in the collision system
@@ -104,9 +101,9 @@ class CollisionManager:
         """
 
     def delete_entity(
-            self,
-            group_id: CollisionGroupIDType,
-            entity_id: CollisionEntityIDType,
+        self,
+        group_id: CollisionGroupIDType,
+        entity_id: CollisionEntityIDType,
     ) -> None:
         """
         Delete an entity from the collision system
@@ -115,18 +112,18 @@ class CollisionManager:
         """
 
     def update_entity(
-            self,
-            group_id: CollisionGroupIDType,
-            entity_id: CollisionEntityIDType,
-            position: Vec2 | None = None,
-            size: Vec2 | None = None,
-            centered: bool | None = None,
-            rotation: float | None = None,
-            positions: list[Vec2] | None = None,
-            radius: float | None = None,
-            ignore_collisions: int | list[int] | None = None,
-            is_active: bool | None = None,
-            shift_history: bool = True,
+        self,
+        group_id: CollisionGroupIDType,
+        entity_id: CollisionEntityIDType,
+        position: Vec2 | None = None,
+        size: Vec2 | None = None,
+        centered: bool | None = None,
+        rotation: float | None = None,
+        positions: list[Vec2] | None = None,
+        radius: float | None = None,
+        ignore_collisions: int | list[int] | None = None,
+        is_active: bool | None = None,
+        shift_history: bool = True,
     ) -> None:
         """
         Update an entity of the collision system.
@@ -152,13 +149,13 @@ class CollisionManager:
         """
 
     def create_relation(
-            self,
-            a_group_id: CollisionGroupIDType,
-            b_group_id: CollisionGroupIDType,
-            a_collision_start_callback: CollisionCallbackType | None = None,
-            a_collision_end_callback: CollisionCallbackType | None = None,
-            b_collision_start_callback: CollisionCallbackType | None = None,
-            b_collision_end_callback: CollisionCallbackType | None = None
+        self,
+        a_group_id: CollisionGroupIDType,
+        b_group_id: CollisionGroupIDType,
+        a_collision_start_callback: CollisionCallbackType | None = None,
+        a_collision_end_callback: CollisionCallbackType | None = None,
+        b_collision_start_callback: CollisionCallbackType | None = None,
+        b_collision_end_callback: CollisionCallbackType | None = None,
     ) -> CollisionRelationIDType:
         """
         Create a new collision relation between two groups.
@@ -181,27 +178,24 @@ class CollisionManager:
         Should only be called once per frame.
         """
 
-    def calculate_collisions(
-            self,
-            relation_ids: list[CollisionRelationIDType]
-    ) -> None:
+    def calculate_collisions(self, relation_ids: list[CollisionRelationIDType]) -> None:
         """
         Start calculation of specific relations.
         :param relation_ids: List of relation IDs to calculate.
         """
 
     def manual_collision(
-            self,
-            group_ids: list[CollisionGroupIDType],
-            start_position: Vec2,
-            end_position: Vec2,
-            size: Vec2 | None = None,
-            hitbox_type: str = "point",
-            centered: bool = False,
-            rotation: float = 0.0,
-            start_positions: list[Vec2] | None = None,
-            radius: float | None = None,
-            ignore_collisions: int | list[int] | None = None
+        self,
+        group_ids: list[CollisionGroupIDType],
+        start_position: Vec2,
+        end_position: Vec2,
+        size: Vec2 | None = None,
+        hitbox_type: str = "point",
+        centered: bool = False,
+        rotation: float = 0.0,
+        start_positions: list[Vec2] | None = None,
+        radius: float | None = None,
+        ignore_collisions: int | list[int] | None = None,
     ) -> list[CollisionEvent]:
         """
         Run a manual collision without registering an entity or notifying
@@ -230,10 +224,7 @@ class CollisionManager:
         :return: List of CollisionEvents
         """
 
-    def get_hitbox(
-            self,
-            group_id: CollisionGroupIDType
-    ) -> CollisionHitboxType | None:
+    def get_hitbox(self, group_id: CollisionGroupIDType) -> CollisionHitboxType | None:
         """
         Debug-Method to get the hitbox type of any group.
         :param group_id: The group ID.
@@ -241,9 +232,7 @@ class CollisionManager:
         """
 
     def get_points(
-            self,
-            group_id: CollisionGroupIDType,
-            entity_id: CollisionEntityIDType
+        self, group_id: CollisionGroupIDType, entity_id: CollisionEntityIDType
     ) -> list[Vec2]:
         """
         Debug-method to get the points of a hitbox.
@@ -255,9 +244,7 @@ class CollisionManager:
         """
 
     def get_position(
-            self,
-            group_id: CollisionGroupIDType,
-            entity_id: CollisionEntityIDType
+        self, group_id: CollisionGroupIDType, entity_id: CollisionEntityIDType
     ) -> Vec2 | None:
         """
         Debug-method to get the position of an entity.
@@ -267,9 +254,7 @@ class CollisionManager:
         """
 
     def get_size(
-            self,
-            group_id: CollisionGroupIDType,
-            entity_id: CollisionEntityIDType
+        self, group_id: CollisionGroupIDType, entity_id: CollisionEntityIDType
     ) -> Vec2 | None:
         """
         Debug-method to get the size of an entity.
@@ -278,11 +263,7 @@ class CollisionManager:
         :return: The size of the entity if it exists. Otherwise, None.
         """
 
-    def get_radius(
-            self,
-            group_id: int,
-            entity_id: int
-    ) -> float:
+    def get_radius(self, group_id: int, entity_id: int) -> float:
         """
         Debug-method to get the radius of an entity.
         :param group_id: The group ID of the entity

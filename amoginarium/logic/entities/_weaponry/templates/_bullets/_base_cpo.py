@@ -1,7 +1,6 @@
 """
-Base class for bullet entities handling physics, collisions, and clustering.
+amoginarium/logic/entities/_bullets/bullet.py
 
-Path: amoginarium/logic/entities/_weaponry/templates/_bullets/_base_bullet.py
 Project: amoginarium
 Created: 31.03.2026
 Authors: Nilusink, LukasKrah
@@ -9,38 +8,32 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-import inspect
 import typing as tp
 from time import perf_counter
-from types import EllipsisType
 
 import numpy as np
-from icecream import ic
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, DummyCIDs, MurderViable, ProcessCommand
+from amoginarium.shared import BaseCommandType, DummyCIDs, ProcessCommand
 from amoginarium.shared.audio import DistantPop, LargeExplosion
-from amoginarium.shared.debugging import print_ic_style
 from amoginarium.shared.utility import get_default, Vec2
 
 from ...._base import BaseGroup, Bullets, GameCollisions
 from ...._base import GravityAffected, LogicGameEntity, Updated
-from .._weapon_actors.fuzes import FUZES
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, CIDType, Coalitions
     from amoginarium.shared.collision_detection import CollisionEvent
 
     from ...._base import CollisionType
-    from ...._items import Item, Shield
+    from ...._items import Shield
     from ...._player import Player
     from ...._world import Island
     from ..._definitions import Grenade
     from .._turrets import BaseTurret
-    from .._weapon_actors.fuzes import BaseFuze
-
 
 SQR2: tp.Final[np.float64] = np.sqrt(2)
 
@@ -68,18 +61,18 @@ class Bullet(LogicGameEntity):
     _default_cluster_depth: tp.ClassVar[int] = 0
     _default_cluster_amount: tp.ClassVar[int] = 0
     _default_cluster_spread: tp.ClassVar[float] = np.pi / 4
-    _default_cluster_chain_ttl: tp.ClassVar[bool] = True
+    _default_cluster_fuze_ttl_mult: tp.ClassVar[float] = 0.5
+    _default_cluster_fuze_dist: tp.ClassVar[float] = -1
     _default_cluster_step_explosion: tp.ClassVar[float] = 10
     _default_cluster_size_mult: tp.ClassVar[float] = 1
     _default_cluster_last_step_ttl: tp.ClassVar[float] = -1
-    _default_cluster_bullet_type: tp.ClassVar[type[Bullet] | EllipsisType] = ...
+    _default_cluster_bullet_type: tp.ClassVar[tp.Type[Bullet] | EllipsisType] = ...
     _default_cluster_step_inertia: tp.ClassVar[float] = 0
     _default_size: tp.ClassVar[Vec2 | int] = 10
     _default_visibility_offset: tp.ClassVar[float] = 0
     _default_invincibility_offset: tp.ClassVar[float] = 0
+    _default_hp: int = -1
     _default_weight: float = None
-
-    _default_fuze: tp.ClassVar = []
     # endregion
 
     __slots__ = (
@@ -99,18 +92,17 @@ class Bullet(LogicGameEntity):
         "_cluster_spread",
         "_o_dist",
         "_invincibility_offset",
+        "_cluster_fuze_ttl_mult",
         "_coll_sibling",
         "_cluster_step_explosion",
         "_cluster_size_mult",
         "_cluster_last_step_ttl",
+        "_cluster_fuze_dist",
         "_cluster_bullet_type",
         "_cluster_step_inertia",
         "_hp",
         "_cluster_args",
         "_weight",
-        "_left_root",
-        "_initial_root_collision_exception",
-        "_root_entity",
     )
 
     # region InstanceVars
@@ -128,20 +120,16 @@ class Bullet(LogicGameEntity):
     _cluster_depth: int
     _cluster_amount: int
     _cluster_spread: float
-    _cluster_chain_ttl: bool
+    _cluster_fuze_ttl_mult: float
+    _cluster_fuze_dist: float
     _cluster_step_explosion: float
     _cluster_size_mult: float
     _cluster_last_step_ttl: float
-    _cluster_bullet_type: type[Bullet]
+    _cluster_bullet_type: tp.Type[Bullet]
     _cluster_step_inertia: float
     _visibility_offset: float
     _invincibility_offset: float
     _last_pos: Vec2
-    _fuzes: list[BaseFuze]
-
-    _left_root: bool
-    _initial_root_collision_exception: CollisionType.ExceptionID | None
-    _root_entity: LogicGameEntity | None
 
     _target_pos: Vec2 | EllipsisType
     _o_dist: float
@@ -159,9 +147,7 @@ class Bullet(LogicGameEntity):
         coalition: Coalitions,
         initial_position: Vec2,
         initial_velocity: Vec2,
-        weapon_collision_exception_id: int,
         *,
-        initial_facing: float | EllipsisType = ...,
         centered: bool = True,
         collision_group: CollisionType.GroupID | EllipsisType | None = ...,
         collision_exception_ids: list[int] | int | None = None,
@@ -177,17 +163,17 @@ class Bullet(LogicGameEntity):
         cluster_depth: int | EllipsisType = ...,
         cluster_amount: int | EllipsisType = ...,
         cluster_spread_angle: float | EllipsisType = ...,
+        cluster_fuze_ttl_mult: float | EllipsisType = ...,
+        cluster_fuze_dist: float | EllipsisType = ...,
         cluster_step_explosion: float | EllipsisType = ...,
         cluster_size_mult: float | EllipsisType = ...,
         cluster_last_step_ttl: float | EllipsisType = ...,
-        cluster_bullet_type: type[Bullet] | EllipsisType = ...,
+        cluster_bullet_type: tp.Type[Bullet] | EllipsisType = ...,
         cluster_step_inertia: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
         size: Vec2 | int | EllipsisType = ...,
         visibility_offset: float | EllipsisType = ...,
         invincibility_offset: float | EllipsisType = ...,
-        spawn_cid: str | None = None,
-        graphics_spawn_args: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         """
         Base logic bullet
@@ -216,18 +202,19 @@ class Bullet(LogicGameEntity):
         :param cluster_depth: n of cluster steps
         :param cluster_amount: n of bullets per cluster step
         :param cluster_spread_angle: spread of bullets
+        :param cluster_fuze_ttl_mult: % of ttl where cluster step occurs
+        :param cluster_fuze_dist: distance to predicted target where cluster step occurs
         :param cluster_step_explosion: explosion size per cluster step (0 if None)
         :param cluster_size_mult: size multiplier per cluster step
         :param cluster_last_step_ttl: last cluster step bullet ttl (-1 if dynamic)
         :param target_pos: target position
         :param size: bullet size
         :param visibility_offset: visibility offset
-        :param invincibility_offset: invincibility offset.
+        :param invincibility_offset: invincibility offset
         """
         self._start_time = perf_counter()
 
         self._hp = self._default_hp
-        self._weapon_ceid = weapon_collision_exception_id
 
         size = get_default(size, self._default_size)
         if not isinstance(size, Vec2):
@@ -254,6 +241,12 @@ class Bullet(LogicGameEntity):
         self._cluster_spread = get_default(
             cluster_spread_angle, self._default_cluster_spread
         )
+        self._cluster_fuze_ttl_mult = get_default(
+            cluster_fuze_ttl_mult, self._default_cluster_fuze_ttl_mult
+        )
+        self._cluster_fuze_dist = get_default(
+            cluster_fuze_dist, self._default_cluster_fuze_dist
+        )
         self._cluster_step_explosion = get_default(
             cluster_step_explosion, self._default_cluster_step_explosion
         )
@@ -264,7 +257,7 @@ class Bullet(LogicGameEntity):
             cluster_last_step_ttl, self._default_cluster_last_step_ttl
         )
         bullet_default = get_default(self._default_cluster_bullet_type, self.__class__)
-        self._cluster_bullet_type: type[Bullet] = get_default(
+        self._cluster_bullet_type: tp.Type[Bullet] = get_default(
             cluster_bullet_type, bullet_default
         )
         self._cluster_step_inertia = get_default(
@@ -288,7 +281,7 @@ class Bullet(LogicGameEntity):
             self._target_pos = target_pos.copy()
             self._o_dist = (initial_position - self._target_pos).length
 
-        # init superclass
+        # load textures
         super().__init__(
             runtime_buffer=runtime_buffer,
             size=size,
@@ -303,101 +296,6 @@ class Bullet(LogicGameEntity):
             collision_exception_root_additive=collision_exception_root_additive,
             tags=["bullet"],
         )
-
-        self._left_root = False
-        self._root_entity = self.root
-        self._initial_root_collision_exception = None
-        if self._root_entity is not None:
-            if hasattr(self._root_entity, "get_initial_root_collision_exception"):
-                self._initial_root_collision_exception = (
-                    self._root_entity.get_initial_root_collision_exception()
-                )
-                if self._initial_root_collision_exception is not None:
-                    self._collision_exception_ids.append(
-                        self._initial_root_collision_exception
-                    )
-
-        self._collision_exception_ids.append(weapon_collision_exception_id)
-
-        # create default fuzes
-        self._fuzes: list[BaseFuze] = []
-
-        # create fuzes
-        for fuze in self._default_fuze:
-            kwargs = fuze.copy()
-            fuze_name = kwargs.pop("type", None)
-
-            if fuze_name in FUZES:
-                fuze_type = FUZES[fuze_name]
-
-                # insert required arguments to kwargs
-                params = inspect.signature(fuze_type.__init__).parameters
-
-                to_insert = {
-                    "ttl": self._o_time_to_life,
-                    "parent": self,
-                    "position": self._target_pos,
-                    "collision_exception_id": weapon_collision_exception_id,
-                }
-
-                # check if any of to_insert is required by params and not in kwargs
-                done = False
-                name = ""
-                for name in params:
-                    if name in to_insert and name not in kwargs:
-                        if isinstance(to_insert[name], EllipsisType):
-                            break
-
-                        kwargs[name] = to_insert[name]
-
-                else:
-                    done = True
-
-                if not done:
-                    print_ic_style(
-                        f'couldn\'t pass argument "{name}" to fuze '
-                        f'"{fuze_name}" at time of creation '
-                        f"({self._parent.__class__.__name__} -> "
-                        f"{self.__class__.__name__})",
-                        warning=True,
-                    )
-                    continue
-
-                # add fuze
-                try:
-                    self._fuzes.append(fuze_type(**kwargs))
-
-                except TypeError:
-                    # list all specified arguments (+self)
-                    spec = set(list(kwargs.keys()) + ["self"])
-
-                    # list all arguments without default value
-                    req = {p for p in params if params[p].default == inspect._empty}
-
-                    debug_str = (
-                        f'invalid params for fuze type "{fuze_type.__name__}" '
-                        f"({self.__class__.__name__})"
-                    )
-
-                    miss = req - spec
-                    if miss:
-                        debug_str += f", missing: {miss}"
-
-                    add = spec - req
-                    if add:
-                        debug_str += f", additional: {add}"
-
-                    if not miss and not add:
-                        debug_str += ", argument list OK"
-
-                    print_ic_style(debug_str, error=True)
-
-            else:
-                print_ic_style(f'Invalid fuze type: "{fuze_name}"', error=True)
-
-        # set facing
-        self.facing.angle = get_default(initial_facing, self.velocity.angle)
-
         self._create_collision()
         runtime_buffer[self.id].param0 = self._explosion_radius
 
@@ -411,8 +309,6 @@ class Bullet(LogicGameEntity):
         self._last_pos = self.position.copy()
 
         self.remove(Updated)
-
-        # toggles
         if not no_gravity:
             self.add(GravityAffected)
 
@@ -420,17 +316,13 @@ class Bullet(LogicGameEntity):
             self.add(Bullets)
 
         # spawn dummy
-        kwargs = get_default(graphics_spawn_args, {})
-        kwargs.update(
-            {
-                "id": self.id,
-                "cid": spawn_cid or self.cid(),
-                "spawn_time": self._start_time,
-                "visibility_offset": self._visibility_offset,
-                "position": self.position.xy,
-            }
-        )
-
+        kwargs = {
+            "id": self.id,
+            "cid": self.cid(),
+            "spawn_time": self._start_time,
+            "visibility_offset": self._visibility_offset,
+            "position": self.position.xy,
+        }
         if self._target_pos != ...:
             kwargs["target_pos"] = self._target_pos.xy
 
@@ -447,7 +339,9 @@ class Bullet(LogicGameEntity):
         x = max(self._initial_velocity.length, 800)
 
         speed_mult = 1 + ((self.velocity.length - 1300) / x) * 0.5
-        return self._base_damage * speed_mult
+        damage = self._base_damage * speed_mult
+
+        return damage
 
     @property
     def weight(self) -> float:
@@ -459,7 +353,7 @@ class Bullet(LogicGameEntity):
 
     @property
     def recoil_fac(self) -> float:
-        r""":return: weapons recoil \"dampener\""""
+        """:return: weapons recoil \"dampener\""""
         return self.get_recoil_fac(self.weight, self.velocity.length)
 
     @property
@@ -467,22 +361,10 @@ class Bullet(LogicGameEntity):
         """:return: bullets previous position"""
         return self._last_pos.copy()
 
-    @property
-    def ttl(self) -> float:
-        """:returns: time left to life"""
-        return self._time_to_life
-
-    @property
-    def target_pos(self) -> Vec2 | None:
-        if not isinstance(self._target_pos, EllipsisType):
-            return self._target_pos.copy()
-
-        return None
-
     # endregion
 
     def hit(self, _damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
-        """Bullet was hit by someone."""
+        """bullet was hit by someone"""
         if self._hp <= 0 or not issubclass(hit_by.__class__, Bullet):
             self.kill(killed_by=hit_by)
 
@@ -492,142 +374,66 @@ class Bullet(LogicGameEntity):
                 self.kill(killed_by=hit_by)
 
     def hit_someone(self, target_hp: float) -> None:
-        """Bullet has hit someone else."""
+        """bullet has hit someone else"""
         self.kill()
 
-    # region Collision
-    def __collision_island(self, events: list[CollisionEvent["Island"]]) -> None:
-        """
-        Collision reaction to islands: Bullet dies
-        :param events: All details regarding the collisions
-        """
-        event: CollisionEvent["Island"] = events[0]
-        self.position = event.position
-        self.acceleration *= 0
-        self.velocity *= 0
-        self.kill(killed_by=event.other_entity)
-
-    def __collision_general_hit(
-        self,
-        events: list[
-            CollisionEvent[tp.Union["BaseTurret", "Player", "Grenade", "Shield"]]
-        ],
+    def __on_collision_general(
+        self, event: CollisionEvent[tp.Union["Island", "Player", "Grenade"]]
     ) -> None:
-        """
-        General collision reaction is to try to hit the other entity
-        and if it can be hit, the bullet will be killed
-        :param events: All details regarding the collisions
-        """
-        if not self._alive:
+        if event.other_entity == self.parent:
             return
 
-        for event in events:
-            if hasattr(event.other_entity, "hit"):
-                # noinspection PyNoneFunctionAssignment
-                hit_success: bool | None = event.other_entity.hit(
-                    self.damage,
-                    hit_by=self,
-                )
-                if hit_success is None or hit_success is True:
-                    self.position.x = event.position.x
-                    self.position.y = event.position.y
+        self.position.x = event.position.x
+        self.position.y = event.position.y
 
-                    self.kill(killed_by=event.other_entity)
-                    break
+        self.kill(killed_by=event.other_entity)
 
-    def __collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
-        """
-        Bullet hit each other
-        :param events: All details regarding the collisions
-        """
-        for event in events:
-            self.hit(event.other_entity.damage, event.other_entity)
+    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
+        if event.other_entity.parent == self.parent:
+            return
+
+        self.hit(event.other_entity.damage, event.other_entity)
+
+    def __on_collision_shield(self, event: CollisionEvent["Shield"]) -> None:
+        if event.other_entity == self.parent:
+            return
+
+        if event.other_entity.in_use:
+            self.position.x = event.position.x
+            self.position.y = event.position.y
+
+            self.kill(killed_by=event.other_entity)
 
     def _collision_start(
         self,
-        group_id: CollisionType.GroupID,
         events: list[
             CollisionEvent[
-                tp.Union[
-                    "Island",
-                    Bullet,
-                    "Player",
-                    "BaseTurret",
-                    "Grenade",
-                    "Shield",
-                ]
+                tp.Union["Island", Bullet, "Player", "BaseTurret", "Grenade", "Shield"]
             ]
         ],
-    ) -> list[bool] | None:
-        """
-        Distribute collision start events to different methods
+    ) -> None:
+        for event in events:
+            if event.group_id == GameCollisions.collision_group_islands:
+                self.__on_collision_general(event)
+            elif event.group_id == GameCollisions.collision_group_bullets:
+                self.__on_collision_bullet(event)
+            elif event.group_id == GameCollisions.collision_group_players:
+                self.__on_collision_general(event)
+            elif event.group_id == GameCollisions.collision_group_turrets:
+                self.__on_collision_general(event)
+            elif event.group_id == GameCollisions.collision_group_grenades:
+                self.__on_collision_general(event)
+            elif event.group_id == GameCollisions.collision_group_shields:
+                self.__on_collision_shield(event)
 
-        - Island: Bullet kills itself
-        - Bullet: Bullets hit each other
-        - Player: Bullet hits the player and either pierces through or dies
-        - BaseTurret: Bullet hits the turret and either pierces through or dies
-        - Grenade: Bullet hits the grenade and either pierces through or dies
-        - Shield: Bullet hits the shield and either pierces through or dies
-
-        :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collision
-        :return: List of booleans stating whether each collision is accepted.
-        """
-        if (
-            group_id == GameCollisions.collision_group_grenades
-            or group_id == GameCollisions.collision_group_shields
-        ):
-            events: list[CollisionEvent[tp.Union["Grenade", "Shield"]]]
-            self.__collision_general_hit(events)
-
-        elif (
-            group_id == GameCollisions.collision_group_players
-            or group_id == GameCollisions.collision_group_turrets
-        ):
-            events: list[CollisionEvent[tp.Union["BaseTurret", "Player"]]]
-            if self._left_root:
-                self.__collision_general_hit(events)
-
-        elif group_id == GameCollisions.collision_group_islands:
-            events: list[CollisionEvent["Island"]]
-            self.__collision_island(events)
-
-        elif group_id == GameCollisions.collision_group_bullets:
-            events: list[CollisionEvent[Bullet]]
-            self.__collision_bullet(events)
-
-        return None
-
-    # endregion
-
-    def _update(self, delta, update_facing: bool = True) -> None:
+    def _update(self, delta, update_facing: bool = True):
         self._time_to_life -= delta
         self._visibility_offset -= delta
         self._invincibility_offset -= delta
 
-        if not self._left_root:
-            root = self.root
-            if root is not None:
-                offset: int = 10
-                if (
-                    self.position.x + self.size.x <= root.position.x - offset
-                    or self.position.x >= root.position.x + root.size.x + offset
-                    or self.position.y + self.size.y <= root.position.y - offset
-                    or self.position.y >= root.position.y + root.size.y + offset
-                ):
-                    self._left_root = True
-                    if (
-                        self._initial_root_collision_exception is not None
-                        and self._initial_root_collision_exception
-                        in self._collision_exception_ids
-                    ):
-                        self._collision_exception_ids.remove(
-                            self._initial_root_collision_exception
-                        )
-
-        if self._time_to_life <= 0:
-            self.kill()
-            return
+        if any([self._time_to_life <= 0]):
+            if self.kill():
+                return
 
         # double gravity (because why not)
         self.acceleration.y *= 2
@@ -635,45 +441,44 @@ class Bullet(LogicGameEntity):
         self._last_pos = self.position.copy()
 
         super()._update(delta)
-
         if update_facing:
             self.facing.angle = self.velocity.angle
 
-        # update fuzes
-        for fuze in self._fuzes:
-            fuze.update()
+        # check if cluster detonate
+        if self._cluster_depth > 0:
+            # ttl fuze
+            if self._cluster_fuze_ttl_mult > 0:
+                if (
+                    self._time_to_life
+                    < self._o_time_to_life * self._cluster_fuze_ttl_mult
+                ):
+                    self.kill(self)
+
+            # distance fuze
+            elif self._cluster_fuze_dist > 0:
+                if self._target_pos != ...:
+                    if (
+                        self.position - self._target_pos
+                    ).length < self._cluster_fuze_dist:
+                        self.kill(self)
 
         # update velocity
         self._runtime_buffer[self.id].param1 = self.velocity.length
 
-    def _before_kill(
-        self,
-        killed_by: MurderViable | EllipsisType = ...,
-        kill_children: bool = True,
-    ) -> bool:
+    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
         if killed_by != ... and killed_by != self:
             if killed_by.parent == self.parent:
                 if not self._coll_sibling:
-                    return False
+                    return True
 
         if self._invincibility_offset > 0:
-            return False
+            return True
 
         # check if casing
         if all([self._casing, not Updated.out_of_bounds_x(self)]):
             self.position.y -= self.size.y / 2
             self.remove(Updated, GravityAffected)
-            return False
-
-        return True
-
-    def _kill(
-        self,
-        killed_by: MurderViable | EllipsisType = ...,
-        kill_children: bool = True,
-    ) -> None:
-        for fuze in self._fuzes:
-            fuze.kill(killed_by)
+            return True
 
         # bullet hit knockback
         if all([killed_by != self, not issubclass(killed_by.__class__, Bullet)]):
@@ -690,7 +495,6 @@ class Bullet(LogicGameEntity):
             self._cluster_depth > 0 and self._cluster_amount > 0
         ):  # and killed_by == self:
             if self._cluster_amount > 1:
-                kill_children = False
                 # cluster step explosion:
                 if self._cluster_step_explosion:
                     self._explosion_radius = self._cluster_step_explosion
@@ -712,9 +516,6 @@ class Bullet(LogicGameEntity):
                     else:
                         ttl = self._time_to_life
 
-                sibling_collision_exception: CollisionType.ExceptionID = (
-                    GameCollisions.add_exception()
-                )
                 for bi in range(self._cluster_amount):
                     self._cluster_bullet_type(
                         self._runtime_buffer,
@@ -735,8 +536,6 @@ class Bullet(LogicGameEntity):
                         target_pos=self._target_pos,
                         size=self.size * self._cluster_size_mult,
                         collide_siblings=False,
-                        collision_exception_ids=sibling_collision_exception,
-                        weapon_collision_exception_id=self._weapon_ceid,
                     )
                     current_angle += angle_spread
 
@@ -780,7 +579,9 @@ class Bullet(LogicGameEntity):
                 exp.set_volume(0.8, 0.3)
                 exp.play(pos=self.position)
 
-        super()._kill(killed_by=killed_by, kill_children=kill_children)
+        super()._kill()
+
+        return True
 
     # region Static/Class-Methods
     @staticmethod
@@ -788,7 +589,7 @@ class Bullet(LogicGameEntity):
         """
         Calculate bullet weight from size
         :param size: bullet size
-        :return: calculated weight from size.
+        :return: calculated weight from size
         """
         if isinstance(size, Vec2):
             return size.length / 100
@@ -800,7 +601,7 @@ class Bullet(LogicGameEntity):
         """
         Bullet weight getter
         :param size: bullet size
-        :return: bullet weight (depending on size if not specified).
+        :return: bullet weight (depending on size if not specified)
         """
         if cls._default_weight:
             return cls._default_weight
@@ -809,7 +610,7 @@ class Bullet(LogicGameEntity):
 
     @classmethod
     def get_recoil_fac(cls, weight: float, velocity: float) -> float:
-        r"""
+        """
         Recoil \"dampener\" getter
         :param weight: bullet weight
         :param velocity: bullet velocity
