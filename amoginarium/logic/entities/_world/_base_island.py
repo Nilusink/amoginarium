@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import random
 import typing as tp
+from types import EllipsisType
 
 import numpy as np
 from icecream import ic
@@ -25,7 +26,6 @@ from .._base import DebugRectangleEntity, GameCollisions, LogicGameEntity, Walls
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
-    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, CIDType
     from amoginarium.shared.utility import coord_t
@@ -36,6 +36,7 @@ if tp.TYPE_CHECKING:
 class Island(LogicGameEntity):
     """
     Base class for island entities in the game world.
+
     Handles collision generation from bitmaps and logic-to-graphics synchronization.
     """
 
@@ -86,10 +87,10 @@ class Island(LogicGameEntity):
         self._damage = damage
         self._bounce = bounce
 
-        if form is not ...:
+        if not isinstance(form, EllipsisType):
             self._size = Vec2().from_cartesian(
-                self.__class__._block_size[0] * max(len(r) for r in form),
-                self.__class__._block_size[1] * len(form),
+                self.__class__._block_size[0] * max(len(r) for r in form),  # noqa: SLF001
+                self.__class__._block_size[1] * len(form),  # noqa: SLF001
             )
 
         super().__init__(
@@ -100,9 +101,8 @@ class Island(LogicGameEntity):
 
         self.add(Walls)
 
-        ic("parent done")
+        self._coll_id = -1
         self._create_collision_entites()
-        ic("coll calc done")
 
         # spawn graphics entity
         kwargs: dict[str, tp.Any] = {
@@ -179,12 +179,13 @@ class Island(LogicGameEntity):
             return
 
         # Collision rects
-        ic("mask")
+        max_len = max(len(r) for r in self._form)
 
-        bitmap_ = np.array(self._form, np.uint8)
+        bitmap_ = np.array(
+            [r + [0] * (max_len - len(r)) for r in self._form], dtype=np.uint8
+        )
         bitmap = bitmap_ > 0
 
-        ic("find mrd")
         raw_rects = find_minimum_rectangles_dirty(bitmap.tolist())
 
         for r1, c1, r2, c2 in raw_rects:
@@ -201,7 +202,7 @@ class Island(LogicGameEntity):
             position = convert_coord((rect_x, rect_y), Vec2)
             size = convert_coord((rect_w, rect_h), Vec2)
 
-            GameCollisions.collision_manager.register_entity(
+            self._coll_id = GameCollisions.collision_manager.register_entity(
                 GameCollisions.collision_group_islands, self, position, size
             )
             if Island.__DEBUG_DRAW_HITBOXES:
@@ -210,6 +211,7 @@ class Island(LogicGameEntity):
     def to_dict(self) -> tp.MutableMapping[str, tp.Any]:
         """
         Convert island state to a dictionary for serialization/saving.
+
         :return: A dictionary containing the island's configuration and type.
         """
         out: tp.MutableMapping[str, tp.Any] = {"args": {"pos": self.position}}

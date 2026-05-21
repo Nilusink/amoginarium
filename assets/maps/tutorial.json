@@ -128,8 +128,12 @@
             "group": 0
         },
                 {
-            "type": "turret.rideable.gps_guided",
-            "pos": [1500, 730]
+            "type": "vehicle.tank",
+            "pos": [1450, 700]
+        },
+        {
+            "type": "turret.static.flak",
+            "pos": [3000, 700]
         },
         {
             "type": "static.text",

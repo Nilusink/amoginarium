@@ -13,7 +13,7 @@ import typing as tp
 from dataclasses import dataclass
 from time import perf_counter
 
-from ...._base import Bullets, Players
+from ...._base import Updated, Walls
 
 if tp.TYPE_CHECKING:
     from ...._base import PositionedLogicEntity
@@ -64,16 +64,15 @@ class _DetectionGroupManager:
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
-        targets = [p for p in Players.entities() if p.alive]
-        targets.extend(Bullets.entities())
+        walls = Walls.entities()
+        targets = [t for t in Updated.entities() if t not in walls and t.alive]
 
         for group in self._detection_groups:
             group.update_detection(targets)
 
     def reset(self) -> None:
         """
-        Reset all target groups each loop so targets won't
-        be visible forever.
+        Reset all target groups each loop so targets won't be visible forever.
         """
         for group in self._detection_groups:
             group.reset()

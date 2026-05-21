@@ -377,13 +377,13 @@ class Island(SyncedGraphicsEntity):
         world_end = world_position + resolution
 
         # check if island is on screen
-        if (
-            self.pos.x + self.size.x < world_position.x
-            or self.pos.x > world_position.x + resolution.x
-            or self.pos.y + self.size.y < world_position.y
-            or self.pos.y > world_position.y + resolution.y
-        ):
-            return
+        # if (
+        #     self.pos.x + self.size.x < world_position.x
+        #     or self.pos.x > world_position.x + resolution.x
+        #     or self.pos.y + self.size.y < world_position.y
+        #     or self.pos.y > world_position.y + resolution.y
+        # ):
+        #     return
 
         if self._highlight:
             renderer.start_stencil(True)  # noqa: FBT003

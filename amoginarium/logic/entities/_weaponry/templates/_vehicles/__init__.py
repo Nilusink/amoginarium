@@ -6,3 +6,4 @@ Project: amoginarium
 Created: 19.05.2026
 Authors: Nilusink
 """
+from ._base_vehicle import Vehicle

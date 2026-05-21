@@ -38,8 +38,6 @@ class RadarSensor(BaseSensor):
     ``param4`` detect sectors (x4, 16 bit each)
     """
 
-    # __slots__ = []
-
     _CID = SensorCIDs.sensor_radar
     _debug: tp.ClassVar[bool] = False
     _has_sectors = True
@@ -49,6 +47,7 @@ class RadarSensor(BaseSensor):
         runtime_buffer: Array[base_entity_t],
         parent: LogicGameEntity,
         detection_range: float,
+        *,
         position_offset: coord_t = ...,
         sphere_accuracy: int = 128,
         min_rcs: float = 0.04,
@@ -72,7 +71,7 @@ class RadarSensor(BaseSensor):
         out = []
         center: Vec2 = self.parent.position + self._position_offset
         angle_step = (np.pi * 2) / self._sphere_accuracy
-        for target in targets:
+        for target in targets:  # noqa: PLR1702
             delta = target.position - center
 
             if not hasattr(target, "size"):
@@ -104,9 +103,11 @@ class RadarSensor(BaseSensor):
                         if da >= self._min_rcs:
                             out.append(target)
 
-                            if self.parent.coalition != target.coalition:
-                                if angle_index not in self._highlighted_sectors:
-                                    self._highlighted_sectors.append(angle_index)
+                            if (
+                                self.parent.coalition != target.coalition
+                                and angle_index not in self._highlighted_sectors
+                            ):
+                                self._highlighted_sectors.append(angle_index)
 
                     continue
 

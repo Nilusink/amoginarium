@@ -40,11 +40,11 @@ ISLAND_SIZE: tp.Final[int] = 64
 CHUNK_SIZE: tp.Final[int] = ISLAND_SIZE * 96
 CHUNK_SMOOTHING_ITERATIONS: tp.Final[int] = 16
 UPDATE_INTERVAL: tp.Final[float] = 0.0
-MAX_LEN: tp.Final[int] = 1024
+MAX_LEN: tp.Final[int] = 16
 
 PATH_DIR_WEIGHTS: tp.Final[list[int]] = [
-    1,
-    1,
+    8,
+    3,
     1,
     1,
 ]
@@ -190,7 +190,9 @@ def merge_chunks(
     return big, mask, (min_x, min_y)
 
 
-def top_of_column(island: NDArray[np.bool_ | np.float64], x: int, y_start: int = 0) -> int | None:
+def top_of_column(
+    island: NDArray[np.bool_ | np.float64], x: int, y_start: int = 0
+) -> int | None:
     """
     Find top of island via column scan.
 
@@ -330,7 +332,6 @@ def choose_turret(
             headroom = headroom or y_size
 
             if headroom < y_size - 1:
-
                 # add visual hint to map buffer if height fail
                 map_buffer[
                     spawn_pos[1] - y_size : max(1, spawn_pos[1] - y_size + headroom),
@@ -564,7 +565,11 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             for chunk_pos, chunk in chunk_populations.items():
                 pos = Vec2().from_cartesian(*chunk_pos) * CHUNK_SIZE
 
-                renderer.draw_rect(pos - world_pos, (CHUNK_SIZE,) * 2, Color().from_1(0.5, 0.5, 0.5, 1))
+                renderer.draw_rect(
+                    pos - world_pos,
+                    (CHUNK_SIZE,) * 2,
+                    Color().from_1(0.5, 0.5, 0.5, 1),
+                )
 
             renderer.display_draw_frame()
 

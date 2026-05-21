@@ -17,6 +17,7 @@ from time import perf_counter
 from types import EllipsisType, NoneType
 
 import numpy as np
+from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
@@ -58,18 +59,17 @@ class SensorInit(tp.TypedDict):
 
 
 def check_target(target: LogicGameEntity, self: LogicGameEntity) -> bool:
-    """Checks if a target should be fired on."""
+    """Check if a target should be fired on."""
     if target.parent == self:
         return False
 
-    if not isinstance(target.coalition, (EllipsisType, NoneType)):
-        if target.coalition == self.coalition:
-            return False
+    return not (
+        not isinstance(target.coalition, (EllipsisType, NoneType))
+        and target.coalition == self.coalition
+    )
 
-    return True
 
-
-type target_solution_t = TargetSolution | None
+type target_solution_t = TargetSolution | None  # noqa: PYI042
 
 
 class BaseTurret(LogicGameEntity):
@@ -108,11 +108,11 @@ class BaseTurret(LogicGameEntity):
     _default_weapon_drop_casings: bool = False
     _default_weapon_position_offset: Vec2 | list[float] | tuple[float, float] = (0, 0)
 
-    _sensors_list: list[SensorInit] = []
+    _sensors_list: tp.ClassVar[list[SensorInit]] = []
 
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
-    def __init__(
+    def __init__(  # noqa: C901, PLR0912, PLR0915
         self,
         runtime_buffer: Array[base_entity_t],
         coalition: Coalitions,
@@ -148,7 +148,6 @@ class BaseTurret(LogicGameEntity):
         position.y -= size.y / 2
 
         self._set_pos = position.copy()
-        # position.y -= size.y / 2
 
         super().__init__(
             runtime_buffer=runtime_buffer,
@@ -300,14 +299,14 @@ class BaseTurret(LogicGameEntity):
         if self._hp <= 0:
             self.kill(hit_by)
 
-    def _kill(self, killed_by=...) -> None:
+    def _kill(self, killed_by: tp.Any = ...) -> None:
         self.weapon.stop()
         self.weapon.kill(killed_by)
         super()._kill(killed_by)
 
-    def get_next_target(self, include_all: bool = False) -> target_solution_t:
+    def get_next_target(self, *, include_all: bool = False) -> target_solution_t:
         """
-        Returns the next best target to shoot at.
+        Return next best target to shoot at.
         """
         targets = list(self.available_targets.keys())
         for target in sorted(
@@ -357,7 +356,7 @@ class BaseTurret(LogicGameEntity):
 
         return None
 
-    def _update(self, delta) -> None:
+    def _update(self, delta: float) -> None:
         # update weapon
         self.weapon.update(delta)
 
@@ -365,15 +364,12 @@ class BaseTurret(LogicGameEntity):
         targets = self.detection_group.targets
 
         # only check targets that are supposed to be engaged
+        bullets = Bullets.entities()
         targets = [
             t
             for t in targets
-            if any(
-                [
-                    t in Players.entities() if self.intercept_players else False,
-                    t in Bullets.entities() if self.intercept_bullets else False,
-                ]
-            )
+            if ((is_bullet := t in bullets) and self.intercept_bullets)
+            or (not is_bullet and self.intercept_players)
         ]
 
         # filter stuff shot by myself
@@ -404,6 +400,7 @@ class BaseTurret(LogicGameEntity):
             else:
                 sol = self._get_firing_solution(target)
                 self.available_targets[target]["solution"] = sol
+
                 if not sol:
                     sol = self._get_firing_solution(
                         target,
@@ -424,7 +421,7 @@ class BaseTurret(LogicGameEntity):
                 ).length
 
         new_target = self.get_next_target()
-        simulate_target = self.get_next_target(True)
+        simulate_target = self.get_next_target(include_all=True)
         if new_target is not None:
             self._target = new_target
             self._last_shot = perf_counter()
@@ -460,7 +457,6 @@ class BaseTurret(LogicGameEntity):
 
         else:
             self._target = None
-            # self._target_predict = []
 
         if perf_counter() - self._last_shot >= 0.1:
             self.weapon.stop_shooting()

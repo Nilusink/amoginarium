@@ -297,7 +297,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
 
-    def _update(self, delta: float, set_facing: bool = True) -> None:
+    def _update(self, delta: float, *, set_facing: bool = True) -> None:
         # update weapon
         self.weapon.update(delta)
 

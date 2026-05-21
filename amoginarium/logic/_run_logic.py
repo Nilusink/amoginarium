@@ -20,51 +20,19 @@ import pygame as pg
 from icecream import colorize, ic
 
 from amoginarium import pv
-from amoginarium.shared import (
-    ENTITY_COUNTER,
-    INVENTORY_COUNTER,
-    MAX_ENTITIES,
-    BaseCommandType,
-    Coalitions,
-    GlobalVars,
-    ProcessCommand,
-    ProcessCommandType,
-    base_entity_t,
-)
-from amoginarium.shared.audio import (
-    BackgroundPlayer,
-    SoundEffect,
-    sound_effects,
-    sounds,
-)
-from amoginarium.shared.debugging import (
-    CC,
-    cum_timer,
-    get_fg_color,
-    print_ic_style,
-    print_with_prefix,
-    run_with_debug,
-)
+from amoginarium.shared import base_entity_t, BaseCommandType, Coalitions
+from amoginarium.shared import ENTITY_COUNTER, GlobalVars, INVENTORY_COUNTER
+from amoginarium.shared import MAX_ENTITIES, ProcessCommand, ProcessCommandType
+from amoginarium.shared.audio import BackgroundPlayer, sound_effects
+from amoginarium.shared.audio import SoundEffect, sounds
+from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
+from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.utility import PIDController, Vec2
 
-from .entities import (
-    DETECTION_GLOBAL_BLUE,
-    DETECTION_GLOBAL_NEUTRAL,
-    DETECTION_GLOBAL_RED,
-    DETECTION_GROUP_MANAGER,
-    SPAWNABLES,
-    Bullets,
-    DetectionGroup,
-    FrictionXAffected,
-    GameCollisions,
-    GrassIsland,
-    GravityAffected,
-    Island,
-    LogicGameEntity,
-    Player,
-    Players,
-    Updated,
-)
+from .entities import Bullets, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
+from .entities import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER, DetectionGroup
+from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAffected
+from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
 from .graphics_dummies import Controller
 
 if TYPE_CHECKING:
@@ -445,7 +413,7 @@ class LogicProcess:
 
                 Updated.world_position.xy = x_pos, y_pos
 
-            pv.audio_observer_pos.xy = (Updated.world_position - screen_pixels).xy
+            pv.audio_observer_pos.xy = Updated.world_position.xy
             self._global_vars.set_world_position(Updated.world_position)
 
         return True

@@ -29,6 +29,7 @@ from ._text_entity import TextEntity
 from ._turrets import BaseTurretDummy, CalculatedRideableTurretDummy
 from ._turrets import ExactoSniperTurretDummy, RideableTurret
 from ._weapons import ExactoSniper, HandThrownGrenade, WeaponDummy
+from ._vehicles import BaseVehicleDummy
 
 if TYPE_CHECKING:
     from ._synced_entities import SyncedGraphicsEntity
@@ -63,6 +64,7 @@ GRAPHICS_SPAWNABLES: dict[str, type[SyncedGraphicsEntity]] = {
         PlayerControlledMissileDummy,
         RideableTurret,
         CalculatedRideableTurretDummy,
+        BaseVehicleDummy
     ]
 }
 
