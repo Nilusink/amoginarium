@@ -1,13 +1,21 @@
 """
-amoginarium/graphics/ui/_animations/_float_animation.py
+Converts input types into configured float-based UI animation instances.
 
+Path: amoginarium/graphics/ui/_animations/_float_animation.py
 Project: amoginarium
 Created: 16.03.2026
 Authors: LukasKrah
 """
 
-from ._animation_types import anim_float_values_t, AnimatedFloatValues
-from ._complex_animation import create_animation, Animation
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from ._animation_types import AnimatedFloatValues
+from ._complex_animation import Animation, create_animation
+
+if TYPE_CHECKING:
+    from ._animation_types import anim_float_values_t
 
 
 class _FloatAnimationHelper:
@@ -39,10 +47,11 @@ class _FloatAnimationHelper:
                     extend_debounce_duration=float(values[4]) if length > 4 else ...,
                     collapse_debounce_duration=float(values[5]) if length > 5 else ...,
                     extend_curve=values[6] if length > 6 else ...,
-                    collapse_curve=values[7] if length > 7 else ...
+                    collapse_curve=values[7] if length > 7 else ...,
                 )
 
-        raise ValueError(f"Unsupported conversion format: {values}")
+        msg = f"Unsupported conversion format: {values}"
+        raise ValueError(msg)
 
 
 FloatAnimation = Animation
@@ -65,5 +74,5 @@ def create_float_animation(value: anim_float_values_t) -> Animation:
         extend_debounce_duration=val.extend_debounce_duration,
         collapse_debounce_duration=val.collapse_debounce_duration,
         extend_curve=val.extend_curve,
-        collapse_curve=val.collapse_curve
+        collapse_curve=val.collapse_curve,
     )

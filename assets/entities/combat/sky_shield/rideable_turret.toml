@@ -1,0 +1,30 @@
+[id]
+from = "turret.rideable.calculated"
+cid = "turret.rideable.sky_shield"
+
+[visibility]
+size = [128, 128]
+layer = 3
+
+[image]
+name = "skyshield_base"
+
+[behaviour]
+turn_speed = 1.57
+airburst_munition = true
+
+[engagement]
+valid_angles = [2.944, 0.197]
+min_range = 150
+max_range = 2300
+
+[target]
+taps = 1
+
+[weapon]
+type = "<weapon.sky_shield>"
+position_offset = [0, -8]
+
+[passenger]
+visible = false
+offset = [0, 0]

@@ -1,7 +1,17 @@
 # cython: boundscheck=False, wraparound=False, cdivision=True
+"""
+Utility functions written in cython.
+
+Path: amoginarium/shared/utility/_cutility_functions.pyi
+Project: amoginarium
+Created: 11.03.2026
+Authors: Nilusink
+"""
+
 cimport cython
-from ._cvectors cimport Vec2
 from libc.stdint cimport uint8_t
+
+from ._cvectors cimport Vec2
 
 
 cpdef object convert_coord(object coord, object convert_to = tuple):
@@ -13,11 +23,16 @@ cpdef object convert_coord(object coord, object convert_to = tuple):
     elif convert_to is tuple:
         if isinstance(coord, tuple):
             return coord
+
+        elif isinstance(coord, list):
+            return coord[0], coord[1]
+
         return (<Vec2>coord).xy
 
     elif convert_to is int:
         if isinstance(coord, Vec2):
             coord = (<Vec2>coord).xy
+
         return int(coord[0]), int(coord[1])
 
     else:

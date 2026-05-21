@@ -1,9 +1,9 @@
 """
-amoginarium/logic/entities/_base/_groups/_logic_group.py
-
 Defines the base LogicGroup class for managing collections of logic entities.
+
 Allows batch operations like updates and efficient membership testing.
 
+Path: amoginarium/logic/entities/_base/_groups/_logic_group.py
 Project: amoginarium
 Created: 21.04.2026
 Authors: Nilusink, LukasKrah
@@ -11,6 +11,7 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
+import contextlib
 import typing as tp
 
 from amoginarium.shared import BaseLogicEntityLike
@@ -20,16 +21,17 @@ class LogicGroup[T: BaseLogicEntityLike]:
     """
     A container for T objects to facilitate batch updates and management.
     """
+
     __slots__ = ("_entities",)
 
     _entities: dict[T, None]
 
-    def __init__(self, *entities: T):
+    def __init__(self, *entities: T) -> None:
         """
         Initialize the group with an optional sequence of entities.
         :param entities: Initial entities to add to the group.
         """
-        self._entities = {e: None for e in entities}
+        self._entities = dict.fromkeys(entities)
 
     def entities(self) -> list[T]:
         """:return: A shallow copy of the internal entity list."""
@@ -49,10 +51,8 @@ class LogicGroup[T: BaseLogicEntityLike]:
         Removes an entity from the group if it exists.
         :param entity: The logic entity to remove.
         """
-        try:
+        with contextlib.suppress(KeyError):
             del self._entities[entity]
-        except KeyError:
-            pass
 
     remove_internal = remove
 
@@ -69,7 +69,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
         Creates a new group containing the same entities.
         :return: A new LogicGroup instance.
         """
-        new_group: LogicGroup = self.__class__()
+        new_group = self.__class__()
         new_group._entities = self._entities.copy()
         return new_group
 
@@ -99,7 +99,6 @@ class LogicGroup[T: BaseLogicEntityLike]:
         :param args: Positional arguments passed to entity.update.
         :param kwargs: Keyword arguments passed to entity.update.
         """
-        entity: T
         for entity in self._entities.copy():
             entity.update(*args, **kwargs)
 

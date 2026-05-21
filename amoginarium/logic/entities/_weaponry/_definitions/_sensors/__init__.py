@@ -1,9 +1,10 @@
 """
-__init__.py
-28.04.2026
+Exposes sensor definitions for weaponry logic and detection.
 
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_weaponry/_definitions/_sensors/__init__.py
+Project: amoginarium
+Created: 28.04.2026
+Authors: Nilusink
 """
-from ._static_sensors import VisualSensor, VisualRadarSensor
+
+from ._static_sensors import VisualRadarSensor, VisualSensor

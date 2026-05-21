@@ -1,18 +1,22 @@
 """
-_data_types.py
-18.03.2026
+Various data types.
 
-Various data types
-
-Author:
-Nilusink
+Path: amoginarium/shared/_data_types.py
+Project: amoginarium
+Created: 18.03.2026
+Authors: Nilusink, LukasKrah
 """
 
+from __future__ import annotations
+
+import typing as tp
 from dataclasses import dataclass, field
 from enum import Enum
-import typing as tp
 
 from ._entity_hints import ItemLike
+
+if tp.TYPE_CHECKING:
+    from .utility import Vec2
 
 
 type item_t = ItemLike | None  # ItemLike | WeaponLike | None
@@ -21,30 +25,63 @@ type item_t = ItemLike | None  # ItemLike | WeaponLike | None
 @dataclass
 class ItemSlot:
     """
-    A slot in a players inventory
+    A slot in a players inventory.
     """
+
     item: item_t
     count: int
     parent: tp.Any
     id: int
 
 
+@dataclass
+class CurrentView:
+    """current player view."""
+
+    pos: Vec2
+    zoom: float
+    centered: bool = False
+
+
 class DummyCIDs(Enum):
     """
-    Component IDs for Graphics dummies
+    Component IDs for Graphics dummies.
     """
+
     player = "dummy.player"
-    base_bullet = "dummy.bullet.base"  # {"spawn_time": float, "visibility_offset": float}
+    base_bullet = (
+        "dummy.bullet.base"  # {"spawn_time": float, "visibility_offset": float}
+    )
     mortar_bullet = "dummy.bullet.mortar"  # -- "" --
     grenade = "dummy.bullet.grenade"  # -- "" --
     cram = "dummy.bullet.cram"
     aero = "dummy.bullet.aero"
 
 
+class MissileCIDs(Enum):
+    """Component IDs for missiles."""
+
+    base = "dummy.missile.base"
+    multi_stage = "dummy.missile.multi_stage"
+    guided_multi_stage = "dummy.missile.guided_multi_stage"
+    multi_thruster = "dummy.missile.multi_thruster"
+    player_controlled = "dummy.missile.player_controlled"
+
+
+class WeaponSensorCIDs(Enum):
+    """Component IDs for weapon sensors."""
+
+    base = "sensor.weapon.base"
+    laser = "sensor.weapon.laser"
+    heat = "sensor.weapon.heat"
+    gps = "sensor.weapon.gps"
+
+
 class IslandCIDs(Enum):
     """
-    Component IDs for Graphics islands
+    Component IDs for Graphics islands.
     """
+
     grass_island = "island.grass"
     gray_brick_island = "island.brick.gray"
     green_brick_island = "island.brick.green"
@@ -52,8 +89,9 @@ class IslandCIDs(Enum):
 
 class TurretCIDs(Enum):
     """
-    Component IDs for Graphics turrets
+    Component IDs for Graphics turrets.
     """
+
     minigun = "turret.static.minigun"
     sniper = "turret.static.sniper"
     ak47 = "turret.static.ak47"
@@ -63,12 +101,15 @@ class TurretCIDs(Enum):
     base = "turret.static.base"
     sky_shield = "turret.static.sky_shield"
     exacto_sniper = "turret.static.exacto_sniper"
+    rideable_base = "turret.rideable.base"
+    rideable_calculated = "turret.rideable.calculated"
 
 
 class WeaponCIDs(Enum):
     """
-    Component IDs for Graphics weapons
+    Component IDs for Graphics weapons.
     """
+
     minigun = "weapon.minigun"
     sniper = "weapon.sniper"
     ak47 = "weapon.ak47"
@@ -83,7 +124,8 @@ class WeaponCIDs(Enum):
 
 
 class SensorCIDs(Enum):
-    """Component IDs for graphics sensors"""
+    """Component IDs for graphics sensors."""
+
     radar = "sensor.static.radar"
     visual = "sensor.static.visual"
     magic = "sensor.static.magic"
@@ -94,7 +136,8 @@ class SensorCIDs(Enum):
 
 
 class ItemCIDs(Enum):
-    """Component IDs for items"""
+    """Component IDs for items."""
+
     shield = "item.shield"
     healing_potion = "item.healing_potion"
     jetbag = "item.jetbag"
@@ -102,8 +145,9 @@ class ItemCIDs(Enum):
 
 class GraphicsCIDs(Enum):
     """
-    Component IDs for other Graphics
+    Component IDs for other Graphics.
     """
+
     static_text = "static.text"
     debug_rectangle = "debug.rectangle"
     debug_polygon = "debug.polygon"
@@ -111,22 +155,22 @@ class GraphicsCIDs(Enum):
 
 
 class _CIDRegister:
-    """represent all item CIDs as ints"""
+    """represent all item CIDs as ints."""
 
     __slots__ = ["_cids"]
-    
+
     def __init__(self, *enums: tp.Iterable[Enum]) -> None:
         self._cids: dict[str, int] = {}
 
         i = 1  # start with 1 because 0 is no item
         for enum in enums:
-            for name in getattr(enum, "_value2member_map_").keys():
+            for name in enum._value2member_map_:
                 self._cids[name] = i
                 i += 1
 
     def get_id(self, cid: str | tp.Any) -> int:
         """
-        get the corresponding ID from n CID
+        Get the corresponding ID from n CID.
 
         :param cid: original CID
         :returns: corresponding ID, 0 if not found
@@ -140,14 +184,23 @@ class _CIDRegister:
         return 0
 
 
-CID_REGISTER = _CIDRegister(WeaponCIDs)  #, TurretCIDs, IslandCIDs, DummyCIDs)
-type CIDType = DummyCIDs | WeaponCIDs | TurretCIDs | IslandCIDs | GraphicsCIDs
+CID_REGISTER = _CIDRegister(WeaponCIDs)
+type CIDType = (
+    DummyCIDs
+    | WeaponCIDs
+    | TurretCIDs
+    | IslandCIDs
+    | GraphicsCIDs
+    | MissileCIDs
+    | WeaponSensorCIDs
+)
 
 
 class ProcessCommandType(Enum):
     """
-    Commands sent from base to process
+    Commands sent from base to process.
     """
+
     # process control
     quit = 0
     reset = 1
@@ -166,8 +219,9 @@ class ProcessCommandType(Enum):
 
 class BaseCommandType(Enum):
     """
-    commands sent from process to base
+    commands sent from process to base.
     """
+
     spawn_dummy = 0  # {"id": <sync id>, "cid": DummyCIDs, **kwargs}
     spawn_island = 1  # {"id": <sync id>, "cid": IslandCIDs, "size" OR "form"}
     confirm_reset = 2
@@ -176,8 +230,9 @@ class BaseCommandType(Enum):
 @dataclass
 class ProcessCommand:
     """
-    Base command type (all commands)
+    Base command type (all commands).
     """
+
     type: ProcessCommandType | BaseCommandType
     args: tp.Iterable = field(default_factory=list)
     kwargs: dict[str, tp.Any] = field(default_factory=dict)

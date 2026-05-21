@@ -1,9 +1,9 @@
 """
-amoginarium/logic/entities/_base/_game_entities/_collision_logic_entity.py
-
 Defines an entity that integrates with the collision manager.
+
 Handles registering, updating, and removing hitboxes, as well as collision callbacks.
 
+Path: amoginarium/logic/entities/_base/_game_entities/_collision_logic_entity.py
 Project: amoginarium
 Created: 23.04.2026
 Authors: LukasKrah
@@ -11,41 +11,48 @@ Authors: LukasKrah
 
 from __future__ import annotations
 
-# noinspection PyUnresolvedReferences
-from icecream import ic
-from types import EllipsisType
 import typing as tp
+
+from icecream import ic
 
 from amoginarium.shared import CollisionLogicEntityLike
 from amoginarium.shared.utility import get_default
 
-from .._debug import DebugPolygonEntity, DebugRectangleEntity, DebugCircleEntity
 from .._base_entities import PositionedLogicEntity
 from .._collision import GameCollisions, HitboxTypes
+from .._debug import DebugCircleEntity, DebugPolygonEntity, DebugRectangleEntity
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared import base_entity_t
+    from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared.utility import Vec2
 
     from .._base_entities import BaseLogicEntity
     from .._collision import CollisionType
 
 
-# noinspection DuplicatedCode
 class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     """
     A logic entity that supports collision detection and response.
     Integrates with the global collision_manager to handle hitboxes, collision events,
     and collision filtering via exception IDs.
     """
+
     __slots__ = (
-        "_centered", "__collision_entity_id", "__collision_group",
-        "_collision_exception_ids", "__collision_exception_root",
-        "__collision_exception_root_additive", "__collision_exception_root_ids",
-        "_collision_active", "_active_collisions", "_active_normals", "__debug_entity"
+        "_centered",
+        "__collision_entity_id",
+        "__collision_group",
+        "_collision_exception_ids",
+        "__collision_exception_root",
+        "__collision_exception_root_additive",
+        "__collision_exception_root_ids",
+        "_collision_active",
+        "_active_collisions",
+        "_active_normals",
+        "__debug_entity",
     )
 
     # region ClassVars
@@ -63,40 +70,46 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
     _centered: bool
 
-    # Private: Shouldn't be changed from the outside
-    __collision_entity_id: CollisionType.EntityID | None
-    # Private: Cannot be changed after creation.
-    __collision_group: CollisionType.GroupID | None
-    # Can be changed after creation
-    _collision_exception_ids: list[CollisionType.ExceptionID]
+    __collision_entity_id: (
+        CollisionType.EntityID | None
+    )  # Private: Shouldn't be changed from the outside
+    __collision_group: (
+        CollisionType.GroupID | None
+    )  # Private: Cannot be changed after creation.
+    _collision_exception_ids: list[
+        CollisionType.ExceptionID
+    ]  # Can be changed after creation
     __collision_exception_root: bool
     __collision_exception_root_additive: bool
-    # Calculated/Used only internally
-    __collision_exception_root_ids: list[CollisionType.ExceptionID]
+    __collision_exception_root_ids: list[
+        CollisionType.ExceptionID
+    ]  # Calculated/Used only internally
     _collision_active: bool
 
-    # protected / no property for faster access
-    _active_collisions: dict[CollisionType.CollisionID, CollisionEvent]
-    # protected / no property for faster access
-    _active_normals: dict[CollisionType.GroupID, list[Vec2]]
+    _active_collisions: dict[
+        CollisionType.CollisionID, CollisionEvent
+    ]  # protected / no property for faster access
+    _active_normals: dict[
+        CollisionType.GroupID, list[Vec2]
+    ]  # protected / no property for faster access
 
-    __debug_entity: DebugCircleEntity | DebugPolygonEntity | DebugRectangleEntity | None
-
-    # endregion
+    __debug_entity: (
+        DebugCircleEntity | DebugPolygonEntity | DebugRectangleEntity | None
+    )  # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            size: Vec2,
-            position: Vec2,
-            *,
-            parent: CollisionLogicEntity | None = None,
-            centered: bool = False,
-            collision_group: CollisionType.GroupID | EllipsisType | None = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            collision_exception_root: bool | EllipsisType = ...,
-            collision_exception_root_additive: bool | EllipsisType = ...,
-            collision_active: bool = True,
+        self,
+        runtime_buffer: Array[base_entity_t],
+        size: Vec2,
+        position: Vec2,
+        *,
+        parent: CollisionLogicEntity | None = None,
+        centered: bool = False,
+        collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        collision_exception_root: bool | EllipsisType = ...,
+        collision_exception_root_additive: bool | EllipsisType = ...,
+        collision_active: bool = True,
     ) -> None:
         """
         A logic entity with position, size, and optional collision detection
@@ -104,33 +117,27 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :param size: 2D size of the entity
         :param position: 2D position of the entity
         :param parent: Optional parent entity
-        :param centered: Whether the position is center or top left
-            (relevant for collision detection) Edit afterward with self._centered
-        :param collision_group: Collision Group ID.
-            Defaults to cls._DEFAULT_COLLISION_GROUP.
+        :param centered: Whether the position is center or top left (relevant for collision detection)
+            Edit afterward with self._centered
+        :param collision_group: Collision Group ID. Defaults to cls._DEFAULT_COLLISION_GROUP.
         :param collision_exception_ids: Optional list of collision exception rules.
             Edit afterward with self._collision_exception_ids
-        :param collision_exception_root: Groups this entity
-            and all its children recursive to a collision exception rule.
-            Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT.
-        :param collision_exception_root_additive: Whether root collision exception
-            rules created from parents are also added to this entity
-            and its children recursive.
-            Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
+        :param collision_exception_root: Groups this entity and all its children recursive to a collision exception
+            rule. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT.
+        :param collision_exception_root_additive: Whether root collision exception rules created from parents are also
+            added to this entity and its children recursive. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
             Recurses until the next parents sets this to false
         :param collision_active: Whether the collision detection is active.
         """
         super().__init__(
-            runtime_buffer=runtime_buffer,
-            parent=parent,
-            position=position,
-            size=size
+            runtime_buffer=runtime_buffer, parent=parent, position=position, size=size
         )
 
         self._centered = centered
         self.__collision_entity_id = None
-        self.__collision_group = get_default(collision_group,
-                                             self.__class__._DEFAULT_COLLISION_GROUP)
+        self.__collision_group = get_default(
+            collision_group, self.__class__._DEFAULT_COLLISION_GROUP
+        )
 
         self._collision_exception_ids = []
         if collision_exception_ids is not None:
@@ -139,12 +146,11 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
             elif isinstance(collision_exception_ids, list):
                 self._collision_exception_ids = collision_exception_ids
         self.__collision_exception_root = get_default(
-            collision_exception_root,
-            self.__class__._DEFAULT_COLLISION_EXCEPTION_ROOT
+            collision_exception_root, self.__class__._DEFAULT_COLLISION_EXCEPTION_ROOT
         )
         self.__collision_exception_root_additive = get_default(
             collision_exception_root_additive,
-            self.__class__._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE
+            self.__class__._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE,
         )
         self.__collision_exception_root_ids = []
 
@@ -181,9 +187,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
     # region Methods: Collision calculations
     def __calculate_active_normals(self) -> None:
-        """
-        Pre-calculates active normals grouped by collision group ID for faster access
-        """
+        """Pre-calculates active normals grouped by collision group ID for faster access."""
         active_normals: dict[int, list[Vec2]] = {}
 
         for event in self._active_collisions.values():
@@ -195,23 +199,22 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
     @property
     def _collision_exception_root_ids(self) -> list[CollisionType.ExceptionID]:
-        """Returns root collision exceptions rules"""
+        """Returns root collision exceptions rules."""
         return self.__collision_exception_root_ids
 
     @_collision_exception_root_ids.setter
     def _collision_exception_root_ids(
-            self,
-            value: list[CollisionType.ExceptionID]
+        self, value: list[CollisionType.ExceptionID]
     ) -> None:
-        """Sets root collision exceptions rules"""
+        """Sets root collision exceptions rules."""
         self.__collision_exception_root_ids = value
         for child in self._children:
             child._calculate_root_collision_exceptions()
 
     def _calculate_root_collision_exceptions(
-            self
+        self,
     ) -> list[CollisionType.ExceptionID] | None:
-        """Calculates root collision exceptions rules"""
+        """Calculates root collision exceptions rules."""
         collision_exception_root_ids: list[CollisionType.ExceptionID] = []
 
         if self.__collision_exception_root:
@@ -225,7 +228,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     def _change_parent(self, parent: CollisionLogicEntity | None) -> None:
         """
         Change parent and update root collision exceptions down the tree
-        :param parent: New parent
+        :param parent: New parent.
         """
         self._parent = parent
         self._calculate_root_collision_exceptions()
@@ -234,44 +237,35 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
     # region Methods: Collision Start
     def _collision_start(
-            self,
-            group_id: CollisionType.GroupID,
-            events: list[CollisionEvent[CollisionLogicEntity]]
+        self, events: list[CollisionEvent[CollisionLogicEntity]]
     ) -> list[bool] | None:
         """
         Called on collision start
-        :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collisions
-        :return: List of booleans stating whether each collision is accepted.
-           If false, the CollisionManager will not call COLLISION_END
-           and will call COLLISION_START again
-           if there still is a collision in the next update
+        :return: List of bools stating whether each collision is accepted.
+           If False the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again if there still is a collision in the next update.
         """
 
     @tp.final
     def collision_start(
-            self,
-            group_id: CollisionType.GroupID,
-            events: list[CollisionEvent[CollisionLogicEntity]]
+        self, events: list[CollisionEvent[CollisionLogicEntity]]
     ) -> list[bool] | None:
         """
-        Callback for collision start, called by the collision manager.
+        Callback for collision start, called by the collision manager
         Shouldn't be overwritten in inheritance. Instead, use _collision_start
-        :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collision
-        :return: List of booleans stating whether each collision is accepted.
-           If false, the CollisionManager will not call COLLISION_END
-           and will call COLLISION_START again
-           if there still is a collision in the next update
+        :param events: All details regarding the collisions
+        :return: List of bools stating whether each collision is accepted.
+           If False the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again if there still is a collision in the next update.
         """
         # ic("COL START", self, events)
-        collisions_result: list[bool] | None = self._collision_start(group_id, events)
+        collisions_result: list[bool] | None = self._collision_start(events)
 
         # Save accepted collisions in self._active_collisions
         for i in range(len(events)):
-            if collisions_result is not None:
-                if not collisions_result[i]:
-                    continue
+            if collisions_result is not None and not collisions_result[i]:
+                continue
             self._active_collisions[events[i].collision_id] = events[i]
 
         self.__calculate_active_normals()
@@ -283,54 +277,45 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
     # region Methods: Collision End
     def _collision_end(
-            self,
-            group_id: CollisionType.GroupID,
-            events: list[CollisionEvent[CollisionLogicEntity]]
+        self, events: list[CollisionEvent[CollisionLogicEntity]]
     ) -> None:
         """
         Called on collision end
-        :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
 
     @tp.final
-    def collision_end(
-            self,
-            group_id: CollisionType.GroupID,
-            events: list[CollisionEvent[CollisionLogicEntity]]
-    ) -> None:
+    def collision_end(self, events: list[CollisionEvent[CollisionLogicEntity]]) -> None:
         """
         Callback on COLLISION_END, called by the collision manager
-        :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
         # ic("COL END", self, events)
         # Filter for collisions that are still active
         actual_events = [
-            event for event in events
-            if event.collision_id in self._active_collisions.keys()
+            event for event in events if event.collision_id in self._active_collisions
         ]
         for event in actual_events:
-            if event.collision_id in self._active_collisions.keys():
+            if event.collision_id in self._active_collisions:
                 del self._active_collisions[event.collision_id]
 
         self.__calculate_active_normals()
-        self._collision_end(group_id, actual_events)
+        self._collision_end(actual_events)
 
     # endregion
 
     # region Methods: Create/Update/Delete Collision
     @tp.final
     def _create_collision(  # type: ignore
-            self,
-            *,
-            position: Vec2 | EllipsisType = ...,
-            size: Vec2 | EllipsisType = ...,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...,
-            radius: float | None = None,
-            collision_active: bool | EllipsisType = ...,
+        self,
+        *,
+        position: Vec2 | EllipsisType = ...,
+        size: Vec2 | EllipsisType = ...,
+        rotation: float = 0.0,
+        positions: list[Vec2] | None = None,
+        centered: bool | EllipsisType = ...,
+        radius: float | None = None,
+        collision_active: bool | EllipsisType = ...,
     ) -> None:
         """
         Registers this entity with the collision manager.
@@ -340,23 +325,16 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :param positions: Optional list of vertices for polygonal hitboxes.
         :param centered: Whether the hitbox is centered on the position.
         :param radius: Optional radius for circular hitboxes.
-        :param collision_active: Whether the collision entity is active.
-            Defaults to self._collision_active
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
         """
-        if self.__collision_group is None:
-            return
-        if isinstance(position, EllipsisType):
+        if position == ...:
             position = self.position
-            position: Vec2
-        if isinstance(size, EllipsisType):
+        if size == ...:
             size = self.size
-            size: Vec2
-        if isinstance(centered, EllipsisType):
+        if centered == ...:
             centered = self._centered
-            centered: bool
-        if isinstance(collision_active, EllipsisType):
+        if collision_active == ...:
             collision_active = self._collision_active
-            collision_active: bool
 
         self._calculate_root_collision_exceptions()
 
@@ -369,22 +347,22 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
             positions=positions,
             centered=centered,
             radius=radius,
-            ignore_collisions=(self._collision_exception_ids
-                               + self.__collision_exception_root_ids),
+            ignore_collisions=self._collision_exception_ids
+            + self.__collision_exception_root_ids,
             is_active=collision_active,
         )
 
     def _update_collision(  # type: ignore
-            self,
-            *,
-            position: Vec2 | EllipsisType = ...,
-            size: Vec2 | EllipsisType = ...,
-            rotation: float = 0.0,
-            positions: list[Vec2] | None = None,
-            centered: bool | EllipsisType = ...,
-            radius: float | None = None,
-            collision_active: bool | EllipsisType = ...,
-            shift_history: bool = True
+        self,
+        *,
+        position: Vec2 | EllipsisType = ...,
+        size: Vec2 | EllipsisType = ...,
+        rotation: float = 0.0,
+        positions: list[Vec2] | None = None,
+        centered: bool | EllipsisType = ...,
+        radius: float | None = None,
+        collision_active: bool | EllipsisType = ...,
+        shift_history: bool = True,
     ) -> None:
         """
         Updates the entity's hitbox parameters in the collision manager.
@@ -394,27 +372,23 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :param positions: Optional list of vertices for polygonal hitboxes.
         :param centered: Whether the hitbox is centered on the position.
         :param radius: Optional radius for circular hitboxes.
-        :param collision_active: Whether the collision entity is active.
-            Defaults to self._collision_active.
+        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
         :param shift_history: Whether to update the previous position state for CCD.
         """
-        if self.__collision_entity_id is None or self.__collision_group is None:
+        if self.__collision_entity_id is None:
             return
-        if isinstance(position, EllipsisType):
+
+        if position == ...:
             position = self.position
-            position: Vec2
-        if isinstance(size, EllipsisType):
+        if size == ...:
             size = self.size
-            size: Vec2
-        if isinstance(centered, EllipsisType):
+        if centered == ...:
             centered = self._centered
-            centered: bool
-        if isinstance(collision_active, EllipsisType):
+        if collision_active == ...:
             collision_active = self._collision_active
-            collision_active: bool
 
         GameCollisions.collision_manager.update_entity(
-            group_id=self.__collision_group,
+            group_id=self._DEFAULT_COLLISION_GROUP,
             entity_id=self.__collision_entity_id,
             position=position,
             size=size,
@@ -423,8 +397,8 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
             centered=centered,
             radius=radius,
             is_active=collision_active,
-            ignore_collisions=(self._collision_exception_ids
-                               + self.__collision_exception_root_ids),
+            ignore_collisions=self._collision_exception_ids
+            + self.__collision_exception_root_ids,
             shift_history=shift_history,
         )
         if CollisionLogicEntity.__debug_draw_hitboxes and self._collision_active:
@@ -448,67 +422,50 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
                         self.__debug_entity = DebugPolygonEntity(
                             runtime_buffer=self._runtime_buffer,
                         )
-            if self.__debug_entity is None:
-                return
-            collision_group: CollisionType.GroupID | None = self._collision_group
-            if collision_group is not None and self.__collision_entity_id is not None:
-                self.__debug_entity.show()
-                match hitbox:
-                    case HitboxTypes.aabb:
-                        debug_pos: Vec2 | None = \
-                            GameCollisions.collision_manager.get_position(
-                                collision_group,
-                                self.__collision_entity_id
-                            )
-                        if debug_pos is not None:
-                            self.__debug_entity.position = debug_pos
-                        debug_size: Vec2 | None = \
-                            GameCollisions.collision_manager.get_size(
-                                collision_group,
-                                self.__collision_entity_id
-                            )
-                        if debug_size is not None:
-                            self.__debug_entity.size = debug_size
 
-                    case HitboxTypes.circle:
-                        debug_pos = \
-                            GameCollisions.collision_manager.get_position(
-                                collision_group,
-                                self.__collision_entity_id
-                            )
-                        if debug_pos is not None:
-                            self.__debug_entity.position = debug_pos
-                        debug_radius = \
-                            GameCollisions.collision_manager.get_radius(
-                                collision_group,
-                                self.__collision_entity_id
-                            )
-                        if debug_radius is not None:
-                            self.__debug_entity.radius = debug_radius
-
-                    case _:
-                        self.__debug_entity.set_points(  # type: ignore
-                            GameCollisions.collision_manager.get_points(
-                                collision_group,
-                                self.__collision_entity_id
-                            )
+            match hitbox:
+                case HitboxTypes.aabb:
+                    self.__debug_entity.position = (
+                        GameCollisions.collision_manager.get_position(
+                            self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id
                         )
+                    )
+                    self.__debug_entity.size = (
+                        GameCollisions.collision_manager.get_size(
+                            self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id
+                        )
+                    )
+                case HitboxTypes.circle:
+                    self.__debug_entity.position = (
+                        GameCollisions.collision_manager.get_position(
+                            self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id
+                        )
+                    )
+                    self.__debug_entity.radius = (
+                        GameCollisions.collision_manager.get_radius(
+                            self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id
+                        )
+                    )
+                case _:
+                    self.__debug_entity.set_points(
+                        GameCollisions.collision_manager.get_points(
+                            self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id
+                        )
+                    )
 
-        else:
-            if self.__debug_entity is not None:
-                self.__debug_entity.hide()
+        elif self.__debug_entity is not None:
+            self.__debug_entity.kill()
+            self.__debug_entity = None
 
     @tp.final
     def _delete_collision(self) -> None:
         """
         Removes the entity from the collision manager and cleans up debug visuals.
         """
-        collision_group: CollisionType.GroupID | None = self._collision_group
-        if self.__collision_entity_id is None or collision_group is None:
+        if self.__collision_entity_id is None:
             return
         GameCollisions.collision_manager.delete_entity(
-            collision_group,
-            self.__collision_entity_id
+            self._DEFAULT_COLLISION_GROUP, self.__collision_entity_id
         )
         self.__collision_entity_id = None
         if self.__debug_entity is not None:
@@ -520,21 +477,17 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     def _update(self, delta: float) -> None:
         """
         Update shared memory and collision entity
-        :param delta: time since the last update
+        :param delta: time since the last update.
         """
         self._update_collision()
         super()._update(delta)
 
-    def _kill(
-            self,
-            killed_by: BaseLogicEntity | EllipsisType = ...,
-            kill_children: bool = True
-    ) -> None:
+    def _kill(self, killed_by: BaseLogicEntity | EllipsisType = ...) -> None:
         """
         Remove from groups and collision manager
-        :param killed_by: who killed this entity
+        :param killed_by: who killed this entity.
         """
         self._delete_collision()
-        super()._kill(killed_by=killed_by, kill_children=kill_children)
+        super()._kill(killed_by)
 
     # endregion

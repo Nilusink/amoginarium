@@ -1,21 +1,22 @@
 """
-amoginarium/graphics/ui/_base/_focus.py
+Manages UI element focus states and event callback registration.
 
+Path: amoginarium/graphics/ui/_base/_focus.py
 Project: amoginarium
-Created: 03.04.2026
+Created: 11.04.2026
 Authors: LukasKrah
 """
 
-import typing as tp
-import abc
+from __future__ import annotations
 
+import abc
+import typing as tp
 
 if tp.TYPE_CHECKING:
     from ._ui_event_element import UIEventElement
 
 
-class _SharedFocusStructure(abc.ABC):
-    ...
+class _SharedFocusStructure(abc.ABC): ...
 
 
 class Focus(_SharedFocusStructure):

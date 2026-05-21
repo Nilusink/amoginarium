@@ -35,5 +35,5 @@ position_offset = [0, 15]
 type = "<sensor.radar>"
 detection_range = 2200
 sphere_accuracy = 256
-min_rcs = 0.04
+min_rcs = 0.004
 

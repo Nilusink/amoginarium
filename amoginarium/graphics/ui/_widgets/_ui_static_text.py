@@ -1,49 +1,54 @@
 """
-amoginarium/graphics/ui/_widgets/_ui_static_text.py
+Defines a UI widget for rendering immutable static text.
 
+Path: amoginarium/graphics/ui/_widgets/_ui_static_text.py
 Project: amoginarium
-Created: 03.04.2026
+Created: 11.04.2026
 Authors: LukasKrah
 """
 
+from __future__ import annotations
+
 import typing as tp
 
-from amoginarium.shared.utility import coord_t, color_t
-
-from .._base import UIEntity, UIEventElement
 from ...render_bindings import renderer
-from .._types import Positions, Anchor
+from .._base import UIEventElement
+from .._types import Anchor, Positions
+
+if tp.TYPE_CHECKING:
+    from amoginarium.shared.utility import color_t, coord_t
+
+    from .._base import UIEntity
 
 
 class UIStaticText(UIEventElement):
-    """Static text UI widget - text values can't be changed after creation"""
+    """Static text UI widget - text values can't be changed after creation."""
+
     __text_id: renderer.StaticTextID
 
     def __init__(
-            self,
-            position: coord_t,
-            size: coord_t,
-            text: str,
-            *,
-            parent: UIEntity | None = None,
-
-            text_color: color_t = (0, 0, 0),
-            bg_color: color_t = (0, 0, 0, 0),
-            font_size: int = 64,
-            font_family: str = "Arial",
-            bold: bool = False,
-            italic: bool = False,
-
-            placement_anchor: Anchor = Anchor.CENTER,
-            absolute_values: bool = False,
-            positon_is_relative_to_parent: bool = True,
-            size_is_relative_to_parent: bool = True,
-            parent_reference_position: Positions = Positions.TOP_LEFT,
-            collision_buffer: int = 0,
-            use_collision_mask: bool = False,
-            on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
-            on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        self,
+        position: coord_t,
+        size: coord_t,
+        text: str,
+        *,
+        parent: UIEntity | None = None,
+        text_color: color_t = (0, 0, 0),
+        bg_color: color_t = (0, 0, 0, 0),
+        font_size: int = 64,
+        font_family: str = "Arial",
+        bold: bool = False,
+        italic: bool = False,
+        placement_anchor: Anchor = Anchor.CENTER,
+        absolute_values: bool = False,
+        positon_is_relative_to_parent: bool = True,
+        size_is_relative_to_parent: bool = True,
+        parent_reference_position: Positions = Positions.TOP_LEFT,
+        collision_buffer: int = 0,
+        use_collision_mask: bool = False,
+        on_enter_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_leave_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
+        on_buffer_callbacks: list[tp.Callable[[], tp.Any]] | None = None,
     ) -> None:
         """
         Create a new UIDynamicText
@@ -65,7 +70,7 @@ class UIStaticText(UIEventElement):
         :param use_collision_mask: Whether to use a collision mask or just a collision box
         :param on_enter_callbacks: List of callbacks to be called when a cursor enters the component
         :param on_leave_callbacks: List of callbacks to be called when a cursor leaves the component
-        :param on_buffer_callbacks: List of callbacks to be called when a cursor buffers the component
+        :param on_buffer_callbacks: List of callbacks to be called when a cursor buffers the component.
 
         """
         super().__init__(
@@ -100,5 +105,5 @@ class UIStaticText(UIEventElement):
             self.center.absolute_global,
             self.__text_id,
             centered=True,
-            convert_global=False
+            convert_global=False,
         )

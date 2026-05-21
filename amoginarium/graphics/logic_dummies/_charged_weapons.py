@@ -1,31 +1,37 @@
 """
-_charged_weapons.py
-11.04.2026
+Charged weapon dummies.
 
-charged weapon dummies
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_charged_weapons.py
+Project: amoginarium
+Created: 11.04.2026
+Authors: Nilusink
 """
-from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, Color
-from amoginarium.base._textures import textures
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from amoginarium.shared import WeaponCIDs
+from amoginarium.shared.utility import Color, Vec2
 
 from ..render_bindings import renderer
+from ..textures import textures
 from ._weapons import WeaponDummy
+
+if TYPE_CHECKING:
+    from types import EllipsisType
 
 
 class ChargedWeaponDummy(WeaponDummy):
     """
-    weapon with charging bar
-    
+    weapon with charging bar.
+
     ``param2``: charge state
     """
+
     _c_bar_colors: tuple[Color] = (Color().from_255(143, 0, 124),)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
 
         # draw charge bar
@@ -51,7 +57,7 @@ class ChargedWeaponDummy(WeaponDummy):
 
 
 class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
-    """weapon with changing textures"""
+    """weapon with changing textures."""
 
     _image_name = ...
     _image_scope: str = "railgun"
@@ -66,14 +72,13 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
         cls._images = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._image_scope, cls._default_size, mirror="x"
+                cls._image_scope, cls._default_size, mirror="x", pixel_perfect=True
             )
         ]
         cls._images_m = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._image_scope,
-                cls._default_size,
+                cls._image_scope, cls._default_size, pixel_perfect=True
             )
         ]
 
@@ -83,13 +88,13 @@ class ChargedDynamicWeaponDummy(ChargedWeaponDummy):
 
     @property
     def _texture_id_r(self) -> int:
-        """texture id right"""
-        return self._images[round(self.param2 * (len(self._images)-1))]
+        """Texture id right."""
+        return self._images[round(self.param2 * (len(self._images) - 1))]
 
     @property
     def _texture_id_l(self) -> int:
-        """texture id left"""
-        return self._images_m[round(self.param2 * (len(self._images)-1))]
+        """Texture id left."""
+        return self._images_m[round(self.param2 * (len(self._images) - 1))]
 
 
 class RailGunDummy(ChargedDynamicWeaponDummy):

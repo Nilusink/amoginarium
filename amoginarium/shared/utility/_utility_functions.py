@@ -1,22 +1,27 @@
 """
-_utility_functions.py
-19. March 2024
+A few useful functions.
 
-a few useful functions
-
-Author:
-Nilusink
+Path: amoginarium/shared/utility/_utility_functions.py
+Project: amoginarium
+Created: 19.03.2024
+Authors: Nilusink, LukasKrah
 """
 
-from types import EllipsisType
-from icecream import ic
-import typing as tp
-import pygame as pg
-import numpy as np
+from __future__ import annotations
 
-from ._cutility_functions import raycast_mask, infinite_lines_intersect, raycast_size
-from ._cvectors import Vec2
+import typing as tp
+from types import EllipsisType
+
+import numpy as np
+from icecream import ic
+
+from ._ccalculations import calculate_launch_angle
 from ._ccolor import Color
+from ._cutility_functions import raycast_mask, raycast_size
+from ._cvectors import Vec2
+
+if tp.TYPE_CHECKING:
+    import pygame as pg
 
 type coord_t = tuple[int, int] | tuple[float, float] | Vec2
 type color_t = tuple[float, float, float] | tuple[float, float, float, float] | Color
@@ -30,7 +35,8 @@ type color_t = tuple[float, float, float] | tuple[float, float, float, float] | 
 
 
 class EntityLike(tp.Protocol):
-    """really basic entity abstraction"""
+    """really basic entity abstraction."""
+
     position: Vec2
     size: Vec2
     mask: pg.Mask
@@ -43,14 +49,14 @@ class EntityLike(tp.Protocol):
 
 def classname(c: object) -> str:
     """
-    get the name of an obect class
+    Get the name of an obect class.
     """
     return c.__class__.__name__
 
 
 def is_parent(parent: object, child: object) -> bool:
     """
-    check parent is the parent of child
+    Check parent is the parent of child.
     """
     if not hasattr(child, "parent"):
         return False
@@ -59,8 +65,7 @@ def is_parent(parent: object, child: object) -> bool:
 
 
 def convert_color[A: Color | int | float](
-        color: color_t,
-        convert_to: type[A] = tuple
+    color: color_t, convert_to: type[A] = tuple
 ) -> A | tuple[A, A, A, A]:
     if convert_to is Color:
         if isinstance(color, Color):
@@ -71,28 +76,26 @@ def convert_color[A: Color | int | float](
 
         return Color().from_1(*color)
 
-    elif convert_to is int:
+    if convert_to is int:
         if isinstance(color, Color):
             return color.get_rgba255()
 
-        else:
-            # noinspection PyTypeChecker
-            return *(round(c * 255) for c in color),
-
-    else:
-        if isinstance(color, Color):
-            return color.get_rgba1()
         # noinspection PyTypeChecker
-        return *(c / 255 for c in color),
+        return (*(round(c * 255) for c in color),)
+
+    if isinstance(color, Color):
+        return color.get_rgba1()
+    # noinspection PyTypeChecker
+    return (*(c / 255 for c in color),)
 
 
 # @timeit(1)
 def multi_raycast_mask(
-        parent: EntityLike,
-        sprites: tp.Collection[EntityLike],
-        start: Vec2,
-        end: Vec2,
-        sample_rate: int = 10
+    parent: EntityLike,
+    sprites: tp.Collection[EntityLike],
+    start: Vec2,
+    end: Vec2,
+    sample_rate: int = 10,
 ) -> list[tuple[EntityLike, Vec2]]:
     out = []
 
@@ -108,12 +111,7 @@ def multi_raycast_mask(
 
         elif hasattr(sprite, "form"):  # check if island
             if raycast_size(start, end, sprite.position + sprite.size / 2, sprite.size):
-                res = raycast_mask(
-                    sprite,
-                    start,
-                    end,
-                    sample_rate
-                )
+                res = raycast_mask(sprite, start, end, sample_rate)
 
             else:
                 continue
@@ -134,15 +132,15 @@ def multi_raycast_mask(
 
 
 def lidar_sphere(
-        position: Vec2,
-        radius: float,
-        segments: int,
-        entity_sample: tp.Iterable[EntityLike],
-        sample_rate: int = 1,
+    position: Vec2,
+    radius: float,
+    segments: int,
+    entity_sample: tp.Iterable[EntityLike],
+    sample_rate: int = 1,
 ) -> list[Vec2]:
     """
-    cast an array of spheres around a certain point
-    and check if it hits any entity
+    Cast an array of spheres around a certain point
+    and check if it hits any entity.
 
     :returns: list of vectors to hit
     """
@@ -155,16 +153,10 @@ def lidar_sphere(
 
         hits = []
         for entity in entity_sample:
-            res = raycast_mask(
-                entity,
-                position,
-                position + delta,
-                sample_rate
-            )
+            res = raycast_mask(entity, position, position + delta, sample_rate)
 
-            if res is not None:
-                if res.length > 0:
-                    hits.append(res)
+            if res is not None and res.length > 0:
+                hits.append(res)
 
         if hits:
             hits = sorted(hits, key=lambda x: x.length)
@@ -178,5 +170,78 @@ def lidar_sphere(
 
 
 def get_default[T](param: T | EllipsisType, default: T) -> T:
-    """return param if not Ellipsis else default"""
+    """Return param if not Ellipsis else default."""
     return default if isinstance(param, EllipsisType) else param
+
+
+def calculate_launch_angle_all_directions(
+    position_delta: Vec2,
+    target_velocity: Vec2,
+    target_acceleration: Vec2,
+    launch_speed: float,
+    recalculate: int = 10,
+    aim_type: str = "low",
+    g: float = 9.81,
+) -> tuple[Vec2, float, Vec2]:
+    """
+    Remove calculate_launch_angles directional restriction.
+
+    :param position_delta: the position delta between cannon and target
+    :param target_velocity: the current velocity of the target, pass empty Vec2 if no velocity is known
+    :param target_acceleration: the current acceleration of the target, pass empty Vec2 if no velocity is known
+    :param launch_speed: the projectile muzzle speed
+    :param recalculate: how often the position is being recalculated, basically a precision parameter
+    :param aim_type: either "high" - "h" or "low" - "l". Defines if the lower or higher curve should be aimed for
+    :param g: gravitation inflicted on target
+    :return: where to aim, tof, predicted position
+    """
+    # mirror y because of pygame
+    position_delta.y *= -1
+    target_velocity.y *= -1
+    target_acceleration.y *= -1
+
+    # mirror x if negative
+    mirror = False
+    if position_delta.x < 0:
+        mirror = True
+        position_delta.x *= -1
+        target_velocity.x *= -1
+        target_acceleration.x *= -1
+
+    aiming_angle, tof, predict = calculate_launch_angle(
+        position_delta,
+        target_velocity,
+        target_acceleration,
+        launch_speed,
+        recalculate,
+        aim_type,
+        g,
+    )
+
+    # un-mirror everything
+    aiming_angle.y *= -1
+    predict.y *= -1
+
+    if mirror:
+        aiming_angle.x *= -1
+        predict.x *= -1
+
+    return aiming_angle, tof, predict
+
+
+def clamp[A: int | float](value: A, a: float, b: float) -> A:
+    """
+    Clamp a value between a and b.
+
+    :param value: value to clamp
+    :param a: min value
+    :param b: max value
+    :returns: clamped value
+    """
+    if value < a:
+        return a
+
+    if value > b:
+        return b
+
+    return value

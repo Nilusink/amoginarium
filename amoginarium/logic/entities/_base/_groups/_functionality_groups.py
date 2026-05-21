@@ -1,9 +1,7 @@
 """
-amoginarium/logic/entities/_base/_groups/_functionality_groups.py
-
 Contains logical groups that apply global physics properties.
-Includes FrictionXAffected and GravityAffected for batch physics processing.
 
+Path: amoginarium/logic/entities/_base/_groups/_functionality_groups.py
 Project: amoginarium
 Created: 25.01.2024
 Authors: Nilusink, LukasKrah
@@ -11,20 +9,22 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
-from amoginarium.shared import LogicGameEntityLike
 from amoginarium import pv
+from amoginarium.shared import LogicGameEntityLike
 
 from ._base_group import BaseGroup
 
 
 class _GravityAffected(BaseGroup[LogicGameEntityLike]):
     """Logic group handling gravity calculations for entities."""
+
     __slots__ = ()
 
     @property
     def gravity(self) -> float:
         """
         Get the current gravity constant adjusted by the global acceleration factor.
+
         :return: The calculated gravity value.
         """
         return 9.81 * pv.global_vars.get_acceleration_factor()
@@ -40,6 +40,7 @@ class _GravityAffected(BaseGroup[LogicGameEntityLike]):
 
 class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
     """Logic group handling horizontal friction calculations for entities."""
+
     __slots__ = ()
 
     @property
@@ -48,23 +49,18 @@ class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
         Get the friction coefficient.
         :return: Friction value.
         """
-        return 60.0
+        return 60
 
     def calculate_friction(self, _delta: float) -> None:
         """
-        Calculate and apply horizontal friction to entities
-        based on their current velocity.
+        Calculate and apply horizontal friction to entities based on their current velocity.
         :param _delta: Time elapsed since the last frame.
         """
-        friction: float = self.friction
+        friction = self.friction
         for sprite in self.entities():
             sprite.acceleration.x = (
-                    (
-                            sprite.acceleration.x
-                            - (sprite.velocity.x * 0.01)
-                    )
-                    * friction
-            )
+                sprite.acceleration.x - (sprite.velocity.x * 0.01)
+            ) * friction
 
 
 GravityAffected: tp.Final[_GravityAffected] = _GravityAffected()

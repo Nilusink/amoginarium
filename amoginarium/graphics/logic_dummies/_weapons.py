@@ -1,50 +1,62 @@
 """
-_weapons.py
-02.04.2026
+Weapon models.
 
-Weapon models
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_weapons.py
+Project: amoginarium
+Created: 02.04.2026
+Authors: Nilusink
 """
 
-from icecream import ic
-import typing as tp
 import math as m
-import ctypes
+import typing as tp
+from types import EllipsisType
 
-from amoginarium.shared.utility import Vec2, Color, WtfError
-from amoginarium.shared.debugging import run_with_debug
-from amoginarium.base._textures import textures
-from amoginarium.shared import WeaponCIDs
+from icecream import ic
+
 from amoginarium import pv
+from amoginarium.shared import WeaponCIDs
+from amoginarium.shared.utility import Color, convert_coord, PI, RTD, Vec2, WtfError
 
-from ._synced_entities import SyncedLRImageEntity, Iconifyable
+from ..entities import Drawn_0, Drawn_1, Drawn_2
 from ..render_bindings import renderer
-from ..entities import Drawn_1, Drawn_0, Drawn_2
+from ..textures import textures
+from ._bullet import BulletDummy
+from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
 
 class WeaponDummy(Iconifyable, SyncedLRImageEntity):
     """
+
+    ``flags[13]`` weapon loaded
     ``param0`` size fac
-    ``param1`` mag state
+    ``param1`` mag state.
     """
 
     __slots__ = ()
 
+    # region class vars
     _CID = WeaponCIDs.base
-    _image_name: str = "minigun"
-    _image_mirror: str = ""
+    _image_name: tp.ClassVar[str] = "minigun"
+    _image_mirror: tp.ClassVar[str] = ""
+    _image_rotate_anchor: tp.ClassVar[Vec2] = Vec2().from_cartesian(35, 30)
+    _bar_colors: tp.ClassVar = (Color().from_1(0.55, 0.55, 1),)
+    _texture_id_l: tp.ClassVar[int | EllipsisType] = ...
+    _texture_id_r: tp.ClassVar[int | EllipsisType] = ...
+
+    # visible bullet params
+    _bullet_type: tp.ClassVar[type[BulletDummy]] = BulletDummy
+    _bullet_visible: tp.ClassVar[bool] = False
+    _bullet_mount_point: tp.ClassVar[tuple[int, int] | EllipsisType] = ...
+    # endregion
+
+    # region instance vars
     _default_size: tuple[int, int] | Vec2 = (128, 64)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(35, 30)
-    _bar_colors = (Color().from_1(.55, .55, 1),)
-    _texture_id_l: int = ...
-    _texture_id_r: int = ...
+    _bmp: Vec2  # endregion
 
     @classmethod
     def load_textures(cls) -> None:
         """
-        load weapon textures
+        Load weapon textures.
 
         .. note:: only execute once!
         """
@@ -54,6 +66,7 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             name=cls._image_name,
             size=cls._default_size,
             mirror=mirror,
+            pixel_perfect=True,
         )
 
         if "x" in mirror:
@@ -66,15 +79,19 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             name=cls._image_name,
             size=cls._default_size,
             mirror=mirror,
+            pixel_perfect=True,
         )
 
     def __new__(cls, *args, **kwargs) -> tp.Self:
         if cls._texture_id_r is ...:
             cls.load_textures()
 
-        return super().__new__(cls)
+        return super().__new__(cls)  # type: ignore
 
-    def __init__(self, sync_id: int, ) -> None:
+    def __init__(
+        self,
+        sync_id: int,
+    ) -> None:
         super().__init__(
             sync_id=sync_id,
         )
@@ -89,19 +106,54 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                     self._default_size, self._default_size
                 )
 
+        if isinstance(self._bullet_mount_point, EllipsisType):
+            self._bmp = self._default_size / 2
+
+        else:
+            self._bmp = convert_coord(self._bullet_mount_point, Vec2)  # type: ignore
+
         self._default_size: Vec2
 
         self.remove(Drawn_0)
         self.add(Drawn_1)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         """
-        Draw weapon (centered) at a specified position
+        Draw weapon (centered) at a specified position.
 
         :param delta_cal: used for the occasional calculation
         """
-        angle = self.facing.angle * 180/m.pi
+        if isinstance(self._texture_id_l, EllipsisType) or isinstance(
+            self._texture_id_r, EllipsisType
+        ):
+            super()._gl_draw(delta_cal, layer)
+            return
+
+        # because no super call
+        angle = self.facing.angle * 180 / m.pi
         world_pos = pv.global_vars.get_world_position()
+
+        # draw bullet
+        if self._bullet_visible and self._get_bit("flags", 13):
+            bullet_size = self._bullet_type._default_size
+
+            bmp = self._bmp.copy()
+
+            if self.facing.x < 0:
+                bmp.y *= -1
+
+            bullet_offset = Vec2().from_polar(bmp.angle + self.facing.angle, bmp.length)
+
+            bullet_pos = self.pos - bullet_size / 2
+            bullet_pos += bullet_offset
+            bullet_pos -= world_pos
+
+            self._bullet_type.draw_at(
+                bullet_pos,
+                bullet_size,
+                layer=layer,
+                rotation=(self.facing.angle + PI) * RTD,
+            )
 
         if self.facing.x < 0:
             anchor = Vec2().from_cartesian(
@@ -117,13 +169,14 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._default_size,
                 rotate_angle=angle - 180,
                 rotate_anchor=anchor,
-                pixel_perfect=True
+                layer=layer,
+                force_draw=self._highlight,
             )
 
         else:
             anchor = Vec2().from_cartesian(
                 self._image_rotate_anchor.x * self.param0,
-                self._image_rotate_anchor.y * self.param0
+                self._image_rotate_anchor.y * self.param0,
             )
             pos = self.pos - anchor
             pos -= world_pos
@@ -134,21 +187,24 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
                 self._default_size,
                 rotate_angle=angle,
                 rotate_anchor=anchor,
-                pixel_perfect=True
+                layer=layer,
+                force_draw=self._highlight,
             )
 
         # draw ammo bar
+        # noinspection DuplicatedCode
         if self._get_bit("flags", 15):  # has parent
-            if self.parent:
-                pos = self.parent.world_position
-                size = self.parent.size
+            parent = self.parent
+            if parent:
+                pos = parent.world_position
+                size = parent.size
 
             else:
                 pos = self.world_position
                 size = self.size
 
             renderer.draw_bar(
-                (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5*7),
+                (pos.x - size.x / 2, pos.y + size.y / 2 + 10 + 1.5 * 7),
                 (size.x, 7),
                 self._bar_colors,
                 self.param1,
@@ -163,31 +219,35 @@ class WeaponDummy(Iconifyable, SyncedLRImageEntity):
             size: tuple[float, float] = cls._default_size
 
         else:
-            raise WtfError("?")
+            msg = "?"
+            raise WtfError(msg)
+
+        if isinstance(cls._texture_id_r, EllipsisType):
+            return -1, (-1, -1)
 
         return cls._texture_id_r, size
 
 
 class HandThrownGrenade(WeaponDummy):
     _CID = WeaponCIDs.h_grenade
-    _image_name: str = "grenade"
+    _image_name = "grenade"
     _image_mirror = "x"
     _default_size: tuple[int, int] = (32, 32)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(16, 16)
+    _image_rotate_anchor = Vec2().from_cartesian(16, 16)
 
 
 class ExactoSniper(WeaponDummy):
     _CID = WeaponCIDs.exacto_sniper
-    _image_name: str = "exacto_sniper"
+    _image_name = "exacto_sniper"
     _default_size: tuple[int, int] = (120, 60)
-    _image_rotate_anchor: Vec2 = Vec2().from_cartesian(25, 33)
+    _image_rotate_anchor = Vec2().from_cartesian(25, 33)
 
-    def __init__(self, max_range: float, **kwargs):
+    def __init__(self, max_range: float, **kwargs) -> None:
         super().__init__(**kwargs)
         self.add(Drawn_2)
         self._max_range = max_range
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         if layer == 1:
             super()._gl_draw(delta_cal, layer)
             return
@@ -206,11 +266,12 @@ class ExactoSniper(WeaponDummy):
             renderer.draw_thick_line(
                 laser_start,
                 laser_end,
-                Color().from_1(1, 0, 0, .2),
+                Color().from_1(1, 0, 0, 0.2),
                 thickness=3,
             )
             renderer.draw_circle(
                 laser_end,
-                8, 16,
-                Color().from_1(1, 0, 0, .6),
+                8,
+                16,
+                Color().from_1(1, 0, 0, 0.6),
             )

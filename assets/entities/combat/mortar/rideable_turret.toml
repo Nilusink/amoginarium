@@ -1,0 +1,29 @@
+[id]
+from = "turret.rideable.base"
+cid = "turret.rideable.mortar"
+
+[visibility]
+size = [34.5, 36.0]
+
+[image]
+name = "mortar_turret_base"
+
+[behaviour]
+max_hp = 90
+turn_speed = 0.3
+facing_angle = -1.57  # facing up
+max_error = 0.05
+
+[engagement]
+min_range = 550
+max_range = 3000
+
+[weapon]
+type = "<weapon.mortar>"
+position_offset = [0, -13]
+
+[passenger]
+visible = false
+offset = [0, 0]
+
+

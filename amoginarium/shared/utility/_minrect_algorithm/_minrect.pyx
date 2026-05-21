@@ -1,15 +1,17 @@
+# distutils: language=c++
+# cython: boundscheck=False, wraparound=False
 """
-amoginarium/logic/_minrect.pyx.py
+Algorythm for finding minimum rectangles.
 
+Path: amoginarium/shared/utility/_minrect_algorithm/_minrect.pyx
 Project: amoginarium
 Created: 31.03.2026
 Authors: LukasKrah
 """
-# distutils: language=c++
-# cython: boundscheck=False, wraparound=False
-
 from libcpp.vector cimport vector
+
 import pulp
+
 
 # --- Fast C-Level Structs ---
 cdef struct Point:

@@ -1,27 +1,33 @@
 """
-_sensors.py
-15.04.2026
+Sensor HUDs.
 
-sensor HUDs
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_sensors.py
+Project: amoginarium
+Created: 15.04.2026
+Authors: Nilusink
 """
 
+from __future__ import annotations
+
 from types import EllipsisType
+from typing import TYPE_CHECKING
+
 from icecream import ic
 
-from amoginarium.shared.utility import Vec2, Color, unpack_int, MASK16
-from amoginarium.shared import SensorCIDs
 from amoginarium import pv
+from amoginarium.shared import SensorCIDs
+from amoginarium.shared.utility import Color, unpack_int
 
-from ._synced_entities import SyncedGraphicsEntity
 from ..render_bindings import renderer
+from ._synced_entities import SyncedGraphicsEntity
+
+if TYPE_CHECKING:
+    from amoginarium.shared.utility import Vec2
 
 
 class SensorHUD(SyncedGraphicsEntity):
     """
-    sensor entity
+    Sensor entity.
 
     ``param0`` detection range
     ``param1`` target x
@@ -78,7 +84,7 @@ class SensorHUD(SyncedGraphicsEntity):
                             (self.pos + t1) - world_pos,
                             (self.pos + t2) - world_pos,
                         ),
-                        color=Color().from_1(0.2, 0.2, 1, 0.5),
+                        color=Color().from_1(0.3, 0.3, 1, 0.1),
                     )
 
 
@@ -91,28 +97,27 @@ class RadarSensorHUD(SensorHUD):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
-        return
 
-        t_pos = Vec2().from_cartesian(self.param1, self.param2)
-
-        if t_pos.length != 0:
-            world_pos = pv.global_vars.get_world_position()
-
-            direction = t_pos - self.pos
-
-            dir_1 = direction.copy()
-            dir_1.angle += self._min_rcs / 2
-            dir2 = direction.copy()
-            dir2.angle -= self._min_rcs / 2
-
-            renderer.draw_polygon(
-                (
-                    self.world_position,
-                    (self.pos + dir_1) - world_pos,
-                    (self.pos + dir2) - world_pos,
-                ),
-                color=Color().from_1(.2, .2, 1, .5)
-            )
+        # t_pos = Vec2().from_cartesian(self.param1, self.param2)
+        #
+        # if t_pos.length != 0:
+        #     world_pos = pv.global_vars.get_world_position()
+        #
+        #     direction = t_pos - self.pos
+        #
+        #     dir_1 = direction.copy()
+        #     dir_1.angle += self._min_rcs / 2
+        #     dir2 = direction.copy()
+        #     dir2.angle -= self._min_rcs / 2
+        #
+        #     renderer.draw_polygon(
+        #         (
+        #             self.world_position,
+        #             (self.pos + dir_1) - world_pos,
+        #             (self.pos + dir2) - world_pos,
+        #         ),
+        #         color=Color().from_1(.2, .2, 1, .5)
+        #     )
 
 
 class VisualSensorHUD(SensorHUD):

@@ -1,23 +1,24 @@
 """
-amoginarium/graphics/ui/_widgets/_ui_cursor.py
+Manages the UI cursor position, velocity, and rendering logic.
 
+Path: amoginarium/graphics/ui/_widgets/_ui_cursor.py
 Project: amoginarium
 Created: 11.03.2026
 Authors: LukasKrah
 """
 
-from .._base import UIEventElement
-
 import pygame as pg
 
 from amoginarium.shared.utility import convert_coord, Vec2
-from ...entities import Cursor
-from .... import pv
 
+from .... import pv
+from ...entities import Cursor
+from .._base import UIEventElement
 
 ##################################################
 #                     Code                       #
 ##################################################
+
 
 class UICursor(UIEventElement):
     __velocity: Vec2
@@ -34,8 +35,10 @@ class UICursor(UIEventElement):
         mouse_pos = pg.mouse.get_pos()
         screen_size_offset = pv.global_vars.get_screen_size_offset()
         screen_size_fac = pv.global_vars.get_screen_size_fac()
-        mouse_pos = ((mouse_pos[0] - screen_size_offset.x) * screen_size_fac.x,
-                     (mouse_pos[1] - screen_size_offset.y) * screen_size_fac.y)
+        mouse_pos = (
+            (mouse_pos[0] - screen_size_offset.x) * screen_size_fac.x,
+            (mouse_pos[1] - screen_size_offset.y) * screen_size_fac.y,
+        )
         new_pos = convert_coord(mouse_pos, Vec2)
 
         self.__velocity.xy = (new_pos - self.position.absolute_global).xy

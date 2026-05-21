@@ -1,0 +1,26 @@
+[id]
+from = "turret.rideable.calculated"
+cid = "turret.rideable.tv_guided"
+
+[visibility]
+size = [128, 128]
+layer = 3
+
+[image]
+name = "skyshield_base"
+
+[engagement]
+min_range = 150
+max_range = 3000
+
+[target]
+taps = 1
+
+[weapon]
+type = "<weapon.tv_guided>"
+position_offset = [0, -8]
+static_facing = -1.57 # - pi/2
+
+[passenger]
+visible = false
+offset = [0, 0]

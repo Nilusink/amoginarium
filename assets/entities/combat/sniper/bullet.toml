@@ -5,10 +5,6 @@ cid = "bullet.sniper"
 [visibility]
 size = 15
 
-[image]
-name = "bullet"
-mirror = "x"
-
 [behaviour]
 ttl = 10
 weight = 5

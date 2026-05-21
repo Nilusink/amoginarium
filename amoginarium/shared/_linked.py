@@ -1,24 +1,26 @@
 """
-_linked.py
-20. March 2024
+Globals.
 
-globals
-
-Author:
-Nilusink
+Path: amoginarium/shared/_linked.py
+Project: amoginarium
+Created: 20.03.2024
+Authors: Nilusink, LukasKrah
 """
-from multiprocessing.sharedctypes import Synchronized
-from ctypes import c_double, c_int8, c_int64
-from multiprocessing import Value
-from enum import Enum
-import typing as tp
 
-from ._debug_vars import DebugVarsEnum
+from __future__ import annotations
+
+import typing as tp
+from ctypes import c_double, c_int8
+from enum import Enum
+from multiprocessing import Value
+
 from .debugging import cum_timer
 from .utility import Vec2
 
+if tp.TYPE_CHECKING:
+    from multiprocessing.sharedctypes import Synchronized
 
-_GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
+_GLOBAL_VARS_VALUES: dict[str, type] = {
     "screen_size_x": c_double,
     "screen_size_y": c_double,
     "screen_size_real_x": c_double,
@@ -38,13 +40,12 @@ _GLOBAL_VARS_VALUES: dict[str, tp.Type] = {
     "t_mult": c_double,
     "max_fps": c_double,
     "background_position": c_double,
-    "debug_vars": c_int64
 }
 
 
 def generate_global_vars() -> dict[str, Synchronized]:
     """
-    generate multiprocessing Values for global vars
+    Generate multiprocessing Values for global vars.
     """
     out = {}
     for key, value in _GLOBAL_VARS_VALUES.items():
@@ -87,8 +88,6 @@ class GlobalVars:
         self._time = 0
         self._t_mult = 1
 
-        self._debug_vars = 0
-
         if set:
             self._set_from_current()
 
@@ -109,9 +108,9 @@ class GlobalVars:
             self.__compiled.append((item, obj, attr, []))
 
     def add_callback(self, value: str, callback: tp.Callable[[tp.Any], tp.Any]) -> None:
-        """add a value change callback"""
+        """Add a value change callback."""
         for i, v in enumerate(self.__compiled):
-            if v[2] == value or v[2] == f"_{value}":
+            if v[1] == value:
                 self.__compiled[i][3].append(callback)
 
     def _set_from_current(self) -> None:
@@ -134,7 +133,6 @@ class GlobalVars:
         self.__values["t_mult"].value = self._t_mult
         self.__values["max_fps"].value = self._max_fps
         self.__values["background_position"].value = self._background_position
-        self.__values["debug_vars"].value = self._debug_vars
 
     def get_values(self) -> dict[str, Synchronized]:
         return self.__values
@@ -259,45 +257,31 @@ class GlobalVars:
 
         self.__values["pixel_per_meter"].value = value
 
-    def get_debug_var(self, num: DebugVarsEnum) -> bool:
-        return bool((self._debug_vars >> num.value) & 1)
-
-    def set_debug_var(self, num: DebugVarsEnum, value: bool) -> None:
-        if value:
-            self._debug_vars |= (1 << num.value)
-        else:
-            self._debug_vars &= ~(1 << num.value)
-
-        self.__values["debug_vars"].value = self._debug_vars
-
-    def toggle_debug_var(self, num: DebugVarsEnum) -> None:
-        self._debug_vars ^= (1 << num.value)
-        self.__values["debug_vars"].value = self._debug_vars
-
     @property
     def screen_pixels(self) -> Vec2:
         return self._screen_size_real / self._pixel_per_meter
 
     def translate_scale[A: float | int | Vec2](self, value: A) -> A:
         """
-        translate an absolute value to a screen-size relative value
+        Translate an absolute value to a screen-size relative value.
         """
         if self._pixel_per_meter is ...:
-            raise RuntimeError("pixel per meter hasn't been set yet")
+            msg = "pixel per meter hasn't been set yet"
+            raise RuntimeError(msg)
 
         return value * self._pixel_per_meter
 
     def translate_screen_coord[A: float | int | Vec2](self, coord: A) -> A:
         """
-        translate an absolute coordinate to a screen-relative coordinate
+        Translate an absolute coordinate to a screen-relative coordinate.
         """
         scaled_coord = self.translate_scale(coord)
 
         return scaled_coord - self._pixel_per_meter
 
-    def reset(self):
+    def reset(self) -> None:
         """
-        reset all variables to their original state
+        Reset all variables to their original state.
         """
         self.set_pixel_per_meter(1)
         self.set_background_position(0)
@@ -306,7 +290,7 @@ class GlobalVars:
     @cum_timer.time_this
     def update(self) -> None:
         """
-        update from Values
+        Update from Values.
         """
         for item, obj, attr, callbacks in self.__compiled:
             new = item.value
@@ -316,6 +300,5 @@ class GlobalVars:
                 setattr(obj, attr, new)
 
                 if callbacks:
-                    print("CALLBACKS FOUND", callbacks, new)
                     for cb in callbacks:
                         cb(new)

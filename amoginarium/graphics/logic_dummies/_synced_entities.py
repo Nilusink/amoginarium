@@ -1,38 +1,48 @@
 """
-_synced_entities.py
-30.03.2026
+Shared memory synced graphics entities.
 
-Shared memory synced graphics entities
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_synced_entities.py
+Project: amoginarium
+Created: 30.03.2026
+Authors: Nilusink, LukasKrah
 """
+
 from __future__ import annotations
+
+import math as m
+import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
-from icecream import ic
-import math as m
+from typing import TYPE_CHECKING
 
-from amoginarium.shared.utility import Vec2, Color
+from icecream import ic
+
 from amoginarium import pv
+from amoginarium.shared.utility import Color, Vec2
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
 
+if TYPE_CHECKING:
+    from amoginarium.shared.utility import coord_t
+
 
 class _SyncedEntitiesManager:
     __slots__ = ["_entities"]
-    
+
     def __init__(self) -> None:
         self._entities: dict[int, SyncedGraphicsEntity] = {}
 
     def add_entity(self, sync_id: int, entity: SyncedGraphicsEntity) -> None:
         """
-        add an entity to the manager
+        Add an entity to the manager.
         """
         # delete old entity if it already exists
         if sync_id in self._entities:
-            self.get_entity(sync_id).kill()
+            e = self.get_entity(sync_id)
+            if e:
+                e.kill()
+
             self.del_entity(sync_id)  # in case entitie ``kill`` has been overwritten
 
         #     raise RuntimeError(f"entity with id {sync_id} already in manager")
@@ -41,7 +51,7 @@ class _SyncedEntitiesManager:
 
     def del_entity(self, sync_id: int) -> bool:
         """
-        remove an entity from the manager
+        Remove an entity from the manager.
 
         :returns: true if entity was removed, false if not present
         """
@@ -53,7 +63,7 @@ class _SyncedEntitiesManager:
 
     def get_entity(self, sync_id: int) -> SyncedGraphicsEntity | None:
         """
-        get a graphics entity by ID
+        Get a graphics entity by ID.
 
         :returns: None if not found, entity if present
         """
@@ -63,7 +73,7 @@ class _SyncedEntitiesManager:
         return self._entities[sync_id]
 
     def reset(self) -> None:
-        """kill all entities and reset buffer"""
+        """Kill all entities and reset buffer."""
         for eid, entity in self._entities.copy().items():
             self.del_entity(eid)
             entity.kill()
@@ -74,12 +84,21 @@ SE_MANAGER = _SyncedEntitiesManager()
 
 class SyncedGraphicsEntity(BaseGraphicsEntity):
     """
-    Graphics entity synced with logic entity (via SHM)
+    Graphics entity synced with logic entity (via SHM).
     """
 
     __slots__ = [
-        "pos", "facing", "size", "alive", "param0", "param1", "param2",
-        "param3", "__id", "param4", "_logic_visibility"
+        "pos",
+        "facing",
+        "size",
+        "alive",
+        "param0",
+        "param1",
+        "param2",
+        "param3",
+        "__id",
+        "param4",
+        "_logic_visibility",
     ]
     pos: Vec2
     facing: Vec2
@@ -136,7 +155,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     @property
     def world_position(self) -> Vec2:
         """
-        entity position - world position offset
+        Entity position - world position offset.
         """
         return self.pos - pv.global_vars.get_world_position()
 
@@ -144,16 +163,22 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     def _buff(self):
         """:return: runtime buffer data for this entity"""
         return pv.E_BUFF[self.__id]
+
+    @property
+    def id(self) -> int:
+        """Sync ID."""
+        return self.__id
+
     # endregion
 
     # region buffer control
     def _get_bit(self, param: str, bit_index: int) -> bool:
         """
-        get one single bits value
+        Get one single bits value.
 
         :param param: param to get bit from
         :param bit_index: which bit to get
-        :return: bit value
+        :return: value of bit
         """
         value = getattr(pv.E_BUFF[self.__id], param)
 
@@ -161,7 +186,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     def _update_from_buffer(self) -> None:
         """
-        update entity values from shared buffer
+        Update entity values from shared buffer.
         """
         self.pos.x = pv.E_BUFF[self.__id].pos_x
         self.pos.y = pv.E_BUFF[self.__id].pos_y
@@ -188,12 +213,13 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     def update_from_buffer(self, recursive: bool = True) -> None:
         """
-        update entity values from shared buffer
+        Update entity values from shared buffer.
         """
         self._update_from_buffer()
 
         if recursive:
             for child in self._children:
+                child: SyncedGraphicsEntity
                 with suppress(AttributeError):
                     child.update_from_buffer()
 
@@ -214,16 +240,19 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         """
         Called after gl_draw
         :param drawn: Whether the UI-entity was drawn
-        :param layer: what layer the draw function has been called by
+        :param layer: what layer the draw function has been called by.
         """
         if self._highlight:
             renderer.enable_stencil(True)
             renderer.draw_rect(
                 (0, 0),
                 (2000, 2000),
-                Color().from_1(0.6, 0.6, .7, 0.125 + m.sin(self._lifetime) / 8),
+                Color().from_1(
+                    0.6, 0.6, 0.7, 0.125 + m.sin(2 * time.perf_counter() + self.id) / 8
+                ),
             )
             renderer.disable_stencil()
+
     # endregion
 
 
@@ -231,60 +260,71 @@ class SyncedImageEntity(SyncedGraphicsEntity):
     __slots__ = ["_texture_id", "_lifetime"]
 
     def __init__(
-            self,
-            sync_id: int,
-            texture_id: int,
-            parent: int | None = None
+        self, sync_id: int, texture_id: int, parent: int | None = None
     ) -> None:
         self._texture_id = texture_id
-        self._lifetime = 0
         super().__init__(sync_id, parent)
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    @property
+    def texture_id(self) -> int:
+        """Image texture id."""
+        return self._texture_id
+
+    def draw_at(
+        self, position: coord_t, size: coord_t, layer: int, *, rotation: float = 0
+    ) -> None:
+        """Draw an entity at specified position and size."""
+        renderer.draw_textured_quad(
+            self._texture_id,
+            position,
+            size,
+            rotate_angle=rotation,
+            layer=layer,
+        )
+
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         self._lifetime += delta_cal
 
         world_position = pv.global_vars.get_world_position()
-        renderer.draw_textured_quad(
-            self._texture_id,
+
+        self.draw_at(
             (
                 self.pos.x - world_position.x - self.size.x / 2,
-                self.pos.y - world_position.y - self.size.y / 2
+                self.pos.y - world_position.y - self.size.y / 2,
             ),
-            (
-                self.size.x,
-                self.size.y
-            ),
-            rotate_angle=self.facing.angle * (180 / m.pi)
+            (self.size.x, self.size.y),
+            layer=layer,
+            rotation=self.facing.angle * (180 / m.pi),
         )
 
 
 class SyncedLRImageEntity(SyncedGraphicsEntity):
     """
-    entity with two textures used depending on facing.x
+    entity with two textures used depending on facing.x.
     """
 
     __slots__ = ["_texture_id_l", "_texture_id_r"]
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0):
+    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         renderer.draw_textured_quad(
             self._texture_id_r if self.facing.x < 0 else self._texture_id_l,
             self.world_position - self.size / 2,
             self.size,
+            layer=layer,
         )
 
 
 class Iconifyable(ABC):
-    """entities that can be represented in an icon"""
+    """entities that can be represented in an icon."""
 
     def __init__(self, *args, **kwargs) -> None:
-
         # call next class in MRO
         super().__init__(*args, **kwargs)
 
     @abstractmethod
     def get_icon(self) -> tuple[int, tuple[int, int]]:
         """
-        get icon of item
+        Get icon of item.
 
         :returns: icon texture id, icon size
         """

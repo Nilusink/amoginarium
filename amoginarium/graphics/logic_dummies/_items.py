@@ -1,28 +1,27 @@
 """
-_items.py
-08.04.2026
+Item dummies.
 
-item dummies
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_items.py
+Project: amoginarium
+Created: 08.04.2026
+Authors: Nilusink, LukasKrah
 """
 
-import typing as tp
 import math as m
+import typing as tp
 
-from amoginarium.shared.utility import Vec2, Color, normalize_angle
-from amoginarium.base._textures import textures
 from amoginarium.shared import ItemCIDs
+from amoginarium.shared.utility import Color, normalize_angle, Vec2
 
-from ..entities import Drawn_1, Drawn_0, Animation
+from ..entities import Animation, Drawn_0, Drawn_1
 from ..render_bindings import renderer
+from ..textures import textures
 from ._synced_entities import Iconifyable, SyncedLRImageEntity
 
 
 class BaseItem(Iconifyable, SyncedLRImageEntity):
     """
-    base graphics item
+    base graphics item.
 
     ``param1``: usage
     """
@@ -36,32 +35,31 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
     @classmethod
     def load_textures(cls) -> None:
-        """load textures for class"""
+        """Load textures for class."""
         if cls._texture_id_r is not ...:
             return
 
         if isinstance(cls._image_name, str):
             cls._texture_id_r, _ = textures.get_texture(
-                cls._image_name,
-                cls._image_size
+                cls._image_name, cls._image_size, pixel_perfect=True
             )
             cls._texture_id_l, _ = textures.get_texture(
-                cls._image_name,
-                cls._image_size,
-                mirror="x"
+                cls._image_name, cls._image_size, mirror="x", pixel_perfect=True
             )
 
         else:
             cls._texture_id_r, _ = textures.get_texture(
                 cls._image_name[1],
                 cls._image_size,
-                scope=cls._image_name[0]
+                scope=cls._image_name[0],
+                pixel_perfect=True,
             )
             cls._texture_id_l, _ = textures.get_texture(
                 cls._image_name[1],
                 cls._image_size,
                 mirror="x",
-                scope=cls._image_name[0]
+                scope=cls._image_name[0],
+                pixel_perfect=True,
             )
 
     def __new__(cls, *args, **kwargs) -> tp.Self:
@@ -86,16 +84,19 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
     def get_icon(self) -> tuple[int, tuple[int, int]]:
         return self._texture_id_r, self._image_size
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0, draw_item: bool = True):
+    def _gl_draw(
+        self, delta_cal: float, layer: int = 0, draw_item: bool = True
+    ) -> None:
         if draw_item:
-            angle = self.facing.angle * (180/m.pi)
+            angle = self.facing.angle * (180 / m.pi)
             if self.facing.x < 0:
                 renderer.draw_textured_quad(
                     self._texture_id_l,
                     self.world_position,
                     self.size,
                     rotate_angle=angle - 180,
-                    pixel_perfect=True
+                    layer=layer,
+                    force_draw=self._highlight,
                 )
 
             else:
@@ -104,14 +105,16 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
                     self.world_position,
                     self.size,
                     rotate_angle=angle,
-                    pixel_perfect=True
+                    layer=layer,
+                    force_draw=self._highlight,
                 )
 
         # draw usage bar
         if self._get_bit("flags", 15):
-            if self.parent:
-                pos = self.parent.world_position
-                size = self.parent.size
+            parent = self.parent
+            if parent:
+                pos = parent.world_position
+                size = parent.size
 
             else:
                 pos = self.world_position
@@ -127,10 +130,11 @@ class BaseItem(Iconifyable, SyncedLRImageEntity):
 
 class Shield(BaseItem):
     """
-    protective shield
+    protective shield.
 
     ``param1``: usage
     """
+
     __slots__ = ()
 
     _CID = ItemCIDs.shield
@@ -140,7 +144,7 @@ class Shield(BaseItem):
 
 class HealingPotion(BaseItem):
     """
-    healing potion
+    healing potion.
 
     ``param0``: fluid tilt
     ``param1``: usage
@@ -160,15 +164,15 @@ class HealingPotion(BaseItem):
             return
 
         cls._mask_texture, _ = textures.get_texture(
-            cls._empty_mask[1],
-            cls._image_size,
-            scope=cls._empty_mask[0]
+            cls._empty_mask[1], cls._image_size, scope=cls._empty_mask[0]
         )
 
         super().load_textures()
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
-        angle = normalize_angle(self.facing.angle) * (180/m.pi)
+    def _gl_draw(
+        self, delta_cal: float, layer: int = 0, draw_item: bool = True
+    ) -> None:
+        angle = normalize_angle(self.facing.angle) * (180 / m.pi)
         own_pos = self.world_position
 
         # noinspection PyTypeChecker
@@ -179,35 +183,24 @@ class HealingPotion(BaseItem):
             own_pos + self._internal_offset,
             self._image_size,
             rotate_angle=angle - (180 if 90 < angle < 270 else 0),
+            layer=layer,
         )
 
         fill_line = 5 + (self.size.y - 10) * (1 - self.param1)
         renderer.draw_polygon(
             [
-                own_pos + Vec2().from_cartesian(
-                    -self.size.x,
-                    self.size.y
-                ),
-                own_pos + Vec2().from_cartesian(
-                    2 * self.size.x,
-                    self.size.y
-                ),
-                own_pos + Vec2().from_cartesian(
-                    self.size.x / 2, fill_line
-                ) + Vec2().from_polar(
-                    (angle + self.param0) * m.pi / 180,
-                    self.size.x) + Vec2().from_cartesian(
-                    0, 5
-                ),
-                own_pos + Vec2().from_cartesian(
-                    self.size.x / 2, fill_line
-                ) - Vec2().from_polar(
-                    (angle + self.param0) * m.pi / 180,
-                    self.size.x) + Vec2().from_cartesian(
-                    0, 5
-                ),
+                own_pos + Vec2().from_cartesian(-self.size.x, self.size.y),
+                own_pos + Vec2().from_cartesian(2 * self.size.x, self.size.y),
+                own_pos
+                + Vec2().from_cartesian(self.size.x / 2, fill_line)
+                + Vec2().from_polar((angle + self.param0) * m.pi / 180, self.size.x)
+                + Vec2().from_cartesian(0, 5),
+                own_pos
+                + Vec2().from_cartesian(self.size.x / 2, fill_line)
+                - Vec2().from_polar((angle + self.param0) * m.pi / 180, self.size.x)
+                + Vec2().from_cartesian(0, 5),
             ],
-            (0, .8, 0),
+            (0, 0.8, 0),
         )
 
         if not self._highlight:
@@ -217,8 +210,8 @@ class HealingPotion(BaseItem):
 
 
 class JetBag(BaseItem):
-    """makes you flyyy (not actually, but it makes it look like you do)"""
-    
+    """makes you fly (not actually, but it makes it look like you do)."""
+
     __slots__ = ()
 
     _CID = ItemCIDs.jetbag
@@ -236,7 +229,7 @@ class JetBag(BaseItem):
         cls._animation_textures = [
             t[0]
             for t in textures.get_all_from_scope(
-                cls._animation_scope, cls._animation_size
+                cls._animation_scope, cls._animation_size, pixel_perfect=True
             )
         ]
 
@@ -255,12 +248,12 @@ class JetBag(BaseItem):
 
     def _flame_position(self) -> Vec2:
         return self.pos + Vec2().from_cartesian(
-            self.size.x / 2
-            * (1 if self.facing else -1),
-            self.size.y / 2 + 36
+            self.size.x / 2 * (1 if self.facing else -1), self.size.y / 2 + 36
         )
 
-    def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
+    def _gl_draw(
+        self, delta_cal: float, layer: int = 0, draw_item: bool = True
+    ) -> None:
         angle = normalize_angle(self.facing.angle) * (180 / m.pi)
         own_pos = self.world_position
 
@@ -272,25 +265,13 @@ class JetBag(BaseItem):
 
         if 90 < angle < 270:
             renderer.draw_textured_quad(
-                self._texture_id_l,
-                own_pos,
-                (
-                    self.size.x,
-                    self.size.y
-                ),
-                pixel_perfect=True
+                self._texture_id_l, own_pos, (self.size.x, self.size.y), layer=layer
             )
             self._facing = False
 
         else:
             renderer.draw_textured_quad(
-                self._texture_id_r,
-                own_pos,
-                (
-                    self.size.x,
-                    self.size.y
-                ),
-                pixel_perfect=True
+                self._texture_id_r, own_pos, (self.size.x, self.size.y), layer=layer
             )
             self._facing = True
 

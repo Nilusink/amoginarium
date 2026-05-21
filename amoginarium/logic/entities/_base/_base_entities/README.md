@@ -3,11 +3,11 @@
 <details open>
 
 <summary><h2 style="display:inline-block">Structure</h2></summary>
-<!--- MermaidStructureStart --->
 
+<!--- MermaidStructureStart --->
 ```mermaid
 graph TD
-    subgraph Group ["‎"]
+    subgraph Group [" "]
         _base_logic_entity
         _positioned_logic_entity
     end
@@ -17,26 +17,26 @@ graph TD
 
     _positioned_logic_entity --> _base_logic_entity
 ```
-
 <!--- MermaidStructureEnd --->
+
 </details>
 
 <details open>
 
 <summary><h2 style="display:inline-block">Classes</h2></summary>
-<!--- MermaidClassesStart --->
 
+<!--- MermaidClassesStart --->
 ```mermaid
 graph RL
-    subgraph Group1 ["‎"]
+    subgraph Group1 [" "]
         EntityChildViable
     end
-    subgraph Group2 ["‎"]
+    subgraph Group2 [" "]
         BaseLogicEntity
         PositionedLogicEntity
     end
     PositionedLogicEntity --> BaseLogicEntity
 ```
-
 <!--- MermaidClassesEnd --->
+
 </details>

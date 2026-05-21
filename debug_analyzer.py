@@ -1,18 +1,19 @@
 """
-debug_analyzer.py
-25. January 2024
+Analyzes the runtimes of amoginarium.
 
-Analyzes the runtimes of amoginatorium
-
-Author:
-Nilusink
+Path: debug_analyzer.py
+Project: amoginarium
+Created: 25.01.2024
+Authors: Nilusink, LukasKrah
 """
-import matplotlib.pyplot as plt
+
 import json
 
-red = 'tab:red'
-data = json.load(open("graphic_debug.json", "r"))
-logic_data = json.load(open("logic_debug.json", "r"))
+import matplotlib.pyplot as plt
+
+red = "tab:red"
+data = json.load(open("graphic_debug.json", "r", encoding="utf-8"))
+logic_data = json.load(open("logic_debug.json", "r", encoding="utf-8"))
 data.update(logic_data)
 
 pygame_xs = []
@@ -50,7 +51,7 @@ for value in data["bullets"]:
 
 # calculate average loop time per bullet
 av_bullets_ys_tmp = [None] * (max(n_bullets) + 1)
-for n_bullet, loop_time in zip(n_bullets, bullets_ys):
+for n_bullet, loop_time in zip(n_bullets, bullets_ys, strict=False):
     if av_bullets_ys_tmp[n_bullet] is None:
         av_bullets_ys_tmp[n_bullet] = []
 
@@ -77,12 +78,7 @@ ax2 = plt.subplot(2, 1, 2)
 
 # per bullet
 ax2.scatter(n_bullets, bullets_ys, label="loop times", color="blue")
-ax2.plot(
-    av_bullet_xs,
-    av_bullet_ys,
-    label="average",
-    color=red
-)
+ax2.plot(av_bullet_xs, av_bullet_ys, label="average", color=red)
 ax2.set_xlabel("n (entities)")
 ax2.set_ylabel("t per iteration (ms)")
 ax2.legend()
@@ -99,9 +95,9 @@ ax1.grid()
 
 ax1_1 = ax1.twinx()
 
-ax1_1.set_ylabel('n (entities)', color=red)
+ax1_1.set_ylabel("n (entities)", color=red)
 ax1_1.plot(bullets_xs, n_bullets, color=red, label="n entities")
-ax1_1.tick_params(axis='y', labelcolor=red)
+ax1_1.tick_params(axis="y", labelcolor=red)
 
 
 plt.tight_layout()

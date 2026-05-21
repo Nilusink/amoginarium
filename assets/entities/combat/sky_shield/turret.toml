@@ -4,7 +4,7 @@ cid = "turret.static.sky_shield"
 
 [visibility]
 size = [128, 128]
-layer = 1
+layer = 3
 
 [image]
 name = "skyshield_base"

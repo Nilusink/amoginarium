@@ -11,7 +11,7 @@ length = 300
 
 [behaviour]
 weight = 1.5
-base_damage = 30
+base_damage = 0.1
 visibility_offset = 0.08
 
 [cluster]
@@ -21,5 +21,9 @@ spread = 1.5
 fuze_ttl_mult = 0.02
 step_size_mult = 0.3
 step_explosion_size = 10
-last_step_ttl = 0.7
+last_step_ttl = 0.5
 
+[fuze.0]
+type = "proximity"
+distance = 64
+function_delay = 0.5

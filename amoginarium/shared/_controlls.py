@@ -1,16 +1,22 @@
 """
-_controlls.py
-31.03.2026
+Synced controller controls.
 
-synced controller controls
-
-Author:
-Nilusink
+Path: amoginarium/shared/_controlls.py
+Project: amoginarium
+Created: 31.03.2026
+Authors: Nilusink
 """
-from ctypes import Array
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from icecream import ic
 
-from ._shared_memory import base_controller_t
+if TYPE_CHECKING:
+    from ctypes import Array
+
+    from ._shared_memory import base_controller_t
 
 
 class Controls:
@@ -19,13 +25,10 @@ class Controls:
         self._shm: Array[base_controller_t] = ...
 
     def init(
-            self,
-            id: int,
-            c_shm: Array[base_controller_t],
-            initialize: bool = False
-     ) -> None:
+        self, id: int, c_shm: Array[base_controller_t], initialize: bool = False
+    ) -> None:
         """
-        setup controller
+        Setup controller.
 
         :param id: controller id (for shm)
         :param c_shm: controller shared memory buffer
@@ -43,6 +46,8 @@ class Controls:
             self._shm[self._shm_id].wpn_f = False
             self._shm[self._shm_id].wpn_b = False
             self._shm[self._shm_id].joy_btn = False
+            self._shm[self._shm_id].ride = False
+            self._shm[self._shm_id].m_right = False
             self._shm[self._shm_id].joy_x = 0
             self._shm[self._shm_id].joy_y = 0
             self._shm[self._shm_id].mouse_x = 0
@@ -114,6 +119,22 @@ class Controls:
         self._shm[self._shm_id].joy_btn = value
 
     @property
+    def ride(self) -> bool:
+        return self._shm[self._shm_id].ride
+
+    @ride.setter
+    def ride(self, value: bool) -> None:
+        self._shm[self._shm_id].ride = value
+
+    @property
+    def m_right(self) -> bool:
+        return self._shm[self._shm_id].m_right
+
+    @m_right.setter
+    def m_right(self, value: bool) -> None:
+        self._shm[self._shm_id].m_right = value
+
+    @property
     def joy_x(self) -> float:
         return self._shm[self._shm_id].joy_x
 
@@ -144,4 +165,5 @@ class Controls:
     @mouse_y.setter
     def mouse_y(self, value: float) -> None:
         self._shm[self._shm_id].mouse_y = value
+
     # endregion

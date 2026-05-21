@@ -1,30 +1,39 @@
 """
-_spawnables.py
-15.03.2026
+Collects every spawn-able entity.
 
-collects every spawn-able entity
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_spawnables.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink, LukasKrah
 """
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from icecream import ic
-import typing as tp
 
 from amoginarium.shared.param_entities import load_entities_from_files, ProcessType
 
-from ._synced_entities import SyncedGraphicsEntity
-from ._player import PlayerDummy
-from ._bullet import BulletDummy, Grenade
-from ._turrets import BaseTurretDummy, ExactoSniperTurretDummy
-from ._weapons import HandThrownGrenade, ExactoSniper, WeaponDummy
-from ._sensors import SensorHUD, RadarSensorHUD, MagicSensorHUD, VisualSensorHUD
-from ._items import Shield, HealingPotion, JetBag
-from ._debug_rendering import DebugRectangleEntity, DebugPolygonEntity, DebugCircleEntity
-from ._charged_weapons import RailGunDummy
-from ._text_entity import TextEntity
 from ._aero import AeroDummy
+from ._bullet import BulletDummy, Grenade
+from ._charged_weapons import RailGunDummy
+from ._debug_rendering import DebugCircleEntity, DebugPolygonEntity
+from ._debug_rendering import DebugRectangleEntity
+from ._items import HealingPotion, JetBag, Shield
+from ._missiles import GuidedMultiStageMissileDummy, MultiStageMissileDummy
+from ._missiles import MultiThrusterMissileDummy, PlayerControlledMissileDummy
+from ._player import PlayerDummy
+from ._sensors import MagicSensorHUD, RadarSensorHUD, SensorHUD, VisualSensorHUD
+from ._text_entity import TextEntity
+from ._turrets import BaseTurretDummy, CalculatedRideableTurretDummy
+from ._turrets import ExactoSniperTurretDummy, RideableTurret
+from ._weapons import ExactoSniper, HandThrownGrenade, WeaponDummy
 
-GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
+if TYPE_CHECKING:
+    from ._synced_entities import SyncedGraphicsEntity
+
+GRAPHICS_SPAWNABLES: dict[str, type[SyncedGraphicsEntity]] = {
     e.cid(): e
     for e in [
         WeaponDummy,
@@ -48,6 +57,12 @@ GRAPHICS_SPAWNABLES: dict[str, tp.Type[SyncedGraphicsEntity]] = {
         RadarSensorHUD,
         MagicSensorHUD,
         VisualSensorHUD,
+        MultiStageMissileDummy,
+        GuidedMultiStageMissileDummy,
+        MultiThrusterMissileDummy,
+        PlayerControlledMissileDummy,
+        RideableTurret,
+        CalculatedRideableTurretDummy,
     ]
 }
 

@@ -1,20 +1,24 @@
 """
-_shared_memory.py
-28.03.2026
+Shared memory objects.
 
-shared memory objects
-
-Author:
-Nilusink
+Path: amoginarium/shared/_shared_memory.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink
 """
-from multiprocessing.shared_memory import SharedMemory
-from multiprocessing import shared_memory, Lock
-import typing as tp
-import ctypes
+# ruff: noqa: T201
 
+from __future__ import annotations
+
+import ctypes
+import typing as tp
+from multiprocessing import Lock, shared_memory
+
+if tp.TYPE_CHECKING:
+    from multiprocessing.shared_memory import SharedMemory
 
 # region constants
-MAX_ENTITIES: int = 100_000
+MAX_ENTITIES: int = 32_000
 MAX_CONTROLLERS: int = 8
 MAX_INVENTORIES: int = 64
 MAX_INVENTORY_SLOTS: int = 64
@@ -32,10 +36,9 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
         ("size_y", ctypes.c_uint16),
         ("flags", ctypes.c_uint16),  # (
         # 0=alive, 1=visible, 2=highlight,
-        # 14=(active (item))
+        # 14=(active (item), active(rideable Turret))
         # 15=(in inventory (player), has parent (item))
         # )
-
         # misc parameters for sharing data with base process
         ("param0", ctypes.c_float),
         ("param1", ctypes.c_float),
@@ -55,6 +58,8 @@ class base_controller_t(ctypes.Structure):
         ("drop", ctypes.c_bool),
         ("wpn_f", ctypes.c_bool),
         ("wpn_b", ctypes.c_bool),
+        ("ride", ctypes.c_bool),
+        ("m_right", ctypes.c_bool),
         ("joy_btn", ctypes.c_float),
         ("joy_x", ctypes.c_float),
         ("joy_y", ctypes.c_float),
@@ -65,10 +70,7 @@ class base_controller_t(ctypes.Structure):
 
 class item_slot_t(ctypes.Structure):
     _pack_ = 1
-    _fields_ = [
-        ("item_id", ctypes.c_uint16),
-        ("count", ctypes.c_uint8)
-    ]
+    _fields_ = [("item_id", ctypes.c_uint16), ("count", ctypes.c_uint8)]
 
 
 class inventory_t(ctypes.Structure):
@@ -78,57 +80,66 @@ class inventory_t(ctypes.Structure):
         ("size", ctypes.c_uint8),
         ("hover", ctypes.c_uint8),
         ("selected", ctypes.c_uint8),
-        ("slots", item_slot_t * MAX_INVENTORY_SLOTS)
+        ("slots", item_slot_t * MAX_INVENTORY_SLOTS),
     ]
+
+
 # endregion
 
 
 # region methods
 _e_shm: SharedMemory = ...
+
+
 def get_entity_memory() -> SharedMemory:
     global _e_shm
     if _e_shm is ...:
         _e_shm = shared_memory.SharedMemory(
-            create=True,
-            size=ctypes.sizeof(base_entity_t) * MAX_ENTITIES
+            create=True, size=ctypes.sizeof(base_entity_t) * MAX_ENTITIES
         )
 
     return _e_shm
 
 
 _c_shm: SharedMemory = ...
+
+
 def get_controller_memory() -> SharedMemory:
     global _c_shm
     if _c_shm is ...:
         _c_shm = shared_memory.SharedMemory(
-            create=True,
-            size=ctypes.sizeof(base_controller_t) * MAX_CONTROLLERS
+            create=True, size=ctypes.sizeof(base_controller_t) * MAX_CONTROLLERS
         )
 
     return _c_shm
 
 
 _i_shm: SharedMemory = ...
+
+
 def get_inventory_memory() -> SharedMemory:
     global _i_shm
     if _i_shm is ...:
         _i_shm = shared_memory.SharedMemory(
-            create=True,
-            size=ctypes.sizeof(inventory_t) * MAX_INVENTORY_SLOTS
+            create=True, size=ctypes.sizeof(inventory_t) * MAX_INVENTORY_SLOTS
         )
 
     return _i_shm
 
 
 _lock: tp.Any | None = None
+
+
 def get_write_lock() -> Lock:
     global _lock
     if _lock is None:
         _lock = Lock()
 
     return _lock
+
+
 # endregion
 
 
 if __name__ == "__main__":
-    print(ctypes.sizeof(inventory_t) * MAX_INVENTORIES)
+    print(ctypes.sizeof(base_entity_t) * MAX_ENTITIES)

@@ -1,80 +1,73 @@
 """
-_run_logic.py
-28.03.2026
+Runs the logic process.
 
-runs the logic process
-
-Author:
-Nilusink
+Path: amoginarium/logic/_run_logic.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink, LukasKrah
 """
-from multiprocessing.shared_memory import SharedMemory
-from multiprocessing.sharedctypes import Synchronized
-from multiprocessing.connection import Connection
-from time import perf_counter, sleep, perf_counter_ns
-from multiprocessing import Queue, synchronize
-from icecream import ic, colorize
-from queue import Empty
-import pygame as pg
+
+from __future__ import annotations
+
 import ctypes
 import json
 import os
+from queue import Empty
+from time import perf_counter, perf_counter_ns, sleep
+from typing import TYPE_CHECKING
 
-from amoginarium.shared.audio import sound_effects, BackgroundPlayer, sounds, SoundEffect, LargeExplosion
-from amoginarium.shared import base_entity_t, MAX_ENTITIES, GlobalVars, ProcessCommand
-from amoginarium.shared import ProcessCommandType, Coalitions, ENTITY_COUNTER
-from amoginarium.shared import BaseCommandType, INVENTORY_COUNTER, DebugVarsEnum
-from amoginarium.shared.debugging import print_ic_style, CC, run_with_debug, cum_timer
-from amoginarium.shared.debugging import print_with_prefix, get_fg_color
-from amoginarium.shared.utility import Vec2, calculate_launch_angle
+import pygame as pg
+from icecream import colorize, ic
+
 from amoginarium import pv
+from amoginarium.shared import base_entity_t, BaseCommandType, Coalitions
+from amoginarium.shared import ENTITY_COUNTER, GlobalVars, INVENTORY_COUNTER
+from amoginarium.shared import MAX_ENTITIES, ProcessCommand, ProcessCommandType
+from amoginarium.shared.audio import BackgroundPlayer, sound_effects
+from amoginarium.shared.audio import SoundEffect, sounds
+from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
+from amoginarium.shared.debugging import print_with_prefix, run_with_debug
+from amoginarium.shared.utility import Vec2
 
-from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, DETECTION_GLOBAL_NEUTRAL, \
-    AerodynamicEntity
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GLOBAL_BLUE, GameCollisions
-from .entities import Updated, Bullets, Players, CollisionLogicEntity
-from .entities import LogicGameEntity, GrassIsland, SPAWNABLES, Player, Island
-from .entities import GravityAffected, FrictionXAffected, ExactoBullet
+from .entities import Bullets, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
+from .entities import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER, DetectionGroup
+from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAffected
+from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
 from .graphics_dummies import Controller
 
-# CollisionDestroyed, WallBouncer
-
-
-# class TestEntity(AerodynamicEntity):
-#     def _update(self, delta: float) -> None:
-#         self.apply_force(
-#             Vec2().from_polar(-3.14159/2, 300), Vec2().from_cartesian(-self.size.x / 2, 0)
-#         )
-#         super()._update(delta)
+if TYPE_CHECKING:
+    from multiprocessing import Queue, synchronize
+    from multiprocessing.connection import Connection
+    from multiprocessing.shared_memory import SharedMemory
+    from multiprocessing.sharedctypes import Synchronized
 
 
 class LogicProcess:
     """
-    Logic Process data
+    Logic Process data.
     """
 
     def __init__(
-            self,
-            shm: SharedMemory,
-            c_shm: SharedMemory,
-            i_shm: SharedMemory,
-            command_in_queue: Queue,
-            command_out_queue: Queue,
-            write_lock: synchronize.Lock,
-            global_vars: GlobalVars,
-            base_comm: Connection,
-            process_comm: Connection,
-            start_time: float,
-            run_name: str
+        self,
+        shm: SharedMemory,
+        c_shm: SharedMemory,
+        i_shm: SharedMemory,
+        command_in_queue: Queue,
+        command_out_queue: Queue,
+        write_lock: synchronize.Lock,
+        global_vars: GlobalVars,
+        base_comm: Connection,
+        process_comm: Connection,
+        start_time: float,
+        run_name: str,
     ) -> None:
         self._start = start_time
         self._run_name = run_name
         ic.configureOutput(
             prefix="",
             outputFunction=lambda s, **kwargs: print_with_prefix(
-                s,
-                prefix=self.get_ic_prefix(),
-                **kwargs
-            )
+                s, prefix=self.get_ic_prefix(), **kwargs
+            ),
         )
 
         # map loading status
@@ -108,7 +101,7 @@ class LogicProcess:
 
         # initialize sound stuff
         self._background_player = BackgroundPlayer()
-        self._background_player.volume = .6
+        self._background_player.volume = 0.6
 
         # debugging
         self._logic_loop_times: list[tuple[float, float]] = []
@@ -164,7 +157,7 @@ class LogicProcess:
     @run_with_debug(reraise_errors=True, show_finish=True)
     def preload(self) -> None:
         """
-        preloads sound effects
+        Preloads sound effects.
         """
         start = perf_counter_ns()
         # load sounds
@@ -191,7 +184,7 @@ class LogicProcess:
         ic(load_time)
 
     def get_ic_prefix(self) -> str:
-        """get terminal prefix for icecream"""
+        """Get terminal prefix for icecream."""
         t = round(perf_counter() - self._start, 4)
 
         t1, t2 = str(t).split(".")
@@ -202,54 +195,51 @@ class LogicProcess:
         )
 
     def load_map(self, map_path: str) -> None:
-        """load a map from a json file"""
+        """Load a map from a json file."""
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
             ic(map_path)
             if not os.path.isfile(map_path):
-                raise FileNotFoundError(f"Couldn't find map \"{map_path}\"")
+                msg = f'Couldn\'t find map "{map_path}"'
+                raise FileNotFoundError(msg)
 
         self._map_loading = True
         self._last_map_path = map_path
 
         # load map data
-        data = json.load(open(map_path, "r"))
+        data = json.load(open(map_path, "r", encoding="utf-8"))
         self._last_loaded = map_path
 
-        pg.display.set_caption(f"amoginarium - {data["name"]}")
+        pg.display.set_caption(f"amoginarium - {data['name']}")
 
         Players.spawn_point = Vec2().from_cartesian(*data["spawn_pos"])
 
         # load islands
         for island in data["platforms"]:
             island_type = GrassIsland
-            if "type" in island:
-                if island["type"] in Island.ISLANDS:
-                    island_type = Island.ISLANDS[island["type"]]
+            if "type" in island and island["type"] in Island.ISLANDS:
+                island_type = Island.ISLANDS[island["type"]]
 
             if "args" in island:
-                i = island_type(self._runtime_buffer, **island["args"])
+                island_type(self._runtime_buffer, **island["args"])
 
             elif "size" in island:
-                i = island_type(
+                island_type(
                     self._runtime_buffer,
                     Vec2().from_cartesian(*island["pos"]),
                     size=Vec2().from_cartesian(*island["size"]),
                 )
 
             elif "form" in island:
-                i = island_type(
+                island_type(
                     self._runtime_buffer,
                     Vec2().from_cartesian(*island["pos"]),
                     form=island["form"],
                 )
 
             else:
-                print_ic_style(
-                    f"{CC.fg.RED}invalid island: "
-                    f"{CC.fg.YELLOW}{island}"
-                )
+                print_ic_style(f"{CC.fg.RED}invalid island: {CC.fg.YELLOW}{island}")
                 continue
 
             # if "move" in island:
@@ -267,8 +257,7 @@ class LogicProcess:
         for entity in data["entities"]:
             if entity["type"] not in SPAWNABLES:
                 print_ic_style(
-                    f"{CC.fg.RED}unknown entity: "
-                    f"{CC.fg.YELLOW}{entity["type"]}"
+                    f"{CC.fg.RED}unknown entity: {CC.fg.YELLOW}{entity['type']}"
                 )
                 continue
 
@@ -289,14 +278,14 @@ class LogicProcess:
                     runtime_buffer=self._runtime_buffer,
                     coalition=Coalitions.red,
                     position=Vec2().from_cartesian(*entity["pos"]),
-                    **args
+                    **args,
                 )
 
             except KeyboardInterrupt:  # (KeyError, TypeError):
                 print_ic_style(
                     f"{CC.fg.RED}invalid arguments for "
-                    f"{CC.fg.YELLOW}{SPAWNABLES[entity["type"]].__name__}{CC.fg.RED}: "
-                    f"\"{CC.fg.YELLOW}{args.__repr__()}{CC.fg.RED}\""
+                    f"{CC.fg.YELLOW}{SPAWNABLES[entity['type']].__name__}{CC.fg.RED}: "
+                    f'"{CC.fg.YELLOW}{args!r}{CC.fg.RED}"'
                 )
 
         self._map_loading = False
@@ -304,17 +293,15 @@ class LogicProcess:
     @cum_timer.time_this
     def update_entities(self, delta: float) -> bool:
         """
-        update all entities
+        Update all entities.
 
         :returns: True if update, false if paused
         """
         start = perf_counter()
 
-        self._logic_loop_times.append(
-            (start - self._start, delta)
-        )
+        self._logic_loop_times.append((start - self._start, delta))
         self._n_bullets_times.append(
-            (start - self._start, Bullets.__len__() + Updated.__len__(), delta)
+            (start - self._start, len(Bullets) + len(Updated), delta)
         )
 
         # update commands
@@ -330,7 +317,7 @@ class LogicProcess:
                 self.end()
                 return False
 
-            elif item.type == ProcessCommandType.reset:
+            if item.type == ProcessCommandType.reset:
                 self.reset_game()
                 self._paused = True
                 ic("logic reset complete")
@@ -339,7 +326,7 @@ class LogicProcess:
                 )
                 return False
 
-            elif item.type == ProcessCommandType.pause:
+            if item.type == ProcessCommandType.pause:
                 self._paused = True
 
             elif item.type == ProcessCommandType.unpause:
@@ -360,7 +347,7 @@ class LogicProcess:
                     Player(
                         self._runtime_buffer,
                         Controller(item.kwargs.pop("controller_id")),
-                        **item.kwargs
+                        **item.kwargs,
                     )
 
                 else:
@@ -389,36 +376,6 @@ class LogicProcess:
         self._last_spawn -= delta
         if self._last_spawn < 0:
             self._last_spawn = 3
-        #     ExactoBullet(
-        #         self._runtime_buffer,
-        #         self._dummy_dad,
-        #         Coalitions.neutral,
-        #         Vec2().from_cartesian(500, 700),
-        #         Vec2().from_cartesian(2000, 0),
-        #         lambda: Vec2().from_cartesian(4000, 200)
-        #     )
-        #     AerodynamicEntity(
-        #         self._runtime_buffer,
-        #         self._dummy_dad,
-        #         Coalitions.neutral,
-        #         Vec2().from_cartesian(500, 700),
-        #         initial_velocity=Vec2().from_cartesian(1500, -1000),
-        #         size=Vec2().from_cartesian(100, 10),
-        #         rudder_size=10,
-        #         mass=1,
-        #         collide_siblings=False
-        #     ).rudder_angle = -.5
-        #     TestEntity(
-        #         self._runtime_buffer,
-        #         self._dummy_dad,
-        #         Coalitions.neutral,
-        #         Vec2().from_cartesian(500, 700),
-        #         initial_velocity=Vec2().from_cartesian(0, -800),
-        #         size=Vec2().from_cartesian(200, 10),
-        #         rudder_size=10,
-        #         mass=10,
-        #         collide_siblings=False
-        #     )
 
         # reset and update detection Groups
         DETECTION_GROUP_MANAGER.reset()
@@ -439,7 +396,8 @@ class LogicProcess:
         # _, max_player_pos = Players.get_position_extremes()
         players = Players.entities()
         if len(players) > 0:
-            max_player_pos = players[0].position
+            curr_view = players[0].get_current_view()
+            max_player_pos = curr_view.pos
             pv.audio_observer_pos.xy = max_player_pos.xy
             world_position = pv.global_vars.get_world_position()
 
@@ -447,21 +405,28 @@ class LogicProcess:
                 pv.global_vars.get_screen_size() / pv.global_vars.get_pixel_per_meter()
             ) / 2
 
-            if max_player_pos.x > world_position.x + screen_pixels.x:
-                x = max_player_pos.x - screen_pixels.x
-                Updated.world_position.x = x
+            if curr_view.centered:
+                Updated.world_position.xy = (
+                    max_player_pos.x - screen_pixels.x,
+                    max_player_pos.y - screen_pixels.y,
+                )
 
-            elif max_player_pos.x < world_position.x + screen_pixels.x * .6:
-                x = max_player_pos.x - screen_pixels.x * .6
-                Updated.world_position.x = x
+            else:
+                if max_player_pos.x > world_position.x + screen_pixels.x:
+                    x = max_player_pos.x - screen_pixels.x
+                    Updated.world_position.x = x
 
-            if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
-                y = max_player_pos.y - screen_pixels.y * 1.4
-                Updated.world_position.y = y
+                elif max_player_pos.x < world_position.x + screen_pixels.x * 0.6:
+                    x = max_player_pos.x - screen_pixels.x * 0.6
+                    Updated.world_position.x = x
 
-            elif max_player_pos.y < world_position.y + screen_pixels.y * .6:
-                y = max_player_pos.y - screen_pixels.y * .6
-                Updated.world_position.y = y
+                if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
+                    y = max_player_pos.y - screen_pixels.y * 1.4
+                    Updated.world_position.y = y
+
+                elif max_player_pos.y < world_position.y + screen_pixels.y * 0.6:
+                    y = max_player_pos.y - screen_pixels.y * 0.6
+                    Updated.world_position.y = y
 
             self._global_vars.set_world_position(Updated.world_position)
 
@@ -470,7 +435,7 @@ class LogicProcess:
     @cum_timer.time_this
     def update_memory(self) -> None:
         """
-        copy runtime buffer to memory buffer
+        Copy runtime buffer to memory buffer.
         """
         self._write_lock.acquire()
         ctypes.memmove(
@@ -481,7 +446,7 @@ class LogicProcess:
         self._write_lock.release()
 
     def reset_game(self) -> None:
-        """reset game state"""
+        """Reset game state."""
         # kill all entities
         for e in Updated.entities() + Bullets.entities():
             e.kill()
@@ -501,7 +466,7 @@ class LogicProcess:
         ENTITY_COUNTER.reset()
 
     def end(self) -> None:
-        """close the logic thread"""
+        """Close the logic thread."""
         # print entity stats
         entities = Updated.entities() + Bullets.entities()
         entities = [e.__class__.__name__ for e in entities]
@@ -523,47 +488,36 @@ class LogicProcess:
 
         # write debug data
         os.makedirs("debug", exist_ok=True)
-        with open(f"debug/logic_debug_{self._run_name}_{int(self._start)}.json",
-                  "w") as out:
-            json.dump({
-                "logic": self._logic_loop_times,
-                "bullets": self._n_bullets_times
-            }, out)
-        with open(f"logic_debug.json",
-                  "w") as out:
-            json.dump({
-                "logic": self._logic_loop_times,
-                "bullets": self._n_bullets_times
-            }, out)
-
-
-def update_debug_vars(values: int) -> None:
-    """
-    Update debug flags based on bitmask values
-    :param values: new bitmask of debug flags
-    """
-    # Hitbox debug
-    draw_hitboxes = bool(values & (1 << DebugVarsEnum.DRAW_HITBOXES.value))
-    CollisionLogicEntity.debug_draw_hitboxes(draw_hitboxes)
-    Island.debug_draw_hitboxes(draw_hitboxes)
+        with open(
+            f"debug/logic_debug_{self._run_name}_{int(self._start)}.json",
+            "w",
+            encoding="utf-8",
+        ) as out:
+            json.dump(
+                {"logic": self._logic_loop_times, "bullets": self._n_bullets_times}, out
+            )
+        with open("logic_debug.json", "w", encoding="utf-8") as out:
+            json.dump(
+                {"logic": self._logic_loop_times, "bullets": self._n_bullets_times}, out
+            )
 
 
 def run_continuous(
-        shm: SharedMemory,
-        c_shm: SharedMemory,
-        i_shm: SharedMemory,
-        command_in_queue: Queue,
-        command_out_queue: Queue,
-        write_lock: synchronize.Lock,
-        global_vars_values: dict[str, Synchronized],
-        base_comm: Connection,
-        process_comm: Connection,
-        start_time: float,
-        time_multiplier: float,
-        run_name: str
+    shm: SharedMemory,
+    c_shm: SharedMemory,
+    i_shm: SharedMemory,
+    command_in_queue: Queue,
+    command_out_queue: Queue,
+    write_lock: synchronize.Lock,
+    global_vars_values: dict[str, Synchronized],
+    base_comm: Connection,
+    process_comm: Connection,
+    start_time: float,
+    time_multiplier: float,
+    run_name: str,
 ) -> None:
     """
-    run the logic process continuously
+    Run the logic process continuously.
     """
     global_vars = GlobalVars(global_vars_values, False)
     global_vars.update()
@@ -584,12 +538,6 @@ def run_continuous(
 
     ic("logic process start")
 
-    # Debugging callbacks
-    pv.global_vars.add_callback(
-        value="_debug_vars",
-        callback=update_debug_vars
-    )
-
     last_run = perf_counter()
     last_update_success = False
     while lp.running:
@@ -607,7 +555,7 @@ def run_continuous(
 
         # don't update if paused
         if lp.paused:
-            sleep(.05)
+            sleep(0.05)
             continue
 
         # copy buffer

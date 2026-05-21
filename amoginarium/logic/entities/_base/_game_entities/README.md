@@ -3,11 +3,11 @@
 <details open>
 
 <summary><h2 style="display:inline-block">Structure</h2></summary>
-<!--- MermaidStructureStart --->
 
+<!--- MermaidStructureStart --->
 ```mermaid
 graph TD
-    subgraph Group ["‎"]
+    subgraph Group [" "]
         _collision_logic_entity
         _logic_game_entity
     end
@@ -17,23 +17,23 @@ graph TD
 
     _logic_game_entity --> _collision_logic_entity
 ```
-
 <!--- MermaidStructureEnd --->
+
 </details>
 
 <details open>
 
 <summary><h2 style="display:inline-block">Classes</h2></summary>
-<!--- MermaidClassesStart --->
 
+<!--- MermaidClassesStart --->
 ```mermaid
 graph RL
-    subgraph Group1 ["‎"]
+    subgraph Group1 [" "]
         CollisionLogicEntity
         LogicGameEntity
     end
     LogicGameEntity --> CollisionLogicEntity
 ```
-
 <!--- MermaidClassesEnd --->
+
 </details>

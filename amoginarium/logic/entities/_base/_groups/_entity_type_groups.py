@@ -1,9 +1,7 @@
 """
-amoginarium/logic/entities/_base/_groups/_entity_type_groups.py
-
 Contains predefined entity type groups (Bullets, Walls, Players).
-Includes helper methods for querying spatial extremes of player entities.
 
+Path: amoginarium/logic/entities/_base/_groups/_entity_type_groups.py
 Project: amoginarium
 Created: 25.01.2024
 Authors: Nilusink, LukasKrah
@@ -11,8 +9,8 @@ Authors: Nilusink, LukasKrah
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2
 from amoginarium.shared import PositionedLogicEntityLike
+from amoginarium.shared.utility import Vec2
 
 from ._base_group import BaseGroup
 from ._updated import Updated
@@ -20,16 +18,19 @@ from ._updated import Updated
 
 class _Bullets(BaseGroup[PositionedLogicEntityLike]):
     """Group containing all active bullet entities."""
+
     __slots__ = ()
 
 
 class _Walls(BaseGroup[PositionedLogicEntityLike]):
     """Group containing all static wall/collision entities."""
+
     __slots__ = ()
 
 
-class _Players(BaseGroup[PositionedLogicEntityLike]):
+class _Players(BaseGroup["Player"]):
     """Group containing all player entities and spawn logic."""
+
     __slots__ = ()
 
     _spawn_point: tp.ClassVar[Vec2 | None] = None
@@ -42,6 +43,7 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
         """
         if _Players._spawn_point:
             return Updated.world_position + _Players._spawn_point
+
         return None
 
     @spawn_point.setter
@@ -57,8 +59,8 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
         Calculate the maximum X-axis position among all players.
         :return: Vec2 representing the position of the rightmost player.
         """
-        max_sprite: PositionedLogicEntityLike | None = None
-        max_x: float = -float('inf')
+        max_sprite = None
+        max_x = -float("inf")
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -73,8 +75,8 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
         Calculate the minimum X-axis position among all players.
         :return: Vec2 representing the position of the leftmost player.
         """
-        min_sprite: PositionedLogicEntityLike | None = None
-        min_x: float = float('inf')
+        min_sprite = None
+        min_x = float("inf")
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -82,19 +84,21 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
                 min_x = px
                 min_sprite = sprite
 
-        if min_sprite is None:
-            return Vec2().from_cartesian(float('inf'), float('inf'))
-        return min_sprite.position.copy()
+        return (
+            min_sprite.position.copy()
+            if min_sprite
+            else Vec2().from_cartesian(float("inf"), float("inf"))
+        )
 
     def get_position_extremes(self) -> tuple[Vec2, Vec2]:
         """
         Get the minimum and maximum X-axis positions in a single pass.
         :return: A tuple of (min_pos, max_pos) Vec2 objects.
         """
-        max_sprite: PositionedLogicEntityLike | None = None
-        min_sprite: PositionedLogicEntityLike | None = None
-        max_x: float = -float('inf')
-        min_x: float = float('inf')
+        max_sprite = None
+        min_sprite = None
+        max_x = -float("inf")
+        min_x = float("inf")
 
         for sprite in self.entities():
             px = sprite.position.x
@@ -106,9 +110,10 @@ class _Players(BaseGroup[PositionedLogicEntityLike]):
                 min_sprite = sprite
 
         return (
-            min_sprite.position.copy() if min_sprite else
-            Vec2().from_cartesian(float('inf'), float('inf')),
-            max_sprite.position.copy() if max_sprite else Vec2()
+            min_sprite.position.copy()
+            if min_sprite
+            else Vec2().from_cartesian(float("inf"), float("inf")),
+            max_sprite.position.copy() if max_sprite else Vec2(),
         )
 
 

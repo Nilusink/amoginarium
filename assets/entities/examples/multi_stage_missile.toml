@@ -1,0 +1,80 @@
+[id]
+from = "dummy.missile.multi_stage"
+cid = "missile.rpg"
+
+[visibility]
+size = [100, 10]
+
+[trace]
+color = [[255, 255, 255]]  # either one or two colors
+color_time = 0
+length = 300
+show = true
+fade = false
+width_mult = 1  # trace width multiplier
+
+[image]
+name = "bullet"
+mirror = "x"
+
+[behaviour]
+hp = 10
+ttl = 20
+weight = 5  # knockback
+mass = 10  # aerodynamics
+base_damage = 15
+visibility_offset = 0
+invincibility_offset = 0
+
+[explosion]
+radius = 128
+damage = 64
+
+[cluster]
+depth = 0
+amount = 0
+spread = 0.8
+fuze_ttl_mult = 0.5
+fuze_dist = -1
+step_size_mult = 1
+step_inertia = 0
+step_explosion_size = 10
+last_step_ttl = -1
+bullet_type = "<dummy.bullet.base>"  # leaving this out will make self as cluster bullet type, brackets (<>) required!
+
+[rudder]
+size = 10
+max_angle = 0.01
+
+[motor]
+start = [0.5, 0]
+launch = [1, 300, 50]
+accel = [2, 100, 10]
+march = [0, 0]
+inertial = [0, 0]
+
+[fuze.0]
+type = "ttl_mult"  # ttl multiplier fuze
+mult = 0.5
+
+[fuze.1]
+type = "distance"  # distance to predicted target position
+distance = 20
+
+[fuze.2]
+type = "proximity"  # proximity to entity
+distance = 100
+function_delay = 0.2
+
+[fuze.3]
+type = "ttl"  # dies after specified time (behaviour/ttl SHOULD BE USED!)
+ttl = 10
+
+[fuze.4]
+type = "alt"  # height above ground (must be above height to arm first)
+height = 300
+
+# all fuzes:
+[fuze.4]
+offset = [0, 0] # offset from parent (oriented)
+arm_delay = 2  # arm delay in seconds

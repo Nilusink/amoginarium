@@ -1,22 +1,44 @@
 """
-_entity_hints.py
-12.03.2026
+Type hints for entities.
 
-type hints for entities
-
-Author:
-Nilusink
+Path: amoginarium/shared/_entity_hints.py
+Project: amoginarium
+Created: 12.03.2026
+Authors: Nilusink, LukasKrah
 """
-from __future__ import annotations
-from typing import Protocol
-import pygame as pg
 
-from .utility import Vec2
-from ._linked import Coalitions
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Protocol, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pygame as pg
+
+    from ._linked import Coalitions
+    from .utility import Vec2
 
 
 class HasPosition(Protocol):
     position: Vec2
+
+
+class HasFacing(Protocol):
+    facing: Vec2
+
+
+class DynamicEntityParentViable(ABC):
+    """can be used as dynamic entity parent."""
+
+    @classmethod
+    @abstractmethod
+    def has_cid(cls) -> bool:
+        """Entity has component ID?"""
+
+    @classmethod
+    @abstractmethod
+    def cid(cls) -> str:
+        """Component ID."""
 
 
 class BaseEntityLike(Protocol):
@@ -72,15 +94,15 @@ class IslandLike(GameEntityLike, Protocol):
 
     @classmethod
     def random_between(
-            cls,
-            x_start: int,
-            x_end: int,
-            y_start: int,
-            y_end: int,
-            x_size_start: int,
-            x_size_end: int,
-            y_size_start: int,
-            y_size_end: int
+        cls,
+        x_start: int,
+        x_end: int,
+        y_start: int,
+        y_end: int,
+        x_size_start: int,
+        x_size_end: int,
+        y_size_start: int,
+        y_size_end: int,
     ) -> IslandLike: ...
 
     @classmethod
@@ -93,14 +115,12 @@ class IslandLike(GameEntityLike, Protocol):
     def player_contact(self, player, delta: float) -> None: ...
 
     def get_collided_sides(
-            self,
-            top_collider: tuple[Vec2, pg.Mask],
-            right_collider: tuple[Vec2, pg.Mask],
-            bottom_collider: tuple[Vec2, pg.Mask],
-            left_collider: tuple[Vec2, pg.Mask],
-    ) -> tuple[
-        tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]
-    ]: ...
+        self,
+        top_collider: tuple[Vec2, pg.Mask],
+        right_collider: tuple[Vec2, pg.Mask],
+        bottom_collider: tuple[Vec2, pg.Mask],
+        left_collider: tuple[Vec2, pg.Mask],
+    ) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]: ...
 
 
 class VisibleGameEntityLike(GameEntityLike, Protocol):
@@ -138,7 +158,6 @@ class PlayerLike(VisibleGameEntityLike, Protocol):
 
 
 class BaseItemLike(Protocol):
-    ...
     _position: Vec2
     _size: Vec2
 
@@ -147,18 +166,20 @@ class BaseItemLike(Protocol):
 
     def get_icon(self) -> tuple[int, tuple[int, int]]: ...
 
-    def get_mag_state(self, max_out: float) -> tuple[float, int] | tuple[float, float]: ...
+    def get_mag_state(
+        self, max_out: float
+    ) -> tuple[float, int] | tuple[float, float]: ...
 
     def kill(self, killed_by=...) -> None: ...
 
     def update(self, delta: float) -> None: ...
 
     def draw_at(
-            self,
-            position: Vec2,
-            angle: float,
-            size_fac: float = 1,
-            convert_global: bool = True
+        self,
+        position: Vec2,
+        angle: float,
+        size_fac: float = 1,
+        convert_global: bool = True,
     ) -> None: ...
 
     def stop(self) -> None: ...
@@ -172,10 +193,10 @@ class BaseItemLike(Protocol):
 
 class WeaponLike(BaseItemLike, Protocol):
     def shoot(
-            self,
-            direction: Vec2,
-            bullet_tof: float = ...,
-            target_pos: Vec2 = ...,
+        self,
+        direction: Vec2,
+        bullet_tof: float = ...,
+        target_pos: Vec2 = ...,
     ) -> bool: ...
 
     def stop_shooting(self) -> None: ...

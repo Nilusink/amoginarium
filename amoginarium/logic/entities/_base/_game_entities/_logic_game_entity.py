@@ -1,10 +1,10 @@
 """
-amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
+Defines the core LogicGameEntity.
 
-Defines the core LogicGameEntity,
-which combines spatial data, physics (velocity/acceleration),
-and collision detection, serving as the base class for standard game objects.
+Combines spatial data, physics (velocity/acceleration), and collision detection,
+serving as the base class for standard game objects.
 
+Path: amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
 Project: amoginarium
 Created: 28.03.2026
 Authors: Nilusink, LukasKrah
@@ -14,24 +14,26 @@ from __future__ import annotations
 
 import typing as tp
 
-from amoginarium.shared.utility import Vec2, normalize_angle, get_default
-from amoginarium.shared.debugging import print_ic_style, CC
-from amoginarium.shared import Coalitions, LogicGameEntityLike
-
 from amoginarium import pv
+from amoginarium.shared import Coalitions, DynamicEntityParentViable
+from amoginarium.shared import LogicGameEntityLike
+from amoginarium.shared.debugging import CC, print_ic_style
+from amoginarium.shared.utility import get_default, normalize_angle, Vec2
 
 from ._collision_logic_entity import CollisionLogicEntity
 
 if tp.TYPE_CHECKING:
-    from types import EllipsisType
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
 
     from .._collision import CollisionType
 
 
-class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
+class LogicGameEntity(
+    CollisionLogicEntity, LogicGameEntityLike, DynamicEntityParentViable
+):
     """
     Implements all basic stuff for logic entities
     - Parent/Children relations
@@ -41,12 +43,18 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
     - Positon, Size
     - Velocity, Acceleration
     - Optional Collision Detection
-    - Coalitions
+    - Coalitions.
     """
+
     __slots__ = (
-        "facing", "velocity", "acceleration", "_coalition",
-        "_velocity_to_add", "_acceleration_to_add", "__world_position",
-        "_tags"
+        "facing",
+        "velocity",
+        "acceleration",
+        "_coalition",
+        "_velocity_to_add",
+        "_acceleration_to_add",
+        "__world_position",
+        "_tags",
     )
 
     # region InstanceVars
@@ -64,21 +72,21 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
     # endregion
 
     def __init__(
-            self,
-            runtime_buffer: Array[base_entity_t],
-            size: Vec2,
-            position: Vec2,
-            *,
-            initial_velocity: Vec2 | None = None,
-            parent: LogicGameEntity | None = None,
-            coalition: Coalitions | EllipsisType = ...,
-            centered: bool = False,
-            collision_group: CollisionType.GroupID | EllipsisType | None = ...,
-            collision_exception_ids: list[int] | int | None = None,
-            collision_exception_root: bool | EllipsisType = ...,
-            collision_exception_root_additive: bool | EllipsisType = ...,
-            tags: list[str] | None = None,
-            collision_active: bool = True
+        self,
+        runtime_buffer: Array[base_entity_t],
+        size: Vec2,
+        position: Vec2,
+        *,
+        initial_velocity: Vec2 | None = None,
+        parent: LogicGameEntity | None = None,
+        coalition: Coalitions | EllipsisType = ...,
+        centered: bool = False,
+        collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+        collision_exception_ids: list[int] | int | None = None,
+        collision_exception_root: bool | EllipsisType = ...,
+        collision_exception_root_additive: bool | EllipsisType = ...,
+        tags: list[str] | None = None,
+        collision_active: bool = True,
     ) -> None:
         """
         Basic logic game entity that implements all basic stuff for logic entities
@@ -88,19 +96,16 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
         :param initial_velocity: Optional 2D initial velocity of the entity
         :param parent: Optional parent entity
         :param coalition: Coalition of the entity. Defaults to Coalitions.neutral
-        :param centered: Whether the position is center or top left
-            (relevant for collision detection) Edit afterward with self._centered
-        :param collision_group: Collision Group ID.
-            Defaults to cls._DEFAULT_COLLISION_GROUP.
+        :param centered: Whether the position is center or top left (relevant for
+            collision detection) Edit afterward with self._centered
+        :param collision_group: Collision Group ID. Defaults to
+            cls._DEFAULT_COLLISION_GROUP.
         :param collision_exception_ids: Optional list of collision exception rules.
             Edit afterward with self._collision_exception_ids
-        :param collision_exception_root: Groups this entity and all its children
-            recursive to a collision exception rule.
-            Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT.
-        :param collision_exception_root_additive: Whether root collision exception
-            rules created from parents are also added to this entity
-            and its children recursive.
-            Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
+        :param collision_exception_root: Groups this entity and all its children recursive to a collision exception
+            rule. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT.
+        :param collision_exception_root_additive: Whether root collision exception rules created from parents are also
+            added to this entity and its children recursive. Defaults to cls._DEFAULT_COLLISION_EXCEPTION_ROOT_ADDITIVE.
             Recurses until the next parents sets this to false
         :param tags: Optional list of tags for the entity
         :param collision_active: Whether the collision detection is active.
@@ -115,14 +120,15 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
             collision_exception_ids=collision_exception_ids,
             collision_exception_root=collision_exception_root,
             collision_exception_root_additive=collision_exception_root_additive,
-            collision_active=collision_active
+            collision_active=collision_active,
         )
         # region default parameters
         self._velocity_to_add = Vec2()
         self._acceleration_to_add = Vec2()
 
-        # do not use get_default here
-        self.velocity = initial_velocity if initial_velocity is not None else Vec2()
+        self.velocity = (
+            initial_velocity if initial_velocity is not None else Vec2()
+        )  # do not use get_default here
         self._coalition = get_default(coalition, Coalitions.neutral)
 
         self.acceleration = Vec2()
@@ -131,7 +137,7 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
 
         self._tags = {}
         if tags is not None:
-            self._tags.update({tag: None for tag in tags})
+            self._tags.update(dict.fromkeys(tags))
         # endregion
 
     # region Properties
@@ -157,45 +163,36 @@ class LogicGameEntity(CollisionLogicEntity, LogicGameEntityLike):
         """:return: convert the entity to a dict if possible"""
         if not self.serializable:
             print_ic_style(
-                f"{CC.fg.RED}Entity of the type {self.__class__.__name__} is not"
+                f"{CC.fg.RED}Entity of type {self.__class__.__name__} is not"
                 f"serializable{CC.ctrl.ENDL}",
             )
 
-        return {
-            "type": self.cid(),
-            "pos": self.position
-        }
+        return {"type": self.cid(), "pos": self.position}
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        add velocity to the entity
-        and guarantee that it will be valid (for short bursts)
-        :param value: 2D velocity to add
+        Add velocity to the entity and guarantee that it will be valid (for short bursts)
+        :param value: 2D velocity to add.
         """
         self._velocity_to_add += value
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        add acceleration to the entity
-        and guarantee that it will be valid (for long accelerations)
-        :param value: 2D acceleration to add
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        :param value: 2D acceleration to add.
         """
         self._acceleration_to_add += value
 
     def _update(self, delta: float) -> None:
         """
         Update logic game entity
-        :param delta: time since the last update
+        :param delta: time since the last update.
         """
         self.__world_position = pv.global_vars.get_world_position()
 
         self.velocity += (
-                (
-                        self._acceleration_to_add
-                        + self.acceleration)
-                * delta
-                + self._velocity_to_add
-        )
+            self._acceleration_to_add + self.acceleration
+        ) * delta + self._velocity_to_add
         self.position += self.velocity * delta
         self.acceleration.x *= 0
 

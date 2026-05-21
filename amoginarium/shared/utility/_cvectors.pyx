@@ -1,6 +1,15 @@
 # fast_vec2.pyx
+"""
+Vec2 class and vec2 related functions.
+
+Path: amoginarium/shared/utility/_cvectors.pyx
+Project: amoginarium
+Created: 11.03.2026
+Authors: Nilusink
+"""
+
 cimport cython
-from libc.math cimport sqrt, atan2, cos, sin, pi, fmod
+from libc.math cimport atan2, cos, fmod, pi, sin, sqrt
 
 
 cdef class Vec2:
@@ -69,7 +78,7 @@ cdef class Vec2:
         self.y = sin(angle) * length
 
     # maths
-    cpdef double dot(self, Vec2 other):
+    cpdef double dot(self, object other):
         return self.x * other.x + self.y * other.y
 
     cpdef copy(self):
@@ -78,7 +87,7 @@ cdef class Vec2:
         v.y = self.y
         return v
 
-    cpdef tuple split_vector(self, Vec2 direction):
+    cpdef tuple split_vector(self, object direction):
         a = (direction.get_angle() - self.get_angle())
         facing = self.from_polar(
             angle=direction.get_angle(),
@@ -91,21 +100,41 @@ cdef class Vec2:
 
         return facing, other
 
-    cpdef Vec2 normalize(self):
+    cpdef object normalize(self):
         self.set_length(1)
         return self
 
-    cpdef Vec2 mirror(self, Vec2 mirror_by):
+    cpdef object mirror(self, object mirror_by):
         mirror_by = mirror_by.copy().normalize()
         ang_d = mirror_by.get_angle() - self.get_angle()
         self.set_angle(mirror_by.get_angle() + 2 * ang_d)
         return self
 
+    cpdef object rotate_by(self, object angle):
+        if isinstance(angle, Vec2):
+            return self.rotate_by_vec2(angle)
+
+        return self.rotate_by_angle(angle)
+
+    cdef object rotate_by_angle(self, double angle):
+        return self.from_polar(self.angle + angle, self.length)
+
+    cdef object rotate_by_vec2(self, object other):
+        # normalize directional vector
+        o = other.copy()
+        o.normalize()
+
+        # rotate
+        return self.from_cartesian(
+            self.x * o.x - self.y * o.y,
+            self.x * o.y + self.y * o.x
+        )
+
     # magic stuff
-    cdef Vec2 add_vec2(self, Vec2 other):
+    cdef object add_vec2(self, object other):
         return self.from_cartesian(self.x + other.x, self.y + other.y)
 
-    cdef Vec2 add_double(self, double other):
+    cdef object add_double(self, double other):
         return self.from_cartesian(self.x + other, self.y + other)
 
     def __add__(self, other):
@@ -115,10 +144,10 @@ cdef class Vec2:
         else:
             return self.add_double(other)
 
-    cdef Vec2 sub_vec2(self, Vec2 other):
+    cdef object sub_vec2(self, object other):
         return self.from_cartesian(self.x - other.x, self.y - other.y)
 
-    cdef Vec2 sub_double(self, double other):
+    cdef object sub_double(self, double other):
         return self.from_cartesian(self.x - other, self.y - other)
 
     def __sub__(self, other):
@@ -128,13 +157,13 @@ cdef class Vec2:
         else:
             return self.sub_double(other)
 
-    cdef Vec2 mul_vec2(self, Vec2 other):
+    cdef object mul_vec2(self, object other):
         return self.from_polar(
             self.get_angle() * other.get_angle(),
             self.get_length() * other.get_length()
         )
 
-    cdef Vec2 mul_double(self, double other):
+    cdef object mul_double(self, double other):
         return self.from_cartesian(self.x * other, self.y * other)
 
     def __mul__(self, other):
@@ -144,7 +173,7 @@ cdef class Vec2:
         else:
             return self.mul_double(other)
 
-    cdef Vec2 div(self, double other):
+    cdef object div(self, double other):
         return self.from_cartesian(self.x / other, self.y / other)
 
     def __truediv__(self, double other):
@@ -161,18 +190,19 @@ cdef class Vec2:
 
 
     # constructors
-    cpdef Vec2 from_cartesian(self, double x, double y):
+    cpdef object from_cartesian(self, double x, double y):
         v = Vec2()
         v.x = x
         v.y = y
     
         return v
 
-    cpdef Vec2 from_polar(self, double angle, double length):
+    cpdef object from_polar(self, double angle, double length):
         v = Vec2()
         v.set_polar(angle, length)
     
         return v
+
 
 cpdef double normalize_angle(double value):
     cdef double a = value
@@ -182,3 +212,39 @@ cpdef double normalize_angle(double value):
     if r < 0:
         r += b
     return r
+
+
+cpdef double normalize_angle_neg(double value):
+    return normalize_angle(value + pi) - pi
+
+
+cpdef double clamp_angle(double angle, double center, double max_delta):
+    diff = normalize_angle_neg(angle - center)
+
+    diff = max(-max_delta, min(max_delta, diff))
+
+    return normalize_angle(center + diff)
+
+
+cpdef double max_angle(double center, double[:] angles):
+    cdef:
+        Py_ssize_t i
+        double best = angles[0]
+
+    for i in range(1, angles.shape[0]):
+        if abs(angles[i] - center) > abs(best - center):
+            best = angles[i]
+
+    return best
+
+
+cpdef double min_angle(double center, double[:] angles):
+    cdef:
+        Py_ssize_t i
+        double best = angles[0]
+
+    for i in range(1, angles.shape[0]):
+        if abs(angles[i] - center) < abs(best - center):
+            best = angles[i]
+
+    return best

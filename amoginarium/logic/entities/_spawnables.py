@@ -1,35 +1,34 @@
 """
-_spawnables.py
-15.03.2026
+Collects every spawn-able entity.
 
-collects every spawn-able entity
-
-Author:
-Nilusink
+Path: amoginarium/logic/entities/_spawnables.py
+Project: amoginarium
+Created: 28.03.2026
+Authors: Nilusink, LukasKrah
 """
-import typing as tp
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from icecream import ic
 
-from ._weaponry import VisualRadarSensor, VisualSensor
-from ._base import LogicGameEntity
-from ._weaponry import ExactoTurret
-from ._world import TextEntity
+from ._dynamic_entities import DYNAMIC_ENTITIES
+from ._weaponry import ExactoTurret, VisualRadarSensor, VisualSensor
+
 # from ._static_turret import BaseTurret, SniperTurret, AkTurret, MinigunTurret, \
 #     MortarTurret, FlakTurret, CRAMTurret
 # from ._sensors import Radar
 # from ._text_entity import TextEntity
 from ._weaponry.templates import Bullet
-from ._dynamic_entities import DYNAMIC_ENTITIES
+from ._world import TextEntity
 
+if TYPE_CHECKING:
+    from ._base import LogicGameEntity
 
 # noinspection PyTypeChecker
-SPAWNABLES: dict[str, tp.Type[LogicGameEntity]] = {
-    e.cid(): e for e in [
-        VisualSensor,
-        VisualRadarSensor,
-        TextEntity,
-        ExactoTurret,
-        Bullet
-    ]
+SPAWNABLES: dict[str, type[LogicGameEntity]] = {
+    e.cid(): e
+    for e in [VisualSensor, VisualRadarSensor, TextEntity, ExactoTurret, Bullet]
 }
 SPAWNABLES.update(DYNAMIC_ENTITIES)
