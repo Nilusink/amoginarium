@@ -12,8 +12,14 @@ from __future__ import annotations
 import typing as tp
 from dataclasses import dataclass
 from time import perf_counter
+from types import EllipsisType
 
-from ...._base import Updated, Walls
+from icecream import ic
+from scipy._lib.pyprima.cobyla import initialize
+
+from ...._base import Updated, Walls, Players
+from ._ctarget_track import TargetTrack
+from ._ckalman_track import KalmanTrack2D
 
 if tp.TYPE_CHECKING:
     from ...._base import PositionedLogicEntity
@@ -31,12 +37,15 @@ class TargetInfo:
 class _DetectionGroupManager:
     """manages all detection groups."""
 
-    _instance: _DetectionGroupManager = ...
+    _instance: tp.ClassVar[tp.Self | EllipsisType] = ...
     _detection_groups: list[DetectionGroup]
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is ...:
-            cls._instance = super().__new__(cls)
+    def __new__(cls, *args: tp.Any, **kwargs: tp.Any) -> tp.Self:
+        if isinstance(cls._instance, EllipsisType):
+            instance = super().__new__(cls)
+
+            cls._instance = instance
+            return instance
 
         return cls._instance
 
@@ -53,22 +62,20 @@ class _DetectionGroupManager:
     def get_all(self) -> list[DetectionGroup]:
         return self._detection_groups.copy()
 
-    # will later be used for target tracks
-    # def update(self, delta: float) -> None:
-    #     for group in self._detection_groups:
-    #         group.update(delta)
-
-    def update_detection(self) -> None:
+    def update_detection(self, delta: float) -> None:
         """
         Ask all sensors to get their targeting information.
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
         walls = Walls.entities()
-        targets = [t for t in Updated.entities() if t not in walls and t.alive]
+
+        # create base group of targets that are viable for detection
+        # targets = [t for t in Updated.entities() if t not in walls and t.alive]
+        targets = Players.entities()
 
         for group in self._detection_groups:
-            group.update_detection(targets)
+            group.update_detection(delta, from_entities=targets)
 
     def reset(self) -> None:
         """
@@ -85,6 +92,7 @@ class DetectionGroup:
     """Group of sensors."""
 
     _targets: dict[PositionedLogicEntity, TargetInfo]
+    _tracks: dict[int, KalmanTrack2D]
     _sensors: list[BaseSensor]
 
     def __new__(cls, *args, **kwargs):
@@ -101,6 +109,7 @@ class DetectionGroup:
 
         self._name = name
         self._targets = {}
+        self._tracks = {}
         self._sensors = []
 
     @property
@@ -116,33 +125,60 @@ class DetectionGroup:
         return list(self._targets.keys())
 
     @property
+    def tracks(self) -> list[KalmanTrack2D]:
+        return list(self._tracks.values())
+
+    @property
     def sensors(self) -> list[BaseSensor]:
         return self._sensors.copy()
+
+    def _add_target(
+        self,
+        target: PositionedLogicEntity,
+        detector: PositionedLogicEntity,
+        delta: float,
+    ) -> None:
+        if target not in self._targets:
+            self._targets[target] = TargetInfo(
+                last_seen=perf_counter(), seen_by=detector
+            )
+
+        if target.id not in self._tracks:
+            self._tracks[target.id] = KalmanTrack2D()
+            self._tracks[target.id].initialize(*target.position.xy)
+
+        else:
+            self._tracks[target.id].step(*target.position.xy, delta)
+
+        # ic(
+        #     target.position.xy,
+        #     target.velocity.xy,
+        #     target.acceleration.xy,
+        #     self._tracks[target.id].get_position(),
+        #     self._tracks[target.id].get_velocity(),
+        #     self._tracks[target.id].get_acceleration(),
+        # )
 
     def add_target(
         self,
         target: PositionedLogicEntity | tp.Iterable[PositionedLogicEntity],
         detector: PositionedLogicEntity,
+        delta: float,
     ) -> None:
         """
         Add target to detection scope.
         """
         if isinstance(target, tp.Iterable):
             for t in target:
-                if t not in self._targets:
-                    self._targets[t] = TargetInfo(
-                        last_seen=perf_counter(), seen_by=detector
-                    )
+                self._add_target(t, detector, delta)
+
             return
 
-        if target not in self._targets:
-            self._targets[target] = TargetInfo(
-                last_seen=perf_counter(), seen_by=detector
-            )
+        self._add_target(target, detector, delta)
 
     def add_sensor(self, sensor: BaseSensor) -> None:
         """
-        Adds a sensor to detection scope.
+        Add a sensor to detection scope.
         """
         self._sensors.append(sensor)
         sensor.group_add(self)
@@ -153,23 +189,18 @@ class DetectionGroup:
         """
         if sensor in self._sensors:
             self._sensors.remove(sensor)
-        #
-        # else:
-        #     ic(CC.fg.RED + "sensor not in list!")
 
     def update_detection(
-        self, from_entities: tp.Iterable[PositionedLogicEntity] | None = None
+        self,
+        delta: float,
+        *,
+        from_entities: tp.Iterable[PositionedLogicEntity] | None = None,
     ) -> None:
         """
         Ask all sensors to get their targeting information.
         """
         for sensor in self._sensors:
-            self.add_target(sensor.get_targets(from_entities), sensor.parent)
-
-    # def update(self, delta: float) -> None:
-    #     now = perf_counter()
-    #     for target, info in self._targets.items():
-    #         if now - info.last_seen > ...:
+            self.add_target(sensor.get_targets(from_entities), sensor.parent, delta)
 
     def reset(self) -> None:
         self._targets.clear()

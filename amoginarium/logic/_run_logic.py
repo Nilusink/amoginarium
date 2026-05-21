@@ -386,8 +386,10 @@ class LogicProcess:
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
 
+        # give turrets a little extra help with bullets by getting their position from
+        # current loop instead of last loop
         Bullets.update(delta)
-        DETECTION_GROUP_MANAGER.update_detection()
+        DETECTION_GROUP_MANAGER.update_detection(delta)
         Updated.update(delta)
 
         players = Players.entities()
