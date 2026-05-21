@@ -19,7 +19,7 @@ if tp.TYPE_CHECKING:
     from .utility import Vec2
 
 
-type item_t = ItemLike | None  # ItemLike | WeaponLike | None
+type item_t = ItemLike | None  # ItemLike | WeaponLike | None  # noqa: PYI042
 
 
 @dataclass
@@ -154,6 +154,12 @@ class GraphicsCIDs(Enum):
     debug_circle = "debug.circle"
 
 
+class VehicleCIDs(Enum):
+    """Vehicle Component-IDs."""
+
+    base = "vehicle.base"
+
+
 class _CIDRegister:
     """represent all item CIDs as ints."""
 
@@ -193,6 +199,7 @@ type CIDType = (
     | GraphicsCIDs
     | MissileCIDs
     | WeaponSensorCIDs
+    | VehicleCIDs
 )
 
 
@@ -211,10 +218,14 @@ class ProcessCommandType(Enum):
     load_map = 4  # {"map_path": <path to map file>}
 
     # sound stuff
-    play_sound = 5  # {"loops": int, "maxtime": float, "fade_ms": float, "sound_name": <name of sound>}
+    # {"loops": int, "maxtime": float, "fade_ms": float, "sound_name": <name of sound>}
+    play_sound = 5
 
     # entity spawning
     spawn_player = 6  # {"controller_id": int}
+
+    # camera control
+    set_zoom = 7  # {"zoom": <float, relative to 1>}
 
 
 class BaseCommandType(Enum):

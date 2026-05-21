@@ -11,7 +11,7 @@ from ._controlls import Controls
 from ._data_types import BaseCommandType, CID_REGISTER, CIDType, CurrentView, DummyCIDs
 from ._data_types import GraphicsCIDs, IslandCIDs, item_t, ItemCIDs, ItemSlot
 from ._data_types import MissileCIDs, ProcessCommand, ProcessCommandType, SensorCIDs
-from ._data_types import TurretCIDs, WeaponCIDs, WeaponSensorCIDs
+from ._data_types import TurretCIDs, VehicleCIDs, WeaponCIDs, WeaponSensorCIDs
 from ._debug_vars import DebugVarsEnum
 from ._entity_counter import ENTITY_COUNTER, INVENTORY_COUNTER
 from ._entity_hints import BaseEntityLike, DynamicEntityParentViable

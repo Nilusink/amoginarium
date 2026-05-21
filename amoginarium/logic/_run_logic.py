@@ -28,7 +28,7 @@ from amoginarium.shared.audio import BackgroundPlayer, sound_effects
 from amoginarium.shared.audio import SoundEffect, sounds
 from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
 from amoginarium.shared.debugging import print_with_prefix, run_with_debug
-from amoginarium.shared.utility import Vec2
+from amoginarium.shared.utility import PIDController, Vec2
 
 from .entities import Bullets, CollisionLogicEntity, DETECTION_GLOBAL_BLUE
 from .entities import DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
@@ -119,29 +119,12 @@ class LogicProcess:
         self._running = True
         self._paused = False
 
-        # self._v = 3000
-        # self._b_vel, *_ = calculate_launch_angle(
-        #     Vec2().from_cartesian(6000, -65),
-        #     Vec2(),
-        #     Vec2(),
-        #     self._v,
-        #     aim_type="high",
-        #     g=GravityAffected.gravity * 2
-        # )
-        # self._b_vel.y *= -1
-        # ic(self._b_vel)
         self._b_start = Vec2().from_cartesian(700, 700)
         self._dummy_dad = LogicGameEntity(self._runtime_buffer, Vec2(), self._b_start)
-        # self._w = Mortar(
-        #     self._dummy_dad,
-        #     self._runtime_buffer,
-        #     bullet_speed=self._v
-        # )
-        # self._w.set_parent(self._dummy_dad)
-        # self._w.show()
-        # self._w._mag_size = 4
-        # self._w.reload(True)
-        # self._w.facing = self._b_vel
+
+        # world position pid controller
+        self._x_pid = PIDController(4, 0.0001, 0.5)
+        self._y_pid = PIDController(4, 0.0001, 0.5)
 
     # region properties
     @property
@@ -196,8 +179,8 @@ class LogicProcess:
             f"{get_fg_color(12)}logic{get_fg_color(247)} |> "
         )
 
-    def load_map(self, map_path: str) -> None:
-        """Load a map from a json file."""
+    def load_map(self, map_path: str) -> None:  # noqa: C901, PLR0912
+        """Load a map from a JSON file."""
         if not os.path.isfile(map_path):
             # if the file wasn't found, try adding the root program path
             map_path = os.path.dirname(__file__) + "/" + map_path
@@ -207,11 +190,9 @@ class LogicProcess:
                 raise FileNotFoundError(msg)
 
         self._map_loading = True
-        self._last_map_path = map_path
 
         # load map data
         data = json.load(open(map_path, "r", encoding="utf-8"))
-        self._last_loaded = map_path
 
         pg.display.set_caption(f"amoginarium - {data['name']}")
 
@@ -243,12 +224,6 @@ class LogicProcess:
             else:
                 print_ic_style(f"{CC.fg.RED}invalid island: {CC.fg.YELLOW}{island}")
                 continue
-
-            # if "move" in island:
-            #     create_moving_island(
-            #         i,
-            #         **island["move"]
-            #     )
 
         # load entities
         detection_groups: dict[int, DetectionGroup] = {
@@ -290,10 +265,16 @@ class LogicProcess:
                     f'"{CC.fg.YELLOW}{args!r}{CC.fg.RED}"'
                 )
 
+        # set initial camera position
+        view_pos = data["end_pos"] if "end_pos" in data else data["spawn_pos"]
+
+        self._x_pid.set_value(view_pos[0])
+        self._y_pid.set_value(view_pos[1])
+
         self._map_loading = False
 
     @cum_timer.time_this
-    def update_entities(self, delta: float) -> bool:
+    def update_entities(self, delta: float) -> bool:  # noqa: C901, PLR0912, PLR0915
         """
         Update all entities.
 
@@ -355,6 +336,27 @@ class LogicProcess:
                 else:
                     self._ciq.put(item)
 
+            elif item.type == ProcessCommandType.set_zoom:
+                # get current center
+                screen_size = pv.global_vars.get_screen_size()
+                ppm = pv.global_vars.get_pixel_per_meter()
+
+                screen_pixels = (screen_size / ppm) / 2
+                current_center: Vec2 = (
+                    pv.global_vars.get_world_position() + screen_pixels
+                )
+
+                # zoom
+                ppm *= item.kwargs["zoom"]
+                pv.global_vars.set_pixel_per_meter(ppm)
+
+                # update position
+                screen_pixels = (screen_size / ppm) / 2
+                w_pos = current_center - screen_pixels
+                pv.global_vars.set_world_position(w_pos)
+                self._x_pid.set_value(w_pos.x)
+                self._y_pid.set_value(w_pos.y)
+
             else:
                 ic(item)
 
@@ -385,23 +387,14 @@ class LogicProcess:
         # update entities
         GravityAffected.calculate_gravity(delta)
         FrictionXAffected.calculate_friction(delta)
-        # WallBouncer.update()
 
         Bullets.update(delta)
-        # ic(list(Bullets.entities()))
         DETECTION_GROUP_MANAGER.update_detection()
         Updated.update(delta)
 
-        # CollisionDestroyed.update()
-
-        # update world position
-        # _, max_player_pos = Players.get_position_extremes()
         players = Players.entities()
         if len(players) > 0:
             curr_view = players[0].get_current_view()
-            max_player_pos = curr_view.pos
-            pv.audio_observer_pos.xy = max_player_pos.xy
-            world_position = pv.global_vars.get_world_position()
 
             screen_pixels = (
                 pv.global_vars.get_screen_size() / pv.global_vars.get_pixel_per_meter()
@@ -409,27 +402,20 @@ class LogicProcess:
 
             if curr_view.centered:
                 Updated.world_position.xy = (
-                    max_player_pos.x - screen_pixels.x,
-                    max_player_pos.y - screen_pixels.y,
+                    curr_view.pos.x - screen_pixels.x,
+                    curr_view.pos.y - screen_pixels.y,
                 )
 
             else:
-                if max_player_pos.x > world_position.x + screen_pixels.x:
-                    x = max_player_pos.x - screen_pixels.x
-                    Updated.world_position.x = x
+                curr_view.pos -= screen_pixels
 
-                elif max_player_pos.x < world_position.x + screen_pixels.x * 0.6:
-                    x = max_player_pos.x - screen_pixels.x * 0.6
-                    Updated.world_position.x = x
+                # set position in case of graphics position update
+                x_pos = self._x_pid.update_value(curr_view.pos.x, delta)
+                y_pos = self._y_pid.update_value(curr_view.pos.y, delta)
 
-                if max_player_pos.y > world_position.y + screen_pixels.y * 1.4:
-                    y = max_player_pos.y - screen_pixels.y * 1.4
-                    Updated.world_position.y = y
+                Updated.world_position.xy = x_pos, y_pos
 
-                elif max_player_pos.y < world_position.y + screen_pixels.y * 0.6:
-                    y = max_player_pos.y - screen_pixels.y * 0.6
-                    Updated.world_position.y = y
-
+            pv.audio_observer_pos.xy = Updated.world_position.xy
             self._global_vars.set_world_position(Updated.world_position)
 
         return True
@@ -452,8 +438,6 @@ class LogicProcess:
         # kill all entities
         for e in Updated.entities() + Bullets.entities():
             e.kill()
-
-        # collision_manager.clear_all_entities()
 
         # reset shared values
         self._write_lock.acquire()
@@ -481,7 +465,7 @@ class LogicProcess:
         times = cum_timer.get_times()
         for func, values in sorted(times.items(), key=lambda e: e[1][0]):
             print_ic_style(
-                f"{func}, called {values[1]} times {round(values[2], 3)}µs each,"
+                f"{func}, called {values[1]} times {round(values[2], 3)}μs each,"
                 f" totaling {round(values[0] / 1000, 2)}ms"
             )
 
@@ -515,7 +499,7 @@ def update_debug_vars(values: int) -> None:
     Island.debug_draw_hitboxes(draw_hitboxes)
 
 
-def run_continuous(
+def run_continuous(  # noqa: PLR0917
     shm: SharedMemory,
     c_shm: SharedMemory,
     i_shm: SharedMemory,
@@ -526,13 +510,12 @@ def run_continuous(
     base_comm: Connection,
     process_comm: Connection,
     start_time: float,
-    time_multiplier: float,
     run_name: str,
 ) -> None:
     """
     Run the logic process continuously.
     """
-    global_vars = GlobalVars(global_vars_values, False)
+    global_vars = GlobalVars(global_vars_values, False)  # noqa: FBT003
     global_vars.update()
 
     lp = LogicProcess(

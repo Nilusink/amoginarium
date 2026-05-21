@@ -33,14 +33,18 @@ class RideablePerks(tp.Protocol):
         """Specifies weather the passenger is visible or not."""
         return True
 
+    @property
+    def camera_centered(self) -> bool:
+        return True
+
     def get_passenger_position(self) -> Vec2 | None:
-        """:returns: position of passenger if modified"""
+        """:return: position of passenger if modified"""
 
     def get_camera_position(self) -> Vec2 | None:
-        """:returns: position of camera if modified"""
+        """:return: position of camera if modified"""
 
     def get_camera_zoom(self) -> float | None:
-        """:returns cam zoom if modified"""
+        """:return cam zoom if modified"""
 
 
 RideableGameEntity = RideablePerks

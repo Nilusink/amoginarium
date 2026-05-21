@@ -44,6 +44,7 @@ from ._startmenu import StartMenu
 
 if tp.TYPE_CHECKING:
     from amoginarium.graphics.controllers import Controller
+    from amoginarium.shared.utility import Vec2
 
 
 class BoundFunction[**A, R]:
@@ -128,7 +129,6 @@ class BaseGame:
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start,
-                "time_multiplier": time_multiplier,
                 "run_name": self._git_branch,
             },
         )
@@ -410,8 +410,6 @@ class BaseGame:
             "Game": UIVisiblity(False, False, False),
         }
 
-        # self.load_map("assets/maps/test.json")
-
         def load_ui_visibility() -> None:
             """Whatever this does (I didn't code it)."""
             visibility = ui_visibility[active_scene]
@@ -496,10 +494,12 @@ class BaseGame:
 
             load_ui_visibility()
 
-        def handle_zoom(e) -> None:
+        def handle_zoom(e: Vec2) -> None:
             """Zoom callback."""
-            self.global_vars.set_pixel_per_meter(
-                self.global_vars.get_pixel_per_meter() * (1 + e.y / 30)
+            pv.COQ.put(
+                ProcessCommand(
+                    type=ProcessCommandType.set_zoom, kwargs={"zoom": 1 + e.y / 30}
+                )
             )
 
         start_menu = StartMenu(start_game, open_settings, self.__clean_end)
@@ -602,6 +602,7 @@ class BaseGame:
                 elif event.type == pg.MOUSEWHEEL:
                     if active_scene in ["Game", "PauseSettings", "PauseMenu"]:
                         handle_zoom(event)
+
                 elif event.type == pg.QUIT:
                     self.__clean_end()
 
@@ -698,13 +699,6 @@ class BaseGame:
             renderer.display_draw_frame()
 
         ic("pygame end")
-        times = cum_timer.get_times()
-        for func, values in sorted(times.items(), key=lambda e: e[1][0]):
-            print_ic_style(
-                f"{func}, called {values[1]} times {round(values[2], 3)}µs each, "
-                f"totaling {round(values[0] / 1000, 2)}ms"
-            )
-
         self.end()
 
     def draw_entities_only(self) -> None:
@@ -744,6 +738,14 @@ class BaseGame:
         """
         # send end to process
         pv.COQ.put(ProcessCommand(type=ProcessCommandType.quit))
+
+        # print debug times
+        times = cum_timer.get_times()
+        for func, values in sorted(times.items(), key=lambda e: e[1][0]):
+            print_ic_style(
+                f"{func}, called {values[1]} times {round(values[2], 3)}μs each, "
+                f"totaling {round(values[0] / 1000, 2)}ms"
+            )
 
         # check if end has already been called
         if self._ended:

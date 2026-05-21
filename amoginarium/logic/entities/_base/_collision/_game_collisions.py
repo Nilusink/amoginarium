@@ -37,6 +37,7 @@ class _GameCollisions:
         "collision_group_rideable_turrets",
         "collision_group_aerodynamic_entity",
         "collision_group_grenades",
+        "collision_group_vehicles",
         "collision_group_players",
         "collision_group_bullets",
         "collision_group_islands",
@@ -56,6 +57,7 @@ class _GameCollisions:
     collision_group_rideable_turrets: CollisionGroupIDType
     collision_group_aerodynamic_entity: CollisionGroupIDType
     collision_group_grenades: CollisionGroupIDType
+    collision_group_vehicles: CollisionType.GroupID
     collision_group_players: CollisionGroupIDType
     collision_group_bullets: CollisionGroupIDType
     collision_group_islands: CollisionGroupIDType
@@ -100,6 +102,9 @@ class _GameCollisions:
         self.collision_group_grenades = self.collision_manager.add_group(
             max_level=1, hitbox_type="circle"
         )
+        self.collision_group_vehicles = self.collision_manager.add_group(
+            max_level=0, hitbox_type="obb"
+        )
         self.collision_group_players = self.collision_manager.add_group(max_level=0)
         self.collision_group_bullets = self.collision_manager.add_group(
             max_level=1, hitbox_type="circle"
@@ -115,6 +120,7 @@ class _GameCollisions:
             self.collision_group_players,
             self.collision_group_bullets,
             self.collision_group_grenades,
+            self.collision_group_vehicles,
             self.collision_group_islands,
             self.collision_group_turrets,
             self.collision_group_shields,
@@ -123,7 +129,7 @@ class _GameCollisions:
             self.collision_group_rideable_turrets,
         ]
 
-        self.hitboxes = {  # type: ignore[idk]
+        self.hitboxes = {  # type: ignore[ask-LukasKrah]
             group: self.collision_manager.get_hitbox(group) for group in self.all_groups
         }
 
@@ -138,6 +144,7 @@ class _GameCollisions:
                 self.collision_group_players,
                 self.collision_group_grenades,
                 self.collision_group_shields,
+                self.collision_group_vehicles,
             ],
         )
         self.create_relations(
@@ -155,11 +162,12 @@ class _GameCollisions:
             [
                 self.collision_group_rideable_turrets,
                 self.collision_group_aerodynamic_entity,
+                self.collision_group_vehicles,
+                self.collision_group_grenades,
+                self.collision_group_shields,
                 self.collision_group_islands,
                 self.collision_group_bullets,
-                self.collision_group_grenades,
                 self.collision_group_items,
-                self.collision_group_shields,
             ],
         )
         self.create_relations(
@@ -167,11 +175,12 @@ class _GameCollisions:
             [
                 self.collision_group_rideable_turrets,
                 self.collision_group_aerodynamic_entity,
+                self.collision_group_grenades,
+                self.collision_group_vehicles,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_turrets,
                 self.collision_group_players,
-                self.collision_group_grenades,
                 self.collision_group_shields,
             ],
         )
@@ -179,9 +188,10 @@ class _GameCollisions:
             self.collision_group_islands,
             [
                 self.collision_group_aerodynamic_entity,
+                self.collision_group_grenades,
+                self.collision_group_vehicles,
                 self.collision_group_players,
                 self.collision_group_bullets,
-                self.collision_group_grenades,
                 self.collision_group_shields,
             ],
         )
@@ -196,6 +206,15 @@ class _GameCollisions:
             self.collision_group_rideable_turrets,
             [
                 self.collision_group_aerodynamic_entity,
+                self.collision_group_bullets,
+                self.collision_group_players,
+            ],
+        )
+        self.create_relations(
+            self.collision_group_vehicles,
+            [
+                self.collision_group_missiles,
+                self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_players,
             ],

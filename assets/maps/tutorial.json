@@ -2,6 +2,7 @@
     "name": "Tutorial",
     "background": 3,
     "spawn_pos": [100, 600],
+    "end_pos": [21500, 400],
     "platforms": [
         {
             "pos": [10, 740],
@@ -127,8 +128,12 @@
             "group": 0
         },
                 {
-            "type": "turret.rideable.gps_guided",
-            "pos": [1500, 730]
+            "type": "vehicle.tank",
+            "pos": [1450, 700]
+        },
+        {
+            "type": "turret.static.flak",
+            "pos": [3000, 700]
         },
         {
             "type": "static.text",
