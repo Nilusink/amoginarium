@@ -660,8 +660,10 @@ class Bullet(LogicGameEntity):
         # update velocity
         self._runtime_buffer[self.id].param1 = self.velocity.length
 
+    @tp.override
     def _before_kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> bool:
@@ -683,6 +685,7 @@ class Bullet(LogicGameEntity):
     @tp.override
     def _kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> None:

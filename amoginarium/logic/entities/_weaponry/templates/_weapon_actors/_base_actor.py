@@ -75,7 +75,7 @@ class BaseActor:
     def kill(self, killed_by) -> None:
         """Kills actor."""
         if self._dbe is not None:
-            self._dbe.kill(killed_by)
+            self._dbe.kill(killed_by=killed_by)
 
     def _update_position(self) -> None:
         """Update fuze position."""

@@ -160,7 +160,7 @@ class Shield(Something):
         self._uses_left -= damage
 
         if self._uses_left <= 0:
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
     def _update(self, delta: float, **_) -> None:
         if self.parent:

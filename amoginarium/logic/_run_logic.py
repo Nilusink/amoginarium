@@ -49,7 +49,7 @@ class LogicProcess:
     Logic Process data.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         shm: SharedMemory,
         c_shm: SharedMemory,

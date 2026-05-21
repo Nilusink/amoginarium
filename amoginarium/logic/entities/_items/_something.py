@@ -87,8 +87,10 @@ class Something(Item):
         self.stop_use()
         self._set_bit("flags", 14, False)  # set use to false
 
+    @tp.override
     def _after_kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
         killed: bool = True,
@@ -97,6 +99,7 @@ class Something(Item):
     @tp.override
     def _before_kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> bool:

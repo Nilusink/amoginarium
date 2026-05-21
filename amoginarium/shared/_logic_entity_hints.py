@@ -102,6 +102,7 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def _before_kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> bool:
@@ -114,6 +115,7 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def _kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> None:
@@ -125,6 +127,7 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def _after_kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
         killed: bool = True,
@@ -139,6 +142,7 @@ class BaseLogicEntityLike(tp.Protocol):
 
     def kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
         force_kill: bool = False,

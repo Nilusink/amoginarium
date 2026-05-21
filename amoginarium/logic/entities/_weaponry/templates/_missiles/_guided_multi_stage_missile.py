@@ -96,6 +96,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
     @tp.override
     def _kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> None:
@@ -106,10 +107,11 @@ class GuidedMultiStageMissile(MultiStageMissile):
 
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         """
-        Update guidance system
+        Update guidance system.
+
         :param dt: time delta since last update
         :param target_delta: delta to target position
-        :return:
+        :return: ?
         """
         if target_delta:
             facing = self.velocity.copy().normalize()

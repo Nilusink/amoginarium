@@ -282,7 +282,7 @@ class Player(Passenger, LogicGameEntity):
         if self._hp <= 0:
             if self.item:
                 self.item.stop()
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
         self._last_hit = perf_counter()
         self._controller.feedback_heal_stop()

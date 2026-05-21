@@ -68,7 +68,7 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
 
         # check for passenger protocol
         if not isinstance(self._player, Passenger):
-            self.kill(self)
+            self.kill(killed_by=self)
             return
 
         self._set_as_ridden = False  # should be done once guidance starts
@@ -107,7 +107,7 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
         self._rudder_angle = 0
 
         if self._controller.m_right:
-            self.kill(self)
+            self.kill(killed_by=self)
 
         if abs(self.alpha) < self._default_guidance_max_alpha:
             # check for controller

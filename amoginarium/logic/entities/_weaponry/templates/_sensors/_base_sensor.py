@@ -169,6 +169,7 @@ class BaseSensor(PositionedLogicEntity):
     @tp.override
     def _kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> None:

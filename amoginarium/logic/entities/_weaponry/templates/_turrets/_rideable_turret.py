@@ -275,7 +275,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
         # check for turret death
         if self._hp <= 0:
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
     def _shoot_at(
         self,

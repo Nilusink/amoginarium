@@ -193,28 +193,32 @@ class BaseLogicEntity(BaseLogicEntityLike):
                 self.__groups.remove(group)
 
     # noinspection PyUnusedLocal, PyMethodMayBeStatic
-    def _before_kill(
+    def _before_kill(  # noqa: PLR6301
         self,
-        killed_by: MurderViable | EllipsisType = ...,
-        kill_children: bool = True,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,  # noqa: ARG002
+        kill_children: bool = True,  # noqa: ARG002
     ) -> bool:
         """
-        Whether the entity can be killed. Called before _kill
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively
-        :return: Whether the entity kill is accepted.
+        Whether the entity can be killed. Called before _kill.
+
+        :param killed_by: Who killed this entity
+        :param kill_children: Whether to kill children as well recursively
+        :return: Whether the entity kill is accepted
         """
         return True
 
     def _kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,  # noqa: ARG002
         kill_children: bool = True,
     ) -> None:
         """
-        Kill entity and all its children
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively.
+        Kill the entity and all its children.
+
+        :param killed_by: Who killed this entity
+        :param kill_children: Whether to kill children as well recursively
         """
         # kill children first
         if kill_children:
@@ -224,37 +228,41 @@ class BaseLogicEntity(BaseLogicEntityLike):
         for group in self.__groups:
             group.remove(self)
 
-        self._set_bit("flags", 0, False)  # set alive
+        self._set_bit("flags", 0, False)  # set alive  # noqa: FBT003
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__groups.clear()
 
     def _after_kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
         killed: bool = True,
     ) -> None:
         """
-        Called at the end of kill no matter if the kill was accepted or not
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively
-        :param killed: Whether the entity kill was accepted or not.
+        Reaction at the end of kill no matter if the kill was accepted or not.
+
+        :param killed_by: Who killed this entity
+        :param kill_children: Whether to kill children as well recursively
+        :param killed: Whether the entity kill was accepted or not
         """
 
     @tp.final
     def kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
         force_kill: bool = False,
     ) -> bool | None:
         """
-        Kill entity and all its children
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well as recursively
-        :param force_kill: whether to kill even if before kill returns False
-        :return: Whether the entity was killed or not. May be denied by _before_kill.
+        Kill the entity and all its children.
+
+        :param killed_by: Who killed this entity
+        :param kill_children: Whether to kill children as well as recursively
+        :param force_kill: Whether to kill even if before kill returns False
+        :return: Whether the entity wa0s killed or not. May be denied by _before_kill.
             None if the entity is already dead.
         """
         if self._alive:

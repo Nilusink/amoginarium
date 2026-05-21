@@ -304,16 +304,17 @@ class BaseTurret(LogicGameEntity):
 
         # check for turret death
         if self._hp <= 0:
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
     @tp.override
     def _kill(
         self,
+        *,
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> None:
         self.weapon.stop()
-        self.weapon.kill(killed_by)
+        self.weapon.kill(killed_by=killed_by)
         super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     def get_next_target(self, include_all: bool = False) -> target_solution_t:
