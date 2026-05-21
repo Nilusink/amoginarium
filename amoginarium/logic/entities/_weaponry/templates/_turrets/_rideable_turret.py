@@ -255,14 +255,6 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     # endregion
 
-    # region collision
-    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
-        dmg = event.other_entity.damage
-        if dmg > 0 and event.other_entity.root != self.root:
-            self.hit(dmg, hit_by=event.other_entity)
-
-    # endregion
-
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         """
         Deal damage to the turret.

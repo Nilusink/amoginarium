@@ -57,7 +57,7 @@ class _GameCollisions:
     collision_group_rideable_turrets: CollisionGroupIDType
     collision_group_aerodynamic_entity: CollisionGroupIDType
     collision_group_grenades: CollisionGroupIDType
-    collision_group_vehicles: CollisionType.GroupID
+    collision_group_vehicles: CollisionGroupIDType
     collision_group_players: CollisionGroupIDType
     collision_group_bullets: CollisionGroupIDType
     collision_group_islands: CollisionGroupIDType
@@ -213,7 +213,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_vehicles,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_players,

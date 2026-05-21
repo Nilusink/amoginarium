@@ -578,6 +578,7 @@ class Bullet(LogicGameEntity):
         - Shield: Bullet hits the shield and either pierces through or dies
         - RideableTurret: Bullet hits the turret and either pierces through or dies
         - AerodynamicEntity: Bullets and Aerodynamic entities hit each other
+        - Vehicle: Bullet hits the vehicle and either pierces through or dies
 
         :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collision
@@ -594,6 +595,7 @@ class Bullet(LogicGameEntity):
             group_id == GameCollisions.collision_group_players
             or group_id == GameCollisions.collision_group_turrets
             or group_id == GameCollisions.collision_group_rideable_turrets
+            or group_id == GameCollisions.collision_group_vehicles
         ):
             events: list[CollisionEvent[BaseTurret | Player | RideableTurret]]
             if self._left_root:

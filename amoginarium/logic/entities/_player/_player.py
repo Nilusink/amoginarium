@@ -418,7 +418,7 @@ class Player(Passenger, LogicGameEntity):
         """
         Distribute collision start events to different methods.
 
-        - Island:  Player walks on islands / collides with them
+        - Island: Player walks on islands / collides with them
         - Items: Item decides if it can be picked up and calls pickup_item if so
         - Shield: Same goes for shield except is even more complex
         - Grenades: No reaction to Grenades for the player
@@ -434,7 +434,10 @@ class Player(Passenger, LogicGameEntity):
         if group_id == GameCollisions.collision_group_islands:
             events: list[CollisionEvent[Island]]
             return self.__collision_island(events)
-        if group_id == GameCollisions.collision_group_rideable_turrets:
+        if (
+            group_id == GameCollisions.collision_group_rideable_turrets
+            or group_id == GameCollisions.collision_group_vehicles
+        ):
             events: list[CollisionEvent[RideableTurret]]
             self.__collision_rideable_start(events)
             return None
