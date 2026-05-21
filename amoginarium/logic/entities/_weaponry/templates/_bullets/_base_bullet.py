@@ -548,6 +548,7 @@ class Bullet(LogicGameEntity):
         for event in events:
             self.hit(event.other_entity.damage, event.other_entity)
 
+    @tp.override
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
@@ -616,6 +617,7 @@ class Bullet(LogicGameEntity):
 
     # endregion
 
+    @tp.override
     def _update(self, delta, update_facing: bool = True) -> None:
         self._time_to_life -= delta
         self._visibility_offset -= delta

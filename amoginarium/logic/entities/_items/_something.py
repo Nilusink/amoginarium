@@ -59,6 +59,7 @@ class Something(Item):
         """Gets called when item is used up."""
         self._used_callback = callback
 
+    @tp.override
     def _update(self, delta: float, *, keep_position: bool = False) -> None:
         super()._update(delta, keep_position=keep_position)
         self._runtime_buffer[self.id].param1, _ = self.get_mag_state(1)

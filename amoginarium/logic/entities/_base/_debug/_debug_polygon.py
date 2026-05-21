@@ -120,6 +120,7 @@ class DebugPolygonEntity(DebugEntity):
 
             getattr(self, f"p{i + 1}").xy = points[i].xy
 
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Packs vertex data into the C-buffer using bitwise operations for the renderer.

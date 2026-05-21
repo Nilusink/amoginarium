@@ -515,6 +515,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
     # endregion
 
     # region Methods: General Update & Kill
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Update shared memory and collision entity

@@ -368,6 +368,7 @@ class BaseTurret(LogicGameEntity):
 
         return None
 
+    @tp.override
     def _update(self, delta: float) -> None:
         # update weapon
         self.weapon.update(delta)

@@ -98,6 +98,7 @@ class PlayerControlledMissile(RideablePerks, GuidedMultiStageMissile):
 
     # endregion
 
+    @tp.override
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         # set self as ridden entity
         if not self._set_as_ridden:

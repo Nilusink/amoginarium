@@ -128,6 +128,7 @@ class Island(LogicGameEntity):
 
         pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_island, kwargs=kwargs))
 
+    @tp.override
     @classmethod
     def debug_draw_hitboxes(cls, value: bool) -> None:
         """
@@ -273,6 +274,7 @@ class Island(LogicGameEntity):
                 GameCollisions.collision_group_islands, self, position, size
             )
 
+    @tp.override
     def to_dict(self) -> tp.MutableMapping[str, tp.Any]:
         """
         Convert island state to a dictionary for serialization/saving.

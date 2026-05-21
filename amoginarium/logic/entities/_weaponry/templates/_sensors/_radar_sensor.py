@@ -115,6 +115,7 @@ class RadarSensor(BaseSensor):
 
         return out
 
+    @tp.override
     def get_targets(
         self, from_entities: tp.Iterable[LogicGameEntity] | None = None
     ) -> list[LogicGameEntity]:

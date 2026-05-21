@@ -75,6 +75,7 @@ class Shield(Something):
     def in_use(self) -> bool:
         return self._in_use
 
+    @tp.override
     def use(self) -> None:
         """
         Start using the item.
@@ -84,6 +85,7 @@ class Shield(Something):
             self._in_use = True
             self.add(Updated)
 
+    @tp.override
     def stop_use(self) -> None:
         """
         Stop using the item.
@@ -93,6 +95,7 @@ class Shield(Something):
             self._in_use = False
             self.remove(Updated)
 
+    @tp.override
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
         super().remove_parent(
             at_pos
@@ -102,11 +105,12 @@ class Shield(Something):
             velocity,
         )
 
+    @tp.override
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
         events: list[CollisionEvent[Island | Bullet | Grenade | Player]],
-    ) -> None:
+    ) -> list[bool] | None:
         """
         Distribute collision start events to different methods.
 
@@ -128,7 +132,8 @@ class Shield(Something):
             events: list[CollisionEvent[Island | Player | Bullet]]
             super()._collision_start(group_id, events)
 
-    def _update_collision(
+    @tp.override
+    def _update_collision(  # type: ignore
         self,
         *,
         position: Vec2 | EllipsisType = ...,
@@ -136,6 +141,8 @@ class Shield(Something):
         rotation: float = 0.0,
         positions: list[Vec2] | None = None,
         centered: bool | EllipsisType = ...,
+        radius: float | None = None,
+        collision_active: bool | EllipsisType = ...,
         shift_history: bool = True,
     ) -> None:
         super()._update_collision(
@@ -144,9 +151,12 @@ class Shield(Something):
             rotation=self.facing.angle,
             positions=positions,
             centered=True,
+            radius=radius,
+            collision_active=collision_active,
             shift_history=shift_history,
         )
 
+    @tp.override
     def item_pickupable(self) -> bool:
         return self._parent is None and super().item_pickupable()
 
@@ -162,6 +172,7 @@ class Shield(Something):
         if self._uses_left <= 0:
             self.kill(killed_by=hit_by)
 
+    @tp.override
     def _update(self, delta: float, **_) -> None:
         if self.parent:
             d = Vec2().from_polar(

@@ -99,6 +99,7 @@ class Item(LogicGameEntity):
                 continue
             event.other_entity.pickup_item(self)
 
+    @tp.override
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
@@ -140,6 +141,7 @@ class Item(LogicGameEntity):
         self.highlight()
         self._collision_active = True
 
+    @tp.override
     def _update(self, delta: float, *, keep_position: bool = False) -> None:
         if self._parent:
             if not keep_position:

@@ -151,6 +151,7 @@ class Grenade(Bullet):
                 self.velocity.x += other_velocity.x
                 self.velocity.y += other_velocity.y
 
+    @tp.override
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
@@ -182,6 +183,7 @@ class Grenade(Bullet):
             return [False for _ in events]
         return None
 
+    @tp.override
     def _update(self, delta: float, update_facing: bool = True) -> None:
         if GameCollisions.collision_group_islands in self._active_normals:
             for n in self._active_normals[GameCollisions.collision_group_islands]:
@@ -199,6 +201,7 @@ class Grenade(Bullet):
         super()._update(delta, update_facing=update_facing)
 
     # noinspection DuplicatedCode
+    @tp.override
     def add_velocity(self, value: Vec2) -> None:
         """
         Add velocity to the entity and guarantee that it will be valid (for short bursts)
@@ -218,6 +221,7 @@ class Grenade(Bullet):
         self._velocity_to_add.y += y
 
     # noinspection DuplicatedCode
+    @tp.override
     def add_acceleration(self, value: Vec2) -> None:
         """
         Add acceleration to the entity and guarantee that it will be valid (for long accelerations)

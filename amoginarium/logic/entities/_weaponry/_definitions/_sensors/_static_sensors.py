@@ -93,11 +93,12 @@ class VisualSensor(LogicGameEntity):
             if dmg > 0 and event.other_entity.parent != self:
                 self.hit(dmg, hit_by=event.other_entity)
 
+    @tp.override
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
         events: list[CollisionEvent[Bullet]],
-    ) -> None:
+    ) -> list[bool] | None:
         if group_id == GameCollisions.collision_group_bullets:
             self.__on_collision_bullet(events)
 

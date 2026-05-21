@@ -61,14 +61,17 @@ class HealingPotion(Something):
         self._f_velocity = 0
         self._f_tilt = 0
 
+    @tp.override
     def use(self) -> None:
         self._drinking = True
 
+    @tp.override
     def stop_use(self) -> None:
         self._drinking = False
         if self._sound.playing:
             self._sound.done()
 
+    @tp.override
     def _update(self, delta: float, **_) -> None:
         if not self.parent:
             super()._update(delta)

@@ -192,10 +192,6 @@ class Player(Passenger, LogicGameEntity):
         return True
 
     @property
-    def alive(self) -> bool:
-        return self._alive
-
-    @property
     def item(self) -> ItemLike | None:
         if not hasattr(self, "_hotbar"):
             return None
@@ -388,6 +384,7 @@ class Player(Passenger, LogicGameEntity):
                 event.other_entity.stop_highlight()
                 self._colliding_rideables.remove(event.other_entity)
 
+    @tp.override
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
@@ -443,6 +440,7 @@ class Player(Passenger, LogicGameEntity):
             return None
         return None
 
+    @tp.override
     def _collision_end(
         self,
         group_id: CollisionGroupIDType,
@@ -460,6 +458,7 @@ class Player(Passenger, LogicGameEntity):
         super().clear_controlled_entity(to_clear)
 
     # noinspection DuplicatedCode
+    @tp.override
     def _update(self, delta) -> None:
         # update passenger status
         self.update_passenger(delta)
@@ -717,6 +716,7 @@ class Player(Passenger, LogicGameEntity):
 
         super()._update(0)
 
+    @tp.override
     def add_velocity(self, value: Vec2) -> None:
         """
         Add velocity to the entity and guarantee that it will be valid (for short bursts)
@@ -735,6 +735,7 @@ class Player(Passenger, LogicGameEntity):
         self._velocity_to_add.x += x
         self._velocity_to_add.y += y
 
+    @tp.override
     def add_acceleration(self, value: Vec2) -> None:
         """
         Add acceleration to the entity and guarantee that it will be valid (for long accelerations)

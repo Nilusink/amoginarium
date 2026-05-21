@@ -201,6 +201,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         """Max engagement range."""
         return self._default_engagement_max_range
 
+    @tp.override
     @property
     def root(self) -> BaseLogicEntity:
         # return player if ridden
@@ -269,16 +270,17 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     def _shoot_at(
         self,
-        target_angle: Vec2,
+        target_angle: Vec2,  # noqa: ARG002
         tof: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
-        **bullet_args,
+        **bullet_args: tp.Any,
     ) -> None:
         """Checks if shot is inside parameters."""
         self.weapon.shoot(
             self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
 
+    @tp.override
     def _update(self, delta: float, *, set_facing: bool = True) -> None:
         # update weapon
         self.weapon.update(delta)

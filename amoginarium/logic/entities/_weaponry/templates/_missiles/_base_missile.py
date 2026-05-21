@@ -104,10 +104,12 @@ class BaseMissile(AerodynamicEntity):
         """Currently produced thrust."""
         return 0
 
+    @tp.override
     @property
     def mass(self) -> float:
         return self._mass + self._fuel_mass
 
+    @tp.override
     @property
     def alpha(self) -> float:
         return normalize_angle_neg(self.velocity.angle - self.facing.angle)
@@ -121,7 +123,7 @@ class BaseMissile(AerodynamicEntity):
         killed_by: MurderViable | EllipsisType = ...,
         kill_children: bool = True,
     ) -> None:
-        val = super()._kill(killed_by)
+        val = super()._kill(killed_by=killed_by)
 
         if not isinstance(self._sound, EllipsisType):
             self._sound.stop()
@@ -131,7 +133,8 @@ class BaseMissile(AerodynamicEntity):
 
         return val
 
-    def _update(self, delta: float, apply_thrust: bool = True) -> None:  # noqa: FBT002
+    @tp.override
+    def _update(self, delta: float, apply_thrust: bool = True) -> None:
         # apply thrust force at rear of missile
         if self.thrust != 0 and apply_thrust:
             self.apply_force(

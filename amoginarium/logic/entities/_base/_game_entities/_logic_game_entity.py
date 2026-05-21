@@ -172,7 +172,7 @@ class LogicGameEntity(
     # endregion
 
     # region methods
-    def to_dict(self) -> dict | None:
+    def to_dict(self) -> tp.MutableMapping[str, tp.Any] | None:
         """:return: convert the entity to a dict if possible"""
         if not self.serializable:
             print_ic_style(
@@ -209,6 +209,7 @@ class LogicGameEntity(
         if self._impulse_resistance_factor > 0:
             self._acceleration_to_add += value
 
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Update logic game entity

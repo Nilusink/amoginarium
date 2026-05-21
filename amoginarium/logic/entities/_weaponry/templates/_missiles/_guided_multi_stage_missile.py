@@ -170,6 +170,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
         else:
             self._rudder_angle = 0
 
+    @tp.override
     def _update(self, delta: float, apply_thrust: bool = True) -> None:
         super()._update(delta, apply_thrust=apply_thrust)
 

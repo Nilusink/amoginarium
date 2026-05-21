@@ -127,6 +127,7 @@ class AerodynamicEntity(Bullet):
     def _update_rudder(self, delta: float) -> None:
         """Update rudder position."""
 
+    @tp.override
     def _update(self, delta: float) -> None:
         forward_force = Vec2()
 
@@ -204,6 +205,7 @@ class AerodynamicEntity(Bullet):
         self._buffer.param2 = self.velocity.angle
         self._buffer.param1 = self.velocity.length
 
+    @tp.override
     def _update_collision(  # type: ignore
         self,
         *,
