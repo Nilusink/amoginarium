@@ -15,7 +15,7 @@ import typing as tp
 
 import numpy as np
 
-from amoginarium.shared import MissileCIDs, MurderViable
+from amoginarium.shared import MissileCIDs
 from amoginarium.shared.utility import calculate_launch_angle_all_directions
 from amoginarium.shared.utility import clamp_angle, PI_4, PIDController, Vec2
 
@@ -26,7 +26,7 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared import base_entity_t, Coalitions, MurderViable
 
     from ...._base import LogicGameEntity
     from .._weapon_actors.sensors import BaseWeaponsSensor

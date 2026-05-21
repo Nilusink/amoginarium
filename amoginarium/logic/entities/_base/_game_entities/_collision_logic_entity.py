@@ -17,7 +17,6 @@ from types import EllipsisType
 from icecream import ic
 
 from amoginarium.shared import CollisionLogicEntityLike
-from amoginarium.shared.collision_detection import CollisionHitboxType
 from amoginarium.shared.utility import get_default
 
 from .._base_entities import PositionedLogicEntity
@@ -33,6 +32,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.collision_detection import CollisionEventIDType
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
     from amoginarium.shared.collision_detection import CollisionGroupIDType
+    from amoginarium.shared.collision_detection import CollisionHitboxType
     from amoginarium.shared.utility import Vec2
 
 

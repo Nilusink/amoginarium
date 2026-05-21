@@ -9,21 +9,21 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
-from types import EllipsisType
 import typing as tp
 
 import numpy as np
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, ProcessCommand, SensorCIDs, MurderViable
+from amoginarium.shared import BaseCommandType, ProcessCommand, SensorCIDs
 from amoginarium.shared.utility import convert_coord, MASK16, pack_int, Vec2
 
 from ...._base import PositionedLogicEntity, Updated
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t
+    from amoginarium.shared import base_entity_t, MurderViable
     from amoginarium.shared.utility import coord_t
 
     from ...._base import LogicGameEntity
@@ -165,7 +165,7 @@ class BaseSensor(PositionedLogicEntity):
                     self._values_per_param,
                     sectors + [MASK16] * (self._values_per_param - len(sectors)),
                 )
-    
+
     @tp.override
     def _kill(
         self,

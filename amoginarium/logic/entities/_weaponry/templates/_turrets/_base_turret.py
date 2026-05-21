@@ -19,7 +19,7 @@ from types import EllipsisType, NoneType
 import numpy as np
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs, MurderViable
+from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import calculate_launch_angle, get_default, MASK16
 from amoginarium.shared.utility import MASK32, MASK64, normalize_angle, Vec2
@@ -30,7 +30,8 @@ from .._sensors import DetectionGroup
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
-    from amoginarium.shared import base_entity_t, Coalitions, VisibleGameEntityLike
+    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared import MurderViable, VisibleGameEntityLike
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
 
     from .._sensors import BaseSensor
