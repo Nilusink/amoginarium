@@ -25,7 +25,7 @@ from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import calculate_launch_angle, get_default, MASK16
 from amoginarium.shared.utility import MASK32, MASK64, normalize_angle, Vec2
 
-from ...._base import Bullets, GameCollisions, GravityAffected, LogicGameEntity, Players
+from ...._base import Bullets, GameCollisions, GravityAffected, LogicGameEntity
 from .._sensors import DetectionGroup
 
 if tp.TYPE_CHECKING:

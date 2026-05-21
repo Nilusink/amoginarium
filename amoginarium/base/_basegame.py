@@ -24,27 +24,16 @@ from icecream import colorizedStderrPrint, ic
 
 from amoginarium import pv
 from amoginarium.graphics.controllers import Controllers, KeyboardController
-from amoginarium.graphics.entities import (
-    Drawn_0,
-    Drawn_1,
-    Drawn_2,
-    SyncedEntities,
-    UIEntities,
-)
+from amoginarium.graphics.entities import Drawn_0, Drawn_1, Drawn_2
+from amoginarium.graphics.entities import SyncedEntities, UIEntities
 from amoginarium.graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.graphics.textures import textures
 from amoginarium.graphics.ui import UICursor
 from amoginarium.logic import run_continuous
 from amoginarium.shared import BaseCommandType, ProcessCommand, ProcessCommandType
-from amoginarium.shared.debugging import (
-    CC,
-    cum_timer,
-    get_fg_color,
-    print_ic_style,
-    print_with_prefix,
-    run_with_debug,
-)
+from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
+from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.settings import Settings
 
 from ._pausemenu import PauseMenu

@@ -594,7 +594,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                 [0, 1, 0],
             ]
         )
-        labels, num_islands = ndimage.label(mask, structure=structure)
+        labels, _num_islands = ndimage.label(mask, structure=structure)
 
         # write map
         block_size = 24 * 3

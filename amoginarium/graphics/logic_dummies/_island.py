@@ -19,7 +19,7 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.graphics.render_bindings import renderer
 from amoginarium.shared import IslandCIDs
-from amoginarium.shared.utility import Vec2, clamp, convert_coord
+from amoginarium.shared.utility import clamp, convert_coord, Vec2
 
 from ..textures import textures
 from ._synced_entities import SyncedGraphicsEntity
