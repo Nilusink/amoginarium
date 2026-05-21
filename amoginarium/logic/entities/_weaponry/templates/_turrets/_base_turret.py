@@ -19,7 +19,7 @@ from types import EllipsisType, NoneType
 import numpy as np
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
+from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs, MurderViable
 from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import calculate_launch_angle, get_default, MASK16
 from amoginarium.shared.utility import MASK32, MASK64, normalize_angle, Vec2
@@ -305,8 +305,11 @@ class BaseTurret(LogicGameEntity):
         if self._hp <= 0:
             self.kill(hit_by)
 
+    @tp.override
     def _kill(
-        self, killed_by: tp.Any | EllipsisType = ..., kill_children: bool = True
+        self,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
     ) -> None:
         self.weapon.stop()
         self.weapon.kill(killed_by)

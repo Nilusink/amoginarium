@@ -423,6 +423,8 @@ class Player(Passenger, LogicGameEntity):
         - Shield: Same goes for shield except is even more complex
         - Grenades: No reaction to Grenades for the player
         - Bullets: The bullet calls hit to avoid hitting too much when tunneling
+        - AerodynamicEntity: The entity calls hit
+            to avoid hitting too much when tunneling
         - RideableTurret: Player can enter/ride the turret.
 
         :param group_id: ID of the other group involved in the collision
@@ -674,6 +676,7 @@ class Player(Passenger, LogicGameEntity):
         # else:
         #     self.__should_be_killed = 0
 
+    @tp.override
     def _kill(
         self,
         killed_by: MurderViable | EllipsisType = ...,

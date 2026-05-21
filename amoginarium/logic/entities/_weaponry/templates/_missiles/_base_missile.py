@@ -12,7 +12,7 @@ from __future__ import annotations
 import typing as tp
 from types import EllipsisType
 
-from amoginarium.shared import MissileCIDs
+from amoginarium.shared import MissileCIDs, MurderViable
 from amoginarium.shared.utility import get_default, normalize_angle_neg, Vec2
 
 from ...._base import DebugPolygonEntity
@@ -114,7 +114,12 @@ class BaseMissile(AerodynamicEntity):
 
     # endregion
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
+    @tp.override
+    def _kill(
+        self,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         val = super()._kill(killed_by)
 
         if not isinstance(self._sound, EllipsisType):

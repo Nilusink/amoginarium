@@ -112,6 +112,8 @@ class Shield(Something):
 
         - Island: Shield falls to the ground and hovers over it when not in inventory
         - Bullet: The bulleQt calls hit to avoid hitting too much when tunneling
+        - AerodynamicEntity: The entity calls hit
+            to avoid hitting too much when tunneling
         - Grenade: Grenades bounce back from shields. No reaction to the shield
         - Player: Players collect the shield if they have no parent
 

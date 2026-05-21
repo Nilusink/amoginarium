@@ -15,7 +15,7 @@ import typing as tp
 
 import numpy as np
 
-from amoginarium.shared import MissileCIDs
+from amoginarium.shared import MissileCIDs, MurderViable
 from amoginarium.shared.utility import calculate_launch_angle_all_directions
 from amoginarium.shared.utility import clamp_angle, PI_4, PIDController, Vec2
 
@@ -93,11 +93,16 @@ class GuidedMultiStageMissile(MultiStageMissile):
         else:
             self._sensor = None
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
+    @tp.override
+    def _kill(
+        self,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         if self._sensor:
             self._sensor.kill(self)
 
-        return super()._kill(killed_by)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         """

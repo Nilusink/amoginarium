@@ -35,7 +35,7 @@ class _GameCollisions:
         "COLLISION_START",
         "COLLISION_END",
         "collision_group_rideable_turrets",
-        "collision_group_missiles",
+        "collision_group_aerodynamic_entity",
         "collision_group_grenades",
         "collision_group_players",
         "collision_group_bullets",
@@ -54,7 +54,7 @@ class _GameCollisions:
     COLLISION_END: CollisionCallbackType
 
     collision_group_rideable_turrets: CollisionGroupIDType
-    collision_group_missiles: CollisionGroupIDType
+    collision_group_aerodynamic_entity: CollisionGroupIDType
     collision_group_grenades: CollisionGroupIDType
     collision_group_players: CollisionGroupIDType
     collision_group_bullets: CollisionGroupIDType
@@ -94,7 +94,7 @@ class _GameCollisions:
         self.collision_group_rideable_turrets = self.collision_manager.add_group(
             max_level=0
         )
-        self.collision_group_missiles = self.collision_manager.add_group(
+        self.collision_group_aerodynamic_entity = self.collision_manager.add_group(
             max_level=1, hitbox_type="obb"
         )
         self.collision_group_grenades = self.collision_manager.add_group(
@@ -119,7 +119,7 @@ class _GameCollisions:
             self.collision_group_turrets,
             self.collision_group_shields,
             self.collision_group_items,
-            self.collision_group_missiles,
+            self.collision_group_aerodynamic_entity,
             self.collision_group_rideable_turrets,
         ]
 
@@ -128,8 +128,9 @@ class _GameCollisions:
         }
 
         self.create_relations(
-            self.collision_group_missiles,
+            self.collision_group_aerodynamic_entity,
             [
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_rideable_turrets,
                 self.collision_group_islands,
                 self.collision_group_bullets,
@@ -142,7 +143,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_grenades,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_players,
@@ -153,7 +154,7 @@ class _GameCollisions:
             self.collision_group_players,
             [
                 self.collision_group_rideable_turrets,
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_grenades,
@@ -165,7 +166,7 @@ class _GameCollisions:
             self.collision_group_bullets,
             [
                 self.collision_group_rideable_turrets,
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_turrets,
@@ -177,7 +178,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_islands,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_players,
                 self.collision_group_bullets,
                 self.collision_group_grenades,
@@ -187,14 +188,14 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_turrets,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_bullets,
             ],
         )
         self.create_relations(
             self.collision_group_rideable_turrets,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_bullets,
                 self.collision_group_players,
             ],
@@ -202,7 +203,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_shields,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_bullets,
                 self.collision_group_grenades,
                 self.collision_group_islands,

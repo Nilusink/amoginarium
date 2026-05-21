@@ -437,13 +437,13 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
 
             if self.__debug_entity is None:
                 match hitbox:
-                    case CollisionHitboxType.aabb:
+                    case "aabb":
                         self.__debug_entity = DebugRectangleEntity(
                             runtime_buffer=self._runtime_buffer,
                             position=self.position,
                             size=self.size,
                         )
-                    case CollisionHitboxType.circle:
+                    case "circle":
                         self.__debug_entity = DebugCircleEntity(
                             runtime_buffer=self._runtime_buffer,
                             position=self.position,
@@ -459,7 +459,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
             if collision_group is not None and self.__collision_entity_id is not None:
                 self.__debug_entity.show()
                 match hitbox:
-                    case CollisionHitboxType.aabb:
+                    case "aabb":
                         debug_pos: Vec2 | None = (
                             GameCollisions.collision_manager.get_position(
                                 collision_group, self.__collision_entity_id
@@ -475,7 +475,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
                         if debug_size is not None:
                             self.__debug_entity.size = debug_size
 
-                    case CollisionHitboxType.circle:
+                    case "circle":
                         debug_pos = GameCollisions.collision_manager.get_position(
                             collision_group, self.__collision_entity_id
                         )
@@ -523,6 +523,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         self._update_collision()
         super()._update(delta)
 
+    @tp.override
     def _kill(
         self,
         killed_by: MurderViable | EllipsisType = ...,

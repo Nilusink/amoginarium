@@ -161,6 +161,8 @@ class Grenade(Bullet):
 
         - Island: Grenades bounce back from islands
         - Bullet: The bullet calls hit to avoid hitting too much when tunneling
+        - AerodynamicEntity: The entity calls hit
+            to avoid hitting too much when tunneling
         - Player: Players kick the grenade
         - Shield: Grenades bounce back from shields
 

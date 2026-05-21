@@ -9,12 +9,13 @@ Authors: Nilusink, LukasKrah
 
 from __future__ import annotations
 
+from types import EllipsisType
 import typing as tp
 
 import numpy as np
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, ProcessCommand, SensorCIDs
+from amoginarium.shared import BaseCommandType, ProcessCommand, SensorCIDs, MurderViable
 from amoginarium.shared.utility import convert_coord, MASK16, pack_int, Vec2
 
 from ...._base import PositionedLogicEntity, Updated
@@ -164,12 +165,17 @@ class BaseSensor(PositionedLogicEntity):
                     self._values_per_param,
                     sectors + [MASK16] * (self._values_per_param - len(sectors)),
                 )
-
-    def _kill(self, *args, **kwargs) -> None:
+    
+    @tp.override
+    def _kill(
+        self,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         if self._detection_group:
             self._detection_group.remove_sensor(self)
 
-        super()._kill(*args, **kwargs)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} range={self.detection_range}>"

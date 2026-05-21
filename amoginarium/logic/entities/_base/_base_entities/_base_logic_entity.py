@@ -208,7 +208,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     def _kill(
         self,
-        killed_by: MurderViable | EllipsisType = ...,
+        killed_by: MurderViable | EllipsisType = ...,  # noqa: ARG002
         kill_children: bool = True,
     ) -> None:
         """

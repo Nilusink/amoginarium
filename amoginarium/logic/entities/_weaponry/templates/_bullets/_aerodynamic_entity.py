@@ -50,7 +50,7 @@ class AerodynamicEntity(Bullet):
     _default_rudder_max_angle: float = 1
 
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
-        GameCollisions.collision_group_missiles
+        GameCollisions.collision_group_aerodynamic_entity
     )
 
     def __init__(

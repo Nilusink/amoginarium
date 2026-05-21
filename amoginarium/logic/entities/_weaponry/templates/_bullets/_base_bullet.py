@@ -41,6 +41,7 @@ if tp.TYPE_CHECKING:
     from ..._definitions import Grenade
     from .._turrets import BaseTurret, RideableTurret
     from .._weapon_actors.fuzes import BaseFuze
+    from ._aerodynamic_entity import AerodynamicEntity
 
 
 SQR2: tp.Final[np.float64] = np.sqrt(2)
@@ -536,9 +537,12 @@ class Bullet(LogicGameEntity):
                     self.kill(killed_by=event.other_entity)
                     break
 
-    def __collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
+    def __collision_bullet_or_aerodynamic_entity(
+        self,
+        events: list[CollisionEvent[Bullet | AerodynamicEntity]],
+    ) -> None:
         """
-        Bullet hit each other
+        Bullet/Aerodynamic entities hit each other
         :param events: All details regarding the collisions.
         """
         for event in events:
@@ -548,11 +552,23 @@ class Bullet(LogicGameEntity):
         self,
         group_id: CollisionGroupIDType,
         events: list[
-            CollisionEvent[Island | Bullet | Player | BaseTurret | Grenade | Shield]
+            CollisionEvent[
+                Island
+                | Bullet
+                | Player
+                | BaseTurret
+                | Grenade
+                | Shield
+                | RideableTurret
+                | AerodynamicEntity
+            ]
         ],
     ) -> list[bool] | None:
         """
         Distribute collision start events to different methods.
+
+        Note: This function takes into account
+            that it gets also called as an AerodynamicEntity.
 
         - Island: Bullet kills itself
         - Bullet: Bullets hit each other
@@ -561,6 +577,7 @@ class Bullet(LogicGameEntity):
         - Grenade: Bullet hits the grenade and either pierces through or dies
         - Shield: Bullet hits the shield and either pierces through or dies
         - RideableTurret: Bullet hits the turret and either pierces through or dies
+        - AerodynamicEntity: Bullets and Aerodynamic entities hit each other
 
         :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collision
@@ -586,9 +603,12 @@ class Bullet(LogicGameEntity):
             events: list[CollisionEvent[Island]]
             self.__collision_island(events)
 
-        elif group_id == GameCollisions.collision_group_bullets:
-            events: list[CollisionEvent[Bullet]]
-            self.__collision_bullet(events)
+        elif (
+            group_id == GameCollisions.collision_group_bullets
+            or group_id == GameCollisions.collision_group_aerodynamic_entity
+        ):
+            events: list[CollisionEvent[Bullet | AerodynamicEntity]]
+            self.__collision_bullet_or_aerodynamic_entity(events)
 
         return None
 
@@ -660,6 +680,7 @@ class Bullet(LogicGameEntity):
 
         return True
 
+    @tp.override
     def _kill(
         self,
         killed_by: MurderViable | EllipsisType = ...,
