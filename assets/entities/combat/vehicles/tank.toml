@@ -1,0 +1,23 @@
+[id]
+from = "vehicle.base"
+cid = "vehicle.tank"
+
+[visibility]
+size = [128, 128]
+
+[image]
+name = "skyshield_base"
+
+[behaviour]
+mass = 80
+engine_power = 350
+max_speed = 1200
+
+
+[weapon]
+type = "<weapon.flak>"
+position_offset = [0, -8]
+
+[passenger]
+visible = false
+offset = [0, 0]

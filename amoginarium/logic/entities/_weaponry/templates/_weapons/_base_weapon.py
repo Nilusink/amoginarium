@@ -295,11 +295,11 @@ class BaseWeapon(Item):
                         self.muzzle_velocity + self.parent.velocity.length,
                     ),
                 )
-                * -self.parent._impulse_resistance_factor
+                * -1
             )
 
             recoil *= self.recoil_factor
-            self.parent.add_velocity(recoil)
+            self.parent.add_impulse(recoil)
 
         self._current_recoil_time = self._recoil_time
 

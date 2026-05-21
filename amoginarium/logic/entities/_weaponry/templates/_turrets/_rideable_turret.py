@@ -106,14 +106,14 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         weapon_kwargs: dict[str, tp.Any] | EllipsisType = ...,
     ) -> None:
         # get size and convert to Vec2
-        size_: Vec2 = convert_coord(  # type: ignore
+        size_: Vec2 = convert_coord(  # type: ignore[trust-me-bro]
             get_default(size, self._default_size), Vec2
         )
         weapon_kwargs: dict = get_default(weapon_kwargs, {})
 
         # get defaults
         self._passenger_visible = self._default_passenger_visible
-        self._passenger_offset: Vec2 = convert_coord(  # type: ignore
+        self._passenger_offset: Vec2 = convert_coord(  # type: ignore[trust-me-bro]
             self._default_passenger_offset, Vec2
         )
         self._turn_speed: float = get_default(self._default_turn_speed, np.inf)
@@ -126,8 +126,8 @@ class RideableTurret(RideablePerks, LogicGameEntity):
                 for a in valid_angles
             ]
 
-            self._valid_angles[0].length = self.max_range  # type: ignore
-            self._valid_angles[1].length = self.max_range  # type: ignore
+            self._valid_angles[0].length = self.max_range  # type: ignore[trust-me-bro]
+            self._valid_angles[1].length = self.max_range  # type: ignore[trust-me-bro]
 
         # region weapon creation
         if isinstance(self._default_weapon_position_offset, Vec2):
@@ -297,7 +297,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
 
-    def _update(self, delta: float, set_facing: bool = True) -> None:
+    def _update(self, delta: float, *, set_facing: bool = True) -> None:
         # update weapon
         self.weapon.update(delta)
 

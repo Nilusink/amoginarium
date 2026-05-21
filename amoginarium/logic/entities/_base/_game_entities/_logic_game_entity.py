@@ -35,7 +35,8 @@ class LogicGameEntity(
     CollisionLogicEntity, LogicGameEntityLike, DynamicEntityParentViable
 ):
     """
-    Implements all basic stuff for logic entities
+    Implements all basic stuff for logic entities.
+
     - Parent/Children relations
     - Groups
     - Update
@@ -57,6 +58,13 @@ class LogicGameEntity(
         "_tags",
     )
 
+    # region ClassVars
+    _default_mass: tp.ClassVar[float] = (
+        0.0  # if set, will be used to calculate impulse_resistance_factor
+    )
+    _impulse_resistance_factor: tp.ClassVar[float] = -1  # 0 = completely resistant
+    # endregion
+
     # region InstanceVars
     facing: Vec2  # public / no property for faster access
     velocity: Vec2  # public / no property for faster access
@@ -70,6 +78,12 @@ class LogicGameEntity(
     _tags: dict[str, None]
 
     # endregion
+
+    def __init_subclass__(cls, **kwargs: tp.Any) -> None:
+        super().__init_subclass__(**kwargs)
+
+        if cls._default_mass > 0:
+            cls._impulse_resistance_factor = 1 / cls._default_mass
 
     def __init__(
         self,
@@ -169,19 +183,32 @@ class LogicGameEntity(
 
         return {"type": self.cid(), "pos": self.position}
 
+    def add_impulse(self, impulse: Vec2) -> None:
+        """
+        Add an impulse force to the entity.
+
+        :param impulse: impulse to add.
+        """
+        if self._impulse_resistance_factor > 0:
+            self._velocity_to_add += impulse * self._impulse_resistance_factor
+
     def add_velocity(self, value: Vec2) -> None:
         """
-        Add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee that it will be valid (for short bursts).
+
         :param value: 2D velocity to add.
         """
-        self._velocity_to_add += value
+        if self._impulse_resistance_factor > 0:
+            self._velocity_to_add += value
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee that it will be valid (for long accelerations).
+
         :param value: 2D acceleration to add.
         """
-        self._acceleration_to_add += value
+        if self._impulse_resistance_factor > 0:
+            self._acceleration_to_add += value
 
     def _update(self, delta: float) -> None:
         """

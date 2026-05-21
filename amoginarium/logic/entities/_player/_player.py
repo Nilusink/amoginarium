@@ -110,7 +110,7 @@ class Player(Passenger, LogicGameEntity):
         self._hotbar = Inventory(self, 10, self._set_slot, self._remove_hover)
         self._hotbar.set_highlight(0)
         items = [
-            DYNAMIC_ENTITIES["weapon.ak47"](self, self._runtime_buffer, False),
+            DYNAMIC_ENTITIES["weapon.tv_guided"](self, self._runtime_buffer, False),
             DYNAMIC_ENTITIES["weapon.minigun"](
                 self, self._runtime_buffer, False, parent_position_offset=(0, 10)
             ),
@@ -207,10 +207,10 @@ class Player(Passenger, LogicGameEntity):
         if e:
             cam_pos = e.get_camera_position()
             cam_zoom = e.get_camera_zoom()
+            centered = e.camera_centered
 
             if cam_pos is not None:
                 pos = cam_pos
-                centered = True
 
             if cam_zoom is not None:
                 zoom = cam_zoom
@@ -388,7 +388,10 @@ class Player(Passenger, LogicGameEntity):
             events: list[CollisionEvent[Item]]
             self.__on_collision_item(events)
 
-        elif events[0].group_id == GameCollisions.collision_group_rideable_turrets:
+        elif (
+            events[0].group_id == GameCollisions.collision_group_rideable_turrets
+            or events[0].group_id == GameCollisions.collision_group_vehicles
+        ):
             events: list[CollisionEvent[RideableTurret]]
             self.__on_collision_rideable(events)
 

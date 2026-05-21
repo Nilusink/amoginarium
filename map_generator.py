@@ -24,22 +24,27 @@ from scipy import ndimage
 from amoginarium import pv
 from amoginarium.base import BaseGame
 from amoginarium.graphics.render_bindings import renderer
-from amoginarium.logic.map import array_get, generate_chunk_noise, iterate_chunk, to_str
+from amoginarium.logic.map import array_get, generate_chunk_noise
+from amoginarium.logic.map import iterate_chunk as i_c
+from amoginarium.logic.map import to_str
+from amoginarium.shared.debugging import cum_timer
 from amoginarium.shared.utility import Color, Vec2
 
 if tp.TYPE_CHECKING:
     from numpy.typing import NDArray
+
+iterate_chunk = cum_timer.time_this(i_c)
 
 DEBUG: tp.Final[bool] = False
 ISLAND_SIZE: tp.Final[int] = 64
 CHUNK_SIZE: tp.Final[int] = ISLAND_SIZE * 96
 CHUNK_SMOOTHING_ITERATIONS: tp.Final[int] = 16
 UPDATE_INTERVAL: tp.Final[float] = 0.0
-MAX_LEN: tp.Final[int] = 8
+MAX_LEN: tp.Final[int] = 16
 
 PATH_DIR_WEIGHTS: tp.Final[list[int]] = [
-    6,
-    2,
+    8,
+    3,
     1,
     1,
 ]
@@ -185,7 +190,9 @@ def merge_chunks(
     return big, mask, (min_x, min_y)
 
 
-def top_of_column(island: NDArray[np.bool_], x: int, y_start: int = 0) -> int | None:
+def top_of_column(
+    island: NDArray[np.bool_ | np.float64], x: int, y_start: int = 0
+) -> int | None:
     """
     Find top of island via column scan.
 
@@ -325,7 +332,6 @@ def choose_turret(
             headroom = headroom or y_size
 
             if headroom < y_size - 1:
-                ic("height fail", y_size, turret[0][1][1], headroom)
                 # add visual hint to map buffer if height fail
                 map_buffer[
                     spawn_pos[1] - y_size : max(1, spawn_pos[1] - y_size + headroom),
@@ -339,9 +345,6 @@ def choose_turret(
                 turret_args["cluster"] = True
 
             turrets.append(((*turret[0], turret_args), turret[1]))
-
-        else:
-            ic("size fail")
 
     if len(turrets) == 0:
         ic("no valid turrets found")
@@ -562,16 +565,25 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             for chunk_pos, chunk in chunk_populations.items():
                 pos = Vec2().from_cartesian(*chunk_pos) * CHUNK_SIZE
 
-                render_chunk(pos, chunk)
+                renderer.draw_rect(
+                    pos - world_pos,
+                    (CHUNK_SIZE,) * 2,
+                    Color().from_1(0.5, 0.5, 0.5, 1),
+                )
 
             renderer.display_draw_frame()
 
         # merge chunks
+        ic("merging ...")
         big_chunk, chunk_mask, min_pos = merge_chunks(chunk_populations, spawn_masks)
+        ic("iterating")
+
         for _ in range(12):
             iterate_chunk(big_chunk, 0, 1)
 
         iterate_chunk(big_chunk, 2, 1)
+
+        ic("iteration done")
 
         # group islands
         mask = big_chunk < 0.5
@@ -582,12 +594,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                 [0, 1, 0],
             ]
         )
-        labels, num_islands = ndimage.label(mask, structure=structure)
-
-        islands: list[NDArray] = [  # type: ignore[trust-me-bro]
-            (labels == i) for i in range(1, num_islands + 1)
-        ]
-        coords_list = [np.argwhere(labels == i) for i in range(1, num_islands + 1)]
+        labels, _num_islands = ndimage.label(mask, structure=structure)
 
         # write map
         block_size = 24 * 3
@@ -610,13 +617,17 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
             "entities": [],
         }
 
-        # create islands
-        for island, pts in zip(islands, coords_list, strict=True):
-            min_y, min_x = pts.min(axis=0)
-            max_y, max_x = pts.max(axis=0)
+        slices = ndimage.find_objects(labels)
 
-            cropped = island[min_y : max_y + 1, min_x : max_x + 1]
-            pos = tuple(map(float, (min_x * ISLAND_SIZE, min_y * ISLAND_SIZE)))
+        for i, slc in enumerate(slices, start=1):
+            if slc is None:
+                continue
+
+            cropped = labels[slc] == i
+
+            min_y, min_x = slc[0].start, slc[1].start
+
+            pos = (min_x * ISLAND_SIZE, min_y * ISLAND_SIZE)
 
             chunk = {
                 "args": {
@@ -624,6 +635,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
                     "form": cropped.tolist(),
                 }
             }
+
             map_data["platforms"].append(chunk)
 
         # generate turrets

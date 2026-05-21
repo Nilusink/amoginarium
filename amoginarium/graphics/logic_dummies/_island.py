@@ -1,11 +1,10 @@
 """
-visual representation of an island.
+Visual representation of an Island.
 
-_island.py
-30.03.2026
-
-Author:
-Nilusink
+Path: amoginarium/graphics/logic_dummies/_island.py
+Project: amoginarium
+Created: 30.03.2026
+Authors: Nilusink
 """
 
 from __future__ import annotations
@@ -378,16 +377,16 @@ class Island(SyncedGraphicsEntity):
         world_end = world_position + resolution
 
         # check if island is on screen
-        if (
-            self.pos.x + self.size.x < world_position.x
-            or self.pos.x > world_position.x + resolution.x
-            or self.pos.y + self.size.y < world_position.y
-            or self.pos.y > world_position.y + resolution.y
-        ):
-            return
+        # if (
+        #     self.pos.x + self.size.x < world_position.x
+        #     or self.pos.x > world_position.x + resolution.x
+        #     or self.pos.y + self.size.y < world_position.y
+        #     or self.pos.y > world_position.y + resolution.y
+        # ):
+        #     return
 
         if self._highlight:
-            renderer.start_stencil(True)
+            renderer.start_stencil(True)  # noqa: FBT003
 
         # for texture_id, (column_offset, row_offset) in self.__parsed_island:
         n_rows = len(self.__parsed_island)
@@ -427,7 +426,7 @@ class Island(SyncedGraphicsEntity):
                     )
 
         if self._highlight:
-            renderer.enable_stencil(True)
+            renderer.enable_stencil(True)  # noqa: FBT003
 
             renderer.draw_rect(
                 self.world_position - self.size / 2,
