@@ -95,10 +95,10 @@ class Grenade(Bullet):
             **kwargs,
         )
 
-    def __collision_island(self, events: list[CollisionEvent["Island"]]) -> None:
+    def __collision_island(self, events: list[CollisionEvent[Island]]) -> None:
         """
         Grenades bounce back from islands
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
         for event in events:
             self.position.x = event.position.x
@@ -121,13 +121,13 @@ class Grenade(Bullet):
                 if ny < -0.5 and abs(self.velocity.y) < 30:
                     self.velocity.y = 0
 
-    def __collision_player(self, events: list[CollisionEvent["Player"]]) -> None:
+    def __collision_player(self, events: list[CollisionEvent[Player]]) -> None:
         for event in events:
             if self._lifetime > 0.5:
                 self.add_velocity(event.other_entity.velocity)
                 self.add_velocity(Vec2().from_cartesian(0, -200))
 
-    def __collision_shield(self, events: list[CollisionEvent["Shield"]]) -> None:
+    def __collision_shield(self, events: list[CollisionEvent[Shield]]) -> None:
         for event in events:
             self.position.x = event.position.x
             self.position.y = event.position.y
@@ -154,10 +154,10 @@ class Grenade(Bullet):
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
-        events: list[CollisionEvent[tp.Union["Island", "Bullet", "Player", "Shield"]]],
+        events: list[CollisionEvent[Island | Bullet | Player | Shield]],
     ) -> list[bool] | None:
         """
-        Distribute collision start events to different methods
+        Distribute collision start events to different methods.
 
         - Island: Grenades bounce back from islands
         - Bullet: The bullet calls hit to avoid hitting too much when tunneling
@@ -169,18 +169,18 @@ class Grenade(Bullet):
         :return: List of booleans stating whether each collision is accepted.
         """
         if group_id == GameCollisions.collision_group_islands:
-            events: list[CollisionEvent["Island"]]
+            events: list[CollisionEvent[Island]]
             self.__collision_island(events)
         elif group_id == GameCollisions.collision_group_players:
-            events: list[CollisionEvent["Player"]]
+            events: list[CollisionEvent[Player]]
             self.__collision_player(events)
         elif group_id == GameCollisions.collision_group_shields:
-            events: list[CollisionEvent["Shield"]]
+            events: list[CollisionEvent[Shield]]
             self.__collision_shield(events)
             return [False for _ in events]
         return None
 
-    def _update(self, delta: float, update_facing: bool = True):
+    def _update(self, delta: float, update_facing: bool = True) -> None:
         if GameCollisions.collision_group_islands in self._active_normals:
             for n in self._active_normals[GameCollisions.collision_group_islands]:
                 if n.y < -0.5:

@@ -87,7 +87,7 @@ class VisualSensor(LogicGameEntity):
         if self._hp <= 0:
             self.kill()
 
-    def __on_collision_bullet(self, events: list[CollisionEvent["Bullet"]]) -> None:
+    def __on_collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
         for event in events:
             dmg = event.other_entity.damage
             if dmg > 0 and event.other_entity.parent != self:
@@ -96,7 +96,7 @@ class VisualSensor(LogicGameEntity):
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
-        events: list[CollisionEvent["Bullet"]],
+        events: list[CollisionEvent[Bullet]],
     ) -> None:
         if group_id == GameCollisions.collision_group_bullets:
             self.__on_collision_bullet(events)
