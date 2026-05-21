@@ -21,18 +21,20 @@ from icecream import colorize, ic
 
 from amoginarium import pv
 from amoginarium.shared import base_entity_t, BaseCommandType, Coalitions
-from amoginarium.shared import ENTITY_COUNTER, GlobalVars, INVENTORY_COUNTER
-from amoginarium.shared import MAX_ENTITIES, ProcessCommand, ProcessCommandType
+from amoginarium.shared import DebugVarsEnum, ENTITY_COUNTER, GlobalVars
+from amoginarium.shared import INVENTORY_COUNTER, MAX_ENTITIES
+from amoginarium.shared import ProcessCommand, ProcessCommandType
 from amoginarium.shared.audio import BackgroundPlayer, sound_effects
 from amoginarium.shared.audio import SoundEffect, sounds
 from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_style
 from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.utility import PIDController, Vec2
 
-from .entities import Bullets, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER, DetectionGroup
-from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAffected
-from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
+from .entities import Bullets, CollisionLogicEntity, DETECTION_GLOBAL_BLUE
+from .entities import DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
+from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, FrictionXAffected
+from .entities import GameCollisions, GrassIsland, GravityAffected, Island
+from .entities import LogicGameEntity, Player, Players, SPAWNABLES, Updated
 from .graphics_dummies import Controller
 
 if TYPE_CHECKING:
@@ -486,6 +488,17 @@ class LogicProcess:
             )
 
 
+def update_debug_vars(values: int) -> None:
+    """
+    Update debug flags based on bitmask values
+    :param values: new bitmask of debug flags.
+    """
+    # Hitbox debug
+    draw_hitboxes = bool(values & (1 << DebugVarsEnum.DRAW_HITBOXES.value))
+    CollisionLogicEntity.debug_draw_hitboxes(draw_hitboxes)
+    Island.debug_draw_hitboxes(draw_hitboxes)
+
+
 def run_continuous(  # noqa: PLR0917
     shm: SharedMemory,
     c_shm: SharedMemory,
@@ -520,6 +533,9 @@ def run_continuous(  # noqa: PLR0917
     )
 
     ic("logic process start")
+
+    # Debugging callbacks
+    pv.global_vars.add_callback(value="_debug_vars", callback=update_debug_vars)
 
     last_run = perf_counter()
     last_update_success = False

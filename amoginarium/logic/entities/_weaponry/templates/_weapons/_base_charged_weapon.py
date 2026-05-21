@@ -9,12 +9,12 @@ Authors: Nilusink
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as tp
 
 from .._bullets import Bullet
 from ._base_weapon import BaseWeapon
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
@@ -112,12 +112,14 @@ class BaseChargedWeapon(BaseWeapon):
         """
         return self._charged
 
+    @tp.override
     @property
     def muzzle_velocity(self) -> float:
         return self._bullet_speed_range[0] + (
             self._bullet_speed_range[1] - self._bullet_speed_range[0]
         ) * self._speed_curve(self._charged)
 
+    @tp.override
     @property
     def recoil_factor(self) -> float:
         return self._recoil_range[0] + (
@@ -160,6 +162,7 @@ class BaseChargedWeapon(BaseWeapon):
         self._charging = False
         self._charged = 0
 
+    @tp.override
     def _update(self, delta: float) -> None:
         if self._charging:
             # limit charge to 0-1
@@ -171,13 +174,15 @@ class BaseChargedWeapon(BaseWeapon):
         super()._update(delta)
         self._runtime_buffer[self.id].param2 = self._charged
 
+    @tp.override
     def shoot(
         self,
         direction: Vec2,
         bullet_tof: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
+        **bullet_args,
     ) -> bool:
         self._update_kwargs()
-        res = super().shoot(direction, bullet_tof, target_pos)
+        res = super().shoot(direction, bullet_tof, target_pos, bullet_args=bullet_args)
         self.stop()
         return res

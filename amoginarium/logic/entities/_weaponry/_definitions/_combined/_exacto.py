@@ -25,9 +25,10 @@ if tp.TYPE_CHECKING:
     from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, Coalitions, VisibleGameEntityLike
+    from amoginarium.shared.collision_detection import CollisionExceptionIDType
     from amoginarium.shared.utility import coord_t
 
-    from ...._base import CollisionType, LogicGameEntity
+    from ...._base import LogicGameEntity
 
 
 class ExactoBullet(AerodynamicEntity):
@@ -54,7 +55,7 @@ class ExactoBullet(AerodynamicEntity):
 
     _max_alpha: float = 0.1
 
-    EXACTO_DOES_NOT_TRACE_ITSELF: CollisionType.ExceptionID = (
+    EXACTO_DOES_NOT_TRACE_ITSELF: CollisionExceptionIDType = (
         GameCollisions.add_exception()
     )
 
@@ -84,6 +85,7 @@ class ExactoBullet(AerodynamicEntity):
         self._cluster_args = {"target_callback": target_callback}
         self._guidance_delay = get_default(guidance_delay, self._default_guidance_delay)
 
+    @tp.override
     def _update_rudder(self, delta: float) -> None:
         if self._guidance_delay > 0:
             self._guidance_delay -= delta
@@ -154,6 +156,7 @@ class ExactoSniper(BaseWeapon):
     def _get_current_target(self) -> Vec2 | None:
         return self._current_target
 
+    @tp.override
     def _update(self, delta: float) -> None:
         super()._update(delta)
 
@@ -243,6 +246,7 @@ class ExactoTurret(BaseTurret):
 
         return None
 
+    @tp.override
     def _get_firing_solution(
         self,
         target: VisibleGameEntityLike,
@@ -261,6 +265,7 @@ class ExactoTurret(BaseTurret):
             tof=(diff.length / self.weapon.muzzle_velocity) * 1.5,
         )
 
+    @tp.override
     def _shoot_weapon(self, solution: TargetSolution) -> bool:
         shot = self.weapon.shoot(
             self.facing,

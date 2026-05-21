@@ -4,7 +4,7 @@ Central manager for handling all game collision logic.
 Registers groups, handles hitboxes,
 and establishes bidirectional collision relationships.
 
-Path: amoginarium/logic/entities/_base/_collision/_collision_manager.py
+Path: amoginarium/logic/entities/_base/_collision/_game_collisions.py
 Project: amoginarium
 Created: 16.04.2026
 Authors: LukasKrah, Nilusink
@@ -17,15 +17,16 @@ import typing as tp
 from amoginarium.shared.collision_detection import CollisionManager
 
 if tp.TYPE_CHECKING:
-    from amoginarium.shared.collision_detection import CollisionCallback
-
-    from ._collision_types import CollisionType, HitboxTypes
+    from amoginarium.shared.collision_detection import CollisionCallbackType
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
+    from amoginarium.shared.collision_detection import CollisionHitboxType
 
 
 # noinspection DuplicatedCode
 class _GameCollisions:
     """
     Manages the collision groups and relations for the game world.
+
     Handles the registration of hitboxes and bidirectional collision callbacks.
     """
 
@@ -34,7 +35,7 @@ class _GameCollisions:
         "COLLISION_START",
         "COLLISION_END",
         "collision_group_rideable_turrets",
-        "collision_group_missiles",
+        "collision_group_aerodynamic_entity",
         "collision_group_grenades",
         "collision_group_vehicles",
         "collision_group_players",
@@ -50,22 +51,22 @@ class _GameCollisions:
     )
 
     collision_manager: tp.Final[CollisionManager]
-    COLLISION_START: CollisionCallback
-    COLLISION_END: CollisionCallback
+    COLLISION_START: CollisionCallbackType
+    COLLISION_END: CollisionCallbackType
 
-    collision_group_rideable_turrets: CollisionType.GroupID
-    collision_group_missiles: CollisionType.GroupID
-    collision_group_grenades: CollisionType.GroupID
-    collision_group_vehicles: CollisionType.GroupID
-    collision_group_players: CollisionType.GroupID
-    collision_group_bullets: CollisionType.GroupID
-    collision_group_islands: CollisionType.GroupID
-    collision_group_turrets: CollisionType.GroupID
-    collision_group_shields: CollisionType.GroupID
-    collision_group_items: CollisionType.GroupID
+    collision_group_rideable_turrets: CollisionGroupIDType
+    collision_group_aerodynamic_entity: CollisionGroupIDType
+    collision_group_grenades: CollisionGroupIDType
+    collision_group_vehicles: CollisionGroupIDType
+    collision_group_players: CollisionGroupIDType
+    collision_group_bullets: CollisionGroupIDType
+    collision_group_islands: CollisionGroupIDType
+    collision_group_turrets: CollisionGroupIDType
+    collision_group_shields: CollisionGroupIDType
+    collision_group_items: CollisionGroupIDType
 
-    all_groups: list[CollisionType.GroupID]
-    hitboxes: dict[CollisionType.GroupID, HitboxTypes]
+    all_groups: list[CollisionGroupIDType]
+    hitboxes: dict[CollisionGroupIDType, CollisionHitboxType]
     _registered_relations: set[tuple[int, int]]
     __exception_num: int
 
@@ -78,10 +79,11 @@ class _GameCollisions:
         self.__exception_num = -1
 
     def init(
-        self, callback_start: CollisionCallback, callback_end: CollisionCallback
+        self, callback_start: CollisionCallbackType, callback_end: CollisionCallbackType
     ) -> None:
         """
-        Initializes the collision groups and sets up the default relations.
+        Initialize the collision groups and sets up the default relations.
+
         :param callback_start: The callback triggered when a collision begins.
         :param callback_end: The callback triggered when a collision ends.
         """
@@ -90,11 +92,11 @@ class _GameCollisions:
         self._setup_groups()
 
     def _setup_groups(self) -> None:
-        """Internal method to define collision groups and their relationships."""
+        """Define collision groups and their relationships."""
         self.collision_group_rideable_turrets = self.collision_manager.add_group(
             max_level=0
         )
-        self.collision_group_missiles = self.collision_manager.add_group(
+        self.collision_group_aerodynamic_entity = self.collision_manager.add_group(
             max_level=1, hitbox_type="obb"
         )
         self.collision_group_grenades = self.collision_manager.add_group(
@@ -123,7 +125,7 @@ class _GameCollisions:
             self.collision_group_turrets,
             self.collision_group_shields,
             self.collision_group_items,
-            self.collision_group_missiles,
+            self.collision_group_aerodynamic_entity,
             self.collision_group_rideable_turrets,
         ]
 
@@ -132,8 +134,9 @@ class _GameCollisions:
         }
 
         self.create_relations(
-            self.collision_group_missiles,
+            self.collision_group_aerodynamic_entity,
             [
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_rideable_turrets,
                 self.collision_group_islands,
                 self.collision_group_bullets,
@@ -147,7 +150,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_grenades,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_players,
@@ -158,7 +161,7 @@ class _GameCollisions:
             self.collision_group_players,
             [
                 self.collision_group_rideable_turrets,
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_vehicles,
                 self.collision_group_grenades,
                 self.collision_group_shields,
@@ -171,7 +174,7 @@ class _GameCollisions:
             self.collision_group_bullets,
             [
                 self.collision_group_rideable_turrets,
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_grenades,
                 self.collision_group_vehicles,
                 self.collision_group_islands,
@@ -184,7 +187,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_islands,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_grenades,
                 self.collision_group_vehicles,
                 self.collision_group_players,
@@ -195,14 +198,14 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_turrets,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_bullets,
             ],
         )
         self.create_relations(
             self.collision_group_rideable_turrets,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_bullets,
                 self.collision_group_players,
             ],
@@ -210,7 +213,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_vehicles,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_islands,
                 self.collision_group_bullets,
                 self.collision_group_players,
@@ -219,7 +222,7 @@ class _GameCollisions:
         self.create_relations(
             self.collision_group_shields,
             [
-                self.collision_group_missiles,
+                self.collision_group_aerodynamic_entity,
                 self.collision_group_bullets,
                 self.collision_group_grenades,
                 self.collision_group_islands,
@@ -233,11 +236,15 @@ class _GameCollisions:
         )
 
     def create_relations(
-        self, group_a: CollisionType.GroupID, targets: list[CollisionType.GroupID]
+        self,
+        group_a: CollisionGroupIDType,
+        targets: list[CollisionGroupIDType],
     ) -> None:
         """
-        Registers bidirectional collision relations between a group and multiple target groups.
+        Register bidirectional collision relations one group and multiple groups.
+
         Prevents redundant registration if the relation already exists.
+
         :param group_a: The ID of the first collision group.
         :param targets: A list of group IDs to collide with.
         """
@@ -248,20 +255,20 @@ class _GameCollisions:
                 continue
 
             self.collision_manager.create_relation(
-                group_a_id=group_a,
-                group_b_id=group_b,
-                cb_a_on_start=self.COLLISION_START,
-                cb_b_on_start=self.COLLISION_START,
-                cb_a_on_end=self.COLLISION_END,
-                cb_b_on_end=self.COLLISION_END,
+                a_group_id=group_a,
+                b_group_id=group_b,
+                a_collision_start_callback=self.COLLISION_START,
+                b_collision_start_callback=self.COLLISION_START,
+                a_collision_end_callback=self.COLLISION_END,
+                b_collision_end_callback=self.COLLISION_END,
             )
             self._registered_relations.add(rel_key)
 
     def add_exception(self) -> int:
         """
-        Registers a new collision exception rule and returns its unique identifier.
+        Register a new collision exception rule and returns its unique identifier.
+
         :return: A unique integer identifier for the collision exception.
-        :rtype: int.
         """
         self.__exception_num += 1
         return self.__exception_num

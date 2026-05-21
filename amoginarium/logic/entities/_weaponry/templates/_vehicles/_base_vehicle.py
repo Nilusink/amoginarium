@@ -72,6 +72,7 @@ class Vehicle(RideableTurret):
 
     # endregion
 
+    @tp.override
     def _update(self, delta: float, *, set_facing: bool = True) -> None:
         # update movement
         # update keys

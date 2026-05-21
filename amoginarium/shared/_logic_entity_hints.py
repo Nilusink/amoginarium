@@ -20,18 +20,27 @@ if tp.TYPE_CHECKING:
 
 
 class EntityChildViable(tp.Protocol):
-    """Minimum requirements for an object to be assigned as a child of a logic entity."""
+    """
+    Minimum requirements for an object to be assigned as the child of a logic entity.
+    """
 
     def update(self, delta: float) -> None:
         """
-        Update function
-        :param delta: Tme since the last update.
+        Update function.
+
+        :param delta: Tme since the last update
         """
-        ...
 
     def kill(self) -> None:
         """Clean up and terminate the child."""
-        ...
+
+
+class MurderViable(tp.Protocol):
+    """Can kill someone."""
+
+    @property
+    def parent(self) -> tp.Any:
+        """Parent."""
 
 
 class BaseLogicEntityLike(tp.Protocol):
@@ -91,19 +100,61 @@ class BaseLogicEntityLike(tp.Protocol):
         """
         ...
 
-    def _kill(self, killed_by: tp.Any | EllipsisType = ...) -> None:
+    def _before_kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> bool:
+        """
+        Whether the entity can be killed. Called before _kill
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively
+        :return: Whether the entity kill is accepted.
+        """
+
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         """
         Kill entity and all its children
-        :param killed_by: who killed this entity.
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively.
+        """
+
+    def _after_kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+        killed: bool = True,
+    ) -> None:
+        """
+        Called at the end of kill no matter if the kill was accepted or not
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well recursively
+        :param killed: Whether the entity kill was accepted or not.
         """
         ...
 
-    def kill(self, killed_by: tp.Any | EllipsisType = ...) -> None:
+    def kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+        force_kill: bool = False,
+    ) -> bool | None:
         """
         Kill entity and all its children
-        :param killed_by: who killed this entity.
+        :param killed_by: who killed this entity
+        :param kill_children: whether to kill children as well as recursively
+        :param force_kill: whether to kill even if before kill returns False
+        :return: Whether the entity was killed or not. May be denied by _before_kill.
+            None if the entity is already dead.
         """
-        ...
 
     def _update(self, delta: float) -> None:
         """
@@ -201,42 +252,56 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         ...
 
     def _collision_start(
-        self, event: list[CollisionEvent[CollisionLogicEntityLike]]
+        self,
+        group_id: int,
+        events: list[CollisionEvent[CollisionLogicEntityLike]],
     ) -> list[bool] | None:
         """
-        Called on collision start
-        :param event: All details regarding the collisions
-        :return: List of bools stating whether each collision is accepted.
+        Called on collision start.
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collisions
+        :return: List of booleans stating whether each collision is accepted.
+           If false, the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again
+           if there still is a collision in the next update
         """
-        ...
 
     def collision_start(
-        self, events: list[CollisionEvent[CollisionLogicEntityLike]]
+        self, group_id: int, events: list[CollisionEvent[CollisionLogicEntityLike]]
     ) -> list[bool] | None:
         """
-        Callback for collision start, called by the collision manager
-        :param events: All details regarding the collisions
-        :return: List of bools stating whether each collision is accepted.
+        Callback for collision start, called by the collision manager.
+
+        Shouldn't be overwritten in inheritance. Instead, use _collision_start.
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
+        :return: List of booleans stating whether each collision is accepted.
+           If false, the CollisionManager will not call COLLISION_END
+           and will call COLLISION_START again
+           if there still is a collision in the next update
         """
-        ...
 
     def _collision_end(
-        self, events: list[CollisionEvent[CollisionLogicEntityLike]]
+        self, group_id: int, events: list[CollisionEvent[CollisionLogicEntityLike]]
     ) -> None:
         """
-        Called on collision end
-        :param events: All details regarding the collisions.
+        Called on collision end.
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collisions
         """
-        ...
 
     def collision_end(
-        self, events: list[CollisionEvent[CollisionLogicEntityLike]]
+        self, group_id: int, events: list[CollisionEvent[CollisionLogicEntityLike]]
     ) -> None:
         """
-        Callback on COLLISION_END, called by the collision manager
-        :param events: All details regarding the collisions.
+        Callback on COLLISION_END, called by the collision manager.
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collisions
         """
-        ...
 
     def _create_collision(
         self,
@@ -251,6 +316,7 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
     ) -> None:
         """
         Registers this entity with the collision manager.
+
         :param position: The 2D position for the hitbox. Defaults to self.position.
         :param size: The 2D size for the hitbox. Defaults to self.size.
         :param rotation: Rotation of the hitbox in radians.

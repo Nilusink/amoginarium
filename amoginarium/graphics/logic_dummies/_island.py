@@ -210,7 +210,6 @@ class Island(SyncedGraphicsEntity):
     _textures: IslandTextures = ...
 
     _image_size: tuple[int, int] = (64, 64)
-    debug = False
 
     def __new__(cls, *_args: tp.Any, **_kwargs: tp.Any) -> tp.Self:
         # only load texture once

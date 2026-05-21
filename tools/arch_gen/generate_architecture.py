@@ -74,7 +74,7 @@ def process_packages() -> None:
             cross_links.add((ts, td))
 
     root_name = root_dir.resolve().name or "_base"
-    mmd = ["graph TD\n", '    subgraph Group [" "]\n']
+    mmd = ["graph TD\n", '    subgraph Group ["\u200e"]\n']
     mmd += [f"        {i}\n" for i in valid_top_items]
     mmd += ["    end\n\n"]
     mmd += [f"    {root_name} --- {i}\n" for i in valid_top_items if i in init_imports]
@@ -132,14 +132,14 @@ def process_classes() -> None:
     mmd, g_idx = ["graph RL"], 1
     for i in range(0, len(isolated), 5):
         mmd += (
-            [f'\n    subgraph Group{g_idx} [" "]\n']
+            [f'\n    subgraph Group{g_idx} ["\u200e"]\n']
             + [f"        {n}\n" for n in isolated[i : i + 5]]
             + ["    end"]
         )
         g_idx += 1
     for t in trees:
         mmd += (
-            [f'\n    subgraph Group{g_idx} [" "]\n']
+            [f'\n    subgraph Group{g_idx} ["\u200e"]\n']
             + [f"        {n}\n" for n in t]
             + ["    end"]
         )
@@ -174,16 +174,15 @@ def update_readme_file() -> None:
                 f.write(f"# {h_path}\n\n")
                 if sc:
                     f.write(
-                        f'<details open>\n\n<summary><h2 style="display:inline-block">Structure</h2></summary>\n\n{S_START}\n{ticks}mermaid\n{sc}\n{ticks}\n{S_END}\n\n</details>\n\n'
+                        f'<details open>\n\n<summary><h2 style="display:inline-block">Structure</h2></summary>\n{S_START}\n\n{ticks}mermaid\n{sc}\n{ticks}\n\n{S_END}\n</details>\n\n'
                     )
                 if cc:
                     f.write(
-                        f'<details open>\n\n<summary><h2 style="display:inline-block">Classes</h2></summary>\n\n{C_START}\n{ticks}mermaid\n{cc}\n{ticks}\n{C_END}\n\n</details>\n'
+                        f'<details open>\n\n<summary><h2 style="display:inline-block">Classes</h2></summary>\n{C_START}\n\n{ticks}mermaid\n{cc}\n{ticks}\n\n{C_END}\n</details>\n'
                     )
             print("  -> Created README.md")
         ss, cs = bool(sc), bool(cc)
     else:
-        # UPDATE: Strict tag checking
         content = open(rf, encoding="utf-8").read()
         ss, cs, updated = False, False, False
 
@@ -192,7 +191,7 @@ def update_readme_file() -> None:
         if s_idx != -1:
             e_idx = content.find(S_END, s_idx)
             if e_idx != -1:
-                replacement = f"\n{ticks}mermaid\n{sc}\n{ticks}\n" if sc else "\n"
+                replacement = f"\n\n{ticks}mermaid\n{cc}\n{ticks}\n\n" if cc else "\n"
                 content = (
                     content[: s_idx + len(S_START)] + replacement + content[e_idx:]
                 )

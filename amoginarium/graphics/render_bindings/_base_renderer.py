@@ -156,7 +156,6 @@ class BaseRenderer(abc.ABC):
     # endregion
 
     # region Stencil
-    # TODO mytodo - stencils work!
     @abc.abstractmethod
     def apply_stencil[**A](
         self,

@@ -30,6 +30,7 @@ class MagicSensor(BaseSensor):
 
     _CID = SensorCIDs.sensor_magic
 
+    @tp.override
     def get_targets(
         self, from_entities: tp.Iterable[LogicGameEntity] | None = None
     ) -> list[LogicGameEntity]:

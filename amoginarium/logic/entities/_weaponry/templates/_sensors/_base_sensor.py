@@ -21,8 +21,9 @@ from ...._base import PositionedLogicEntity, Updated
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t
+    from amoginarium.shared import base_entity_t, MurderViable
     from amoginarium.shared.utility import coord_t
 
     from ...._base import LogicGameEntity
@@ -38,7 +39,6 @@ class BaseSensor(PositionedLogicEntity):
     _CID = SensorCIDs.hud
     _has_sectors: tp.ClassVar[bool] = False
 
-    _parent: PositionedLogicEntity
     _visible: bool
     _min_rcs: float = 0
 
@@ -58,7 +58,6 @@ class BaseSensor(PositionedLogicEntity):
 
         self._detection_range = detection_range
         self._visible = visible
-        self._parent = parent
         if position_offset is ...:
             self._position_offset: Vec2 = Vec2()
 
@@ -91,10 +90,6 @@ class BaseSensor(PositionedLogicEntity):
     def detection_range(self) -> float:
         return self._detection_range
 
-    @property
-    def parent(self) -> PositionedLogicEntity:
-        return self._parent
-
     def _calculate_sphere(self) -> list[Vec2]:
         """
         Calculate detection sphere.
@@ -116,9 +111,10 @@ class BaseSensor(PositionedLogicEntity):
     ) -> list[LogicGameEntity]:
         raise NotImplementedError
 
+    @tp.override
     def _update(self, delta: float) -> None:
-        if hasattr(self.parent, "position"):
-            self.position = self.parent.position + self._position_offset
+        if hasattr(self._parent, "position"):
+            self.position = self._parent.position + self._position_offset
             # ic(self.position, self._buffer.param0)
 
         super()._update(delta)
@@ -165,11 +161,17 @@ class BaseSensor(PositionedLogicEntity):
                     sectors + [MASK16] * (self._values_per_param - len(sectors)),
                 )
 
-    def _kill(self, *_args, **_kwargs) -> None:
+    @tp.override
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         if self._detection_group:
             self._detection_group.remove_sensor(self)
 
-        super()._kill(*_args, **_kwargs)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} range={self.detection_range}>"

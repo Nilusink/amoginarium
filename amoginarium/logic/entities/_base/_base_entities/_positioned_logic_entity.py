@@ -95,6 +95,7 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
     # endregion
 
     # region Methods: Update
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Update shared memory and collision entity.

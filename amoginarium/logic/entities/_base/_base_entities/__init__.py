@@ -10,5 +10,5 @@ Created: 28.03.2026
 Authors: Nilusink, LukasKrah
 """
 
-from ._base_logic_entity import BaseLogicEntity, EntityChildViable
+from ._base_logic_entity import BaseLogicEntity
 from ._positioned_logic_entity import PositionedLogicEntity

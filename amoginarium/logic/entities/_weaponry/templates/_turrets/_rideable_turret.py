@@ -29,11 +29,9 @@ if tp.TYPE_CHECKING:
 
     from amoginarium.logic.entities import BaseLogicEntity
     from amoginarium.shared import base_entity_t
-    from amoginarium.shared.collision_detection import CollisionEvent
 
     from .....graphics_dummies import Controller
     from ...._player import Player
-    from .._bullets import Bullet
     from .._weapons import BaseWeapon
 
 
@@ -203,6 +201,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         """Max engagement range."""
         return self._default_engagement_max_range
 
+    @tp.override
     @property
     def root(self) -> BaseLogicEntity:
         # return player if ridden
@@ -255,22 +254,6 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     # endregion
 
-    # region collision
-    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
-        dmg = event.other_entity.damage
-        if dmg > 0 and event.other_entity.root != self.root:
-            self.hit(dmg, hit_by=event.other_entity)
-
-    def _collision_start(self, events: list[CollisionEvent[Bullet | Player]]) -> None:
-        # bullet - 5 turrets - events länge 5
-        # turret - events 1 bullet
-        for event in events:
-            if event.group_id == GameCollisions.collision_group_bullets:
-                event: CollisionEvent[Bullet]
-                self.__on_collision_bullet(event)
-
-    # endregion
-
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         """
         Deal damage to the turret.
@@ -283,20 +266,21 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
         # check for turret death
         if self._hp <= 0:
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
     def _shoot_at(
         self,
-        target_angle: Vec2,
+        target_angle: Vec2,  # noqa: ARG002
         tof: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
-        **bullet_args,
+        **bullet_args: tp.Any,
     ) -> None:
         """Checks if shot is inside parameters."""
         self.weapon.shoot(
             self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
 
+    @tp.override
     def _update(self, delta: float, *, set_facing: bool = True) -> None:
         # update weapon
         self.weapon.update(delta)
