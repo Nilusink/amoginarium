@@ -18,8 +18,9 @@ from .debugging import cum_timer
 from .utility import Vec2
 
 if tp.TYPE_CHECKING:
-    from ._debug_vars import DebugVarsEnum
     from multiprocessing.sharedctypes import Synchronized
+
+    from ._debug_vars import DebugVarsEnum
 
 _GLOBAL_VARS_VALUES: dict[str, type] = {
     "screen_size_x": c_double,

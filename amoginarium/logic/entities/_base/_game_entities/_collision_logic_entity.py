@@ -12,23 +12,22 @@ Authors: LukasKrah
 from __future__ import annotations
 
 import typing as tp
+from types import EllipsisType
 
 from icecream import ic
 
 from amoginarium.shared import CollisionLogicEntityLike
+from amoginarium.shared.collision_detection import CollisionHitboxType
 from amoginarium.shared.utility import get_default
 
 from .._base_entities import PositionedLogicEntity
 from .._collision import GameCollisions
 from .._debug import DebugCircleEntity, DebugPolygonEntity, DebugRectangleEntity
-from amoginarium.shared.collision_detection import CollisionHitboxType
-from types import EllipsisType
 
 if tp.TYPE_CHECKING:
-    from amoginarium.shared import MurderViable
     from ctypes import Array
 
-    from amoginarium.shared import base_entity_t
+    from amoginarium.shared import base_entity_t, MurderViable
     from amoginarium.shared.collision_detection import CollisionEntityIDType
     from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared.collision_detection import CollisionEventIDType
@@ -312,9 +311,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         # ic("COL END", self, events)
         # Filter for collisions that are still active
         actual_events = [
-            event
-            for event in events
-            if event.collision_id in self._active_collisions
+            event for event in events if event.collision_id in self._active_collisions
         ]
         for event in actual_events:
             if event.collision_id in self._active_collisions:

@@ -23,8 +23,9 @@ if tp.TYPE_CHECKING:
     from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
-    from ...._base import CollisionType, LogicGameEntity
+    from ...._base import LogicGameEntity
 
 
 class AerodynamicEntity(Bullet):
@@ -48,7 +49,7 @@ class AerodynamicEntity(Bullet):
     _default_rudder_size: float = 1
     _default_rudder_max_angle: float = 1
 
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = (
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
         GameCollisions.collision_group_missiles
     )
 

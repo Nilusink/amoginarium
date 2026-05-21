@@ -22,7 +22,8 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t, Coalitions
-    from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionEvent, \
+        CollisionGroupIDType
 
     from ...._base import LogicGameEntity
     from ...._items import Shield
@@ -153,7 +154,11 @@ class Grenade(Bullet):
             self.velocity.x += event.other_entity.parent.velocity.x
             self.velocity.y += event.other_entity.parent.velocity.y
 
-    def _collision_start(self, events: list[CollisionEvent]) -> list[bool] | None:
+    def _collision_start(
+        self,
+        group_id: CollisionGroupIDType,
+        events: list[CollisionEvent]
+    ) -> list[bool] | None:
         for event in events:
             if event.group_id == GameCollisions.collision_group_islands:
                 self.__on_collision_island(event)

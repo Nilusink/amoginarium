@@ -28,13 +28,13 @@ from ...._base import GravityAffected, LogicGameEntity, Updated
 from .._weapon_actors.fuzes import FUZES
 
 if tp.TYPE_CHECKING:
-    from amoginarium.shared import MurderViable
     from ctypes import Array
 
-    from amoginarium.shared import base_entity_t, CIDType, Coalitions
+    from amoginarium.shared import base_entity_t, CIDType, Coalitions, MurderViable
     from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionExceptionIDType
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
-    from ...._base import CollisionType
     from ...._items import Shield
     from ...._player import Player
     from ...._world import Island
@@ -56,7 +56,7 @@ class Bullet(LogicGameEntity):
     # region ClassVars
     _CID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
 
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID | None] = (
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
         GameCollisions.collision_group_bullets
     )
 
@@ -141,7 +141,7 @@ class Bullet(LogicGameEntity):
     _fuzes: list[BaseFuze]
 
     _left_root: bool
-    _initial_root_collision_exception: CollisionType.ExceptionID | None
+    _initial_root_collision_exception: CollisionGroupIDType | None
     _root_entity: LogicGameEntity | None
 
     _target_pos: Vec2 | EllipsisType
@@ -164,7 +164,7 @@ class Bullet(LogicGameEntity):
         *,
         initial_facing: float | EllipsisType = ...,
         centered: bool = True,
-        collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+        collision_group: CollisionGroupIDType | EllipsisType | None = ...,
         collision_exception_ids: list[int] | int | None = None,
         collision_exception_root: bool | EllipsisType = ...,
         collision_exception_root_additive: bool | EllipsisType = ...,
@@ -510,9 +510,7 @@ class Bullet(LogicGameEntity):
 
     def __collision_general_hit(
         self,
-        events: list[
-            CollisionEvent[BaseTurret | Player | Grenade | Shield]
-        ],
+        events: list[CollisionEvent[BaseTurret | Player | Grenade | Shield]],
     ) -> None:
         """
         General collision reaction is to try to hit the other entity
@@ -546,11 +544,9 @@ class Bullet(LogicGameEntity):
 
     def _collision_start(
         self,
-        group_id: CollisionType.GroupID,
+        group_id: CollisionGroupIDType,
         events: list[
-            CollisionEvent[
-                Island | Bullet | Player | BaseTurret | Grenade | Shield
-            ]
+            CollisionEvent[Island | Bullet | Player | BaseTurret | Grenade | Shield]
         ],
     ) -> list[bool] | None:
         """
@@ -704,7 +700,7 @@ class Bullet(LogicGameEntity):
                 else:
                     ttl = self._time_to_life
 
-                sibling_collision_exception: CollisionType.ExceptionID = (
+                sibling_collision_exception: CollisionExceptionIDType = (
                     GameCollisions.add_exception()
                 )
                 for _bi in range(self._cluster_amount):

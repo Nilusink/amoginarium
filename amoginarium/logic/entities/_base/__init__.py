@@ -7,7 +7,7 @@ Created: 27.04.2026
 Authors: LukasKrah
 """
 
-from ._base_entities import BaseLogicEntity, EntityChildViable, PositionedLogicEntity
+from ._base_entities import BaseLogicEntity, PositionedLogicEntity
 from ._collision import CollisionCallbackType, CollisionEntityIDType, CollisionEvent
 from ._collision import CollisionEventIDType, CollisionExceptionIDType
 from ._collision import CollisionGroupIDType, CollisionHitboxType, CollisionManager

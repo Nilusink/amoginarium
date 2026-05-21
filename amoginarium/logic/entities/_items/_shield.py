@@ -10,6 +10,7 @@ Authors: Nilusink, LukasKrah
 from __future__ import annotations
 
 import typing as tp
+from types import EllipsisType
 
 from amoginarium.shared import ItemCIDs
 from amoginarium.shared.audio import MetalPings
@@ -18,7 +19,6 @@ from amoginarium.shared.utility import Vec2
 from .. import Updated
 from .._base import GameCollisions
 from ._something import Something
-from types import EllipsisType
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
@@ -26,8 +26,9 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.audio import RandomizedEffect
     from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
-    from .._base import CollisionType, LogicGameEntity
+    from .._base import LogicGameEntity
     from .._player import Player
     from .._weaponry import Grenade
     from .._weaponry.templates import Bullet
@@ -103,7 +104,7 @@ class Shield(Something):
 
     def _collision_start(
         self,
-        group_id: CollisionType.GroupID,
+        group_id: CollisionGroupIDType,
         events: list[CollisionEvent[Island | Bullet | Grenade | Player]],
     ) -> None:
         """

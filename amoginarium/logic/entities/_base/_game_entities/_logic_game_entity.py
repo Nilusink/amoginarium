@@ -27,8 +27,7 @@ if tp.TYPE_CHECKING:
     from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
-
-    from .._collision import CollisionType
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
 
 class LogicGameEntity(
@@ -81,7 +80,7 @@ class LogicGameEntity(
         parent: LogicGameEntity | None = None,
         coalition: Coalitions | EllipsisType = ...,
         centered: bool = False,
-        collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+        collision_group: CollisionGroupIDType | EllipsisType | None = ...,
         collision_exception_ids: list[int] | int | None = None,
         collision_exception_root: bool | EllipsisType = ...,
         collision_exception_root_additive: bool | EllipsisType = ...,

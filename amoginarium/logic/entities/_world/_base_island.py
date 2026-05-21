@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import random
 import typing as tp
+from types import EllipsisType
 
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand
@@ -19,15 +20,13 @@ from amoginarium.shared.utility import convert_coord, find_minimum_rectangles_di
 from amoginarium.shared.utility import get_default, Vec2
 
 from .._base import DebugRectangleEntity, GameCollisions, LogicGameEntity, Walls
-from types import EllipsisType
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t, CIDType
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
     from amoginarium.shared.utility import coord_t
-
-    from .._base import CollisionType
 
 
 class Island(LogicGameEntity):
@@ -39,7 +38,7 @@ class Island(LogicGameEntity):
     __slots__ = ("_size", "_form", "_damage", "_bounce", "_debug_entities")
     # region ClassVars
     _block_size: tp.ClassVar[tuple[int, int]] = (64, 64)
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = (
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
         GameCollisions.collision_group_islands
     )
     __debug_draw_hitboxes: tp.ClassVar[bool] = False

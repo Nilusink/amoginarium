@@ -25,9 +25,10 @@ if tp.TYPE_CHECKING:
     from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, Coalitions, VisibleGameEntityLike
+    from amoginarium.shared.collision_detection import CollisionExceptionIDType
     from amoginarium.shared.utility import coord_t
 
-    from ...._base import CollisionType, LogicGameEntity
+    from ...._base import LogicGameEntity
 
 
 class ExactoBullet(AerodynamicEntity):
@@ -54,7 +55,7 @@ class ExactoBullet(AerodynamicEntity):
 
     _max_alpha: float = 0.1
 
-    EXACTO_DOES_NOT_TRACE_ITSELF: CollisionType.ExceptionID = (
+    EXACTO_DOES_NOT_TRACE_ITSELF: CollisionExceptionIDType = (
         GameCollisions.add_exception()
     )
 

@@ -16,7 +16,9 @@ from amoginarium.shared.utility import Vec2
 
 from ._base_group import BaseGroup
 from ._updated import Updated
-from ..._player import Player
+
+if tp.TYPE_CHECKING:
+    from ..._player import Player  # noqa: TC004
 
 
 class _Bullets(BaseGroup[PositionedLogicEntityLike]):
@@ -31,7 +33,7 @@ class _Walls(BaseGroup[PositionedLogicEntityLike]):
     __slots__ = ()
 
 
-class _Players(BaseGroup[Player]):
+class _Players(BaseGroup["Player"]):
     """Group containing all player entities and spawn logic."""
 
     __slots__ = ()
