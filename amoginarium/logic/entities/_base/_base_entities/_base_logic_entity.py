@@ -214,7 +214,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively
+        :param kill_children: whether to kill children as well recursively.
         """
         # kill children first
         if kill_children:
@@ -239,9 +239,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
         Called at the end of kill no matter if the kill was accepted or not
         :param killed_by: who killed this entity
         :param kill_children: whether to kill children as well recursively
-        :param killed: Whether the entity kill was accepted or not
+        :param killed: Whether the entity kill was accepted or not.
         """
-        ...
 
     @tp.final
     def kill(

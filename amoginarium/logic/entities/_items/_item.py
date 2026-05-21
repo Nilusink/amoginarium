@@ -90,7 +90,7 @@ class Item(LogicGameEntity):
         self.stop_highlight()
         self._collision_active = False
 
-    def __collision_player(self, events: list[CollisionEvent["Player"]]) -> None:
+    def __collision_player(self, events: list[CollisionEvent[Player]]) -> None:
         if not self.item_pickupable():
             return
 
@@ -102,10 +102,10 @@ class Item(LogicGameEntity):
     def _collision_start(
         self,
         group_id: CollisionGroupIDType,
-        events: list[CollisionEvent[tp.Union["Player", "Island", "Bullet"]]],
+        events: list[CollisionEvent[Player | Island | Bullet]],
     ) -> list[bool] | None:
         """
-        Distribute collision start events to different methods
+        Distribute collision start events to different methods.
 
         - Player: Player picks up the item if both sides agree
         - Island: Item falls to the ground and hovers over it when not in inventory
@@ -113,12 +113,11 @@ class Item(LogicGameEntity):
         :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collision
         """
-
         if group_id == GameCollisions.collision_group_islands:
-            events: list[CollisionEvent["Island"]]
+            events: list[CollisionEvent[Island]]
             self.position = events[0].position
         elif group_id == GameCollisions.collision_group_players:
-            events: list[CollisionEvent["Player"]]
+            events: list[CollisionEvent[Player]]
             self.__collision_player(events)
         return None
 

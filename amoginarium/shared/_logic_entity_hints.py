@@ -120,7 +120,7 @@ class BaseLogicEntityLike(tp.Protocol):
         """
         Kill entity and all its children
         :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively
+        :param kill_children: whether to kill children as well recursively.
         """
 
     def _after_kill(
@@ -133,7 +133,7 @@ class BaseLogicEntityLike(tp.Protocol):
         Called at the end of kill no matter if the kill was accepted or not
         :param killed_by: who killed this entity
         :param kill_children: whether to kill children as well recursively
-        :param killed: Whether the entity kill was accepted or not
+        :param killed: Whether the entity kill was accepted or not.
         """
         ...
 

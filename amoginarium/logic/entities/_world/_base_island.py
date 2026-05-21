@@ -19,10 +19,10 @@ from amoginarium.shared.utility import convert_coord, find_minimum_rectangles_di
 from amoginarium.shared.utility import get_default, Vec2
 
 from .._base import DebugRectangleEntity, GameCollisions, LogicGameEntity, Walls
+from types import EllipsisType
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
-    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, CIDType
     from amoginarium.shared.utility import coord_t
@@ -223,10 +223,9 @@ class Island(LogicGameEntity):
                 for debug_entity in self._debug_entities:
                     debug_entity.show()
 
-        else:
-            if self._debug_entities is not None:
-                for debug_entity in self._debug_entities:
-                    debug_entity.hide()
+        elif self._debug_entities is not None:
+            for debug_entity in self._debug_entities:
+                debug_entity.hide()
 
     def _create_collision_entites(self) -> None:
         """

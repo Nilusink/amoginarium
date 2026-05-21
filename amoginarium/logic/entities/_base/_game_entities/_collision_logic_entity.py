@@ -15,16 +15,18 @@ import typing as tp
 
 from icecream import ic
 
-from amoginarium.shared import CollisionLogicEntityLike, MurderViable
+from amoginarium.shared import CollisionLogicEntityLike
 from amoginarium.shared.utility import get_default
 
 from .._base_entities import PositionedLogicEntity
 from .._collision import GameCollisions
 from .._debug import DebugCircleEntity, DebugPolygonEntity, DebugRectangleEntity
+from amoginarium.shared.collision_detection import CollisionHitboxType
+from types import EllipsisType
 
 if tp.TYPE_CHECKING:
+    from amoginarium.shared import MurderViable
     from ctypes import Array
-    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.collision_detection import CollisionEntityIDType
@@ -32,10 +34,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.collision_detection import CollisionEventIDType
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
     from amoginarium.shared.collision_detection import CollisionGroupIDType
-    from amoginarium.shared.collision_detection import CollisionHitboxType
     from amoginarium.shared.utility import Vec2
-
-    from .._base_entities import BaseLogicEntity
 
 
 class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
@@ -252,7 +251,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :return: List of booleans stating whether each collision is accepted.
            If false, the CollisionManager will not call COLLISION_END
            and will call COLLISION_START again
-           if there still is a collision in the next update
+           if there still is a collision in the next update.
         """
 
     @tp.final
@@ -269,7 +268,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :return: List of booleans stating whether each collision is accepted.
            If false, the CollisionManager will not call COLLISION_END
            and will call COLLISION_START again
-           if there still is a collision in the next update
+           if there still is a collision in the next update.
         """
         # ic("COL START", self, events)
         collisions_result: list[bool] | None = self._collision_start(group_id, events)
@@ -296,7 +295,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         """
         Called on collision end
         :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
 
     @tp.final
@@ -308,17 +307,17 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         """
         Callback on COLLISION_END, called by the collision manager
         :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
         # ic("COL END", self, events)
         # Filter for collisions that are still active
         actual_events = [
             event
             for event in events
-            if event.collision_id in self._active_collisions.keys()
+            if event.collision_id in self._active_collisions
         ]
         for event in actual_events:
-            if event.collision_id in self._active_collisions.keys():
+            if event.collision_id in self._active_collisions:
                 del self._active_collisions[event.collision_id]
 
         self.__calculate_active_normals()
@@ -348,7 +347,7 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
         :param centered: Whether the hitbox is centered on the position.
         :param radius: Optional radius for circular hitboxes.
         :param collision_active: Whether the collision entity is active.
-            Defaults to self._collision_active
+            Defaults to self._collision_active.
         """
         if self.__collision_group is None:
             return
@@ -498,9 +497,8 @@ class CollisionLogicEntity(PositionedLogicEntity, CollisionLogicEntityLike):
                             )
                         )
 
-        else:
-            if self.__debug_entity is not None:
-                self.__debug_entity.hide()
+        elif self.__debug_entity is not None:
+            self.__debug_entity.hide()
 
     @tp.final
     def _delete_collision(self) -> None:

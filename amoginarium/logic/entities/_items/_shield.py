@@ -18,10 +18,10 @@ from amoginarium.shared.utility import Vec2
 from .. import Updated
 from .._base import GameCollisions
 from ._something import Something
+from types import EllipsisType
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
-    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.audio import RandomizedEffect
@@ -104,10 +104,10 @@ class Shield(Something):
     def _collision_start(
         self,
         group_id: CollisionType.GroupID,
-        events: list[CollisionEvent[tp.Union["Island", "Bullet", "Grenade", "Player"]]],
+        events: list[CollisionEvent[Island | Bullet | Grenade | Player]],
     ) -> None:
         """
-        Distribute collision start events to different methods
+        Distribute collision start events to different methods.
 
         - Island: Shield falls to the ground and hovers over it when not in inventory
         - Bullet: The bulleQt calls hit to avoid hitting too much when tunneling
@@ -122,7 +122,7 @@ class Shield(Something):
             or group_id == GameCollisions.collision_group_players
             or group_id == GameCollisions.collision_group_bullets
         ):
-            events: list[CollisionEvent[tp.Union["Island", "Player", "Bullet"]]]
+            events: list[CollisionEvent[Island | Player | Bullet]]
             super()._collision_start(group_id, events)
 
     def _update_collision(

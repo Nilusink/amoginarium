@@ -20,8 +20,6 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared import base_entity_t, MurderViable
     from amoginarium.shared.utility import Vec2
 
-    from .._base import LogicGameEntity
-
 
 class Something(Item):
     _max_uses: tp.ClassVar[int] = 1
@@ -106,7 +104,7 @@ class Something(Item):
         If the item is used up but gets reused, it will be reset instead of killed
         :param killed_by: who killed this entity
         :param kill_children: whether to kill children as well recursively
-        :return: False if the item gets reused
+        :return: False if the item gets reused.
         """
         if self._used_callback and self._used_callback(1):
             self.reset()

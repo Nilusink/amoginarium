@@ -24,7 +24,7 @@ class CollisionManager:
     - different entities registered in the groups
     It handles:
     - Calling collision_start and collision_end callbacks
-    - Using a grid to speed up collision detection
+    - Using a grid to speed up collision detection.
     """
 
     def __init__(
@@ -36,7 +36,7 @@ class CollisionManager:
         Create a new CollisionSystemManager
         :param base_cell_size: Size of one base cell of the grid (height and width)
         :param level_dividers: Each number creates a new sub-grid for each cell
-            recursive dividing the previous cells size by the given number
+            recursive dividing the previous cells size by the given number.
         """
 
     def add_group(
@@ -55,12 +55,12 @@ class CollisionManager:
             This is a pure speed improvement!
         :param hitbox_type: The type of the hitbox of the entities in this group.
             For simplicity, only one type is supported per group.
-        :return: The unique ID of the new group
+        :return: The unique ID of the new group.
         """
 
     def clear_all_entities(self) -> None:
         """
-        Deletes all registered entities
+        Deletes all registered entities.
         """
 
     def register_entity(
@@ -97,7 +97,7 @@ class CollisionManager:
             Any 2 entities that have the same exception ID will not collide.
         :param is_active: Whether the entity is alive.
             Useful for disabling collisions temporarily.
-        :return: The unique ID of the new entity
+        :return: The unique ID of the new entity.
         """
 
     def delete_entity(
@@ -108,7 +108,7 @@ class CollisionManager:
         """
         Delete an entity from the collision system
         :param group_id: Which group the entity belongs to
-        :param entity_id: The unique ID of the entity to delete
+        :param entity_id: The unique ID of the entity to delete.
         """
 
     def update_entity(
@@ -169,7 +169,7 @@ class CollisionManager:
             will get called on a collision start.
         :param b_collision_end_callback: Callback that group B
             will get called on a collision end.
-        :return: The unique ID of this new relation
+        :return: The unique ID of this new relation.
         """
 
     def calculate_all_collisions(self) -> None:
@@ -228,7 +228,7 @@ class CollisionManager:
         """
         Debug-Method to get the hitbox type of any group.
         :param group_id: The group ID.
-        :return: The hitbox type of the group or None if group does not exist
+        :return: The hitbox type of the group or None if group does not exist.
         """
 
     def get_points(

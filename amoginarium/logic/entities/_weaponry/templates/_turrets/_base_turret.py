@@ -31,10 +31,8 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t, Coalitions, VisibleGameEntityLike
-    from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
 
-    from .._bullets import Bullet
     from .._sensors import BaseSensor
     from .._weapons import BaseWeapon
 

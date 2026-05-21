@@ -27,7 +27,7 @@ def convert_coord(coord: coord_t, convert_to: tuple | int | Vec2) -> coord_t:
     Convert 2-dimensional coordinate type
     :param coord: Value to convert
     :param convert_to: What to convert to
-    :return: Converted value
+    :return: Converted value.
     """
 
 @tp.overload

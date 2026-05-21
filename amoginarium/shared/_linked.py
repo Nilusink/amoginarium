@@ -14,11 +14,11 @@ from ctypes import c_double, c_int8, c_int64
 from enum import Enum
 from multiprocessing import Value
 
-from ._debug_vars import DebugVarsEnum
 from .debugging import cum_timer
 from .utility import Vec2
 
 if tp.TYPE_CHECKING:
+    from ._debug_vars import DebugVarsEnum
     from multiprocessing.sharedctypes import Synchronized
 
 _GLOBAL_VARS_VALUES: dict[str, type] = {

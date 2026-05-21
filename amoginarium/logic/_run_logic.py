@@ -507,7 +507,7 @@ class LogicProcess:
 def update_debug_vars(values: int) -> None:
     """
     Update debug flags based on bitmask values
-    :param values: new bitmask of debug flags
+    :param values: new bitmask of debug flags.
     """
     # Hitbox debug
     draw_hitboxes = bool(values & (1 << DebugVarsEnum.DRAW_HITBOXES.value))
