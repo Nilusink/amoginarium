@@ -39,7 +39,7 @@ if tp.TYPE_CHECKING:
     from ...._player import Player
     from ...._world import Island
     from ..._definitions import Grenade
-    from .._turrets import BaseTurret
+    from .._turrets import BaseTurret, RideableTurret
     from .._weapon_actors.fuzes import BaseFuze
 
 
@@ -510,7 +510,9 @@ class Bullet(LogicGameEntity):
 
     def __collision_general_hit(
         self,
-        events: list[CollisionEvent[BaseTurret | Player | Grenade | Shield]],
+        events: list[
+            CollisionEvent[BaseTurret | Player | Grenade | Shield | RideableTurret]
+        ],
     ) -> None:
         """
         General collision reaction is to try to hit the other entity
@@ -558,6 +560,7 @@ class Bullet(LogicGameEntity):
         - BaseTurret: Bullet hits the turret and either pierces through or dies
         - Grenade: Bullet hits the grenade and either pierces through or dies
         - Shield: Bullet hits the shield and either pierces through or dies
+        - RideableTurret: Bullet hits the turret and either pierces through or dies
 
         :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collision
@@ -573,8 +576,9 @@ class Bullet(LogicGameEntity):
         elif (
             group_id == GameCollisions.collision_group_players
             or group_id == GameCollisions.collision_group_turrets
+            or group_id == GameCollisions.collision_group_rideable_turrets
         ):
-            events: list[CollisionEvent[BaseTurret | Player]]
+            events: list[CollisionEvent[BaseTurret | Player | RideableTurret]]
             if self._left_root:
                 self.__collision_general_hit(events)
 

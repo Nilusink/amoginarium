@@ -261,14 +261,6 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         if dmg > 0 and event.other_entity.root != self.root:
             self.hit(dmg, hit_by=event.other_entity)
 
-    def _collision_start(self, events: list[CollisionEvent[Bullet | Player]]) -> None:
-        # bullet - 5 turrets - events länge 5
-        # turret - events 1 bullet
-        for event in events:
-            if event.group_id == GameCollisions.collision_group_bullets:
-                event: CollisionEvent[Bullet]
-                self.__on_collision_bullet(event)
-
     # endregion
 
     def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:

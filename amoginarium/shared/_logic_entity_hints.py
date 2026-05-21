@@ -248,7 +248,9 @@ class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
         ...
 
     def _collision_start(
-        self, group_id: int, events: list[CollisionEvent[CollisionLogicEntityLike]]
+        self,
+        group_id: int,
+        events: list[CollisionEvent[CollisionLogicEntityLike]],
     ) -> list[bool] | None:
         """
         Called on collision start.

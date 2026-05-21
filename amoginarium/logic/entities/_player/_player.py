@@ -390,19 +390,20 @@ class Player(Passenger, LogicGameEntity):
 
     def _collision_start(
         self,
+        group_id: CollisionGroupIDType,
         events: list[CollisionEvent[Bullet | Island | Item | RideableTurret]],
     ) -> list[bool] | None:
-        if events[0].group_id == GameCollisions.collision_group_islands:
+        if group_id == GameCollisions.collision_group_islands:
             events: list[CollisionEvent[Island]]
             return self.__on_collision_island(events)
 
-        if events[0].group_id == GameCollisions.collision_group_bullets:
+        if group_id == GameCollisions.collision_group_bullets:
             events: list[CollisionEvent[Bullet]]
             self.__on_collision_bullet(events)
 
         elif (
-            events[0].group_id == GameCollisions.collision_group_items
-            or events[0].group_id == GameCollisions.collision_group_shields
+            group_id == GameCollisions.collision_group_items
+            or group_id == GameCollisions.collision_group_shields
         ):
             events: list[CollisionEvent[Item]]
             self.__on_collision_item(events)
@@ -422,6 +423,7 @@ class Player(Passenger, LogicGameEntity):
         - Shield: Same goes for shield except is even more complex
         - Grenades: No reaction to Grenades for the player
         - Bullets: The bullet calls hit to avoid hitting too much when tunneling
+        - RideableTurret: Player can enter/ride the turret.
 
         :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collision
@@ -430,7 +432,7 @@ class Player(Passenger, LogicGameEntity):
         if group_id == GameCollisions.collision_group_islands:
             events: list[CollisionEvent[Island]]
             return self.__collision_island(events)
-        if events[0].group_id == GameCollisions.collision_group_rideable_turrets:
+        if group_id == GameCollisions.collision_group_rideable_turrets:
             events: list[CollisionEvent[RideableTurret]]
             self.__collision_rideable_start(events)
             return None
