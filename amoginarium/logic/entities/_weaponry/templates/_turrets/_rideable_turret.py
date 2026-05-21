@@ -29,11 +29,9 @@ if tp.TYPE_CHECKING:
 
     from amoginarium.logic.entities import BaseLogicEntity
     from amoginarium.shared import base_entity_t
-    from amoginarium.shared.collision_detection import CollisionEvent
 
     from .....graphics_dummies import Controller
     from ...._player import Player
-    from .._bullets import Bullet
     from .._weapons import BaseWeapon
 
 
