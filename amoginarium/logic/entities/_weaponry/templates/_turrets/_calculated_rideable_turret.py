@@ -166,8 +166,8 @@ class CalculatedRideableTurret(RideableTurret):
                 target_pos=self._target_solution.target_predict,
             )
 
-    def _update(self, delta: float, set_facing: bool = True) -> None:
-        super()._update(delta, False)
+    def _update(self, delta: float, *, set_facing: bool = True) -> None:
+        super()._update(delta, set_facing=False)
 
         # calculate target position
         if self._target_angle.length != 0:

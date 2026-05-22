@@ -195,6 +195,16 @@ def calculate_launch_angle_all_directions(
     :param g: gravitation inflicted on target
     :return: where to aim, tof, predicted position
     """
+    return calculate_launch_angle(
+        position_delta,
+        target_velocity,
+        target_acceleration,
+        launch_speed,
+        recalculate,
+        aim_type,
+        g,
+    )
+
     # mirror y because of pygame
     position_delta.y *= -1
     target_velocity.y *= -1

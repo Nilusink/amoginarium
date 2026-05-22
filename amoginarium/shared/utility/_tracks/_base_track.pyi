@@ -1,0 +1,56 @@
+"""
+Base track class.
+
+Path: amoginarium/shared/utility/_tracks/_base_track.pyi
+Project: amoginarium
+Created: 22.05.2026
+Authors: Nilusink
+"""
+
+from .._cvectors import Vec2
+
+class BaseTrack:
+    """Base track class."""
+
+    def reset(self) -> None:
+        """Reset the track."""
+    def initialize(self, x: float, y: float, vx: float, vy: float) -> None:
+        """
+        Initialize the track.
+
+        :param x: initial x position
+        :param y: initial y position
+        :param vx: initial x velocity
+        :param vy: initial y velocity
+        """
+
+    def step(self, mx: float, my: float, mvx: float, mvy: float, dt: float) -> None:
+        """
+        Add new sensor data to track.
+
+        :param mx: x position
+        :param my: y position
+        :param mvx: x velocity
+        :param mvy: y velocity
+        :param dt: time since last step
+        """
+
+    def get_position(self) -> Vec2:
+        """Get current position."""
+
+    def get_velocity(self) -> Vec2:
+        """Get current velocity."""
+
+    def get_acceleration(self) -> Vec2:
+        """Get current acceleration."""
+
+    def predict_future_position(self, t: float) -> Vec2:
+        """
+        Predict position in t seconds.
+
+        :param t: time in seconds
+        :return: predicted position
+        """
+
+    def get_speed(self) -> float:
+        """Get current speed in m/s."""

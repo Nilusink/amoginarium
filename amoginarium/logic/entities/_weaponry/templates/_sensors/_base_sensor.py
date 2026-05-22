@@ -45,7 +45,7 @@ class BaseSensor(PositionedLogicEntity):
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
-        parent: PositionedLogicEntity,
+        parent: LogicGameEntity,
         detection_range: float,
         position_offset: coord_t = ...,
         visible: bool = True,
@@ -92,7 +92,7 @@ class BaseSensor(PositionedLogicEntity):
         return self._detection_range
 
     @property
-    def parent(self) -> PositionedLogicEntity:
+    def parent(self) -> LogicGameEntity:
         return self._parent
 
     def _calculate_sphere(self) -> list[Vec2]:
@@ -119,7 +119,6 @@ class BaseSensor(PositionedLogicEntity):
     def _update(self, delta: float) -> None:
         if hasattr(self.parent, "position"):
             self.position = self.parent.position + self._position_offset
-            # ic(self.position, self._buffer.param0)
 
         super()._update(delta)
 

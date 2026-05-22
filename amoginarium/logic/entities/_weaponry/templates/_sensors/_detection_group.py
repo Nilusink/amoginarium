@@ -15,11 +15,10 @@ from time import perf_counter
 from types import EllipsisType
 
 from icecream import ic
-from scipy._lib.pyprima.cobyla import initialize
 
-from ...._base import Updated, Walls, Players
-from ._ctarget_track import TargetTrack
-from ._ckalman_track import KalmanTrack2D
+from amoginarium.shared.utility import RadarTrack2D, Vec2
+
+from ...._base import Players, Walls, Bullets
 
 if tp.TYPE_CHECKING:
     from ...._base import PositionedLogicEntity
@@ -40,7 +39,7 @@ class _DetectionGroupManager:
     _instance: tp.ClassVar[tp.Self | EllipsisType] = ...
     _detection_groups: list[DetectionGroup]
 
-    def __new__(cls, *args: tp.Any, **kwargs: tp.Any) -> tp.Self:
+    def __new__(cls, *args: tp.Any, **kwargs: tp.Any) -> tp.Self:  # noqa: ARG004
         if isinstance(cls._instance, EllipsisType):
             instance = super().__new__(cls)
 
@@ -51,6 +50,13 @@ class _DetectionGroupManager:
 
     def __init__(self) -> None:
         self._detection_groups = []
+        self.__current_id: int = 0
+
+    def get_id(self) -> int:
+        """Get new detection group ID."""
+        dg_id = self.__current_id
+        self.__current_id += 1
+        return dg_id
 
     def add(self, group: DetectionGroup) -> None:
         self._detection_groups.append(group)
@@ -72,7 +78,7 @@ class _DetectionGroupManager:
 
         # create base group of targets that are viable for detection
         # targets = [t for t in Updated.entities() if t not in walls and t.alive]
-        targets = Players.entities()
+        targets = Players.entities() + Bullets.entities()
 
         for group in self._detection_groups:
             group.update_detection(delta, from_entities=targets)
@@ -85,27 +91,22 @@ class _DetectionGroupManager:
             group.reset()
 
 
-detection_id: int = 0
-
-
 class DetectionGroup:
     """Group of sensors."""
 
     _targets: dict[PositionedLogicEntity, TargetInfo]
-    _tracks: dict[int, KalmanTrack2D]
+    _tracks: dict[int, RadarTrack2D]
     _sensors: list[BaseSensor]
 
-    def __new__(cls, *args, **kwargs):
+    @tp.override
+    def __new__(cls, *args: tp.Any, **kwargs: tp.Any) -> tp.Self:
         i = super().__new__(cls)
         DETECTION_GROUP_MANAGER.add(i)
         return i
 
     def __init__(self, name: str | None = None) -> None:
-        global detection_id
-
         # assign unique id
-        self.__id = detection_id
-        detection_id += 1
+        self.__id = DETECTION_GROUP_MANAGER.get_id()
 
         self._name = name
         self._targets = {}
@@ -117,7 +118,7 @@ class DetectionGroup:
         return self.__id
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
         return self._name
 
     @property
@@ -125,7 +126,7 @@ class DetectionGroup:
         return list(self._targets.keys())
 
     @property
-    def tracks(self) -> list[KalmanTrack2D]:
+    def tracks(self) -> list[RadarTrack2D]:
         return list(self._tracks.values())
 
     @property
@@ -143,21 +144,16 @@ class DetectionGroup:
                 last_seen=perf_counter(), seen_by=detector
             )
 
+        # try to get velocity from target, else velocity=0
+        velocity: Vec2 = getattr(target, "velocity", Vec2())
+        tid = target.id
+
         if target.id not in self._tracks:
-            self._tracks[target.id] = KalmanTrack2D()
-            self._tracks[target.id].initialize(*target.position.xy)
+            self._tracks[tid] = RadarTrack2D()
+            self._tracks[tid].initialize(*target.position.xy, *velocity.xy)
 
         else:
-            self._tracks[target.id].step(*target.position.xy, delta)
-
-        # ic(
-        #     target.position.xy,
-        #     target.velocity.xy,
-        #     target.acceleration.xy,
-        #     self._tracks[target.id].get_position(),
-        #     self._tracks[target.id].get_velocity(),
-        #     self._tracks[target.id].get_acceleration(),
-        # )
+            self._tracks[tid].step(*target.position.xy, *velocity.xy, delta)
 
     def add_target(
         self,

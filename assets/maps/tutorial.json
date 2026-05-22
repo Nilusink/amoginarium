@@ -128,11 +128,11 @@
             "group": 0
         },
                 {
-            "type": "vehicle.tank",
+            "type": "turret.rideable.sky_shield",
             "pos": [1450, 700]
         },
         {
-            "type": "turret.static.flak",
+            "type": "turret.static.cram",
             "pos": [3000, 700]
         },
         {

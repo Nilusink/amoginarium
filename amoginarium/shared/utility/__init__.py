@@ -8,7 +8,7 @@ Authors: Nilusink, LukasKrah
 """
 
 from ._calculations import calculate_launch_angle_iterative, rk4_update
-from ._ccalculations import calculate_launch_angle
+from ._ccalculations import calculate_launch_angle, calculate_launch_solution_from_track
 from ._ccolor import c_255_to_1, Color, fade
 from ._constants import *
 from ._cutility_functions import add_tuple, convert_coord, is_related
@@ -19,6 +19,7 @@ from ._cvectors import normalize_angle, normalize_angle_neg, Vec2
 from ._error_types import WtfError
 from ._minrect_algorithm import find_minimum_rectangles, find_minimum_rectangles_dirty
 from ._pid_controller import PIDController
+from ._tracks import *
 from ._tuplemath import TupleMath
 from ._utility_classes import BetterDict, SimpleLock, WDTimer
 from ._utility_functions import calculate_launch_angle_all_directions, clamp, classname
