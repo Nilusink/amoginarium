@@ -9,3 +9,4 @@ Authors: Nilusink
 from ._base_track import BaseTrack
 from ._ckalman_track import KalmanTrack2D
 from ._cradar_track import RadarTrack2D
+from ._track_enums import TrackQuality, TrackState

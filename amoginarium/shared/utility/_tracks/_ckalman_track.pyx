@@ -65,6 +65,8 @@ cdef class KalmanTrack2D(BaseTrack):
         self.x = x
         self.y = y
 
+        BaseTrack.initialize(self, x, y, vx, vy)
+
     cdef predict(self, double dt):
         """
         Predict next state.
@@ -105,6 +107,8 @@ cdef class KalmanTrack2D(BaseTrack):
         cdef double dx, dy
 
         cdef double dvx, dvy
+
+        BaseTrack.update(self, mx, my, mvx, mvy, dt)
 
         # POSITION UPDATE
         kx = self.px / (self.px + self.measurement_noise)

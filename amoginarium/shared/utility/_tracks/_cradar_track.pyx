@@ -10,6 +10,8 @@ Authors: Nilusink
 """
 
 from ._base_track cimport BaseTrack
+from ._base_track import TrackQuality
+
 
 cdef class RadarTrack2D(BaseTrack):
     """
@@ -55,6 +57,9 @@ cdef class RadarTrack2D(BaseTrack):
         self.prev_vx = vx
         self.prev_vy = vy
 
+        BaseTrack.initialize(self, x, y, vx, vy)
+        self._track_quality = TrackQuality.POS_AND_VEL.value
+
     cdef predict(self, double dt):
         if dt == 0:
             return
@@ -87,6 +92,8 @@ cdef class RadarTrack2D(BaseTrack):
         if dt == 0:
             return
 
+        BaseTrack.update(self, mx, my, mvx, mvy, dt)
+
         self.x = mx
         self.y = my
 
@@ -113,3 +120,5 @@ cdef class RadarTrack2D(BaseTrack):
         # prev values
         self.prev_vx = self.vx
         self.prev_vy = self.vy
+
+        self._track_quality = TrackQuality.POS_VEL_ACC.value

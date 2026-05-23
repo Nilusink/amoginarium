@@ -7,13 +7,34 @@ Created: 22.05.2026
 Authors: Nilusink
 """
 
+from enum import Enum
+
 from .._cvectors import Vec2
+
+class TrackState(Enum):
+    """Track state."""
+
+class TrackQuality(Enum):
+    """Target track quality."""
 
 class BaseTrack:
     """Base track class."""
 
+    @property
+    def state(self) -> TrackState:
+        """Track State."""
+
+    @state.setter
+    def state(self, new_state: TrackState) -> None:
+        """Track State."""
+
+    @property
+    def quality(self) -> TrackQuality:
+        """Target track quality."""
+
     def reset(self) -> None:
         """Reset the track."""
+
     def initialize(self, x: float, y: float, vx: float, vy: float) -> None:
         """
         Initialize the track.

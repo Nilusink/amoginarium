@@ -8,7 +8,7 @@ Authors: Nilusink
 """
 
 cimport cython
-from libc.math cimport atan, cos, pi, sin, sqrt
+from libc.math cimport cos, fabs, sqrt, atan2
 from libc.stdint cimport uint16_t
 
 from ._tracks cimport BaseTrack
@@ -26,6 +26,7 @@ cdef inline double get_solution(
         double x
         double y
         double v2
+        double discriminant
         double root
 
         double z1
@@ -39,15 +40,15 @@ cdef inline double get_solution(
 
     v2 = speed * speed
 
-    root = v2 * v2 - g * (g * x * x + 2 * y * v2)
+    discriminant = v2 * v2 - g * (g * x * x + 2.0 * y * v2)
 
-    if root < 0:
+    if discriminant < 0.0:
         raise ValueError("no possible launch angle found")
 
-    root = sqrt(root)
+    root = sqrt(discriminant)
 
-    z1 = atan((v2 + root) / (g * x))
-    z2 = atan((v2 - root) / (g * x))
+    z1 = atan2(v2 + root, g * x)
+    z2 = atan2(v2 - root, g * x)
 
     solutions[0] = z1
     solutions[1] = z2
@@ -59,7 +60,14 @@ cdef inline double get_solution(
 
     vx = speed * cos(angle)
 
-    return abs(x / vx)
+    if fabs(vx) < 1e-9:
+        raise ValueError("invalid horizontal velocity")
+
+    # Preserve sign consistency
+    if (x > 0 > vx) or (x < 0 < vx):
+        raise ValueError("solution points away from target")
+
+    return x / vx
 
 
 cpdef tuple calculate_launch_angle(

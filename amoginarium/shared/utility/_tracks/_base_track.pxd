@@ -7,6 +7,8 @@ Created: 22.05.2026
 Authors: Nilusink
 """
 
+from libc.stdint cimport int8_t
+
 from .._cvectors cimport Vec2
 
 cdef class BaseTrack:
@@ -14,6 +16,9 @@ cdef class BaseTrack:
     cdef double x, y
     cdef double vx, vy
     cdef double ax, ay
+
+    cdef int8_t _track_quality
+    cdef int8_t _track_state
 
     cpdef reset(self)
     cpdef initialize(self, double x, double y, double vx, double vy)

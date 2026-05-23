@@ -10,14 +10,35 @@ Authors: Nilusink
 from libc.math cimport sqrt
 
 from .._cvectors cimport Vec2
+from ._track_enums import TrackQuality, TrackState
+
 
 cdef class BaseTrack:
+    @property
+    def state(self) -> TrackState:
+        return TrackState(self._track_state)
+
+    @state.setter
+    def state(self, new_state: TrackState) -> None:
+        self._track_state = new_state.value
+
+    @property
+    def quality(self) -> TrackQuality:
+        return TrackQuality(self._track_quality)
+
+    def __cinit__(self):
+        self._track_state = TrackState.NEW.value
+        self._track_quality = TrackQuality.NONE.value
+
     cpdef reset(self):
         pass
+
     cpdef initialize(self, double x, double y, double vx, double vy):
-        pass
+        self._track_quality = TrackQuality.POS_ONLY.value
+
     cdef predict(self, double dt):
         pass
+
     cdef update(
         self,
         double mx, double my,
@@ -25,6 +46,7 @@ cdef class BaseTrack:
         double dt
     ):
         pass
+
     cpdef step(
         self,
         double mx, double my,

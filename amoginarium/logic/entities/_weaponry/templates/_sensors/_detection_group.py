@@ -16,9 +16,9 @@ from types import EllipsisType
 
 from icecream import ic
 
-from amoginarium.shared.utility import RadarTrack2D, Vec2
+from amoginarium.shared.utility import RadarTrack2D, TrackState, Vec2
 
-from ...._base import Players, Walls, Bullets
+from ...._base import Bullets, Players, Walls
 
 if tp.TYPE_CHECKING:
     from ...._base import PositionedLogicEntity
@@ -153,7 +153,14 @@ class DetectionGroup:
             self._tracks[tid].initialize(*target.position.xy, *velocity.xy)
 
         else:
-            self._tracks[tid].step(*target.position.xy, *velocity.xy, delta)
+            track = self._tracks[tid]
+            track.step(*target.position.xy, *velocity.xy, delta)
+
+            if track.state == TrackState.NEW:
+                self._tracks[tid].state = TrackState.TENTATIVE
+
+            else:  # doesn't matter if TENTATIVE, DEGRADED or "DEAD"
+                track.state = TrackState.CONFIRMED
 
     def add_target(
         self,
@@ -195,6 +202,18 @@ class DetectionGroup:
         """
         Ask all sensors to get their targeting information.
         """
+        for tid, track in self._tracks.copy().items():
+
+            # tracks can be inactive for two loops before being removed
+            if track.state == TrackState.CONFIRMED:
+                track.state = TrackState.DEGRADED
+
+            elif track.state == TrackState.DEGRADED:
+                track.state = TrackState.DEAD
+
+            elif track.state == TrackState.DEAD:
+                self._tracks.pop(tid)
+
         for sensor in self._sensors:
             self.add_target(sensor.get_targets(from_entities), sensor.parent, delta)
 

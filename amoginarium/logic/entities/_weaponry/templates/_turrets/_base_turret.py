@@ -25,7 +25,7 @@ from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import calculate_launch_angle
 from amoginarium.shared.utility import calculate_launch_solution_from_track
 from amoginarium.shared.utility import get_default, MASK16, MASK32, MASK64
-from amoginarium.shared.utility import normalize_angle, Vec2
+from amoginarium.shared.utility import normalize_angle, TrackQuality, TrackState, Vec2
 
 from ...._base import DebugPolygonEntity, GameCollisions
 from ...._base import GravityAffected, LogicGameEntity
@@ -50,7 +50,7 @@ class TargetSolution:
     target_predict: Vec2
     angle: Vec2
     tof: float
-    track: BaseTrack | EllipsisType | None = ...
+    track: BaseTrack
 
 
 class SensorInit(tp.TypedDict):
@@ -289,6 +289,11 @@ class BaseTurret(LogicGameEntity):
     def hp(self) -> int:
         return self._hp
 
+    @property
+    def weapon_pos(self) -> Vec2:
+        """Position of Weapon."""
+        return self.position + self.weapon.parent_position_offset
+
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
         Deal damage to the turret.
@@ -322,6 +327,14 @@ class BaseTurret(LogicGameEntity):
 
             if include_all:
                 return t["solution"]
+
+            # require position, velocity AND acceleration and confirmed track
+            # before firing
+            if (
+                target.quality != TrackQuality.POS_VEL_ACC
+                and target.state == TrackState.CONFIRMED
+            ):
+                continue
 
             if t["distance"] > self.max_range:
                 continue
@@ -377,11 +390,14 @@ class BaseTurret(LogicGameEntity):
         # ]
 
         for target in targets:
+            if isinstance(target, EllipsisType):
+                continue
+
             self._track_dbe.p1 = target.get_position()
-            self._track_dbe.p2 = target.predict_future_position(0.25)
-            self._track_dbe.p3 = target.predict_future_position(0.5)
-            self._track_dbe.p4 = target.predict_future_position(0.75)
-            self._track_dbe.p5 = target.predict_future_position(1)
+            self._track_dbe.p2 = target.predict_future_position(0.25 / 2)
+            self._track_dbe.p3 = target.predict_future_position(0.25)
+            self._track_dbe.p4 = target.predict_future_position(0.75 / 2)
+            self._track_dbe.p5 = target.predict_future_position(0.5)
 
             if target not in self.available_targets:
                 self.available_targets[target] = {
@@ -433,9 +449,7 @@ class BaseTurret(LogicGameEntity):
 
             sol = self.available_targets[target]["solution"]
             if sol:
-                self._target_predict = [
-                   sol.target_predict
-                ]
+                self._target_predict = [sol.target_predict]
             else:
                 self._target_predict[0] = Vec2()
 
@@ -533,35 +547,50 @@ class BaseTurret(LogicGameEntity):
         :param track: track to aim at
         :returns:
         """
-        # try to predict where the player is going to be
+        position_delta = track.get_position() - self.weapon_pos
+        vel = get_default(track.get_velocity(), Vec2())
+        acc = get_default(track.get_acceleration(), Vec2())
+
+        # mirror y-axis (because in pygame, + is down)
+        position_delta.y *= -1
+        vel.y *= -1
+        acc.y *= -1
+
+        # mirror x if < 0 because calculate_launch_angle is weird and it works this ways
+        mirror = False
+        if position_delta.x < 0:
+            position_delta.x *= -1
+            vel.x *= -1
+            acc.x *= -1
+            mirror = True
+
         with suppress(ValueError):
-            aiming_angle, tof, predict = calculate_launch_solution_from_track(
-                self.position + self.weapon.parent_position_offset,
-                track,
+            aiming_angle, tof, predict = calculate_launch_angle(
+                position_delta,
+                vel,
+                acc,
                 self.weapon.muzzle_velocity,
                 recalc,
-                # 2 * position_delta.length / self.weapon.bullet_speed,
                 self._default_engagement_aim_type,
-                # *2 because for some reason I gave bullets 2x gravity
                 g=GravityAffected.gravity * 2,
             )
 
             # check if inside range
-            if predict.length > self.max_range:
+            if predict.length > self.max_range or predict.length < self.min_range:
                 return None
 
-            target_predict = (
-                self.position + self.weapon.parent_position_offset + predict
-            )
+            # mirror back y-axis
+            aiming_angle.y *= -1
+            predict.y *= -1
 
-            if predict.length < self.min_range:
-                return None
+            if mirror:
+                aiming_angle.x *= -1
+                predict.x *= -1
+
+            target_predict = self.weapon_pos + predict
 
             return TargetSolution(
-                target_predict=target_predict,
-                angle=aiming_angle,
-                track=track,
-                tof=tof,
+                target_predict=target_predict, angle=aiming_angle, tof=tof, track=track
             )
 
         return None
