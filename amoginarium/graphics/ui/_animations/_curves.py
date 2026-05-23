@@ -1,10 +1,10 @@
 """
 Defines mathematical easing curves for UI animation transitions.
 
-Path: amoginarium/graphics/ui/_animations/_curves.py
-Project: amoginarium
-Created: 16.03.2026
-Authors: LukasKrah
+| Path: amoginarium/graphics/ui/_animations/_curves.py
+| Project: amoginarium
+| Created: 16.03.2026
+| Authors: LukasKrah
 """
 
 

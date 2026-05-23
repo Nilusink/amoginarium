@@ -1,10 +1,10 @@
 """
 Changes the pitch of a sound effect.
 
-Path: pitch_changer.py
-Project: amoginarium
-Created: 07.04.2026
-Authors: Nilusink
+| Path: pitch_changer.py
+| Project: amoginarium
+| Created: 07.04.2026
+| Authors: Nilusink
 """
 # ruff: noqa: T201
 

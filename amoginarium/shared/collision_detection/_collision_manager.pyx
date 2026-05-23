@@ -7,10 +7,10 @@
 """
 Implements the CollisionManager class.
 
-Path: amoginarium/shared/collision_detection/_collision_manager.pyx
-Project: amoginarium
-Created: 17.04.2026
-Authors: LukasKrah
+| Path: amoginarium/shared/collision_detection/_collision_manager.pyx
+| Project: amoginarium
+| Created: 17.04.2026
+| Authors: LukasKrah
 """
 
 # noinspection PyUnresolvedReferences

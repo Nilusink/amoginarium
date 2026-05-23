@@ -4,10 +4,10 @@ Central manager for handling all game collision logic.
 Registers groups, handles hitboxes,
 and establishes bidirectional collision relationships.
 
-Path: amoginarium/logic/entities/_base/_collision/_game_collisions.py
-Project: amoginarium
-Created: 16.04.2026
-Authors: LukasKrah, Nilusink
+| Path: amoginarium/logic/entities/_base/_collision/_game_collisions.py
+| Project: amoginarium
+| Created: 16.04.2026
+| Authors: LukasKrah, Nilusink
 """
 
 from __future__ import annotations

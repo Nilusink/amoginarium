@@ -1,10 +1,10 @@
 """
 Uses the keyboard as a controller.
 
-Path: amoginarium/graphics/controllers/_keyboard_controller.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/graphics/controllers/_keyboard_controller.py
+| Project: amoginarium
+| Created: 25.01.2024
+| Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

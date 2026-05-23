@@ -1,10 +1,10 @@
 """
 Defines data structures for absolute and relative UI element metrics.
 
-Path: amoginarium/graphics/ui/_base/_ui_element/_ui_element_values.py
-Project: amoginarium
-Created: 25.03.2026
-Authors: LukasKrah
+| Path: amoginarium/graphics/ui/_base/_ui_element/_ui_element_values.py
+| Project: amoginarium
+| Created: 25.03.2026
+| Authors: LukasKrah
 """
 
 from __future__ import annotations

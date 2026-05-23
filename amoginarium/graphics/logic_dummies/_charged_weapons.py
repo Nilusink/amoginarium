@@ -1,10 +1,10 @@
 """
 Charged weapon dummies.
 
-Path: amoginarium/graphics/logic_dummies/_charged_weapons.py
-Project: amoginarium
-Created: 11.04.2026
-Authors: Nilusink
+| Path: amoginarium/graphics/logic_dummies/_charged_weapons.py
+| Project: amoginarium
+| Created: 11.04.2026
+| Authors: Nilusink
 """
 
 from __future__ import annotations

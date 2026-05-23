@@ -1,10 +1,10 @@
 """
 Defines the core game.
 
-Path: amoginarium/shared/debugging/_decoators.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/shared/debugging/_decoators.py
+| Project: amoginarium
+| Created: 25.01.2024
+| Authors: Nilusink, LukasKrah
 """
 # ruff: noqa: T201
 

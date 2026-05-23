@@ -1,10 +1,10 @@
 """
 Implements scrolling and parallax background systems.
 
-Path: amoginarium/base/_scrolling_background.py
-Project: amoginarium
-Created: 26.01.2024
-Authors: Nilusink
+| Path: amoginarium/base/_scrolling_background.py
+| Project: amoginarium
+| Created: 26.01.2024
+| Authors: Nilusink
 """
 
 from __future__ import annotations

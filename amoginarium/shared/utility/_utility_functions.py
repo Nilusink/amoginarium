@@ -1,10 +1,10 @@
 """
 A few useful functions.
 
-Path: amoginarium/shared/utility/_utility_functions.py
-Project: amoginarium
-Created: 19.03.2024
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/shared/utility/_utility_functions.py
+| Project: amoginarium
+| Created: 19.03.2024
+| Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

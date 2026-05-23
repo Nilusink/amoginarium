@@ -1,10 +1,10 @@
 """
 Type hints for logic entities.
 
-Path: amoginarium/shared/_logic_entity_hints.py
-Project: amoginarium
-Created: 28.03.2026
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/shared/_logic_entity_hints.py
+| Project: amoginarium
+| Created: 28.03.2026
+| Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

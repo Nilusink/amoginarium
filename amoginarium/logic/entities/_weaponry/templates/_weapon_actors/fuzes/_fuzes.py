@@ -1,10 +1,10 @@
 """
 Different type of fuzes.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/fuzes/_fuzes.py
-Project: amoginarium
-Created: 08.05.2026
-Authors: Nilusink
+| Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/fuzes/_fuzes.py
+| Project: amoginarium
+| Created: 08.05.2026
+| Authors: Nilusink
 """
 
 from __future__ import annotations

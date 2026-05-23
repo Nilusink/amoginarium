@@ -1,10 +1,10 @@
 """
 Weapons that need to charge before firing (bow).
 
-Path: amoginarium/logic/entities/_weaponry/_definitions/_weapons/_charged_weapons.py
-Project: amoginarium
-Created: 14.03.2026
-Authors: Nilusink
+| Path: amoginarium/logic/entities/_weaponry/_definitions/_weapons/_charged_weapons.py
+| Project: amoginarium
+| Created: 14.03.2026
+| Authors: Nilusink
 """
 
 from __future__ import annotations

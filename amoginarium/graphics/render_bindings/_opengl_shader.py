@@ -1,10 +1,10 @@
 """
 OpenGL renderer implementation using shaders.
 
-Path: amoginarium/graphics/render_bindings/_opengl_shader.py
-Project: amoginarium
-Created: 08.04.2026
-Authors: LukasKrah
+| Path: amoginarium/graphics/render_bindings/_opengl_shader.py
+| Project: amoginarium
+| Created: 08.04.2026
+| Authors: LukasKrah
 """
 
 from __future__ import annotations

@@ -3,10 +3,10 @@
 """
 Algorythm for finding minimum rectangles without a perfect result but way faster.
 
-Path: amoginarium/shared/utility/_minrect_algorithm/_minrect_dirty.pyx
-Project: amoginarium
-Created: 13.04.2026
-Authors: LukasKrah
+| Path: amoginarium/shared/utility/_minrect_algorithm/_minrect_dirty.pyx
+| Project: amoginarium
+| Created: 13.04.2026
+| Authors: LukasKrah
 """
 
 from libcpp.vector cimport vector

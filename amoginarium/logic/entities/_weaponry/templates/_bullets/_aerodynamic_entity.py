@@ -1,10 +1,10 @@
 """
 Really simple game-ifyed version of aerodynamics.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_bullets/_aerodynamic_entity.py
-Project: amoginarium
-Created: 17.04.2026
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/logic/entities/_weaponry/templates/_bullets/_aerodynamic_entity.py
+| Project: amoginarium
+| Created: 17.04.2026
+| Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

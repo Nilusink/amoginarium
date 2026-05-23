@@ -1,10 +1,10 @@
 """
 Base weapon actor (sensor, fuze, ...).
 
-Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/_base_actor.py
-Project: amoginarium
-Created: 08.05.2026
-Authors: LukasKrah
+| Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/_base_actor.py
+| Project: amoginarium
+| Created: 08.05.2026
+| Authors: LukasKrah
 """
 
 from __future__ import annotations

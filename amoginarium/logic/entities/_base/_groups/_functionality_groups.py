@@ -1,10 +1,10 @@
 """
 Contains logical groups that apply global physics properties.
 
-Path: amoginarium/logic/entities/_base/_groups/_functionality_groups.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/logic/entities/_base/_groups/_functionality_groups.py
+| Project: amoginarium
+| Created: 25.01.2024
+| Authors: Nilusink, LukasKrah
 """
 
 import typing as tp

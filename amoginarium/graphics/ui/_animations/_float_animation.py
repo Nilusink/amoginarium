@@ -1,10 +1,10 @@
 """
 Converts input types into configured float-based UI animation instances.
 
-Path: amoginarium/graphics/ui/_animations/_float_animation.py
-Project: amoginarium
-Created: 16.03.2026
-Authors: LukasKrah
+| Path: amoginarium/graphics/ui/_animations/_float_animation.py
+| Project: amoginarium
+| Created: 16.03.2026
+| Authors: LukasKrah
 """
 
 from __future__ import annotations

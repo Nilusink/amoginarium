@@ -1,10 +1,10 @@
 """
 Vec2 class and calculate_launch_angle.
 
-Path: amoginarium/shared/utility/_ccalculations.pyi
-Project: amoginarium
-Created: 11.03.2026
-Authors: Nilusink
+| Path: amoginarium/shared/utility/_ccalculations.pyi
+| Project: amoginarium
+| Created: 11.03.2026
+| Authors: Nilusink
 """
 
 class Vec2: ...

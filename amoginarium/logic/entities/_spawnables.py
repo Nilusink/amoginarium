@@ -1,10 +1,10 @@
 """
 Collects every spawn-able entity.
 
-Path: amoginarium/logic/entities/_spawnables.py
-Project: amoginarium
-Created: 28.03.2026
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/logic/entities/_spawnables.py
+| Project: amoginarium
+| Created: 28.03.2026
+| Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

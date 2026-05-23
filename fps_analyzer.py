@@ -1,10 +1,10 @@
 """
 Calculates average, 1% low, and 1% high FPS from JSON.
 
-Path: fps_analyzer.py
-Project: amoginarium
-Created: 15.03.2024
-Authors: Nilusink
+| Path: fps_analyzer.py
+| Project: amoginarium
+| Created: 15.03.2024
+| Authors: Nilusink
 """
 # ruff: noqa: T201
 

@@ -1,10 +1,10 @@
 """
 Exports collision management systems and hitbox type definitions.
 
-Path: amoginarium/logic/entities/_base/_collision/__init__.py
-Project: amoginarium
-Created: 21.04.2026
-Authors: LukasKrah
+| Path: amoginarium/logic/entities/_base/_collision/__init__.py
+| Project: amoginarium
+| Created: 21.04.2026
+| Authors: LukasKrah
 """
 
 from amoginarium.shared.collision_detection import CollisionCallbackType

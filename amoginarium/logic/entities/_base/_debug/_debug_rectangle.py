@@ -3,10 +3,10 @@ Contains the DebugRectangleEntity for drawing rectangular debug shapes.
 
 Helpful for visualizing bounding boxes or trigger areas on the graphics side.
 
-Path: amoginarium/logic/entities/_base/_debug/_debug_rectangle.py
-Project: amoginarium
-Created: 25.04.2026
-Authors: LukasKrah
+| Path: amoginarium/logic/entities/_base/_debug/_debug_rectangle.py
+| Project: amoginarium
+| Created: 25.04.2026
+| Authors: LukasKrah
 """
 
 from __future__ import annotations

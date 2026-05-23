@@ -1,10 +1,10 @@
 """
 Exposes item-related classes and inventory logic for the engine.
 
-Path: amoginarium/logic/entities/_items/__init__.py
-Project: amoginarium
-Created: 18.04.2026
-Authors: LukasKrah
+| Path: amoginarium/logic/entities/_items/__init__.py
+| Project: amoginarium
+| Created: 18.04.2026
+| Authors: LukasKrah
 """
 
 from ._healing_potion import HealingPotion

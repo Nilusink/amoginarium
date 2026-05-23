@@ -1,10 +1,10 @@
 """
 Defines a synced graphics entity for rendering static text.
 
-Path: amoginarium/graphics/logic_dummies/_text_entity.py
-Project: amoginarium
-Created: 12.04.2026
-Authors: LukasKrah
+| Path: amoginarium/graphics/logic_dummies/_text_entity.py
+| Project: amoginarium
+| Created: 12.04.2026
+| Authors: LukasKrah
 """
 
 import typing as tp

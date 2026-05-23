@@ -1,11 +1,11 @@
 """
 Missile that maneuvers by applying small thrusters.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
-      _multi_thruster_missile.py
-Project: amoginarium
-Created: 11.05.2026
-Authors: Nilusink
+| Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
+        _multi_thruster_missile.py
+| Project: amoginarium
+| Created: 11.05.2026
+| Authors: Nilusink
 """
 
 from __future__ import annotations

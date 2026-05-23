@@ -1,10 +1,10 @@
 """
 Implements weapons for players and turrets.
 
-Path: amoginarium/logic/entities/_weaponry/_definitions/_weapons/_weapons.py
-Project: amoginarium
-Created: 01.04.2026
-Authors: LukasKrah
+| Path: amoginarium/logic/entities/_weaponry/_definitions/_weapons/_weapons.py
+| Project: amoginarium
+| Created: 01.04.2026
+| Authors: LukasKrah
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 Convert everything ingame to a str.
 
-Path: amoginarium/logic/map/_json_serialize.py
-Project: amoginarium
-Created: 15.03.2026
-Authors: Nilusink
+| Path: amoginarium/logic/map/_json_serialize.py
+| Project: amoginarium
+| Created: 15.03.2026
+| Authors: Nilusink
 """
 
 import json

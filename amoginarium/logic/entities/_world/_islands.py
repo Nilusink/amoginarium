@@ -1,10 +1,10 @@
 """
 An island in the sky.
 
-Path: amoginarium/logic/entities/_world/_islands.py
-Project: amoginarium
-Created: 28.04.2026
-Authors: Nilusink, LukasKrah
+| Path: amoginarium/logic/entities/_world/_islands.py
+| Project: amoginarium
+| Created: 28.04.2026
+| Authors: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

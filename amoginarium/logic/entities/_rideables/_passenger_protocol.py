@@ -1,10 +1,10 @@
 """
 Base attributes of an entity that can ride things.
 
-Path: amoginarium/logic/entities/_rideables/_passenger_protocol.py
-Project: amoginarium
-Created: 05.05.2026
-Authors: Nilusink
+| Path: amoginarium/logic/entities/_rideables/_passenger_protocol.py
+| Project: amoginarium
+| Created: 05.05.2026
+| Authors: Nilusink
 """
 
 from __future__ import annotations
