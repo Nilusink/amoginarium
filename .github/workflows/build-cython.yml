@@ -1,0 +1,39 @@
+name: Build Cython Extensions on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+
+jobs:
+  build-cython:
+    if: github.event.pull_request.draft == false
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+
+      - name: Install Cython and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cython setuptools
+
+      - name: Build Cython extensions
+        run: python setup.py build_ext --inplace
+
+      - name: Commit and push back to PR branch
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-build Cython extensions"
+          file_pattern: "*.pyd"
