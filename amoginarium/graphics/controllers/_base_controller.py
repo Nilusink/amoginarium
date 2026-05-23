@@ -1,10 +1,10 @@
 """
 All controller types should inherit from this.
 
-| Path: amoginarium/graphics/controllers/_base_controller.py
-| Project: amoginarium
-| Created: 25.01.2024
-| Authors: Nilusink
+| ``Path``: amoginarium/graphics/controllers/_base_controller.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

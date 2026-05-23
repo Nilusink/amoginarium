@@ -1,11 +1,11 @@
 """
 A multi-stage missile with guidance.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
-        _guided_multi_stage_missile.py
-| Project: amoginarium
-| Created: 10.05.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_missiles/
+            _guided_multi_stage_missile.py
+| ``Project``: amoginarium
+| ``Created``: 10.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

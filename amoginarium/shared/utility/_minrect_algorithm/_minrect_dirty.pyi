@@ -1,10 +1,10 @@
 """
 Algorythm for finding minimum rectangles without a perfect result but way faster.
 
-| Path: amoginarium/shared/utility/_minrect_algorithm/_minrect_dirty.pyi
-| Project: amoginarium
-| Created: 13.04.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/shared/utility/_minrect_algorithm/_minrect_dirty.pyi
+| ``Project``: amoginarium
+| ``Created``: 13.04.2026
+| ``Authors``: LukasKrah
 """
 
 def find_minimum_rectangles_dirty(

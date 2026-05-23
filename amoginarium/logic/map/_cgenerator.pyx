@@ -1,10 +1,10 @@
 """
 Cython functions for the map generator.
 
-| Path: amoginarium/logic/map/_cgenerator.pyx
-| Project: amoginarium
-| Created: 18.05.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/logic/map/_cgenerator.pyx
+| ``Project``: amoginarium
+| ``Created``: 18.05.2026
+| ``Authors``: Nilusink
 """
 
 import numpy as np

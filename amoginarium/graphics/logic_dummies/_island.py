@@ -1,10 +1,10 @@
 """
 Visual representation of an Island.
 
-| Path: amoginarium/graphics/logic_dummies/_island.py
-| Project: amoginarium
-| Created: 30.03.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/graphics/logic_dummies/_island.py
+| ``Project``: amoginarium
+| ``Created``: 30.03.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

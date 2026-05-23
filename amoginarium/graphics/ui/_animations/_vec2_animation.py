@@ -1,10 +1,10 @@
 """
 Provides a MultiAnimation implementation for 2D vector transitions.
 
-| Path: amoginarium/graphics/ui/_animations/_vec2_animation.py
-| Project: amoginarium
-| Created: 16.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_animations/_vec2_animation.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

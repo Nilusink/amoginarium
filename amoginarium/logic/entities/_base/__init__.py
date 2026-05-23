@@ -1,10 +1,10 @@
 """
 Base entity classes and functionality modules for logic entities.
 
-| Path: amoginarium/logic/entities/_base/__init__.py
-| Project: amoginarium
-| Created: 27.04.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/logic/entities/_base/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 27.04.2026
+| ``Authors``: LukasKrah
 """
 
 from ._base_entities import BaseLogicEntity, PositionedLogicEntity

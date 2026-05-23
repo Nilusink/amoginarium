@@ -1,10 +1,10 @@
 """
 Defines the pause menu UI with navigation and action buttons.
 
-| Path: amoginarium/base/_pausemenu.py
-| Project: amoginarium
-| Created: 01.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/base/_pausemenu.py
+| ``Project``: amoginarium
+| ``Created``: 01.03.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

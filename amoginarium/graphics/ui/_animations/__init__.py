@@ -1,10 +1,10 @@
 """
 Exports UI animation types, curves, and specialized animation controllers.
 
-| Path: amoginarium/graphics/ui/_animations/__init__.py
-| Project: amoginarium
-| Created: 16.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_animations/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: LukasKrah
 """
 
 from ._animation_types import anim_color_t, anim_color_values_t, anim_float_t

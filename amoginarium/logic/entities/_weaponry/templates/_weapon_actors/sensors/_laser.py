@@ -1,10 +1,11 @@
 """
 Laser sensor and designator.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/sensors/_laser.py
-| Project: amoginarium
-| Created: 10.05.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/sensors/
+            _laser.py
+| ``Project``: amoginarium
+| ``Created``: 10.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 Generally useful functions.
 
-| Path: amoginarium/shared/debugging/_utils.py
-| Project: amoginarium
-| Created: 22.03.2024
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/debugging/_utils.py
+| ``Project``: amoginarium
+| ``Created``: 22.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 import inspect

@@ -1,10 +1,10 @@
 """
 Utility functions written in cython.
 
-| Path: amoginarium/shared/utility/_cutility_functions.pyi
-| Project: amoginarium
-| Created: 11.03.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/shared/utility/_cutility_functions.pyi
+| ``Project``: amoginarium
+| ``Created``: 11.03.2026
+| ``Authors``: Nilusink
 """
 
 import typing as tp

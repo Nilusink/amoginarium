@@ -1,10 +1,10 @@
 """
 Uses the keyboard as a controller.
 
-| Path: amoginarium/graphics/controllers/_game_controller.py
-| Project: amoginarium
-| Created: 27.01.2024
-| Authors: Nilusink
+| ``Path``: amoginarium/graphics/controllers/_game_controller.py
+| ``Project``: amoginarium
+| ``Created``: 27.01.2024
+| ``Authors``: Nilusink
 """
 
 from contextlib import suppress

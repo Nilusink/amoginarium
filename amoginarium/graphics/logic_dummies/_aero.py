@@ -1,10 +1,10 @@
 """
 Aerodynamics skeleton entity.
 
-| Path: amoginarium/graphics/logic_dummies/_aero.py
-| Project: amoginarium
-| Created: 17.04.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/graphics/logic_dummies/_aero.py
+| ``Project``: amoginarium
+| ``Created``: 17.04.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

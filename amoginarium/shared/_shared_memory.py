@@ -1,10 +1,10 @@
 """
 Shared memory objects.
 
-| Path: amoginarium/shared/_shared_memory.py
-| Project: amoginarium
-| Created: 28.03.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/shared/_shared_memory.py
+| ``Project``: amoginarium
+| ``Created``: 28.03.2026
+| ``Authors``: Nilusink
 """
 # ruff: noqa: T201
 

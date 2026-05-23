@@ -1,10 +1,10 @@
 """
 Defines a UI widget for rendering immutable static text.
 
-| Path: amoginarium/graphics/ui/_widgets/_ui_static_text.py
-| Project: amoginarium
-| Created: 11.04.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_widgets/_ui_static_text.py
+| ``Project``: amoginarium
+| ``Created``: 11.04.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

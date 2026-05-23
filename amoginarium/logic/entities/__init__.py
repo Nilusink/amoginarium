@@ -1,10 +1,10 @@
 """
 Exposes core logic entities, weaponry, and world objects.
 
-| Path: amoginarium/logic/entities/__init__.py
-| Project: amoginarium
-| Created: 25.01.2024
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from ._base import BaseLogicEntity, Bullets, CollisionLogicEntity, FrictionXAffected

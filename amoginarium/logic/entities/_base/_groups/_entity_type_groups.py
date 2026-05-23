@@ -1,10 +1,10 @@
 """
 Contains predefined entity type groups (Bullets, Walls, Players).
 
-| Path: amoginarium/logic/entities/_base/_groups/_entity_type_groups.py
-| Project: amoginarium
-| Created: 25.01.2024
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_base/_groups/_entity_type_groups.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

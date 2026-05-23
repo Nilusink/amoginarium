@@ -1,10 +1,10 @@
 """
 Graphics entities for rendering debug shapes from logic buffers.
 
-| Path: amoginarium/graphics/logic_dummies/_debug_rendering.py
-| Project: amoginarium
-| Created: 17.04.2026
-| Authors: LukasKrah, Nilusink
+| ``Path``: amoginarium/graphics/logic_dummies/_debug_rendering.py
+| ``Project``: amoginarium
+| ``Created``: 17.04.2026
+| ``Authors``: LukasKrah, Nilusink
 """
 
 from __future__ import annotations

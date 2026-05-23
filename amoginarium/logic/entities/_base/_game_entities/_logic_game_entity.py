@@ -4,10 +4,10 @@ Defines the core LogicGameEntity.
 Combines spatial data, physics (velocity/acceleration), and collision detection,
 serving as the base class for standard game objects.
 
-| Path: amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
-| Project: amoginarium
-| Created: 28.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
+| ``Project``: amoginarium
+| ``Created``: 28.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

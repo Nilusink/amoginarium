@@ -1,10 +1,10 @@
 """
 Python functions for the map generator.
 
-| Path: amoginarium/logic/map/_generator.py
-| Project: amoginarium
-| Created: 18.05.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/logic/map/_generator.py
+| ``Project``: amoginarium
+| ``Created``: 18.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

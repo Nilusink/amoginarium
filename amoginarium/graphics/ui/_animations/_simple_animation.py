@@ -1,10 +1,10 @@
 """
 Provides a basic two-state float value animation controller.
 
-| Path: amoginarium/graphics/ui/_animations/_simple_animation.py
-| Project: amoginarium
-| Created: 16.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_animations/_simple_animation.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: LukasKrah
 """
 
 from ._animation_types import AnimationPhase

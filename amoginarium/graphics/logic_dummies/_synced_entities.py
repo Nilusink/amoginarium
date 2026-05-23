@@ -1,10 +1,10 @@
 """
 Shared memory synced graphics entities.
 
-| Path: amoginarium/graphics/logic_dummies/_synced_entities.py
-| Project: amoginarium
-| Created: 30.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/logic_dummies/_synced_entities.py
+| ``Project``: amoginarium
+| ``Created``: 30.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

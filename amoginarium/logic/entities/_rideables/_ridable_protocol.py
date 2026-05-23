@@ -1,10 +1,10 @@
 """
 Base attributes a rideable entity needs.
 
-| Path: amoginarium/logic/entities/_rideables/_ridable_protocol.py
-| Project: amoginarium
-| Created: 05.05.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_rideables/_ridable_protocol.py
+| ``Project``: amoginarium
+| ``Created``: 05.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

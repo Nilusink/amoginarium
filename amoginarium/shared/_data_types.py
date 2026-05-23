@@ -1,10 +1,10 @@
 """
 Various data types.
 
-| Path: amoginarium/shared/_data_types.py
-| Project: amoginarium
-| Created: 18.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/_data_types.py
+| ``Project``: amoginarium
+| ``Created``: 18.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 Base class for automated turrets with target tracking and engagement.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_turrets/_base_turret.py
-| Project: amoginarium
-| Created: 19.03.2024
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_turrets/_base_turret.py
+| ``Project``: amoginarium
+| ``Created``: 19.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

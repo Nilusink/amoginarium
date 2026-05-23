@@ -1,10 +1,10 @@
 """
 Exports sensor templates and detection group management for weaponry.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_sensors/__init__.py
-| Project: amoginarium
-| Created: 18.04.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_sensors/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 18.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from ._base_sensor import BaseSensor

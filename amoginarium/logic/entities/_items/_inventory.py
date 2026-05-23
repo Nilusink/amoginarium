@@ -1,10 +1,10 @@
 """
 Basic inventory can be used by all entities (players, chests, ...).
 
-| Path: amoginarium/logic/entities/_items/_inventory.py
-| Project: amoginarium
-| Created: 16.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_items/_inventory.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

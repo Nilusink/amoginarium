@@ -3,10 +3,10 @@
 """
 Header file for the Cython-generated CollisionManager class.
 
-| Path: amoginarium/shared/collision_detection/_collision_manager.pxd
-| Project: amoginarium
-| Created: 13.05.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/shared/collision_detection/_collision_manager.pxd
+| ``Project``: amoginarium
+| ``Created``: 13.05.2026
+| ``Authors``: LukasKrah
 """
 
 from libc.stdint cimport uint64_t

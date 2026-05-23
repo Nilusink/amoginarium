@@ -1,10 +1,10 @@
 """
 Sensor detecting all entities within a specific circular range.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_sensors/_magic_sensor.py
-| Project: amoginarium
-| Created: 18.04.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_sensors/_magic_sensor.py
+| ``Project``: amoginarium
+| ``Created``: 18.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 Defines the main menu UI with game navigation buttons.
 
-| Path: amoginarium/base/_startmenu.py
-| Project: amoginarium
-| Created: 01.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/base/_startmenu.py
+| ``Project``: amoginarium
+| ``Created``: 01.03.2026
+| ``Authors``: LukasKrah
 """
 
 import typing as tp

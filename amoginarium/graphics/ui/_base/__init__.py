@@ -1,10 +1,10 @@
 """
 Exports core UI base classes and data types for amoginarium.
 
-| Path: amoginarium/graphics/ui/_base/__init__.py
-| Project: amoginarium
-| Created: 16.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_base/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: LukasKrah
 """
 
 from ._ui_element import UIElement, UIElementData, UIElementValueFloat

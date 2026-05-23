@@ -1,10 +1,10 @@
 """
 OpenGl Fonts.
 
-| Path: amoginarium/graphics/render_bindings/opengl_fonts/_opengl_fonts.pyi
-| Project: amoginarium
-| Created: 03.04.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/render_bindings/opengl_fonts/_opengl_fonts.pyi
+| ``Project``: amoginarium
+| ``Created``: 03.04.2026
+| ``Authors``: LukasKrah
 """
 
 class GLFont:

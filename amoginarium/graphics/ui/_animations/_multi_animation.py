@@ -1,10 +1,10 @@
 """
 Manages multiple synchronized animations using scalar or sequence inputs.
 
-| Path: amoginarium/graphics/ui/_animations/_multi_animation.py
-| Project: amoginarium
-| Created: 16.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_animations/_multi_animation.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

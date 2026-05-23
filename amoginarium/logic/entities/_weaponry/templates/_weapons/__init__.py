@@ -1,10 +1,10 @@
 """
 Exports base weapon templates for logic-level entity weaponry.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_weapons/__init__.py
-| Project: amoginarium
-| Created: 18.04.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapons/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 18.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from ._base_charged_weapon import BaseChargedWeapon

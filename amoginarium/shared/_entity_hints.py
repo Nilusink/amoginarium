@@ -1,10 +1,10 @@
 """
 Type hints for entities.
 
-| Path: amoginarium/shared/_entity_hints.py
-| Project: amoginarium
-| Created: 12.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/_entity_hints.py
+| ``Project``: amoginarium
+| ``Created``: 12.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

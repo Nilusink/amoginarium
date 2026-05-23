@@ -1,10 +1,10 @@
 """
 "Data-link" to share target information.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_sensors/_detection_group.py
-| Project: amoginarium
-| Created: 10.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_sensors/_detection_group.py
+| ``Project``: amoginarium
+| ``Created``: 10.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

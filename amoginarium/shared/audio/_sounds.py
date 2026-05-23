@@ -1,10 +1,10 @@
 """
 Global sounds.
 
-| Path: amoginarium/shared/audio/_sounds.py
-| Project: amoginarium
-| Created: 26.03.2024
-| Authors: Nilusink
+| ``Path``: amoginarium/shared/audio/_sounds.py
+| ``Project``: amoginarium
+| ``Created``: 26.03.2024
+| ``Authors``: Nilusink
 """
 
 import json

@@ -1,10 +1,10 @@
 """
 Inventory dummy (+UI) for logic.
 
-| Path: amoginarium/graphics/logic_dummies/_inventory.py
-| Project: amoginarium
-| Created: 06.04.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/logic_dummies/_inventory.py
+| ``Project``: amoginarium
+| ``Created``: 06.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

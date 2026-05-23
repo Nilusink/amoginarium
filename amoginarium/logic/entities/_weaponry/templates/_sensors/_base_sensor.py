@@ -1,10 +1,10 @@
 """
 Base class for logic entities handling spatial detection and targeting.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/_sensors/_base_sensor.py
-| Project: amoginarium
-| Created: 10.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_sensors/_base_sensor.py
+| ``Project``: amoginarium
+| ``Created``: 10.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

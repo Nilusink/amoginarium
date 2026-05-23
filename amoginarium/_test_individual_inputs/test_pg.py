@@ -1,10 +1,10 @@
 """
 Tests multi-device input using Windows Raw Input and PyOpenGL.
 
-| Path: amoginarium/_test_individual_inputs/test_pg.py
-| Project: amoginarium
-| Created: 16.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/_test_individual_inputs/test_pg.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: LukasKrah
 """
 
 import ctypes

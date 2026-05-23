@@ -1,10 +1,10 @@
 """
 Graphics base entity.
 
-| Path: amoginarium/graphics/entities/_base_entity.py
-| Project: amoginarium
-| Created: 29.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/entities/_base_entity.py
+| ``Project``: amoginarium
+| ``Created``: 29.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

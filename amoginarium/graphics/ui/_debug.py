@@ -1,10 +1,10 @@
 """
 Class decorator for visualizing UI element bounding boxes and anchors.
 
-| Path: amoginarium/graphics/ui/_debug.py
-| Project: amoginarium
-| Created: 25.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_debug.py
+| ``Project``: amoginarium
+| ``Created``: 25.03.2026
+| ``Authors``: LukasKrah
 """
 
 import functools

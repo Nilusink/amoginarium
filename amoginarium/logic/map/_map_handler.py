@@ -1,10 +1,10 @@
 """
 Load and save maps.
 
-| Path: amoginarium/logic/map/_map_handler.py
-| Project: amoginarium
-| Created: 15.03.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/logic/map/_map_handler.py
+| ``Project``: amoginarium
+| ``Created``: 15.03.2026
+| ``Authors``: Nilusink
 """
 
 from typing import TYPE_CHECKING

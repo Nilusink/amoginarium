@@ -1,11 +1,11 @@
 """
 Uses the missile's target_pos as a sensor target.
 
-| Path: amoginarium/logic/entities/_weaponry/templates/
-      _weapon_actors/sensors/_gps_sensor.py
-| Project: amoginarium
-| Created: 14.05.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/
+            _weapon_actors/sensors/_gps_sensor.py
+| ``Project``: amoginarium
+| ``Created``: 14.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

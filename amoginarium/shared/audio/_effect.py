@@ -1,10 +1,10 @@
 """
 Manages spatialized audio effects, sound playback, and preset sound classes.
 
-| Path: amoginarium/shared/audio/_effect.py
-| Project: amoginarium
-| Created: 22.03.2024
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/audio/_effect.py
+| ``Project``: amoginarium
+| ``Created``: 22.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

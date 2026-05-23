@@ -3,10 +3,10 @@
 """
 Algorythm for finding minimum rectangles.
 
-| Path: amoginarium/shared/utility/_minrect_algorithm/_minrect.pyx
-| Project: amoginarium
-| Created: 31.03.2026
-| Authors: LukasKrah
+| ``Path``: amoginarium/shared/utility/_minrect_algorithm/_minrect.pyx
+| ``Project``: amoginarium
+| ``Created``: 31.03.2026
+| ``Authors``: LukasKrah
 """
 from libcpp.vector cimport vector
 

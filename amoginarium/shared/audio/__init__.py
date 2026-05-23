@@ -1,10 +1,10 @@
 """
 Exports background players, sound effects, and audio management utilities.
 
-| Path: amoginarium/shared/audio/__init__.py
-| Project: amoginarium
-| Created: 25.03.2024
-| Authors: Nilusink
+| ``Path``: amoginarium/shared/audio/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 25.03.2024
+| ``Authors``: Nilusink
 """
 
 from ._background import BackgroundPlayer

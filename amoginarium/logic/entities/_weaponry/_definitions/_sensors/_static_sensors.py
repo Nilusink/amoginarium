@@ -1,10 +1,11 @@
 """
 Allows sensors to be placed on the map.
 
-| Path: amoginarium/logic/entities/_weaponry/_definitions/_sensors/_static_sensors.py
-| Project: amoginarium
-| Created: 15.04.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/_definitions/_sensors/
+            _static_sensors.py
+| ``Project``: amoginarium
+| ``Created``: 15.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

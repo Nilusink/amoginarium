@@ -1,10 +1,10 @@
 """
 Keeps track of all entity ids.
 
-| Path: amoginarium/shared/_entity_counter.py
-| Project: amoginarium
-| Created: 28.03.2026
-| Authors: Nilusink
+| ``Path``: amoginarium/shared/_entity_counter.py
+| ``Project``: amoginarium
+| ``Created``: 28.03.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

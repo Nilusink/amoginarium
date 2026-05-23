@@ -1,10 +1,10 @@
 """
 Graphics dummy for player.
 
-| Path: amoginarium/graphics/logic_dummies/_player.py
-| Project: amoginarium
-| Created: 30.03.2026
-| Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/logic_dummies/_player.py
+| ``Project``: amoginarium
+| ``Created``: 30.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 import pygame as pg
