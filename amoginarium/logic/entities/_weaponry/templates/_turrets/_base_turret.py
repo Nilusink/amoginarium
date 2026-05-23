@@ -396,6 +396,8 @@ class BaseTurret(LogicGameEntity):
                 self.available_targets.pop(target)
                 continue
 
+            self._target_predict = [target.get_position()]
+
             if self.available_targets[target]["shot_at"] >= 0:
                 sol = self._get_firing_solution(target)
                 self.available_targets[target]["solution"] = sol
@@ -409,23 +411,36 @@ class BaseTurret(LogicGameEntity):
                 self.available_targets[target]["solution"] = sol
 
                 if not sol:
-                    sol = self._get_firing_solution(
-                        target,
-                        ignore_acceleration=True,
-                        ignore_velocity=True,
-                    )
-                    self.available_targets[target]["solution"] = sol
+                    self.available_targets[target]["distance"] = np.inf
 
-                    # if aim type is high, allow no-movement targets
-                    if self._allow_static_target or not sol:
-                        self.available_targets[target]["distance"] = np.inf
-                        continue
+                    # sol = self._get_firing_solution(
+                    #     target,
+                    #     ignore_acceleration=True,
+                    #     ignore_velocity=True,
+                    # )
+                    # self.available_targets[target]["solution"] = sol
+                    #
+                    # # if aim type is high, allow no-movement targets
+                    # if self._allow_static_target or not sol:
+                    #     continue
 
-                self.available_targets[target]["distance"] = (
-                    sol.target_predict
-                    - self.position
-                    + self.weapon.parent_position_offset
-                ).length
+                else:
+                    self.available_targets[target]["distance"] = (
+                        sol.target_predict
+                        - self.position
+                        + self.weapon.parent_position_offset
+                    ).length
+
+            sol = self.available_targets[target]["solution"]
+            if sol:
+                self._target_predict = [
+                   sol.target_predict
+                ]
+            else:
+                self._target_predict[0] = Vec2()
+
+        if not self.available_targets:
+            self._target_predict = [self.position.copy()]
 
         new_target = self.get_next_target()
         simulate_target = self.get_next_target(include_all=True)
@@ -538,7 +553,6 @@ class BaseTurret(LogicGameEntity):
             target_predict = (
                 self.position + self.weapon.parent_position_offset + predict
             )
-            self._target_predict = [target_predict]
 
             if predict.length < self.min_range:
                 return None

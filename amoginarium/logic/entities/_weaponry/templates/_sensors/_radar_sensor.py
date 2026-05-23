@@ -127,7 +127,7 @@ class RadarSensor(BaseSensor):
 
         # check if target is in pre-calculated sphere
         valid_targets = self._check_in_sphere(
-            [t for t in targets if t.coalition != self.parent.coalition]
+            [t for t in targets if t.coalition != self.parent.coalition and t.alive]
         )
 
         self._targets = valid_targets.copy()
