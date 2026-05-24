@@ -135,12 +135,13 @@ class CalculatedRideableTurret(RideableTurret):
 
         return None
 
+    @tp.override
     def _shoot_at(
         self,
         target_angle: Vec2,
         tof: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
-        **bullet_args,
+        **bullet_args: tp.Any,
     ) -> None:
         # check if static facing
         if self._weapon_static or self._default_engagement_ignore_solution:
@@ -169,6 +170,7 @@ class CalculatedRideableTurret(RideableTurret):
                 target_pos=self._target_solution.target_predict,
             )
 
+    @tp.override
     def _update(self, delta: float, *, set_facing: bool = True) -> None:
         super()._update(delta, set_facing=False)
 
@@ -184,7 +186,12 @@ class CalculatedRideableTurret(RideableTurret):
                 self._weapon_static and target_delta
             ) or self._default_engagement_ignore_solution:
                 target: Vec2 = self.position + target_delta
-                self._target_solution = TargetSolution(target, Vec2(), -1)
+                self._target_solution = TargetSolution(
+                    target,
+                    Vec2(),
+                    -1,
+                    track=object,  # type: ignore[unused]
+                )
 
                 if not self._weapon_static:
                     self._turn_at(target_delta.angle, delta)

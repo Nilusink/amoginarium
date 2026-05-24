@@ -8,6 +8,7 @@ Authors: Nilusink, LukasKrah
 """
 # ruff: noqa: T201
 
+from __future__ import annotations
 import typing as tp
 from time import perf_counter_ns
 from traceback import format_exc
@@ -17,13 +18,16 @@ from icecream import ic
 from ._console_colors import CC, get_fg_color
 from ._utils import get_caller_name
 
+if tp.TYPE_CHECKING:
+    from types import EllipsisType
 
-def run_with_debug[**A, R](
+
+def run_with_debug[**A, R](  # noqa: C901
     *,
     show_call: bool = True,
     show_finish: bool = False,
     show_args: bool = False,
-    on_fail: tp.Callable[[Exception], tp.Any] = ...,
+    on_fail: tp.Callable[[Exception], tp.Any] | EllipsisType = ...,
     reraise_errors: bool = False,
 ) -> tp.Callable[[tp.Callable[A, R]], tp.Callable[A, R]]:
     """
@@ -70,8 +74,6 @@ def run_with_debug[**A, R](
                         color=False,
                     )
 
-                return val
-
             # log caught errors
             except Exception as e:
                 if ic.enabled:
@@ -89,13 +91,18 @@ def run_with_debug[**A, R](
                 if reraise_errors:
                     raise
 
+            else:
+                return val
+
         return wrapper
 
     return decorator
 
 
-def timeit(times_run: int):
-    def decorator[**A, R](func: tp.Callable[A, R]):
+def timeit[**A, R](
+    times_run: int,
+) -> tp.Callable[[tp.Callable[A, R]], tp.Callable[A, R]]:
+    def decorator(func: tp.Callable[A, R]) -> tp.Callable[A, R]:
         def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
             start = perf_counter_ns()
             for _ in range(times_run - 1):
@@ -114,7 +121,7 @@ def timeit(times_run: int):
                 f"timing {CC.fg.MAGENTA}{func.__name__}"
                 f"{get_fg_color(36)} for {get_fg_color(247)}{times_run}"
                 f"{get_fg_color(36)} iterations. result: {CC.fg.MAGENTA}"
-                f"{time_taken}µs{CC.ctrl.ENDC}"
+                f"{time_taken}μs{CC.ctrl.ENDC}"
             )
 
             return result
@@ -142,7 +149,7 @@ class _CumTimer:
     def __init__(self) -> None:
         self._func_times: dict[str, list[float | int]] = {}
 
-    def time_this[**A, R](self, func: tp.Callable[[A], R]):
+    def time_this[**A, R](self, func: tp.Callable[[A], R]) -> tp.Callable[[A], R]:
         def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
             start = perf_counter_ns()
             res = func(*args, **kwargs)

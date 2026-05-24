@@ -16,12 +16,12 @@ from types import EllipsisType
 
 from icecream import ic
 
-from amoginarium.shared.utility import RadarTrack2D, TrackState, Vec2
+from amoginarium.shared.utility import RadarTrack2D, TrackState
 
-from ...._base import Bullets, Players, Walls, Dead
+from ...._base import Bullets, Dead, DebugPolygonEntity, Players, Walls
 
 if tp.TYPE_CHECKING:
-    from ...._base import PositionedLogicEntity, LogicGameEntity
+    from ...._base import LogicGameEntity, PositionedLogicEntity
     from ._base_sensor import BaseSensor
 
 
@@ -95,6 +95,8 @@ class _DetectionGroupManager:
 class DetectionGroup:
     """Group of sensors."""
 
+    _DEBUG: tp.ClassVar[bool] = True
+
     _targets: dict[PositionedLogicEntity, TargetInfo]
     _tracks: dict[int, RadarTrack2D]
     _sensors: list[BaseSensor]
@@ -113,6 +115,9 @@ class DetectionGroup:
         self._targets = {}
         self._tracks = {}
         self._sensors = []
+
+        if self._DEBUG:
+            self._debug_entities = {}
 
     @property
     def id(self) -> int:
@@ -152,6 +157,11 @@ class DetectionGroup:
         if target.id not in self._tracks:
             self._tracks[tid] = RadarTrack2D()
             self._tracks[tid].initialize(*target.position.xy, *velocity.xy)
+
+            if self._DEBUG:
+                self._debug_entities[tid] = DebugPolygonEntity(
+                    target.runtime_buffer, point_radius=8, fill_color=(0, 0, 0, 0)
+                )
 
         else:
             self._tracks[tid].step(*target.position.xy, *velocity.xy, delta)
@@ -198,9 +208,17 @@ class DetectionGroup:
         Ask all sensors to get their targeting information.
         """
         for tid, track in self._tracks.copy().items():
+            if self._DEBUG:
+                self._debug_entities[tid].p1 = track.get_position()
+                self._debug_entities[tid].p2 = track.predict_future_position(0.25 / 2)
+                self._debug_entities[tid].p3 = track.predict_future_position(0.25)
+                self._debug_entities[tid].p4 = track.predict_future_position(0.75 / 2)
+                self._debug_entities[tid].p5 = track.predict_future_position(0.5)
+
             # check if track has marked itself as dead in last iteration
             if track.state == TrackState.DEAD:
                 self._tracks.pop(tid)
+                self._debug_entities.pop(tid).kill()
 
             # increment track time and predicted position
             track.increment_time(delta)

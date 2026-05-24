@@ -23,11 +23,10 @@ from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import calculate_launch_angle
-from amoginarium.shared.utility import calculate_launch_solution_from_track
 from amoginarium.shared.utility import get_default, MASK16, MASK32, MASK64
 from amoginarium.shared.utility import normalize_angle, TrackQuality, TrackState, Vec2
 
-from ...._base import DebugPolygonEntity, GameCollisions
+from ...._base import GameCollisions
 from ...._base import GravityAffected, LogicGameEntity
 from .._sensors import DetectionGroup
 
@@ -279,8 +278,6 @@ class BaseTurret(LogicGameEntity):
             )
         )
 
-        self._track_dbe = DebugPolygonEntity(runtime_buffer, point_radius=5)
-
     @property
     def max_hp(self) -> int:
         return self._default_max_hp
@@ -392,12 +389,6 @@ class BaseTurret(LogicGameEntity):
         for target in targets:
             if isinstance(target, EllipsisType):
                 continue
-
-            self._track_dbe.p1 = target.get_position()
-            self._track_dbe.p2 = target.predict_future_position(0.25 / 2)
-            self._track_dbe.p3 = target.predict_future_position(0.25)
-            self._track_dbe.p4 = target.predict_future_position(0.75 / 2)
-            self._track_dbe.p5 = target.predict_future_position(0.5)
 
             if target not in self.available_targets:
                 self.available_targets[target] = {

@@ -56,7 +56,6 @@ class RadarSensor(BaseSensor):
     ) -> None:
         self._sphere = None
         self._sphere_accuracy = sphere_accuracy
-        self._has_sectors = sphere_accuracy
         self._min_rcs = min_rcs
         self._update_rate = update_rate
         self._last_update = update_rate

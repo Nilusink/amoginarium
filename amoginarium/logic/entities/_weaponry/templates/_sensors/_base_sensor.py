@@ -26,6 +26,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import coord_t
 
     from ...._base import LogicGameEntity
+    from ...templates import DetectionGroup
 
 
 class BaseSensor(PositionedLogicEntity):
@@ -48,6 +49,7 @@ class BaseSensor(PositionedLogicEntity):
         parent: LogicGameEntity,
         detection_range: float,
         position_offset: coord_t = ...,
+        *,
         visible: bool = True,
     ) -> None:
         super().__init__(
@@ -108,7 +110,7 @@ class BaseSensor(PositionedLogicEntity):
 
         return out
 
-    def group_add(self, group) -> None:
+    def group_add(self, group: DetectionGroup) -> None:
         self._detection_group = group
 
     def get_targets(
@@ -164,7 +166,7 @@ class BaseSensor(PositionedLogicEntity):
                     sectors + [MASK16] * (self._values_per_param - len(sectors)),
                 )
 
-    def _kill(self, *_args, **_kwargs) -> None:
+    def _kill(self, *_args: tp.Any, **_kwargs: tp.Any) -> None:
         if self._detection_group:
             self._detection_group.remove_sensor(self)
 
