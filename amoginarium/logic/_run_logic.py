@@ -29,7 +29,7 @@ from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_s
 from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.utility import PIDController, Vec2
 
-from .entities import Bullets, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
+from .entities import Bullets, Dead, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
 from .entities import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER, DetectionGroup
 from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAffected
 from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
@@ -379,7 +379,7 @@ class LogicProcess:
         if self._last_spawn < 0:
             self._last_spawn = 3
 
-        # reset and update detection Groups
+        # reset detection Group
         DETECTION_GROUP_MANAGER.reset()
 
         # update entities
@@ -390,6 +390,7 @@ class LogicProcess:
         # current loop instead of last loop
         Bullets.update(delta)
         DETECTION_GROUP_MANAGER.update_detection(delta)
+        Dead.empty()  # empty dead here because it is primarily used for detection
         Updated.update(delta)
 
         players = Players.entities()

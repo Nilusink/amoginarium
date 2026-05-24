@@ -7,7 +7,11 @@ Created: 23.05.2026
 Authors: Nilusink
 """
 
+import typing as tp
 from enum import Enum
+
+
+TRACK_HALF_TIME: tp.Final[float] = 1.0
 
 
 class TrackState(Enum):

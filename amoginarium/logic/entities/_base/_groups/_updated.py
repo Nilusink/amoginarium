@@ -13,6 +13,7 @@ import typing as tp
 
 from amoginarium import pv
 from amoginarium.shared import PositionedLogicEntityLike
+from amoginarium.shared.debugging import do_not_call
 from amoginarium.shared.utility import Vec2
 
 from ._base_group import BaseGroup
@@ -67,4 +68,14 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
                 t.load_textures()
 
 
+class _Dead(_Updated):
+    """All ``Updated`` entities will be in ``Dead`` for one iteration."""
+
+    @tp.override
+    @do_not_call
+    def update(self, *args: tp.Any, **kwargs: tp.Any) -> tp.Never:
+        """DO NOT CALL!."""
+
+
 Updated: tp.Final[_Updated] = _Updated()
+Dead: tp.Final[_Dead] = _Dead()

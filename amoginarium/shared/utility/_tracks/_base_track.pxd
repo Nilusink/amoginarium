@@ -16,9 +16,12 @@ cdef class BaseTrack:
     cdef double x, y
     cdef double vx, vy
     cdef double ax, ay
+    cdef double last_update
 
     cdef int8_t _track_quality
     cdef int8_t _track_state
+
+    cpdef increment_time(self, double dt)
 
     cpdef reset(self)
     cpdef initialize(self, double x, double y, double vx, double vy)
@@ -40,3 +43,4 @@ cdef class BaseTrack:
     cpdef Vec2 get_acceleration(self)
     cpdef Vec2 predict_future_position(self, double t)
     cpdef double get_speed(self)
+    cpdef kill(self)

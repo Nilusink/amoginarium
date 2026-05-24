@@ -17,7 +17,7 @@ import typing as tp
 from amoginarium import pv
 from amoginarium.shared import BaseLogicEntityLike, ENTITY_COUNTER
 
-from .._groups import Updated
+from .._groups import Dead, Updated
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
@@ -230,6 +230,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         for child in self._children:
             child.kill()
 
+        # commit suicide
         for group in self.__groups:
             group.remove(self)
 
@@ -237,6 +238,9 @@ class BaseLogicEntity(BaseLogicEntityLike):
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__groups.clear()
+
+        # add to dead
+        Dead.add(self)
 
     @tp.final
     def kill(self, killed_by: MurderViable | EllipsisType = ...) -> None:

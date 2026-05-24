@@ -18,18 +18,19 @@ from ._console_colors import CC, get_fg_color
 from ._utils import get_caller_name
 
 
-def run_with_debug(
+def run_with_debug[**A, R](
+    *,
     show_call: bool = True,
     show_finish: bool = False,
     show_args: bool = False,
     on_fail: tp.Callable[[Exception], tp.Any] = ...,
     reraise_errors: bool = False,
-):
+) -> tp.Callable[[tp.Callable[A, R]], tp.Callable[A, R]]:
     """
     Run a function with debugging and exception printing.
     """
 
-    def decorator[**A, R](func: tp.Callable[A, R]):
+    def decorator(func: tp.Callable[A, R]) -> tp.Callable[A, R]:
         def wrapper(*args: A.args, **kwargs: A.kwargs) -> R:
             # get caller name
             prefix = ic.prefix
@@ -40,12 +41,9 @@ def run_with_debug(
             prefix_arrow = prefix[-3:]
 
             func_name = func.__name__  # terminal_link(
-            #     inspect.getfile(func),
-            #     func.__name__
-            # )
 
             if ic.enabled and show_call:
-                context = get_caller_name(True)
+                context = get_caller_name(extended=True)
                 ic.outputFunction(
                     f"{get_fg_color(36)}{prefix_time}"
                     f"{get_fg_color(247)}{prefix_arrow}{CC.fg.GREEN}"
@@ -124,6 +122,16 @@ def timeit(times_run: int):
         return wrapper
 
     return decorator
+
+
+def do_not_call[**A, R](func: tp.Callable[A, R]) -> tp.Callable[A, R]:
+    """Do not call this function."""
+
+    def wrapper(*_: tp.Any, **__: tp.Any) -> tp.Never:
+        msg = f"{func.__name__} must not be called"
+        raise RuntimeError(msg)
+
+    return wrapper
 
 
 class _CumTimer:

@@ -24,13 +24,16 @@ class BaseTrack:
     def state(self) -> TrackState:
         """Track State."""
 
-    @state.setter
-    def state(self, new_state: TrackState) -> None:
-        """Track State."""
-
     @property
     def quality(self) -> TrackQuality:
         """Target track quality."""
+
+    @property
+    def time_since_last_update(self) -> float:
+        """Time since last track update."""
+
+    def increment_time(self, dt: float) -> None:
+        """Increment track time + position predict."""
 
     def reset(self) -> None:
         """Reset the track."""
@@ -75,3 +78,6 @@ class BaseTrack:
 
     def get_speed(self) -> float:
         """Get current speed in m/s."""
+
+    def kill(self) -> None:
+        """Mark track as Dead."""

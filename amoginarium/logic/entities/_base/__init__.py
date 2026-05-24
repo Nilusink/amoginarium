@@ -11,7 +11,7 @@ from ._base_entities import BaseLogicEntity, EntityChildViable, PositionedLogicE
 from ._collision import CollisionType, GameCollisions, HitboxTypes
 from ._debug import DebugCircleEntity, DebugPolygonEntity, DebugRectangleEntity
 from ._game_entities import CollisionLogicEntity, LogicGameEntity
-from ._groups import BaseGroup, Bullets, FrictionXAffected
+from ._groups import BaseGroup, Bullets, Dead, FrictionXAffected
 from ._groups import GravityAffected, LogicGroup, Players, Updated, Walls
 
 GameCollisions.init(

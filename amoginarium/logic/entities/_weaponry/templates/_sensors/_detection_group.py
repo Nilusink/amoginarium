@@ -1,10 +1,10 @@
 """
 "Data-link" to share target information.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_sensors/_detection_group.py
-Project: amoginarium
-Created: 10.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_sensors/_detection_group.py
+| ``Project``: amoginarium
+| ``Created``: 10.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -18,10 +18,10 @@ from icecream import ic
 
 from amoginarium.shared.utility import RadarTrack2D, TrackState, Vec2
 
-from ...._base import Bullets, Players, Walls
+from ...._base import Bullets, Players, Walls, Dead
 
 if tp.TYPE_CHECKING:
-    from ...._base import PositionedLogicEntity
+    from ...._base import PositionedLogicEntity, LogicGameEntity
     from ._base_sensor import BaseSensor
 
 
@@ -79,9 +79,10 @@ class _DetectionGroupManager:
         # create base group of targets that are viable for detection
         # targets = [t for t in Updated.entities() if t not in walls and t.alive]
         targets = Players.entities() + Bullets.entities()
+        dead = Dead.entities()
 
         for group in self._detection_groups:
-            group.update_detection(delta, from_entities=targets)
+            group.update_detection(delta, from_entities=targets, dead_entities=dead)
 
     def reset(self) -> None:
         """
@@ -135,7 +136,7 @@ class DetectionGroup:
 
     def _add_target(
         self,
-        target: PositionedLogicEntity,
+        target: LogicGameEntity,
         detector: PositionedLogicEntity,
         delta: float,
     ) -> None:
@@ -145,7 +146,7 @@ class DetectionGroup:
             )
 
         # try to get velocity from target, else velocity=0
-        velocity: Vec2 = getattr(target, "velocity", Vec2())
+        velocity = (target.position - target.last_position) / target.last_delta
         tid = target.id
 
         if target.id not in self._tracks:
@@ -153,14 +154,7 @@ class DetectionGroup:
             self._tracks[tid].initialize(*target.position.xy, *velocity.xy)
 
         else:
-            track = self._tracks[tid]
-            track.step(*target.position.xy, *velocity.xy, delta)
-
-            if track.state == TrackState.NEW:
-                self._tracks[tid].state = TrackState.TENTATIVE
-
-            else:  # doesn't matter if TENTATIVE, DEGRADED or "DEAD"
-                track.state = TrackState.CONFIRMED
+            self._tracks[tid].step(*target.position.xy, *velocity.xy, delta)
 
     def add_target(
         self,
@@ -197,25 +191,32 @@ class DetectionGroup:
         self,
         delta: float,
         *,
-        from_entities: tp.Iterable[PositionedLogicEntity] | None = None,
+        from_entities: tp.Iterable[LogicGameEntity] | None = None,
+        dead_entities: tp.Iterable[LogicGameEntity] | None = None,
     ) -> None:
         """
         Ask all sensors to get their targeting information.
         """
         for tid, track in self._tracks.copy().items():
-
-            # tracks can be inactive for two loops before being removed
-            if track.state == TrackState.CONFIRMED:
-                track.state = TrackState.DEGRADED
-
-            elif track.state == TrackState.DEGRADED:
-                track.state = TrackState.DEAD
-
-            elif track.state == TrackState.DEAD:
+            # check if track has marked itself as dead in last iteration
+            if track.state == TrackState.DEAD:
                 self._tracks.pop(tid)
 
+            # increment track time and predicted position
+            track.increment_time(delta)
+
         for sensor in self._sensors:
-            self.add_target(sensor.get_targets(from_entities), sensor.parent, delta)
+            self.add_target(
+                sensor.get_targets(delta, from_entities=from_entities),
+                sensor.parent,
+                delta,
+            )
+
+        # mark tracks from dead entities as dead
+        if dead_entities:
+            for entity in dead_entities:
+                if entity.id in self._tracks:
+                    self._tracks[entity.id].kill()
 
     def reset(self) -> None:
         self._targets.clear()

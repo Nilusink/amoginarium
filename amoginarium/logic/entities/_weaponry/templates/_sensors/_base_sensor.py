@@ -112,7 +112,7 @@ class BaseSensor(PositionedLogicEntity):
         self._detection_group = group
 
     def get_targets(
-        self, from_entities: tp.Iterable[LogicGameEntity] | None = None
+        self, delta: float, from_entities: tp.Iterable[LogicGameEntity] | None = None
     ) -> list[LogicGameEntity]:
         raise NotImplementedError
 

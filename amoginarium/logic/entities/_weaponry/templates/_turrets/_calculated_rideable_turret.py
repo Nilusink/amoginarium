@@ -127,7 +127,10 @@ class CalculatedRideableTurret(RideableTurret):
             target_predict = self.weapon_pos + predict
 
             return TargetSolution(
-                target_predict=target_predict, angle=aiming_angle, tof=tof
+                track=object,  # type: ignore[not-used]
+                target_predict=target_predict,
+                angle=aiming_angle,
+                tof=tof,
             )
 
         return None

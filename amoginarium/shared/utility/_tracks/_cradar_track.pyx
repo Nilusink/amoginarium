@@ -68,13 +68,9 @@ cdef class RadarTrack2D(BaseTrack):
         self.y += self.vy * dt
 
         # # optional gravity / accel model
-        self.vy += self.ax * dt
-        self.vx += self.ay * dt
+        self.vx += self.ax * dt
+        self.vy += self.ay * dt
 
-        # self.px += 0.1
-        # self.py += 0.1
-        # self.pvx += 0.1
-        # self.pvy += 0.1
 
     cdef update(
         self,
@@ -82,6 +78,9 @@ cdef class RadarTrack2D(BaseTrack):
         double mvx, double mvy,
         double dt
     ):
+        cdef:
+            double target_ax, target_ay
+            double last_update_dt = self.last_update
         # position
         # cdef double kx = self.px / (self.px + self.measurement_noise_pos)
         # cdef double ky = self.py / (self.py + self.measurement_noise_pos)
@@ -108,14 +107,20 @@ cdef class RadarTrack2D(BaseTrack):
         # self.vy += kvy * (mvy - self.vy)
 
         # acceleration
-        self.ax = (self.vx - self.prev_vx) / dt
-        self.ay = (self.vy - self.prev_vy) / dt
+        self.ax = (self.vx - self.prev_vx) / last_update_dt
+        self.ay = (self.vy - self.prev_vy) / last_update_dt
 
         # self.ax *= 0.99
         # self.ay *= 0.99
 
         # self.ax += 0.1 * (mvx - self.prev_vx) / dt
         # self.ay += 0.1 * (mvy - self.prev_vy) / dt
+
+        # target_ax = (mvx - self.prev_vx) / last_update_dt
+        # target_ay = (mvy - self.prev_vy) / last_update_dt
+        #
+        # self.ax += (target_ax - self.ax) * 0.5
+        # self.ay += (target_ay - self.ay) * 0.5
 
         # prev values
         self.prev_vx = self.vx

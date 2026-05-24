@@ -36,4 +36,5 @@ type = "<sensor.radar>"
 detection_range = 2200
 sphere_accuracy = 256
 min_rcs = 0.004
+update_rate = 0.05
 

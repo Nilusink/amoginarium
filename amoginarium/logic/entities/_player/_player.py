@@ -588,6 +588,8 @@ class Player(Passenger, LogicGameEntity):
 
         if ridden_pos:
             self.position = ridden_pos
+            self.velocity *= 0
+            self.acceleration *= 0
 
         else:
             self.position += self.__add_position

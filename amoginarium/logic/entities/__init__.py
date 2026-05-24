@@ -7,7 +7,7 @@ Created: 25.01.2024
 Authors: Nilusink, LukasKrah
 """
 
-from ._base import BaseLogicEntity, Bullets, FrictionXAffected
+from ._base import BaseLogicEntity, Bullets, Dead, FrictionXAffected
 from ._base import GameCollisions, GravityAffected, LogicGameEntity
 from ._base import Players, PositionedLogicEntity, Updated, Walls
 from ._player import Player
