@@ -140,7 +140,7 @@ class Player(Passenger, LogicGameEntity):
             if slot.item:
                 slot.item.hide()
                 if hasattr(slot.item, "reload"):
-                    slot.item.reload(True)
+                    slot.item.reload(instant=True)
 
         self.item.show()
 
@@ -655,6 +655,8 @@ class Player(Passenger, LogicGameEntity):
 
         if ridden_pos:
             self.position = ridden_pos
+            self.velocity *= 0
+            self.acceleration *= 0
 
         else:
             self.position += self.__add_position

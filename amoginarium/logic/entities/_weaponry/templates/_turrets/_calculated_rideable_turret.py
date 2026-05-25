@@ -127,7 +127,10 @@ class CalculatedRideableTurret(RideableTurret):
             target_predict = self.weapon_pos + predict
 
             return TargetSolution(
-                target_predict=target_predict, angle=aiming_angle, tof=tof
+                track=object,  # type: ignore[not-used]
+                target_predict=target_predict,
+                angle=aiming_angle,
+                tof=tof,
             )
 
         return None
@@ -168,8 +171,8 @@ class CalculatedRideableTurret(RideableTurret):
             )
 
     @tp.override
-    def _update(self, delta: float, set_facing: bool = True) -> None:
-        super()._update(delta, False)
+    def _update(self, delta: float, *, set_facing: bool = True) -> None:
+        super()._update(delta, set_facing=False)
 
         # calculate target position
         if self._target_angle.length != 0:
@@ -183,7 +186,12 @@ class CalculatedRideableTurret(RideableTurret):
                 self._weapon_static and target_delta
             ) or self._default_engagement_ignore_solution:
                 target: Vec2 = self.position + target_delta
-                self._target_solution = TargetSolution(target, Vec2(), -1)
+                self._target_solution = TargetSolution(
+                    target,
+                    Vec2(),
+                    -1,
+                    track=object,  # type: ignore[unused]
+                )
 
                 if not self._weapon_static:
                     self._turn_at(target_delta.angle, delta)

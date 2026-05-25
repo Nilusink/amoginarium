@@ -12,11 +12,16 @@ from __future__ import annotations
 import typing as tp
 from dataclasses import dataclass
 from time import perf_counter
+from types import EllipsisType
 
-from ...._base import Updated, Walls
+from icecream import ic
+
+from amoginarium.shared.utility import RadarTrack2D, TrackState
+
+from ...._base import Bullets, Dead, DebugPolygonEntity, GravityAffected, Updated, Walls
 
 if tp.TYPE_CHECKING:
-    from ...._base import PositionedLogicEntity
+    from ...._base import LogicGameEntity, PositionedLogicEntity
     from ._base_sensor import BaseSensor
 
 
@@ -31,17 +36,27 @@ class TargetInfo:
 class _DetectionGroupManager:
     """manages all detection groups."""
 
-    _instance: _DetectionGroupManager = ...
+    _instance: tp.ClassVar[tp.Self | EllipsisType] = ...
     _detection_groups: list[DetectionGroup]
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is ...:
-            cls._instance = super().__new__(cls)
+    def __new__(cls, *args: tp.Any, **kwargs: tp.Any) -> tp.Self:  # noqa: ARG004
+        if isinstance(cls._instance, EllipsisType):
+            instance = super().__new__(cls)
+
+            cls._instance = instance
+            return instance
 
         return cls._instance
 
     def __init__(self) -> None:
         self._detection_groups = []
+        self.__current_id: int = 0
+
+    def get_id(self) -> int:
+        """Get new detection group ID."""
+        dg_id = self.__current_id
+        self.__current_id += 1
+        return dg_id
 
     def add(self, group: DetectionGroup) -> None:
         self._detection_groups.append(group)
@@ -53,22 +68,24 @@ class _DetectionGroupManager:
     def get_all(self) -> list[DetectionGroup]:
         return self._detection_groups.copy()
 
-    # will later be used for target tracks
-    # def update(self, delta: float) -> None:
-    #     for group in self._detection_groups:
-    #         group.update(delta)
-
-    def update_detection(self) -> None:
+    def update_detection(self, delta: float) -> None:
         """
         Ask all sensors to get their targeting information.
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
         walls = Walls.entities()
-        targets = [t for t in Updated.entities() if t not in walls and t.alive]
+
+        # create base group of targets that are viable for detection
+        targets = [
+            t
+            for t in Bullets.entities() + Updated.entities()
+            if hasattr(t, "coalition") and t not in walls and t.alive
+        ]
+        dead = Dead.entities()
 
         for group in self._detection_groups:
-            group.update_detection(targets)
+            group.update_detection(delta, from_entities=targets, dead_entities=dead)
 
     def reset(self) -> None:
         """
@@ -78,37 +95,39 @@ class _DetectionGroupManager:
             group.reset()
 
 
-detection_id: int = 0
-
-
 class DetectionGroup:
     """Group of sensors."""
 
+    _DEBUG: tp.ClassVar[bool] = True
+
     _targets: dict[PositionedLogicEntity, TargetInfo]
+    _tracks: dict[int, RadarTrack2D]
     _sensors: list[BaseSensor]
 
-    def __new__(cls, *args, **kwargs):
+    @tp.override
+    def __new__(cls, *args: tp.Any, **kwargs: tp.Any) -> tp.Self:
         i = super().__new__(cls)
         DETECTION_GROUP_MANAGER.add(i)
         return i
 
     def __init__(self, name: str | None = None) -> None:
-        global detection_id
-
         # assign unique id
-        self.__id = detection_id
-        detection_id += 1
+        self.__id = DETECTION_GROUP_MANAGER.get_id()
 
         self._name = name
         self._targets = {}
+        self._tracks = {}
         self._sensors = []
+
+        if self._DEBUG:
+            self._debug_entities = {}
 
     @property
     def id(self) -> int:
         return self.__id
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
         return self._name
 
     @property
@@ -116,33 +135,70 @@ class DetectionGroup:
         return list(self._targets.keys())
 
     @property
+    def tracks(self) -> list[RadarTrack2D]:
+        return list(self._tracks.values())
+
+    @property
     def sensors(self) -> list[BaseSensor]:
         return self._sensors.copy()
+
+    def _add_target(
+        self,
+        target: LogicGameEntity,
+        detector: PositionedLogicEntity,
+        delta: float,
+    ) -> None:
+        if target not in self._targets:
+            self._targets[target] = TargetInfo(
+                last_seen=perf_counter(), seen_by=detector
+            )
+
+        # try to get velocity from target, else velocity=0
+        velocity = (target.position - target.last_position) / target.last_delta
+        tid = target.id
+
+        if target.id not in self._tracks:
+            g = GravityAffected.gravity
+
+            if target in Bullets.entities():
+                g *= 2
+
+            self._tracks[tid] = RadarTrack2D()
+            self._tracks[tid].initialize(
+                *target.position.xy,
+                *velocity.xy,
+                g=g,
+            )
+            self._tracks[tid].set_size(*target.size.xy)
+
+            if self._DEBUG:
+                self._debug_entities[tid] = DebugPolygonEntity(
+                    target.runtime_buffer, point_radius=8, fill_color=(0, 0, 0, 0)
+                )
+
+        else:
+            self._tracks[tid].step(*target.position.xy, *velocity.xy, delta)
 
     def add_target(
         self,
         target: PositionedLogicEntity | tp.Iterable[PositionedLogicEntity],
         detector: PositionedLogicEntity,
+        delta: float,
     ) -> None:
         """
         Add target to detection scope.
         """
         if isinstance(target, tp.Iterable):
             for t in target:
-                if t not in self._targets:
-                    self._targets[t] = TargetInfo(
-                        last_seen=perf_counter(), seen_by=detector
-                    )
+                self._add_target(t, detector, delta)
+
             return
 
-        if target not in self._targets:
-            self._targets[target] = TargetInfo(
-                last_seen=perf_counter(), seen_by=detector
-            )
+        self._add_target(target, detector, delta)
 
     def add_sensor(self, sensor: BaseSensor) -> None:
         """
-        Adds a sensor to detection scope.
+        Add a sensor to detection scope.
         """
         self._sensors.append(sensor)
         sensor.group_add(self)
@@ -153,23 +209,45 @@ class DetectionGroup:
         """
         if sensor in self._sensors:
             self._sensors.remove(sensor)
-        #
-        # else:
-        #     ic(CC.fg.RED + "sensor not in list!")
 
     def update_detection(
-        self, from_entities: tp.Iterable[PositionedLogicEntity] | None = None
+        self,
+        delta: float,
+        *,
+        from_entities: tp.Iterable[LogicGameEntity] | None = None,
+        dead_entities: tp.Iterable[LogicGameEntity] | None = None,
     ) -> None:
         """
         Ask all sensors to get their targeting information.
         """
-        for sensor in self._sensors:
-            self.add_target(sensor.get_targets(from_entities), sensor.parent)
+        for tid, track in self._tracks.copy().items():
+            if self._DEBUG:
+                self._debug_entities[tid].p1 = track.get_position()
+                self._debug_entities[tid].p2 = track.predict_future_position(0.25 / 2)
+                self._debug_entities[tid].p3 = track.predict_future_position(0.25)
+                self._debug_entities[tid].p4 = track.predict_future_position(0.75 / 2)
+                self._debug_entities[tid].p5 = track.predict_future_position(0.5)
 
-    # def update(self, delta: float) -> None:
-    #     now = perf_counter()
-    #     for target, info in self._targets.items():
-    #         if now - info.last_seen > ...:
+            # check if track has marked itself as dead in last iteration
+            if track.state == TrackState.DEAD:
+                self._tracks.pop(tid)
+                self._debug_entities.pop(tid).kill()
+
+            # increment track time and predicted position
+            track.increment_time(delta)
+
+        for sensor in self._sensors:
+            self.add_target(
+                sensor.get_targets(delta, from_entities=from_entities),
+                sensor.parent,
+                delta,
+            )
+
+        # mark tracks from dead entities as dead
+        if dead_entities:
+            for entity in dead_entities:
+                if entity.id in self._tracks:
+                    self._tracks[entity.id].kill()
 
     def reset(self) -> None:
         self._targets.clear()

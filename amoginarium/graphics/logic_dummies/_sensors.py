@@ -9,8 +9,8 @@ Sensor HUDs.
 
 from __future__ import annotations
 
+import typing as tp
 from types import EllipsisType
-from typing import TYPE_CHECKING
 
 from icecream import ic
 
@@ -21,7 +21,7 @@ from amoginarium.shared.utility import Color, unpack_int
 from ..render_bindings import renderer
 from ._synced_entities import SyncedGraphicsEntity
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import Vec2
 
 
@@ -56,6 +56,7 @@ class SensorHUD(SyncedGraphicsEntity):
         self._min_rcs = min_rcs
         self._vpp = vpp
 
+    @tp.override
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         world_pos = pv.global_vars.get_world_position()
 
@@ -97,27 +98,6 @@ class RadarSensorHUD(SensorHUD):
 
     def _gl_draw(self, delta_cal: float, layer: int = 0) -> None:
         super()._gl_draw(delta_cal, layer)
-
-        # t_pos = Vec2().from_cartesian(self.param1, self.param2)
-        #
-        # if t_pos.length != 0:
-        #     world_pos = pv.global_vars.get_world_position()
-        #
-        #     direction = t_pos - self.pos
-        #
-        #     dir_1 = direction.copy()
-        #     dir_1.angle += self._min_rcs / 2
-        #     dir2 = direction.copy()
-        #     dir2.angle -= self._min_rcs / 2
-        #
-        #     renderer.draw_polygon(
-        #         (
-        #             self.world_position,
-        #             (self.pos + dir_1) - world_pos,
-        #             (self.pos + dir2) - world_pos,
-        #         ),
-        #         color=Color().from_1(.2, .2, 1, .5)
-        #     )
 
 
 class VisualSensorHUD(SensorHUD):

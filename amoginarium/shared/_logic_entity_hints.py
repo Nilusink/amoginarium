@@ -375,6 +375,8 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
     facing: Vec2
     velocity: Vec2
     acceleration: Vec2
+    last_position: Vec2
+    last_delta: float
 
     @property
     def parent(self) -> LogicGameEntityLike | None:
@@ -396,7 +398,7 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
         """:return: whether the entity is serializable or not"""
         ...
 
-    def to_dict(self) -> dict | None:
+    def to_dict(self) -> tp.MutableMapping[str, tp.Any] | None:
         """:return: convert the entity to a dict if possible"""
         ...
 

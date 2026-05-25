@@ -14,7 +14,7 @@ from ._collision import CollisionGroupIDType, CollisionHitboxType, CollisionMana
 from ._collision import CollisionRelationIDType, CollisionTypes, GameCollisions
 from ._debug import DebugCircleEntity, DebugPolygonEntity, DebugRectangleEntity
 from ._game_entities import CollisionLogicEntity, LogicGameEntity
-from ._groups import BaseGroup, Bullets, FrictionXAffected
+from ._groups import BaseGroup, Bullets, Dead, FrictionXAffected
 from ._groups import GravityAffected, LogicGroup, Players, Updated, Walls
 
 GameCollisions.init(  # noqa: RUF067

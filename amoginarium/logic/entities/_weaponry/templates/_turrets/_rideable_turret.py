@@ -151,7 +151,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             parent_position_offset=offset,
             **weapon_kwargs,
         )
-        self.weapon.reload(True)
+        self.weapon.reload(instant=True)
         # endregion
 
         # health

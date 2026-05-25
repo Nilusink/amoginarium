@@ -50,6 +50,8 @@ class LogicGameEntity(
         "facing",
         "velocity",
         "acceleration",
+        "last_delta",
+        "last_position",
         "_coalition",
         "_velocity_to_add",
         "_acceleration_to_add",
@@ -68,6 +70,9 @@ class LogicGameEntity(
     facing: Vec2  # public / no property for faster access
     velocity: Vec2  # public / no property for faster access
     acceleration: Vec2  # public / no property for faster access
+
+    last_position: Vec2
+    last_delta: float
 
     _coalition: Coalitions
     _velocity_to_add: Vec2
@@ -138,6 +143,8 @@ class LogicGameEntity(
         # region default parameters
         self._velocity_to_add = Vec2()
         self._acceleration_to_add = Vec2()
+        self.last_position = self.position.copy()
+        self.last_delta = 0.0
 
         self.velocity = (
             initial_velocity if initial_velocity is not None else Vec2()
@@ -212,15 +219,22 @@ class LogicGameEntity(
     @tp.override
     def _update(self, delta: float) -> None:
         """
-        Update logic game entity
+        Update logic game entity.
+
         :param delta: time since the last update.
         """
+        self.last_delta = delta
+
         self.__world_position = pv.global_vars.get_world_position()
 
         self.velocity += (
             self._acceleration_to_add + self.acceleration
         ) * delta + self._velocity_to_add
+
+        # update position
+        self.last_position = self.position.copy()
         self.position += self.velocity * delta
+
         self.acceleration.x *= 0
 
         self._velocity_to_add *= 0

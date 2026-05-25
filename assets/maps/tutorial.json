@@ -123,16 +123,17 @@
             "pos": [25000, 500],
             "args": {
                 "detection_range": 4000,
-                "min_rcs": 0.0001
+                "min_rcs": 0.0001,
+                "update_rate": 0.03
             },
             "group": 0
         },
                 {
-            "type": "vehicle.tank",
+            "type": "turret.rideable.sky_shield",
             "pos": [1450, 700]
         },
         {
-            "type": "turret.static.flak",
+            "type": "turret.static.cram",
             "pos": [3000, 700]
         },
         {
@@ -222,7 +223,8 @@
             "pos": [10500, 805],
             "args": {
                 "detection_range": 4000,
-                "min_rcs": 0.0001
+                "min_rcs": 0.0001,
+                "update_rate": 0.03
             },
             "group": 2
         },
@@ -295,7 +297,8 @@
             "pos": [16540, 390],
             "args": {
                 "detection_range": 4000,
-                "min_rcs": 0.0001
+                "min_rcs": 0.0001,
+                "update_rate": 0.03
             },
             "group": 0
         },

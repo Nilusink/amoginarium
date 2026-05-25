@@ -78,7 +78,7 @@ cdef class Vec2:
         self.y = sin(angle) * length
 
     # maths
-    cpdef double dot(self, object other):
+    cpdef double dot(self, Vec2 other):
         return self.x * other.x + self.y * other.y
 
     cpdef copy(self):
@@ -87,16 +87,18 @@ cdef class Vec2:
         v.y = self.y
         return v
 
-    cpdef tuple split_vector(self, object direction):
-        a = (direction.get_angle() - self.get_angle())
-        facing = self.from_polar(
-            angle=direction.get_angle(),
-            length=self.get_length() * cos(a)
-        )
-        other = self.from_polar(
-            angle=direction.get_angle() - pi / 2,
-            length=self.get_length() * sin(a)
-        )
+    cpdef tuple split_vector(self, Vec2 direction):
+        cdef double inv_len = 1.0 / sqrt(direction.x*direction.x + direction.y*direction.y)
+        cdef double dx = direction.x * inv_len
+        cdef double dy = direction.y * inv_len
+
+        cdef double dot = self.x * dx + self.y * dy
+
+        # parallel component
+        cdef Vec2 facing = Vec2(dot * dx, dot * dy)
+
+        # perpendicular component
+        cdef Vec2 other = Vec2(self.x - facing.x, self.y - facing.y)
 
         return facing, other
 
@@ -104,11 +106,19 @@ cdef class Vec2:
         self.set_length(1)
         return self
 
-    cpdef object mirror(self, object mirror_by):
-        mirror_by = mirror_by.copy().normalize()
-        ang_d = mirror_by.get_angle() - self.get_angle()
-        self.set_angle(mirror_by.get_angle() + 2 * ang_d)
-        return self
+    cpdef Vec2 mirror(self, Vec2 mirror_by):
+        cdef double inv_len = 1.0 / sqrt(
+            mirror_by.x*mirror_by.x + mirror_by.y*mirror_by.y
+        )
+        cdef double nx = mirror_by.x * inv_len
+        cdef double ny = mirror_by.y * inv_len
+
+        cdef double dot = self.x * nx + self.y * ny
+
+        return Vec2(
+            2.0 * dot * nx - self.x,
+            2.0 * dot * ny - self.y
+        )
 
     cpdef object rotate_by(self, object angle):
         if isinstance(angle, Vec2):
@@ -116,26 +126,26 @@ cdef class Vec2:
 
         return self.rotate_by_angle(angle)
 
-    cdef object rotate_by_angle(self, double angle):
-        return self.from_polar(self.angle + angle, self.length)
+    cdef inline object rotate_by_angle(self, double angle):
+        return Vec2().from_polar(self.angle + angle, self.length)
 
-    cdef object rotate_by_vec2(self, object other):
-        # normalize directional vector
-        o = other.copy()
-        o.normalize()
+    cdef inline Vec2 rotate_by_vec2(Vec2 self, Vec2 other):
+        cdef double inv_len = 1.0 / sqrt(other.x*other.x + other.y*other.y)
 
-        # rotate
-        return self.from_cartesian(
-            self.x * o.x - self.y * o.y,
-            self.x * o.y + self.y * o.x
+        cdef double ox = other.x * inv_len
+        cdef double oy = other.y * inv_len
+
+        return Vec2().from_cartesian(
+            self.x * ox - self.y * oy,
+            self.x * oy + self.y * ox
         )
 
     # magic stuff
-    cdef object add_vec2(self, object other):
-        return self.from_cartesian(self.x + other.x, self.y + other.y)
+    cdef inline Vec2 add_vec2(self, Vec2 other):
+        return Vec2().from_cartesian(self.x + other.x, self.y + other.y)
 
-    cdef object add_double(self, double other):
-        return self.from_cartesian(self.x + other, self.y + other)
+    cdef inline Vec2 add_double(self, double other):
+        return Vec2().from_cartesian(self.x + other, self.y + other)
 
     def __add__(self, other):
         if hasattr(other, "y"):
@@ -144,11 +154,11 @@ cdef class Vec2:
         else:
             return self.add_double(other)
 
-    cdef object sub_vec2(self, object other):
-        return self.from_cartesian(self.x - other.x, self.y - other.y)
+    cdef inline Vec2 sub_vec2(self, Vec2 other):
+        return Vec2().from_cartesian(self.x - other.x, self.y - other.y)
 
-    cdef object sub_double(self, double other):
-        return self.from_cartesian(self.x - other, self.y - other)
+    cdef inline Vec2 sub_double(self, double other):
+        return Vec2().from_cartesian(self.x - other, self.y - other)
 
     def __sub__(self, other):
         if hasattr(other, "y"):
@@ -157,14 +167,14 @@ cdef class Vec2:
         else:
             return self.sub_double(other)
 
-    cdef object mul_vec2(self, object other):
-        return self.from_polar(
+    cdef inline Vec2 mul_vec2(self, Vec2 other):
+        return Vec2().from_polar(
             self.get_angle() * other.get_angle(),
             self.get_length() * other.get_length()
         )
 
-    cdef object mul_double(self, double other):
-        return self.from_cartesian(self.x * other, self.y * other)
+    cdef inline Vec2 mul_double(self, double other):
+        return Vec2().from_cartesian(self.x * other, self.y * other)
 
     def __mul__(self, other):
         if hasattr(other, "y"):
@@ -173,8 +183,8 @@ cdef class Vec2:
         else:
             return self.mul_double(other)
 
-    cdef object div(self, double other):
-        return self.from_cartesian(self.x / other, self.y / other)
+    cdef inline Vec2 div(self, double other):
+        return Vec2().from_cartesian(self.x / other, self.y / other)
 
     def __truediv__(self, double other):
         return self.div(other)
@@ -191,14 +201,14 @@ cdef class Vec2:
 
     # constructors
     cpdef object from_cartesian(self, double x, double y):
-        v = Vec2()
+        v = self
         v.x = x
         v.y = y
     
         return v
 
     cpdef object from_polar(self, double angle, double length):
-        v = Vec2()
+        v = self
         v.set_polar(angle, length)
     
         return v

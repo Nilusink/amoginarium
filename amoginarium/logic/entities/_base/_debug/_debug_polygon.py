@@ -12,6 +12,7 @@ Packs vertex data efficiently into the entity buffer for the renderer.
 from __future__ import annotations
 
 import typing as tp
+from contextlib import suppress
 from types import EllipsisType
 
 from amoginarium import pv
@@ -57,7 +58,8 @@ class DebugPolygonEntity(DebugEntity):
         **kwargs: tp.Any,
     ) -> None:
         """
-        Initializes the debug polygon with up to 8 vertices.
+        Initialize the debug polygon with up to 8 vertices.
+
         :param runtime_buffer: The shared memory buffer.
         :param radius: The collision or culling radius.
         :param p1: Vertex 1.
@@ -123,33 +125,35 @@ class DebugPolygonEntity(DebugEntity):
     @tp.override
     def _update(self, delta: float) -> None:
         """
-        Packs vertex data into the C-buffer using bitwise operations for the renderer.
+        Pack vertex data into the C-buffer using bitwise operations for the renderer.
+
         :param delta: Time since last frame.
         """
-        # normal points
-        self._buffer.pos_x = self.p1.x
-        self._buffer.pos_y = self.p1.y
+        with suppress(ValueError):
+            # normal points
+            self._buffer.pos_x = self.p1.x
+            self._buffer.pos_y = self.p1.y
 
-        self._buffer.size_x = int(normalize_angle(self.p2.angle) * 10_000)
-        self._buffer.size_y = int(self.p2.length)
+            self._buffer.size_x = int(normalize_angle(self.p2.angle) * 10_000)
+            self._buffer.size_y = int(self.p2.length)
 
-        # float points
-        self._buffer.param0 = self.p3.angle
-        self._buffer.param1 = self.p4.angle
-        self._buffer.param2 = self.p5.angle
-        self._buffer.facing = int(normalize_angle(self.p6.angle) * 10_000)
+            # float points
+            self._buffer.param0 = self.p3.angle
+            self._buffer.param1 = self.p4.angle
+            self._buffer.param2 = self.p5.angle
+            self._buffer.facing = int(normalize_angle(self.p6.angle) * 10_000)
 
-        self._buffer.param3 = (
-            int(self.p3.length) & MASK16
-            | (int(self.p4.length) & MASK16) << 16
-            | (int(self.p5.length) & MASK16) << 32
-            | (int(self.p6.length) & MASK16) << 48
-        )
+            self._buffer.param3 = (
+                int(self.p3.length) & MASK16
+                | (int(self.p4.length) & MASK16) << 16
+                | (int(self.p5.length) & MASK16) << 32
+                | (int(self.p6.length) & MASK16) << 48
+            )
 
-        # dual-packed variables
-        self._buffer.param4 = (
-            int(normalize_angle(self.p7.angle) * 10_000) & MASK16
-            | (int(self.p7.length) & MASK16) << 16
-            | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
-            | (int(self.p8.length) & MASK16) << 48
-        )
+            # dual-packed variables
+            self._buffer.param4 = (
+                int(normalize_angle(self.p7.angle) * 10_000) & MASK16
+                | (int(self.p7.length) & MASK16) << 16
+                | (int(normalize_angle(self.p8.angle) * 10_000) & MASK16) << 32
+                | (int(self.p8.length) & MASK16) << 48
+            )

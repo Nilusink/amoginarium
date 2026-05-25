@@ -27,6 +27,7 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import coord_t
 
     from ...._base import LogicGameEntity
+    from ...templates import DetectionGroup
 
 
 class BaseSensor(PositionedLogicEntity):
@@ -42,12 +43,15 @@ class BaseSensor(PositionedLogicEntity):
     _visible: bool
     _min_rcs: float = 0
 
+    _parent: LogicGameEntity
+
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
-        parent: PositionedLogicEntity,
+        parent: LogicGameEntity,
         detection_range: float,
         position_offset: coord_t = ...,
+        *,
         visible: bool = True,
     ) -> None:
         super().__init__(
@@ -90,6 +94,11 @@ class BaseSensor(PositionedLogicEntity):
     def detection_range(self) -> float:
         return self._detection_range
 
+    @tp.override
+    @property
+    def parent(self) -> LogicGameEntity:
+        return self._parent
+
     def _calculate_sphere(self) -> list[Vec2]:
         """
         Calculate detection sphere.
@@ -103,19 +112,18 @@ class BaseSensor(PositionedLogicEntity):
 
         return out
 
-    def group_add(self, group) -> None:
+    def group_add(self, group: DetectionGroup) -> None:
         self._detection_group = group
 
     def get_targets(
-        self, from_entities: tp.Iterable[LogicGameEntity] | None = None
+        self, delta: float, from_entities: tp.Iterable[LogicGameEntity] | None = None
     ) -> list[LogicGameEntity]:
         raise NotImplementedError
 
     @tp.override
     def _update(self, delta: float) -> None:
-        if hasattr(self._parent, "position"):
-            self.position = self._parent.position + self._position_offset
-            # ic(self.position, self._buffer.param0)
+        if hasattr(self.parent, "position"):
+            self.position = self.parent.position + self._position_offset
 
         super()._update(delta)
 

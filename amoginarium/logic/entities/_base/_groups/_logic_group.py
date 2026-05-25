@@ -96,6 +96,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
     def update(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         """
         Batch update all entities in the group.
+
         :param args: Positional arguments passed to entity.update.
         :param kwargs: Keyword arguments passed to entity.update.
         """
@@ -104,7 +105,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
             entity.update(*args, **kwargs)
 
     def empty(self) -> None:
-        """Removes all entities from the group."""
+        """Remove all entities from the group."""
         self._entities.clear()
 
     def __bool__(self) -> bool:

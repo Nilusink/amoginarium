@@ -22,18 +22,20 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
-from amoginarium.shared.utility import calculate_launch_angle, get_default, MASK16
-from amoginarium.shared.utility import MASK32, MASK64, normalize_angle, Vec2
+from amoginarium.shared.utility import calculate_launch_angle, get_default
+from amoginarium.shared.utility import ManeuveringTrackClass, MASK16, MASK32, MASK64
+from amoginarium.shared.utility import MotionTrackType, normalize_angle, TrackQuality
+from amoginarium.shared.utility import TrackState, UnknownTrackClass, Vec2
 
-from ...._base import Bullets, GameCollisions, GravityAffected, LogicGameEntity
+from ...._base import GameCollisions, GravityAffected, LogicGameEntity
 from .._sensors import DetectionGroup
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
-    from amoginarium.shared import base_entity_t, Coalitions
-    from amoginarium.shared import MurderViable, VisibleGameEntityLike
+    from amoginarium.shared import base_entity_t, Coalitions, MurderViable
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
+    from amoginarium.shared.utility import BaseTrack
 
     from .._sensors import BaseSensor
     from .._weapons import BaseWeapon
@@ -46,7 +48,7 @@ class TargetSolution:
     target_predict: Vec2
     angle: Vec2
     tof: float
-    target: VisibleGameEntityLike | EllipsisType | None = ...
+    track: BaseTrack
 
 
 class SensorInit(tp.TypedDict):
@@ -180,7 +182,7 @@ class BaseTurret(LogicGameEntity):
 
             if isinstance(self._default_weapon_type, EllipsisType):
                 msg = f"No weapon set for {self.__class__.__name__}"
-                raise RuntimeError(msg)
+                raise RuntimeError(msg)  # noqa: TRY004
 
             if cluster:
                 weapon_kwargs["cluster"] = True
@@ -192,7 +194,7 @@ class BaseTurret(LogicGameEntity):
                 parent_position_offset=offset,
                 **weapon_kwargs,
             )
-            self.weapon.reload(True)
+            self.weapon.reload(instant=True)
 
         self.weapon.set_parent(self)
         self.weapon.show()
@@ -248,8 +250,6 @@ class BaseTurret(LogicGameEntity):
         self.facing.angle = self._default_facing_angle
         self.weapon.facing.angle = self.facing.angle
 
-        # self.add(CollisionDestroyed)
-
         if not detection_group:
             self.detection_group = DetectionGroup(str(self.id))
 
@@ -291,6 +291,11 @@ class BaseTurret(LogicGameEntity):
     def hp(self) -> int:
         return self._hp
 
+    @property
+    def weapon_pos(self) -> Vec2:
+        """Position of Weapon."""
+        return self.position + self.weapon.parent_position_offset
+
     def hit(self, damage: float, hit_by: tp.Self = ...) -> None:
         """
         Deal damage to the turret.
@@ -331,12 +336,17 @@ class BaseTurret(LogicGameEntity):
             if include_all:
                 return t["solution"]
 
-            if t["distance"] > self.max_range:
+            # require position, velocity AND acceleration and confirmed track
+            # before firing
+            if (
+                target.quality != TrackQuality.POS_VEL_ACC
+                and target.state == TrackState.CONFIRMED
+            ) or t["distance"] > self.max_range:
                 continue
 
             if t["shot_at"] < -0.5:
                 # check if firing solution inside engagement envelope
-                if self._valid_angles is not ...:
+                if not isinstance(self._valid_angles, EllipsisType):
                     angle_delta = normalize_angle(
                         self._valid_angles[1].angle - self._valid_angles[0].angle
                     )
@@ -344,15 +354,11 @@ class BaseTurret(LogicGameEntity):
                     end2 = self._valid_angles[1].angle - angle_delta
 
                     # check if firing-solution is inside engagement envelope
-                    if not any(
-                        [
-                            self._valid_angles[0].angle
-                            < t["solution"].angle.angle
-                            < start2,
-                            self._valid_angles[1].angle
-                            > t["solution"].angle.angle
-                            > end2,
-                        ]
+                    if not (
+                        self._valid_angles[0].angle < t["solution"].angle.angle < start2
+                        or self._valid_angles[1].angle
+                        > t["solution"].angle.angle
+                        > end2,
                     ):
                         continue
 
@@ -364,87 +370,109 @@ class BaseTurret(LogicGameEntity):
             for target in self.available_targets:
                 self.available_targets[target]["shot_at"] = -1
 
-        # deleted because targets will now be shot at if last shot missed
-
         return None
 
     @tp.override
-    def _update(self, delta: float) -> None:
+    def _update(self, delta: float) -> None:  # noqa: C901, PLR0912, PLR0915
         # update weapon
         self.weapon.update(delta)
 
         # scan for targets and engage the closest one
-        targets = self.detection_group.targets
+        targets = self.detection_group.tracks
 
-        # only check targets that are supposed to be engaged
-        bullets = Bullets.entities()
-        targets = [
-            t
-            for t in targets
-            if ((is_bullet := t in bullets) and self.intercept_bullets)
-            or (not is_bullet and self.intercept_players)
-        ]
-
-        # filter stuff shot by myself
-        targets = [e for e in targets if check_target(e, self)]
-
-        for target in targets:
-            if target not in self.available_targets:
-                self.available_targets[target] = {
-                    "shot_at": -self._number_target_taps,
-                    "distance": np.inf,
-                    "solution": None,
-                }
-
-        # make list only contain the entities
-        for target in self.available_targets.copy():
-            if target not in targets:
-                self.available_targets.pop(target)
+        for track in targets:
+            if isinstance(track, EllipsisType) or track in self.available_targets:
                 continue
 
-            if self.available_targets[target]["shot_at"] >= 0:
-                sol = self._get_firing_solution(target)
-                self.available_targets[target]["solution"] = sol
-                self.available_targets[target]["shot_at"] -= delta
+            self.available_targets[track] = {
+                "shot_at": -self._number_target_taps,
+                "distance": np.inf,
+                "solution": None,
+            }
 
-            elif self.available_targets[target]["shot_at"] > -1:
-                self.available_targets[target]["shot_at"] = -self._number_target_taps
+        # make list only contain the entities
+        for track in self.available_targets.copy():
+            track: BaseTrack
+
+            if track not in targets:
+                self.available_targets.pop(track)
+                continue
+
+            is_bullet = (
+                track.track_classification.motion
+                == MotionTrackType.MOTION_BALLISTIC.value
+                or track.track_classification.motion
+                == MotionTrackType.MOTION_ORBITAL.value
+                or (
+                    track.track_classification.motion
+                    == MotionTrackType.MOTION_MANEUVERING.value
+                    and track.track_classification.type
+                    != ManeuveringTrackClass.DRONE.value
+                    # ignore cuz player
+                )
+                or (
+                    track.track_classification.motion
+                    == MotionTrackType.MOTION_UNKNOWN.value
+                    and (
+                        track.track_classification.type
+                        == UnknownTrackClass.SMALL_FAST.value
+                        or track.track_classification.type
+                        == UnknownTrackClass.BIG_FAST.value
+                    )
+                )
+            )
+
+            if (not self.intercept_bullets and is_bullet) or (
+                not self.intercept_players and not is_bullet
+            ):
+                self.available_targets[track]["solution"] = None
+                continue
+
+            self._target_predict = [track.get_position()]
+
+            if self.available_targets[track]["shot_at"] >= 0:
+                sol = self._get_firing_solution(track)
+                self.available_targets[track]["solution"] = sol
+                self.available_targets[track]["shot_at"] -= delta
+
+            elif self.available_targets[track]["shot_at"] > -1:
+                self.available_targets[track]["shot_at"] = -self._number_target_taps
 
             else:
-                sol = self._get_firing_solution(target)
-                self.available_targets[target]["solution"] = sol
+                sol = self._get_firing_solution(track)
+                self.available_targets[track]["solution"] = sol
 
                 if not sol:
-                    sol = self._get_firing_solution(
-                        target,
-                        ignore_acceleration=True,
-                        ignore_velocity=True,
-                    )
-                    self.available_targets[target]["solution"] = sol
+                    self.available_targets[track]["distance"] = np.inf
 
-                    # if aim type is high, allow no-movement targets
-                    if self._allow_static_target or not sol:
-                        self.available_targets[target]["distance"] = np.inf
-                        continue
+                else:
+                    self.available_targets[track]["distance"] = (
+                        sol.target_predict
+                        - self.position
+                        + self.weapon.parent_position_offset
+                    ).length
 
-                self.available_targets[target]["distance"] = (
-                    sol.target_predict
-                    - self.position
-                    + self.weapon.parent_position_offset
-                ).length
+            sol = self.available_targets[track]["solution"]
+            if sol:
+                self._target_predict = [sol.target_predict]
+            else:
+                self._target_predict[0] = Vec2()
+
+        if not self.available_targets:
+            self._target_predict = [self.position.copy()]
 
         new_target = self.get_next_target()
         simulate_target = self.get_next_target(include_all=True)
         if new_target is not None:
             self._target = new_target
             self._last_shot = perf_counter()
-            solution = self._get_firing_solution(new_target.target, recalc=25)
+            solution = self._get_firing_solution(new_target.track, recalc=25)
 
             if solution is None:
                 # allos mortar to treat target as static position
                 if self._allow_static_target:
                     solution = self._get_firing_solution(
-                        new_target.target,
+                        new_target.track,
                         recalc=25,
                         ignore_velocity=True,
                         ignore_acceleration=True,
@@ -512,55 +540,51 @@ class BaseTurret(LogicGameEntity):
 
     def _get_firing_solution(
         self,
-        target: VisibleGameEntityLike,
+        track: BaseTrack,
         *,
         recalc: int = 5,
-        ignore_velocity: bool = False,
-        ignore_acceleration: bool = False,
+        ignore_velocity: bool = False,  # noqa: ARG002
+        ignore_acceleration: bool = False,  # noqa: ARG002
     ) -> TargetSolution | None:
         """
         Aim at specified target.
 
-        :param target: target to aim at
+        :param track: track to aim at
         :returns:
         """
-        player_velocity = target.velocity.copy()
-        player_acceleration = target.acceleration.copy()
+        position_delta = track.get_position() - self.weapon_pos
+        vel = get_default(track.get_velocity(), Vec2())
+        acc = get_default(track.get_acceleration(), Vec2())
 
-        # if target is on ground, subtract gravitational acceleration
-        if hasattr(target, "on_ground") and target.on_ground:
-            player_acceleration.y -= GravityAffected.gravity
-
-        target_position = target.position
-
-        position_delta = target_position - (
-            self.position + self.weapon.parent_position_offset
-        )
+        # mirror y-axis (because in pygame, + is down)
         position_delta.y *= -1
-        player_velocity.y *= -1
-        player_acceleration.y *= -1
+        vel.y *= -1
+        acc.y *= -1
 
+        # mirror x if < 0 because calculate_launch_angle is weird and it works this ways
         mirror = False
         if position_delta.x < 0:
             position_delta.x *= -1
-            player_velocity.x *= -1
-            player_acceleration.x *= -1
+            vel.x *= -1
+            acc.x *= -1
             mirror = True
 
-        # try to predict where the player is going to be
         with suppress(ValueError):
             aiming_angle, tof, predict = calculate_launch_angle(
                 position_delta,
-                player_velocity * (1 - ignore_velocity),
-                player_acceleration * (1 - ignore_acceleration),
+                vel,
+                acc,
                 self.weapon.muzzle_velocity,
                 recalc,
-                # 2 * position_delta.length / self.weapon.bullet_speed,
                 self._default_engagement_aim_type,
-                # *2 because for some reason I gave bullets 2x gravity
                 g=GravityAffected.gravity * 2,
             )
 
+            # check if inside range
+            if predict.length > self.max_range or predict.length < self.min_range:
+                return None
+
+            # mirror back y-axis
             aiming_angle.y *= -1
             predict.y *= -1
 
@@ -568,22 +592,10 @@ class BaseTurret(LogicGameEntity):
                 aiming_angle.x *= -1
                 predict.x *= -1
 
-            # check if inside range
-            if predict.length > self.max_range:
-                return None
-
-            target_predict = (
-                self.position + self.weapon.parent_position_offset + predict
-            )
-
-            if predict.length < self.min_range:
-                return None
+            target_predict = self.weapon_pos + predict
 
             return TargetSolution(
-                target_predict=target_predict,
-                angle=aiming_angle,
-                target=target,
-                tof=tof,
+                target_predict=target_predict, angle=aiming_angle, tof=tof, track=track
             )
 
         return None
@@ -599,7 +611,8 @@ class BaseTurret(LogicGameEntity):
         self, solution: TargetSolution, *, max_error: float | EllipsisType = ...
     ) -> None:
         """
-        Shoot at specified target
+        Shoot at specified target.
+
         :param solution: where to shoot to
         :param max_error: max facing offset to target solution.
         """
@@ -629,11 +642,11 @@ class BaseTurret(LogicGameEntity):
 
         if shot:
             self._target_predict = [solution.target_predict]
-            if self.available_targets[solution.target]["shot_at"] < -1:
-                self.available_targets[solution.target]["shot_at"] += 1
+            if self.available_targets[solution.track]["shot_at"] < -1:
+                self.available_targets[solution.track]["shot_at"] += 1
 
             else:
-                self.available_targets[solution.target]["shot_at"] = solution.tof
+                self.available_targets[solution.track]["shot_at"] = solution.tof
 
     def _turn_at(self, solution: TargetSolution, delta: float) -> None:
         """Turn towards a target."""

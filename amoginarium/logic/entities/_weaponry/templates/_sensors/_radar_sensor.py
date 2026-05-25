@@ -52,14 +52,16 @@ class RadarSensor(BaseSensor):
         sphere_accuracy: int = 128,
         min_rcs: float = 0.04,
         visible: bool = True,
+        update_rate: float = 0.5,
     ) -> None:
         self._sphere = None
         self._sphere_accuracy = sphere_accuracy
-        self._has_sectors = sphere_accuracy
         self._min_rcs = min_rcs
+        self._update_rate = update_rate
+        self._last_update = update_rate
 
         super().__init__(
-            runtime_buffer, parent, detection_range, position_offset, visible
+            runtime_buffer, parent, detection_range, position_offset, visible=visible
         )
 
     def _check_in_sphere(
@@ -117,8 +119,17 @@ class RadarSensor(BaseSensor):
 
     @tp.override
     def get_targets(
-        self, from_entities: tp.Iterable[LogicGameEntity] | None = None
+        self,
+        delta: float,
+        from_entities: tp.Iterable[LogicGameEntity] | None = None,
     ) -> list[LogicGameEntity]:
+        self._last_update += delta
+
+        # only update every <update_rate>
+        if self._last_update < self._update_rate:
+            return []
+
+        self._last_update = 0
         if from_entities is None:
             targets = [p for p in Players.entities() if p.alive]
             targets.extend(Bullets.entities())
@@ -127,7 +138,9 @@ class RadarSensor(BaseSensor):
             targets = from_entities
 
         # check if target is in pre-calculated sphere
-        valid_targets = self._check_in_sphere(targets)
+        valid_targets = self._check_in_sphere(
+            [t for t in targets if t.coalition != self.parent.coalition and t.alive]
+        )
 
         self._targets = valid_targets.copy()
 
@@ -138,40 +151,3 @@ class RadarSensor(BaseSensor):
             f"<{self.__class__.__name__} range={self.detection_range}, "
             f"sa={self._sphere_accuracy}, min_rcs={self._min_rcs}>"
         )
-
-    # def gl_draw(self, draw: bool = True) -> None:
-    #     # detection sphere
-    #     if draw:
-    #         po = self.parent.world_position + self._position_offset
-    #         for sector in self._highlighted_sectors:
-    #             t1 = self._sphere[sector] + po
-    #             t2 = self._sphere[(sector + 1) % self._sphere_accuracy] + po
-    #             renderer.draw_polygon(
-    #                 (self.parent.world_position + self._position_offset, t1, t2),
-    #                 (.4, .4, 1, .2)
-    #             )
-    #         self._highlighted_sectors.clear()
-    #
-    #         if self._debug and self._sphere:
-    #             renderer.draw_polygon(
-    #                 self._sphere,
-    #                 (1, 0, 0, .5),
-    #                 center=self.parent.world_position,
-    #                 # convert_global=False
-    #             )
-    #             for delta in self._sphere:
-    #                 renderer.draw_circle(
-    #                     self.parent.world_position + delta,
-    #                     4,
-    #                     4,
-    #                     (1, .5, 0)
-    #                 )
-    #
-    #             for target in self.get_targets(Players.entities() + Bullets.entities()):
-    #                 renderer.draw_line(
-    #                     self.parent.world_position,
-    #                     target.world_position,
-    #                     (1, 1, 0)
-    #                 )
-    #
-    #     super().gl_draw()

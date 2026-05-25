@@ -45,6 +45,7 @@ cpp_files = [
     "_minrect_dirty.pyx",
     "_collision_manager.pyx",
     "_collision_methods.pyx",
+    "_ctarget_track.pyx",
 ]
 
 for root, _, files in os.walk(base_package):

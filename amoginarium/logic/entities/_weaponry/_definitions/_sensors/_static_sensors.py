@@ -21,6 +21,7 @@ from ...templates import DetectionGroup, MagicSensor, RadarSensor
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
+    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, Coalitions
     from amoginarium.shared.collision_detection import CollisionEvent
@@ -45,7 +46,7 @@ class VisualSensor(LogicGameEntity):
         position: Vec2,
         coalition: Coalitions,
         detection_group: DetectionGroup = None,
-        **sensor_args,
+        **sensor_args: tp.Any,
     ) -> None:
         self.coalition = coalition
         self._hp = self._max_hp
@@ -57,7 +58,6 @@ class VisualSensor(LogicGameEntity):
             centered=True,
         )
         self._create_collision()
-        # self.add(CollisionDestroyed)
 
         if not detection_group:
             self.detection_group = DetectionGroup(str(self.id))
@@ -82,7 +82,7 @@ class VisualSensor(LogicGameEntity):
             )
         )
 
-    def hit(self, damage: float, hit_by: LogicGameEntity = ...) -> None:
+    def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:  # noqa: ARG002
         self._hp -= damage
 
         if self._hp <= 0:

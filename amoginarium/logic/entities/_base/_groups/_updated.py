@@ -13,6 +13,7 @@ import typing as tp
 
 from amoginarium import pv
 from amoginarium.shared import PositionedLogicEntityLike
+from amoginarium.shared.debugging import do_not_call
 from amoginarium.shared.utility import Vec2
 
 from ._base_group import BaseGroup
@@ -26,9 +27,10 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
     __slots__ = ("world_position",)
     world_position: Vec2
 
-    def __init__(self, *args) -> None:
+    def __init__(self, *args: tp.Any) -> None:
         """
-        Initializes the updated group with a default world position.
+        Initialize the updated group with a default world position.
+
         :param args: Arguments passed to the BaseGroup constructor.
         """
         self.world_position = Vec2()
@@ -38,7 +40,8 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
         self, sprite: PositionedLogicEntityLike, margin: float = 0
     ) -> bool:
         """
-        Checks if a sprite is outside the horizontal bounds
+        Check if a sprite is outside the horizontal bounds.
+
         :param sprite: The entity to check.
         :param margin: Additional padding for the boundary check.
         :return: True if the sprite is out of bounds, False otherwise.
@@ -50,7 +53,8 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
 
     def load_textures(self) -> None:
         """
-        Iterates through all unique entity types in the group and triggers
+        Iterate through all unique entity types in the group and triggers.
+
         their texture loading logic if available.
         """
         # get the different types of entities
@@ -66,4 +70,14 @@ class _Updated(BaseGroup[PositionedLogicEntityLike]):
                 t.load_textures()
 
 
+class _Dead(_Updated):
+    """All ``Updated`` entities will be in ``Dead`` for one iteration."""
+
+    @tp.override
+    @do_not_call
+    def update(self, *args: tp.Any, **kwargs: tp.Any) -> tp.Never:
+        """DO NOT CALL!."""
+
+
 Updated: tp.Final[_Updated] = _Updated()
+Dead: tp.Final[_Dead] = _Dead()

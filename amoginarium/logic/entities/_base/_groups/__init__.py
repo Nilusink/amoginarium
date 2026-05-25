@@ -14,4 +14,4 @@ from ._base_group import BaseGroup
 from ._entity_type_groups import Bullets, Players, Walls
 from ._functionality_groups import FrictionXAffected, GravityAffected
 from ._logic_group import LogicGroup
-from ._updated import Updated
+from ._updated import Dead, Updated

@@ -14,7 +14,7 @@ from icecream import colorize, ic, stderrPrint, supportTerminalColorsInWindows
 from ._console_colors import CC, get_fg_color
 
 
-def print_with_prefix(content: str, prefix: str = "", color: bool = True) -> None:
+def print_with_prefix(content: str, prefix: str = "", *, color: bool = True) -> None:
     """StderrPrint with prefix and togglable colorization."""
     if color:
         content = colorize(content)
@@ -23,7 +23,7 @@ def print_with_prefix(content: str, prefix: str = "", color: bool = True) -> Non
         stderrPrint(prefix + get_fg_color(247) + content + CC.ctrl.ENDC)
 
 
-def get_caller_name(extended: bool = False) -> str | dict:
+def get_caller_name(*, extended: bool = False) -> str | dict:
     """
     Get the name of the function that called this context.
     """
