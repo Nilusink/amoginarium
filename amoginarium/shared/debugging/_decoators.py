@@ -9,6 +9,7 @@ Defines the core game.
 # ruff: noqa: T201
 
 from __future__ import annotations
+
 import typing as tp
 from time import perf_counter_ns
 from traceback import format_exc

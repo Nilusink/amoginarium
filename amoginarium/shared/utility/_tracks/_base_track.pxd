@@ -11,6 +11,7 @@ from libc.stdint cimport int8_t
 
 from .._cvectors cimport Vec2
 
+
 cdef class BaseTrack:
 
     cdef double x, y

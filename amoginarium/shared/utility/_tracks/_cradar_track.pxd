@@ -11,6 +11,7 @@ Authors: Nilusink
 
 from ._base_track cimport BaseTrack
 
+
 cdef class RadarTrack2D(BaseTrack):
 
     cdef double px, py

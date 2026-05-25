@@ -30,11 +30,7 @@ from amoginarium.shared.debugging import CC, cum_timer, get_fg_color, print_ic_s
 from amoginarium.shared.debugging import print_with_prefix, run_with_debug
 from amoginarium.shared.utility import PIDController, Vec2
 
-from .entities import Bullets, Dead, DETECTION_GLOBAL_BLUE, DETECTION_GLOBAL_NEUTRAL
-from .entities import DETECTION_GLOBAL_RED, DETECTION_GROUP_MANAGER, DetectionGroup
-from .entities import FrictionXAffected, GameCollisions, GrassIsland, GravityAffected
-from .entities import Island, LogicGameEntity, Player, Players, SPAWNABLES, Updated
-from .entities import Bullets, CollisionLogicEntity, DETECTION_GLOBAL_BLUE
+from .entities import Bullets, CollisionLogicEntity, Dead, DETECTION_GLOBAL_BLUE
 from .entities import DETECTION_GLOBAL_NEUTRAL, DETECTION_GLOBAL_RED
 from .entities import DETECTION_GROUP_MANAGER, DetectionGroup, FrictionXAffected
 from .entities import GameCollisions, GrassIsland, GravityAffected, Island

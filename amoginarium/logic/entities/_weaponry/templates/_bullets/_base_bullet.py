@@ -806,26 +806,35 @@ class Bullet(LogicGameEntity):
     @staticmethod
     def _weight_from_size(size: Vec2 | float) -> float:
         """
-        Calculate bullet weight from size
+        Calculate bullet weight from size.
+
         :param size: bullet size
         :return: calculated weight from size.
         """
         if isinstance(size, Vec2):
             return size.length / 100
 
+        size: float
         return (size * SQR2) / 100
 
     @classmethod
-    def get_weight(cls, size: Vec2 | float) -> float:
+    def get_weight(cls, size: Vec2 | float | EllipsisType = ...) -> float:
         """
-        Bullet weight getter
+        Bullet weight getter.
+
         :param size: bullet size
         :return: bullet weight (depending on size if not specified).
         """
         if cls._default_weight:
             return cls._default_weight
 
-        return cls._weight_from_size(size)
+        if isinstance(size, EllipsisType):
+            size_: Vec2 | float = cls._default_size
+
+        else:
+            size_: Vec2 | float = size
+
+        return cls._weight_from_size(size_)
 
     @classmethod
     def get_recoil_fac(cls, weight: float, velocity: float) -> float:

@@ -8,11 +8,11 @@ Vec2 class and calculate_launch_angle.
 """
 
 cimport cython
-from libc.math cimport cos, fabs, sqrt, atan2
+from libc.math cimport atan2, cos, fabs, sqrt
 from libc.stdint cimport uint16_t
 
-from ._tracks cimport BaseTrack
 from ._cvectors cimport Vec2
+from ._tracks cimport BaseTrack
 
 
 cdef inline double get_solution(

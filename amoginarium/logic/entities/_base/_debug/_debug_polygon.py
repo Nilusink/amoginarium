@@ -12,8 +12,8 @@ Packs vertex data efficiently into the entity buffer for the renderer.
 from __future__ import annotations
 
 import typing as tp
-from types import EllipsisType
 from contextlib import suppress
+from types import EllipsisType
 
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, GraphicsCIDs, ProcessCommand

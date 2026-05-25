@@ -58,6 +58,7 @@ class BaseWeapon(Item):
     _default_bullet_mount_point: tuple[int, int] | EllipsisType = ...
     _default_cluster_bullet_type: type[Bullet] | EllipsisType = ...
 
+    @tp.override
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
@@ -79,7 +80,7 @@ class BaseWeapon(Item):
         drop_casings: bool = False,
         cluster: bool = False,
         spawn_args: dict[str, tp.Any] | EllipsisType = ...,
-        **bullet_kwargs,
+        **bullet_kwargs: tp.Any,
     ) -> None:
 
         if weapon_size is ...:
@@ -144,8 +145,12 @@ class BaseWeapon(Item):
     # region properties
     @tp.override
     @property
-    def coalition(self) -> Coalitions:
-        return self.parent.coalition
+    def coalition(self) -> Coalitions | None:
+        p = self.parent
+        if not p:
+            return None
+
+        return p.coalition
 
     @property
     def mag_size(self) -> int:
@@ -182,7 +187,8 @@ class BaseWeapon(Item):
 
     def get_mag_state(self, max_out: float) -> tuple[float, int] | tuple[float, float]:
         """
-        Returns the current mag size (rising when reloading)
+        Return current mag size (rising when reloading).
+
         :param max_out: output size
         :returns: x out of max_out, value of current state.
         """
@@ -196,7 +202,7 @@ class BaseWeapon(Item):
         )
 
     @tp.override
-    def _update(self, delta: float) -> None:
+    def _update(self, delta: float, *, keep_position: bool = False) -> None:
         """
         Update weapon state (like reloading, ...).
         """
@@ -221,9 +227,6 @@ class BaseWeapon(Item):
         if self._current_sound_time > 0:
             self._current_sound_time -= delta
 
-        # if self._current_sound_time < 0:
-        #     self._current_sound_time = 0
-
         if self.parent:
             self.position = self.parent.position + self._parent_position_offset
 
@@ -238,12 +241,12 @@ class BaseWeapon(Item):
         if hasattr(self._sound_effect, "done") and self._sound_effect.playing:
             self._sound_effect.done()
 
-    def shoot(
+    def shoot(  # noqa: C901
         self,
         direction: Vec2,
         bullet_tof: float | EllipsisType = ...,
         target_pos: Vec2 | EllipsisType = ...,
-        **bullet_args,
+        **bullet_args: tp.Any,
     ) -> bool:
         """
         Shoot a bullet and check for recoil and reload.
@@ -271,9 +274,11 @@ class BaseWeapon(Item):
             ):
                 self._sound_effect.play(pos=self.position)
 
-            if hasattr(self._sound_effect, "stage_one_done"):
-                if not self._sound_effect.stage_one_done:
-                    return False
+            if (
+                hasattr(self._sound_effect, "stage_one_done")
+                and not self._sound_effect.stage_one_done
+            ):
+                return False
 
         # inaccuracy
         offset = (random() * 2) - 1  # random between -1 - 1
@@ -286,15 +291,15 @@ class BaseWeapon(Item):
                 Vec2().from_polar(
                     direction.angle,
                     self._bullet_type.get_recoil_fac(
-                        self._bullet_type.get_weight(self._bullet_type._default_size),
-                        self.muzzle_velocity + self.parent.velocity.length,
+                        self._bullet_type.get_weight(),
+                        self.muzzle_velocity + self.parent.velocity.length,  # type: ignore[weird-Self-stuff]  # noqa: E501, RUF100
                     ),
                 )
                 * -1
             )
 
             recoil *= self.recoil_factor
-            self.parent.add_impulse(recoil)
+            self.parent.add_impulse(recoil)  # type: ignore[i-have-parents-you-dipshit]
 
         self._current_recoil_time = self._recoil_time
 
@@ -332,18 +337,14 @@ class BaseWeapon(Item):
             **kwargs,
         )
 
-        # TODO: casings
-        # if self._drop_casings:
-
         return True
 
-    def reload(self, instant: bool = False) -> None:
+    def reload(self, *, instant: bool = False) -> None:
         """
         Reload the weapon.
         """
-        if hasattr(self._sound_effect, "done"):
-            if 0 < self._sound_effect.playing < 3:
-                self._sound_effect.done()
+        if hasattr(self._sound_effect, "done") and 0 < self._sound_effect.playing < 3:
+            self._sound_effect.done()
 
         self._current_reload_time = 0 if instant else self._reload_time
         self._current_recoil_time = 0
@@ -361,25 +362,28 @@ class BaseWeapon(Item):
         """
         Stop all running effects.
         """
-        if self._sound_effect is not ...:
-            if hasattr(self._sound_effect, "stage_one_done"):
-                self._sound_effect.stop()
+        if not isinstance(self._sound_effect, EllipsisType) and hasattr(
+            self._sound_effect, "stage_one_done"
+        ):
+            self._sound_effect.stop()
 
 
 class FileLoadedWeapon(BaseWeapon):
     _CID = WeaponCIDs.base
 
+    @tp.override
     def __init__(
         self,
-        parent,
+        parent: LogicGameEntity,
         runtime_buffer: Array[base_entity_t],
         drop_casings: bool = False,
-        parent_position_offset: Vec2 | tuple[float, float] = Vec2(),
-        **kwargs,
+        parent_position_offset: Vec2 | tuple[float, float] | EllipsisType = ...,
+        **kwargs: tp.Any,
     ) -> None:
+        parent_position_offset_ = get_default(parent_position_offset, Vec2())
         super().__init__(
             runtime_buffer=runtime_buffer,
             parent=parent,
-            parent_position_offset=parent_position_offset,
+            parent_position_offset=parent_position_offset_,
             **kwargs,
         )

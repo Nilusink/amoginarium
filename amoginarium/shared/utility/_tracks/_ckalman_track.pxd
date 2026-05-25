@@ -9,6 +9,7 @@ Authors: Nilusink
 
 from ._base_track cimport BaseTrack
 
+
 cdef class KalmanTrack2D(BaseTrack):
 
     # diagonal covariance approximation

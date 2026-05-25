@@ -74,7 +74,7 @@ class _DetectionGroupManager:
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
-        walls = Walls.entities()
+        Walls.entities()
 
         # create base group of targets that are viable for detection
         # targets = [t for t in Updated.entities() if t not in walls and t.alive]

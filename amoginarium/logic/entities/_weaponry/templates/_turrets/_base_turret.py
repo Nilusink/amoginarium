@@ -22,22 +22,19 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
-from amoginarium.shared.utility import calculate_launch_angle, get_default, MASK16
-from amoginarium.shared.utility import MASK32, MASK64, normalize_angle, Vec2
+from amoginarium.shared.utility import calculate_launch_angle, get_default
+from amoginarium.shared.utility import MASK16, MASK32, MASK64, normalize_angle
+from amoginarium.shared.utility import TrackQuality, TrackState, Vec2
 
-from ...._base import GameCollisions
-from ...._base import GravityAffected, LogicGameEntity
+from ...._base import GameCollisions, GravityAffected, LogicGameEntity
 from .._sensors import DetectionGroup
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
-    from amoginarium.shared import base_entity_t, Coalitions
-    from amoginarium.shared.collision_detection import CollisionEvent
-    from amoginarium.shared.utility import BaseTrack
-    from amoginarium.shared import base_entity_t, Coalitions
-    from amoginarium.shared import MurderViable, VisibleGameEntityLike
+    from amoginarium.shared import base_entity_t, Coalitions, MurderViable
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
+    from amoginarium.shared.utility import BaseTrack
 
     from .._sensors import BaseSensor
     from .._weapons import BaseWeapon
@@ -196,7 +193,7 @@ class BaseTurret(LogicGameEntity):
                 parent_position_offset=offset,
                 **weapon_kwargs,
             )
-            self.weapon.reload(True)
+            self.weapon.reload(instant=True)
 
         self.weapon.set_parent(self)
         self.weapon.show()
@@ -343,15 +340,12 @@ class BaseTurret(LogicGameEntity):
             if (
                 target.quality != TrackQuality.POS_VEL_ACC
                 and target.state == TrackState.CONFIRMED
-            ):
-                continue
-
-            if t["distance"] > self.max_range:
+            ) or t["distance"] > self.max_range:
                 continue
 
             if t["shot_at"] < -0.5:
                 # check if firing solution inside engagement envelope
-                if self._valid_angles is not ...:
+                if not isinstance(self._valid_angles, EllipsisType):
                     angle_delta = normalize_angle(
                         self._valid_angles[1].angle - self._valid_angles[0].angle
                     )
@@ -359,15 +353,11 @@ class BaseTurret(LogicGameEntity):
                     end2 = self._valid_angles[1].angle - angle_delta
 
                     # check if firing-solution is inside engagement envelope
-                    if not any(
-                        [
-                            self._valid_angles[0].angle
-                            < t["solution"].angle.angle
-                            < start2,
-                            self._valid_angles[1].angle
-                            > t["solution"].angle.angle
-                            > end2,
-                        ]
+                    if not (
+                        self._valid_angles[0].angle < t["solution"].angle.angle < start2
+                        or self._valid_angles[1].angle
+                        > t["solution"].angle.angle
+                        > end2,
                     ):
                         continue
 
@@ -379,12 +369,10 @@ class BaseTurret(LogicGameEntity):
             for target in self.available_targets:
                 self.available_targets[target]["shot_at"] = -1
 
-        # deleted because targets will now be shot at if last shot missed
-
         return None
 
     @tp.override
-    def _update(self, delta: float) -> None:
+    def _update(self, delta: float) -> None:  # noqa: C901, PLR0912, PLR0915
         # update weapon
         self.weapon.update(delta)
 
@@ -424,17 +412,6 @@ class BaseTurret(LogicGameEntity):
 
                 if not sol:
                     self.available_targets[target]["distance"] = np.inf
-
-                    # sol = self._get_firing_solution(
-                    #     target,
-                    #     ignore_acceleration=True,
-                    #     ignore_velocity=True,
-                    # )
-                    # self.available_targets[target]["solution"] = sol
-                    #
-                    # # if aim type is high, allow no-movement targets
-                    # if self._allow_static_target or not sol:
-                    #     continue
 
                 else:
                     self.available_targets[target]["distance"] = (
@@ -534,8 +511,8 @@ class BaseTurret(LogicGameEntity):
         track: BaseTrack,
         *,
         recalc: int = 5,
-        ignore_velocity: bool = False,
-        ignore_acceleration: bool = False,
+        ignore_velocity: bool = False,  # noqa: ARG002
+        ignore_acceleration: bool = False,  # noqa: ARG002
     ) -> TargetSolution | None:
         """
         Aim at specified target.

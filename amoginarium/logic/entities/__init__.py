@@ -7,9 +7,9 @@ Exposes core logic entities, weaponry, and world objects.
 | ``Authors``: Nilusink, LukasKrah
 """
 
-from ._base import BaseLogicEntity, Bullets, Dead, FrictionXAffected
-from ._base import GameCollisions, GravityAffected, LogicGameEntity
-from ._base import Players, PositionedLogicEntity, Updated, Walls, CollisionLogicEntity
+from ._base import BaseLogicEntity, Bullets, CollisionLogicEntity, Dead
+from ._base import FrictionXAffected, GameCollisions, GravityAffected, LogicGameEntity
+from ._base import Players, PositionedLogicEntity, Updated, Walls
 from ._player import Player
 from ._spawnables import SPAWNABLES
 from ._weaponry import ExactoBullet, Grenade

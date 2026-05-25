@@ -9,8 +9,8 @@ Sensor HUDs.
 
 from __future__ import annotations
 
-from types import EllipsisType
 import typing as tp
+from types import EllipsisType
 
 from icecream import ic
 
