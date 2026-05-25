@@ -36,13 +36,22 @@ class BaseTrack:
         """Time since last track update."""
 
     def increment_time(self, dt: float) -> None:
-        """Increment track time + position predict."""
+        """
+        Increment track time + position predict.
+
+        :param dt: Delta time in seconds.
+        """
 
     def reset(self) -> None:
         """Reset the track."""
 
     def set_size(self, x: float, y: float) -> None:
-        """Set size of tracked object."""
+        """
+        Set size of tracked object.
+
+        :param x: X-axis size
+        :param y: Y-axis size
+        """
 
     def initialize(self, x: float, y: float, vx: float, vy: float, g: float) -> None:
         """
@@ -67,24 +76,24 @@ class BaseTrack:
         """
 
     def get_position(self) -> Vec2:
-        """Get current position."""
+        """:return: Get current position."""
 
     def get_velocity(self) -> Vec2:
-        """Get current velocity."""
+        """:return: Get current velocity."""
 
     def get_acceleration(self) -> Vec2:
-        """Get current acceleration."""
+        """:return: Get current acceleration."""
 
     def predict_future_position(self, t: float) -> Vec2:
         """
         Predict position in t seconds.
 
-        :param t: time in seconds
-        :return: predicted position
+        :param t: Time in seconds
+        :return: Predicted position
         """
 
     def get_speed(self) -> float:
-        """Get current speed in m/s."""
+        """:return: Get current speed in m/s."""
 
     def kill(self) -> None:
         """Mark track as Dead."""

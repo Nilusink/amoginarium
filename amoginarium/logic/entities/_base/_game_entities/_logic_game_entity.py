@@ -71,6 +71,9 @@ class LogicGameEntity(
     velocity: Vec2  # public / no property for faster access
     acceleration: Vec2  # public / no property for faster access
 
+    last_position: Vec2
+    last_delta: float
+
     _coalition: Coalitions
     _velocity_to_add: Vec2
     _acceleration_to_add: Vec2
@@ -141,7 +144,7 @@ class LogicGameEntity(
         self._velocity_to_add = Vec2()
         self._acceleration_to_add = Vec2()
         self.last_position = self.position.copy()
-        self.last_delta = 0
+        self.last_delta = 0.0
 
         self.velocity = (
             initial_velocity if initial_velocity is not None else Vec2()

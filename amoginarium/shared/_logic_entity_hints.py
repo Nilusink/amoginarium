@@ -375,6 +375,8 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
     facing: Vec2
     velocity: Vec2
     acceleration: Vec2
+    last_position: Vec2
+    last_delta: float
 
     @property
     def parent(self) -> LogicGameEntityLike | None:

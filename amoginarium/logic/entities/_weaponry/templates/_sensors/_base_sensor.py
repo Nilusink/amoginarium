@@ -43,6 +43,8 @@ class BaseSensor(PositionedLogicEntity):
     _visible: bool
     _min_rcs: float = 0
 
+    _parent: LogicGameEntity
+
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
@@ -92,6 +94,7 @@ class BaseSensor(PositionedLogicEntity):
     def detection_range(self) -> float:
         return self._detection_range
 
+    @tp.override
     @property
     def parent(self) -> LogicGameEntity:
         return self._parent

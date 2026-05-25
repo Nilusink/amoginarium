@@ -32,7 +32,9 @@ class MagicSensor(BaseSensor):
 
     @tp.override
     def get_targets(
-        self, delta: float, from_entities: tp.Iterable[LogicGameEntity] | None = None
+        self,
+        delta: float,
+        from_entities: tp.Iterable[LogicGameEntity] | None = None,
     ) -> list[LogicGameEntity]:
         if from_entities is None:
             targets = [p for p in Players.entities() if p.alive]
