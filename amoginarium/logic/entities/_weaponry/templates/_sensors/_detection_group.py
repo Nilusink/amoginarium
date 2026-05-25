@@ -18,7 +18,7 @@ from icecream import ic
 
 from amoginarium.shared.utility import RadarTrack2D, TrackState
 
-from ...._base import Bullets, Dead, DebugPolygonEntity, Players, Walls
+from ...._base import Bullets, Dead, DebugPolygonEntity, GravityAffected, Updated, Walls
 
 if tp.TYPE_CHECKING:
     from ...._base import LogicGameEntity, PositionedLogicEntity
@@ -74,11 +74,14 @@ class _DetectionGroupManager:
         """
         # create targets list once so it doesn't get re-checked
         # for every sensor
-        Walls.entities()
+        walls = Walls.entities()
 
         # create base group of targets that are viable for detection
-        # targets = [t for t in Updated.entities() if t not in walls and t.alive]
-        targets = Players.entities() + Bullets.entities()
+        targets = [
+            t
+            for t in Bullets.entities() + Updated.entities()
+            if hasattr(t, "coalition") and t not in walls and t.alive
+        ]
         dead = Dead.entities()
 
         for group in self._detection_groups:
@@ -155,8 +158,18 @@ class DetectionGroup:
         tid = target.id
 
         if target.id not in self._tracks:
+            g = GravityAffected.gravity
+
+            if target in Bullets.entities():
+                g *= 2
+
             self._tracks[tid] = RadarTrack2D()
-            self._tracks[tid].initialize(*target.position.xy, *velocity.xy)
+            self._tracks[tid].initialize(
+                *target.position.xy,
+                *velocity.xy,
+                g=g,
+            )
+            self._tracks[tid].set_size(*target.size.xy)
 
             if self._DEBUG:
                 self._debug_entities[tid] = DebugPolygonEntity(

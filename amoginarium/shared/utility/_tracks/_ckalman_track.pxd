@@ -33,7 +33,7 @@ cdef class KalmanTrack2D(BaseTrack):
     cdef double process_noise
 
     cpdef reset(self)
-    cpdef initialize(self, double x, double y, double vx, double vy)
+    cpdef initialize(self, double x, double y, double vx, double vy, double g)
     cdef predict(self, double dt)
     cdef update(
         self,

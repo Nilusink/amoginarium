@@ -10,22 +10,29 @@ Authors: Nilusink
 from libc.stdint cimport int8_t
 
 from .._cvectors cimport Vec2
+from ._ctrack_enums cimport TrackClassification
 
 
 cdef class BaseTrack:
 
+    cdef double sx, sy
+
+    cdef double g
     cdef double x, y
-    cdef double vx, vy
-    cdef double ax, ay
+    cdef Vec2 vel
+    cdef Vec2 acc
     cdef double last_update
 
     cdef int8_t _track_quality
     cdef int8_t _track_state
 
+    cdef public TrackClassification track_classification
+
     cpdef increment_time(self, double dt)
 
     cpdef reset(self)
-    cpdef initialize(self, double x, double y, double vx, double vy)
+    cpdef set_size(self, double x, double y)
+    cpdef initialize(self, double x, double y, double vx, double vy, double g)
     cdef predict(self, double dt)
     cdef update(
         self,
@@ -33,6 +40,7 @@ cdef class BaseTrack:
         double mvx, double mvy,
         double dt
     )
+    cdef inline update_classification(self)
     cpdef step(
         self,
         double mx, double my,

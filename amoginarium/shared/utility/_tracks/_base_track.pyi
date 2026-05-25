@@ -10,6 +10,7 @@ Authors: Nilusink
 from enum import Enum
 
 from .._cvectors import Vec2
+from ._ctrack_enums import TrackClassification
 
 class TrackState(Enum):
     """Track state."""
@@ -19,6 +20,8 @@ class TrackQuality(Enum):
 
 class BaseTrack:
     """Base track class."""
+
+    track_classification: TrackClassification
 
     @property
     def state(self) -> TrackState:
@@ -38,7 +41,10 @@ class BaseTrack:
     def reset(self) -> None:
         """Reset the track."""
 
-    def initialize(self, x: float, y: float, vx: float, vy: float) -> None:
+    def set_size(self, x: float, y: float) -> None:
+        """Set size of tracked object."""
+
+    def initialize(self, x: float, y: float, vx: float, vy: float, g: float) -> None:
         """
         Initialize the track.
 
@@ -46,6 +52,7 @@ class BaseTrack:
         :param y: initial y position
         :param vx: initial x velocity
         :param vy: initial y velocity
+        :param g: gravity
         """
 
     def step(self, mx: float, my: float, mvx: float, mvy: float, dt: float) -> None:

@@ -35,7 +35,7 @@ class _GrenadeShrapnel(Bullet):
     _CID = DummyCIDs.base_bullet
 
     _default_size = 4
-    _default_base_damage = 1
+    _default_base_damage = 10
 
     _col_exception_grenade_cluster = GameCollisions.add_exception()
     __slots__ = ()

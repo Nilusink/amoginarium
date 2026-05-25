@@ -61,11 +61,11 @@ cdef class KalmanTrack2D(BaseTrack):
         self.pax = 1000
         self.pay = 1000
 
-    cpdef initialize(self, double x, double y, double vx, double vy):
+    cpdef initialize(self, double x, double y, double vx, double vy, double g):
         self.x = x
         self.y = y
 
-        BaseTrack.initialize(self, x, y, vx, vy)
+        BaseTrack.initialize(self, x, y, vx, vy, g)
 
     cdef predict(self, double dt):
         """

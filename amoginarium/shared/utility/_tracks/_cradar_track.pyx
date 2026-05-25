@@ -9,7 +9,9 @@ Created: 22.05.2026
 Authors: Nilusink
 """
 
+from .._cvectors cimport Vec2
 from ._base_track cimport BaseTrack
+
 from ._base_track import TrackQuality
 
 
@@ -27,6 +29,7 @@ cdef class RadarTrack2D(BaseTrack):
     ):
         self.measurement_noise_pos = measurement_noise_pos
         self.measurement_noise_vel = measurement_noise_vel
+        self.prev_vel = Vec2()
 
         self.reset()
 
@@ -34,11 +37,11 @@ cdef class RadarTrack2D(BaseTrack):
         self.x = 0
         self.y = 0
 
-        self.vx = 0
-        self.vy = 0
+        self.vel.x = 0
+        self.vel.y = 0
 
-        self.ax = 0
-        self.ay = 0
+        self.acc.x = 0
+        self.acc.y = 0
 
         self.px = 1000
         self.py = 1000
@@ -46,30 +49,30 @@ cdef class RadarTrack2D(BaseTrack):
         self.pvx = 1000
         self.pvy = 1000
 
-        self.prev_vx = 0
-        self.prev_vy = 0
+        self.prev_vel.x = 0
+        self.prev_vel.y = 0
 
-    cpdef initialize(self, double x, double y, double vx, double vy):
+    cpdef initialize(self, double x, double y, double vx, double vy, double g):
         self.x = x
         self.y = y
-        self.vx = vx
-        self.vy = vy
-        self.prev_vx = vx
-        self.prev_vy = vy
+        self.vel.x = vx
+        self.vel.y = vy
+        self.prev_vel.x = vx
+        self.prev_vel.y = vy
 
-        BaseTrack.initialize(self, x, y, vx, vy)
+        BaseTrack.initialize(self, x, y, vx, vy, g)
         self._track_quality = TrackQuality.POS_AND_VEL.value
 
     cdef predict(self, double dt):
         if dt == 0:
             return
 
-        self.x += self.vx * dt
-        self.y += self.vy * dt
+        self.x += self.vel.x * dt
+        self.y += self.vel.y * dt
 
         # # optional gravity / accel model
-        self.vx += self.ax * dt
-        self.vy += self.ay * dt
+        self.vel.x += self.acc.x * dt
+        self.vel.y += self.acc.y * dt
 
 
     cdef update(
@@ -97,8 +100,8 @@ cdef class RadarTrack2D(BaseTrack):
         self.y = my
 
         # velocity
-        self.vx = mvx
-        self.vy = mvy
+        self.vel.x = mvx
+        self.vel.y = mvy
 
         # cdef double kvx = self.pvx / (self.pvx + self.measurement_noise_vel)
         # cdef double kvy = self.pvy / (self.pvy + self.measurement_noise_vel)
@@ -107,8 +110,8 @@ cdef class RadarTrack2D(BaseTrack):
         # self.vy += kvy * (mvy - self.vy)
 
         # acceleration
-        self.ax = (self.vx - self.prev_vx) / last_update_dt
-        self.ay = (self.vy - self.prev_vy) / last_update_dt
+        self.acc.x = (self.vel.x - self.prev_vel.x) / last_update_dt
+        self.acc.y = (self.vel.y - self.prev_vel.y) / last_update_dt
 
         # self.ax *= 0.99
         # self.ay *= 0.99
@@ -123,7 +126,6 @@ cdef class RadarTrack2D(BaseTrack):
         # self.ay += (target_ay - self.ay) * 0.5
 
         # prev values
-        self.prev_vx = self.vx
-        self.prev_vy = self.vy
+        self.prev_vel = self.vel.copy()
 
         self._track_quality = TrackQuality.POS_VEL_ACC.value

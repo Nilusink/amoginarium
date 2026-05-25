@@ -23,8 +23,9 @@ from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import calculate_launch_angle, get_default
-from amoginarium.shared.utility import MASK16, MASK32, MASK64, normalize_angle
-from amoginarium.shared.utility import TrackQuality, TrackState, Vec2
+from amoginarium.shared.utility import ManeuveringTrackClass, MASK16, MASK32, MASK64
+from amoginarium.shared.utility import MotionTrackType, normalize_angle, TrackQuality
+from amoginarium.shared.utility import TrackState, UnknownTrackClass, Vec2
 
 from ...._base import GameCollisions, GravityAffected, LogicGameEntity
 from .._sensors import DetectionGroup
@@ -379,48 +380,79 @@ class BaseTurret(LogicGameEntity):
         # scan for targets and engage the closest one
         targets = self.detection_group.tracks
 
-        for target in targets:
-            if isinstance(target, EllipsisType):
+        for track in targets:
+            if isinstance(track, EllipsisType) or track in self.available_targets:
                 continue
 
-            if target not in self.available_targets:
-                self.available_targets[target] = {
-                    "shot_at": -self._number_target_taps,
-                    "distance": np.inf,
-                    "solution": None,
-                }
+            self.available_targets[track] = {
+                "shot_at": -self._number_target_taps,
+                "distance": np.inf,
+                "solution": None,
+            }
 
         # make list only contain the entities
-        for target in self.available_targets.copy():
-            if target not in targets:
-                self.available_targets.pop(target)
+        for track in self.available_targets.copy():
+            track: BaseTrack
+
+            if track not in targets:
+                self.available_targets.pop(track)
                 continue
 
-            self._target_predict = [target.get_position()]
+            is_bullet = (
+                track.track_classification.motion
+                == MotionTrackType.MOTION_BALLISTIC.value
+                or track.track_classification.motion
+                == MotionTrackType.MOTION_ORBITAL.value
+                or (
+                    track.track_classification.motion
+                    == MotionTrackType.MOTION_MANEUVERING.value
+                    and track.track_classification.type
+                    != ManeuveringTrackClass.DRONE.value
+                    # ignore cuz player
+                )
+                or (
+                    track.track_classification.motion
+                    == MotionTrackType.MOTION_UNKNOWN.value
+                    and (
+                        track.track_classification.type
+                        == UnknownTrackClass.SMALL_FAST.value
+                        or track.track_classification.type
+                        == UnknownTrackClass.BIG_FAST.value
+                    )
+                )
+            )
 
-            if self.available_targets[target]["shot_at"] >= 0:
-                sol = self._get_firing_solution(target)
-                self.available_targets[target]["solution"] = sol
-                self.available_targets[target]["shot_at"] -= delta
+            if (not self.intercept_bullets and is_bullet) or (
+                not self.intercept_players and not is_bullet
+            ):
+                self.available_targets[track]["solution"] = None
+                continue
 
-            elif self.available_targets[target]["shot_at"] > -1:
-                self.available_targets[target]["shot_at"] = -self._number_target_taps
+            self._target_predict = [track.get_position()]
+
+            if self.available_targets[track]["shot_at"] >= 0:
+                sol = self._get_firing_solution(track)
+                self.available_targets[track]["solution"] = sol
+                self.available_targets[track]["shot_at"] -= delta
+
+            elif self.available_targets[track]["shot_at"] > -1:
+                self.available_targets[track]["shot_at"] = -self._number_target_taps
 
             else:
-                sol = self._get_firing_solution(target)
-                self.available_targets[target]["solution"] = sol
+                sol = self._get_firing_solution(track)
+                self.available_targets[track]["solution"] = sol
 
                 if not sol:
-                    self.available_targets[target]["distance"] = np.inf
+                    self.available_targets[track]["distance"] = np.inf
 
                 else:
-                    self.available_targets[target]["distance"] = (
+                    self.available_targets[track]["distance"] = (
                         sol.target_predict
                         - self.position
                         + self.weapon.parent_position_offset
                     ).length
 
-            sol = self.available_targets[target]["solution"]
+            sol = self.available_targets[track]["solution"]
             if sol:
                 self._target_predict = [sol.target_predict]
             else:

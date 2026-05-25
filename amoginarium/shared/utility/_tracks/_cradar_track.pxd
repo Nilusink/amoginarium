@@ -9,6 +9,7 @@ Created: 22.05.2026
 Authors: Nilusink
 """
 
+from .._cvectors cimport Vec2
 from ._base_track cimport BaseTrack
 
 
@@ -17,13 +18,13 @@ cdef class RadarTrack2D(BaseTrack):
     cdef double px, py
     cdef double pvx, pvy
 
-    cdef double prev_vx, prev_vy
+    cdef Vec2 prev_vel
 
     cdef double measurement_noise_pos
     cdef double measurement_noise_vel
 
     cpdef reset(self)
-    cpdef initialize(self, double x, double y, double vx, double vy)
+    cpdef initialize(self, double x, double y, double vx, double vy, double g)
     cdef predict(self, double dt)
     cdef update(
         self,
