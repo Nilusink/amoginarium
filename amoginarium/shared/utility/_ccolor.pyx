@@ -2,10 +2,10 @@
 """
 Color class, fade function, c_255_to_1 function.
 
-Path: amoginarium/shared/utility/_ccolor.pyx
-Project: amoginarium
-Created: 16.03.2026
-Authors: Nilusink
+| ``Path``: amoginarium/shared/utility/_ccolor.pyx
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: Nilusink
 """
 from typing import Tuple
 

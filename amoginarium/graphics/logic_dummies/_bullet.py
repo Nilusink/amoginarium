@@ -1,10 +1,10 @@
 """
 Bullet dummy entity.
 
-Path: amoginarium/graphics/logic_dummies/_bullet.py
-Project: amoginarium
-Created: 31.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/logic_dummies/_bullet.py
+| ``Project``: amoginarium
+| ``Created``: 31.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

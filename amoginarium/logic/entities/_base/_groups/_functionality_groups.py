@@ -1,10 +1,10 @@
 """
 Contains logical groups that apply global physics properties.
 
-Path: amoginarium/logic/entities/_base/_groups/_functionality_groups.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_base/_groups/_functionality_groups.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 import typing as tp
@@ -49,14 +49,14 @@ class _FrictionXAffected(BaseGroup[LogicGameEntityLike]):
         Get the friction coefficient.
         :return: Friction value.
         """
-        return 60
+        return 60.0
 
     def calculate_friction(self, _delta: float) -> None:
         """
         Calculate and apply horizontal friction to entities based on their current velocity.
         :param _delta: Time elapsed since the last frame.
         """
-        friction = self.friction
+        friction: float = self.friction
         for sprite in self.entities():
             sprite.acceleration.x = (
                 sprite.acceleration.x - (sprite.velocity.x * 0.01)

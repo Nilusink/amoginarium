@@ -1,10 +1,10 @@
 """
 Base UI component managing relative/absolute positioning and sizing.
 
-Path: amoginarium/graphics/ui/_base/_ui_element/_ui_element.py
-Project: amoginarium
-Created: 10.03.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_base/_ui_element/_ui_element.py
+| ``Project``: amoginarium
+| ``Created``: 10.03.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

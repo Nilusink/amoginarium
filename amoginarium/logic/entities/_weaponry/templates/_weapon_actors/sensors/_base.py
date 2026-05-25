@@ -1,10 +1,11 @@
 """
 Base weapons sensor used in weapons guidance.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/sensors/_base.py
-Project: amoginarium
-Created: 10.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/sensors/
+            _base.py
+| ``Project``: amoginarium
+| ``Created``: 10.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

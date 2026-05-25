@@ -1,15 +1,16 @@
 """
 Weapons that need to charge before firing (bow).
 
-Path: amoginarium/logic/entities/_weaponry/_definitions/_weapons/_charged_weapons.py
-Project: amoginarium
-Created: 14.03.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/_definitions/_weapons/
+            _charged_weapons.py
+| ``Project``: amoginarium
+| ``Created``: 14.03.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as tp
 
 from amoginarium.shared import WeaponCIDs
 from amoginarium.shared.audio import SmallExplosion
@@ -17,7 +18,7 @@ from amoginarium.shared.utility import Vec2
 
 from ...templates import BaseChargedWeapon
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t
@@ -53,6 +54,7 @@ class RailGun(BaseChargedWeapon):
             visibility_offset=0.058,
         )
 
+    @tp.override
     @staticmethod
     def _recoil_curve(value: float) -> float:
         return value**2

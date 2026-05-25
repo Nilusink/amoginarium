@@ -1,15 +1,16 @@
 """
 Defines a shield item that blocks projectiles and absorbs damage.
 
-Path: amoginarium/logic/entities/_items/_shield.py
-Project: amoginarium
-Created: 18.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_items/_shield.py
+| ``Project``: amoginarium
+| ``Created``: 18.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
 
 import typing as tp
+from types import EllipsisType
 
 from amoginarium.shared import ItemCIDs
 from amoginarium.shared.audio import MetalPings
@@ -21,13 +22,13 @@ from ._something import Something
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
-    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.audio import RandomizedEffect
     from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
-    from .._base import CollisionType, LogicGameEntity
+    from .._base import LogicGameEntity
     from .._player import Player
     from .._weaponry import Grenade
     from .._weaponry.templates import Bullet
@@ -74,6 +75,7 @@ class Shield(Something):
     def in_use(self) -> bool:
         return self._in_use
 
+    @tp.override
     def use(self) -> None:
         """
         Start using the item.
@@ -82,8 +84,8 @@ class Shield(Something):
             self._collision_active = True
             self._in_use = True
             self.add(Updated)
-            # self.add(CollisionDestroyed)
 
+    @tp.override
     def stop_use(self) -> None:
         """
         Stop using the item.
@@ -92,8 +94,8 @@ class Shield(Something):
             self._collision_active = False
             self._in_use = False
             self.remove(Updated)
-            # self.remove(CollisionDestroyed)
 
+    @tp.override
     def remove_parent(self, at_pos: Vec2, velocity: Vec2 | EllipsisType = ...) -> None:
         super().remove_parent(
             at_pos
@@ -103,25 +105,35 @@ class Shield(Something):
             velocity,
         )
 
+    @tp.override
     def _collision_start(
         self,
+        group_id: CollisionGroupIDType,
         events: list[CollisionEvent[Island | Bullet | Grenade | Player]],
-    ) -> None:
+    ) -> list[bool] | None:
         """
-        Reaction to collision
-        :param events: Event details.
-        """
-        group_id: CollisionType.GroupID = events[0].group_id
-        if group_id == GameCollisions.collision_group_islands:
-            self.position = events[0].position - self.size / 2
-        elif group_id in (
-            GameCollisions.collision_group_bullets,
-            GameCollisions.collision_group_grenades,
-        ):
-            for event in events:
-                self.hit_by_bullet(event.other_entity.damage, event.other_entity)
+        Distribute collision start events to different methods.
 
-    def _update_collision(
+        - Island: Shield falls to the ground and hovers over it when not in inventory
+        - Bullet: The bulleQt calls hit to avoid hitting too much when tunneling
+        - AerodynamicEntity: The entity calls hit
+            to avoid hitting too much when tunneling
+        - Grenade: Grenades bounce back from shields. No reaction to the shield
+        - Player: Players collect the shield if they have no parent
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
+        """
+        if (
+            group_id == GameCollisions.collision_group_islands
+            or group_id == GameCollisions.collision_group_players
+            or group_id == GameCollisions.collision_group_bullets
+        ):
+            events: list[CollisionEvent[Island | Player | Bullet]]
+            super()._collision_start(group_id, events)
+
+    @tp.override
+    def _update_collision(  # type: ignore
         self,
         *,
         position: Vec2 | EllipsisType = ...,
@@ -129,6 +141,8 @@ class Shield(Something):
         rotation: float = 0.0,
         positions: list[Vec2] | None = None,
         centered: bool | EllipsisType = ...,
+        radius: float | None = None,
+        collision_active: bool | EllipsisType = ...,
         shift_history: bool = True,
     ) -> None:
         super()._update_collision(
@@ -137,29 +151,28 @@ class Shield(Something):
             rotation=self.facing.angle,
             positions=positions,
             centered=True,
+            radius=radius,
+            collision_active=collision_active,
             shift_history=shift_history,
         )
 
+    @tp.override
     def item_pickupable(self) -> bool:
         return self._parent is None and super().item_pickupable()
 
-    def hit_by_bullet(
-        self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...
-    ) -> None:
+    def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         if not self._in_use:
-            return
+            super().hit(damage, hit_by)
 
-        if hit_by is not ... and "bullet" in hit_by._tags:
+        if not isinstance(hit_by, EllipsisType) and "bullet" in hit_by._tags:
             self._sound.play(pos=self.position)
 
         self._uses_left -= damage
 
         if self._uses_left <= 0:
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> None:
-        super()._kill(killed_by)
-
+    @tp.override
     def _update(self, delta: float, **_) -> None:
         if self.parent:
             d = Vec2().from_polar(

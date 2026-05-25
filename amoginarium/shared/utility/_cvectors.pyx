@@ -2,10 +2,10 @@
 """
 Vec2 class and vec2 related functions.
 
-Path: amoginarium/shared/utility/_cvectors.pyx
-Project: amoginarium
-Created: 11.03.2026
-Authors: Nilusink
+| ``Path``: amoginarium/shared/utility/_cvectors.pyx
+| ``Project``: amoginarium
+| ``Created``: 11.03.2026
+| ``Authors``: Nilusink
 """
 
 cimport cython

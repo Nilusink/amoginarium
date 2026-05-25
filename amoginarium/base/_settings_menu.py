@@ -1,10 +1,10 @@
 """
 UI component for managing display scaling and engine settings.
 
-Path: amoginarium/base/_settings_menu.py
-Project: amoginarium
-Created: 01.03.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/base/_settings_menu.py
+| ``Project``: amoginarium
+| ``Created``: 01.03.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 Compiles Cython extensions with OpenMP and optimized C++ flags.
 
-Path: setup.py
-Project: amoginarium
-Created: 11.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: setup.py
+| ``Project``: amoginarium
+| ``Created``: 11.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 # ruff: disable[ERA001]
@@ -43,8 +43,8 @@ base_package = "amoginarium"
 cpp_files = [
     "_minrect.pyx",
     "_minrect_dirty.pyx",
-    "collision_manager.pyx",
-    "collision_methods.pyx",
+    "_collision_manager.pyx",
+    "_collision_methods.pyx",
     "_ctarget_track.pyx"
 ]
 

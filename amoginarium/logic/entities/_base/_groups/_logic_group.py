@@ -3,10 +3,10 @@ Defines the base LogicGroup class for managing collections of logic entities.
 
 Allows batch operations like updates and efficient membership testing.
 
-Path: amoginarium/logic/entities/_base/_groups/_logic_group.py
-Project: amoginarium
-Created: 21.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_base/_groups/_logic_group.py
+| ``Project``: amoginarium
+| ``Created``: 21.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
         Creates a new group containing the same entities.
         :return: A new LogicGroup instance.
         """
-        new_group = self.__class__()
+        new_group: LogicGroup = self.__class__()
         new_group._entities = self._entities.copy()
         return new_group
 
@@ -100,6 +100,7 @@ class LogicGroup[T: BaseLogicEntityLike]:
         :param args: Positional arguments passed to entity.update.
         :param kwargs: Keyword arguments passed to entity.update.
         """
+        entity: T
         for entity in self._entities.copy():
             entity.update(*args, **kwargs)
 

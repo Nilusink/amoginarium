@@ -1,10 +1,10 @@
 """
 Base missile Type.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_missiles/_base_missile.py
-Project: amoginarium
-Created: 05.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_missiles/_base_missile.py
+| ``Project``: amoginarium
+| ``Created``: 05.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from .._bullets import AerodynamicEntity
 if tp.TYPE_CHECKING:
     from ctypes import Array
 
-    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared import base_entity_t, Coalitions, MurderViable
     from amoginarium.shared.audio import PresetEffect
 
     from ...._base import LogicGameEntity
@@ -104,18 +104,26 @@ class BaseMissile(AerodynamicEntity):
         """Currently produced thrust."""
         return 0
 
+    @tp.override
     @property
     def mass(self) -> float:
         return self._mass + self._fuel_mass
 
+    @tp.override
     @property
     def alpha(self) -> float:
         return normalize_angle_neg(self.velocity.angle - self.facing.angle)
 
     # endregion
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
-        val = super()._kill(killed_by)
+    @tp.override
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
+        val = super()._kill(killed_by=killed_by)
 
         if not isinstance(self._sound, EllipsisType):
             self._sound.stop()
@@ -125,7 +133,8 @@ class BaseMissile(AerodynamicEntity):
 
         return val
 
-    def _update(self, delta: float, apply_thrust: bool = True) -> None:  # noqa: FBT002
+    @tp.override
+    def _update(self, delta: float, apply_thrust: bool = True) -> None:
         # apply thrust force at rear of missile
         if self.thrust != 0 and apply_thrust:
             self.apply_force(

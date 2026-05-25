@@ -1,10 +1,10 @@
 """
 Background music.
 
-Path: amoginarium/shared/audio/_background.py
-Project: amoginarium
-Created: 25.03.2024
-Authors: Nilusink
+| ``Path``: amoginarium/shared/audio/_background.py
+| ``Project``: amoginarium
+| ``Created``: 25.03.2024
+| ``Authors``: Nilusink
 """
 
 from random import randint

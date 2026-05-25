@@ -1,10 +1,10 @@
 """
 Prototype renderer.
 
-Path: amoginarium/graphics/render_bindings/_base_renderer.py
-Project: amoginarium
-Created: 22.03.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/render_bindings/_base_renderer.py
+| ``Project``: amoginarium
+| ``Created``: 22.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -156,7 +156,6 @@ class BaseRenderer(abc.ABC):
     # endregion
 
     # region Stencil
-    # TODO mytodo - stencils work!
     @abc.abstractmethod
     def apply_stencil[**A](
         self,

@@ -1,21 +1,22 @@
 """
 Missile "bullet".
 
-Path: amoginarium/logic/entities/_weaponry/templates/_missiles/_multi_stage_missile.py
-Project: amoginarium
-Created: 05.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_missiles/
+            _multi_stage_missile.py
+| ``Project``: amoginarium
+| ``Created``: 05.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as tp
 
 from amoginarium.shared import MissileCIDs
 
 from ._base_missile import BaseMissile
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
@@ -112,10 +113,12 @@ class MultiStageMissile(BaseMissile):
     def _current_stage(self) -> int:
         return self.__current_stage
 
+    @tp.override
     @property
     def _fuel_mass(self) -> float:
         return self.__current_fuel_weight
 
+    @tp.override
     @property
     def thrust(self) -> float:
         return self.__current_thrust
@@ -162,6 +165,7 @@ class MultiStageMissile(BaseMissile):
                 self._stages[self.__current_stage][0] + self.__current_stage_t
             )
 
+    @tp.override
     def _update(self, delta: float, apply_thrust: bool = True) -> None:
         self.__update_stage(delta)
         super()._update(delta, apply_thrust=apply_thrust)

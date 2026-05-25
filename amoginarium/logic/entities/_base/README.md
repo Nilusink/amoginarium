@@ -3,11 +3,11 @@
 <details open>
 
 <summary><h2 style="display:inline-block">Structure</h2></summary>
-
 <!--- MermaidStructureStart --->
+
 ```mermaid
 graph TD
-    subgraph Group [" "]
+    subgraph Group ["‎"]
         _base_entities
         _collision
         _debug
@@ -27,24 +27,24 @@ graph TD
     _game_entities --> _collision
     _game_entities --> _debug
 ```
-<!--- MermaidStructureEnd --->
 
+<!--- MermaidStructureEnd --->
 </details>
 
 <details open>
 
 <summary><h2 style="display:inline-block">Classes</h2></summary>
-
 <!--- MermaidClassesStart --->
+
 ```mermaid
 graph RL
-    subgraph Group1 [" "]
+    subgraph Group1 ["‎"]
         CollisionType
         EntityChildViable
         HitboxTypes
         _GameCollisions
     end
-    subgraph Group2 [" "]
+    subgraph Group2 ["‎"]
         BaseGroup
         LogicGroup
         _Bullets
@@ -54,7 +54,7 @@ graph RL
         _Updated
         _Walls
     end
-    subgraph Group3 [" "]
+    subgraph Group3 ["‎"]
         BaseLogicEntity
         CollisionLogicEntity
         DebugCircleEntity
@@ -77,6 +77,6 @@ graph RL
     _GravityAffected --> BaseGroup
     _Updated --> BaseGroup
 ```
-<!--- MermaidClassesEnd --->
 
+<!--- MermaidClassesEnd --->
 </details>

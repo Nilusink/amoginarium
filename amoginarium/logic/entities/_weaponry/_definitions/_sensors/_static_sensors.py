@@ -1,10 +1,11 @@
 """
 Allows sensors to be placed on the map.
 
-Path: amoginarium/logic/entities/_weaponry/_definitions/_sensors/_static_sensors.py
-Project: amoginarium
-Created: 15.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/_definitions/_sensors/
+            _static_sensors.py
+| ``Project``: amoginarium
+| ``Created``: 15.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ if tp.TYPE_CHECKING:
 
     from amoginarium.shared import base_entity_t, Coalitions
     from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
     from ...templates import BaseSensor, Bullet
 
@@ -86,15 +88,20 @@ class VisualSensor(LogicGameEntity):
         if self._hp <= 0:
             self.kill()
 
-    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
-        dmg = event.other_entity.damage
-        if dmg > 0 and event.other_entity.parent != self:
-            self.hit(dmg, hit_by=event.other_entity)
-
-    def _collision_start(self, events: list[CollisionEvent[Bullet]]) -> None:
+    def __on_collision_bullet(self, events: list[CollisionEvent[Bullet]]) -> None:
         for event in events:
-            if event.group_id == GameCollisions.collision_group_bullets:
-                self.__on_collision_bullet(event)
+            dmg = event.other_entity.damage
+            if dmg > 0 and event.other_entity.parent != self:
+                self.hit(dmg, hit_by=event.other_entity)
+
+    @tp.override
+    def _collision_start(
+        self,
+        group_id: CollisionGroupIDType,
+        events: list[CollisionEvent[Bullet]],
+    ) -> list[bool] | None:
+        if group_id == GameCollisions.collision_group_bullets:
+            self.__on_collision_bullet(events)
 
 
 class VisualRadarSensor(VisualSensor):

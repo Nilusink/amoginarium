@@ -1,10 +1,10 @@
 """
 Defines a player.
 
-Path: amoginarium/logic/entities/_player/_player.py
-Project: amoginarium
-Created: 30.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_player/_player.py
+| ``Project``: amoginarium
+| ``Created``: 30.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -31,13 +31,16 @@ from .._weaponry.templates import BaseWeapon
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
+    from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, ItemLike, ItemSlot
+    from amoginarium.shared import base_entity_t, ItemLike, ItemSlot, MurderViable
     from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionExceptionIDType
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
     from ...graphics_dummies import Controller
-    from .._base import CollisionLogicEntity
     from .._items import Item
+    from .._weaponry import Grenade
     from .._weaponry.templates import Bullet, RideableTurret
     from .._world import Island
 
@@ -58,6 +61,8 @@ class Player(Passenger, LogicGameEntity):
 
     __should_be_killed: int
 
+    _bullets_do_not_initially_hit_player: CollisionExceptionIDType
+
     def __init__(
         self,
         runtime_buffer: Array[base_entity_t],
@@ -73,8 +78,10 @@ class Player(Passenger, LogicGameEntity):
         self._on_ground = False
         self._alive = True
 
+        self._bullets_do_not_initially_hit_player = GameCollisions.add_exception()
+
         if not size:
-            size: Vec2 = Vec2().from_cartesian(64, 64)
+            size: Vec2 = Vec2().from_cartesian(63.9, 63.9)
 
         if not position:
             position: Vec2 = Players.spawn_point
@@ -94,8 +101,11 @@ class Player(Passenger, LogicGameEntity):
             parent=parent,
             coalition=coalition,
             centered=True,
+            tags=["player"],
         )
         self._create_collision()
+
+        self._collision_exception_ids.append(self._bullets_do_not_initially_hit_player)
 
         self._groaning = SoundEffect(("groaning", "hugh_1"))
         self._pickup_sound = OnHoverButtonSound()
@@ -178,8 +188,8 @@ class Player(Passenger, LogicGameEntity):
         return self._on_ground
 
     @property
-    def alive(self) -> bool:
-        return self._alive
+    def can_pickup_item(self) -> bool:
+        return True
 
     @property
     def item(self) -> ItemLike | None:
@@ -268,7 +278,7 @@ class Player(Passenger, LogicGameEntity):
         if self._hp <= 0:
             if self.item:
                 self.item.stop()
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
         self._last_hit = perf_counter()
         self._controller.feedback_heal_stop()
@@ -280,15 +290,22 @@ class Player(Passenger, LogicGameEntity):
         self._hp = new
         return True
 
-    def __on_collision_island(self, events: list[CollisionEvent[Island]]) -> list[bool]:
+    def __collision_island(self, events: list[CollisionEvent[Island]]) -> list[bool]:
+        """
+        Player collision reaction to islands.
+        Guarantees that the player won't get stuck
+        in walls or fly through them and can still move along them.
+        :param events: All details regarding the collisions
+        :return: Which collisions were accepted.
+        """
         accepted_collisions: list[bool] = [False for _ in events]
 
         active_normals = [
             False,
+            False,  # x-negative, x-positive
             False,
             False,
-            False,
-        ]  # x-negative, x-positive, y-negative, y-positive
+        ]  # y-negative, y-positive
         if GameCollisions.collision_group_islands in self._active_normals:
             for normal in self._active_normals[GameCollisions.collision_group_islands]:
                 if normal.x < -0.5:
@@ -307,9 +324,8 @@ class Player(Passenger, LogicGameEntity):
                 if active_normals[1] and event.normal.x > 0.5:
                     continue
                 self.__add_position *= 0
-                self.__add_position.y += (
-                    self.position.y - event.position.y
-                )  # try to make up for the lost y in the next update!
+                # try to make up for the lost y movement in the next update!
+                self.__add_position.y += self.position.y - event.position.y
                 self.position = event.position
                 self.velocity.x = 0
                 self.acceleration.x = 0
@@ -323,9 +339,8 @@ class Player(Passenger, LogicGameEntity):
                 if active_normals[3] and event.normal.y > 0.5:
                     continue
                 self.__add_position *= 0
-                self.__add_position.x += (
-                    self.position.x - event.position.x
-                )  # try to make up for the lost y in the next update!
+                # try to make up for the lost x movement in the next update!
+                self.__add_position.x += self.position.x - event.position.x
                 self.position = event.position
                 self.velocity.y = 0
                 self.acceleration.y = 0
@@ -354,14 +369,14 @@ class Player(Passenger, LogicGameEntity):
             if event.other_entity.item_pickupable():
                 self.pickup_item(event.other_entity)
 
-    def __on_collision_rideable(
+    def __collision_rideable_start(
         self, events: list[CollisionEvent[RideableTurret]]
     ) -> None:
         for event in events:
             event.other_entity.highlight()
             self._colliding_rideables.append(event.other_entity)
 
-    def __on_collision_rideable_end(
+    def __collision_rideable_end(
         self, events: list[CollisionEvent[RideableTurret]]
     ) -> None:
         for event in events:
@@ -369,49 +384,84 @@ class Player(Passenger, LogicGameEntity):
                 event.other_entity.stop_highlight()
                 self._colliding_rideables.remove(event.other_entity)
 
+    @tp.override
     def _collision_start(
         self,
+        group_id: CollisionGroupIDType,
         events: list[CollisionEvent[Bullet | Island | Item | RideableTurret]],
     ) -> list[bool] | None:
-        if events[0].group_id == GameCollisions.collision_group_islands:
+        if group_id == GameCollisions.collision_group_islands:
             events: list[CollisionEvent[Island]]
             return self.__on_collision_island(events)
 
-        if events[0].group_id == GameCollisions.collision_group_bullets:
+        if group_id == GameCollisions.collision_group_bullets:
             events: list[CollisionEvent[Bullet]]
             self.__on_collision_bullet(events)
 
         elif (
-            events[0].group_id == GameCollisions.collision_group_items
-            or events[0].group_id == GameCollisions.collision_group_shields
+            group_id == GameCollisions.collision_group_items
+            or group_id == GameCollisions.collision_group_shields
         ):
             events: list[CollisionEvent[Item]]
             self.__on_collision_item(events)
 
-        elif (
-            events[0].group_id == GameCollisions.collision_group_rideable_turrets
-            or events[0].group_id == GameCollisions.collision_group_vehicles
-        ):
-            events: list[CollisionEvent[RideableTurret]]
-            self.__on_collision_rideable(events)
-
         return None
 
+    def _collision_start(
+        self,
+        group_id: CollisionGroupIDType,
+        events: list[CollisionEvent[Item | Shield | Bullet | Island | Grenade]],
+    ) -> list[bool] | None:
+        """
+        Distribute collision start events to different methods.
+
+        - Island: Player walks on islands / collides with them
+        - Items: Item decides if it can be picked up and calls pickup_item if so
+        - Shield: Same goes for shield except is even more complex
+        - Grenades: No reaction to Grenades for the player
+        - Bullets: The bullet calls hit to avoid hitting too much when tunneling
+        - AerodynamicEntity: The entity calls hit
+            to avoid hitting too much when tunneling
+        - RideableTurret: Player can enter/ride the turret.
+
+        :param group_id: ID of the other group involved in the collision
+        :param events: All details regarding the collision
+        :return: List of booleans stating whether each collision is accepted.
+        """
+        if group_id == GameCollisions.collision_group_islands:
+            events: list[CollisionEvent[Island]]
+            return self.__collision_island(events)
+        if (
+            group_id == GameCollisions.collision_group_rideable_turrets
+            or group_id == GameCollisions.collision_group_vehicles
+        ):
+            events: list[CollisionEvent[RideableTurret]]
+            self.__collision_rideable_start(events)
+            return None
+        return None
+
+    @tp.override
     def _collision_end(
-        self, events: list[CollisionEvent[CollisionLogicEntity]]
+        self,
+        group_id: CollisionGroupIDType,
+        events: list[CollisionEvent[RideableTurret]],
     ) -> None:
-        if events[0].group_id == GameCollisions.collision_group_rideable_turrets:
-            self.__on_collision_rideable_end(events)
+        if group_id == GameCollisions.collision_group_rideable_turrets:
+            events: list[CollisionEvent[RideableTurret]]
+            self.__collision_rideable_end(events)
+
+    def get_initial_root_collision_exception(self) -> CollisionExceptionIDType:
+        return self._bullets_do_not_initially_hit_player
 
     def clear_controlled_entity(self, to_clear) -> bool:
         self.__ride_pressed = True
         super().clear_controlled_entity(to_clear)
 
+    # noinspection DuplicatedCode
+    @tp.override
     def _update(self, delta) -> None:
         # update passenger status
         self.update_passenger(delta)
-
-        self._on_ground = False
 
         # update reloads
         for hover_slot in self._hotbar:
@@ -432,31 +482,6 @@ class Player(Passenger, LogicGameEntity):
         )
         vector -= self.world_position
         self.facing.angle = vector.angle
-
-        # update movement
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
-                if n.y < -0.5:
-                    self._on_ground = True
-                    if self.acceleration.y > 0:
-                        self.acceleration.y = 0
-                    if self.velocity.y > 0:
-                        self.velocity.y = 0
-                elif n.y > 0.5:
-                    if self.acceleration.y < 0:
-                        self.acceleration.y = 0
-                    if self.velocity.y < 0:
-                        self.velocity.y = 0
-                if n.x < -0.5:
-                    if self.acceleration.x > 0:
-                        self.acceleration.x = 0
-                    if self.velocity.x > 0:
-                        self.velocity.x = 0
-                elif n.x > 0.5:
-                    if self.acceleration.x < 0:
-                        self.acceleration.x = 0
-                    if self.velocity.x < 0:
-                        self.velocity.x = 0
 
         if not self.is_controlled:
             if (
@@ -586,6 +611,48 @@ class Player(Passenger, LogicGameEntity):
             if self.item:
                 self.item.show()
 
+        self._on_ground = False
+
+        if GameCollisions.collision_group_islands in self._active_normals:
+            for n in self._active_normals[GameCollisions.collision_group_islands]:
+                if n.y < -0.5:
+                    self._on_ground = True
+                    if self.acceleration.y > 0:
+                        self.acceleration.y = 0
+                    if self._acceleration_to_add.y > 0:
+                        self._acceleration_to_add.y = 0
+                    if self.velocity.y > 0:
+                        self.velocity.y = 0
+                    if self._velocity_to_add.y > 0:
+                        self._velocity_to_add.y = 0
+                elif n.y > 0.5:
+                    if self.acceleration.y < 0:
+                        self.acceleration.y = 0
+                    if self._acceleration_to_add.y < 0:
+                        self._acceleration_to_add.y = 0
+                    if self.velocity.y < 0:
+                        self.velocity.y = 0
+                    if self._velocity_to_add.y < 0:
+                        self._velocity_to_add.y = 0
+                if n.x < -0.5:
+                    if self.acceleration.x > 0:
+                        self.acceleration.x = 0
+                    if self._acceleration_to_add.x > 0:
+                        self._acceleration_to_add.x = 0
+                    if self.velocity.x > 0:
+                        self.velocity.x = 0
+                    if self._velocity_to_add.x > 0:
+                        self._velocity_to_add.x = 0
+                elif n.x > 0.5:
+                    if self.acceleration.x < 0:
+                        self.acceleration.x = 0
+                    if self._acceleration_to_add.x < 0:
+                        self._acceleration_to_add.x = 0
+                    if self.velocity.x < 0:
+                        self.velocity.x = 0
+                    if self._velocity_to_add.x < 0:
+                        self._velocity_to_add.x = 0
+
         if ridden_pos:
             self.position = ridden_pos
             self.velocity *= 0
@@ -613,7 +680,12 @@ class Player(Passenger, LogicGameEntity):
         # else:
         #     self.__should_be_killed = 0
 
-    def _kill(self, killed_by=...) -> None:
+    @tp.override
+    def _kill(
+        self,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         self._alive = False
         self._death_sound.play()
 
@@ -622,9 +694,9 @@ class Player(Passenger, LogicGameEntity):
         elif hasattr(self.item, "stop_shooting"):
             self.item.stop_shooting()
 
-        super()._kill(killed_by)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
-    def respawn(self, pos: Vec2 = ...) -> None:
+    def respawn(self, pos: Vec2 | EllipsisType = ...) -> None:
         self._alive = True
 
         self.add(
@@ -646,6 +718,7 @@ class Player(Passenger, LogicGameEntity):
 
         super()._update(0)
 
+    @tp.override
     def add_velocity(self, value: Vec2) -> None:
         """
         Add velocity to the entity and guarantee that it will be valid (for short bursts)
@@ -664,6 +737,7 @@ class Player(Passenger, LogicGameEntity):
         self._velocity_to_add.x += x
         self._velocity_to_add.y += y
 
+    @tp.override
     def add_acceleration(self, value: Vec2) -> None:
         """
         Add acceleration to the entity and guarantee that it will be valid (for long accelerations)

@@ -1,10 +1,10 @@
 """
 Defines a few useful classes.
 
-Path: amoginarium/shared/utility/_utility_classes.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/utility/_utility_classes.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 import asyncio

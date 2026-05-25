@@ -1,10 +1,11 @@
 """
 Really simple game-ifyed version of aerodynamics.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_bullets/_aerodynamic_entity.py
-Project: amoginarium
-Created: 17.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_bullets/
+            _aerodynamic_entity.py
+| ``Project``: amoginarium
+| ``Created``: 17.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -23,8 +24,9 @@ if tp.TYPE_CHECKING:
     from types import EllipsisType
 
     from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
-    from ...._base import CollisionType, LogicGameEntity
+    from ...._base import LogicGameEntity
 
 
 class AerodynamicEntity(Bullet):
@@ -48,8 +50,8 @@ class AerodynamicEntity(Bullet):
     _default_rudder_size: float = 1
     _default_rudder_max_angle: float = 1
 
-    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionType.GroupID] = (
-        GameCollisions.collision_group_missiles
+    _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
+        GameCollisions.collision_group_aerodynamic_entity
     )
 
     def __init__(
@@ -126,6 +128,7 @@ class AerodynamicEntity(Bullet):
     def _update_rudder(self, delta: float) -> None:
         """Update rudder position."""
 
+    @tp.override
     def _update(self, delta: float) -> None:
         forward_force = Vec2()
 
@@ -203,6 +206,7 @@ class AerodynamicEntity(Bullet):
         self._buffer.param2 = self.velocity.angle
         self._buffer.param1 = self.velocity.length
 
+    @tp.override
     def _update_collision(  # type: ignore
         self,
         *,

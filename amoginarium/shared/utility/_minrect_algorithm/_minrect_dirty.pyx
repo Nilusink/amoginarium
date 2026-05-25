@@ -3,10 +3,10 @@
 """
 Algorythm for finding minimum rectangles without a perfect result but way faster.
 
-Path: amoginarium/shared/utility/_minrect_algorithm/_minrect_dirty.pyx
-Project: amoginarium
-Created: 13.04.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/shared/utility/_minrect_algorithm/_minrect_dirty.pyx
+| ``Project``: amoginarium
+| ``Created``: 13.04.2026
+| ``Authors``: LukasKrah
 """
 
 from libcpp.vector cimport vector
@@ -19,7 +19,7 @@ cdef struct Rect:
     int r2
     int c2
 
-cpdef list find_minimum_rectangles_dirty(list bitmap):
+cpdef object find_minimum_rectangles_dirty(list bitmap):
     """
     Greedy heuristic to find near-minimum rectangles, heavily optimized in C++.
     Finds the largest available rectangle, marks it, and repeats.

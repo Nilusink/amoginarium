@@ -1,10 +1,10 @@
 """
 Base class for weapon logic, handling shooting, reloading, and recoil.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_weapons/_base_weapon.py
-Project: amoginarium
-Created: 01.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapons/_base_weapon.py
+| ``Project``: amoginarium
+| ``Created``: 01.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -142,16 +142,10 @@ class BaseWeapon(Item):
             )  # ignore: type
 
     # region properties
+    @tp.override
     @property
     def coalition(self) -> Coalitions:
         return self.parent.coalition
-
-    @property
-    def parent(self) -> LogicGameEntity:
-        """
-        Weapon parent (player / turret).
-        """
-        return self._parent
 
     @property
     def mag_size(self) -> int:
@@ -201,6 +195,7 @@ class BaseWeapon(Item):
             round(self._current_reload_time, 2),
         )
 
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Update weapon state (like reloading, ...).

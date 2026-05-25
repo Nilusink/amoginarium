@@ -1,10 +1,11 @@
 """
 Different type of fuzes.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/fuzes/_fuzes.py
-Project: amoginarium
-Created: 08.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/fuzes/
+            _fuzes.py
+| ``Project``: amoginarium
+| ``Created``: 08.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
@@ -47,7 +48,7 @@ class TTLFuze(BaseFuze):
 
         # update fuze
         if self._parent.lifetime >= self._ttl:
-            self._parent.kill(self)
+            self._parent.kill(killed_by=self)
 
 
 class TTLMultFuze(TTLFuze):
@@ -93,7 +94,7 @@ class PositionFuze(BaseFuze):
 
         # check fuze
         if (self._position - self._target_position).length <= self._distance:
-            self._parent.kill(self)
+            self._parent.kill(killed_by=self)
 
 
 class ProximityFuze(BaseFuze):
@@ -140,7 +141,7 @@ class ProximityFuze(BaseFuze):
         )
 
         if entities:
-            self._parent.kill(self)
+            self._parent.kill(killed_by=self)
 
 
 class AltitudeFuze(BaseFuze):
@@ -183,7 +184,7 @@ class AltitudeFuze(BaseFuze):
 
                 # only explode on decent
                 if diff.y > 0:
-                    self._parent.kill(self)
+                    self._parent.kill(killed_by=self)
 
         elif not entities:
             self._armed = True

@@ -1,10 +1,10 @@
 """
 Base class for automated turrets with target tracking and engagement.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_turrets/_base_turret.py
-Project: amoginarium
-Created: 19.03.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_turrets/_base_turret.py
+| ``Project``: amoginarium
+| ``Created``: 19.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -22,9 +22,8 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
-from amoginarium.shared.utility import calculate_launch_angle
-from amoginarium.shared.utility import get_default, MASK16, MASK32, MASK64
-from amoginarium.shared.utility import normalize_angle, TrackQuality, TrackState, Vec2
+from amoginarium.shared.utility import calculate_launch_angle, get_default, MASK16
+from amoginarium.shared.utility import MASK32, MASK64, normalize_angle, Vec2
 
 from ...._base import GameCollisions
 from ...._base import GravityAffected, LogicGameEntity
@@ -36,8 +35,10 @@ if tp.TYPE_CHECKING:
     from amoginarium.shared import base_entity_t, Coalitions
     from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared.utility import BaseTrack
+    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared import MurderViable, VisibleGameEntityLike
+    from amoginarium.shared.collision_detection import CollisionExceptionIDType
 
-    from .._bullets import Bullet
     from .._sensors import BaseSensor
     from .._weapons import BaseWeapon
 
@@ -115,6 +116,8 @@ class BaseTurret(LogicGameEntity):
 
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_turrets
 
+    _bullets_do_not_initially_hit_turret: CollisionExceptionIDType
+
     def __init__(  # noqa: C901, PLR0912, PLR0915
         self,
         runtime_buffer: Array[base_entity_t],
@@ -159,6 +162,8 @@ class BaseTurret(LogicGameEntity):
             coalition=coalition,
             centered=True,
         )
+
+        self._bullets_do_not_initially_hit_turret = GameCollisions.add_exception()
 
         # audio
         self._ping = MetalPings().set_volume(0.4, 0.5)
@@ -241,6 +246,8 @@ class BaseTurret(LogicGameEntity):
 
         self._hp = self._default_max_hp
 
+        self._collision_exception_ids.append(self._bullets_do_not_initially_hit_turret)
+
         self._create_collision()
         self.facing.angle = self._default_facing_angle
         self.weapon.facing.angle = self.facing.angle
@@ -303,12 +310,18 @@ class BaseTurret(LogicGameEntity):
 
         # check for turret death
         if self._hp <= 0:
-            self.kill(hit_by)
+            self.kill(killed_by=hit_by)
 
-    def _kill(self, killed_by: tp.Any = ...) -> None:
+    @tp.override
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         self.weapon.stop()
-        self.weapon.kill(killed_by)
-        super()._kill(killed_by)
+        self.weapon.kill(killed_by=killed_by)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     def get_next_target(self, *, include_all: bool = False) -> target_solution_t:
         """
@@ -370,21 +383,13 @@ class BaseTurret(LogicGameEntity):
 
         return None
 
+    @tp.override
     def _update(self, delta: float) -> None:
         # update weapon
         self.weapon.update(delta)
 
         # scan for targets and engage the closest one
         targets = self.detection_group.tracks
-
-        # only check targets that are supposed to be engaged
-        # bullets = Bullets.entities()
-        # targets = [
-        #     t
-        #     for t in targets
-        #     if ((is_bullet := t in bullets) and self.intercept_bullets)
-        #     or (not is_bullet and self.intercept_players)
-        # ]
 
         for target in targets:
             if isinstance(target, EllipsisType):
@@ -668,15 +673,5 @@ class BaseTurret(LogicGameEntity):
         self.facing.angle = new_angle
         self.weapon.facing.angle = self.facing.angle
 
-    def __on_collision_bullet(self, event: CollisionEvent[Bullet]) -> None:
-        dmg = event.other_entity.damage
-        if dmg > 0 and event.other_entity.parent != self:
-            self.hit(dmg, hit_by=event.other_entity)
-
-    def _collision_start(self, events: list[CollisionEvent[Bullet]]) -> None:
-
-        # bullet - 5 turrets - events länge 5
-        # turret - events 1 bullet
-        for event in events:
-            if event.group_id == GameCollisions.collision_group_bullets:
-                self.__on_collision_bullet(event)
+    def get_initial_root_collision_exception(self) -> CollisionExceptionIDType:
+        return self._bullets_do_not_initially_hit_turret

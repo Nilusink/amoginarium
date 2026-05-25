@@ -1,10 +1,10 @@
 """
 Base for all vehicle types.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_vehicles/_base_vehicle.py
-Project: amoginarium
-Created: 19.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_vehicles/_base_vehicle.py
+| ``Project``: amoginarium
+| ``Created``: 19.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
@@ -72,6 +72,7 @@ class Vehicle(RideableTurret):
 
     # endregion
 
+    @tp.override
     def _update(self, delta: float, *, set_facing: bool = True) -> None:
         # update movement
         # update keys

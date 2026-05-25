@@ -1,16 +1,16 @@
 """
 Missile that maneuvers by applying small thrusters.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
-      _multi_thruster_missile.py
-Project: amoginarium
-Created: 11.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_missiles/
+            _multi_thruster_missile.py
+| ``Project``: amoginarium
+| ``Created``: 11.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as tp
 
 import numpy as np
 
@@ -19,7 +19,7 @@ from amoginarium.shared.utility import normalize_angle_neg, PI, PI_2, Vec2
 
 from ._guided_multi_stage_missile import GuidedMultiStageMissile
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
@@ -72,6 +72,7 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
         # pause thrust until ready
         self._apply_thrust = False
 
+    @tp.override
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         if self._current_stage != 0:
             self._directional_thrust_values = [0] * 4
@@ -160,6 +161,7 @@ class MultiThrusterMissile(GuidedMultiStageMissile):
         if target_delta:
             self._dbe.p5 = self.position + target_delta
 
+    @tp.override
     def _update(self, delta: float, apply_thrust: bool = True) -> None:
         # update stuff
         # noinspection PyArgumentEqualDefault

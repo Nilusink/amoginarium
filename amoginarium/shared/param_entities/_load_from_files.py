@@ -1,10 +1,10 @@
 """
 Load entities from files.
 
-Path: amoginarium/shared/param_entities/_load_from_files.py
-Project: amoginarium
-Created: 20.04.2026
-Authors: Nilusink
+| ``Path``: amoginarium/shared/param_entities/_load_from_files.py
+| ``Project``: amoginarium
+| ``Created``: 20.04.2026
+| ``Authors``: Nilusink
 """
 
 import tomllib

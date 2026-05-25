@@ -1,10 +1,10 @@
 """
 Visual representation of an Island.
 
-Path: amoginarium/graphics/logic_dummies/_island.py
-Project: amoginarium
-Created: 30.03.2026
-Authors: Nilusink
+| ``Path``: amoginarium/graphics/logic_dummies/_island.py
+| ``Project``: amoginarium
+| ``Created``: 30.03.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
@@ -210,7 +210,6 @@ class Island(SyncedGraphicsEntity):
     _textures: IslandTextures = ...
 
     _image_size: tuple[int, int] = (64, 64)
-    debug = False
 
     def __new__(cls, *_args: tp.Any, **_kwargs: tp.Any) -> tp.Self:
         # only load texture once

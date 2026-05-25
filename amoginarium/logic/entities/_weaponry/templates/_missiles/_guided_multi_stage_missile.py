@@ -1,11 +1,11 @@
 """
 A multi-stage missile with guidance.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
-      _guided_multi_stage_missile.py
-Project: amoginarium
-Created: 10.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_missiles/
+            _guided_multi_stage_missile.py
+| ``Project``: amoginarium
+| ``Created``: 10.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared import base_entity_t, Coalitions, MurderViable
 
     from ...._base import LogicGameEntity
     from .._weapon_actors.sensors import BaseWeaponsSensor
@@ -93,18 +93,25 @@ class GuidedMultiStageMissile(MultiStageMissile):
         else:
             self._sensor = None
 
-    def _kill(self, killed_by: LogicGameEntity | EllipsisType = ...) -> bool:
+    @tp.override
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
         if self._sensor:
             self._sensor.kill(self)
 
-        return super()._kill(killed_by)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
     def _update_guidance(self, dt: float, target_delta: Vec2 | None = None) -> None:
         """
-        Update guidance system
+        Update guidance system.
+
         :param dt: time delta since last update
         :param target_delta: delta to target position
-        :return:
+        :return: ?
         """
         if target_delta:
             facing = self.velocity.copy().normalize()
@@ -163,6 +170,7 @@ class GuidedMultiStageMissile(MultiStageMissile):
         else:
             self._rudder_angle = 0
 
+    @tp.override
     def _update(self, delta: float, apply_thrust: bool = True) -> None:
         super()._update(delta, apply_thrust=apply_thrust)
 

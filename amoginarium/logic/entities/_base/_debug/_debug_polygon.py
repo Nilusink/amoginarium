@@ -3,15 +3,16 @@ Contains the DebugPolygonEntity for rendering arbitrary polygons.
 
 Packs vertex data efficiently into the entity buffer for the renderer.
 
-Path: amoginarium/logic/entities/_base/_debug/_debug_polygon.py
-Project: amoginarium
-Created: 17.04.2026
-Authors: LukasKrah, Nilusink
+| ``Path``: amoginarium/logic/entities/_base/_debug/_debug_polygon.py
+| ``Project``: amoginarium
+| ``Created``: 17.04.2026
+| ``Authors``: LukasKrah, Nilusink
 """
 
 from __future__ import annotations
 
 import typing as tp
+from types import EllipsisType
 from contextlib import suppress
 
 from amoginarium import pv
@@ -19,17 +20,16 @@ from amoginarium.shared import BaseCommandType, GraphicsCIDs, ProcessCommand
 from amoginarium.shared.utility import convert_color, get_default
 from amoginarium.shared.utility import MASK16, normalize_angle, Vec2
 
-from .._base_entities import PositionedLogicEntity
+from ._debug_entity import DebugEntity
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
-    from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
     from amoginarium.shared.utility import color_t
 
 
-class DebugPolygonEntity(PositionedLogicEntity):
+class DebugPolygonEntity(DebugEntity):
     """A debug entity used to render arbitrary polygons by packing vertex data into the entity buffer."""
 
     _CID = GraphicsCIDs.debug_polygon
@@ -58,7 +58,8 @@ class DebugPolygonEntity(PositionedLogicEntity):
         **kwargs: tp.Any,
     ) -> None:
         """
-        Initializes the debug polygon with up to 8 vertices.
+        Initialize the debug polygon with up to 8 vertices.
+
         :param runtime_buffer: The shared memory buffer.
         :param radius: The collision or culling radius.
         :param p1: Vertex 1.
@@ -89,7 +90,7 @@ class DebugPolygonEntity(PositionedLogicEntity):
         self.p7 = get_default(p7, Vec2())
         self.p8 = get_default(p8, Vec2())
 
-        if points is not ...:
+        if not isinstance(points, EllipsisType):
             self.set_points(points)
 
         kwargs["id"] = self.id
@@ -121,6 +122,7 @@ class DebugPolygonEntity(PositionedLogicEntity):
 
             getattr(self, f"p{i + 1}").xy = points[i].xy
 
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Pack vertex data into the C-buffer using bitwise operations for the renderer.

@@ -1,15 +1,15 @@
 """
 Defines a jetpack item providing flight acceleration and sound.
 
-Path: amoginarium/logic/entities/_items/_jet_bag.py
-Project: amoginarium
-Created: 18.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_items/_jet_bag.py
+| ``Project``: amoginarium
+| ``Created``: 18.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as tp
 
 from amoginarium import pv
 from amoginarium.shared import ItemCIDs
@@ -19,7 +19,7 @@ from amoginarium.shared.utility import Vec2
 from .._base import GameCollisions
 from ._something import Something
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from ctypes import Array
 
     from amoginarium.shared import base_entity_t
@@ -51,14 +51,17 @@ class JetBag(Something):
         self._facing = True
         self._size_fac = 1
 
+    @tp.override
     def use(self) -> None:
         self._in_use = True
 
+    @tp.override
     def stop_use(self) -> None:
         self._in_use = False
         if self._sound.playing:
             self._sound.stop()
 
+    @tp.override
     def _update(self, delta: float, **_) -> None:
         if not self.parent:
             self._set_bit("flags", 14, False)  # set use to false

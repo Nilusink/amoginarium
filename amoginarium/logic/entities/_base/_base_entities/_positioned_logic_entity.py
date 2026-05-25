@@ -4,10 +4,10 @@ Defines PositionedLogicEntity.
 Defines an entity with spatial properties (position and size).
 Extends BaseLogicEntity to synchronize its spatial properties with the C-level buffer.
 
-Path: amoginarium/logic/entities/_base/_base_entities/_positioned_logic_entity.py
-Project: amoginarium
-Created: 28.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_base/_base_entities/_positioned_logic_entity.py
+| ``Project``: amoginarium
+| ``Created``: 28.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -95,6 +95,7 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
     # endregion
 
     # region Methods: Update
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Update shared memory and collision entity.

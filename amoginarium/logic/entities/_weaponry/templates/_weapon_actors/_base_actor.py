@@ -1,10 +1,10 @@
 """
 Base weapon actor (sensor, fuze, ...).
 
-Path: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/_base_actor.py
-Project: amoginarium
-Created: 08.05.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/_base_actor.py
+| ``Project``: amoginarium
+| ``Created``: 08.05.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations
@@ -75,7 +75,7 @@ class BaseActor:
     def kill(self, killed_by) -> None:
         """Kills actor."""
         if self._dbe is not None:
-            self._dbe.kill(killed_by)
+            self._dbe.kill(killed_by=killed_by)
 
     def _update_position(self) -> None:
         """Update fuze position."""

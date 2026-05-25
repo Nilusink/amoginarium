@@ -1,10 +1,10 @@
 """
 Missile dummies.
 
-Path: amoginarium/graphics/logic_dummies/_missiles.py
-Project: amoginarium
-Created: 05.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/graphics/logic_dummies/_missiles.py
+| ``Project``: amoginarium
+| ``Created``: 05.05.2026
+| ``Authors``: Nilusink
 """
 
 import math

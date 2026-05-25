@@ -4,10 +4,10 @@ Defines the core LogicGameEntity.
 Combines spatial data, physics (velocity/acceleration), and collision detection,
 serving as the base class for standard game objects.
 
-Path: amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
-Project: amoginarium
-Created: 28.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_base/_game_entities/_logic_game_entity.py
+| ``Project``: amoginarium
+| ``Created``: 28.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
@@ -27,8 +27,7 @@ if tp.TYPE_CHECKING:
     from types import EllipsisType
 
     from amoginarium.shared import base_entity_t
-
-    from .._collision import CollisionType
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
 
 class LogicGameEntity(
@@ -97,7 +96,7 @@ class LogicGameEntity(
         parent: LogicGameEntity | None = None,
         coalition: Coalitions | EllipsisType = ...,
         centered: bool = False,
-        collision_group: CollisionType.GroupID | EllipsisType | None = ...,
+        collision_group: CollisionGroupIDType | EllipsisType | None = ...,
         collision_exception_ids: list[int] | int | None = None,
         collision_exception_root: bool | EllipsisType = ...,
         collision_exception_root_additive: bool | EllipsisType = ...,
@@ -177,7 +176,7 @@ class LogicGameEntity(
     # endregion
 
     # region methods
-    def to_dict(self) -> dict | None:
+    def to_dict(self) -> tp.MutableMapping[str, tp.Any] | None:
         """:return: convert the entity to a dict if possible"""
         if not self.serializable:
             print_ic_style(
@@ -214,6 +213,7 @@ class LogicGameEntity(
         if self._impulse_resistance_factor > 0:
             self._acceleration_to_add += value
 
+    @tp.override
     def _update(self, delta: float) -> None:
         """
         Update logic game entity.

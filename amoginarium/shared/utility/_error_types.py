@@ -1,10 +1,10 @@
 """
 Error types.
 
-Path: amoginarium/shared/utility/_error_types.py
-Project: amoginarium
-Created: 21.04.2026
-Authors: Nilusink
+| ``Path``: amoginarium/shared/utility/_error_types.py
+| ``Project``: amoginarium
+| ``Created``: 21.04.2026
+| ``Authors``: Nilusink
 """
 
 

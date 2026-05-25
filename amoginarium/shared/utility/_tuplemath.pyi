@@ -1,10 +1,10 @@
 """
 Fast tuple basic math operations.
 
-Path: amoginarium/shared/utility/_tuplemath.pyi
-Project: amoginarium
-Created: 03.04.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/shared/utility/_tuplemath.pyi
+| ``Project``: amoginarium
+| ``Created``: 03.04.2026
+| ``Authors``: LukasKrah
 """
 
 from typing import Any, TypeVar

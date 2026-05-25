@@ -1,10 +1,10 @@
 """
 An animation made from multiple images.
 
-Path: amoginarium/graphics/entities/_animation.py
-Project: amoginarium
-Created: 13.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/entities/_animation.py
+| ``Project``: amoginarium
+| ``Created``: 13.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

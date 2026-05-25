@@ -1,16 +1,16 @@
 """
 Globals.
 
-Path: amoginarium/shared/_linked.py
-Project: amoginarium
-Created: 20.03.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/_linked.py
+| ``Project``: amoginarium
+| ``Created``: 20.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
 
 import typing as tp
-from ctypes import c_double, c_int8
+from ctypes import c_double, c_int8, c_int64
 from enum import Enum
 from multiprocessing import Value
 
@@ -19,6 +19,8 @@ from .utility import Vec2
 
 if tp.TYPE_CHECKING:
     from multiprocessing.sharedctypes import Synchronized
+
+    from ._debug_vars import DebugVarsEnum
 
 _GLOBAL_VARS_VALUES: dict[str, type] = {
     "screen_size_x": c_double,
@@ -40,6 +42,7 @@ _GLOBAL_VARS_VALUES: dict[str, type] = {
     "t_mult": c_double,
     "max_fps": c_double,
     "background_position": c_double,
+    "debug_vars": c_int64,
 }
 
 
@@ -88,6 +91,8 @@ class GlobalVars:
         self._time = 0
         self._t_mult = 1
 
+        self._debug_vars = 0
+
         if set:
             self._set_from_current()
 
@@ -108,9 +113,14 @@ class GlobalVars:
             self.__compiled.append((item, obj, attr, []))
 
     def add_callback(self, value: str, callback: tp.Callable[[tp.Any], tp.Any]) -> None:
-        """Add a value change callback."""
+        """
+        Add a value change callback.
+
+        :param value: Which value to subscribe to
+        :param callback: Callback callend on value Change
+        """
         for i, v in enumerate(self.__compiled):
-            if v[1] == value:
+            if v[2] == value or v[2] == f"_{value}":
                 self.__compiled[i][3].append(callback)
 
     def _set_from_current(self) -> None:
@@ -133,9 +143,25 @@ class GlobalVars:
         self.__values["t_mult"].value = self._t_mult
         self.__values["max_fps"].value = self._max_fps
         self.__values["background_position"].value = self._background_position
+        self.__values["debug_vars"].value = self._debug_vars
 
     def get_values(self) -> dict[str, Synchronized]:
         return self.__values
+
+    def get_debug_var(self, num: DebugVarsEnum) -> bool:
+        return bool((self._debug_vars >> num.value) & 1)
+
+    def set_debug_var(self, num: DebugVarsEnum, value: bool) -> None:
+        if value:
+            self._debug_vars |= 1 << num.value
+        else:
+            self._debug_vars &= ~(1 << num.value)
+
+        self.__values["debug_vars"].value = self._debug_vars
+
+    def toggle_debug_var(self, num: DebugVarsEnum) -> None:
+        self._debug_vars ^= 1 << num.value
+        self.__values["debug_vars"].value = self._debug_vars
 
     def get_screen_size(self) -> Vec2:
         return self._screen_size.copy()

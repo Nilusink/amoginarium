@@ -1,10 +1,10 @@
 """
 Exports graphical entities, animation classes, and rendering group containers.
 
-Path: amoginarium/graphics/entities/__init__.py
-Project: amoginarium
-Created: 29.03.2026
-Authors: Nilusink
+| ``Path``: amoginarium/graphics/entities/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 29.03.2026
+| ``Authors``: Nilusink
 """
 
 from ._animation import Animation, explosion

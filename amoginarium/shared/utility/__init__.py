@@ -1,10 +1,10 @@
 """
 Exposes core mathematical, geometric, and system utility functions and classes.
 
-Path: amoginarium/shared/utility/__init__.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/utility/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from ._calculations import calculate_launch_angle_iterative, rk4_update
