@@ -1,10 +1,10 @@
 """
 Implements advanced UI animations with curves, debouncing, and durations.
 
-Path: amoginarium/graphics/ui/_animations/_complex_animation.py
-Project: amoginarium
-Created: 16.03.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_animations/_complex_animation.py
+| ``Project``: amoginarium
+| ``Created``: 16.03.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

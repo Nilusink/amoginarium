@@ -1,10 +1,10 @@
 """
 Edit maps.
 
-Path: map_editor.py
-Project: amoginarium
-Created: 09.02.2024
-Authors: Nilusink
+| ``Path``: map_editor.py
+| ``Project``: amoginarium
+| ``Created``: 09.02.2024
+| ``Authors``: Nilusink
 """
 
 from contextlib import suppress

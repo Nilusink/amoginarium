@@ -1,10 +1,10 @@
 """
 Synced controller controls.
 
-Path: amoginarium/shared/_controlls.py
-Project: amoginarium
-Created: 31.03.2026
-Authors: Nilusink
+| ``Path``: amoginarium/shared/_controlls.py
+| ``Project``: amoginarium
+| ``Created``: 31.03.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

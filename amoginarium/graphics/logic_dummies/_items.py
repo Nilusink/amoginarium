@@ -1,10 +1,10 @@
 """
 Item dummies.
 
-Path: amoginarium/graphics/logic_dummies/_items.py
-Project: amoginarium
-Created: 08.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/logic_dummies/_items.py
+| ``Project``: amoginarium
+| ``Created``: 08.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 import math as m

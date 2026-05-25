@@ -1,10 +1,10 @@
 """
 Defines common type aliases and enumerations used throughout the collision system.
 
-Path: amoginarium/shared/collision_detection/collision_types.py
-Project: amoginarium
-Created: 27.04.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/shared/collision_detection/collision_types.py
+| ``Project``: amoginarium
+| ``Created``: 27.04.2026
+| ``Authors``: LukasKrah
 """
 
 import typing as tp

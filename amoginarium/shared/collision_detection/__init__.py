@@ -1,10 +1,10 @@
 """
 Exports core collision management and event handling interfaces.
 
-Path: amoginarium/shared/collision_detection/__init__.py
-Project: amoginarium
-Created: 13.04.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/shared/collision_detection/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 13.04.2026
+| ``Authors``: LukasKrah
 """
 
 from ._collision_event import CollisionEvent

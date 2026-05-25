@@ -1,10 +1,10 @@
 """
 Compiles Cython extensions with OpenMP and optimized C++ flags.
 
-Path: setup.py
-Project: amoginarium
-Created: 11.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: setup.py
+| ``Project``: amoginarium
+| ``Created``: 11.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 # ruff: disable[ERA001]

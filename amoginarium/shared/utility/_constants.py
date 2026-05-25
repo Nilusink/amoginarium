@@ -1,10 +1,10 @@
 """
 Constant values reused in the program.
 
-Path: amoginarium/shared/utility/_constants.py
-Project: amoginarium
-Created: 01.04.2026
-Authors: Nilusink
+| ``Path``: amoginarium/shared/utility/_constants.py
+| ``Project``: amoginarium
+| ``Created``: 01.04.2026
+| ``Authors``: Nilusink
 """
 # ruff: noqa: T201
 

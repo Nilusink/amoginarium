@@ -1,10 +1,10 @@
 """
 Globals.
 
-Path: amoginarium/shared/_linked.py
-Project: amoginarium
-Created: 20.03.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/shared/_linked.py
+| ``Project``: amoginarium
+| ``Created``: 20.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

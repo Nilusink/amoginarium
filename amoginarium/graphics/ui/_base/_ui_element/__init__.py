@@ -1,10 +1,10 @@
 """
 Exports base UI element classes and data structures.
 
-Path: amoginarium/graphics/ui/_base/_ui_element/__init__.py
-Project: amoginarium
-Created: 25.03.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_base/_ui_element/__init__.py
+| ``Project``: amoginarium
+| ``Created``: 25.03.2026
+| ``Authors``: LukasKrah
 """
 
 from ._ui_element import UIElement

@@ -1,10 +1,10 @@
 """
 Creates all data used for process sharing.
 
-Path: amoginarium/__shared_process_creator.py
-Project: amoginarium
-Created: 29.03.2026
-Authors: Nilusink
+| ``Path``: amoginarium/__shared_process_creator.py
+| ``Project``: amoginarium
+| ``Created``: 29.03.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

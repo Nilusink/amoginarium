@@ -1,10 +1,10 @@
 """
 Defines a functions that perform some kind of calculation.
 
-Path: amoginarium/shared/utility/_calculations.py
-Project: amoginarium
-Created: 17.03.22024
-Authors: Nilusink
+| ``Path``: amoginarium/shared/utility/_calculations.py
+| ``Project``: amoginarium
+| ``Created``: 17.03.22024
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 Defines data structures for collision events and callback types.
 
-Path: amoginarium/shared/collision_detection/collision_event.py
-Project: amoginarium
-Created: 17.04.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/shared/collision_detection/collision_event.py
+| ``Project``: amoginarium
+| ``Created``: 17.04.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

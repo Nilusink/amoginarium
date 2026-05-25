@@ -1,10 +1,10 @@
 """
 Logic representation for static text elements.
 
-Path: amoginarium/logic/entities/_world/_text_entity.py
-Project: amoginarium
-Created: 11.04.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/logic/entities/_world/_text_entity.py
+| ``Project``: amoginarium
+| ``Created``: 11.04.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

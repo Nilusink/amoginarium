@@ -1,10 +1,10 @@
 """
 Defines the core game.
 
-Path: amoginarium/base/_basegame.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/base/_basegame.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

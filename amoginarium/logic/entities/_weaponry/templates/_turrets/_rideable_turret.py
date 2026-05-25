@@ -1,10 +1,10 @@
 """
 Turret that can be ridden.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_turrets/_rideable_turret.py
-Project: amoginarium
-Created: 13.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_turrets/_rideable_turret.py
+| ``Project``: amoginarium
+| ``Created``: 13.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

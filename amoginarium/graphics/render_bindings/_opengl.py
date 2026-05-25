@@ -1,10 +1,10 @@
 """
 A few functions for rendering.
 
-Path: amoginarium/graphics/render_bindings/_opengl.py
-Project: amoginarium
-Created: 22.03.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/graphics/render_bindings/_opengl.py
+| ``Project``: amoginarium
+| ``Created``: 22.03.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

@@ -1,9 +1,9 @@
 """
 amoginarium/logic/entities/_bullets/grenade.py.
 
-Project: amoginarium
-Created: 31.03.2026
-Authors: Nilusink, LukasKrah
+| ``Project``: amoginarium
+| ``Created``: 31.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

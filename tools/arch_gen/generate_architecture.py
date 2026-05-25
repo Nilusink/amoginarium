@@ -1,10 +1,10 @@
 """
 Generates Mermaid diagrams and updates READMEs with project architecture.
 
-Path: tools/arch_gen/generate_architecture.py
-Project: amoginarium
-Created: 28.04.2026
-Authors: LukasKrah
+| ``Path``: tools/arch_gen/generate_architecture.py
+| ``Project``: amoginarium
+| ``Created``: 28.04.2026
+| ``Authors``: LukasKrah
 """
 # ruff: noqa: T201
 

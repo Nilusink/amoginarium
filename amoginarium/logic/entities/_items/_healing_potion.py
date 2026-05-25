@@ -1,10 +1,10 @@
 """
 Defines a consumable healing potion entity with physics-based tilt.
 
-Path: amoginarium/logic/entities/_items/_healing_potion.py
-Project: amoginarium
-Created: 18.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_items/_healing_potion.py
+| ``Project``: amoginarium
+| ``Created``: 18.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

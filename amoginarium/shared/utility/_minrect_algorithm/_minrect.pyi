@@ -1,10 +1,10 @@
 """
 Algorythm for finding minimum rectangles.
 
-Path: amoginarium/shared/utility/_minrect_algorithm/_minrect.pyi
-Project: amoginarium
-Created: 31.03.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/shared/utility/_minrect_algorithm/_minrect.pyi
+| ``Project``: amoginarium
+| ``Created``: 31.03.2026
+| ``Authors``: LukasKrah
 """
 
 def find_minimum_rectangles(bitmap: list[list[int]]) -> list[tuple[int, int, int, int]]:

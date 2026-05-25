@@ -1,10 +1,10 @@
 """
 Defines a few console colors.
 
-Path: amoginarium/shared/debugging/_console_colors.py
-Project: amoginarium
-Created: 25.01.2024
-Authors: Nilusink
+| ``Path``: amoginarium/shared/debugging/_console_colors.py
+| ``Project``: amoginarium
+| ``Created``: 25.01.2024
+| ``Authors``: Nilusink
 """
 # ruff: noqa: T201
 

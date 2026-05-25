@@ -1,10 +1,10 @@
 """
 Runs the logic process.
 
-Path: amoginarium/logic/_run_logic.py
-Project: amoginarium
-Created: 28.03.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/_run_logic.py
+| ``Project``: amoginarium
+| ``Created``: 28.03.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

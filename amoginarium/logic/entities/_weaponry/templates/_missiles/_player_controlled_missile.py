@@ -1,11 +1,11 @@
 """
 MultiStageMissile than can be controlled by the player.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_missiles/
-      _player_controlled_missile.py
-Project: amoginarium
-Created: 12.05.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_missiles/
+            _player_controlled_missile.py
+| ``Project``: amoginarium
+| ``Created``: 12.05.2026
+| ``Authors``: LukasKrah
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 Defines enumeration types for UI element positioning and anchoring.
 
-Path: amoginarium/graphics/ui/_types.py
-Project: amoginarium
-Created: 02.03.2026
-Authors: LukasKrah
+| ``Path``: amoginarium/graphics/ui/_types.py
+| ``Project``: amoginarium
+| ``Created``: 02.03.2026
+| ``Authors``: LukasKrah
 """
 
 from enum import StrEnum

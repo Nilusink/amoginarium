@@ -1,10 +1,10 @@
 """
 Base for all vehicle types.
 
-Path: amoginarium/logic/entities/_weaponry/templates/_vehicles/_base_vehicle.py
-Project: amoginarium
-Created: 19.05.2026
-Authors: Nilusink
+| ``Path``: amoginarium/logic/entities/_weaponry/templates/_vehicles/_base_vehicle.py
+| ``Project``: amoginarium
+| ``Created``: 19.05.2026
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations

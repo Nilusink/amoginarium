@@ -1,10 +1,10 @@
 """
 Base class for island entities with bitmap-based collision generation.
 
-Path: amoginarium/logic/entities/_world/_base_island.py
-Project: amoginarium
-Created: 26.01.2024
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_world/_base_island.py
+| ``Project``: amoginarium
+| ``Created``: 26.01.2024
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
 """
 All items should inherit from this.
 
-Path: amoginarium/logic/entities/_items/_item.py
-Project: amoginarium
-Created: 01.04.2026
-Authors: Nilusink, LukasKrah
+| ``Path``: amoginarium/logic/entities/_items/_item.py
+| ``Project``: amoginarium
+| ``Created``: 01.04.2026
+| ``Authors``: Nilusink, LukasKrah
 """
 
 from __future__ import annotations
