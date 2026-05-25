@@ -61,7 +61,7 @@ class RadarSensor(BaseSensor):
         self._last_update = update_rate
 
         super().__init__(
-            runtime_buffer, parent, detection_range, position_offset, visible
+            runtime_buffer, parent, detection_range, position_offset, visible=visible
         )
 
     def _check_in_sphere(
