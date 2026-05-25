@@ -398,7 +398,7 @@ class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
         """:return: whether the entity is serializable or not"""
         ...
 
-    def to_dict(self) -> dict | None:
+    def to_dict(self) -> tp.MutableMapping[str, tp.Any] | None:
         """:return: convert the entity to a dict if possible"""
         ...
 
