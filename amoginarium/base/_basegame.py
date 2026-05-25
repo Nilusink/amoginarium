@@ -126,6 +126,7 @@ class BaseGame:
                 "shm": pv.SHM,
                 "c_shm": pv.C_SHM,
                 "i_shm": pv.I_SHM,
+                "d_shm": pv.D_SHM,
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start,

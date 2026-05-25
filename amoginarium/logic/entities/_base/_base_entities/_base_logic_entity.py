@@ -12,10 +12,14 @@ Includes hierarchy management, lifecycle hooks, and bitwise buffer access.
 
 from __future__ import annotations
 
+import ctypes
 import typing as tp
+
+from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared import BaseLogicEntityLike, ENTITY_COUNTER
+from amoginarium.shared.debugging import SharedDebuggingInstance
 
 from .._groups import Dead, Updated
 
@@ -36,6 +40,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
     - Groups
     - Update
     - Visibility
+
+    :ivar _sdi: shared debugging instance (if created)
     """
 
     __slots__ = [
@@ -48,6 +54,10 @@ class BaseLogicEntity(BaseLogicEntityLike):
         "_alive",
     ]
 
+    # region ClassVars
+    _ADVANCED_DEBUGGING: tp.ClassVar[bool] = True
+    # endregion
+
     # region InstanceVars
     _parent: BaseLogicEntity | None
     _children: list[EntityChildViable]
@@ -57,6 +67,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     __groups: list[LogicGroup]
 
     _alive: bool
+    _sdi: SharedDebuggingInstance | None
 
     # endregion
 
@@ -89,6 +100,18 @@ class BaseLogicEntity(BaseLogicEntityLike):
         pv.E_BUFF[self.__id] = self._runtime_buffer[self.__id]
 
         self.add(Updated)
+
+        # create shared debugging instance if required
+        if self._ADVANCED_DEBUGGING:
+            self._sdi: SharedDebuggingInstance = SharedDebuggingInstance(
+                pv.SH,
+                [  # type: ignore[trust]
+                    ("id", ctypes.c_uint16),
+                    ("_alive", ctypes.c_bool),
+                ],
+                4,
+            )
+            self._sdi.create()
 
     # region Properties
     @property
@@ -297,6 +320,11 @@ class BaseLogicEntity(BaseLogicEntityLike):
         :param delta: Time since the last update
         """
         self._lifetime += delta
+
+        if self._ADVANCED_DEBUGGING:
+            self._sdi.write_from_object(self)
+            ic(self._alive)
+            self._sdi.read()
 
     @tp.final
     def update(self, delta: float, *, recursive: bool = True) -> None:

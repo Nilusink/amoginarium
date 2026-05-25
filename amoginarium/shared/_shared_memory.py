@@ -13,6 +13,7 @@ from __future__ import annotations
 import ctypes
 import typing as tp
 from multiprocessing import Lock, shared_memory
+from types import EllipsisType
 
 if tp.TYPE_CHECKING:
     from multiprocessing.shared_memory import SharedMemory
@@ -22,11 +23,13 @@ MAX_ENTITIES: int = 32_000
 MAX_CONTROLLERS: int = 8
 MAX_INVENTORIES: int = 64
 MAX_INVENTORY_SLOTS: int = 64
+DEBUGGING_MAX_MEMORY: int = MAX_ENTITIES * 512  # ca. 512 bytes per entity (NOT EQUAL)
 # endregion
 
 
 # region types
-class base_entity_t(ctypes.Structure):  # basic changing attributes
+# ruff: disable[ERA001]
+class base_entity_t(ctypes.Structure):  # basic changing attributes  # noqa: N801
     _pack_ = 1
     _fields_ = [
         ("pos_x", ctypes.c_double),
@@ -48,7 +51,10 @@ class base_entity_t(ctypes.Structure):  # basic changing attributes
     ]
 
 
-class base_controller_t(ctypes.Structure):
+# ruff: enable[ERA001]
+
+
+class base_controller_t(ctypes.Structure):  # noqa: N801
     _pack_ = 1
     _fields_ = [
         ("jump", ctypes.c_bool),
@@ -68,12 +74,12 @@ class base_controller_t(ctypes.Structure):
     ]
 
 
-class item_slot_t(ctypes.Structure):
+class item_slot_t(ctypes.Structure):  # noqa: N801
     _pack_ = 1
     _fields_ = [("item_id", ctypes.c_uint16), ("count", ctypes.c_uint8)]
 
 
-class inventory_t(ctypes.Structure):
+class inventory_t(ctypes.Structure):  # noqa: N801
     _pack_ = 1
     _fields_ = [
         ("flags", ctypes.c_uint8),  # (0=alive, 1=visible, )
@@ -88,50 +94,71 @@ class inventory_t(ctypes.Structure):
 
 
 # region methods
-_e_shm: SharedMemory = ...
+_e_shm: SharedMemory | EllipsisType = ...
 
 
 def get_entity_memory() -> SharedMemory:
-    global _e_shm
-    if _e_shm is ...:
+    global _e_shm  # noqa: PLW0603
+    if isinstance(_e_shm, EllipsisType):
         _e_shm = shared_memory.SharedMemory(
-            create=True, size=ctypes.sizeof(base_entity_t) * MAX_ENTITIES
+            create=True,
+            size=ctypes.sizeof(base_entity_t) * MAX_ENTITIES,
+            name="ENTITY",
         )
 
-    return _e_shm
+    return _e_shm  # type: ignore[u-fucking-serious?]
 
 
-_c_shm: SharedMemory = ...
+_c_shm: SharedMemory | EllipsisType = ...
 
 
 def get_controller_memory() -> SharedMemory:
-    global _c_shm
-    if _c_shm is ...:
+    global _c_shm  # noqa: PLW0603
+    if isinstance(_c_shm, EllipsisType):
         _c_shm = shared_memory.SharedMemory(
-            create=True, size=ctypes.sizeof(base_controller_t) * MAX_CONTROLLERS
+            create=True,
+            size=ctypes.sizeof(base_controller_t) * MAX_CONTROLLERS,
+            name="CONTROLLER",
         )
 
-    return _c_shm
+    return _c_shm  # type: ignore[u-fucking-serious?]
 
 
-_i_shm: SharedMemory = ...
+_i_shm: SharedMemory | EllipsisType = ...
 
 
 def get_inventory_memory() -> SharedMemory:
-    global _i_shm
-    if _i_shm is ...:
+    global _i_shm  # noqa: PLW0603
+    if isinstance(_i_shm, EllipsisType):
         _i_shm = shared_memory.SharedMemory(
-            create=True, size=ctypes.sizeof(inventory_t) * MAX_INVENTORY_SLOTS
+            create=True,
+            size=ctypes.sizeof(inventory_t) * MAX_INVENTORY_SLOTS,
+            name="INVENTORY",
         )
 
-    return _i_shm
+    return _i_shm  # type: ignore[u-fucking-serious?]
+
+
+_d_shm: SharedMemory | EllipsisType = ...
+
+
+def get_debugging_memory() -> SharedMemory:
+    global _d_shm  # noqa: PLW0603
+    if isinstance(_d_shm, EllipsisType):
+        _d_shm = shared_memory.SharedMemory(
+            create=True,
+            size=DEBUGGING_MAX_MEMORY,
+            name="DEBUGGING",
+        )
+
+    return _d_shm  # type: ignore[u-fucking-serious?]
 
 
 _lock: tp.Any | None = None
 
 
 def get_write_lock() -> Lock:
-    global _lock
+    global _lock  # noqa: PLW0603
     if _lock is None:
         _lock = Lock()
 
