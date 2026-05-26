@@ -13,17 +13,18 @@ import math as m
 import time
 from abc import ABC, abstractmethod
 from contextlib import suppress
-from typing import TYPE_CHECKING
+import typing as tp
 
 from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared.utility import Color, Vec2
+from amoginarium.shared.debugging import SharedDebuggingInstance
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import coord_t
 
 
@@ -44,8 +45,6 @@ class _SyncedEntitiesManager:
                 e.kill()
 
             self.del_entity(sync_id)  # in case entitie ``kill`` has been overwritten
-
-        #     raise RuntimeError(f"entity with id {sync_id} already in manager")
 
         self._entities[sync_id] = entity
 
@@ -85,6 +84,13 @@ SE_MANAGER = _SyncedEntitiesManager()
 class SyncedGraphicsEntity(BaseGraphicsEntity):
     """
     Graphics entity synced with logic entity (via SHM).
+
+    :ivar pos: Position
+    :ivar facing: Facing
+    :ivar size: Size
+    :ivar alive: is alive
+    :ivar _logic_visibility: Is set visible by logic process?
+    :ivar _sdi: Shared Debugging Instance
     """
 
     __slots__ = [
@@ -97,6 +103,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         "param2",
         "param3",
         "__id",
+        "_sdi",
         "param4",
         "_logic_visibility",
     ]
@@ -105,6 +112,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     size: Vec2
     alive: bool
     _logic_visibility: bool
+    _sdi: SharedDebuggingInstance | None
 
     param0: float
     param1: float
@@ -112,7 +120,12 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     param3: int
     param4: int
 
-    def __init__(self, sync_id: int, parent: int | None = None) -> None:
+    def __init__(
+        self,
+        sync_id: int,
+        parent: int | None = None,
+        adv_debugging_data: dict | None = None
+    ) -> None:
         self.__id = sync_id
 
         # try to get parent by sync_id
@@ -139,6 +152,14 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         # add to manager
         SE_MANAGER.add_entity(self.__id, self)
         self.add(Drawn_0, SyncedEntities)
+
+        # create debugging instance
+        self._sdi = None
+        if adv_debugging_data:
+            self._sdi = SharedDebuggingInstance.from_data(
+                sh=pv.SH,
+                data=adv_debugging_data,
+            )
 
     # region entity management
     def kill(self) -> None:
@@ -236,9 +257,13 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         if self._highlight:
             renderer.start_stencil(True)
 
+        if self._sdi:
+            ic(self.id, self._sdi.read())
+
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
-        Called after gl_draw
+        Run after gl_draw.
+
         :param drawn: Whether the UI-entity was drawn
         :param layer: what layer the draw function has been called by.
         """
@@ -260,10 +285,14 @@ class SyncedImageEntity(SyncedGraphicsEntity):
     __slots__ = ["_texture_id", "_lifetime"]
 
     def __init__(
-        self, sync_id: int, texture_id: int, parent: int | None = None
+        self,
+        sync_id: int,
+        texture_id: int,
+        parent: int | None = None,
+        adv_debugging_data: dict | None = None,
     ) -> None:
         self._texture_id = texture_id
-        super().__init__(sync_id, parent)
+        super().__init__(sync_id, parent, adv_debugging_data=adv_debugging_data)
 
     @property
     def texture_id(self) -> int:
@@ -271,7 +300,12 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         return self._texture_id
 
     def draw_at(
-        self, position: coord_t, size: coord_t, layer: int, *, rotation: float = 0
+        self,
+        position: coord_t,
+        size: coord_t,
+        layer: int,
+        *,
+        rotation: float = 0,
     ) -> None:
         """Draw an entity at specified position and size."""
         renderer.draw_textured_quad(
@@ -317,7 +351,7 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
 class Iconifyable(ABC):
     """entities that can be represented in an icon."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         # call next class in MRO
         super().__init__(*args, **kwargs)
 

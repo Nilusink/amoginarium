@@ -11,10 +11,10 @@ cdef class SharedHeap:
     cdef heap_t* heap
     cdef object shm
 
-    def __init__(self, name):
-        self.shm = SharedMemory(name=name)
+    def __init__(self, shm: SharedMemory):
+        self.shm = shm
         self.base = <void*>self.shm.buf
-        self.heap = self.heap = get_heap(self.base)
+        self.heap = get_heap(self.base)
 
     cpdef alloc(self, int size):
         cdef uint32_t off
@@ -34,4 +34,5 @@ cdef class SharedHeap:
 
     cpdef read(self, int off, int n):
         cdef char* ptr = <char*>self.base + off
+        print(self.shm.buf[0])
         return <bytes>ptr[:n]

@@ -107,7 +107,8 @@ class LogicGameEntity(
         collision_active: bool = True,
     ) -> None:
         """
-        Basic logic game entity that implements all basic stuff for logic entities
+        Implement basic stuff for logic entities.
+
         :param runtime_buffer: Logic runtime buffer
         :param size: 2D size of the entity
         :param position: 2D position of the entity

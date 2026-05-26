@@ -15,6 +15,8 @@ import typing as tp
 from multiprocessing import Lock, shared_memory
 from types import EllipsisType
 
+from icecream import ic
+
 if tp.TYPE_CHECKING:
     from multiprocessing.shared_memory import SharedMemory
 
@@ -145,6 +147,7 @@ _d_shm: SharedMemory | EllipsisType = ...
 def get_debugging_memory() -> SharedMemory:
     global _d_shm  # noqa: PLW0603
     if isinstance(_d_shm, EllipsisType):
+        ic("create shit")
         _d_shm = shared_memory.SharedMemory(
             create=True,
             size=DEBUGGING_MAX_MEMORY,

@@ -10,7 +10,7 @@ Bullet dummy entity.
 from __future__ import annotations
 
 from types import EllipsisType
-from typing import TYPE_CHECKING
+import typing as tp
 
 from amoginarium import pv
 from amoginarium.shared import DummyCIDs
@@ -22,7 +22,7 @@ from ..render_bindings import renderer
 from ..textures import textures
 from ._synced_entities import SyncedImageEntity
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import coord_t
 
     from ._synced_entities import BaseGraphicsEntity
@@ -85,7 +85,7 @@ class BulletDummy(SyncedImageEntity):
                 pixel_perfect=True,
             )
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: tp.Any) -> None:
         super().__init_subclass__(**kwargs)
 
         # make sure subclasses initialize their own bullet textures
@@ -98,6 +98,7 @@ class BulletDummy(SyncedImageEntity):
         position: coord_t,
         size: int | Vec2 | EllipsisType = ...,
         parent: BaseGraphicsEntity | None = None,
+        adv_debugging_data: dict | None = None,
         visibility_offset: float = 0,
         target_pos: Vec2 | EllipsisType = ...,
         show_trace: bool | EllipsisType = ...,
@@ -156,7 +157,12 @@ class BulletDummy(SyncedImageEntity):
             self._c_trace_color: Color = self._c_trace_color[0]
             self._original_alpha = self._c_trace_color.a1
 
-        super().__init__(sync_id, self._bullet_image, parent)  # type: ignore
+        super().__init__(
+            sync_id,
+            self._bullet_image,
+            parent,
+            adv_debugging_data=adv_debugging_data
+        )
 
     @classmethod
     def bullet_image(cls) -> int:

@@ -20,6 +20,7 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.shared import BaseLogicEntityLike, ENTITY_COUNTER
 from amoginarium.shared.debugging import SharedDebuggingInstance
+from amoginarium.shared import BaseCommandType, ProcessCommand
 
 from .._groups import Dead, Updated
 
@@ -27,7 +28,7 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, EntityChildViable, MurderViable
+    from amoginarium.shared import base_entity_t, EntityChildViable, MurderViable, CIDType
 
     from .._groups import LogicGroup
 
@@ -55,7 +56,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
     ]
 
     # region ClassVars
-    _ADVANCED_DEBUGGING: tp.ClassVar[bool] = True
+    _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
+    _ADVANCED_DEBUGGING: tp.ClassVar[bool] = False
     # endregion
 
     # region InstanceVars
@@ -106,14 +108,14 @@ class BaseLogicEntity(BaseLogicEntityLike):
             self._sdi: SharedDebuggingInstance = SharedDebuggingInstance(
                 pv.SH,
                 [  # type: ignore[trust]
-                    ("id", ctypes.c_uint16),
-                    ("_alive", ctypes.c_bool),
+                    ("id", int),
+                    ("_alive", bool),
                 ],
                 4,
             )
             self._sdi.create()
 
-    # region Properties
+    # region properties (and other getters)
     @property
     def alive(self) -> bool:
         """Whether the entity is alive."""
@@ -155,6 +157,12 @@ class BaseLogicEntity(BaseLogicEntityLike):
     def runtime_buffer(self) -> Array[base_entity_t]:
         """Entity runtime buffer."""
         return self._runtime_buffer
+
+    def _get_ids(self) -> list[int]:
+        """:return: list of all entity IDs including this one and parents"""
+        if self._parent is None:
+            return [self.id]
+        return self._parent._get_ids() + [self.id]  # noqa: SLF001
 
     # endregion
 
@@ -323,8 +331,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
         if self._ADVANCED_DEBUGGING:
             self._sdi.write_from_object(self)
-            ic(self._alive)
-            self._sdi.read()
+            ic(self._sdi.read())
 
     @tp.final
     def update(self, delta: float, *, recursive: bool = True) -> None:
@@ -359,4 +366,51 @@ class BaseLogicEntity(BaseLogicEntityLike):
         """Stop highlighting the graphics entity."""
         self._set_bit("flags", 2, False)  # noqa: FBT003
 
+    # endregion
+
+    # region Methods: component ID
+
+    @classmethod
+    def has_cid(cls) -> bool:
+        """:return: Return True if the entity has a CID."""
+        return cls._CID != ...
+
+    @classmethod
+    def cid(cls) -> CIDType:
+        """
+        Return CID.
+
+        :return: The entities' component ID
+        :raise ValueError: if the class has no __cid
+        """
+        if cls._CID == ...:
+            raise ValueError("_CID is not defined for " + cls.__name__)
+
+        return cls._CID.value  # type: ignore[Any]
+
+    # endregion
+
+    # region Methods: graphics sync
+    def _spawn_graphics_entity(
+        self,
+        *args: tp.Any,
+        skip_cid: bool = False,
+        **kwargs: tp.Any,
+    ) -> None:
+        """
+        Spawn graphics entity.
+        """
+        kwargs["id"] = self.id
+
+        if not skip_cid:
+            kwargs["cid"] = self.cid()
+
+        if self._ADVANCED_DEBUGGING:
+            kwargs["adv_debugging_data"] = self._sdi.get_spawn_data()
+
+        pv.COQ.put(ProcessCommand(
+            type=BaseCommandType.spawn_dummy,
+            kwargs=kwargs,
+            args=args
+        ))
     # endregion

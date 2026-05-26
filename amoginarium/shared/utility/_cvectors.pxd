@@ -51,6 +51,8 @@ cdef class Vec2:
 
     cpdef object from_polar(self, double angle, double length)
 
+    cpdef object from_bytes(self, object b)
+
 
 cpdef double normalize_angle(double value)
 

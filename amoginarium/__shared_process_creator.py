@@ -63,7 +63,7 @@ class _ProcessValues:
         self.I_BUFF = (inventory_t * MAX_INVENTORIES).from_buffer(self.I_SHM.buf)
 
         self.D_SHM = get_debugging_memory()
-        self.SH = SharedHeap(self.D_SHM.name)
+        self.SH = SharedHeap(self.D_SHM)
 
         # initialize shared memories to all 0s
         memset(addressof(self.E_BUFF), 0, sizeof(self.E_BUFF))
@@ -104,7 +104,7 @@ class _ProcessValues:
         self.I_BUFF = (inventory_t * MAX_INVENTORIES).from_buffer(self.I_SHM.buf)
 
         self.D_SHM = debugging_memory
-        self.SH = SharedHeap(self.D_SHM.name)
+        self.SH = SharedHeap(self.D_SHM)
 
         self.WRITE_LOCK = write_lock
         self.COQ = command_out_queue
