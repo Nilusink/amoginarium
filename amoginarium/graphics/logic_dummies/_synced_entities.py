@@ -410,29 +410,30 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                 start_pos.y += self._AD_SIZE * 1.5
                 block_size.y -= self._AD_SIZE * 1.5
 
-            # draw console
-            renderer.draw_rounded_rect(
-                start_pos,
-                block_size,
-                (0.3, 0.3, 0.3, 1),
-                5,
-            )
-
-            start_pos.x += self._AD_SIZE * font_width_mult / 2
-            start_pos.y += self._AD_SIZE * 0.2
-            block_size.x -= self._AD_SIZE * font_width_mult
-
-            for line in self._sdi.get_console_lines():
-                renderer.draw_dynamic_text(
+            if self._sdi.console_lines > 0:
+                # draw console
+                renderer.draw_rounded_rect(
                     start_pos,
-                    line,
-                    color=(1, 1, 1),
-                    font_family="monospace",
-                    font_size=self._AD_SIZE,
-                    convert_global=True,
+                    block_size,
+                    (0.3, 0.3, 0.3, 1),
+                    5,
                 )
-                start_pos.y += self._AD_SIZE * 1.3
-                block_size.y -= self._AD_SIZE * 1.3
+
+                start_pos.x += self._AD_SIZE * font_width_mult / 2
+                start_pos.y += self._AD_SIZE * 0.2
+                block_size.x -= self._AD_SIZE * font_width_mult
+
+                for line in self._sdi.get_console_lines():
+                    renderer.draw_dynamic_text(
+                        start_pos,
+                        line,
+                        color=(1, 1, 1),
+                        font_family="monospace",
+                        font_size=self._AD_SIZE,
+                        convert_global=True,
+                    )
+                    start_pos.y += self._AD_SIZE * 1.3
+                    block_size.y -= self._AD_SIZE * 1.3
 
     # endregion
 

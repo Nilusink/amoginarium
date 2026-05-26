@@ -231,7 +231,9 @@ class DetectionGroup:
             # check if track has marked itself as dead in last iteration
             if track.state == TrackState.DEAD:
                 self._tracks.pop(tid)
-                self._debug_entities.pop(tid).kill()
+
+                if self._DEBUG:
+                    self._debug_entities.pop(tid).kill()
 
             # increment track time and predicted position
             track.increment_time(delta)

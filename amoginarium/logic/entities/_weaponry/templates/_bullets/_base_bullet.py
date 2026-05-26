@@ -57,7 +57,7 @@ class Bullet(LogicGameEntity):
     # region ClassVars
     _CID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
 
-    _ADVANCED_DEBUGGING = True
+    _ADVANCED_DEBUGGING = False
     _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
         ("_time_to_life", float),
         ("velocity", Vec2),

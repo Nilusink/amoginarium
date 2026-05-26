@@ -65,7 +65,7 @@ class Player(Passenger, LogicGameEntity):
 
     _bullets_do_not_initially_hit_player: CollisionExceptionIDType
 
-    _ADVANCED_DEBUGGING = True
+    _ADVANCED_DEBUGGING = False
     _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
         ("_hp", float),
         ("on_ground", bool),
@@ -540,7 +540,6 @@ class Player(Passenger, LogicGameEntity):
 
                         elif self.item.shoot(self.facing):
                             self._controller.feedback_shoot()
-                            self._sdi.print(f"{self._lifetime:.1f}, shot")
 
                     elif self.item:
                         self.item.use()

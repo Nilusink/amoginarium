@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import struct
 import typing as tp
+from functools import reduce
 
 from icecream import ic
 
@@ -150,15 +151,29 @@ class SharedDebuggingInstance:
     def write_from_object(self, obj: object) -> None:
         """Write variable scheme from given object."""
         curr_pos = 0
-        for var_name, var_type in self._variable_scheme:
-            val = getattr(obj, var_name, None)
+        for (var_name, var_type), var_size in zip(
+            self._variable_scheme, self._var_sizes, strict=True
+        ):
+            if "." in var_name:
+                val = reduce(
+                    lambda a, b: getattr(a, b, None),
+                    var_name.split("."),
+                    obj,
+                )
+
+            else:
+                val = getattr(obj, var_name, None)
+
+            if val is None:
+                curr_pos += var_size
+                continue
 
             padding = var_type[1] if isinstance(var_type, tuple) else -1
             data = to_bytes(val, pad_size=padding)
 
             self.__sh.write(self._offset + curr_pos, data)
 
-            curr_pos += len(data)
+            curr_pos += var_size
 
     def read(self) -> dict[str, tp.Any]:
         curr_pos = 0

@@ -58,11 +58,16 @@ class BaseTurretDummy(SyncedGraphicsEntity):
             cls._image_name, cls._default_size, cls._image_mirror, pixel_perfect=True
         )
 
-    def __init__(self, sync_id: int, weapon_id: int) -> None:
+    def __init__(
+        self,
+        sync_id: int,
+        weapon_id: int,
+        adv_debugging_data: dict | None = None,
+    ) -> None:
         self._target_pos: Vec2 | None = None
         self._range = (0, 0)
         self._angles = (-1, -1)
-        super().__init__(sync_id=sync_id)
+        super().__init__(sync_id=sync_id, adv_debugging_data=adv_debugging_data)
         self.add(Drawn_1, Drawn_2)
 
         # defaults
