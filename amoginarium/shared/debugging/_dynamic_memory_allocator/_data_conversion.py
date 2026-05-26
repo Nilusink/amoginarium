@@ -105,14 +105,11 @@ def from_bytes[A](  # noqa: PLR0911
         return struct.unpack("<?", data)[0]
 
     if dtype is str:
-        # get string length by finding null terminator
-        d_length = data.find(b"\0")
+        # try to cut sting on null terminator
+        if (str_end := data.find(b"\0")) > 0:
+            data = data[:str_end]
 
-        # if not found, return whole block as data
-        if d_length == -1:
-            d_length = len(data)
-
-        return data[:d_length].decode("utf-8")
+        return data.decode("utf-8")
 
     if dtype is Vec2:
         return Vec2().from_bytes(data)
@@ -133,8 +130,21 @@ def from_bytes[A](  # noqa: PLR0911
     return dtype()
 
 
+def debug_repr(var: tp.Any) -> str:
+    """Use a custom representation for advanced debugging."""
+    d_type = type(var)
+
+    if d_type is Vec2:
+        return f"v({var.x:.2f}, {var.y:.2f})"
+
+    if d_type is float:
+        return f"{var:.2f}"
+
+    return repr(var)
+
+
 if __name__ == "__main__":
-    var = Vec2().from_polar(1, 34)
+    var = "alsdfj"
 
     b_data = to_bytes(var, pad_size=16)
     ic(b_data, len(b_data))

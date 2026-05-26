@@ -48,10 +48,13 @@ uint32_t alloc(void* base, heap_t* heap, uint32_t size) {
 }
 
 void free_block(void* base, heap_t* heap, uint32_t payload_off) {
-    block_t* b = (block_t*)((uint8_t*)base + payload_off - sizeof(block_t));
-    b->free = 1;
+    if (payload_off == 0)
+        return;
 
-    // optional: coalescing could be added here
+    block_t* b =
+        (block_t*)((uint8_t*)base + payload_off - sizeof(block_t));
+
+    b->free = 1;
 }
 
 void init_heap(void* base, heap_t* heap, uint32_t size) {

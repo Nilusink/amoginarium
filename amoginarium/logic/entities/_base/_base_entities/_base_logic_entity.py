@@ -18,9 +18,9 @@ import typing as tp
 from icecream import ic
 
 from amoginarium import pv
-from amoginarium.shared import BaseLogicEntityLike, ENTITY_COUNTER
+from amoginarium.shared import BaseCommandType, BaseLogicEntityLike
+from amoginarium.shared import ENTITY_COUNTER, ProcessCommand
 from amoginarium.shared.debugging import SharedDebuggingInstance
-from amoginarium.shared import BaseCommandType, ProcessCommand
 
 from .._groups import Dead, Updated
 
@@ -28,7 +28,8 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, EntityChildViable, MurderViable, CIDType
+    from amoginarium.shared import base_entity_t, CIDType
+    from amoginarium.shared import EntityChildViable, MurderViable
 
     from .._groups import LogicGroup
 
@@ -58,6 +59,10 @@ class BaseLogicEntity(BaseLogicEntityLike):
     # region ClassVars
     _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
     _ADVANCED_DEBUGGING: tp.ClassVar[bool] = False
+    _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
+        ("_alive", bool),
+    ]
+    _AD_CONSOLE_LINES: tp.ClassVar[int] = 2
     # endregion
 
     # region InstanceVars
@@ -107,11 +112,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
         if self._ADVANCED_DEBUGGING:
             self._sdi: SharedDebuggingInstance = SharedDebuggingInstance(
                 pv.SH,
-                [  # type: ignore[trust]
-                    ("id", int),
-                    ("_alive", bool),
-                ],
-                4,
+                self._AD_VARS,
+                self._AD_CONSOLE_LINES,
             )
             self._sdi.create()
 
@@ -265,8 +267,12 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
         self.__groups.clear()
 
+        # free buffer
+        if self._ADVANCED_DEBUGGING:
+            self._sdi.kill()
+
         # add to dead
-        Dead.add(self)
+        Dead.add(self)  # type: ignore[trust]
 
     def _after_kill(
         self,
@@ -331,7 +337,6 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
         if self._ADVANCED_DEBUGGING:
             self._sdi.write_from_object(self)
-            ic(self._sdi.read())
 
     @tp.final
     def update(self, delta: float, *, recursive: bool = True) -> None:
@@ -408,9 +413,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
         if self._ADVANCED_DEBUGGING:
             kwargs["adv_debugging_data"] = self._sdi.get_spawn_data()
 
-        pv.COQ.put(ProcessCommand(
-            type=BaseCommandType.spawn_dummy,
-            kwargs=kwargs,
-            args=args
-        ))
+        pv.COQ.put(
+            ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs, args=args)
+        )
+
     # endregion

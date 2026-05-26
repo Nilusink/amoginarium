@@ -98,7 +98,7 @@ class _DetectionGroupManager:
 class DetectionGroup:
     """Group of sensors."""
 
-    _DEBUG: tp.ClassVar[bool] = True
+    _DEBUG: tp.ClassVar[bool] = False
 
     _targets: dict[PositionedLogicEntity, TargetInfo]
     _tracks: dict[int, RadarTrack2D]

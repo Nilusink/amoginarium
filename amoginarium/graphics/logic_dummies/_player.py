@@ -87,8 +87,9 @@ class PlayerDummy(SyncedLRImageEntity):
         h_id: int,
         size: int = 64,
         parent: int | None = None,
+        adv_debugging_data: dict | None = None,
     ) -> None:
-        super().__init__(sync_id, parent)
+        super().__init__(sync_id, parent, adv_debugging_data=adv_debugging_data)
         self._draw_children = False
         self.add(Drawn_1, Drawn_2)
 

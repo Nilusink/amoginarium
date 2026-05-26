@@ -1,7 +1,7 @@
 from libc.stdint cimport uint32_t
 from libc.string cimport memcpy, memset
 
-from ._callocator cimport alloc, free_block, get_heap, heap_t
+from ._callocator cimport alloc, free_block, get_heap, heap_t, init_heap
 
 from multiprocessing.shared_memory import SharedMemory
 
@@ -10,17 +10,35 @@ cdef class SharedHeap:
     cdef void* base
     cdef heap_t* heap
     cdef object shm
+    cdef unsigned char[:] _view
 
     def __init__(self, shm: SharedMemory):
         self.shm = shm
-        self.base = <void*>self.shm.buf
+
+        # store shared memory object + memory view
+        self._view = self.shm.buf
+        self.base = <void*>&self._view[0]
         self.heap = get_heap(self.base)
+
+        # initialize heap
+        init_heap(self.base, self.heap, shm.size)
 
     cpdef alloc(self, int size):
         cdef uint32_t off
+
+        # try to get offset
         off = alloc(self.base, self.heap, size)
+
+        # check if invalid
+        if off == 0:
+            msg = "Out of memory"
+            raise MemoryError(msg)
+
+        # initialize block to 0
         cdef char* ptr = <char*>self.base + off
         memset(ptr, 0, size)
+
+        # return offset
         return off
 
     cpdef free(self, int off):
@@ -34,5 +52,4 @@ cdef class SharedHeap:
 
     cpdef read(self, int off, int n):
         cdef char* ptr = <char*>self.base + off
-        print(self.shm.buf[0])
         return <bytes>ptr[:n]

@@ -8,3 +8,4 @@ Shared heap stuff.
 """
 from ._callocator_interface import SharedHeap
 from ._dynamic_shared_debugging import SharedDebuggingInstance
+from ._data_conversion import debug_repr

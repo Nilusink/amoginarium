@@ -75,7 +75,7 @@ class _ProcessValues:
         self.COQ = Queue()
         self.BASE_COMM, self.PROCESS_COMM = Pipe()
 
-    def set_shared_process_values(
+    def set_shared_process_values(  # noqa: PLR0917
         self,
         g_vars: GlobalVars,
         command_in_queue: Queue,

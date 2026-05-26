@@ -8,6 +8,7 @@ Pygame groups for drawn entities.
 """
 
 import typing as tp
+from contextlib import suppress
 
 import pygame as pg
 
@@ -32,6 +33,12 @@ class _Drawn(BaseGroup):
     def gl_draw(self, delta_cal: float) -> None:
         for sprite in self.sprites():
             sprite.gl_draw(delta_cal, layer=self._layer)
+
+    def draw_debug_overlay(self) -> None:
+        """Draw debug overlay."""
+        for sprite in self.sprites():
+            with suppress(AttributeError):
+                sprite.draw_debug_overlay()
 
 
 class _Cursor(BaseGroup): ...

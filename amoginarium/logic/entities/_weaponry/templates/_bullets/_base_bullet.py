@@ -58,6 +58,11 @@ class Bullet(LogicGameEntity):
     _CID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
 
     _ADVANCED_DEBUGGING = True
+    _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
+        ("_time_to_life", float),
+        ("velocity", Vec2),
+        ("_hp", float)
+    ]
 
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
         GameCollisions.collision_group_bullets

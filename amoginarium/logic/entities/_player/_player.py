@@ -46,6 +46,8 @@ if tp.TYPE_CHECKING:
 
 
 class Player(Passenger, LogicGameEntity):
+    _CID = DummyCIDs.player
+
     _impulse_resistance_factor: float = 1  # 0 = completely resistant
     _heal_per_second: float = 2  # hp healing per second
     _time_to_heal: float = 5  # time without taking damage before healing starts
@@ -62,6 +64,15 @@ class Player(Passenger, LogicGameEntity):
     __should_be_killed: int
 
     _bullets_do_not_initially_hit_player: CollisionExceptionIDType
+
+    _ADVANCED_DEBUGGING = True
+    _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
+        ("_hp", float),
+        ("on_ground", bool),
+        ("velocity", Vec2),
+        ("acceleration", Vec2)
+    ]
+    _AD_CONSOLE_LINES = 8
 
     def __init__(
         self,
@@ -153,17 +164,7 @@ class Player(Passenger, LogicGameEntity):
 
         self.__ride_pressed = False
 
-        pv.COQ.put(
-            ProcessCommand(
-                type=BaseCommandType.spawn_dummy,
-                kwargs={
-                    "id": self.id,
-                    "cid": DummyCIDs.player.value,
-                    "i_id": self._inventory.id,
-                    "h_id": self._hotbar.id,
-                },
-            )
-        )
+        self._spawn_graphics_entity(i_id=self._inventory.id, h_id=self._hotbar.id)
 
     def _set_slot(self, slot_id: ItemSlot) -> None:
         self._hover_slot = slot_id
@@ -483,7 +484,7 @@ class Player(Passenger, LogicGameEntity):
         vector -= self.world_position
         self.facing.angle = vector.angle
 
-        if not self.is_controlled:
+        if not self.is_controlled:  # noqa: PLR1702
             if (
                 len(self._colliding_rideables) > 0
                 and self._controller.ride
@@ -536,20 +537,27 @@ class Player(Passenger, LogicGameEntity):
                     if isinstance(self.item, BaseWeapon):
                         if hasattr(self.item, "charge"):
                             self.item.charge()
+
                         elif self.item.shoot(self.facing):
                             self._controller.feedback_shoot()
+                            self._sdi.print(f"{self._lifetime:.1f}, shot")
+
                     elif self.item:
                         self.item.use()
+
                 elif isinstance(self.item, BaseWeapon):
                     if hasattr(self.item, "charge"):
                         item: ... = self.item
                         if item.charged > 0:
                             if self.item.shoot(self.facing):
                                 self._controller.feedback_shoot()
+
                         else:
                             self.item.stop_shooting()
+
                     else:
                         self.item.stop_shooting()
+
                 elif self.item:
                     self.item.stop_use()
 

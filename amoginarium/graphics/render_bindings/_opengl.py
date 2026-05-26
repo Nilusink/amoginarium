@@ -62,7 +62,7 @@ if tp.TYPE_CHECKING:
 
 
 # noinspection DuplicatedCode
-class OpenGLRenderer(BaseRenderer):
+class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
     __slots__ = (
         "__dynamic_text_fonts",
         "__static_text_graphics",
@@ -1898,7 +1898,8 @@ class OpenGLRenderer(BaseRenderer):
         offscreen_check: bool = True,
     ) -> DynamicTextID:
         """
-        Draw a text to the given position
+        Draw a text to the given position.
+
         :param pos: Position of the text
         :param text: Text to be drawn
         :param color: Text color

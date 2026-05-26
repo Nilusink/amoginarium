@@ -658,6 +658,13 @@ class BaseGame:
                     renderer.flush_layer(2)
                     renderer.flush()
 
+                    # debugging
+                    Drawn_0.draw_debug_overlay()
+                    Drawn_1.draw_debug_overlay()
+                    Drawn_2.draw_debug_overlay()
+
+                    renderer.flush()
+
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)
                 pause_menu.gl_draw(delta)
@@ -686,6 +693,13 @@ class BaseGame:
                 renderer.flush_layer(1)
                 Drawn_2.gl_draw(0)
                 renderer.flush_layer(2)
+                renderer.flush()
+
+                # debugging
+                Drawn_0.draw_debug_overlay()
+                Drawn_1.draw_debug_overlay()
+                Drawn_2.draw_debug_overlay()
+
                 renderer.flush()
 
             # update global vars

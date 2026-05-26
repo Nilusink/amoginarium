@@ -7,14 +7,15 @@ Dynamically shares debugging data across Processes.
 | ``Created``: 25.05.2026
 | ``Authors``: Nilusink
 """
+
 from __future__ import annotations
 
+import struct
 import typing as tp
-import ctypes
 
 from icecream import ic
 
-from ._data_conversion import to_bytes, from_bytes, sizeof
+from ._data_conversion import from_bytes, sizeof, to_bytes
 
 if tp.TYPE_CHECKING:
     from ._callocator_interface import SharedHeap
@@ -48,7 +49,7 @@ class SharedDebuggingInstance:
         sh: SharedHeap,
         variable_scheme: list[tuple[str, type | tuple[type, int]]],
         console_lines: int,
-        max_console_line_length: int = 32
+        max_console_line_length: int = 32,
     ) -> None:
         """
         Create shared debugging instance.
@@ -63,8 +64,11 @@ class SharedDebuggingInstance:
         self._max_console_line_length = max_console_line_length
         self._offset = -1
         self._allocated_size = -1
+        self._console_offset = -1
         self._var_sizes = []
+        self._current_line = 0
 
+    # region properties
     @property
     def offset(self) -> int:
         """:return: offset, -1 if not set."""
@@ -73,6 +77,19 @@ class SharedDebuggingInstance:
 
         return self._offset
 
+    @property
+    def max_console_line_length(self) -> int:
+        """:return: max length of console lines."""
+        return self._max_console_line_length
+
+    @property
+    def console_lines(self) -> int:
+        """:return: amount of console lines."""
+        return self._console_lines
+
+    # endregion
+
+    # region initialization
     def get_spawn_data(self) -> dict[str, tp.Any]:
         """
         :return: All data required for graphics spawn
@@ -84,6 +101,7 @@ class SharedDebuggingInstance:
             "console_lines": self._console_lines,
             "max_console_line_length": self._max_console_line_length,
             "allocated_size": self._allocated_size,
+            "console_offset": self._console_offset,
         }
 
     def create(self) -> None:
@@ -93,7 +111,7 @@ class SharedDebuggingInstance:
         # add required variable size
         for _, var_type in self._variable_scheme:
             if isinstance(var_type, tuple):
-                size = sizeof(var_type[0](), padding=var_type[1])
+                size = sizeof(var_type[0](), pad_size=var_type[1])
 
             else:
                 size = sizeof(var_type())
@@ -101,17 +119,34 @@ class SharedDebuggingInstance:
             required_size += size
             self._var_sizes.append(size)
 
-        ic(required_size)
-
         # add required console size
+        required_size += 1  # add one byte for curr terminal pos
+        self._console_offset = required_size
         required_size += self._console_lines * self._max_console_line_length
-
-        ic("f", required_size)
 
         # allocate
         self._offset = self.__sh.alloc(required_size)
         self._allocated_size = required_size
 
+    @classmethod
+    def from_data(cls, sh: SharedHeap, data: dict[str, tp.Any]) -> tp.Self:
+        instance = cls(
+            sh=sh,
+            variable_scheme=data["var_scheme"],
+            console_lines=data["console_lines"],
+            max_console_line_length=data["max_console_line_length"],
+        )
+
+        instance._offset = data["off"]
+        instance._allocated_size = data["allocated_size"]
+        instance._var_sizes = data["var_sizes"]
+        instance._console_offset = data["console_offset"]
+
+        return instance
+
+    # endregion
+
+    # region runtime interface
     def write_from_object(self, obj: object) -> None:
         """Write variable scheme from given object."""
         curr_pos = 0
@@ -121,10 +156,7 @@ class SharedDebuggingInstance:
             padding = var_type[1] if isinstance(var_type, tuple) else -1
             data = to_bytes(val, pad_size=padding)
 
-            self.__sh.write(
-                self._offset + curr_pos,
-                data
-            )
+            self.__sh.write(self._offset + curr_pos, data)
 
             curr_pos += len(data)
 
@@ -132,18 +164,14 @@ class SharedDebuggingInstance:
         curr_pos = 0
 
         out = {}
-        ic(self._offset)
         for (var_name, var_type), var_size in zip(
-            self._variable_scheme,
-            self._var_sizes,
-            strict=True
+            self._variable_scheme, self._var_sizes, strict=True
         ):
             # read data
             data = self.__sh.read(self._offset + curr_pos, var_size)
 
             # convert data
             d_type = var_type[0] if isinstance(var_type, tuple) else var_type
-            ic(data, d_type)
             out[var_name] = from_bytes(data, d_type)
 
             # increment reader position
@@ -151,25 +179,55 @@ class SharedDebuggingInstance:
 
         return out
 
-    def kill(self) -> None:
-        """Close memory."""
-        ic("freeing", self._offset)
-        self.__sh.free(self._offset)
+    def print(self, line: str) -> None:
+        """Print a line to the terminal."""
+        # truncate line
+        if len(line) > self._max_console_line_length:
+            line = line[: self._max_console_line_length]
 
-    # def __del__(self) -> None:
-    #     self.kill()
-
-    @classmethod
-    def from_data(cls, sh: SharedHeap, data: dict[str, tp.Any]) -> tp.Self:
-        instance = cls(
-            sh=sh,
-            variable_scheme=data["var_scheme"],
-            console_lines=data["console_lines"],
-            max_console_line_length=data["max_console_line_length"]
+        # write line to buffer
+        curr_pos = (
+            self._offset
+            + self._console_offset
+            + self._current_line * self._max_console_line_length
         )
 
-        instance._offset = data["off"]
-        instance._allocated_size = data["allocated_size"]
-        instance._var_sizes = data["var_sizes"]
+        self.__sh.write(curr_pos, line.encode("utf-8"))
+        self._current_line = (self._current_line + 1) % self._console_lines
+        self.__sh.write(
+            self._offset + self._console_offset - 1,
+            struct.pack("<B", self._current_line),  # treat as unsigned char
+        )
 
-        return instance
+    def get_console_lines(self) -> list[str]:
+        """:return: console lines."""
+        out: list[str] = []
+
+        current_write_pos = struct.unpack(
+            "<B", self.__sh.read(self._offset + self._console_offset - 1, 1)
+        )[0]
+
+        for i in range(self._console_lines):
+            val: bytes = self.__sh.read(
+                (
+                    self._offset
+                    + self._console_offset
+                    + i * self._max_console_line_length
+                ),
+                self._max_console_line_length,
+            )
+
+            # try to locate end of string
+            if (str_end := val.find(b"\0")) > 0:
+                val = val[:str_end]
+
+            out.append(val.decode("utf-8"))
+
+        # re-sort list based on current index
+        return out[current_write_pos:] + out[:current_write_pos]
+
+    def kill(self) -> None:
+        """Close memory."""
+        self.__sh.free(self._offset)
+
+    # endregion
