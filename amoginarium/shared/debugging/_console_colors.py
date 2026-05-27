@@ -34,7 +34,8 @@ class BetterDict:
 
 
 if os.name == "nt":
-    os.system("color")
+    os.system("color")  # noqa: S605, S607
+
 
 CC = BetterDict(
     ctrl=BetterDict(
@@ -109,14 +110,29 @@ CC = BetterDict(
 )
 
 
-def get_fg_color(n: int) -> str:
+def get_fg_color(n: int, *, background: bool = False) -> str:
     """
+    Dynamic fg/bg color.
+
     Standard background color where n can be a number between 0-7
     High intensity background color where n can be a number between 8-15
     Rainbow background color where n can be a number between 16-231
     Gray background color where n can be a number between 232-255.
     """
-    return f"\u001b[38;5;{n}m"
+    return f"\u001b[{"4" if background else "3"}8;5;{n}m"
+
+
+def term_color_rgb(r: int, g: int, b: int, *, background: bool = False) -> str:
+    """
+    Get terminal color from RGB.
+
+    :param r: red
+    :param g: green
+    :param b: blue
+    :param background: if true, return code for BG color
+    :return: terminal escape code
+    """
+    return f"\u001b[{"4" if background else "3"}8;2;{r};{g};{b}m"
 
 
 def terminal_link(uri, label=None):
@@ -132,15 +148,5 @@ def terminal_link(uri, label=None):
 
 
 if __name__ == "__main__":
+    print(f"{term_color_rgb(123, 223, 6)} harrow")
 
-    def p() -> str:
-        t = 1243.1251
-        t1, t2 = str(t).split(".")
-
-        return f"(logic: {os.getpid()}) {t1: >4}.{t2: <4} |> "
-
-    for i in range(8, 16):
-        print(f"{get_fg_color(i)}x")
-
-    # ic.configureOutput(prefix=p)
-    # ic("hellow")

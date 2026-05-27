@@ -147,7 +147,6 @@ _d_shm: SharedMemory | EllipsisType = ...
 def get_debugging_memory() -> SharedMemory:
     global _d_shm  # noqa: PLW0603
     if isinstance(_d_shm, EllipsisType):
-        ic("create shit")
         _d_shm = shared_memory.SharedMemory(
             create=True,
             size=DEBUGGING_MAX_MEMORY,

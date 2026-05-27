@@ -7,5 +7,6 @@ Created: 21.05.2026
 Authors: Nilusink
 """
 from ._cvectors cimport Vec2
+from ._ccolor cimport Color
 from ._pid_controller cimport PIDController
 from ._tracks cimport *

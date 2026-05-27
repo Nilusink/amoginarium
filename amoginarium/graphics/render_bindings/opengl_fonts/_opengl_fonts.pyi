@@ -7,6 +7,8 @@ OpenGl Fonts.
 | ``Authors``: LukasKrah
 """
 
+from amoginarium.shared.utility import Color
+
 class GLFont:
     tex_id: int
     line_height: float
@@ -20,6 +22,7 @@ class GLFont:
         text: str,
         x: float,
         y: float,
+        color: Color,
+        *,
         scale: float = 1.0,
-        color: object | None = None,
     ) -> None: ...

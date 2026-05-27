@@ -147,7 +147,8 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
         size: coord_t,
     ) -> bool:
         """
-        Check if a rect is out of the screen
+        Check if a rect is out of the screen.
+
         :param top_left: Absolute top left position
         :param size: Absolute size
         :return: True if rect is out of screen.
@@ -940,7 +941,8 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
         offscreen_check: bool = True,
     ) -> None:
         """
-        Draw a rect with rounded corners with fill
+        Draw a rect with rounded corners with fill.
+
         :param start: Absolute top left corner position
         :param size: Width and height of the rectangle
         :param color: Drawing color
@@ -1881,6 +1883,7 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
     # endregion
 
     # region Texts and surfaces
+    @cum_timer.time_this
     def draw_dynamic_text(
         self,
         pos: coord_t,
@@ -1916,8 +1919,10 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
         """
         if not isinstance(bg_color, Color):
             bg_color = self.__set_color(bg_color)
-        if not isinstance(color, Color):
-            color = self.__set_color(color)
+
+        color_: Color = (
+            self.__set_color(color) if not isinstance(color, Color) else color
+        )
 
         pos: Vec2 = convert_coord(pos, Vec2)
 
@@ -1954,14 +1959,12 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
                 convert_global=convert_global,
             )
 
-        glPushMatrix()
-        font.draw(text, pos.x, pos.y, scale, color.rgba255)
-        glPopMatrix()
+        font.draw(text, pos.x, pos.y, color_, scale=scale)
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(pos, (text_width, text_height))
 
-        return -1
+        return 0
 
     def generate_static_text(
         self,

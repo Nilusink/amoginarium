@@ -7,16 +7,12 @@ Color class, fade function, c_255_to_1 function.
 | ``Created``: 16.03.2026
 | ``Authors``: Nilusink
 """
-from typing import Tuple
 
 cimport cython
 from libc.stdint cimport uint8_t
 
 
 cdef class Color:
-    cdef double _r1, _g1, _b1, _a1
-    cdef uint8_t _r255, _g255, _b255, _a255
-
     def __cinit__(self):
         self._r1 = 0.0
         self._g1 = 0.0
@@ -195,7 +191,7 @@ cdef class Color:
         c.set_rgba1(r, g, b, a)
         return c
 
-    cpdef from_255(self, uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255):  # type: (int, int, int, int) -> Color
+    cpdef Color from_255(self, uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255):  # type: (int, int, int, int) -> Color
         cdef c = Color()
         c.set_rgba255(r, g, b, a)
         return c

@@ -65,12 +65,12 @@ class Player(Passenger, LogicGameEntity):
 
     _bullets_do_not_initially_hit_player: CollisionExceptionIDType
 
-    _ADVANCED_DEBUGGING = False
+    _ADVANCED_DEBUGGING = True
     _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
         ("_hp", float),
         ("on_ground", bool),
         ("velocity", Vec2),
-        ("acceleration", Vec2)
+        ("acceleration", Vec2),
     ]
     _AD_CONSOLE_LINES = 8
 
@@ -540,6 +540,12 @@ class Player(Passenger, LogicGameEntity):
 
                         elif self.item.shoot(self.facing):
                             self._controller.feedback_shoot()
+
+                            if self._ADVANCED_DEBUGGING:
+                                self._sdi.print(
+                                    f'shot "{self.item.__class__.__name__}" at '
+                                    f'{self._lifetime}: True'
+                                )
 
                     elif self.item:
                         self.item.use()

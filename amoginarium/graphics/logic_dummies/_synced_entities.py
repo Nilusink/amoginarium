@@ -15,7 +15,7 @@ import typing as tp
 from abc import ABC, abstractmethod
 from contextlib import suppress
 
-from icecream import ic
+from icecream import ic, colorize
 
 from amoginarium import pv
 from amoginarium.shared.debugging import debug_repr, SharedDebuggingInstance
@@ -316,9 +316,6 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
             block_size = Vec2().from_cartesian(block_len, block_height)
 
-            # start_pos = pv.global_vars.translate_screen_coord(self.world_position)
-            # start_pos.x += pv.global_vars.translate_scale(self.size.x / 1.5)
-
             start_pos = self.world_position
             start_pos.x -= self.size.x + block_size.x
 
@@ -369,6 +366,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                 color=Color().from_255(23, 146, 173),
                 font_family="monospace",
                 font_size=m.ceil(self._AD_SIZE * 1.5),
+                bold=True,
                 convert_global=True,
             )
             start_pos.y += self._AD_SIZE * 1.5
@@ -401,7 +399,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                         + (block_size.x - len(var) * self._AD_SIZE * font_width_mult),
                         start_pos.y,
                     ),
-                    var,
+                    colorize(var),
                     color=(1, 1, 1),
                     font_family="monospace",
                     font_size=self._AD_SIZE,
@@ -426,7 +424,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                 for line in self._sdi.get_console_lines():
                     renderer.draw_dynamic_text(
                         start_pos,
-                        line,
+                        colorize(line),
                         color=(1, 1, 1),
                         font_family="monospace",
                         font_size=self._AD_SIZE,
