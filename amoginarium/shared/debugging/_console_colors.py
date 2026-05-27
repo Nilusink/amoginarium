@@ -9,27 +9,24 @@ Defines a few console colors.
 # ruff: noqa: T201
 
 import os
-import typing as tp
-
-from icecream import ic
 
 
-class BetterDict:
+class BetterDict[T]:
     """
     each element is also accessible with instance.element.
     """
 
-    def __init__(self, **initial) -> None:
+    def __init__(self, **initial: T) -> None:
         for key, value in initial.items():
             setattr(self, key, value)
 
-    def __setitem__(self, key: str, value: tp.Any) -> None:
+    def __setitem__(self, key: str, value: T) -> None:
         setattr(self, key, value)
 
-    def __getitem__(self, item: str) -> tp.Any:
-        return self.__dict__[item]
+    def __getitem__(self, key: str) -> T:
+        return self.__dict__[key]
 
-    def __delitem__(self, key) -> None:
+    def __delitem__(self, key: str) -> None:
         delattr(self, key)
 
 
@@ -37,7 +34,7 @@ if os.name == "nt":
     os.system("color")  # noqa: S605, S607
 
 
-CC = BetterDict(
+CC: BetterDict[BetterDict[str]] = BetterDict(
     ctrl=BetterDict(
         ENDC="\033[0m",
         BOLD="\033[1m",
@@ -135,18 +132,22 @@ def term_color_rgb(r: int, g: int, b: int, *, background: bool = False) -> str:
     return f"\u001b[{"4" if background else "3"}8;2;{r};{g};{b}m"
 
 
-def terminal_link(uri, label=None):
+def terminal_link(uri: str, label: str | None = None) -> str:
+    """
+    Create a clickable terminal link.
+
+    :param uri: target
+    :param label: label to show  (=uri if None)
+    :return: formatted link
+    """
     if label is None:
         label = uri
 
     parameters = ""
 
     # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST
-    escape_mask = "\033]8;{};{}\033\\{}\033]8;;\033\\"
-
-    return escape_mask.format(parameters, uri, label)
+    return f"\033]8;{parameters};{uri}\033\\{label}\033]8;;\033\\"
 
 
 if __name__ == "__main__":
     print(f"{term_color_rgb(123, 223, 6)} harrow")
-

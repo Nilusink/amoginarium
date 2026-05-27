@@ -62,6 +62,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
         ("_alive", bool),
     ]
+    _AD_CONSOLE_LINE_LENGTH: tp.ClassVar[int] = 32
     _AD_CONSOLE_LINES: tp.ClassVar[int] = 2
     # endregion
 
@@ -114,6 +115,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
                 pv.SH,
                 self._AD_VARS,
                 self._AD_CONSOLE_LINES,
+                max_console_line_length=self._AD_CONSOLE_LINE_LENGTH
             )
             self._sdi.create()
 
