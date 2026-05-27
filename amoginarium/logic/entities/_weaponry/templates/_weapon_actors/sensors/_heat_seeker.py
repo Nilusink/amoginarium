@@ -19,9 +19,9 @@ from ....._base import DebugPolygonEntity, GameCollisions
 from ._base import BaseWeaponsSensor
 
 if tp.TYPE_CHECKING:
-    from amoginarium.shared import MurderViable
     from types import EllipsisType
 
+    from amoginarium.shared import MurderViable
     from amoginarium.shared.collision_detection import CollisionEvent
     from amoginarium.shared.collision_detection import CollisionGroupIDType
 

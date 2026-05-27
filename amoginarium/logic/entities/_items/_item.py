@@ -40,6 +40,8 @@ class Item(LogicGameEntity):
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
         GameCollisions.collision_group_items
     )
+    _DEFAULT_COLLISION_REMEMBER_ACTIVE_NORMALS: tp.ClassVar[bool] = True
+
     _drop_timeout: tp.ClassVar[int] = 1
     # endregion
     # region InstanceVars
@@ -153,8 +155,8 @@ class Item(LogicGameEntity):
         self._current_timeout -= delta
 
         # wall stuff
-        if GameCollisions.collision_group_islands in self._active_normals:
-            if self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            if self._collision_active_normals[GameCollisions.collision_group_islands]:
                 # wall, pos = res
                 self.acceleration *= 0
                 self.velocity *= 0

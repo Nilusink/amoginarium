@@ -17,8 +17,6 @@ import typing as tp
 from amoginarium import pv
 from amoginarium.shared import BaseLogicEntityLike, ENTITY_COUNTER
 
-from .._groups import Dead, Updated
-
 if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
@@ -36,6 +34,14 @@ class BaseLogicEntity(BaseLogicEntityLike):
     - Groups
     - Update
     - Visibility
+
+    :ivar _parent: The parent entity of this entity, optional.
+    :ivar _children: List of all children that this entity is the parent to.
+    :ivar _lifetime: Time since entity spawn.
+    :ivar _runtime_buffer: Logic runtime buffer.
+    :ivar __id: Entity id (+ buffer location).
+    :ivar __groups: List of groups this entity is in.
+    :ivar _alive: Whether the entity is alive or already dead.
     """
 
     __slots__ = [
@@ -57,7 +63,6 @@ class BaseLogicEntity(BaseLogicEntityLike):
     __groups: list[LogicGroup]
 
     _alive: bool
-
     # endregion
 
     def __init__(
@@ -88,39 +93,41 @@ class BaseLogicEntity(BaseLogicEntityLike):
         # directly write to RAM to make sure the graphics entity has correct data
         pv.E_BUFF[self.__id] = self._runtime_buffer[self.__id]
 
-        self.add(Updated)
-
     # region Properties
     @property
     def alive(self) -> bool:
-        """Whether the entity is alive."""
+        """:return: Whether the entity is alive."""
         return self._alive
 
     @property
     def id(self) -> int:
-        """:return: entity id (+ buffer location)"""
+        """:return: Entity id (+ buffer location)"""
         return self.__id
 
     @property
     def parent(self) -> BaseLogicEntity | None:
-        """:return: Entity parent if present"""
+        """:return: Entity parent if present."""
         return self._parent
+
+    def parent_died(self) -> None:
+        """Call when the parent dies."""
+        self._parent = None
 
     @property
     def root(self) -> BaseLogicEntity:
-        """:return: root entity; entity parent if present else self"""
+        """:return: Root entity; entity parent if present else self"""
         if self._parent:
             return self._parent.root
         return self
 
     @property
     def children(self) -> list[EntityChildViable]:
-        """:return: list of all children of this entity"""
+        """:return: List of all children of this entity"""
         return self._children
 
     @property
     def _buffer(self) -> base_entity_t:
-        """:return: runtime buffer data for this entity"""
+        """:return: Runtime buffer data for this entity"""
         return self._runtime_buffer[self.__id]
 
     @property
@@ -230,7 +237,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
             group.remove(self)
         self.__groups = []
 
-        self._set_bit("flags", 0, False)  # set alive  # noqa: FBT003
+        self._set_bit("flags", 0, False)  # set alive # noqa: FBT003
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__groups.clear()
@@ -238,11 +245,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
         # delete parent reference
         self._parent = None
         for child in self._children:
-            child._parent = None
+            child.parent_died()
         self._children = []
-
-        # add to dead
-        Dead.add(self)
 
     def _after_kill(
         self,
@@ -273,7 +277,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         :param killed_by: Who killed this entity
         :param kill_children: Whether to kill children as well as recursively
         :param force_kill: Whether to kill even if before kill returns False
-        :return: Whether the entity wa0s killed or not. May be denied by _before_kill.
+        :return: Whether the entity was killed or not. May be denied by _before_kill.
             None if the entity is already dead.
         """
         if self._alive:

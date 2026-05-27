@@ -9,7 +9,6 @@ Type hints for entities.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from typing import Protocol, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -27,16 +26,14 @@ class HasFacing(Protocol):
     facing: Vec2
 
 
-class DynamicEntityParentViable(ABC):
+class DynamicEntityParentViable(Protocol):
     """can be used as dynamic entity parent."""
 
     @classmethod
-    @abstractmethod
     def has_cid(cls) -> bool:
-        """Entity has component ID?"""
+        """Entity has component ID."""
 
     @classmethod
-    @abstractmethod
     def cid(cls) -> str:
         """Component ID."""
 

@@ -21,11 +21,11 @@ from ...templates import AerodynamicEntity, BaseTurret
 from ...templates import BaseWeapon, RadarSensor, TargetSolution
 
 if tp.TYPE_CHECKING:
-    from amoginarium.shared import MurderViable
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, Coalitions, VisibleGameEntityLike
+    from amoginarium.shared import base_entity_t, Coalitions
+    from amoginarium.shared import MurderViable, VisibleGameEntityLike
     from amoginarium.shared.collision_detection import CollisionExceptionIDType
     from amoginarium.shared.utility import coord_t
 

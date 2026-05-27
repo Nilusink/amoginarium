@@ -56,6 +56,7 @@ class Player(Passenger, LogicGameEntity):
     on_wall: bool = False
 
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_players
+    _DEFAULT_COLLISION_REMEMBER_ACTIVE_NORMALS: tp.ClassVar[bool] = True
 
     __add_position: Vec2
 
@@ -306,8 +307,10 @@ class Player(Passenger, LogicGameEntity):
             False,
             False,
         ]  # y-negative, y-positive
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for normal in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for normal in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 if normal.x < -0.5:
                     active_normals[0] = True
                 elif normal.x > 0.5:
@@ -613,8 +616,10 @@ class Player(Passenger, LogicGameEntity):
 
         self._on_ground = False
 
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for n in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 if n.y < -0.5:
                     self._on_ground = True
                     if self.acceleration.y > 0:
@@ -727,8 +732,10 @@ class Player(Passenger, LogicGameEntity):
         x = value.x
         y = value.y
 
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for n in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
@@ -746,8 +753,10 @@ class Player(Passenger, LogicGameEntity):
         x = value.x
         y = value.y
 
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for n in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x

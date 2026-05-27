@@ -33,6 +33,8 @@ class JetBag(Something):
     _acceleration = 19
     _max_uses: int = 5
 
+    _DEFAULT_COLLISION_REMEMBER_ACTIVE_NORMALS: tp.ClassVar[bool] = True
+
     __slots__ = ("_in_use", "_facing", "_size_fac", "_sound")
 
     def __init__(
@@ -109,8 +111,11 @@ class JetBag(Something):
 
                 self._set_bit("flags", 14, False)  # set use to false
 
-        elif GameCollisions.collision_group_islands in self.parent._active_normals:
-            for normal in self.parent._active_normals[
+        elif (
+            GameCollisions.collision_group_islands
+            in self.parent._collision_active_normals
+        ):
+            for normal in self.parent._collision_active_normals[
                 GameCollisions.collision_group_islands
             ]:
                 if normal.y < -0.5:

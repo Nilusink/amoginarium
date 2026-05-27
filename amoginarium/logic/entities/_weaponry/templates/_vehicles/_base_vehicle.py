@@ -33,6 +33,8 @@ class Vehicle(RideableTurret):
     _CID = VehicleCIDs.base
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_vehicles
 
+    _DEFAULT_COLLISION_REMEMBER_ACTIVE_NORMALS: tp.ClassVar[bool] = True
+
     __slots__ = ()
 
     # region ClassVars
@@ -97,8 +99,10 @@ class Vehicle(RideableTurret):
                 )
 
         # check if on floor
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for normal in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for normal in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 if (normal.y < 0.1 and self.velocity.y > 0) or (
                     normal.y > 0.1 and self.velocity.y < 0
                 ):

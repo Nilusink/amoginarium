@@ -19,7 +19,7 @@ from amoginarium.shared.utility import Vec2
 from ._base_group import BaseGroup
 
 
-class _Updated(BaseGroup[PositionedLogicEntityLike]):
+class _Updated[T](BaseGroup[T]):
     """
     A specialized group for entities that require regular logic updates.
     """
@@ -79,5 +79,7 @@ class _Dead(_Updated):
         """DO NOT CALL!."""
 
 
-Updated: tp.Final[_Updated] = _Updated()
+Updated: tp.Final[_Updated[PositionedLogicEntityLike]] = _Updated[
+    PositionedLogicEntityLike
+]()
 Dead: tp.Final[_Dead] = _Dead()
