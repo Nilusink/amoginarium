@@ -21,6 +21,7 @@ from ...templates import AerodynamicEntity, BaseTurret
 from ...templates import BaseWeapon, RadarSensor, TargetSolution
 
 if tp.TYPE_CHECKING:
+    from amoginarium.shared import MurderViable
     from ctypes import Array
     from types import EllipsisType
 
@@ -153,13 +154,13 @@ class ExactoSniper(BaseWeapon):
         self._current_target: Vec2 | None = None
         self._targeting_func = targeting_func
 
+        GameCollisions.add_extra_calculate_callback(self.__calculate_exacto_hit_raycast)
+
     def _get_current_target(self) -> Vec2 | None:
         return self._current_target
 
-    @tp.override
-    def _update(self, delta: float) -> None:
-        super()._update(delta)
-
+    def __calculate_exacto_hit_raycast(self) -> None:
+        """Extra collision calculate for the exacto laser raycast."""
         # if no targeting func, target with straight laser
         if not self._targeting_func:
             # entities = Updated.entities() + Players.entities() + [
@@ -183,6 +184,10 @@ class ExactoSniper(BaseWeapon):
         else:
             self._current_target = self._targeting_func()
 
+    @tp.override
+    def _update(self, delta: float) -> None:
+        super()._update(delta)
+
         if self._current_target:
             self._buffer.param3 = int(
                 normalize_angle(self._current_target.angle) * 10_000
@@ -191,6 +196,17 @@ class ExactoSniper(BaseWeapon):
 
         else:
             self._buffer.param4 = 0
+
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
+        GameCollisions.remove_extra_calculate_callback(
+            self.__calculate_exacto_hit_raycast
+        )
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
 
 
 class ExactoTurret(BaseTurret):
@@ -226,6 +242,8 @@ class ExactoTurret(BaseTurret):
         )
 
         self._current_target = None
+
+        GameCollisions.add_extra_calculate_callback(self.__get_target)
 
     def __get_target(self) -> Vec2 | None:
         """Return current target for exacto."""
@@ -278,3 +296,12 @@ class ExactoTurret(BaseTurret):
             self._current_target = solution.target
 
         return shot
+
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
+        GameCollisions.remove_extra_calculate_callback(self.__get_target)
+        super()._kill(killed_by=killed_by, kill_children=kill_children)

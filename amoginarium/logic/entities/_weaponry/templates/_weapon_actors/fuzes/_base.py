@@ -11,4 +11,6 @@ from .._base_actor import BaseActor
 
 
 class BaseFuze(BaseActor):
-    """bullet fuze."""
+    """Bullet base fuze."""
+
+    __slots__ = ()

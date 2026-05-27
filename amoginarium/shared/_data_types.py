@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import typing as tp
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 
 from ._entity_hints import ItemLike
 
@@ -43,7 +43,7 @@ class CurrentView:
     centered: bool = False
 
 
-class DummyCIDs(Enum):
+class DummyCIDs(StrEnum):
     """
     Component IDs for Graphics dummies.
     """
@@ -58,7 +58,7 @@ class DummyCIDs(Enum):
     aero = "dummy.bullet.aero"
 
 
-class MissileCIDs(Enum):
+class MissileCIDs(StrEnum):
     """Component IDs for missiles."""
 
     base = "dummy.missile.base"
@@ -68,7 +68,7 @@ class MissileCIDs(Enum):
     player_controlled = "dummy.missile.player_controlled"
 
 
-class WeaponSensorCIDs(Enum):
+class WeaponSensorCIDs(StrEnum):
     """Component IDs for weapon sensors."""
 
     base = "sensor.weapon.base"
@@ -77,7 +77,7 @@ class WeaponSensorCIDs(Enum):
     gps = "sensor.weapon.gps"
 
 
-class IslandCIDs(Enum):
+class IslandCIDs(StrEnum):
     """
     Component IDs for Graphics islands.
     """
@@ -87,7 +87,7 @@ class IslandCIDs(Enum):
     green_brick_island = "island.brick.green"
 
 
-class TurretCIDs(Enum):
+class TurretCIDs(StrEnum):
     """
     Component IDs for Graphics turrets.
     """
@@ -105,7 +105,7 @@ class TurretCIDs(Enum):
     rideable_calculated = "turret.rideable.calculated"
 
 
-class WeaponCIDs(Enum):
+class WeaponCIDs(StrEnum):
     """
     Component IDs for Graphics weapons.
     """
@@ -123,7 +123,7 @@ class WeaponCIDs(Enum):
     exacto_sniper = "weapon.exacto_sniper"
 
 
-class SensorCIDs(Enum):
+class SensorCIDs(StrEnum):
     """Component IDs for graphics sensors."""
 
     radar = "sensor.static.radar"
@@ -135,7 +135,7 @@ class SensorCIDs(Enum):
     hud = "sensor.static.hud"
 
 
-class ItemCIDs(Enum):
+class ItemCIDs(StrEnum):
     """Component IDs for items."""
 
     shield = "item.shield"
@@ -143,7 +143,7 @@ class ItemCIDs(Enum):
     jetbag = "item.jetbag"
 
 
-class GraphicsCIDs(Enum):
+class GraphicsCIDs(StrEnum):
     """
     Component IDs for other Graphics.
     """
@@ -154,7 +154,7 @@ class GraphicsCIDs(Enum):
     debug_circle = "debug.circle"
 
 
-class VehicleCIDs(Enum):
+class VehicleCIDs(StrEnum):
     """Vehicle Component-IDs."""
 
     base = "vehicle.base"

@@ -21,15 +21,25 @@ from ._base import BaseWeaponsSensor
 if tp.TYPE_CHECKING:
     from types import EllipsisType
 
+    from amoginarium.shared import CIDType
     from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
     from ..._bullets import AerodynamicEntity
 
-_LASER_POINTERS: dict[int, Vec2] = {}
+_laser_pointers: dict[int, Vec2] = {}
 
 
 class LaserDesignator:
-    """designate targets for laser sensor."""
+    """Designate targets for laser sensor."""
+
+    __slots__ = (
+        "__code",
+        "_collision_groups",
+    )
+
+    _code: int
+    _collision_groups: list[CollisionGroupIDType]
 
     def __init__(self, code: int = 1688) -> None:
         """
@@ -46,7 +56,13 @@ class LaserDesignator:
         return self.__code
 
     def shine(self, origin: Vec2, direction: Vec2, max_range: float) -> None:
-        """Shine the laser in a direction."""
+        """
+        Shine the laser in a direction.
+
+        :param origin: Origin of the laser
+        :param direction: Direction of the laser
+        :param max_range: Maximum range of the laser
+        """
         entities: list[CollisionEvent] = (
             GameCollisions.collision_manager.manual_collision(
                 self._collision_groups,
@@ -56,16 +72,24 @@ class LaserDesignator:
         )
 
         if entities:
-            _LASER_POINTERS[self.__code] = entities[0].position
+            _laser_pointers[self.__code] = entities[0].position
 
         else:
-            _LASER_POINTERS.pop(self.__code, None)
+            _laser_pointers.pop(self.__code, None)
 
 
 class LaserSensor(BaseWeaponsSensor):
     """homes in on a laser."""
 
-    _CID = WeaponSensorCIDs.laser
+    __slots__ = (
+        "__code",
+        "_target",
+    )
+
+    _CID: tp.ClassVar[CIDType] = WeaponSensorCIDs.laser
+
+    __code: int
+    _target: Vec2 | None
 
     def __init__(
         self,
@@ -78,15 +102,15 @@ class LaserSensor(BaseWeaponsSensor):
         """
         Homes in on a designated laser.
 
-        :param parent: parent bullet
-        :param code: laser code
-        :param offset: offset from parent
-        :param function_delay: sensor function delay
+        :param parent: Parent bullet
+        :param code: Laser code
+        :param offset: Offset from parent
+        :param function_delay: Sensor function delay
         """
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
-        self.__code: int = code
-        self._target: Vec2 | None = None
+        self.__code = code
+        self._target = None
 
     # region properties
     @property
@@ -97,18 +121,20 @@ class LaserSensor(BaseWeaponsSensor):
     # endregion
 
     # region interface
+    @tp.override
     def get_target(self) -> Vec2 | None:
-        """Get sensor target."""
+        """:return: The sensor target."""
         if self._target:
             return self._parent.position - self._target
-
         return None
 
     # endregion
 
+    @tp.override
     def _update(self) -> None:
+        """Update the laser sensor."""
         # update position
         super()._update()
 
-        if self.__code in _LASER_POINTERS:
-            self._target = _LASER_POINTERS[self.__code].copy()
+        if self.__code in _laser_pointers:
+            self._target = _laser_pointers[self.__code].copy()

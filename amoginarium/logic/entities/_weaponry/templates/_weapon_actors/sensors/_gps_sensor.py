@@ -10,22 +10,27 @@ Uses the missile's target_pos as a sensor target.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing as tp
 
 from amoginarium.shared import WeaponSensorCIDs
 
 from ._base import BaseWeaponsSensor
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
+    from amoginarium.shared import CIDType
     from amoginarium.shared.utility import Vec2
 
 
 class GPSSensor(BaseWeaponsSensor):
-    """heat seeking sensor."""
+    """GPS sensor."""
 
-    _CID = WeaponSensorCIDs.gps
+    __slots__ = ()
 
+    _CID: tp.ClassVar[CIDType] = WeaponSensorCIDs.gps
+
+    @tp.override
     def get_target(self) -> Vec2 | None:
+        """:return: The sensor target."""
         t_pos = self._parent.target_pos
 
         if t_pos:

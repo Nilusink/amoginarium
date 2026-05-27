@@ -1,5 +1,5 @@
 """
-Exposes fuze implementations and a registry mapping for weapon actors.
+Exposes fuze implementations.
 
 | ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/fuzes/
             __init__.py
@@ -8,19 +8,6 @@ Exposes fuze implementations and a registry mapping for weapon actors.
 | ``Authors``: Nilusink
 """
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from ._fuzes import AltitudeFuze, PositionFuze, ProximityFuze, TTLFuze, TTLMultFuze
-
-if TYPE_CHECKING:
-    from ._base import BaseFuze
-
-FUZES: dict[str, type[BaseFuze]] = {
-    "ttl": TTLFuze,
-    "ttl_mult": TTLMultFuze,
-    "distance": PositionFuze,
-    "proximity": ProximityFuze,
-    "alt": AltitudeFuze,
-}
+from ._base import BaseFuze
+from ._fuzes import AltitudeFuze, FUZES, PositionFuze
+from ._fuzes import ProximityFuze, TTLFuze, TTLMultFuze

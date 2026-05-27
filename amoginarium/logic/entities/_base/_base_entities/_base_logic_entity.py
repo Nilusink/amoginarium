@@ -228,11 +228,18 @@ class BaseLogicEntity(BaseLogicEntityLike):
         # commit suicide
         for group in self.__groups:
             group.remove(self)
+        self.__groups = []
 
         self._set_bit("flags", 0, False)  # set alive  # noqa: FBT003
         ENTITY_COUNTER.pop_id(self.__id)
 
         self.__groups.clear()
+
+        # delete parent reference
+        self._parent = None
+        for child in self._children:
+            child._parent = None
+        self._children = []
 
         # add to dead
         Dead.add(self)

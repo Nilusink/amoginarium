@@ -184,6 +184,6 @@ class BaseChargedWeapon(BaseWeapon):
         **bullet_args,
     ) -> bool:
         self._update_kwargs()
-        res = super().shoot(direction, bullet_tof, target_pos, bullet_args=bullet_args)
+        res = super().shoot(direction, bullet_tof, target_pos, **bullet_args)
         self.stop()
         return res
