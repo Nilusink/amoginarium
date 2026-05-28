@@ -1,4 +1,4 @@
-from libc.stdint cimport uint32_t
+from libc.stdint cimport uint32_t, uint8_t
 from libc.string cimport memcpy, memset
 
 from ._callocator cimport alloc, free_block, get_heap, heap_t, init_heap
@@ -50,6 +50,14 @@ cdef class SharedHeap:
 
         memcpy(ptr, <char*>data, n)
 
-    cpdef read(self, int off, int n):
+    cpdef write_byte(self, int off, uint8_t data):
+        cdef char* ptr = <char*>self.base + off
+        memcpy(ptr, &data, 1)
+
+    cpdef bytes read(self, int off, int n):
         cdef char* ptr = <char*>self.base + off
         return <bytes>ptr[:n]
+
+    cpdef int read_byte(self, int off):  # type: (int) -> int
+        cdef char* ptr = <char*>self.base + off
+        return <int>ptr[0]

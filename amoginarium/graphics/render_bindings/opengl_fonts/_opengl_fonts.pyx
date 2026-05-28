@@ -168,7 +168,12 @@ cdef class GLFont:
         self.term_colors[7] = term_color_t(1, 1, 1)  # white
         self.term_colors[9] = term_color_t(1, 1, 1)  # default
 
-    cpdef tuple get_dimensions(self, str text, float scale=1.0):
+    cpdef tuple get_dimensions(
+        self,
+        str text,
+        float scale=1.0,
+        float line_height=1.0,
+    ):
         """Calculates the total width and total height of a string, including newlines."""
         cdef float max_width = 0.0
         cdef float current_width = 0.0
@@ -191,7 +196,7 @@ cdef class GLFont:
         if current_width > max_width:
             max_width = current_width
             
-        cdef float total_height = self.line_height * lines * scale
+        cdef float total_height = self.line_height * lines * scale * line_height
 
         return max_width, total_height
 
@@ -212,6 +217,8 @@ cdef class GLFont:
             float start_x = 0.0
             float cursor_x = 0.0
             float cursor_y = 0.0
+            float saved_x = 0.0
+            float saved_y = 0.0
 
             int params[8]
             int param_count = 0
@@ -234,18 +241,25 @@ cdef class GLFont:
 
         GL.glBegin(GL.GL_QUADS)
 
+        w = 0
         for character in text:
-            if character == '\n':
-                cursor_x = start_x
-                cursor_y += self.line_height * scale * line_height
-                continue
-
             ascii_val = ord(character)
 
             # check for escape characters
             if state == NORMAL:
-                if ascii_val == 27:   # ESC
+                if ascii_val == ord('\n'):
+                    cursor_x = start_x
+                    cursor_y += self.line_height * scale * line_height
+                    continue
+
+                elif ascii_val == ord('\r'):
+                    cursor_x = start_x
+                    continue
+
+                elif ascii_val == 27:   # ESC
                     state = ESC
+                    params[0] = 0  # reset param 0 to 1
+                    params[1] = 0  # reset param 1 to 1
                     continue
 
                 # elif ascii_val == ord('\a'):  # alarm  # disabled cuz permanently playing
@@ -272,7 +286,7 @@ cdef class GLFont:
                     building_number = True
                     continue
 
-                # semicolon
+                # value separator
                 if ascii_val == ord(';'):
                     params[param_count] = current
                     param_count += 1
@@ -280,7 +294,7 @@ cdef class GLFont:
                     building_number = False
                     continue
 
-                # final byte (e.g. 'm')
+                # final byte
                 if ascii_val == ord('m'):
                     if building_number:
                         params[param_count] = current
@@ -329,8 +343,46 @@ cdef class GLFont:
                                 1.0,
                             )
 
-                    state = NORMAL
-                    continue
+                # region cursor movement
+                elif ascii_val == ord('A'):  # cursor up
+                    cursor_y -= self.line_height * scale * line_height * params[0]
+
+                elif ascii_val == ord('B'):  # cursor down
+                    cursor_y += self.line_height * scale * line_height * params[0]
+
+                elif ascii_val == ord('C'):  # cursor forward
+                    cursor_x += w * params[0]
+
+                elif ascii_val == ord('D'):  # cursor back
+                    cursor_x -= w * params[0]
+
+                elif ascii_val == ord('E'):  # cursor next line
+                    cursor_x = start_x
+                    cursor_y += self.line_height * scale * line_height * params[0]
+
+                elif ascii_val == ord('F'):  # cursor previous line
+                    cursor_x = start_x
+                    cursor_y -= self.line_height * scale * line_height * params[0]
+
+                elif ascii_val == ord('G'):  # cursor horizontal absolute
+                    cursor_y = self.line_height * scale * line_height * params[0]
+
+                elif ascii_val == ord('H') or ascii_val == ord('f'):  # cursor position (move to y;x)
+                    cursor_x = w * params[1]
+                    cursor_y = self.line_height * scale * line_height * params[0]
+
+                elif ascii_val == ord('s'):  # save cursor pos
+                    saved_x = cursor_x
+                    saved_y = cursor_y
+
+                elif ascii_val == ord('u'):  # restore saved cursor pos
+                    cursor_x = saved_x
+                    cursor_y = saved_y
+
+                else:
+                    print("unknown ascii_val: ", ascii_val, repr(chr(ascii_val)))
+
+                # endregion
 
                 # unknown → reset
                 state = NORMAL

@@ -411,28 +411,46 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
             if self._sdi.console_lines > 0:
                 # draw console
+                renderer.start_stencil(show_stencil=True)
                 renderer.draw_rounded_rect(
                     start_pos,
                     block_size,
                     (0.3, 0.3, 0.3, 1),
                     5,
                 )
+                renderer.enable_stencil(show_stencil=True)
 
                 start_pos.x += self._AD_SIZE * font_width_mult / 2
                 start_pos.y += self._AD_SIZE * 0.2
                 block_size.x -= self._AD_SIZE * font_width_mult
+                block_size.y -= self._AD_SIZE * 0.2
 
                 console_lines = self._sdi.get_console_lines()
-                term_output = "\n".join(console_lines)
-                renderer.draw_dynamic_text(
-                    start_pos,
-                    colorize(term_output),
-                    color=(1, 1, 1),
-                    font_family="monospace",
-                    font_size=self._AD_SIZE,
-                    line_height=1.1,
-                    convert_global=True,
-                )
+                if console_lines:
+                    colored_text = colorize(console_lines)
+                    _, text_height = renderer.get_dynamic_text_size(
+                        colored_text,
+                        font_family="monospace",
+                        font_size=self._AD_SIZE,
+                        line_height=1.1,
+                        convert_global=True,
+                    )
+
+                    # "scroll"
+                    if text_height > block_size.y:
+                        start_pos.y += block_size.y - text_height
+
+                    renderer.draw_dynamic_text(
+                        start_pos,
+                        colored_text,
+                        color=(1, 1, 1),
+                        font_family="monospace",
+                        font_size=self._AD_SIZE,
+                        line_height=1.1,
+                        convert_global=True,
+                    )
+
+                renderer.disable_stencil()
 
     # endregion
 

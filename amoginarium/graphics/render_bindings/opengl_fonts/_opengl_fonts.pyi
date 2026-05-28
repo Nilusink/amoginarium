@@ -16,7 +16,12 @@ class GLFont:
     def __init__(
         self, font_name: str, size: int, bold: bool = False, italic: bool = False
     ) -> None: ...
-    def get_dimensions(self, text: str, scale: float = 1.0) -> tuple[float, float]: ...
+    def get_dimensions(
+        self,
+        text: str,
+        scale: float = 1.0,
+        line_height: float = 1.0,
+    ) -> tuple[float, float]: ...
     def draw(
         self,
         text: str,

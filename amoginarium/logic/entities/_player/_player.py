@@ -540,6 +540,7 @@ class Player(Passenger, LogicGameEntity):
 
                         elif self.item.shoot(self.facing):
                             self._controller.feedback_shoot()
+                            self._debug_print(f"{self._lifetime:.2f}> harrow")
 
                     elif self.item:
                         self.item.use()
@@ -669,8 +670,6 @@ class Player(Passenger, LogicGameEntity):
             self.__add_position *= 0
 
         super()._update(delta)
-
-        self._debug_print(f"{self._lifetime:.2f}> harrow")
 
         if self.item:
             self.item.facing.angle = self.facing.angle

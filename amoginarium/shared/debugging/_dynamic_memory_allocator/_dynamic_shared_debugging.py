@@ -67,7 +67,7 @@ class SharedDebuggingInstance:
         self._allocated_size = -1
         self._console_offset = -1
         self._var_sizes = []
-        self._current_line = 0
+        self._current_char = 0
 
     # region properties
     @property
@@ -121,7 +121,7 @@ class SharedDebuggingInstance:
             self._var_sizes.append(size)
 
         # add required console size
-        required_size += 1  # add one byte for curr terminal pos
+        required_size += 2  # add two bytes for curr terminal pos
         self._console_offset = required_size
         required_size += self._console_lines * self._max_console_line_length
 
@@ -194,52 +194,52 @@ class SharedDebuggingInstance:
 
         return out
 
-    def print(self, line: str) -> None:
-        """Print a line to the terminal."""
-        # truncate line
-        if len(line) > self._max_console_line_length:
-            line = line[: self._max_console_line_length]
+    def print(self, text: str, *, end: str = "\n") -> None:
+        """
+        Print text to the terminal.
 
-        # write line to buffer
-        curr_pos = (
-            self._offset
-            + self._console_offset
-            + self._current_line * self._max_console_line_length
-        )
+        :param text: text to print to terminal
+        :param end: character to append to end of text
+        """
+        text += end
 
-        self.__sh.write(curr_pos, line.encode("utf-8"))
-        self._current_line = (self._current_line + 1) % self._console_lines
+        for character in text.encode("utf-8"):
+            self.__sh.write_byte(
+                self._offset + self._console_offset + self._current_char,
+                character,
+            )
+
+            # wrap around at end of terminal (ring buffer)
+            self._current_char = (self._current_char + 1) % (
+                self._console_lines * self._max_console_line_length
+            )
+
+        # write current cursor pos to buffer
         self.__sh.write(
-            self._offset + self._console_offset - 1,
-            struct.pack("<B", self._current_line),  # treat as unsigned char
+            self._offset + self._console_offset - 2,
+            struct.pack("<H", self._current_char),  # treat as unsigned short
         )
 
-    def get_console_lines(self) -> list[str]:
+    def get_console_lines(self) -> str:
         """:return: console lines."""
         out: list[str] = []
 
         current_write_pos = struct.unpack(
-            "<B", self.__sh.read(self._offset + self._console_offset - 1, 1)
+            "<H", self.__sh.read(self._offset + self._console_offset - 2, 2)
         )[0]
 
-        for i in range(self._console_lines):
-            val: bytes = self.__sh.read(
-                (
-                    self._offset
-                    + self._console_offset
-                    + i * self._max_console_line_length
-                ),
-                self._max_console_line_length,
-            )
+        for i in range(self._console_lines * self._max_console_line_length):
+            val: int = self.__sh.read_byte(self._offset + self._console_offset + i)
 
-            # try to locate end of string
-            if (str_end := val.find(b"\0")) > 0:
-                val = val[:str_end]
+            # append character to char array
+            out.append(chr(val))
 
-            out.append(val.decode("utf-8"))
-
-        # re-sort list based on current index
-        return out[current_write_pos:] + out[:current_write_pos]
+        # re-sort list based on current index and convert to string
+        return "".join(
+            character
+            for character in out[current_write_pos:] + out[:current_write_pos]
+            if character != "\0"
+        )
 
     def kill(self) -> None:
         """Close memory."""

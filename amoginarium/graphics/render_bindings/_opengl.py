@@ -1883,7 +1883,6 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
     # endregion
 
     # region Texts and surfaces
-    @cum_timer.time_this
     def draw_dynamic_text(
         self,
         pos: coord_t,
@@ -1967,6 +1966,44 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
             self._draw_debug_bounds(pos, (text_width, text_height))
 
         return 0
+
+    def get_dynamic_text_size(
+        self,
+        text: str,
+        *,
+        font_size: int = 64,
+        font_family: str = "arial",
+        bold: bool = False,
+        italic: bool = False,
+        line_height: float = 1.0,
+        convert_global: bool = True,
+    ) -> tuple[float, float]:
+        """
+        Get size of dynamic text.
+
+        :param text: Text to be drawn
+        :param font_size: Size of the font
+        :param font_family: Family of the font
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :param line_height: distance between lines
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :return: size of text
+        """
+        scale = 1.0
+        if convert_global:
+            scale = pv.global_vars.translate_scale(1.0)
+
+        font_key = (font_family, font_size, bold, italic)
+
+        if font_key not in self.__dynamic_text_fonts:
+            self.__dynamic_text_fonts[font_key] = GLFont(
+                font_family, font_size, bold, italic
+            )
+
+        font = self.__dynamic_text_fonts[font_key]
+
+        return font.get_dimensions(text, scale, line_height)
 
     def generate_static_text(
         self,

@@ -145,7 +145,7 @@ def terminal_link(uri: str, label: str | None = None) -> str:
 
     parameters = ""
 
-    # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST
+    # ESC 8 ; params ; URI ST <name> ESC 8 ;; ST
     return f"\033]8;{parameters};{uri}\033\\{label}\033]8;;\033\\"
 
 
