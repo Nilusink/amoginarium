@@ -69,7 +69,7 @@ class BoundFunction(tp.TypedDict):
     kwargs: dict
 
 
-class GlobalVars:
+class GlobalVars:  # noqa: PLR0904
     show_targets: bool = False
 
     def __init__(self, values: dict[str, Synchronized], set: bool = True) -> None:

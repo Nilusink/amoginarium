@@ -1059,7 +1059,8 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
         offscreen_check: bool = True,
     ) -> None:
         """
-        Draw a rectangle outline without fill
+        Draw a rectangle outline without fill.
+
         :param start: Absolute top left corner position
         :param size: Width and height of the rectangle
         :param color: Drawing color

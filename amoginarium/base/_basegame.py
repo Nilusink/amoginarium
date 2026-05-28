@@ -24,6 +24,7 @@ from icecream import colorizedStderrPrint, ic
 
 from amoginarium import pv
 from amoginarium.graphics.controllers import Controllers, KeyboardController
+from amoginarium.graphics.debug_overlay import DEBUG_KEYBINDS, draw_debug_overlay
 from amoginarium.graphics.entities import Drawn_0, Drawn_1, Drawn_2
 from amoginarium.graphics.entities import SyncedEntities, UIEntities
 from amoginarium.graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
@@ -516,7 +517,8 @@ class BaseGame:
 
         # draw background once
         paused = False
-        while self.running:
+        debug_menu = False
+        while self.running:  # noqa: PLR1702
             # print process comms
             while pv.BASE_COMM.poll(0):
                 msg = pv.BASE_COMM.recv()
@@ -611,10 +613,10 @@ class BaseGame:
                         ):
                             close_settings()
 
-                    elif event.key == pg.K_h:
-                        pv.global_vars.toggle_debug_var(DebugVarsEnum.DRAW_HITBOXES)
+                    elif event.key == pg.K_h:  # debug menu
+                        debug_menu = not debug_menu
 
-                    elif event.key == pg.K_PAUSE:
+                    elif event.key == pg.K_PAUSE:  # pause
                         pv.COQ.put(
                             ProcessCommand(
                                 type=ProcessCommandType.unpause
@@ -623,6 +625,11 @@ class BaseGame:
                             )
                         )
                         paused = not paused
+
+                    else:  # debug keys
+                        for key, (_, debug_var) in DEBUG_KEYBINDS.items():
+                            if event.key == key:
+                                pv.global_vars.toggle_debug_var(debug_var)
 
                 elif event.type == pg.MOUSEBUTTONUP:
                     if event.button == pg.BUTTON_LEFT:
@@ -655,7 +662,9 @@ class BaseGame:
                     renderer.flush()
 
                     # debugging
-                    if self._debugging:
+                    if self._debugging and pv.global_vars.get_debug_var(
+                        DebugVarsEnum.ADV_DEBUGGING
+                    ):
                         Drawn_0.draw_debug_overlay()
                         Drawn_1.draw_debug_overlay()
                         Drawn_2.draw_debug_overlay()
@@ -693,7 +702,9 @@ class BaseGame:
                 renderer.flush()
 
                 # debugging
-                if self._debugging:
+                if self._debugging and pv.global_vars.get_debug_var(
+                    DebugVarsEnum.ADV_DEBUGGING
+                ):
                     Drawn_0.draw_debug_overlay()
                     Drawn_1.draw_debug_overlay()
                     Drawn_2.draw_debug_overlay()
@@ -708,6 +719,11 @@ class BaseGame:
                 (now - self._game_start, perf_counter() - now)
             )
             last = now
+
+            # draw debug overlay
+            if debug_menu:
+                draw_debug_overlay(paused=paused, slo_mo=t_mult != self.time_multiplier)
+                renderer.flush()
 
             renderer.display_draw_frame()
 

@@ -12,14 +12,13 @@ Includes hierarchy management, lifecycle hooks, and bitwise buffer access.
 
 from __future__ import annotations
 
-import ctypes
 import typing as tp
 
 from icecream import ic
 
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, BaseLogicEntityLike
-from amoginarium.shared import ENTITY_COUNTER, ProcessCommand
+from amoginarium.shared import DebugVarsEnum, ENTITY_COUNTER, ProcessCommand
 from amoginarium.shared.debugging import SharedDebuggingInstance
 
 from .._groups import Dead, Updated
@@ -58,9 +57,6 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     # region ClassVars
     _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
-
-    # root only
-    _ADVANCED_DEBUGGING_ROOT: tp.Final[bool] = False
 
     # per entity
     _ADVANCED_DEBUGGING: tp.ClassVar[bool] = False
@@ -115,14 +111,10 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.add(Updated)
 
         # create shared debugging instance if required
-        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
-            self._sdi: SharedDebuggingInstance = SharedDebuggingInstance(
-                pv.SH,
-                self._AD_VARS,
-                self._AD_CONSOLE_LINES,
-                max_console_line_length=self._AD_CONSOLE_LINE_LENGTH
-            )
-            self._sdi.create()
+        self._sdi = None
+
+        if self._ADVANCED_DEBUGGING:
+            self.__create_shared_debug_instance()
 
     # region properties (and other getters)
     @property
@@ -275,7 +267,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.__groups.clear()
 
         # free buffer
-        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
+        if self._sdi:
             self._sdi.kill()
 
         # add to dead
@@ -342,7 +334,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         """
         self._lifetime += delta
 
-        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
+        if self._sdi and pv.global_vars.get_debug_var(DebugVarsEnum.ADV_DEBUGGING):
             self._sdi.write_from_object(self)
 
     @tp.final
@@ -417,7 +409,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         if not skip_cid:
             kwargs["cid"] = self.cid()
 
-        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
+        if self._sdi:
             kwargs["adv_debugging_data"] = self._sdi.get_spawn_data()
 
         pv.COQ.put(
@@ -427,6 +419,17 @@ class BaseLogicEntity(BaseLogicEntityLike):
     # endregion
 
     # region Methods: debugging
+    def __create_shared_debug_instance(self) -> None:
+        """Create SharedDebugInstance."""
+        sdi: SharedDebuggingInstance = SharedDebuggingInstance(
+            pv.SH,
+            self._AD_VARS,
+            self._AD_CONSOLE_LINES,
+            max_console_line_length=self._AD_CONSOLE_LINE_LENGTH,
+        )
+        sdi.create()
+        self._sdi = sdi
+
     def _debug_print(self, line: str, *, end: str = "\n") -> None:
         """
         Print to debug instance if debugging is enabled.
@@ -434,6 +437,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         :param line: line to print
         :param end: append to end of line
         """
-        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
-            self._sdi.print(line, end=end)
+        if self._sdi:
+            self._sdi.print(line, end=end)  # type: ignore[trust-me-bro]
+
     # endregion

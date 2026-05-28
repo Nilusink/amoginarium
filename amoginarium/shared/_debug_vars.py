@@ -16,3 +16,4 @@ class DebugVarsEnum(Enum):
     """
 
     DRAW_HITBOXES = 0
+    ADV_DEBUGGING = 1
