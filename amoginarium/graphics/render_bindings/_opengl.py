@@ -1896,6 +1896,7 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
         font_family: str = "arial",
         bold: bool = False,
         italic: bool = False,
+        line_height: float = 1.0,
         text_id: DynamicTextID | None = None,
         convert_global: bool = True,
         offscreen_check: bool = True,
@@ -1912,6 +1913,7 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
         :param font_family: Family of the font
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
+        :param line_height: distance between lines
         :param text_id: NOT SUPPORTED
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing.
@@ -1959,7 +1961,7 @@ class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
                 convert_global=convert_global,
             )
 
-        font.draw(text, pos.x, pos.y, color_, scale=scale)
+        font.draw(text, pos.x, pos.y, color_, scale=scale, line_height=line_height)
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(pos, (text_width, text_height))

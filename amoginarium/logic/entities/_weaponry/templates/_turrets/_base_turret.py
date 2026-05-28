@@ -90,7 +90,7 @@ class BaseTurret(LogicGameEntity):
         ("intercept_bullets", bool),
         ("intercept_players", bool),
     ]
-    _AD_CONSOLE_LINES = 0
+    _AD_CONSOLE_LINES = 1
 
     size: Vec2
     weapon: BaseWeapon
@@ -468,6 +468,9 @@ class BaseTurret(LogicGameEntity):
 
         if not self.available_targets:
             self._target_predict = [self.position.copy()]
+
+        if self._ADVANCED_DEBUGGING:
+            self._sdi.print(f"{len(self.available_targets)} targets")
 
         new_target = self.get_next_target()
         simulate_target = self.get_next_target(include_all=True)

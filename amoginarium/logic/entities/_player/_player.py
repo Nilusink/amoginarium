@@ -68,12 +68,11 @@ class Player(Passenger, LogicGameEntity):
 
     _ADVANCED_DEBUGGING = True
     _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
-        ("_hp", float),
         ("on_ground", bool),
         ("velocity", Vec2),
         ("acceleration", Vec2),
     ]
-    _AD_CONSOLE_LINES = 8
+    _AD_CONSOLE_LINES = 4
 
     def __init__(
         self,
@@ -670,6 +669,8 @@ class Player(Passenger, LogicGameEntity):
             self.__add_position *= 0
 
         super()._update(delta)
+
+        self._debug_print(f"{self._lifetime:.2f}> harrow")
 
         if self.item:
             self.item.facing.angle = self.facing.angle

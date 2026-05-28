@@ -11,8 +11,10 @@ import OpenGL.GL as GL
 import pygame as pg
 
 from libc.stdint cimport uint8_t
+from mpl_toolkits.axes_grid1 import axes_size
 
 from amoginarium.shared.utility._ccolor cimport Color
+from ...sound_effect import PresetGraphicsSoundEffect
 
 
 # Define a pure C struct to hold character data.
@@ -64,6 +66,10 @@ cpdef tuple ansi_256_to_rgb(uint8_t x):
 cdef uint8_t NORMAL = 0
 cdef uint8_t ESC = 1
 cdef uint8_t CSI = 2
+
+
+class TerminalBell(PresetGraphicsSoundEffect):
+    _sound_name = "error_attention"
 
 
 # Declare the class as an extension type (cdef class)
@@ -189,7 +195,15 @@ cdef class GLFont:
 
         return max_width, total_height
 
-    cpdef void draw(self, str text, float x, float y, Color color, float scale=1.0):
+    cpdef void draw(
+        self,
+        str text,
+        float x,
+        float y,
+        Color color,
+        float scale=1.0,
+        float line_height=1.0
+    ):
         """Draws the text using glTranslate to match the engine's coordinate style."""
         cdef:
             int ascii_val
@@ -223,7 +237,7 @@ cdef class GLFont:
         for character in text:
             if character == '\n':
                 cursor_x = start_x
-                cursor_y += self.line_height * scale
+                cursor_y += self.line_height * scale * line_height
                 continue
 
             ascii_val = ord(character)
@@ -234,16 +248,21 @@ cdef class GLFont:
                     state = ESC
                     continue
 
+                # elif ascii_val == ord('\a'):  # alarm  # disabled cuz permanently playing
+                #     TerminalBell().play()  # error sound
+
                 # render normal char
 
             elif state == ESC:
-                if ascii_val == ord('['):
+                if ascii_val == ord('['):  # control sequence
                     state = CSI
                     param_count = 0
                     current = 0
                     building_number = False
+
                 else:
                     state = NORMAL
+
                 continue
 
             elif state == CSI:

@@ -147,6 +147,7 @@ class BaseGame:
         self.global_vars.scaling = Settings.scaling
 
         # configure icecream
+        self._debugging = debug
         if not debug:
             ic.disable()
 
@@ -659,11 +660,12 @@ class BaseGame:
                     renderer.flush()
 
                     # debugging
-                    Drawn_0.draw_debug_overlay()
-                    Drawn_1.draw_debug_overlay()
-                    Drawn_2.draw_debug_overlay()
+                    if self._debugging:
+                        Drawn_0.draw_debug_overlay()
+                        Drawn_1.draw_debug_overlay()
+                        Drawn_2.draw_debug_overlay()
 
-                    renderer.flush()
+                        renderer.flush()
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)
@@ -696,11 +698,12 @@ class BaseGame:
                 renderer.flush()
 
                 # debugging
-                Drawn_0.draw_debug_overlay()
-                Drawn_1.draw_debug_overlay()
-                Drawn_2.draw_debug_overlay()
+                if self._debugging:
+                    Drawn_0.draw_debug_overlay()
+                    Drawn_1.draw_debug_overlay()
+                    Drawn_2.draw_debug_overlay()
 
-                renderer.flush()
+                    renderer.flush()
 
             # update global vars
             self.global_vars.update()

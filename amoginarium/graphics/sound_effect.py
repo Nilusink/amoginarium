@@ -1,7 +1,7 @@
 """
 Dummy for playing a sound effect, sends command instead of creating a sound.
 
-| ``Path``: amoginarium/graphics/logic_dummies/_sound_effect.py
+| ``Path``: amoginarium/graphics/sound_effect.py
 | ``Project``: amoginarium
 | ``Created``: 29.03.2026
 | ``Authors``: Nilusink

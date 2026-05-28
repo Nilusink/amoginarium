@@ -25,4 +25,5 @@ class GLFont:
         color: Color,
         *,
         scale: float = 1.0,
+        line_height: float = 1.0,
     ) -> None: ...

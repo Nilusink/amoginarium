@@ -420,3 +420,14 @@ class BaseLogicEntity(BaseLogicEntityLike):
         )
 
     # endregion
+
+    # region Methods: debugging
+    def _debug_print(self, line: str) -> None:
+        """
+        Print to debug instance if debugging is enabled.
+
+        :param line: line to print
+        """
+        if self._ADVANCED_DEBUGGING:
+            self._sdi.print(line)
+    # endregion

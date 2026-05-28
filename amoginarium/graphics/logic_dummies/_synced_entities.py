@@ -14,11 +14,13 @@ import time
 import typing as tp
 from abc import ABC, abstractmethod
 from contextlib import suppress
+from functools import reduce
 
-from icecream import ic, colorize
+from icecream import colorize, ic
 
 from amoginarium import pv
-from amoginarium.shared.debugging import debug_repr, SharedDebuggingInstance
+from amoginarium.shared.debugging import debug_repr, get_fg_color
+from amoginarium.shared.debugging import SharedDebuggingInstance
 from amoginarium.shared.utility import Color, Vec2
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
@@ -299,7 +301,10 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                 * self._AD_SIZE
                 * 1.5
             )
-            max_len = max(len(name) + len(var) - 3 for name, var in debug_vars.items())
+            max_name_len = max(len(v) for v in debug_vars)
+            max_var_len = max(len(v) for v in debug_vars.values())
+
+            max_len = max_name_len + max_var_len
             max_len = max(
                 [
                     max_len,
@@ -384,29 +389,25 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
             block_size.y -= self._AD_SIZE * 1.5
 
             # draw vars
-            for name, var in debug_vars.items():
-                renderer.draw_dynamic_text(
-                    start_pos,
-                    name,
-                    color=(0.5, 0.5, 0.5),
-                    font_family="monospace",
-                    font_size=self._AD_SIZE,
-                    convert_global=True,
+            block_strings = []
+            for name, val in debug_vars.items():
+                block_strings.append(
+                    f"{get_fg_color(245)}{name}"
+                    f"{'':<{1 + max_len - (len(name) + len(val))}}{colorize(val)}"
                 )
-                renderer.draw_dynamic_text(
-                    (
-                        start_pos.x
-                        + (block_size.x - len(var) * self._AD_SIZE * font_width_mult),
-                        start_pos.y,
-                    ),
-                    colorize(var),
-                    color=(1, 1, 1),
-                    font_family="monospace",
-                    font_size=self._AD_SIZE,
-                    convert_global=True,
-                )
-                start_pos.y += self._AD_SIZE * 1.5
-                block_size.y -= self._AD_SIZE * 1.5
+
+            renderer.draw_dynamic_text(
+                start_pos,
+                "\n".join(block_strings),
+                color=(1, 1, 1),
+                font_family="monospace",
+                font_size=self._AD_SIZE,
+                line_height=1.3,
+                convert_global=True,
+            )
+
+            start_pos.y += self._AD_SIZE * 1.5 * len(debug_vars)
+            block_size.y -= self._AD_SIZE * 1.5 * len(debug_vars)
 
             if self._sdi.console_lines > 0:
                 # draw console
@@ -421,17 +422,17 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                 start_pos.y += self._AD_SIZE * 0.2
                 block_size.x -= self._AD_SIZE * font_width_mult
 
-                for line in self._sdi.get_console_lines():
-                    renderer.draw_dynamic_text(
-                        start_pos,
-                        colorize(line),
-                        color=(1, 1, 1),
-                        font_family="monospace",
-                        font_size=self._AD_SIZE,
-                        convert_global=True,
-                    )
-                    start_pos.y += self._AD_SIZE * 1.3
-                    block_size.y -= self._AD_SIZE * 1.3
+                console_lines = self._sdi.get_console_lines()
+                term_output = "\n".join(console_lines)
+                renderer.draw_dynamic_text(
+                    start_pos,
+                    colorize(term_output),
+                    color=(1, 1, 1),
+                    font_family="monospace",
+                    font_size=self._AD_SIZE,
+                    line_height=1.1,
+                    convert_global=True,
+                )
 
     # endregion
 
