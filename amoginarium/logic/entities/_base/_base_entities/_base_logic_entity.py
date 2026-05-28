@@ -58,6 +58,11 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
     # region ClassVars
     _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
+
+    # root only
+    _ADVANCED_DEBUGGING_ROOT: tp.Final[bool] = False
+
+    # per entity
     _ADVANCED_DEBUGGING: tp.ClassVar[bool] = False
     _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
         ("_alive", bool),
@@ -110,7 +115,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.add(Updated)
 
         # create shared debugging instance if required
-        if self._ADVANCED_DEBUGGING:
+        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
             self._sdi: SharedDebuggingInstance = SharedDebuggingInstance(
                 pv.SH,
                 self._AD_VARS,
@@ -270,7 +275,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         self.__groups.clear()
 
         # free buffer
-        if self._ADVANCED_DEBUGGING:
+        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
             self._sdi.kill()
 
         # add to dead
@@ -337,7 +342,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         """
         self._lifetime += delta
 
-        if self._ADVANCED_DEBUGGING:
+        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
             self._sdi.write_from_object(self)
 
     @tp.final
@@ -412,7 +417,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
         if not skip_cid:
             kwargs["cid"] = self.cid()
 
-        if self._ADVANCED_DEBUGGING:
+        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
             kwargs["adv_debugging_data"] = self._sdi.get_spawn_data()
 
         pv.COQ.put(
@@ -429,6 +434,6 @@ class BaseLogicEntity(BaseLogicEntityLike):
         :param line: line to print
         :param end: append to end of line
         """
-        if self._ADVANCED_DEBUGGING:
+        if self._ADVANCED_DEBUGGING and self._ADVANCED_DEBUGGING_ROOT:
             self._sdi.print(line, end=end)
     # endregion

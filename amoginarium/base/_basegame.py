@@ -515,6 +515,7 @@ class BaseGame:
         mouse_cursor = UICursor()
 
         # draw background once
+        paused = False
         while self.running:
             # print process comms
             while pv.BASE_COMM.poll(0):
@@ -525,6 +526,7 @@ class BaseGame:
             pv.WRITE_LOCK.acquire()
             pv.WRITE_LOCK.release()
 
+            # slow-motion
             if pg.key.get_pressed()[pg.K_DOWN]:
                 pv.global_vars.set_time_mult(0.01)
                 t_mult = 0.01
@@ -532,23 +534,6 @@ class BaseGame:
             else:
                 pv.global_vars.set_time_mult(self.time_multiplier)
                 t_mult = self.time_multiplier
-
-            # # check for new controllers
-            # if len(self._new_controllers) > 0:
-            #     tmp = self._new_controllers.copy()
-            #     self._new_controllers.clear()
-            #
-            #     for new_controller in tmp:
-            #         # spawn new player
-            #         if Players.spawn_point:
-            #             Player(
-            #                 runtime_buffer=self._runtime_buffer,
-            #                 coalition=Coalitions.blue,
-            #                 controller=new_controller
-            #             )
-            #
-            #         else:
-            #             self._new_controllers.append(new_controller)
 
             # update commands
             while True:
@@ -608,15 +593,13 @@ class BaseGame:
                 elif event.type == pg.QUIT:
                     self.__clean_end()
 
-                # elif events.type == pg.JOYDEVICEADDED:
-                #     self.__add_joystick(events)
-
                 elif event.type == pg.KEYUP:
                     if event.key == pg.K_F11:
                         if renderer.display_state == "windowed_fullscreen":
                             renderer.display_set_windowed()
                         else:
                             renderer.display_windowed_fullscreen()
+
                     elif event.key == pg.K_ESCAPE:
                         if active_scene == "Game":
                             pause_game()
@@ -627,8 +610,20 @@ class BaseGame:
                             or active_scene == "StartSettings"
                         ):
                             close_settings()
+
                     elif event.key == pg.K_h:
                         pv.global_vars.toggle_debug_var(DebugVarsEnum.DRAW_HITBOXES)
+
+                    elif event.key == pg.K_PAUSE:
+                        pv.COQ.put(
+                            ProcessCommand(
+                                type=ProcessCommandType.unpause
+                                if paused
+                                else ProcessCommandType.pause
+                            )
+                        )
+                        paused = not paused
+
                 elif event.type == pg.MOUSEBUTTONUP:
                     if event.button == pg.BUTTON_LEFT:
                         for sprite in UIEntities:

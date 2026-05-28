@@ -469,8 +469,7 @@ class BaseTurret(LogicGameEntity):
         if not self.available_targets:
             self._target_predict = [self.position.copy()]
 
-        # if self._ADVANCED_DEBUGGING:
-        #     self._sdi.print(f"{len(self.available_targets)} targets")
+        self._debug_print(f"{len(self.available_targets)} targets")
 
         new_target = self.get_next_target()
         simulate_target = self.get_next_target(include_all=True)

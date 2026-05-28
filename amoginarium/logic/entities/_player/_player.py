@@ -16,8 +16,7 @@ from time import perf_counter
 from icecream import ic
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, Coalitions
-from amoginarium.shared import CurrentView, DummyCIDs, ProcessCommand
+from amoginarium.shared import Coalitions, CurrentView, DummyCIDs
 from amoginarium.shared.audio import DeathSound, OnHoverButtonSound, SoundEffect
 from amoginarium.shared.utility import convert_coord, Vec2
 
@@ -66,7 +65,7 @@ class Player(Passenger, LogicGameEntity):
 
     _bullets_do_not_initially_hit_player: CollisionExceptionIDType
 
-    _ADVANCED_DEBUGGING = True
+    _ADVANCED_DEBUGGING = False
     _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
         ("on_ground", bool),
         ("velocity", Vec2),

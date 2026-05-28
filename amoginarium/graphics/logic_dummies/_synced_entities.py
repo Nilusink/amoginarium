@@ -433,7 +433,7 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
                         font_family="monospace",
                         font_size=self._AD_SIZE,
                         line_height=1.1,
-                        convert_global=True,
+                        convert_global=False,
                     )
 
                     # "scroll"
