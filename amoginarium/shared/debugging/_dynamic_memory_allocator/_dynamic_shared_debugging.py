@@ -131,6 +131,13 @@ class SharedDebuggingInstance:
 
     @classmethod
     def from_data(cls, sh: SharedHeap, data: dict[str, tp.Any]) -> tp.Self:
+        """
+        Create shared debugging instance from a given set of data.
+
+        :param sh: global SharedHeap instance
+        :param data: data to create instance from
+        :return: instance created from data
+        """
         instance = cls(
             sh=sh,
             variable_scheme=data["var_scheme"],
@@ -149,7 +156,11 @@ class SharedDebuggingInstance:
 
     # region runtime interface
     def write_from_object(self, obj: object) -> None:
-        """Write variable scheme from given object."""
+        """
+        Write variable scheme from given object.
+
+        :param obj: object to get data from
+        """
         curr_pos = 0
         for (var_name, var_type), var_size in zip(
             self._variable_scheme, self._var_sizes, strict=True
@@ -176,6 +187,11 @@ class SharedDebuggingInstance:
             curr_pos += var_size
 
     def read(self) -> dict[str, tp.Any]:
+        """
+        Read data from shared heap.
+
+        :return: data read
+        """
         curr_pos = 0
 
         out = {}

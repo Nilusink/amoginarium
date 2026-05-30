@@ -13,7 +13,7 @@ import os
 
 class BetterDict[T]:
     """
-    each element is also accessible with instance.element.
+    Each element is also accessible with instance.element.
     """
 
     def __init__(self, **initial: T) -> None:
@@ -111,10 +111,16 @@ def get_fg_color(n: int, *, background: bool = False) -> str:
     """
     Dynamic fg/bg color.
 
-    Standard background color where n can be a number between 0-7
-    High intensity background color where n can be a number between 8-15
-    Rainbow background color where n can be a number between 16-231
+    Standard background color where n can be a number between 0-7.
+
+    High intensity background color where n can be a number between 8-15.
+
+    Rainbow background color where n can be a number between 16-231.
+
     Gray background color where n can be a number between 232-255.
+
+    :param n: number to create color from
+    :param background: if true, return code for bg color, else fg color
     """
     return f"\u001b[{"4" if background else "3"}8;5;{n}m"
 
@@ -126,7 +132,7 @@ def term_color_rgb(r: int, g: int, b: int, *, background: bool = False) -> str:
     :param r: red
     :param g: green
     :param b: blue
-    :param background: if true, return code for BG color
+    :param background: if true, return code for bg color, else fg color
     :return: terminal escape code
     """
     return f"\u001b[{"4" if background else "3"}8;2;{r};{g};{b}m"

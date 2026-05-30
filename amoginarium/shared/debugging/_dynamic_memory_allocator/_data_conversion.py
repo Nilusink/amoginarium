@@ -8,7 +8,7 @@ import struct
 
 from icecream import ic
 
-from amoginarium.shared.utility import Vec2, Color
+from amoginarium.shared.utility import Vec2
 
 
 def to_bytes(data: tp.Any, *, pad_size: int = -1) -> bytes:  # noqa: PLR0911
@@ -141,10 +141,6 @@ def debug_repr(var: tp.Any) -> str:
         return f"{var:.2f}"
 
     return repr(var)
-
-
-def debug_colorize(string: str) -> ...:
-    ...
 
 
 if __name__ == "__main__":
