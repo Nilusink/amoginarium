@@ -145,7 +145,9 @@ class BaseGame:
         self._last_loaded: tp.LiteralString | EllipsisType = ...
         self._shifting = False
 
-        self.global_vars.scaling = Settings.scaling
+        # initialize global vars from settings
+        self.global_vars.set_scaling(Settings.scaling)
+        self.global_vars.initialize_debug_vars(Settings.debug_vars)
 
         # configure icecream
         self._debugging = debug
@@ -781,7 +783,9 @@ class BaseGame:
             return
         self._ended = True
 
+        # update settings
         Settings.scaling = self.global_vars.get_scaling()
+        Settings.debug_vars = self.global_vars.get_debug_vars()
         Settings.write()
 
         # tell threads to exit

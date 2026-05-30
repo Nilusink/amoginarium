@@ -117,7 +117,7 @@ class GlobalVars:  # noqa: PLR0904
         Add a value change callback.
 
         :param value: Which value to subscribe to
-        :param callback: Callback callend on value Change
+        :param callback: Callback called on value Change
         """
         for i, v in enumerate(self.__compiled):
             if v[2] == value or v[2] == f"_{value}":
@@ -159,9 +159,18 @@ class GlobalVars:  # noqa: PLR0904
 
         self.__values["debug_vars"].value = self._debug_vars
 
+    def initialize_debug_vars(self, value: int) -> None:
+        """Set all debug vars from value."""
+        self._debug_vars = value
+        self.__values["debug_vars"].value = value
+
     def toggle_debug_var(self, num: DebugVarsEnum) -> None:
         self._debug_vars ^= 1 << num.value
         self.__values["debug_vars"].value = self._debug_vars
+
+    def get_debug_vars(self) -> int:
+        """Get all debug vars."""
+        return self.__values["debug_vars"].value
 
     def get_screen_size(self) -> Vec2:
         return self._screen_size.copy()
