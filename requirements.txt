@@ -3,7 +3,6 @@ crossfiledialog~=1.1.0
 icecream~=2.1.10
 matplotlib~=3.10.8
 numpy~=2.4.2
-pginter~=0.2.16
 pillow~=12.1.1
 pydantic~=2.12.5
 pygame-ce~=2.5.6
