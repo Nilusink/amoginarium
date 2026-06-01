@@ -70,7 +70,3 @@ Monitor engine runtimes, memory metrics, and multi-file comparisons in real-time
 ```bash
 python debug_analyzer_live.py
 ```
-
-## License
-
-[MIT License] - See the `LICENSE` file for details.
