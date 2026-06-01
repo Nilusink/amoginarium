@@ -415,8 +415,11 @@ class LogicProcess:
                 curr_view.pos -= screen_pixels
 
                 # set position in case of graphics position update
-                x_pos = self._x_pid.update_value(curr_view.pos.x, delta)
-                y_pos = self._y_pid.update_value(curr_view.pos.y, delta)
+                self._x_pid.update_value(curr_view.pos.x, delta)
+                self._y_pid.update_value(curr_view.pos.y, delta)
+
+                x_pos = self._x_pid.value
+                y_pos = self._y_pid.value
 
                 Updated.world_position.xy = x_pos, y_pos
 

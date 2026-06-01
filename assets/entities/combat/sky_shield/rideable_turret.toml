@@ -10,8 +10,15 @@ layer = 3
 name = "skyshield_base"
 
 [behaviour]
-turn_speed = 1.57
 airburst_munition = true
+
+[turret_control]
+turn_speed = 1.745
+turn_acceleration = 26
+friction = 4
+p = 8
+i = 0
+d = 0.8
 
 [engagement]
 valid_angles = [2.944, 0.197]

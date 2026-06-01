@@ -51,4 +51,4 @@ cdef class PIDController:
         # apply PID output TO the value
         self._value += output * dt
 
-        return self._value
+        return output

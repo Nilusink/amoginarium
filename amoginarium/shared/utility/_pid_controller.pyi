@@ -20,4 +20,10 @@ class PIDController:
         """Update PID controller based on absolute value."""
 
     def update(self, error: float, dt: float) -> float:
-        """Update the PID controller based on relative error."""
+        """
+        Update the PID controller based on relative error.
+
+        :param error: relative error
+        :param dt: current time
+        :return: PID control value (velocity like)
+        """

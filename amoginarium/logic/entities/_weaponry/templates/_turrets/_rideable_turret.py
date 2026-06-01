@@ -18,8 +18,9 @@ from icecream import ic
 from amoginarium import pv
 from amoginarium.shared import BaseCommandType, Coalitions, ProcessCommand, TurretCIDs
 from amoginarium.shared.audio import MetalPings
-from amoginarium.shared.utility import convert_coord, get_default, MASK16
-from amoginarium.shared.utility import MASK32, normalize_angle, Vec2
+from amoginarium.shared.utility import convert_coord, get_default
+from amoginarium.shared.utility import InertialValue, MASK16, MASK32
+from amoginarium.shared.utility import normalize_angle, PIDController, Vec2
 
 from ...._base import GameCollisions, LogicGameEntity
 from ...._rideables import Passenger, RideablePerks
@@ -52,12 +53,19 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     )
 
     # region ClassVars
+    _ADVANCED_DEBUGGING = True
+    _AD_VARS: tp.ClassVar = [
+        ("control_value", float),
+        ("_turret_angle.value", float),
+        ("target_turret_angle", float),
+    ]
+    _AD_CONSOLE_LINES = 0
+
     _default_size: tp.ClassVar[Vec2 | float | tuple[float, float] | list[float]] = (
         32,
         32,
     )
     _default_max_hp: tp.ClassVar[float] = 50
-    _default_turn_speed: tp.ClassVar[float] = np.inf
     _default_facing_angle: tp.ClassVar[float] = 0
     _default_airburst_munition: tp.ClassVar[bool] = False
 
@@ -66,6 +74,13 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     ] = ...
     _default_engagement_min_range: tp.ClassVar[float] = 0
     _default_engagement_max_range: tp.ClassVar[float] = 300
+
+    _default_turret_control_turn_speed: tp.ClassVar[float] = np.inf
+    _default_turret_control_turn_acceleration: tp.ClassVar[float] = np.inf
+    _default_turret_control_friction: tp.ClassVar[float] = 4
+    _default_turret_control_p: tp.ClassVar[float] = 8
+    _default_turret_control_i: tp.ClassVar[float] = 0
+    _default_turret_control_d: tp.ClassVar[float] = 1.6
 
     _default_target_taps: tp.ClassVar[int] = 1  # shots per click
 
@@ -90,6 +105,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     _passenger_visible: bool
     _passenger_offset: Vec2
     _turn_speed: float
+    _turn_acceleration: float
 
     # endregion
 
@@ -114,7 +130,14 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         self._passenger_offset: Vec2 = convert_coord(  # type: ignore[trust-me-bro]
             self._default_passenger_offset, Vec2
         )
-        self._turn_speed: float = get_default(self._default_turn_speed, np.inf)
+        self._turn_speed: float = get_default(
+            self._default_turret_control_turn_speed,
+            np.inf,
+        )
+        self._turn_acceleration: float = get_default(
+            self._default_turret_control_turn_acceleration,
+            np.inf,
+        )
 
         self._valid_angles = ...
         valid_angles = self._default_engagement_valid_angles
@@ -174,6 +197,24 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         self.weapon.set_parent(self)
         self.weapon.show()
 
+        # turret stuff
+        self.control_value = 0
+        self.target_turret_angle = 0
+        self._turret_angle = InertialValue(
+            self.facing.angle,
+            initial_velocity=0,
+            inertia=1,
+            max_velocity=self._turn_speed,
+            max_acceleration=self._turn_acceleration,
+            friction=self._default_turret_control_friction,
+        )
+        self._turret_angle_pid = PIDController(
+            p=self._default_turret_control_p,
+            i=self._default_turret_control_i,
+            d=self._default_turret_control_d,
+        )
+        self._turret_angle_pid.set_value(self._turret_angle.value)
+
         # create collision
         self._create_collision()
 
@@ -183,12 +224,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         self.__ride_pressed = False
 
         # spawn logic dummy
-        pv.COQ.put(
-            ProcessCommand(
-                type=BaseCommandType.spawn_dummy,
-                kwargs={"id": self.id, "cid": self.cid(), "weapon_id": self.weapon.id},
-            )
-        )
+        self._spawn_graphics_entity(weapon_id=self.weapon.id)
 
     # region properties
     @property
@@ -227,6 +263,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
     def get_camera_position(self) -> Vec2 | None:
         return self.position
 
+    @tp.override
     def get_camera_zoom(self) -> float | None:
         return None
 
@@ -275,7 +312,7 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         target_pos: Vec2 | EllipsisType = ...,
         **bullet_args: tp.Any,
     ) -> None:
-        """Checks if shot is inside parameters."""
+        """Check if shot is inside parameters."""
         self.weapon.shoot(
             self.weapon.facing, bullet_tof=tof, target_pos=target_pos, **bullet_args
         )
@@ -354,6 +391,8 @@ class RideableTurret(RideablePerks, LogicGameEntity):
 
     def _turn_at(self, angle: float, dt: float) -> None:
         """Turn towards a target."""
+        self.target_turret_angle = angle
+
         if not isinstance(self._default_weapon_static_facing, EllipsisType):
             self.weapon.facing.angle = self._default_weapon_static_facing
             return
@@ -366,9 +405,15 @@ class RideableTurret(RideablePerks, LogicGameEntity):
         if diff < -np.pi:
             diff += 2 * np.pi
 
-        # limit turn speed
-        increment = np.sign(diff) * min(abs(diff), self._turn_speed * dt)
-        new_angle = normalize_angle(self.facing.angle + increment)
+        # get PID controll value
+        self._turret_angle_pid.set_value(self.facing.angle)
+        self.control_value = self._turret_angle_pid.update(diff, dt)
+
+        # apply pid control value to turret
+        new_angle = self._turret_angle.update(
+            self.control_value * self._turn_speed / 2,
+            dt,
+        )
 
         # check for gimbal limit
         if not isinstance(self._valid_angles, EllipsisType):

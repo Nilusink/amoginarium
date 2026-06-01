@@ -19,13 +19,13 @@ from types import EllipsisType, NoneType
 import numpy as np
 from icecream import ic
 
-from amoginarium import pv
-from amoginarium.shared import BaseCommandType, ProcessCommand, TurretCIDs
+from amoginarium.shared import TurretCIDs
 from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import calculate_launch_angle, get_default
-from amoginarium.shared.utility import ManeuveringTrackClass, MASK16, MASK32, MASK64
-from amoginarium.shared.utility import MotionTrackType, normalize_angle, TrackQuality
-from amoginarium.shared.utility import TrackState, UnknownTrackClass, Vec2
+from amoginarium.shared.utility import InertialValue, ManeuveringTrackClass, MASK16
+from amoginarium.shared.utility import MASK32, MASK64, MotionTrackType, normalize_angle
+from amoginarium.shared.utility import PIDController, TrackQuality, TrackState
+from amoginarium.shared.utility import UnknownTrackClass, Vec2
 
 from ...._base import GameCollisions, GravityAffected, LogicGameEntity
 from .._sensors import DetectionGroup
@@ -89,6 +89,9 @@ class BaseTurret(LogicGameEntity):
         ("facing.angle", float),
         ("intercept_bullets", bool),
         ("intercept_players", bool),
+        ("control_value", float),
+        ("_turret_angle.value", float),
+        ("target_turret_angle", float),
     ]
     _AD_CONSOLE_LINES = 1
 
@@ -103,11 +106,17 @@ class BaseTurret(LogicGameEntity):
     _number_target_taps: int
 
     _default_size: Vec2 | float | tuple[float, float] | list[float] = (23, 24)
-    _default_turn_speed: float = np.inf  # max rad/s
     _default_facing_angle: float = np.pi
     _default_max_error: float | EllipsisType = ...
     _default_allow_static_target: bool = False
     _default_airburst_munition: bool = False
+
+    _default_turret_control_turn_speed: tp.ClassVar[float] = np.inf
+    _default_turret_control_turn_acceleration: tp.ClassVar[float] = np.inf
+    _default_turret_control_friction: tp.ClassVar[float] = 4
+    _default_turret_control_p: tp.ClassVar[float] = 8
+    _default_turret_control_i: tp.ClassVar[float] = 0
+    _default_turret_control_d: tp.ClassVar[float] = 1.6
 
     _default_engagement_valid_angles: tuple[float, float] | EllipsisType = ...
     _default_engagement_aim_type: tp.Literal["low", "high"] = "low"
@@ -253,7 +262,14 @@ class BaseTurret(LogicGameEntity):
             self._target_tapping = False
             self._number_target_taps = 1
 
-        self._turn_speed = get_default(turn_speed, self._default_turn_speed)
+        self._turn_speed: float = get_default(
+            self._default_turret_control_turn_speed,
+            np.inf,
+        )
+        self._turn_acceleration: float = get_default(
+            self._default_turret_control_turn_acceleration,
+            np.inf,
+        )
 
         self._hp = self._default_max_hp
 
@@ -262,6 +278,24 @@ class BaseTurret(LogicGameEntity):
         self._create_collision()
         self.facing.angle = self._default_facing_angle
         self.weapon.facing.angle = self.facing.angle
+
+        # turret stuff
+        self.control_value = 0
+        self.target_turret_angle = 0
+        self._turret_angle = InertialValue(
+            self.facing.angle,
+            initial_velocity=0,
+            inertia=1,
+            max_velocity=self._turn_speed,
+            max_acceleration=self._turn_acceleration,
+            friction=self._default_turret_control_friction,
+        )
+        self._turret_angle_pid = PIDController(
+            p=self._default_turret_control_p,
+            i=self._default_turret_control_i,
+            d=self._default_turret_control_d,
+        )
+        self._turret_angle_pid.set_value(self._turret_angle.value)
 
         if not detection_group:
             self.detection_group = DetectionGroup(str(self.id))
@@ -489,7 +523,7 @@ class BaseTurret(LogicGameEntity):
                     )
 
                     if solution:
-                        self._turn_at(solution, delta)
+                        self._turn_at(solution.angle.angle, delta)
                         self._shoot_at(solution, max_error=self._max_error)
 
                     else:
@@ -499,15 +533,17 @@ class BaseTurret(LogicGameEntity):
                     new_target = None
 
             else:
-                self._turn_at(solution, delta)
+                self._turn_at(solution.angle.angle, delta)
                 self._shoot_at(solution, max_error=self._max_error)
 
         # aim but don't shoot
         if new_target is None and simulate_target is not None:
-            self._turn_at(simulate_target, delta)
+            self._turn_at(simulate_target.angle.angle, delta)
 
         else:
             self._target = None
+            if self._target_angle != 0:
+                self._turn_at(self._target_angle, delta)
 
         if perf_counter() - self._last_shot >= 0.1:
             self.weapon.stop_shooting()
@@ -658,10 +694,11 @@ class BaseTurret(LogicGameEntity):
             else:
                 self.available_targets[solution.track]["shot_at"] = solution.tof
 
-    def _turn_at(self, solution: TargetSolution, delta: float) -> None:
+    def _turn_at(self, angle: float, delta: float) -> None:
         """Turn towards a target."""
-        diff = solution.angle.angle - self.facing.angle
-        self._target_angle = solution.angle.angle
+        self.target_turret_angle = angle
+        diff = angle - self.facing.angle
+        self._target_angle = angle
 
         if diff > np.pi:
             diff -= 2 * np.pi
@@ -669,9 +706,15 @@ class BaseTurret(LogicGameEntity):
         if diff < -np.pi:
             diff += 2 * np.pi
 
-        # limit turn speed
-        increment = np.sign(diff) * min(abs(diff), self._turn_speed * delta)
-        new_angle = normalize_angle(self.facing.angle + increment)
+        # get PID controll value
+        self._turret_angle_pid.set_value(self.facing.angle)
+        self.control_value = self._turret_angle_pid.update(diff, delta)
+
+        # apply pid control value to turret
+        new_angle = self._turret_angle.update(
+            self.control_value * self._turn_speed / 2,
+            delta,
+        )
 
         # check for gimbal limit
         if not isinstance(self._valid_angles, EllipsisType):

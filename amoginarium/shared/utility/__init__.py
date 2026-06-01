@@ -18,6 +18,7 @@ from ._cvectors import clamp_angle, max_angle, min_angle
 from ._cvectors import normalize_angle, normalize_angle_neg, Vec2
 from ._error_types import WtfError
 from ._minrect_algorithm import find_minimum_rectangles, find_minimum_rectangles_dirty
+from ._physics_approximations import *
 from ._pid_controller import PIDController
 from ._tracks import *
 from ._tuplemath import TupleMath

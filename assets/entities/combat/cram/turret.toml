@@ -9,11 +9,18 @@ size = [64, 128]
 name = "CRAM_base"
 
 [behaviour]
-turn_speed = 2
 facing_angle = 3.14159
-max_error = 0  # not recommendet to set at 0. if not set will use weapons inaccuracy.
+max_error = 0.05  # not recommendet to set at 0. if not set will use weapons inaccuracy.
 allow_static_target = false  # if turret can't find solution for target + movement, allow static target
 airburst_munition = true  # set ttl of bullet to predicrted intercept
+
+[turret_control]
+turn_speed = 2
+turn_acceleration = 500
+friction = 4
+p = 8
+i = 0
+d = 0.1
 
 [engagement]
 valid_angles = [2, 1.1]
