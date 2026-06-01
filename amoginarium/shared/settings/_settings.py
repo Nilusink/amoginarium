@@ -58,8 +58,6 @@ class _Settings:
             # create settings file for future reference
             self.write()
 
-        ic(self.__data)
-
     def write(self) -> None:
         with open(self.__file, "w", encoding="utf-8") as file:
             dump(self.__data, file, indent=4)
