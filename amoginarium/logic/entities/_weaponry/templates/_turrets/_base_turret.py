@@ -26,6 +26,7 @@ from amoginarium.shared.utility import InertialValue, ManeuveringTrackClass, MAS
 from amoginarium.shared.utility import MASK32, MASK64, MotionTrackType, normalize_angle
 from amoginarium.shared.utility import PIDController, TrackQuality, TrackState
 from amoginarium.shared.utility import UnknownTrackClass, Vec2
+from amoginarium.shared.utility.controllers import calculate_actuator
 
 from ...._base import GameCollisions, GravityAffected, LogicGameEntity
 from .._sensors import DetectionGroup
@@ -707,8 +708,16 @@ class BaseTurret(LogicGameEntity):
             diff += 2 * np.pi
 
         # get PID controll value
-        self._turret_angle_pid.set_value(self.facing.angle)
-        self.control_value = self._turret_angle_pid.update(diff, delta)
+        # self._turret_angle_pid.set_value(self.facing.angle)
+        # self.control_value = self._turret_angle_pid.update(diff, delta)
+
+        self.control_value = calculate_actuator(
+            delta,
+            diff,
+            self._turret_angle.velocity,
+            self._turn_acceleration,
+            self._turn_acceleration
+        )
 
         # apply pid control value to turret
         new_angle = self._turret_angle.update(
@@ -733,8 +742,9 @@ class BaseTurret(LogicGameEntity):
                 new_angle = min(max(new_angle, min_a), max_a)
 
         # apply rotation
-        self.facing.angle = new_angle
-        self.weapon.facing.angle = self.facing.angle
+        if new_angle:
+            self.facing.angle = new_angle
+            self.weapon.facing.angle = self.facing.angle
 
     def get_initial_root_collision_exception(self) -> CollisionExceptionIDType:
         return self._bullets_do_not_initially_hit_turret

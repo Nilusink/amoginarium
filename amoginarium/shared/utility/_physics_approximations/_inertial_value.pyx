@@ -36,7 +36,7 @@ cdef class InertialValue:
         friction: float = 1,
     ):
         self._value = initial_value
-        self.vel = initial_velocity
+        self._vel = initial_velocity
         self.inertia = inertia
         self.max_velocity = max_velocity
         self.max_acceleration = max_acceleration
@@ -49,7 +49,7 @@ cdef class InertialValue:
             return self._value
 
         if abs(control_input) < 1e-9:
-            self.vel = 0
+            self._vel = 0
             return self._value
 
         # Newton-style dynamics:
@@ -62,23 +62,30 @@ cdef class InertialValue:
         )
 
         # integrate velocity
-        self.vel += accel * dt
-        self.vel *= exp(-self.friction * dt)
+        self._vel += accel * dt
+        self._vel *= exp(-self.friction * dt)
 
         # velocity limiting (acts like motor saturation)
-        if self.vel > self.max_velocity:
-            self.vel = self.max_velocity
-        elif self.vel < -self.max_velocity:
-            self.vel = -self.max_velocity
+        if self._vel > self.max_velocity:
+            self._vel = self.max_velocity
+        elif self._vel < -self.max_velocity:
+            self._vel = -self.max_velocity
 
         # integrate position
-        self._value += self.vel * dt
+        self._value += self._vel * dt
 
         return self._value
 
     cpdef double get_value(self):
         return self._value
-    
+
+    cpdef double get_velocity(self):
+        return self._vel
+
     @property
     def value(self) -> float:
         return self._value
+
+    @property
+    def velocity(self) -> float:
+        return self._vel

@@ -50,6 +50,13 @@ class InertialValue:
     def get_value(self) -> float:
         """Get current system value."""
 
+    def get_velocity(self) -> float:
+        """Get current velocity."""
+
     @property
     def value(self) -> float:
         """Get current system value."""
+
+    @property
+    def velocity(self) -> float:
+        """Get current velocity."""

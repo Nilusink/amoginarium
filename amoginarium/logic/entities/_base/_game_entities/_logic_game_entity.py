@@ -12,6 +12,7 @@ serving as the base class for standard game objects.
 
 from __future__ import annotations
 
+from contextlib import suppress
 import typing as tp
 
 from amoginarium import pv
@@ -245,8 +246,9 @@ class LogicGameEntity(
         super()._update(delta)
 
         # update runtime buffer
-        self._runtime_buffer[self.id].facing = int(
-            normalize_angle(self.facing.angle) * 10_000
-        )
+        with suppress(ValueError):
+            self._runtime_buffer[self.id].facing = int(
+                normalize_angle(self.facing.angle) * 10_000
+            )
 
     # endregion

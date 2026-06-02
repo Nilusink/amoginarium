@@ -11,8 +11,10 @@ Can be used for both angular and linear movements.
 
 
 cdef class InertialValue:
-    cdef double _value, vel, inertia, max_velocity, max_acceleration, friction
+    cdef double _value, _vel, inertia, max_velocity, max_acceleration, friction
 
     cpdef double update(self, double control_input, double dt)
 
     cpdef double get_value(self)
+
+    cpdef double get_velocity(self)

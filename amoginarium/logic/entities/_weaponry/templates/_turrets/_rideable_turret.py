@@ -21,6 +21,7 @@ from amoginarium.shared.audio import MetalPings
 from amoginarium.shared.utility import convert_coord, get_default
 from amoginarium.shared.utility import InertialValue, MASK16, MASK32
 from amoginarium.shared.utility import normalize_angle, PIDController, Vec2
+from amoginarium.shared.utility.controllers import calculate_actuator
 
 from ...._base import GameCollisions, LogicGameEntity
 from ...._rideables import Passenger, RideablePerks
@@ -406,8 +407,16 @@ class RideableTurret(RideablePerks, LogicGameEntity):
             diff += 2 * np.pi
 
         # get PID controll value
-        self._turret_angle_pid.set_value(self.facing.angle)
-        self.control_value = self._turret_angle_pid.update(diff, dt)
+        # self._turret_angle_pid.set_value(self.facing.angle)
+        # self.control_value = self._turret_angle_pid.update(diff, dt)
+
+        self.control_value = calculate_actuator(
+            dt,
+            diff,
+            self._turret_angle.velocity,
+            self._turn_acceleration,
+            self._turn_acceleration
+        )
 
         # apply pid control value to turret
         new_angle = self._turret_angle.update(
