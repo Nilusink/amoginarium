@@ -73,6 +73,7 @@ class Grenade(Bullet):
 
     _DEFAULT_COLLISION_EXCEPTION_ROOT = True
     _DEFAULT_COLLISION_GROUP = GameCollisions.collision_group_grenades
+    _DEFAULT_COLLISION_REMEMBER_ACTIVE_NORMALS: tp.ClassVar[bool] = True
     # endregion
 
     __slots__ = ()
@@ -185,8 +186,10 @@ class Grenade(Bullet):
 
     @tp.override
     def _update(self, delta: float, update_facing: bool = True) -> None:
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for n in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 if n.y < -0.5:
                     self.acceleration.y = 0
                     if self.velocity.y > 0:
@@ -210,8 +213,10 @@ class Grenade(Bullet):
         x = value.x
         y = value.y
 
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for n in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x
@@ -230,8 +235,10 @@ class Grenade(Bullet):
         x = value.x
         y = value.y
 
-        if GameCollisions.collision_group_islands in self._active_normals:
-            for n in self._active_normals[GameCollisions.collision_group_islands]:
+        if GameCollisions.collision_group_islands in self._collision_active_normals:
+            for n in self._collision_active_normals[
+                GameCollisions.collision_group_islands
+            ]:
                 dot = (x * n.x) + (y * n.y)
                 if dot < 0:
                     x -= dot * n.x

@@ -11,11 +11,14 @@ from __future__ import annotations
 
 import typing as tp
 
+from ._entity_hints import DynamicEntityParentViable
+
 if tp.TYPE_CHECKING:
+    from ctypes import Array
     from types import EllipsisType
 
     from . import base_entity_t, CIDType, Coalitions
-    from .collision_detection import CollisionEvent
+    from .collision_detection import CollisionEvent, CollisionGroupIDType
     from .utility import Vec2
 
 
@@ -31,8 +34,25 @@ class EntityChildViable(tp.Protocol):
         :param delta: Tme since the last update
         """
 
-    def kill(self) -> None:
-        """Clean up and terminate the child."""
+    def kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+        force_kill: bool = False,
+    ) -> bool | None:
+        """
+        Kill the entity and all its children.
+
+        :param killed_by: Who killed this entity
+        :param kill_children: Whether to kill children as well as recursively
+        :param force_kill: Whether to kill even if before kill returns False
+        :return: Whether the entity was killed or not. May be denied by _before_kill.
+            None if the entity is already dead.
+        """
+
+    def parent_died(self) -> None:
+        """Call when the parent dies."""
 
 
 class MurderViable(tp.Protocol):
@@ -43,102 +63,60 @@ class MurderViable(tp.Protocol):
         """Parent."""
 
 
-class BaseLogicEntityLike(tp.Protocol):
+class BaseLogicEntityLike(EntityChildViable, tp.Protocol):
     """
     Protocol for the most basic type of logic entity.
+
     - Parent/Children relations
-    - groups
-    - update
-    - visibility.
+    - Groups
+    - Update
+    - Visibility
     """
+
+    @property
+    def alive(self) -> bool:
+        """:return: Whether the entity is alive."""
 
     @property
     def id(self) -> int:
-        """:return: entity id (+ buffer location)"""
-        ...
+        """:return: Entity id (+ buffer location)"""
 
     @property
     def parent(self) -> BaseLogicEntityLike | None:
-        """:return: entities parent if present"""
-        ...
+        """:return: Entity parent if present."""
+
+    def parent_died(self) -> None:
+        """Call when the parent dies."""
 
     @property
     def root(self) -> BaseLogicEntityLike:
-        """:return: root entity; entity parent if present else self"""
-        ...
+        """:return: Root entity; entity parent if present else self"""
 
     @property
     def children(self) -> list[EntityChildViable]:
-        """:return: list of all children of this entity"""
-        ...
+        """:return: List of all children of this entity"""
 
     @property
-    def _buffer(self) -> base_entity_t:
-        """:return: runtime buffer data for this entity"""
-        ...
+    def lifetime(self) -> float:
+        """Time since entity spawn."""
 
-    def _set_bit(self, param: str, bit_index: int, value: bool) -> None:
-        """
-        Set (or reset) on a specified bit
-        :param param: what parameter to set the bit at
-        :param bit_index: bit to set
-        :param value: what to set the bit to.
-        """
-        ...
+    @property
+    def runtime_buffer(self) -> Array[base_entity_t]:
+        """Entity runtime buffer."""
 
     def add(self, *groups: tp.Any) -> None:
         """
-        Add entity to one or more logic groups
-        :param groups: to add entity to.
+        Add entity to one or more logic groups.
+
+        :param groups: To add entity to
         """
-        ...
 
     def remove(self, *groups: tp.Any) -> None:
         """
-        Remove entity from one or more logic groups
-        :param groups: to remove entity from.
-        """
-        ...
+        Remove entity from one or more logic groups.
 
-    def _before_kill(
-        self,
-        *,
-        killed_by: MurderViable | EllipsisType = ...,
-        kill_children: bool = True,
-    ) -> bool:
+        :param groups: To remove entity from
         """
-        Whether the entity can be killed. Called before _kill
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively
-        :return: Whether the entity kill is accepted.
-        """
-
-    def _kill(
-        self,
-        *,
-        killed_by: MurderViable | EllipsisType = ...,
-        kill_children: bool = True,
-    ) -> None:
-        """
-        Kill entity and all its children
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively.
-        """
-
-    def _after_kill(
-        self,
-        *,
-        killed_by: MurderViable | EllipsisType = ...,
-        kill_children: bool = True,
-        killed: bool = True,
-    ) -> None:
-        """
-        Called at the end of kill no matter if the kill was accepted or not
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well recursively
-        :param killed: Whether the entity kill was accepted or not.
-        """
-        ...
 
     def kill(
         self,
@@ -148,270 +126,176 @@ class BaseLogicEntityLike(tp.Protocol):
         force_kill: bool = False,
     ) -> bool | None:
         """
-        Kill entity and all its children
-        :param killed_by: who killed this entity
-        :param kill_children: whether to kill children as well as recursively
-        :param force_kill: whether to kill even if before kill returns False
+        Kill the entity and all its children.
+
+        :param killed_by: Who killed this entity
+        :param kill_children: Whether to kill children as well as recursively
+        :param force_kill: Whether to kill even if before kill returns False
         :return: Whether the entity was killed or not. May be denied by _before_kill.
             None if the entity is already dead.
         """
 
-    def _update(self, delta: float) -> None:
-        """
-        Update function for the entity
-        :param delta: time since the last update.
-        """
-        ...
-
     def update(self, delta: float, *, recursive: bool = True) -> None:
         """
-        Update entity and their children
-        :param delta: time since the last update
-        :param recursive: Whether to update children recursively.
+        Update entity and their children.
+
+        :param delta: Time since the last update
+        :param recursive: Whether to update children recursively
         """
         ...
 
     def show(self) -> None:
         """Set visibility to 1."""
-        ...
 
     def hide(self) -> None:
         """Set visibility to 0."""
-        ...
 
     def highlight(self) -> None:
         """Highlight the graphics entity."""
-        ...
 
     def stop_highlight(self) -> None:
         """Stop highlighting the graphics entity."""
-        ...
 
 
-class PositionedLogicEntityLike(BaseLogicEntityLike, tp.Protocol):
-    """Protocol for a logic entity with position and size."""
+class PositionedLogicEntityLike(
+    BaseLogicEntityLike, DynamicEntityParentViable, tp.Protocol
+):
+    """
+    Protocol for a logic entity with position and size.
+
+    :ivar position: The 2D position of the entity. Public for faster access
+        Do not modify freely!
+    :ivar size: The 2D size of the entity. Public for faster access.
+        Do not modify freely!
+    """
 
     position: Vec2
     size: Vec2
 
-    @property
-    def parent(self) -> PositionedLogicEntityLike | None:
-        """:return: entities parent if present"""
-        ...
+    @classmethod
+    def has_cid(cls) -> bool:
+        """:return: Return True if the entity has a CID."""
 
     @classmethod
     def cid(cls) -> CIDType:
         """
-        :return: the entities' component ID
-        :raises ValueError: if the class has no __cid
-        """
-        ...
+        Return CID.
 
-    def _get_ids(self) -> list[int]:
-        """:return: list of all entity IDs including this one and its parents recursively"""
+        :return: The entities' component ID
+        :raise ValueError: if the class has no __cid
+        """
+
+    @property
+    def parent(self) -> PositionedLogicEntityLike | None:
+        """:return: Entity parent if present."""
         ...
 
 
 class CollisionLogicEntityLike(PositionedLogicEntityLike, tp.Protocol):
     """
     Protocol for a logic entity that supports collision detection and response.
+
     Integrates with the global collision_manager to handle hitboxes, collision events,
     and collision filtering via exception IDs.
     """
 
-    @property
-    def parent(self) -> CollisionLogicEntityLike | None:
-        """:return: entities parent if present"""
-        ...
-
-    @property
-    def _collision_entity_id(self) -> int | None:
-        """:return: Collision Entity ID or None if no collision not created"""
-        ...
-
-    @property
-    def _collision_group(self) -> int | None:
-        """:return: Collision Group ID"""
-        ...
-
-    @property
-    def _collision_exception_root_ids(self) -> list[int]:
-        """:return: Root Collision exceptions rules. Maybe an empty list if they haven't been calculated yet"""
-        ...
-
     @classmethod
-    def debug_draw_hitboxes(cls, value: bool) -> None:
+    def debug_draw_hitboxes(cls, *, value: bool) -> None:
         """
-        Enables or disables global debug rendering for hitboxes.
+        Enable or disable global debug rendering for hitboxes.
+
         :param value: True to enable, False to disable.
-        """
-        ...
-
-    def _get_root_collision_exceptions(self) -> list[int]:
-        """Calculates root collision exceptions rules."""
-        ...
-
-    def _collision_start(
-        self,
-        group_id: int,
-        events: list[CollisionEvent[CollisionLogicEntityLike]],
-    ) -> list[bool] | None:
-        """
-        Called on collision start.
-
-        :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collisions
-        :return: List of booleans stating whether each collision is accepted.
-           If false, the CollisionManager will not call COLLISION_END
-           and will call COLLISION_START again
-           if there still is a collision in the next update
         """
 
     def collision_start(
-        self, group_id: int, events: list[CollisionEvent[CollisionLogicEntityLike]]
+        self,
+        group_id: CollisionGroupIDType,
+        events: list[CollisionEvent[CollisionLogicEntityLike]],
     ) -> list[bool] | None:
         """
-        Callback for collision start, called by the collision manager.
+        Collision start callback, called by the collision manager.
 
-        Shouldn't be overwritten in inheritance. Instead, use _collision_start.
+        Shouldn't be overwritten in inheritance. Instead, use _collision_start
 
         :param group_id: ID of the other group involved in the collision
         :param events: All details regarding the collision
         :return: List of booleans stating whether each collision is accepted.
            If false, the CollisionManager will not call COLLISION_END
            and will call COLLISION_START again
-           if there still is a collision in the next update
-        """
-
-    def _collision_end(
-        self, group_id: int, events: list[CollisionEvent[CollisionLogicEntityLike]]
-    ) -> None:
-        """
-        Called on collision end.
-
-        :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collisions
+           if there still is a collision in the next update.
         """
 
     def collision_end(
-        self, group_id: int, events: list[CollisionEvent[CollisionLogicEntityLike]]
+        self,
+        group_id: CollisionGroupIDType,
+        events: list[CollisionEvent[CollisionLogicEntityLike]],
     ) -> None:
         """
-        Callback on COLLISION_END, called by the collision manager.
+        Collision end callback, called by the collision manager.
 
         :param group_id: ID of the other group involved in the collision
-        :param events: All details regarding the collisions
+        :param events: All details regarding the collisions.
         """
-
-    def _create_collision(
-        self,
-        *,
-        position: Vec2 | EllipsisType = ...,
-        size: Vec2 | EllipsisType = ...,
-        rotation: float = 0.0,
-        positions: list[Vec2] | None = None,
-        centered: bool | EllipsisType = ...,
-        radius: float | None = None,
-        collision_active: bool | EllipsisType = ...,
-    ) -> None:
-        """
-        Registers this entity with the collision manager.
-
-        :param position: The 2D position for the hitbox. Defaults to self.position.
-        :param size: The 2D size for the hitbox. Defaults to self.size.
-        :param rotation: Rotation of the hitbox in radians.
-        :param positions: Optional list of vertices for polygonal hitboxes.
-        :param centered: Whether the hitbox is centered on the position.
-        :param radius: Optional radius for circular hitboxes.
-        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
-        """
-        ...
-
-    def _update_collision(
-        self,
-        *,
-        position: Vec2 | EllipsisType = ...,
-        size: Vec2 | EllipsisType = ...,
-        rotation: float = 0.0,
-        positions: list[Vec2] | None = None,
-        centered: bool | EllipsisType = ...,
-        radius: float | None = None,
-        collision_active: bool | EllipsisType = ...,
-        shift_history: bool = True,
-    ) -> None:
-        """
-        Updates the entity's hitbox parameters in the collision manager.
-        :param position: The 2D position for the hitbox. Defaults to self.position.
-        :param size: The 2D size for the hitbox. Defaults to self.size.
-        :param rotation: Rotation of the hitbox in radians.
-        :param positions: Optional list of vertices for polygonal hitboxes.
-        :param centered: Whether the hitbox is centered on the position.
-        :param radius: Optional radius for circular hitboxes.
-        :param collision_active: Whether the collision entity is active. Defaults to self._collision_active.
-        :param shift_history: Whether to update the previous position state for CCD.
-        """
-        ...
-
-    def _delete_collision(self) -> None:
-        """
-        Removes the entity from the collision manager and cleans up debug visuals.
-        """
-        ...
 
 
 class LogicGameEntityLike(CollisionLogicEntityLike, tp.Protocol):
     """
-    Protocol for basic game logic entities
+    Protocol for the core logic game entity.
+
     - Parent/Children relations
     - Groups
     - Update
     - Visibility
-    - Position, Size
+    - Positon, Size
     - Velocity, Acceleration
     - Optional Collision Detection
     - Coalitions.
+
+    :ivar facing: The 2D direction the entity is looking/facing.
+    :ivar velocity: The current 2D velocity of the entity.
+    :ivar acceleration: The current 2D acceleration of the entity.
+    :ivar last_delta: The time delta of the last update.
+    :ivar last_position: The position of the entity before the last movement.
     """
 
     facing: Vec2
     velocity: Vec2
     acceleration: Vec2
-    last_position: Vec2
     last_delta: float
-
-    @property
-    def parent(self) -> LogicGameEntityLike | None:
-        """:return: entities parent if present"""
-        ...
+    last_position: Vec2
 
     @property
     def world_position(self) -> Vec2:
-        """:return: entity position on screen"""
-        ...
+        """:return: Entity position on the screen."""
 
     @property
     def coalition(self) -> Coalitions:
-        """:return: which coalition the entity belongs to"""
-        ...
+        """:return: Which coalition the entity belongs to."""
 
     @property
     def serializable(self) -> bool:
-        """:return: whether the entity is serializable or not"""
-        ...
+        """:return: Whether the entity is serializable or not."""
 
     def to_dict(self) -> tp.MutableMapping[str, tp.Any] | None:
-        """:return: convert the entity to a dict if possible"""
-        ...
+        """:return: Convert the entity to a dict if possible."""
+
+    def add_impulse(self, impulse: Vec2) -> None:
+        """
+        Add an impulse force to the entity.
+
+        :param impulse: Impulse to add.
+        """
 
     def add_velocity(self, value: Vec2) -> None:
         """
-        Add velocity to the entity and guarantee that it will be valid (for short bursts)
+        Add velocity to the entity and guarantee it will be valid (for short bursts).
+
         :param value: 2D velocity to add.
         """
-        ...
 
     def add_acceleration(self, value: Vec2) -> None:
         """
-        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
+        Add acceleration to the entity and guarantee it will be valid (for long acc).
+
         :param value: 2D acceleration to add.
         """
-        ...

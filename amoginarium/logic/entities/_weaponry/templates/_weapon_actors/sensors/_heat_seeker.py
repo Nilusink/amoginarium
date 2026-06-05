@@ -21,15 +21,37 @@ from ._base import BaseWeaponsSensor
 if tp.TYPE_CHECKING:
     from types import EllipsisType
 
+    from amoginarium.shared import MurderViable
     from amoginarium.shared.collision_detection import CollisionEvent
+    from amoginarium.shared.collision_detection import CollisionGroupIDType
 
     from ..._bullets import AerodynamicEntity
 
 
 class HeatSeeker(BaseWeaponsSensor):
-    """heat seeking sensor."""
+    """Heat seeking sensor."""
 
+    __slots__ = (
+        "_fov",
+        "_max_range",
+        "_target_pos",
+        "_collision_groups",
+        "_coll_poly",
+        "_collisions",
+    )
+
+    # region ClassVars
     _CID = WeaponSensorCIDs.heat
+    # endregion
+
+    # region InstanceVars
+    _fov: float
+    _max_range: float
+    _target_pos: Vec2 | None
+    _collision_groups: list[CollisionGroupIDType]
+    _coll_poly: list[Vec2]
+    _collisions: list[CollisionEvent]
+    # endregion
 
     def __init__(
         self,
@@ -41,11 +63,13 @@ class HeatSeeker(BaseWeaponsSensor):
         function_delay: float = 0,
     ) -> None:
         """
-        Homes in on a designated laser.
+        Create a heat-seeking sensor.
 
-        :param parent: parent bullet
-        :param offset: offset from parent
-        :param function_delay: sensor function delay
+        :param parent: Parent bullet
+        :param fov: Field of view of the sensor
+        :param max_range: Maximum range of the sensor
+        :param offset: Offset from parent
+        :param function_delay: Sensor function delay
         """
         self._fov = fov
         self._max_range = max_range
@@ -55,17 +79,22 @@ class HeatSeeker(BaseWeaponsSensor):
             GameCollisions.collision_group_items,
             GameCollisions.collision_group_players,
         ]
-        self._coll_poly: list[Vec2] = [
+        self._coll_poly = [
             Vec2(),
         ] * 4
+        self._collisions = []
 
         super().__init__(parent, offset=offset, function_delay=function_delay)
 
         if self._dbe is not None:
-            self._dbe.kill(self)
+            self._dbe.kill(killed_by=self)
             self._dbe = DebugPolygonEntity(self.parent.runtime_buffer)
 
+        GameCollisions.add_extra_calculate_callback(self.__calculate_targets_collisions)
+
+    @tp.override
     def _update_position(self) -> None:
+        """Update fuze position."""
         super()._update_position()
 
         self._coll_poly[0] = self._position
@@ -85,18 +114,9 @@ class HeatSeeker(BaseWeaponsSensor):
             self._dbe.p3 = self._coll_poly[2]
             self._dbe.p4 = self._coll_poly[3]
 
-    def get_target(self) -> Vec2 | None:
-        if self._target_pos:
-            return self._target_pos
-
-        return None
-
-    def _update(self) -> None:
-        # update position
-        super()._update()
-
-        # update target
-        collisions: list[CollisionEvent] = (
+    def __calculate_targets_collisions(self) -> None:
+        """Calculate all potential targets."""
+        self._collisions: list[CollisionEvent] = (
             GameCollisions.collision_manager.manual_collision(
                 self._collision_groups,
                 self._position,
@@ -106,8 +126,22 @@ class HeatSeeker(BaseWeaponsSensor):
             )
         )
 
-        largest_rcs = 0
-        for col in collisions:
+    @tp.override
+    def get_target(self) -> Vec2 | None:
+        """:return: The sensor target."""
+        if self._target_pos:
+            return self._target_pos
+
+        return None
+
+    @tp.override
+    def _update(self) -> None:
+        """Update the heat seeker sensor."""
+        # update position
+        super()._update()
+
+        largest_rcs: float = 0.0
+        for col in self._collisions:
             other = col.other_entity
 
             if other is self.parent.parent:
@@ -134,3 +168,14 @@ class HeatSeeker(BaseWeaponsSensor):
 
         if largest_rcs == 0:
             self._target_pos = None
+
+    def kill(self, killed_by: MurderViable | EllipsisType) -> None:
+        """
+        Kills this heat seeker.
+
+        :param killed_by: Who killed this seeker
+        """
+        GameCollisions.remove_extra_calculate_callback(
+            self.__calculate_targets_collisions
+        )
+        super().kill(killed_by)

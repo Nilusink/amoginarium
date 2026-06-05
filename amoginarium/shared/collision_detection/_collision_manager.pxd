@@ -9,6 +9,7 @@ Header file for the Cython-generated CollisionManager class.
 | ``Authors``: LukasKrah
 """
 
+from cpython.ref cimport PyObject
 from libc.stdint cimport uint64_t
 from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
@@ -60,6 +61,14 @@ cdef struct CollisionGroupStruct:
     vector[int] free_ids  # type: vector[CollisionEntityIDType]
 
 """
+Data for an active collision
+"""
+cdef struct ActiveColData:
+    int col_id
+    PyObject* normal_a
+    PyObject* normal_b
+
+"""
 Data of a collision relation
 (a relation between two groups)
 """
@@ -67,7 +76,7 @@ cdef struct CollisionRelationStruct:
     int id  # type: CollisionRelationIDType
     int group_a_id  # type: CollisionGroupIDType
     int group_b_id  # type: CollisionGroupIDType
-    unordered_map[uint64_t, int] active_cols  # noqa
+    unordered_map[uint64_t, ActiveColData] active_cols  # noqa
     unordered_set[uint64_t] updated_cols
 
 """

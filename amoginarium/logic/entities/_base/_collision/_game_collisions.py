@@ -48,6 +48,7 @@ class _GameCollisions:
         "hitboxes",
         "_registered_relations",
         "__exception_num",
+        "__extra_calculate_callbacks",
     )
 
     collision_manager: tp.Final[CollisionManager]
@@ -70,6 +71,8 @@ class _GameCollisions:
     _registered_relations: set[tuple[int, int]]
     __exception_num: int
 
+    __extra_calculate_callbacks: set[tp.Callable[[], tp.Any]]
+
     def __init__(self) -> None:
         self.collision_manager = CollisionManager(
             base_cell_size=500,
@@ -89,6 +92,8 @@ class _GameCollisions:
         """
         self.COLLISION_START = callback_start
         self.COLLISION_END = callback_end
+
+        self.__extra_calculate_callbacks = set()
         self._setup_groups()
 
     def _setup_groups(self) -> None:
@@ -272,6 +277,35 @@ class _GameCollisions:
         """
         self.__exception_num += 1
         return self.__exception_num
+
+    def calculate_all_collisions(self) -> None:
+        """
+        Calculates all collisions and calls all extra calculated callbacks.
+        """
+        self.collision_manager.calculate_all_collisions()
+        for callback in self.__extra_calculate_callbacks:
+            callback()
+
+    def add_extra_calculate_callback(self, callback: tp.Callable[[], tp.Any]) -> None:
+        """
+        Add a callback that gets called when all collisions are calculated.
+
+        Useful for manual collisions that would normally be done in update to be called
+        after all entities are updated and not mid-update!
+
+        :param callback: The callback that will be called
+        """
+        self.__extra_calculate_callbacks.add(callback)
+
+    def remove_extra_calculate_callback(
+        self, callback: tp.Callable[[], tp.Any]
+    ) -> None:
+        """
+        Remove a previously added extra-calculate-callback.
+
+        :param callback: The callback to remove
+        """
+        self.__extra_calculate_callbacks.discard(callback)
 
 
 GameCollisions: tp.Final[_GameCollisions] = _GameCollisions()

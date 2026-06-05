@@ -10,46 +10,34 @@ Base weapons sensor used in weapons guidance.
 
 from __future__ import annotations
 
+import typing as tp
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
 from amoginarium.shared import DynamicEntityParentViable, WeaponSensorCIDs
 
 from .._base_actor import BaseActor
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
+    from amoginarium.shared import CIDType
     from amoginarium.shared.utility import Vec2
-
-# from types import EllipsisType
-# import typing as tp
-
-
-# if tp.TYPE_CHECKING:
-#     from ..._bullets import AerodynamicEntity
 
 
 class BaseWeaponsSensor(DynamicEntityParentViable, BaseActor, ABC):
-    """sensor for weapons guidance."""
+    """Sensor for weapons guidance."""
 
-    _CID = WeaponSensorCIDs.base
+    __slots__ = ()
 
-    # def __init__(
-    #     self,
-    #     parent: "AerodynamicEntity",
-    #     *,
-    #     offset: tuple[float, float] | Vec2 | EllipsisType = ...,
-    #     function_delay: float = 0,
-    # ) -> None:
-    #     super().__init__(parent, offset=offset, function_delay=function_delay)
-    #
+    _CID: tp.ClassVar[CIDType] = WeaponSensorCIDs.base
+
     # region class methods
     @classmethod
     def has_cid(cls) -> bool:
+        """return: Whether the sensor has a component ID."""
         return True
 
     @classmethod
     def cid(cls) -> str:
-        """Component ID."""
+        """:return: Component ID."""
         return cls._CID.value
 
     # endregion
@@ -57,6 +45,6 @@ class BaseWeaponsSensor(DynamicEntityParentViable, BaseActor, ABC):
     # region interface
     @abstractmethod
     def get_target(self) -> Vec2 | None:
-        """Get sensor target."""
+        """:return: The sensor target."""
 
     # endregion

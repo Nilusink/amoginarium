@@ -16,18 +16,28 @@ import typing as tp
 
 from amoginarium.shared import PositionedLogicEntityLike
 
+from .._groups import Dead, Updated
 from ._base_logic_entity import BaseLogicEntity
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, CIDType
+    from amoginarium.shared import base_entity_t, CIDType, MurderViable
     from amoginarium.shared.utility import Vec2
 
 
 class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
-    """A logic entity with position and size."""
+    """
+    A logic entity with position and size.
+
+    :cvar _CID: The component ID of this entity type for serialization.
+    :ivar _parent: The parent entity of this entity, optional.
+    :ivar position: The 2D position of the entity. Public for faster access
+        Do not modify freely!
+    :ivar size: The 2D size of the entity. Public for faster access.
+        Do not modify freely!
+    """
 
     __slots__ = ("position", "size")
 
@@ -64,6 +74,8 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
         self.position = position
         self.size = size
 
+        self.add(Updated)
+
     # region Class-Methods
     @classmethod
     def has_cid(cls) -> bool:
@@ -86,6 +98,12 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
     # endregion
 
     # region Properties (and other getters)
+    @tp.override
+    @property
+    def parent(self) -> PositionedLogicEntity | None:
+        """:return: Entity parent if present."""
+        return self._parent
+
     def _get_ids(self) -> list[int]:
         """:return: list of all entity IDs including this one and parents"""
         if self._parent is None:
@@ -94,7 +112,7 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
 
     # endregion
 
-    # region Methods: Update
+    # region Methods: Update & Kill
     @tp.override
     def _update(self, delta: float) -> None:
         """
@@ -112,5 +130,20 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
         buf_entry.size_y = int(size.y)
 
         super()._update(delta)
+
+    def _kill(
+        self,
+        *,
+        killed_by: MurderViable | EllipsisType = ...,
+        kill_children: bool = True,
+    ) -> None:
+        """
+        Kill the entity and all its children.
+
+        :param killed_by: Who killed this entity
+        :param kill_children: Whether to kill children as well recursively
+        """
+        super()._kill(killed_by=killed_by, kill_children=kill_children)
+        Dead.add(self)
 
     # endregion

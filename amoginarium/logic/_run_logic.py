@@ -553,7 +553,7 @@ def run_continuous(  # noqa: PLR0917
 
         # update entities
         last_update_success = lp.update_entities(delta)
-        GameCollisions.collision_manager.calculate_all_collisions()
+        GameCollisions.calculate_all_collisions()
 
         # don't update if paused
         if lp.paused:

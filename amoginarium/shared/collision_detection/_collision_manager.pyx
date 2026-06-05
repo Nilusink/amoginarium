@@ -15,7 +15,7 @@ Implements the CollisionManager class.
 
 # noinspection PyUnresolvedReferences
 
-from ._collision_manager cimport CollisionGroupStruct, CollisionManager
+from ._collision_manager cimport ActiveColData, CollisionGroupStruct, CollisionManager
 from ._collision_manager cimport CollisionRelationStruct, DeferredDeletion, EntityData
 from ._collision_methods cimport aabb_aabb_swept, aabb_circle_swept
 from ._collision_methods cimport circle_circle_swept, circle_poly_swept
@@ -28,6 +28,8 @@ from ._collision_types import CollisionExceptionIDType, CollisionGroupIDType
 from ._collision_types import CollisionRelationIDType
 
 # noinspection PyUnresolvedReferences
+
+from cpython.ref cimport Py_DECREF, Py_INCREF, PyObject
 from cython.operator cimport dereference, preincrement
 from libc.math cimport cos, floor, sin, sqrt
 from libc.stdint cimport uint64_t
@@ -146,6 +148,12 @@ cdef class CollisionManager:
 
         total_relations = self.relations.size()
         for relation_idx in range(total_relations):
+            it = self.relations[relation_idx].active_cols.begin()
+            while it != self.relations[relation_idx].active_cols.end():
+                Py_DECREF(<object>dereference(it).second.normal_a)
+                Py_DECREF(<object>dereference(it).second.normal_b)
+                preincrement(it)
+
             self.relations[relation_idx].active_cols.clear()
             self.relations[relation_idx].updated_cols.clear()
 
@@ -384,6 +392,8 @@ cdef class CollisionManager:
         cdef vector[uint64_t] to_remove
         cdef int group_a_id, group_b_id, relation_id
         cdef object instance_a, instance_b
+        cdef int col_id
+        cdef double norm_x, norm_y
 
         total_relations = self.relations.size()
         for i in range(total_relations):
@@ -399,7 +409,9 @@ cdef class CollisionManager:
                 it = relation.active_cols.begin()
                 while it != relation.active_cols.end():
                     pair_key = dereference(it).first
-                    col_id = dereference(it).second
+                    col_id = dereference(it).second.col_id
+                    norm_a = <object>dereference(it).second.normal_a
+                    norm_b = <object>dereference(it).second.normal_b
 
                     entity_a_id = pair_key >> 32
                     entity_b_id = pair_key & 0xFFFFFFFF
@@ -432,7 +444,7 @@ cdef class CollisionManager:
                                                     entity_a_id].position_x_new,
                                                 self.groups[group_a_id].entities[
                                                     entity_a_id].position_y_new),
-                                            Vec2(),
+                                            norm_a,
                                             1.0
                                         )
                                         callbacks[1](instance_a, group_b_id, [ev_a])
@@ -449,7 +461,7 @@ cdef class CollisionManager:
                                                     entity_b_id].position_x_new,
                                                 self.groups[group_b_id].entities[
                                                     entity_b_id].position_y_new),
-                                            Vec2(),
+                                            norm_b,
                                             1.0
                                         )
                                         callbacks[3](instance_b, group_a_id, [ev_b])
@@ -460,6 +472,8 @@ cdef class CollisionManager:
 
                 to_remove_size = to_remove.size()
                 for k in range(to_remove_size):
+                    Py_DECREF(<object>relation.active_cols[to_remove[k]].normal_a)
+                    Py_DECREF(<object>relation.active_cols[to_remove[k]].normal_b)
                     relation.active_cols.erase(to_remove[k])
 
     cdef void _flush_deletions(self):
@@ -986,6 +1000,7 @@ cdef class CollisionManager:
         cdef double a_dx, a_dy, b_dx, b_dy
         cdef bint is_active_col
         cdef int col_id
+        cdef ActiveColData col_data
         cdef int ret_len
         cdef list actual_evs
         cdef object ret
@@ -1135,7 +1150,17 @@ cdef class CollisionManager:
                         if not is_active_col:
                             col_id = self.next_col_id
                             self.next_col_id += 1
-                            rel.active_cols[pair_key] = col_id
+                            col_data.col_id = col_id
+
+                            v_norm_a = Vec2().from_cartesian(norm_x, norm_y)
+                            v_norm_b = Vec2().from_cartesian(-norm_x, -norm_y)
+                            Py_INCREF(v_norm_a)
+                            Py_INCREF(v_norm_b)
+
+                            col_data.normal_a = <PyObject*>v_norm_a
+                            col_data.normal_b = <PyObject*>v_norm_b
+
+                            rel.active_cols[pair_key] = col_data
 
                             imp_ax = ea.position_x_old + ((ea.position_x_new - ea.position_x_old) * t)
                             imp_ay = ea.position_y_old + ((ea.position_y_new - ea.position_y_old) * t)
@@ -1149,8 +1174,7 @@ cdef class CollisionManager:
                                 ev = CollisionEvent(col_id, r_id, g_b_id, inst_b,
                                                     Vec2().from_cartesian(imp_ax,
                                                                           imp_ay),
-                                                    Vec2().from_cartesian(norm_x,
-                                                                          norm_y),
+                                                    <object>col_data.normal_a,
                                                     ev_time)
                                 if ea.id not in events_a_start: events_a_start[
                                     ea.id] = []
@@ -1161,8 +1185,7 @@ cdef class CollisionManager:
                                 ev = CollisionEvent(col_id, r_id, g_a_id, inst_a,
                                                     Vec2().from_cartesian(imp_bx,
                                                                           imp_by),
-                                                    Vec2().from_cartesian(-norm_x,
-                                                                          -norm_y),
+                                                    <object>col_data.normal_b,
                                                     ev_time)
                                 if b_id not in events_b_start: events_b_start[b_id] = []
                                 events_b_start[b_id].append((ev, pair_key))
@@ -1170,7 +1193,9 @@ cdef class CollisionManager:
         it = rel.active_cols.begin()
         while it != rel.active_cols.end():
             pair_key = dereference(it).first
-            col_id = dereference(it).second
+            col_id = dereference(it).second.col_id
+            norm_a = <object>dereference(it).second.normal_a
+            norm_b = <object>dereference(it).second.normal_b
             if rel.updated_cols.find(pair_key) == rel.updated_cols.end():
                 a_id = pair_key >> 32
                 b_id = pair_key & 0xFFFFFFFF
@@ -1183,7 +1208,7 @@ cdef class CollisionManager:
                                             Vec2().from_cartesian(
                                                 ga.entities[a_id].position_x_new,
                                                 ga.entities[a_id].position_y_new),
-                                            Vec2(), 1.0)
+                                            norm_a, 1.0)
                         if a_id not in events_a_end: events_a_end[a_id] = []
                         events_a_end[a_id].append(ev)
 
@@ -1195,7 +1220,7 @@ cdef class CollisionManager:
                                             Vec2().from_cartesian(
                                                 gb.entities[b_id].position_x_new,
                                                 gb.entities[b_id].position_y_new),
-                                            Vec2(), 1.0)
+                                            norm_b, 1.0)
                         if b_id not in events_b_end: events_b_end[b_id] = []
                         events_b_end[b_id].append(ev)
 
@@ -1204,6 +1229,8 @@ cdef class CollisionManager:
 
         to_remove_sz = to_remove.size()
         for k in range(to_remove_sz):
+            Py_DECREF(<object>rel.active_cols[to_remove[k]].normal_a)
+            Py_DECREF(<object>rel.active_cols[to_remove[k]].normal_b)
             rel.active_cols.erase(to_remove[k])
 
         # --- START CALLBACKS ---
@@ -1216,6 +1243,8 @@ cdef class CollisionManager:
                 ret_len = len(ret) if len(ret) < len(evs) else len(evs)
                 for idx in range(ret_len):
                     if not ret[idx]:
+                        Py_DECREF(<object>rel.active_cols[<uint64_t> evs[idx][1]].normal_a)
+                        Py_DECREF(<object>rel.active_cols[<uint64_t> evs[idx][1]].normal_b)
                         rel.active_cols.erase(<uint64_t> evs[idx][1])
 
         for ent_id, evs in events_b_start.items():
@@ -1227,6 +1256,8 @@ cdef class CollisionManager:
                 ret_len = len(ret) if len(ret) < len(evs) else len(evs)
                 for idx in range(ret_len):
                     if not ret[idx]:
+                        Py_DECREF(<object>rel.active_cols[<uint64_t> evs[idx][1]].normal_a)
+                        Py_DECREF(<object>rel.active_cols[<uint64_t> evs[idx][1]].normal_b)
                         rel.active_cols.erase(<uint64_t> evs[idx][1])
 
         # --- END CALLBACKS ---

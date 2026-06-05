@@ -695,6 +695,7 @@ class Bullet(LogicGameEntity):
     ) -> None:
         for fuze in self._fuzes:
             fuze.kill(killed_by)
+        self._fuzes = []
 
         # bullet hit knockback
         if all([killed_by != self, not issubclass(killed_by.__class__, Bullet)]):

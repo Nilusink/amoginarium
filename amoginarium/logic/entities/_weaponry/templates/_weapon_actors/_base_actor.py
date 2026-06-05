@@ -4,7 +4,7 @@ Base weapon actor (sensor, fuze, ...).
 | ``Path``: amoginarium/logic/entities/_weaponry/templates/_weapon_actors/_base_actor.py
 | ``Project``: amoginarium
 | ``Created``: 08.05.2026
-| ``Authors``: LukasKrah
+| ``Authors``: Nilusink
 """
 
 from __future__ import annotations
@@ -18,15 +18,28 @@ from ...._base import DebugCircleEntity
 if tp.TYPE_CHECKING:
     from types import EllipsisType
 
+    from amoginarium.shared import MurderViable
+
     from .._bullets import Bullet
 
 
 class BaseActor:
-    """detonates a bullet."""
+    """Detonates a bullet."""
+
+    __slots__ = ("_parent", "_arm_delay", "_offset", "_position", "_last_pos", "_dbe")
 
     # region ClassVars
-    _DEBUG: tp.ClassVar[bool] = False
+    _DEBUG: tp.Final[bool] = False
+    # endregion
 
+    # region InstanceVars
+    _parent: Bullet
+    _arm_delay: float
+    _offset: Vec2
+    _position: Vec2
+    _last_pos: Vec2
+
+    _dbe: DebugCircleEntity | None
     # endregion
 
     def __init__(
@@ -37,18 +50,18 @@ class BaseActor:
         function_delay: float = 0,
     ) -> None:
         """
-        Base weapon actor.
+        Create a Base weapon actor.
 
-        :param parent: parent bullet
-        :param offset: offset relative to bullet
-        :param function_delay: delays actors function
+        :param parent: Parent bullet
+        :param offset: Offset relative to bullet
+        :param function_delay: Delays actors function
         """
         self._parent = parent
         self._arm_delay = function_delay
 
         # calculate offset
         offset_: Vec2 | tuple[int, int] = get_default(offset, Vec2())
-        self._offset: Vec2 = convert_coord(offset_, Vec2)  # type: ignore
+        self._offset: Vec2 = convert_coord(offset_, Vec2)
 
         self._position = Vec2()
         self._last_pos = Vec2()
@@ -72,8 +85,12 @@ class BaseActor:
         """Bullets parent."""
         return self._parent
 
-    def kill(self, killed_by) -> None:
-        """Kills actor."""
+    def kill(self, killed_by: MurderViable | EllipsisType) -> None:
+        """
+        Kills this actor.
+
+        :param killed_by: Who killed this actor
+        """
         if self._dbe is not None:
             self._dbe.kill(killed_by=killed_by)
 
@@ -91,11 +108,11 @@ class BaseActor:
             self._dbe.position = self._position.copy()
 
     def _update(self) -> None:
-        """Updates the fuze."""
+        """Update the fuze."""
 
     @tp.final
     def update(self) -> None:
-        """Updates the fuze."""
+        """Update the fuze."""
         self._update_position()
 
         if self._parent.lifetime >= self._arm_delay:
