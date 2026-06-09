@@ -48,6 +48,11 @@ cpp_files = [
     "_ctarget_track.pyx",
 ]
 
+callocator_c = os.path.join(
+    base_package,
+    "shared/debugging/_dynamic_memory_allocator/_callocator.c"
+)
+
 for root, _, files in os.walk(base_package):
     for file in files:
         if file.endswith(".pyx"):
@@ -57,10 +62,15 @@ for root, _, files in os.walk(base_package):
             # Determine if this specific file needs the C++ compiler
             lang = "c++" if file in cpp_files else "c"
 
+            sources = [path]
+
+            if "_callocator_interface.pyx" in file:
+                sources.append(callocator_c)
+
             extensions.append(
                 Extension(
                     name=module,
-                    sources=[path],
+                    sources=sources,
                     language=lang,
                     extra_compile_args=c_args,
                     extra_link_args=l_args,

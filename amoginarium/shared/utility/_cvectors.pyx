@@ -10,6 +10,7 @@ Vec2 class and vec2 related functions.
 
 cimport cython
 from libc.math cimport atan2, cos, fmod, pi, sin, sqrt
+from struct import pack, unpack
 
 
 cdef class Vec2:
@@ -198,6 +199,8 @@ cdef class Vec2:
     def __repr__(self) -> str:
         return f"<Vec2; {self.x}, {self.y}>"
 
+    def __bytes__(self) -> bytes:
+        return pack("<dd", self.x, self.y)
 
     # constructors
     cpdef object from_cartesian(self, double x, double y):
@@ -212,6 +215,10 @@ cdef class Vec2:
         v.set_polar(angle, length)
     
         return v
+
+    cpdef object from_bytes(self, object b):
+        self.x, self.y = unpack("<dd", b)
+        return self
 
 
 cpdef double normalize_angle(double value):

@@ -14,8 +14,12 @@ from __future__ import annotations
 
 import typing as tp
 
+from icecream import ic
+
 from amoginarium import pv
-from amoginarium.shared import BaseLogicEntityLike, ENTITY_COUNTER
+from amoginarium.shared import BaseCommandType, BaseLogicEntityLike
+from amoginarium.shared import DebugVarsEnum, ENTITY_COUNTER, ProcessCommand
+from amoginarium.shared.debugging import SharedDebuggingInstance
 
 from .._groups import Dead, Updated
 
@@ -23,7 +27,8 @@ if tp.TYPE_CHECKING:
     from ctypes import Array
     from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, EntityChildViable, MurderViable
+    from amoginarium.shared import base_entity_t, CIDType
+    from amoginarium.shared import EntityChildViable, MurderViable
 
     from .._groups import LogicGroup
 
@@ -36,6 +41,8 @@ class BaseLogicEntity(BaseLogicEntityLike):
     - Groups
     - Update
     - Visibility
+
+    :ivar _sdi: shared debugging instance (if created)
     """
 
     __slots__ = [
@@ -48,6 +55,18 @@ class BaseLogicEntity(BaseLogicEntityLike):
         "_alive",
     ]
 
+    # region ClassVars
+    _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
+
+    # per entity
+    _ADVANCED_DEBUGGING: tp.ClassVar[bool] = False
+    _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
+        ("_alive", bool),
+    ]
+    _AD_CONSOLE_LINE_LENGTH: tp.ClassVar[int] = 32
+    _AD_CONSOLE_LINES: tp.ClassVar[int] = 2
+    # endregion
+
     # region InstanceVars
     _parent: BaseLogicEntity | None
     _children: list[EntityChildViable]
@@ -57,6 +76,7 @@ class BaseLogicEntity(BaseLogicEntityLike):
     __groups: list[LogicGroup]
 
     _alive: bool
+    _sdi: SharedDebuggingInstance | None
 
     # endregion
 
@@ -90,7 +110,13 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
         self.add(Updated)
 
-    # region Properties
+        # create shared debugging instance if required
+        self._sdi = None
+
+        if self._ADVANCED_DEBUGGING:
+            self.__create_shared_debug_instance()
+
+    # region properties (and other getters)
     @property
     def alive(self) -> bool:
         """Whether the entity is alive."""
@@ -132,6 +158,12 @@ class BaseLogicEntity(BaseLogicEntityLike):
     def runtime_buffer(self) -> Array[base_entity_t]:
         """Entity runtime buffer."""
         return self._runtime_buffer
+
+    def _get_ids(self) -> list[int]:
+        """:return: list of all entity IDs including this one and parents"""
+        if self._parent is None:
+            return [self.id]
+        return self._parent._get_ids() + [self.id]  # noqa: SLF001
 
     # endregion
 
@@ -234,8 +266,12 @@ class BaseLogicEntity(BaseLogicEntityLike):
 
         self.__groups.clear()
 
+        # free buffer
+        if self._sdi:
+            self._sdi.kill()
+
         # add to dead
-        Dead.add(self)
+        Dead.add(self)  # type: ignore[trust]
 
     def _after_kill(
         self,
@@ -298,6 +334,9 @@ class BaseLogicEntity(BaseLogicEntityLike):
         """
         self._lifetime += delta
 
+        if self._sdi and pv.global_vars.get_debug_var(DebugVarsEnum.ADV_DEBUGGING):
+            self._sdi.write_from_object(self)
+
     @tp.final
     def update(self, delta: float, *, recursive: bool = True) -> None:
         """
@@ -330,5 +369,75 @@ class BaseLogicEntity(BaseLogicEntityLike):
     def stop_highlight(self) -> None:
         """Stop highlighting the graphics entity."""
         self._set_bit("flags", 2, False)  # noqa: FBT003
+
+    # endregion
+
+    # region Methods: component ID
+
+    @classmethod
+    def has_cid(cls) -> bool:
+        """:return: Return True if the entity has a CID."""
+        return cls._CID != ...
+
+    @classmethod
+    def cid(cls) -> CIDType:
+        """
+        Return CID.
+
+        :return: The entities' component ID
+        :raise ValueError: if the class has no __cid
+        """
+        if cls._CID == ...:
+            raise ValueError("_CID is not defined for " + cls.__name__)
+
+        return cls._CID.value  # type: ignore[Any]
+
+    # endregion
+
+    # region Methods: graphics sync
+    def _spawn_graphics_entity(
+        self,
+        *args: tp.Any,
+        skip_cid: bool = False,
+        **kwargs: tp.Any,
+    ) -> None:
+        """
+        Spawn graphics entity.
+        """
+        kwargs["id"] = self.id
+
+        if not skip_cid:
+            kwargs["cid"] = self.cid()
+
+        if self._sdi:
+            kwargs["adv_debugging_data"] = self._sdi.get_spawn_data()
+
+        pv.COQ.put(
+            ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs, args=args)
+        )
+
+    # endregion
+
+    # region Methods: debugging
+    def __create_shared_debug_instance(self) -> None:
+        """Create SharedDebugInstance."""
+        sdi: SharedDebuggingInstance = SharedDebuggingInstance(
+            pv.SH,
+            self._AD_VARS,
+            self._AD_CONSOLE_LINES,
+            max_console_line_length=self._AD_CONSOLE_LINE_LENGTH,
+        )
+        sdi.create()
+        self._sdi = sdi
+
+    def _debug_print(self, line: str, *, end: str = "\n") -> None:
+        """
+        Print to debug instance if debugging is enabled.
+
+        :param line: line to print
+        :param end: append to end of line
+        """
+        if self._sdi:
+            self._sdi.print(line, end=end)  # type: ignore[trust-me-bro]
 
     # endregion

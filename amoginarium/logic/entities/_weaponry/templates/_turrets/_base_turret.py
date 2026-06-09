@@ -80,6 +80,18 @@ class BaseTurret(LogicGameEntity):
     """
 
     _CID = TurretCIDs.base
+
+    _ADVANCED_DEBUGGING = True
+    _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
+        ("_hp", float),
+        ("weapon._current_reload_time", float),
+        ("_target_angle", float),
+        ("facing.angle", float),
+        ("intercept_bullets", bool),
+        ("intercept_players", bool),
+    ]
+    _AD_CONSOLE_LINES = 1
+
     size: Vec2
     weapon: BaseWeapon
     _default_max_hp: int = 80
@@ -215,6 +227,7 @@ class BaseTurret(LogicGameEntity):
             allow_static_target, self._default_allow_static_target
         )
         self._max_error = self._default_max_error
+        self._target_angle = 0
         self.available_targets = {}
         self._target_predict = []
         self._last_shot = perf_counter()
@@ -276,12 +289,7 @@ class BaseTurret(LogicGameEntity):
 
         # spawn logic dummy
         self._runtime_buffer[self.id].param3 = MASK64
-        pv.COQ.put(
-            ProcessCommand(
-                type=BaseCommandType.spawn_dummy,
-                kwargs={"id": self.id, "cid": self.cid(), "weapon_id": self.weapon.id},
-            )
-        )
+        self._spawn_graphics_entity(weapon_id=self.weapon.id)
 
     @property
     def max_hp(self) -> int:
@@ -460,6 +468,8 @@ class BaseTurret(LogicGameEntity):
 
         if not self.available_targets:
             self._target_predict = [self.position.copy()]
+
+        self._debug_print(f"{len(self.available_targets)} targets")
 
         new_target = self.get_next_target()
         simulate_target = self.get_next_target(include_all=True)
@@ -651,6 +661,7 @@ class BaseTurret(LogicGameEntity):
     def _turn_at(self, solution: TargetSolution, delta: float) -> None:
         """Turn towards a target."""
         diff = solution.angle.angle - self.facing.angle
+        self._target_angle = solution.angle.angle
 
         if diff > np.pi:
             diff -= 2 * np.pi

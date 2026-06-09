@@ -7,7 +7,8 @@ Run amoginarium.
 | ``Authors``: Nilusink, LukasKrah
 """
 
-# from amoginarium.shared.controllers import KeyboardController  # noqa: ERA001
+# ruff: disable[ERA001]
+# from amoginarium.shared.controllers import KeyboardController
 import sys
 
 from amoginarium.base import BaseGame
@@ -16,6 +17,7 @@ sys.setrecursionlimit(10000)
 
 
 def main() -> None:
+    """Program entry point."""
     game = BaseGame(debug=True, show_targets=False, time_multiplier=1)
 
     # create initial controller
@@ -23,6 +25,9 @@ def main() -> None:
     game.load_map("assets/maps/tutorial.json")
     # game.load_map("generated_map.json")
     game.mainloop()
+
+
+# ruff: enable[ERA001]
 
 
 if __name__ == "__main__":

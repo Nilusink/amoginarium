@@ -57,6 +57,13 @@ class Bullet(LogicGameEntity):
     # region ClassVars
     _CID: tp.ClassVar[CIDType] = DummyCIDs.base_bullet
 
+    _ADVANCED_DEBUGGING = False
+    _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
+        ("_time_to_life", float),
+        ("velocity", Vec2),
+        ("_hp", float)
+    ]
+
     _DEFAULT_COLLISION_GROUP: tp.ClassVar[CollisionGroupIDType] = (
         GameCollisions.collision_group_bullets
     )
@@ -425,8 +432,6 @@ class Bullet(LogicGameEntity):
         kwargs = get_default(graphics_spawn_args, {})
         kwargs.update(
             {
-                "id": self.id,
-                "cid": spawn_cid or self.cid(),
                 "spawn_time": self._start_time,
                 "visibility_offset": self._visibility_offset,
                 "position": self.position.xy,
@@ -436,7 +441,7 @@ class Bullet(LogicGameEntity):
         if self._target_pos != ...:
             kwargs["target_pos"] = self._target_pos.xy
 
-        pv.COQ.put(ProcessCommand(type=BaseCommandType.spawn_dummy, kwargs=kwargs))
+        self._spawn_graphics_entity(**kwargs)
 
     # region Properties
     @property

@@ -57,7 +57,7 @@ class MultiStageMissileDummy(BulletDummy):
             )
         ]
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         super().__init__(*args, **kwargs)
 
         self._animation = Animation(

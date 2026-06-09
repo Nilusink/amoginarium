@@ -24,6 +24,7 @@ from icecream import colorizedStderrPrint, ic
 
 from amoginarium import pv
 from amoginarium.graphics.controllers import Controllers, KeyboardController
+from amoginarium.graphics.debug_overlay import DEBUG_KEYBINDS, draw_debug_overlay
 from amoginarium.graphics.entities import Drawn_0, Drawn_1, Drawn_2
 from amoginarium.graphics.entities import SyncedEntities, UIEntities
 from amoginarium.graphics.logic_dummies import GRAPHICS_SPAWNABLES, ISLANDS, SE_MANAGER
@@ -126,6 +127,7 @@ class BaseGame:
                 "shm": pv.SHM,
                 "c_shm": pv.C_SHM,
                 "i_shm": pv.I_SHM,
+                "d_shm": pv.D_SHM,
                 "base_comm": pv.BASE_COMM,
                 "process_comm": pv.PROCESS_COMM,
                 "start_time": self._game_start,
@@ -143,9 +145,12 @@ class BaseGame:
         self._last_loaded: tp.LiteralString | EllipsisType = ...
         self._shifting = False
 
-        self.global_vars.scaling = Settings.scaling
+        # initialize global vars from settings
+        self.global_vars.set_scaling(Settings.scaling)
+        self.global_vars.initialize_debug_vars(Settings.debug_vars)
 
         # configure icecream
+        self._debugging = debug
         if not debug:
             ic.disable()
 
@@ -513,7 +518,9 @@ class BaseGame:
         mouse_cursor = UICursor()
 
         # draw background once
-        while self.running:
+        paused = False
+        debug_menu = False
+        while self.running:  # noqa: PLR1702
             # print process comms
             while pv.BASE_COMM.poll(0):
                 msg = pv.BASE_COMM.recv()
@@ -523,6 +530,7 @@ class BaseGame:
             pv.WRITE_LOCK.acquire()
             pv.WRITE_LOCK.release()
 
+            # slow-motion
             if pg.key.get_pressed()[pg.K_DOWN]:
                 pv.global_vars.set_time_mult(0.01)
                 t_mult = 0.01
@@ -530,23 +538,6 @@ class BaseGame:
             else:
                 pv.global_vars.set_time_mult(self.time_multiplier)
                 t_mult = self.time_multiplier
-
-            # # check for new controllers
-            # if len(self._new_controllers) > 0:
-            #     tmp = self._new_controllers.copy()
-            #     self._new_controllers.clear()
-            #
-            #     for new_controller in tmp:
-            #         # spawn new player
-            #         if Players.spawn_point:
-            #             Player(
-            #                 runtime_buffer=self._runtime_buffer,
-            #                 coalition=Coalitions.blue,
-            #                 controller=new_controller
-            #             )
-            #
-            #         else:
-            #             self._new_controllers.append(new_controller)
 
             # update commands
             while True:
@@ -606,15 +597,13 @@ class BaseGame:
                 elif event.type == pg.QUIT:
                     self.__clean_end()
 
-                # elif events.type == pg.JOYDEVICEADDED:
-                #     self.__add_joystick(events)
-
                 elif event.type == pg.KEYUP:
                     if event.key == pg.K_F11:
                         if renderer.display_state == "windowed_fullscreen":
                             renderer.display_set_windowed()
                         else:
                             renderer.display_windowed_fullscreen()
+
                     elif event.key == pg.K_ESCAPE:
                         if active_scene == "Game":
                             pause_game()
@@ -625,8 +614,25 @@ class BaseGame:
                             or active_scene == "StartSettings"
                         ):
                             close_settings()
-                    elif event.key == pg.K_h:
-                        pv.global_vars.toggle_debug_var(DebugVarsEnum.DRAW_HITBOXES)
+
+                    elif event.key == pg.K_h:  # debug menu
+                        debug_menu = not debug_menu
+
+                    elif event.key == pg.K_PAUSE:  # pause
+                        pv.COQ.put(
+                            ProcessCommand(
+                                type=ProcessCommandType.unpause
+                                if paused
+                                else ProcessCommandType.pause
+                            )
+                        )
+                        paused = not paused
+
+                    else:  # debug keys
+                        for key, (_, debug_var) in DEBUG_KEYBINDS.items():
+                            if event.key == key:
+                                pv.global_vars.toggle_debug_var(debug_var)
+
                 elif event.type == pg.MOUSEBUTTONUP:
                     if event.button == pg.BUTTON_LEFT:
                         for sprite in UIEntities:
@@ -656,6 +662,16 @@ class BaseGame:
                     Drawn_2.gl_draw(0)
                     renderer.flush_layer(2)
                     renderer.flush()
+
+                    # debugging
+                    if self._debugging and pv.global_vars.get_debug_var(
+                        DebugVarsEnum.ADV_DEBUGGING
+                    ):
+                        Drawn_0.draw_debug_overlay()
+                        Drawn_1.draw_debug_overlay()
+                        Drawn_2.draw_debug_overlay()
+
+                        renderer.flush()
 
                 settings.gl_draw(delta)
                 start_menu.gl_draw(delta)
@@ -687,6 +703,16 @@ class BaseGame:
                 renderer.flush_layer(2)
                 renderer.flush()
 
+                # debugging
+                if self._debugging and pv.global_vars.get_debug_var(
+                    DebugVarsEnum.ADV_DEBUGGING
+                ):
+                    Drawn_0.draw_debug_overlay()
+                    Drawn_1.draw_debug_overlay()
+                    Drawn_2.draw_debug_overlay()
+
+                    renderer.flush()
+
             # update global vars
             self.global_vars.update()
 
@@ -695,6 +721,11 @@ class BaseGame:
                 (now - self._game_start, perf_counter() - now)
             )
             last = now
+
+            # draw debug overlay
+            if debug_menu:
+                draw_debug_overlay(paused=paused, slo_mo=t_mult != self.time_multiplier)
+                renderer.flush()
 
             renderer.display_draw_frame()
 
@@ -752,7 +783,9 @@ class BaseGame:
             return
         self._ended = True
 
+        # update settings
         Settings.scaling = self.global_vars.get_scaling()
+        Settings.debug_vars = self.global_vars.get_debug_vars()
         Settings.write()
 
         # tell threads to exit

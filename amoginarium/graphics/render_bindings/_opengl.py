@@ -62,7 +62,7 @@ if tp.TYPE_CHECKING:
 
 
 # noinspection DuplicatedCode
-class OpenGLRenderer(BaseRenderer):
+class OpenGLRenderer(BaseRenderer):  # noqa: PLR0904
     __slots__ = (
         "__dynamic_text_fonts",
         "__static_text_graphics",
@@ -147,7 +147,8 @@ class OpenGLRenderer(BaseRenderer):
         size: coord_t,
     ) -> bool:
         """
-        Check if a rect is out of the screen
+        Check if a rect is out of the screen.
+
         :param top_left: Absolute top left position
         :param size: Absolute size
         :return: True if rect is out of screen.
@@ -940,7 +941,8 @@ class OpenGLRenderer(BaseRenderer):
         offscreen_check: bool = True,
     ) -> None:
         """
-        Draw a rect with rounded corners with fill
+        Draw a rect with rounded corners with fill.
+
         :param start: Absolute top left corner position
         :param size: Width and height of the rectangle
         :param color: Drawing color
@@ -1057,7 +1059,8 @@ class OpenGLRenderer(BaseRenderer):
         offscreen_check: bool = True,
     ) -> None:
         """
-        Draw a rectangle outline without fill
+        Draw a rectangle outline without fill.
+
         :param start: Absolute top left corner position
         :param size: Width and height of the rectangle
         :param color: Drawing color
@@ -1893,12 +1896,14 @@ class OpenGLRenderer(BaseRenderer):
         font_family: str = "arial",
         bold: bool = False,
         italic: bool = False,
+        line_height: float = 1.0,
         text_id: DynamicTextID | None = None,
         convert_global: bool = True,
         offscreen_check: bool = True,
     ) -> DynamicTextID:
         """
-        Draw a text to the given position
+        Draw a text to the given position.
+
         :param pos: Position of the text
         :param text: Text to be drawn
         :param color: Text color
@@ -1908,6 +1913,7 @@ class OpenGLRenderer(BaseRenderer):
         :param font_family: Family of the font
         :param bold: Whether the text is bold
         :param italic: Whether the text is italic
+        :param line_height: distance between lines
         :param text_id: NOT SUPPORTED
         :param convert_global: Whether to apply the global game scaling to pos and size
         :param offscreen_check: Whether to check it the element is on the window before drawing.
@@ -1915,8 +1921,10 @@ class OpenGLRenderer(BaseRenderer):
         """
         if not isinstance(bg_color, Color):
             bg_color = self.__set_color(bg_color)
-        if not isinstance(color, Color):
-            color = self.__set_color(color)
+
+        color_: Color = (
+            self.__set_color(color) if not isinstance(color, Color) else color
+        )
 
         pos: Vec2 = convert_coord(pos, Vec2)
 
@@ -1953,14 +1961,50 @@ class OpenGLRenderer(BaseRenderer):
                 convert_global=convert_global,
             )
 
-        glPushMatrix()
-        font.draw(text, pos.x, pos.y, scale, color.rgba255)
-        glPopMatrix()
+        font.draw(text, pos.x, pos.y, color_, scale=scale, line_height=line_height)
 
         if OpenGLRenderer.DRAW_DEBUG_BOUNDS:
             self._draw_debug_bounds(pos, (text_width, text_height))
 
-        return -1
+        return 0
+
+    def get_dynamic_text_size(
+        self,
+        text: str,
+        *,
+        font_size: int = 64,
+        font_family: str = "arial",
+        bold: bool = False,
+        italic: bool = False,
+        line_height: float = 1.0,
+        convert_global: bool = True,
+    ) -> tuple[float, float]:
+        """
+        Get size of dynamic text.
+
+        :param text: Text to be drawn
+        :param font_size: Size of the font
+        :param font_family: Family of the font
+        :param bold: Whether the text is bold
+        :param italic: Whether the text is italic
+        :param line_height: distance between lines
+        :param convert_global: Whether to apply the global game scaling to pos and size
+        :return: size of text
+        """
+        scale = 1.0
+        if convert_global:
+            scale = pv.global_vars.translate_scale(1.0)
+
+        font_key = (font_family, font_size, bold, italic)
+
+        if font_key not in self.__dynamic_text_fonts:
+            self.__dynamic_text_fonts[font_key] = GLFont(
+                font_family, font_size, bold, italic
+            )
+
+        font = self.__dynamic_text_fonts[font_key]
+
+        return font.get_dimensions(text, scale, line_height)
 
     def generate_static_text(
         self,

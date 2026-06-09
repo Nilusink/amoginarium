@@ -11,19 +11,22 @@ from __future__ import annotations
 
 import math as m
 import time
+import typing as tp
 from abc import ABC, abstractmethod
 from contextlib import suppress
-from typing import TYPE_CHECKING
+from functools import reduce
 
-from icecream import ic
+from icecream import colorize, ic
 
 from amoginarium import pv
+from amoginarium.shared.debugging import debug_repr, get_fg_color
+from amoginarium.shared.debugging import SharedDebuggingInstance
 from amoginarium.shared.utility import Color, Vec2
 
 from ..entities import BaseGraphicsEntity, Drawn_0, SyncedEntities
 from ..render_bindings import renderer
 
-if TYPE_CHECKING:
+if tp.TYPE_CHECKING:
     from amoginarium.shared.utility import coord_t
 
 
@@ -44,8 +47,6 @@ class _SyncedEntitiesManager:
                 e.kill()
 
             self.del_entity(sync_id)  # in case entitie ``kill`` has been overwritten
-
-        #     raise RuntimeError(f"entity with id {sync_id} already in manager")
 
         self._entities[sync_id] = entity
 
@@ -85,6 +86,15 @@ SE_MANAGER = _SyncedEntitiesManager()
 class SyncedGraphicsEntity(BaseGraphicsEntity):
     """
     Graphics entity synced with logic entity (via SHM).
+
+    :cvar _AD_SIZE: Text size for advanced debugging
+
+    :ivar pos: Position
+    :ivar facing: Facing
+    :ivar size: Size
+    :ivar alive: is alive
+    :ivar _logic_visibility: Is set visible by logic process?
+    :ivar _sdi: Shared Debugging Instance
     """
 
     __slots__ = [
@@ -97,14 +107,23 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         "param2",
         "param3",
         "__id",
+        "_sdi",
         "param4",
         "_logic_visibility",
+        "_ad_max_box_len",
     ]
+
+    # region ClassVars
+    _AD_SIZE: tp.ClassVar[int] = 24
+    # endregion
+
     pos: Vec2
     facing: Vec2
     size: Vec2
     alive: bool
     _logic_visibility: bool
+    _sdi: SharedDebuggingInstance | None
+    _ad_max_box_len: int
 
     param0: float
     param1: float
@@ -112,7 +131,12 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
     param3: int
     param4: int
 
-    def __init__(self, sync_id: int, parent: int | None = None) -> None:
+    def __init__(
+        self,
+        sync_id: int,
+        parent: int | None = None,
+        adv_debugging_data: dict | None = None,
+    ) -> None:
         self.__id = sync_id
 
         # try to get parent by sync_id
@@ -139,6 +163,15 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
         # add to manager
         SE_MANAGER.add_entity(self.__id, self)
         self.add(Drawn_0, SyncedEntities)
+
+        # create debugging instance
+        self._sdi = None
+        if adv_debugging_data:
+            self._sdi = SharedDebuggingInstance.from_data(
+                sh=pv.SH,
+                data=adv_debugging_data,
+            )
+            self._ad_max_box_len = 0
 
     # region entity management
     def kill(self) -> None:
@@ -238,7 +271,8 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
 
     def _after_gl_draw(self, drawn: bool, layer: int = 0) -> None:
         """
-        Called after gl_draw
+        Run after gl_draw.
+
         :param drawn: Whether the UI-entity was drawn
         :param layer: what layer the draw function has been called by.
         """
@@ -253,6 +287,171 @@ class SyncedGraphicsEntity(BaseGraphicsEntity):
             )
             renderer.disable_stencil()
 
+    def draw_debug_overlay(self) -> None:
+        """Draw debug overlay."""
+        if self._sdi:
+            debug_vars = {
+                name: debug_repr(var) for name, var in self._sdi.read().items()
+            }
+            e_name = self.__class__.__name__
+
+            # calculate block length and height
+            block_height = (
+                (len(debug_vars) + ((self._sdi.console_lines + 0.5) * (1.3 / 1.5)) + 2)
+                * self._AD_SIZE
+                * 1.5
+            )
+            max_name_len = max(len(v) for v in debug_vars)
+            max_var_len = max(len(v) for v in debug_vars.values())
+
+            max_len = max_name_len + max_var_len
+            max_len = max(
+                [
+                    max_len,
+                    m.ceil(len(e_name) * 1.5),
+                    self._sdi.max_console_line_length,
+                ]
+            )
+            max_len += 4
+            if max_len > self._ad_max_box_len:
+                self._ad_max_box_len = max_len
+
+            font_width_mult = 0.6
+            block_len = (self._ad_max_box_len + 1) * self._AD_SIZE * font_width_mult
+
+            block_size = Vec2().from_cartesian(block_len, block_height)
+
+            start_pos = self.world_position
+            start_pos.x -= self.size.x + block_size.x
+
+            # draw line to observing entity
+            renderer.draw_line(
+                (
+                    start_pos.x + block_size.x / 2,
+                    start_pos.y + block_size.y / 2,
+                ),
+                self.world_position,
+                Color().from_255(32, 179, 83),
+            )
+            renderer.draw_line(
+                (
+                    start_pos.x + block_size.x / 2,
+                    start_pos.y - block_size.y / 2,
+                ),
+                self.world_position,
+                Color().from_255(32, 179, 83),
+            )
+
+            start_pos.y -= block_size.y / 2
+            renderer.draw_rounded_rect(
+                start_pos - 2,
+                block_size + 4,
+                Color().from_255(32, 179, 83),
+                10,
+                convert_global=True,
+            )
+            renderer.draw_rounded_rect(
+                start_pos,
+                block_size,
+                (0, 0, 0, 1),
+                10,
+                convert_global=True,
+            )
+
+            start_pos.x += self._AD_SIZE / 4
+            start_pos.y += self._AD_SIZE / 4
+
+            block_size.x -= self._AD_SIZE * 0.5
+            block_size.y -= self._AD_SIZE * 0.5
+
+            # draw entity name + id
+            renderer.draw_dynamic_text(
+                start_pos,
+                e_name,
+                color=Color().from_255(23, 146, 173),
+                font_family="monospace",
+                font_size=m.ceil(self._AD_SIZE * 1.5),
+                bold=True,
+                convert_global=True,
+            )
+            start_pos.y += self._AD_SIZE * 1.5
+            block_size.y -= self._AD_SIZE * 1.5
+
+            renderer.draw_dynamic_text(
+                start_pos,
+                f"id={self.id}",
+                color=Color().from_255(0, 89, 92),
+                font_family="monospace",
+                font_size=int(self._AD_SIZE * 0.8),
+                convert_global=True,
+            )
+            start_pos.y += self._AD_SIZE * 1.5
+            block_size.y -= self._AD_SIZE * 1.5
+
+            # draw vars
+            block_strings = []
+            for name, val in debug_vars.items():
+                block_strings.append(
+                    f"{get_fg_color(245)}{name}"
+                    f"{'':<{1 + max_len - (len(name) + len(val))}}{colorize(val)}"
+                )
+
+            renderer.draw_dynamic_text(
+                start_pos,
+                "\n".join(block_strings),
+                color=(1, 1, 1),
+                font_family="monospace",
+                font_size=self._AD_SIZE,
+                line_height=1.3,
+                convert_global=True,
+            )
+
+            start_pos.y += self._AD_SIZE * 1.5 * len(debug_vars)
+            block_size.y -= self._AD_SIZE * 1.5 * len(debug_vars)
+
+            if self._sdi.console_lines > 0:
+                # draw console
+                renderer.start_stencil(show_stencil=True)
+                renderer.draw_rounded_rect(
+                    start_pos,
+                    block_size,
+                    (0.3, 0.3, 0.3, 1),
+                    5,
+                )
+                renderer.enable_stencil(show_stencil=True)
+
+                start_pos.x += self._AD_SIZE * font_width_mult / 2
+                start_pos.y += self._AD_SIZE * 0.2
+                block_size.x -= self._AD_SIZE * font_width_mult
+                block_size.y -= self._AD_SIZE * 0.2
+
+                console_lines = self._sdi.get_console_lines()
+                if console_lines:
+                    colored_text = colorize(console_lines)
+                    _, text_height = renderer.get_dynamic_text_size(
+                        colored_text,
+                        font_family="monospace",
+                        font_size=self._AD_SIZE,
+                        line_height=1.1,
+                        convert_global=False,
+                    )
+
+                    # "scroll"
+                    if text_height > block_size.y:
+                        start_pos.y += block_size.y - text_height
+
+                    renderer.draw_dynamic_text(
+                        start_pos,
+                        colored_text,
+                        color=(1, 1, 1),
+                        font_family="monospace",
+                        font_size=self._AD_SIZE,
+                        line_height=1.1,
+                        convert_global=True,
+                    )
+
+                renderer.disable_stencil()
+
     # endregion
 
 
@@ -260,10 +459,14 @@ class SyncedImageEntity(SyncedGraphicsEntity):
     __slots__ = ["_texture_id", "_lifetime"]
 
     def __init__(
-        self, sync_id: int, texture_id: int, parent: int | None = None
+        self,
+        sync_id: int,
+        texture_id: int,
+        parent: int | None = None,
+        adv_debugging_data: dict | None = None,
     ) -> None:
         self._texture_id = texture_id
-        super().__init__(sync_id, parent)
+        super().__init__(sync_id, parent, adv_debugging_data=adv_debugging_data)
 
     @property
     def texture_id(self) -> int:
@@ -271,7 +474,12 @@ class SyncedImageEntity(SyncedGraphicsEntity):
         return self._texture_id
 
     def draw_at(
-        self, position: coord_t, size: coord_t, layer: int, *, rotation: float = 0
+        self,
+        position: coord_t,
+        size: coord_t,
+        layer: int,
+        *,
+        rotation: float = 0,
     ) -> None:
         """Draw an entity at specified position and size."""
         renderer.draw_textured_quad(
@@ -317,7 +525,7 @@ class SyncedLRImageEntity(SyncedGraphicsEntity):
 class Iconifyable(ABC):
     """entities that can be represented in an icon."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: tp.Any, **kwargs: tp.Any) -> None:
         # call next class in MRO
         super().__init__(*args, **kwargs)
 

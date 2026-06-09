@@ -22,6 +22,7 @@ from ._logic_entity_hints import BaseLogicEntityLike, CollisionLogicEntityLike
 from ._logic_entity_hints import EntityChildViable, LogicGameEntityLike
 from ._logic_entity_hints import MurderViable, PositionedLogicEntityLike
 from ._shared_memory import base_controller_t, base_entity_t, get_controller_memory
-from ._shared_memory import get_entity_memory, get_inventory_memory, get_write_lock
-from ._shared_memory import inventory_t, item_slot_t, MAX_CONTROLLERS, MAX_ENTITIES
+from ._shared_memory import get_debugging_memory, get_entity_memory
+from ._shared_memory import get_inventory_memory, get_write_lock, inventory_t
+from ._shared_memory import item_slot_t, MAX_CONTROLLERS, MAX_ENTITIES
 from ._shared_memory import MAX_INVENTORIES, MAX_INVENTORY_SLOTS

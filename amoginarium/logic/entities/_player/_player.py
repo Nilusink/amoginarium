@@ -16,8 +16,7 @@ from time import perf_counter
 from icecream import ic
 
 from amoginarium import pv
-from amoginarium.shared import BaseCommandType, Coalitions
-from amoginarium.shared import CurrentView, DummyCIDs, ProcessCommand
+from amoginarium.shared import Coalitions, CurrentView, DummyCIDs
 from amoginarium.shared.audio import DeathSound, OnHoverButtonSound, SoundEffect
 from amoginarium.shared.utility import convert_coord, Vec2
 
@@ -40,12 +39,15 @@ if tp.TYPE_CHECKING:
 
     from ...graphics_dummies import Controller
     from .._items import Item
+    from .._rideables import RideablePerks
     from .._weaponry import Grenade
     from .._weaponry.templates import Bullet, RideableTurret
     from .._world import Island
 
 
 class Player(Passenger, LogicGameEntity):
+    _CID = DummyCIDs.player
+
     _impulse_resistance_factor: float = 1  # 0 = completely resistant
     _heal_per_second: float = 2  # hp healing per second
     _time_to_heal: float = 5  # time without taking damage before healing starts
@@ -62,6 +64,14 @@ class Player(Passenger, LogicGameEntity):
     __should_be_killed: int
 
     _bullets_do_not_initially_hit_player: CollisionExceptionIDType
+
+    _ADVANCED_DEBUGGING = False
+    _AD_VARS: tp.ClassVar[list[tuple[str, type | tuple[type, int]]]] = [
+        ("on_ground", bool),
+        ("velocity", Vec2),
+        ("acceleration", Vec2),
+    ]
+    _AD_CONSOLE_LINES = 4
 
     def __init__(
         self,
@@ -153,17 +163,7 @@ class Player(Passenger, LogicGameEntity):
 
         self.__ride_pressed = False
 
-        pv.COQ.put(
-            ProcessCommand(
-                type=BaseCommandType.spawn_dummy,
-                kwargs={
-                    "id": self.id,
-                    "cid": DummyCIDs.player.value,
-                    "i_id": self._inventory.id,
-                    "h_id": self._hotbar.id,
-                },
-            )
-        )
+        self._spawn_graphics_entity(i_id=self._inventory.id, h_id=self._hotbar.id)
 
     def _set_slot(self, slot_id: ItemSlot) -> None:
         self._hover_slot = slot_id
@@ -269,7 +269,7 @@ class Player(Passenger, LogicGameEntity):
             return self._hotbar.get_count(self._current_weapon) > 0
         return False
 
-    def hit(self, damage: float, hit_by: LogicGameEntity = ...) -> None:
+    def hit(self, damage: float, hit_by: LogicGameEntity | EllipsisType = ...) -> None:
         self._hp -= damage
 
         if damage != 0:
@@ -290,11 +290,13 @@ class Player(Passenger, LogicGameEntity):
         self._hp = new
         return True
 
-    def __collision_island(self, events: list[CollisionEvent[Island]]) -> list[bool]:
+    def __collision_island(self, events: list[CollisionEvent[Island]]) -> list[bool]:  # noqa: C901, PLR0912
         """
         Player collision reaction to islands.
+
         Guarantees that the player won't get stuck
         in walls or fly through them and can still move along them.
+
         :param events: All details regarding the collisions
         :return: Which collisions were accepted.
         """
@@ -453,13 +455,14 @@ class Player(Passenger, LogicGameEntity):
     def get_initial_root_collision_exception(self) -> CollisionExceptionIDType:
         return self._bullets_do_not_initially_hit_player
 
-    def clear_controlled_entity(self, to_clear) -> bool:
+    @tp.override
+    def clear_controlled_entity(self, to_clear: RideablePerks) -> bool:
         self.__ride_pressed = True
-        super().clear_controlled_entity(to_clear)
+        return super().clear_controlled_entity(to_clear)
 
     # noinspection DuplicatedCode
     @tp.override
-    def _update(self, delta) -> None:
+    def _update(self, delta: float) -> None:  # noqa: C901, PLR0912, PLR0915
         # update passenger status
         self.update_passenger(delta)
 
@@ -481,9 +484,9 @@ class Player(Passenger, LogicGameEntity):
             Vec2,
         )
         vector -= self.world_position
-        self.facing.angle = vector.angle
+        self.facing.angle = vector.angle  # type: ignore[pycharm-is-stupid]
 
-        if not self.is_controlled:
+        if not self.is_controlled:  # noqa: PLR1702
             if (
                 len(self._colliding_rideables) > 0
                 and self._controller.ride
@@ -494,27 +497,24 @@ class Player(Passenger, LogicGameEntity):
             self.__ride_pressed = self._controller.ride
 
             # accelerate right
-            if self._controller.joy_x > 0:
-                if self.velocity.x < self._max_speed:
-                    self.velocity.x += (
-                        self._impulse_resistance_factor * delta * acc_fac * 12
-                    )
+            if self._controller.joy_x > 0 and self.velocity.x < self._max_speed:
+                self.velocity.x += (
+                    self._impulse_resistance_factor * delta * acc_fac * 12
+                )
 
             # accelerate left
-            elif self._controller.joy_x < 0:
-                if self.velocity.x > -self._max_speed:
-                    self.velocity.x -= (
-                        self._impulse_resistance_factor * delta * acc_fac * 12
-                    )
+            elif self._controller.joy_x < 0 and self.velocity.x > -self._max_speed:
+                self.velocity.x -= (
+                    self._impulse_resistance_factor * delta * acc_fac * 12
+                )
 
             # jump
             if self._controller.jump and self.on_ground:
                 self.velocity.y = -400
 
             # reload
-            if self._controller.reload:
-                if isinstance(self.item, BaseWeapon):
-                    self.item.reload()
+            if self._controller.reload and isinstance(self.item, BaseWeapon):
+                self.item.reload()
 
             # switch weapon
             if self._controller.wpn_f:
@@ -536,20 +536,27 @@ class Player(Passenger, LogicGameEntity):
                     if isinstance(self.item, BaseWeapon):
                         if hasattr(self.item, "charge"):
                             self.item.charge()
+
                         elif self.item.shoot(self.facing):
                             self._controller.feedback_shoot()
+                            self._debug_print(f"{self._lifetime:.2f}> harrow")
+
                     elif self.item:
                         self.item.use()
+
                 elif isinstance(self.item, BaseWeapon):
                     if hasattr(self.item, "charge"):
-                        item: ... = self.item
+                        item = self.item
                         if item.charged > 0:
                             if self.item.shoot(self.facing):
                                 self._controller.feedback_shoot()
+
                         else:
                             self.item.stop_shooting()
+
                     else:
                         self.item.stop_shooting()
+
                 elif self.item:
                     self.item.stop_use()
 
@@ -563,9 +570,8 @@ class Player(Passenger, LogicGameEntity):
                 )
 
         # auto reload
-        if isinstance(self.item, BaseWeapon):
-            if self.item.get_mag_state(1)[0] == 0:
-                self.item.reload()
+        if isinstance(self.item, BaseWeapon) and self.item.get_mag_state(1)[0] == 0:
+            self.item.reload()
 
         # heal
         if perf_counter() - self._last_hit > self._time_to_heal:
@@ -669,16 +675,20 @@ class Player(Passenger, LogicGameEntity):
 
         self._runtime_buffer[self.id].param0 = self._hp / self._max_hp
 
+        # ruff: disable[ERA001]
         # Only kill the player if has been below 2000 for 3 updates
         # to let the CollisionSystem check if that position is valid!
-        # 3 because, because first is for any check to happen, second for restoring the y-axis-position on a wall hit
-        # If you don't know what I mean by this, just ask me. But I won't know by then probably! xD
+        # 3 because, because first is for any check to happen, second for restoring the
+        # y-axis-position on a wall hit
+        # If you don't know what I mean by this, just ask me. But I won't know by then
+        # probably! xD
         # if self.position.y > 2000:
         #     if self.__should_be_killed >= 2:
         #         self.kill()
         #     self.__should_be_killed += 1
         # else:
         #     self.__should_be_killed = 0
+        # ruff: enable[ERA001]
 
     @tp.override
     def _kill(
@@ -720,10 +730,6 @@ class Player(Passenger, LogicGameEntity):
 
     @tp.override
     def add_velocity(self, value: Vec2) -> None:
-        """
-        Add velocity to the entity and guarantee that it will be valid (for short bursts)
-        :param value: 2D velocity to add.
-        """
         x = value.x
         y = value.y
 
@@ -739,10 +745,6 @@ class Player(Passenger, LogicGameEntity):
 
     @tp.override
     def add_acceleration(self, value: Vec2) -> None:
-        """
-        Add acceleration to the entity and guarantee that it will be valid (for long accelerations)
-        :param value: 2D acceleration to add.
-        """
         x = value.x
         y = value.y
 

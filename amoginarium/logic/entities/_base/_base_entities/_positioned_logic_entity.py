@@ -20,9 +20,8 @@ from ._base_logic_entity import BaseLogicEntity
 
 if tp.TYPE_CHECKING:
     from ctypes import Array
-    from types import EllipsisType
 
-    from amoginarium.shared import base_entity_t, CIDType
+    from amoginarium.shared import base_entity_t
     from amoginarium.shared.utility import Vec2
 
 
@@ -30,11 +29,6 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
     """A logic entity with position and size."""
 
     __slots__ = ("position", "size")
-
-    # region ClassVars
-    _CID: tp.ClassVar[CIDType | EllipsisType] = ...  # for serialization
-
-    # endregion
 
     # region InstanceVars
     _parent: PositionedLogicEntity | None
@@ -63,36 +57,6 @@ class PositionedLogicEntity(BaseLogicEntity, PositionedLogicEntityLike):
         super().__init__(runtime_buffer=runtime_buffer, parent=parent)
         self.position = position
         self.size = size
-
-    # region Class-Methods
-    @classmethod
-    def has_cid(cls) -> bool:
-        """:return: Return True if the entity has a CID."""
-        return cls._CID != ...
-
-    @classmethod
-    def cid(cls) -> CIDType:
-        """
-        Return CID.
-
-        :return: The entities' component ID
-        :raise ValueError: if the class has no __cid
-        """
-        if cls._CID == ...:
-            raise ValueError("_CID is not defined for " + cls.__name__)
-
-        return cls._CID.value  # type: ignore[Any]
-
-    # endregion
-
-    # region Properties (and other getters)
-    def _get_ids(self) -> list[int]:
-        """:return: list of all entity IDs including this one and parents"""
-        if self._parent is None:
-            return [self.id]
-        return self._parent._get_ids() + [self.id]  # noqa: SLF001
-
-    # endregion
 
     # region Methods: Update
     @tp.override
